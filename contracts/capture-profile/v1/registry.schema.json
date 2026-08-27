@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:idenqa:capture-profile:v1:registry",
+  "title": "Idenqa evidence registry v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "revision",
+    "artefacts",
+    "evidence_types",
+    "acquisition_methods",
+    "purposes",
+    "assurances",
+    "constraints"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "revision": { "type": "integer", "minimum": 1 },
+    "artefacts": { "$ref": "#/$defs/artefact_name_set" },
+    "evidence_types": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "artefacts"],
+        "properties": {
+          "name": { "$ref": "#/$defs/evidence_name" },
+          "artefacts": { "$ref": "#/$defs/nonempty_artefact_name_set" }
+        }
+      }
+    },
+    "acquisition_methods": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "supports"],
+        "properties": {
+          "name": { "$ref": "#/$defs/method_name" },
+          "supports": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["evidence_type", "artefacts", "assurances"],
+              "properties": {
+                "evidence_type": { "$ref": "#/$defs/evidence_name" },
+                "artefacts": { "$ref": "#/$defs/nonempty_artefact_name_set" },
+                "assurances": { "$ref": "#/$defs/assurance_name_set" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "purposes": { "$ref": "#/$defs/purpose_name_set" },
+    "assurances": { "$ref": "#/$defs/assurance_name_set" },
+    "constraints": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "value_kind", "applies_to"],
+        "properties": {
+          "name": { "$ref": "#/$defs/constraint_name" },
+          "value_kind": { "enum": ["string", "integer", "boolean", "string_list"] },
+          "applies_to": { "$ref": "#/$defs/evidence_name_set" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "evidence_name": {
+      "type": "string",
+      "pattern": "^(idenqa\\.evidence|(?!idenqa\\.)[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*\\.evidence)\\.[a-z][a-z0-9_]*$"
+    },
+    "artefact_name": {
+      "type": "string",
+      "pattern": "^(idenqa\\.artefact|(?!idenqa\\.)[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*\\.artefact)\\.[a-z][a-z0-9_]*$"
+    },
+    "method_name": {
+      "type": "string",
+      "pattern": "^(idenqa\\.method|(?!idenqa\\.)[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*\\.method)\\.[a-z][a-z0-9_]*$"
+    },
+    "purpose_name": {
+      "type": "string",
+      "pattern": "^(idenqa\\.purpose|(?!idenqa\\.)[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*\\.purpose)\\.[a-z][a-z0-9_]*$"
+    },
+    "assurance_name": {
+      "type": "string",
+      "pattern": "^(idenqa\\.assurance|(?!idenqa\\.)[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*\\.assurance)\\.[a-z][a-z0-9_]*$"
+    },
+    "constraint_name": {
+      "type": "string",
+      "pattern": "^(idenqa\\.constraint|(?!idenqa\\.)[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*\\.constraint)\\.[a-z][a-z0-9_]*$"
+    },
+    "evidence_name_set": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/evidence_name" }
+    },
+    "artefact_name_set": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/artefact_name" }
+    },
+    "nonempty_artefact_name_set": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/artefact_name" }
+    },
+    "purpose_name_set": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/purpose_name" }
+    },
+    "assurance_name_set": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/assurance_name" }
+    }
+  }
+}

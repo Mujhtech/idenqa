@@ -1,0 +1,50 @@
+{
+  "name": "@idenqa/sdk",
+  "version": "0.1.0-alpha.1",
+  "description": "Zero-runtime-dependency TypeScript client for Idenqa Core",
+  "license": "Apache-2.0",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "generate": "openapi-typescript ../../contracts/api/openapi/v1/openapi.yaml --immutable --output src/generated/openapi.ts",
+    "generate:check": "openapi-typescript ../../contracts/api/openapi/v1/openapi.yaml --immutable --output src/generated/openapi.ts --check",
+    "package:check": "publint && attw --pack .",
+    "test": "vitest run",
+    "typecheck": "tsc --project tsconfig.json"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "0.18.5",
+    "@types/node": "22.20.1",
+    "openapi-typescript": "7.13.0",
+    "publint": "0.3.24",
+    "tsdown": "0.22.14",
+    "typescript": "5.9.3",
+    "vitest": "4.1.11"
+  }
+}

@@ -1,0 +1,168 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:idenqa:capture-profile:v1:profile",
+  "title": "Idenqa capture profile v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "registry", "requirements"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "registry": { "$ref": "#/$defs/registry_reference" },
+    "requirements": {
+      "type": "array",
+      "minItems": 1,
+      "examples": [
+        [
+          {
+            "key": "selfie",
+            "purpose": "idenqa.purpose.identity_verification",
+            "evidence_type": "idenqa.evidence.selfie_image",
+            "artefacts": ["idenqa.artefact.selfie_image"],
+            "acquisition": {
+              "strategy": "any_of",
+              "methods": ["idenqa.method.file_upload"]
+            },
+            "required_assurances": [],
+            "constraints": [],
+            "fallbacks": []
+          }
+        ]
+      ],
+      "items": { "$ref": "#/$defs/requirement" }
+    }
+  },
+  "$defs": {
+    "evidence_name": { "$ref": "#/$defs/names/evidence" },
+    "artefact_name": { "$ref": "#/$defs/names/artefact" },
+    "method_name": { "$ref": "#/$defs/names/method" },
+    "purpose_name": { "$ref": "#/$defs/names/purpose" },
+    "assurance_name": { "$ref": "#/$defs/names/assurance" },
+    "constraint_name": { "$ref": "#/$defs/names/constraint" },
+    "names": {
+      "evidence": {
+        "type": "string",
+        "pattern": "^(idenqa\\.evidence|(?!idenqa\\.)[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*\\.evidence)\\.[a-z][a-z0-9_]*$"
+      },
+      "artefact": {
+        "type": "string",
+        "pattern": "^(idenqa\\.artefact|(?!idenqa\\.)[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*\\.artefact)\\.[a-z][a-z0-9_]*$"
+      },
+      "method": {
+        "type": "string",
+        "pattern": "^(idenqa\\.method|(?!idenqa\\.)[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*\\.method)\\.[a-z][a-z0-9_]*$"
+      },
+      "purpose": {
+        "type": "string",
+        "pattern": "^(idenqa\\.purpose|(?!idenqa\\.)[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*\\.purpose)\\.[a-z][a-z0-9_]*$"
+      },
+      "assurance": {
+        "type": "string",
+        "pattern": "^(idenqa\\.assurance|(?!idenqa\\.)[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*\\.assurance)\\.[a-z][a-z0-9_]*$"
+      },
+      "constraint": {
+        "type": "string",
+        "pattern": "^(idenqa\\.constraint|(?!idenqa\\.)[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*\\.constraint)\\.[a-z][a-z0-9_]*$"
+      }
+    },
+    "registry_reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "revision", "digest"],
+      "properties": {
+        "schema_version": { "const": 1 },
+        "revision": { "type": "integer", "minimum": 1 },
+        "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+      }
+    },
+    "acquisition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["strategy", "methods"],
+      "properties": {
+        "strategy": { "enum": ["any_of", "all_of"] },
+        "methods": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/method_name" }
+        }
+      }
+    },
+    "constraint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "value"],
+      "properties": {
+        "name": { "$ref": "#/$defs/constraint_name" },
+        "value": {
+          "oneOf": [
+            { "type": "string", "minLength": 1 },
+            { "type": "integer", "minimum": 0 },
+            { "type": "boolean" },
+            {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": { "type": "string", "minLength": 1 }
+            }
+          ]
+        }
+      }
+    },
+    "fallback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["on", "acquisition"],
+      "properties": {
+        "on": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": ["capability_unavailable", "method_unavailable", "capture_failed"]
+          }
+        },
+        "acquisition": { "$ref": "#/$defs/acquisition" }
+      }
+    },
+    "requirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "key",
+        "purpose",
+        "evidence_type",
+        "artefacts",
+        "acquisition",
+        "required_assurances",
+        "constraints",
+        "fallbacks"
+      ],
+      "properties": {
+        "key": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,63}$" },
+        "purpose": { "$ref": "#/$defs/purpose_name" },
+        "evidence_type": { "$ref": "#/$defs/evidence_name" },
+        "artefacts": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/artefact_name" }
+        },
+        "acquisition": { "$ref": "#/$defs/acquisition" },
+        "required_assurances": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/assurance_name" }
+        },
+        "constraints": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/constraint" }
+        },
+        "fallbacks": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/fallback" }
+        }
+      }
+    }
+  }
+}
