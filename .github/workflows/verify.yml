@@ -1,0 +1,79 @@
+name: Verify
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:18.4@sha256:a02db8cac496f15b094798a38254f14d6e00741f709360e5e00bb6668ea31636
+        env:
+          POSTGRES_DB: idenqa
+          POSTGRES_PASSWORD: idenqa_dev
+          POSTGRES_USER: idenqa
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U idenqa -d idenqa"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v7.0.0
+        with:
+          go-version: 1.26.6
+          cache: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7.0.0
+        with:
+          node-version: 22.22.3
+
+      - name: Install TypeScript workspace
+        run: corepack pnpm install --frozen-lockfile
+
+      - name: Verify repository
+        run: make verify
+
+      - name: Check OpenAPI compatibility
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          git show "${BASE_SHA}:contracts/api/openapi/v1/openapi.yaml" > /tmp/idenqa-openapi-base.yaml
+          make contract-breaking OPENAPI_BASE=/tmp/idenqa-openapi-base.yaml
+          make proto-breaking PROTO_BASE=".git#ref=${BASE_SHA}"
+
+      - name: Apply embedded migrations
+        env:
+          IDENQA_DATABASE_URL: postgres://idenqa:idenqa_dev@127.0.0.1:5432/idenqa?sslmode=disable
+        run: make migrate
+
+      - name: Run PostgreSQL integration tests
+        env:
+          DATABASE_TEST_URL: postgres://idenqa:idenqa_dev@127.0.0.1:5432/idenqa?sslmode=disable
+        run: make integration
+
+      - name: Run TypeScript SDK conformance
+        env:
+          DATABASE_TEST_URL: postgres://idenqa:idenqa_dev@127.0.0.1:5432/idenqa?sslmode=disable
+        run: make sdk-conformance

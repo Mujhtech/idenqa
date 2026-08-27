@@ -1,0 +1,23 @@
+{
+  "name": "idenqa-workspace",
+  "private": true,
+  "packageManager": "pnpm@11.24.0",
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "scripts": {
+    "build": "pnpm --recursive build",
+    "format": "prettier --write package.json pnpm-workspace.yaml tsconfig.base.json sdk/typescript capture/web",
+    "format:check": "prettier --check package.json pnpm-workspace.yaml tsconfig.base.json sdk/typescript capture/web",
+    "generate": "pnpm --recursive generate",
+    "generate:check": "pnpm --recursive generate:check",
+    "package:check": "pnpm --recursive package:check",
+    "test": "pnpm --recursive test",
+    "typecheck": "pnpm --recursive typecheck",
+    "audit": "pnpm audit --audit-level high",
+    "verify": "pnpm format:check && pnpm generate:check && pnpm typecheck && pnpm test && pnpm build && pnpm package:check && pnpm audit"
+  },
+  "devDependencies": {
+    "prettier": "3.9.6"
+  }
+}

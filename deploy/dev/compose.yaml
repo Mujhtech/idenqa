@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: postgres:18.4@sha256:a02db8cac496f15b094798a38254f14d6e00741f709360e5e00bb6668ea31636
+    environment:
+      POSTGRES_DB: idenqa
+      POSTGRES_PASSWORD: idenqa_dev
+      POSTGRES_USER: idenqa
+    ports:
+      - "${IDENQA_POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U idenqa -d idenqa"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - idenqa-postgres-data:/var/lib/postgresql
+
+volumes:
+  idenqa-postgres-data:

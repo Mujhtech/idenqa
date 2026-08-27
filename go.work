@@ -1,0 +1,8 @@
+go 1.26.6
+
+use (
+	.
+	./adapters/objectstore/s3
+	./distributions/s3
+	./sdk/go
+)
