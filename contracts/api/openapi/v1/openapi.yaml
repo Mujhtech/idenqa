@@ -1,0 +1,3700 @@
+openapi: 3.1.0
+jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
+info:
+  title: Idenqa Core API
+  version: 1.0.0-alpha.1
+  description: |
+    Public HTTP contract for the open-source Idenqa core. The URI major version
+    is the compatibility boundary. Additive changes may be made within v1;
+    incompatible changes require a new URI major version unless a security or
+    correctness issue makes preserving the old behaviour unsafe.
+  license:
+    name: Apache-2.0
+    identifier: Apache-2.0
+  contact:
+    name: Idenqa maintainers
+    url: https://github.com/Mujhtech/idenqa
+servers:
+  - url: /
+    description: Current Idenqa deployment
+tags:
+  - name: Tenant
+    description: Authenticated tenant metadata.
+  - name: Capture profiles
+    description: Tenant-owned versioned evidence collection requirements.
+  - name: Verifications
+    description: Tenant-created verification sessions and immutable capture requirement snapshots.
+  - name: Decisions
+    description: Reproduced immutable policy-decision summaries and explicitly authorised portable exports.
+  - name: Processing authority
+    description: Tenant-declared processing authority, immutable notices, and subject responses.
+  - name: Capture
+    description: Capture-client bootstrap using a session-bound capture token.
+paths:
+  /v1/tenant:
+    get:
+      operationId: getCurrentTenant
+      summary: Get the authenticated tenant
+      description: Returns lifecycle metadata visible to the tenant represented by the API key.
+      tags:
+        - Tenant
+      security:
+        - TenantAPIKey: []
+      responses:
+        "200":
+          description: The current tenant was returned successfully.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+            ETag:
+              $ref: "#/components/headers/ETag"
+            RateLimit:
+              $ref: "#/components/headers/RateLimit"
+            RateLimit-Policy:
+              $ref: "#/components/headers/RateLimitPolicy"
+            Deprecation:
+              $ref: "#/components/headers/Deprecation"
+            Sunset:
+              $ref: "#/components/headers/Sunset"
+            Link:
+              $ref: "#/components/headers/Link"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tenant"
+              examples:
+                active:
+                  $ref: "#/components/examples/ActiveTenant"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /v1/capture-profiles:
+    get:
+      operationId: listCaptureProfiles
+      summary: List capture profiles
+      tags: [Capture profiles]
+      security:
+        - TenantAPIKey: []
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: A descending page of capture profiles.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CaptureProfileList"
+              examples:
+                page:
+                  $ref: "#/components/examples/CaptureProfileList"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+    post:
+      operationId: createCaptureProfile
+      summary: Create a capture-profile draft
+      tags: [Capture profiles]
+      security:
+        - TenantAPIKey: []
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        description: The name and complete registry-bound document for revision one.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CaptureProfileWrite"
+            examples:
+              standard:
+                $ref: "#/components/examples/CaptureProfileWrite"
+      responses:
+        "201":
+          $ref: "#/components/responses/CaptureProfileMutationCreated"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /v1/capture-profiles/{profileID}:
+    parameters:
+      - $ref: "#/components/parameters/ProfileID"
+    get:
+      operationId: getCaptureProfile
+      summary: Get a capture profile
+      tags: [Capture profiles]
+      security:
+        - TenantAPIKey: []
+      responses:
+        "200":
+          description: The capture profile was returned.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CaptureProfile"
+              examples:
+                draft:
+                  $ref: "#/components/examples/CaptureProfileSummary"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /v1/capture-profiles/{profileID}/draft:
+    parameters:
+      - $ref: "#/components/parameters/ProfileID"
+    put:
+      operationId: updateCaptureProfileDraft
+      summary: Replace the current mutable draft
+      tags: [Capture profiles]
+      security:
+        - TenantAPIKey: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        description: The replacement name and complete document for the current mutable draft.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CaptureProfileWrite"
+            examples:
+              standard:
+                $ref: "#/components/examples/CaptureProfileWrite"
+      responses:
+        "200":
+          $ref: "#/components/responses/CaptureProfileMutationOK"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /v1/capture-profiles/{profileID}/validate:
+    parameters:
+      - $ref: "#/components/parameters/ProfileID"
+    post:
+      operationId: validateCaptureProfileDraft
+      summary: Validate the current draft for publication
+      tags: [Capture profiles]
+      security:
+        - TenantAPIKey: []
+      responses:
+        "200":
+          description: The draft passed the publication gate.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CaptureProfileValidation"
+              examples:
+                valid:
+                  $ref: "#/components/examples/CaptureProfileValidation"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /v1/capture-profiles/{profileID}/publish:
+    parameters:
+      - $ref: "#/components/parameters/ProfileID"
+    post:
+      operationId: publishCaptureProfileDraft
+      summary: Publish the current draft
+      tags: [Capture profiles]
+      security:
+        - TenantAPIKey: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "200":
+          $ref: "#/components/responses/CaptureProfileMutationOK"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /v1/capture-profiles/{profileID}/supersede:
+    parameters:
+      - $ref: "#/components/parameters/ProfileID"
+    post:
+      operationId: supersedeCaptureProfile
+      summary: Create a superseding draft
+      tags: [Capture profiles]
+      security:
+        - TenantAPIKey: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        description: The complete document for the new draft revision.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CaptureProfileSupersede"
+            examples:
+              standard:
+                value:
+                  document:
+                    schema_version: 1
+                    registry:
+                      schema_version: 1
+                      revision: 1
+                      digest: sha256:71ef9df77044f9bf5eeb7ae448da3d98811ff4cb3f2541f459e60b4628a5364f
+                    requirements:
+                      - key: selfie
+                        purpose: idenqa.purpose.identity_verification
+                        evidence_type: idenqa.evidence.selfie_image
+                        artefacts: [idenqa.artefact.selfie_image]
+                        acquisition:
+                          strategy: any_of
+                          methods: [idenqa.method.file_upload]
+                        required_assurances: []
+                        constraints: []
+                        fallbacks: []
+      responses:
+        "200":
+          $ref: "#/components/responses/CaptureProfileMutationOK"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /v1/capture-profiles/{profileID}/deactivate:
+    parameters:
+      - $ref: "#/components/parameters/ProfileID"
+    post:
+      operationId: deactivateCaptureProfile
+      summary: Deactivate a capture profile
+      tags: [Capture profiles]
+      security:
+        - TenantAPIKey: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "200":
+          $ref: "#/components/responses/CaptureProfileMutationOK"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /v1/capture-profiles/{profileID}/revisions/{revision}:
+    parameters:
+      - $ref: "#/components/parameters/ProfileID"
+      - $ref: "#/components/parameters/ProfileRevision"
+    get:
+      operationId: getCaptureProfileRevision
+      summary: Get a capture-profile revision
+      tags: [Capture profiles]
+      security:
+        - TenantAPIKey: []
+      responses:
+        "200":
+          description: The numeric revision was returned.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CaptureProfileRevision"
+              examples:
+                published:
+                  $ref: "#/components/examples/CaptureProfileRevision"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /v1/verifications:
+    post:
+      operationId: createVerification
+      summary: Create a verification session
+      description: |
+        Creates a collecting verification from the active published revision of
+        the selected capture profile. The response includes a session-bound
+        display-once capture bearer token. Exact idempotent replay reconstructs
+        the same token without storing the bearer value.
+      tags: [Verifications]
+      security:
+        - TenantAPIKey: []
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        description: The active capture profile and optional bounded session lifetimes.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerificationCreate"
+            example:
+              capture_profile_id: prf_01M11HEQG00000000000000000
+              policy_id: pol_01M11HEQG00000000000000000
+              verification_ttl_seconds: 86400
+              capture_token_ttl_seconds: 1800
+      responses:
+        "201":
+          description: The verification session and initial capture token were created.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerificationCreated"
+              example:
+                session:
+                  id: ver_01M11HEQG00000000000000000
+                  state: collecting
+                  version: 1
+                  profile_id: prf_01M11HEQG00000000000000000
+                  profile_revision: 1
+                  profile_digest: sha256:284a4418399974a7d1ce691f96ea534e1cd97ee1a9bc0d09de25d4a3b9d48969
+                  policy_id: pol_01M11HEQG00000000000000000
+                  region: ng-1
+                  requirements:
+                    schema_version: 1
+                    registry:
+                      schema_version: 1
+                      revision: 1
+                      digest: sha256:71ef9df77044f9bf5eeb7ae448da3d98811ff4cb3f2541f459e60b4628a5364f
+                    requirements: []
+                  created_at: "2026-08-27T12:00:00Z"
+                  updated_at: "2026-08-27T12:00:00Z"
+                  expires_at: "2026-08-28T12:00:00Z"
+                capture_token: idq_cap_v1.1.eyJ0b2tlbl9pZCI6ImN0a18wMU0xMUhFUUcwMDAwMDAwMDAwMDAwMDAwMCJ9.c2lnbmF0dXJl
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /v1/verifications/{verificationID}:
+    parameters:
+      - $ref: "#/components/parameters/VerificationID"
+    get:
+      operationId: getVerification
+      summary: Get a verification session
+      tags: [Verifications]
+      security:
+        - TenantAPIKey: []
+      responses:
+        "200":
+          description: The tenant-owned verification session was returned.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerificationSession"
+              example:
+                id: ver_01M11HEQG00000000000000000
+                state: collecting
+                version: 1
+                profile_id: prf_01M11HEQG00000000000000000
+                profile_revision: 1
+                profile_digest: sha256:284a4418399974a7d1ce691f96ea534e1cd97ee1a9bc0d09de25d4a3b9d48969
+                policy_id: pol_01M11HEQG00000000000000000
+                region: ng-1
+                requirements:
+                  schema_version: 1
+                  registry:
+                    schema_version: 1
+                    revision: 1
+                    digest: sha256:71ef9df77044f9bf5eeb7ae448da3d98811ff4cb3f2541f459e60b4628a5364f
+                  requirements: []
+                created_at: "2026-08-27T12:00:00Z"
+                updated_at: "2026-08-27T12:00:00Z"
+                expires_at: "2026-08-28T12:00:00Z"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /v1/verifications/{verificationID}/decision:
+    parameters:
+      - $ref: "#/components/parameters/VerificationID"
+      - $ref: "#/components/parameters/IfNoneMatch"
+    get:
+      operationId: getLatestDecision
+      summary: Get the latest decision for a verification
+      description: Returns the safely reproduced current leaf of the tenant-owned immutable decision lineage.
+      tags: [Decisions]
+      security:
+        - TenantAPIKey: []
+      responses:
+        "200":
+          description: The latest decision was reproduced and returned.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PolicyDecisionReport"
+              examples:
+                reproduced:
+                  $ref: "#/components/examples/PolicyDecisionReport"
+        "304":
+          description: The current decision digest matches If-None-Match; no body is returned.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+            ETag:
+              $ref: "#/components/headers/ETag"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /v1/decisions/{decisionID}:
+    parameters:
+      - $ref: "#/components/parameters/DecisionID"
+      - $ref: "#/components/parameters/IfNoneMatch"
+    get:
+      operationId: getDecision
+      summary: Get an exact immutable decision
+      description: Returns a safe reproduction report without fact details, reason codes, or canonical payloads.
+      tags: [Decisions]
+      security:
+        - TenantAPIKey: []
+      responses:
+        "200":
+          description: The exact decision was reproduced and returned.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PolicyDecisionReport"
+              examples:
+                reproduced:
+                  $ref: "#/components/examples/PolicyDecisionReport"
+        "304":
+          description: The immutable decision digest matches If-None-Match; no body is returned.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+            ETag:
+              $ref: "#/components/headers/ETag"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /v1/decisions/{decisionID}/bundle:
+    parameters:
+      - $ref: "#/components/parameters/DecisionID"
+      - $ref: "#/components/parameters/IfNoneMatch"
+    get:
+      operationId: exportDecisionBundle
+      summary: Export an exact portable decision bundle
+      description: |
+        Requires the separate decisions:export permission. The byte-exact
+        canonical bundle contains immutable fact and provenance references but
+        never raw evidence bytes. Its embedded digest is self-checking, not a
+        digital signature or an external trust anchor.
+      tags: [Decisions]
+      security:
+        - TenantAPIKey: []
+      responses:
+        "200":
+          description: The byte-exact canonical decision bundle was returned.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/vnd.idenqa.decision-bundle.v1+json:
+              schema:
+                $ref: "#/components/schemas/PolicyDecisionBundle"
+        "304":
+          description: The immutable bundle digest matches If-None-Match; no body is returned.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+            ETag:
+              $ref: "#/components/headers/ETag"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /v1/notices:
+    post:
+      operationId: createNoticeVersion
+      summary: Create an immutable subject-facing notice version
+      tags: [Processing authority]
+      security:
+        - TenantAPIKey: []
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        description: Exact mandatory notice copy and display identities for one immutable version.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NoticeVersionCreate"
+            example:
+              key: tenant.notice.identity_verification
+              locale: en
+              controller: Example Controller
+              recipient: Example Recipient
+              copy:
+                title: Identity verification
+                summary: We need to verify your identity.
+                purpose: Your evidence is used only for identity verification.
+                consequences: You may refuse and collection will not continue.
+              effective_at: "2026-08-27T12:00:00Z"
+      responses:
+        "201":
+          description: The immutable notice version was created or exactly replayed.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+            Location:
+              description: URI of the immutable notice version.
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoticeVersion"
+              example:
+                id: ntc_01M11HEQG00000000000000000
+                key: tenant.notice.identity_verification
+                locale: en
+                controller: Example Controller
+                recipient: Example Recipient
+                copy:
+                  title: Identity verification
+                  summary: We need to verify your identity.
+                  purpose: Your evidence is used only for identity verification.
+                  consequences: You may refuse and collection will not continue.
+                effective_at: "2026-08-27T12:00:00Z"
+                created_at: "2026-08-27T12:00:00Z"
+                digest: sha256:284a4418399974a7d1ce691f96ea534e1cd97ee1a9bc0d09de25d4a3b9d48969
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /v1/notices/{noticeID}:
+    parameters:
+      - $ref: "#/components/parameters/NoticeID"
+    get:
+      operationId: getNoticeVersion
+      summary: Get an immutable notice version
+      tags: [Processing authority]
+      security:
+        - TenantAPIKey: []
+      responses:
+        "200":
+          description: The immutable notice version was returned.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoticeVersion"
+              example:
+                id: ntc_01M11HEQG00000000000000000
+                key: tenant.notice.identity_verification
+                locale: en
+                controller: Example Controller
+                recipient: Example Recipient
+                copy:
+                  title: Identity verification
+                  summary: We need to verify your identity.
+                  purpose: Your evidence is used only for identity verification.
+                  consequences: You may refuse and collection will not continue.
+                effective_at: "2026-08-27T12:00:00Z"
+                created_at: "2026-08-27T12:00:00Z"
+                digest: sha256:284a4418399974a7d1ce691f96ea534e1cd97ee1a9bc0d09de25d4a3b9d48969
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /v1/verifications/{verificationID}/authority:
+    parameters:
+      - $ref: "#/components/parameters/VerificationID"
+    post:
+      operationId: declareProcessingAuthority
+      summary: Bind declared processing authority to a verification
+      description: Idenqa records and enforces this tenant declaration but does not select or certify its legal basis.
+      tags: [Processing authority]
+      security:
+        - TenantAPIKey: []
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        description: Tenant declaration and exact scope to bind to the verification.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProcessingAuthorityDeclare"
+            example:
+              notice_id: ntc_01M11HEQG00000000000000000
+              category: tenant.authority.customer_declared
+              purpose: idenqa.purpose.identity_verification
+              jurisdiction: tenant.jurisdiction.synthetic
+              policy_pack: tenant.policy.synthetic_v1
+              consent_required: true
+              recipient_reference: tenant.recipient.primary
+              recipient_display_name: Example Recipient
+              regions: [idenqa.region.synthetic]
+              retention_reference: tenant.retention.synthetic_v1
+              valid_from: "2026-08-27T12:00:00Z"
+              expires_at: "2026-08-27T13:00:00Z"
+      responses:
+        "201":
+          description: Authority was bound to the verification or exactly replayed.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcessingAuthority"
+              example:
+                id: aut_01M11HEQG00000000000000000
+                subject_id: sub_01M11HEQG00000000000000000
+                verification_id: ver_01M11HEQG00000000000000000
+                notice_id: ntc_01M11HEQG00000000000000000
+                category: tenant.authority.customer_declared
+                purpose: idenqa.purpose.identity_verification
+                jurisdiction: tenant.jurisdiction.synthetic
+                policy_pack: tenant.policy.synthetic_v1
+                consent_required: true
+                requirement_purposes: [idenqa.purpose.identity_verification]
+                evidence_types: [idenqa.evidence.selfie_image]
+                recipient_reference: tenant.recipient.primary
+                recipient_display_name: Example Recipient
+                regions: [idenqa.region.synthetic]
+                retention_reference: tenant.retention.synthetic_v1
+                state: active
+                version: 1
+                valid_from: "2026-08-27T12:00:00Z"
+                expires_at: "2026-08-27T13:00:00Z"
+                created_at: "2026-08-27T12:00:00Z"
+                updated_at: "2026-08-27T12:00:00Z"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    get:
+      operationId: getProcessingAuthority
+      summary: Get the authority bound to a verification
+      tags: [Processing authority]
+      security:
+        - TenantAPIKey: []
+      responses:
+        "200":
+          description: Current authority state was returned.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcessingAuthority"
+              example:
+                id: aut_01M11HEQG00000000000000000
+                subject_id: sub_01M11HEQG00000000000000000
+                verification_id: ver_01M11HEQG00000000000000000
+                notice_id: ntc_01M11HEQG00000000000000000
+                category: tenant.authority.customer_declared
+                purpose: idenqa.purpose.identity_verification
+                jurisdiction: tenant.jurisdiction.synthetic
+                policy_pack: tenant.policy.synthetic_v1
+                consent_required: true
+                requirement_purposes: [idenqa.purpose.identity_verification]
+                evidence_types: [idenqa.evidence.selfie_image]
+                recipient_reference: tenant.recipient.primary
+                recipient_display_name: Example Recipient
+                regions: [idenqa.region.synthetic]
+                retention_reference: tenant.retention.synthetic_v1
+                state: active
+                version: 1
+                valid_from: "2026-08-27T12:00:00Z"
+                expires_at: "2026-08-27T13:00:00Z"
+                created_at: "2026-08-27T12:00:00Z"
+                updated_at: "2026-08-27T12:00:00Z"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /v1/verifications/{verificationID}/authority/restrict:
+    parameters:
+      - $ref: "#/components/parameters/VerificationID"
+    post:
+      operationId: restrictProcessingAuthority
+      summary: Irreversibly restrict processing under the current authority
+      tags: [Processing authority]
+      security:
+        - TenantAPIKey: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "200":
+          $ref: "#/components/responses/AuthorityTransitionOK"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /v1/verifications/{verificationID}/authority/withdraw:
+    parameters:
+      - $ref: "#/components/parameters/VerificationID"
+    post:
+      operationId: withdrawProcessingAuthority
+      summary: Irreversibly withdraw the current authority
+      tags: [Processing authority]
+      security:
+        - TenantAPIKey: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "200":
+          $ref: "#/components/responses/AuthorityTransitionOK"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /v1/verifications/{verificationID}/authority/supersede:
+    parameters:
+      - $ref: "#/components/parameters/VerificationID"
+    post:
+      operationId: supersedeProcessingAuthority
+      summary: Irreversibly supersede the current authority
+      tags: [Processing authority]
+      security:
+        - TenantAPIKey: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "200":
+          $ref: "#/components/responses/AuthorityTransitionOK"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /v1/capture/authority:
+    get:
+      operationId: getCaptureAuthority
+      summary: Get current notice and authority state for capture
+      tags: [Capture, Processing authority]
+      security:
+        - CaptureToken: []
+      responses:
+        "200":
+          description: Current authority, exact notice, and latest response were returned.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CaptureAuthoritySnapshot"
+              example:
+                authority:
+                  id: aut_01M11HEQG00000000000000000
+                  subject_id: sub_01M11HEQG00000000000000000
+                  verification_id: ver_01M11HEQG00000000000000000
+                  notice_id: ntc_01M11HEQG00000000000000000
+                  category: tenant.authority.customer_declared
+                  purpose: idenqa.purpose.identity_verification
+                  jurisdiction: tenant.jurisdiction.synthetic
+                  policy_pack: tenant.policy.synthetic_v1
+                  consent_required: true
+                  requirement_purposes: [idenqa.purpose.identity_verification]
+                  evidence_types: [idenqa.evidence.selfie_image]
+                  recipient_reference: tenant.recipient.primary
+                  recipient_display_name: Example Recipient
+                  regions: [idenqa.region.synthetic]
+                  retention_reference: tenant.retention.synthetic_v1
+                  state: active
+                  version: 1
+                  valid_from: "2026-08-27T12:00:00Z"
+                  expires_at: "2026-08-27T13:00:00Z"
+                  created_at: "2026-08-27T12:00:00Z"
+                  updated_at: "2026-08-27T12:00:00Z"
+                notice:
+                  id: ntc_01M11HEQG00000000000000000
+                  key: tenant.notice.identity_verification
+                  locale: en
+                  controller: Example Controller
+                  recipient: Example Recipient
+                  copy:
+                    title: Identity verification
+                    summary: We need to verify your identity.
+                    purpose: Your evidence is used only for identity verification.
+                    consequences: You may refuse and collection will not continue.
+                  effective_at: "2026-08-27T12:00:00Z"
+                  created_at: "2026-08-27T12:00:00Z"
+                  digest: sha256:284a4418399974a7d1ce691f96ea534e1cd97ee1a9bc0d09de25d4a3b9d48969
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /v1/capture/authority/responses:
+    post:
+      operationId: createSubjectResponse
+      summary: Append an acknowledgement, consent, or refusal
+      tags: [Capture, Processing authority]
+      security:
+        - CaptureToken: []
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        description: One explicit interaction with the exact notice shown to the capture principal.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubjectResponseCreate"
+            example:
+              action: consent
+              locale: en
+      responses:
+        "201":
+          description: The append-only response was recorded or exactly replayed.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubjectResponse"
+              example:
+                id: ack_01M11HEQG00000000000000000
+                authority_id: aut_01M11HEQG00000000000000000
+                notice_id: ntc_01M11HEQG00000000000000000
+                subject_id: sub_01M11HEQG00000000000000000
+                verification_id: ver_01M11HEQG00000000000000000
+                action: consent
+                locale: en
+                recorded_at: "2026-08-27T12:05:00Z"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/ProcessingAuthorityRequired"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /v1/capture/session:
+    get:
+      operationId: getCaptureSession
+      summary: Bootstrap or recover an active capture session
+      tags: [Capture]
+      security:
+        - CaptureToken: []
+      responses:
+        "200":
+          description: The active capture session and immutable requirements were returned.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerificationSession"
+              example:
+                id: ver_01M11HEQG00000000000000000
+                state: collecting
+                version: 1
+                profile_id: prf_01M11HEQG00000000000000000
+                profile_revision: 1
+                profile_digest: sha256:284a4418399974a7d1ce691f96ea534e1cd97ee1a9bc0d09de25d4a3b9d48969
+                policy_id: pol_01M11HEQG00000000000000000
+                region: ng-1
+                requirements:
+                  schema_version: 1
+                  registry:
+                    schema_version: 1
+                    revision: 1
+                    digest: sha256:71ef9df77044f9bf5eeb7ae448da3d98811ff4cb3f2541f459e60b4628a5364f
+                  requirements: []
+                created_at: "2026-08-27T12:00:00Z"
+                updated_at: "2026-08-27T12:00:00Z"
+                expires_at: "2026-08-28T12:00:00Z"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /v1/capture/progress:
+    get:
+      operationId: getCaptureProgress
+      summary: Recover accepted capture-step completion
+      description: |
+        Returns only accepted evidence identifiers and their immutable capture
+        bindings for the exact authenticated capture token and verification.
+        Raw evidence, filenames, integrity digests, object identity, and subject
+        data are intentionally absent.
+        Clients may send If-None-Match with the previous opaque progress ETag;
+        304 means the accepted completion projection has not changed.
+      tags: [Capture]
+      security:
+        - CaptureToken: []
+      parameters:
+        - name: If-None-Match
+          in: header
+          description: Strong opaque ETag returned by a previous capture-progress response.
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The authoritative accepted-step completion snapshot.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CaptureProgress"
+              example:
+                verification_id: ver_01M11HEQG00000000000000000
+                completions:
+                  - upload_id: upl_01M11HEQG00000000000000000
+                    evidence_id: evd_01M11HEQG00000000000000000
+                    requirement_key: selfie
+                    evidence_type: idenqa.evidence.selfie_image
+                    artefact: idenqa.artefact.selfie_image
+                    acquisition_method: idenqa.method.file_upload
+        "304":
+          description: The accepted-step projection has not changed.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+            ETag:
+              $ref: "#/components/headers/ETag"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /v1/capture/native/bootstrap:
+    post:
+      operationId: bootstrapNativeCapture
+      summary: Bind a native application proof key and recover the capture session
+      description: |
+        Redeems the tenant-backend-issued capture token once, verifies an ES256
+        proof from a hardware-backed P-256 key, and atomically binds that token
+        to one configured native application identity and proof-key digest.
+        Optional platform attestation supplements but never replaces proof of
+        possession. Replays and changed-key attempts return the generic capture
+        authentication failure.
+      tags: [Capture]
+      security:
+        - CaptureToken: []
+      requestBody:
+        description: Signed native application proof and capability advertisement.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NativeBootstrapRequest"
+            example:
+              application_id: dev.idenqa.capture
+              proof_key: QkFTRTY0VVJMX1BMQVRGT1JNX1AyNTZfUFVCTElDX0tFWQ
+              proof_created_at: 1788523200
+              proof_algorithm: ES256
+              proof_format: der
+              proof: QkFTRTY0VVJMX0RFUl9TSUdOQVRVUkVfVkFMVUUA
+              capabilities:
+                platform: ios
+                sdk_version: 0.1.0
+                implemented_methods: [camera]
+                currently_available_methods: [camera]
+      responses:
+        "200":
+          description: The token was bound and the active capture session returned.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+            Cache-Control:
+              description: Prevents storage of bootstrap material.
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerificationSession"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /v1/capture/connections:
+    post:
+      operationId: createCaptureConnection
+      summary: Issue a single-use realtime connection ticket
+      description: |
+        Authenticates the capture session and binds a display-once connection
+        ticket to the request's exact allowed browser Origin. The returned URL
+        contains secret query material and must not be logged, persisted, sent
+        to analytics, or reused. Request a new ticket after expiry or failure.
+      tags: [Capture]
+      security:
+        - CaptureToken: []
+      responses:
+        "201":
+          description: A short-lived display-once WebSocket URL was issued.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+            Cache-Control:
+              description: Prevents storage of the display-once URL.
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CaptureConnection"
+              example:
+                websocket_url: wss://core.example.test/v1/capture/socket?ticket=idq_wst_v1_REDACTED
+                protocol: idenqa.capture.v1
+                expires_at: "2026-08-30T12:00:30Z"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/CaptureOriginNotAllowed"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /v1/evidence-uploads:
+    post:
+      operationId: createEvidenceUpload
+      summary: Issue a requirement-bound evidence-upload intent
+      tags: [Capture]
+      security:
+        - CaptureToken: []
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        description: Immutable requirement, acquisition, media, size, digest, and region claim.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EvidenceUploadCreate"
+            example:
+              requirement_key: selfie
+              artefact: idenqa.artefact.selfie_image
+              acquisition_method: idenqa.method.file_upload
+              expected_bytes: 245760
+              expected_digest: sha256:284a4418399974a7d1ce691f96ea534e1cd97ee1a9bc0d09de25d4a3b9d48969
+              media_type: image/jpeg
+              region: idenqa.region.synthetic
+      responses:
+        "201":
+          description: The upload intent was issued or an identical completed initiation was replayed.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+            ETag:
+              $ref: "#/components/headers/ETag"
+            Location:
+              description: URI of the exact evidence-upload intent.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EvidenceUpload"
+              example:
+                id: upl_01M11HEQG00000000000000000
+                evidence_id: evd_01M11HEQG00000000000000000
+                state: issued
+                version: 1
+                attempt: 0
+                requirement_key: selfie
+                evidence_type: idenqa.evidence.selfie_image
+                artefact: idenqa.artefact.selfie_image
+                acquisition_method: idenqa.method.file_upload
+                assurances: []
+                allowed_media_types: [image/jpeg]
+                maximum_bytes: 16777216
+                expected_bytes: 245760
+                media_type: image/jpeg
+                region: idenqa.region.synthetic
+                created_at: "2026-08-30T12:00:00Z"
+                updated_at: "2026-08-30T12:00:00Z"
+                expires_at: "2026-08-30T12:15:00Z"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/ProcessingAuthorityRequired"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "413":
+          $ref: "#/components/responses/RequestTooLarge"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /v1/evidence-uploads/{uploadID}:
+    parameters:
+      - $ref: "#/components/parameters/UploadID"
+    get:
+      operationId: getEvidenceUpload
+      summary: Recover the current state and ETag of an evidence-upload intent
+      description: |
+        Returns the safe lifecycle snapshot for an upload bound to the exact
+        authenticated capture token and verification. Use this after an
+        interrupted or ambiguous upload attempt before restarting from byte zero.
+      tags: [Capture]
+      security:
+        - CaptureToken: []
+      responses:
+        "200":
+          description: The current upload lifecycle snapshot.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EvidenceUpload"
+              example:
+                id: upl_01M11HEQG00000000000000000
+                evidence_id: evd_01M11HEQG00000000000000000
+                state: accepted
+                version: 3
+                attempt: 1
+                requirement_key: selfie
+                evidence_type: idenqa.evidence.selfie_image
+                artefact: idenqa.artefact.selfie_image
+                acquisition_method: idenqa.method.file_upload
+                assurances: []
+                allowed_media_types: [image/jpeg]
+                maximum_bytes: 16777216
+                expected_bytes: 245760
+                media_type: image/jpeg
+                region: idenqa.region.synthetic
+                created_at: "2026-08-30T12:00:00Z"
+                updated_at: "2026-08-30T12:01:00Z"
+                expires_at: "2026-08-30T12:15:00Z"
+                accepted_at: "2026-08-30T12:01:00Z"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    put:
+      operationId: uploadEvidence
+      summary: Stream one complete evidence artefact to an upload intent
+      description: |
+        Sends the complete JPEG or PNG body directly to Idenqa evidence ingress.
+        Interrupted attempts restart from byte zero. A completed retry with the
+        same immutable metadata returns the existing accepted result without
+        consuming or storing the repeated body.
+      tags: [Capture]
+      security:
+        - CaptureToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+        - $ref: "#/components/parameters/ContentDigest"
+      requestBody:
+        description: One complete raw evidence body; Content-Length must equal the intent's expected byte count.
+        required: true
+        content:
+          image/jpeg:
+            schema:
+              type: string
+              format: binary
+          image/png:
+            schema:
+              type: string
+              format: binary
+      responses:
+        "200":
+          description: The evidence was accepted, or the accepted result was exactly replayed.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EvidenceUpload"
+              example:
+                id: upl_01M11HEQG00000000000000000
+                evidence_id: evd_01M11HEQG00000000000000000
+                state: accepted
+                version: 3
+                attempt: 1
+                requirement_key: selfie
+                evidence_type: idenqa.evidence.selfie_image
+                artefact: idenqa.artefact.selfie_image
+                acquisition_method: idenqa.method.file_upload
+                assurances: []
+                allowed_media_types: [image/jpeg]
+                maximum_bytes: 16777216
+                expected_bytes: 245760
+                media_type: image/jpeg
+                region: idenqa.region.synthetic
+                created_at: "2026-08-30T12:00:00Z"
+                updated_at: "2026-08-30T12:01:00Z"
+                expires_at: "2026-08-30T12:15:00Z"
+                accepted_at: "2026-08-30T12:01:00Z"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "412":
+          $ref: "#/components/responses/PreconditionFailed"
+        "413":
+          $ref: "#/components/responses/RequestTooLarge"
+        "428":
+          $ref: "#/components/responses/PreconditionRequired"
+        "500":
+          $ref: "#/components/responses/InternalError"
+components:
+  securitySchemes:
+    TenantAPIKey:
+      type: http
+      scheme: bearer
+      bearerFormat: idq_v1
+      description: A display-once tenant API key supplied only in Authorization.
+    CaptureToken:
+      type: http
+      scheme: bearer
+      bearerFormat: idq_cap_v1
+      description: A session-bound capture token supplied only in Authorization.
+  parameters:
+    Cursor:
+      name: cursor
+      in: query
+      required: false
+      description: Opaque continuation cursor returned by the preceding page.
+      schema:
+        $ref: "#/components/schemas/Cursor"
+    Limit:
+      name: limit
+      in: query
+      required: false
+      description: Maximum collection items to return. The default is 25.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 25
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: |
+        An RFC 9651 String used to deduplicate a consequential request. It is
+        scoped to the authenticated tenant and operation. Reusing a key with a
+        different canonical request fingerprint is a conflict. Keys are not
+        credentials and clients must not place secrets or identity data in them.
+      schema:
+        type: string
+        minLength: 3
+        maxLength: 130
+      example: '"vs_01M11HEQG00000000000000000"'
+    IfMatch:
+      name: If-Match
+      in: header
+      required: true
+      description: Strong entity tag most recently returned for the resource.
+      schema:
+        type: string
+        minLength: 3
+        maxLength: 128
+      example: '"1"'
+    IfNoneMatch:
+      name: If-None-Match
+      in: header
+      required: false
+      description: Strong opaque ETag returned by a previous decision response.
+      schema:
+        type: string
+        minLength: 3
+        maxLength: 128
+      example: '"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"'
+    ProfileID:
+      name: profileID
+      in: path
+      required: true
+      description: Stable capture-profile identifier.
+      schema:
+        $ref: "#/components/schemas/CaptureProfileID"
+    ProfileRevision:
+      name: revision
+      in: path
+      required: true
+      description: Positive immutable profile revision number.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 2147483647
+    VerificationID:
+      name: verificationID
+      in: path
+      required: true
+      description: Stable verification-session identifier.
+      schema:
+        $ref: "#/components/schemas/VerificationSessionID"
+    DecisionID:
+      name: decisionID
+      in: path
+      required: true
+      description: Stable immutable policy-decision identifier.
+      schema:
+        $ref: "#/components/schemas/PolicyDecisionID"
+    UploadID:
+      name: uploadID
+      in: path
+      required: true
+      description: Opaque requirement-bound evidence-upload identifier.
+      schema:
+        $ref: "#/components/schemas/EvidenceUploadID"
+    ContentDigest:
+      name: Content-Digest
+      in: header
+      required: true
+      description: Canonical RFC 9530 SHA-256 digest of the complete plaintext body.
+      schema:
+        type: string
+        pattern: '^sha-256=:[A-Za-z0-9+/]{43}=:$'
+      example: "sha-256=:K7gNU3sdo+OL0wNhqoVWhr3g6s1xYv72ol/pe/Unols=:"
+    NoticeID:
+      name: noticeID
+      in: path
+      required: true
+      description: Immutable notice-version identifier.
+      schema:
+        $ref: "#/components/schemas/NoticeVersionID"
+  headers:
+    XRequestID:
+      description: Server-issued request identifier. Caller-supplied values are ignored.
+      required: true
+      schema:
+        $ref: "#/components/schemas/RequestID"
+    ETag:
+      description: Strong entity tag for conditional access to this representation.
+      required: false
+      schema:
+        type: string
+        minLength: 3
+        maxLength: 128
+      example: '"1"'
+    RateLimit:
+      description: Current request quota and reset information as an HTTP Structured Field.
+      required: false
+      schema:
+        type: string
+      example: "limit=100, remaining=99, reset=60"
+    RateLimitPolicy:
+      description: Applied quota policy as an HTTP Structured Field.
+      required: false
+      schema:
+        type: string
+      example: "100;w=60"
+    RetryAfter:
+      description: Delay in seconds before retrying the request.
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+    Deprecation:
+      description: Deprecation instant encoded as an RFC 9745 Structured Field Date.
+      required: false
+      schema:
+        type: string
+      example: "@1798761600"
+    Sunset:
+      description: Expected retirement time encoded as an RFC 8594 HTTP date.
+      required: false
+      schema:
+        type: string
+      example: Thu, 01 Jul 2027 00:00:00 GMT
+    Link:
+      description: Links to deprecation or successor documentation when applicable.
+      required: false
+      schema:
+        type: string
+    WWWAuthenticate:
+      description: Minimal Bearer authentication challenge.
+      required: true
+      schema:
+        type: string
+      example: Bearer realm="idenqa"
+  schemas:
+    Tenant:
+      type: object
+      description: Safe lifecycle metadata for the authenticated tenant.
+      example:
+        id: ten_01M11HEQG00000000000000000
+        state: active
+        created_at: "2026-08-27T12:00:00Z"
+        updated_at: "2026-08-27T12:00:00Z"
+      additionalProperties: false
+      required:
+        - id
+        - state
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/TenantID"
+        state:
+          type: string
+          example: active
+          enum:
+            - active
+            - disabled
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-08-27T12:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2026-08-27T12:00:00Z"
+    TenantID:
+      type: string
+      description: Stable Idenqa tenant identifier.
+      pattern: ^ten_[0-9A-HJKMNP-TV-Z]{26}$
+      example: ten_01M11HEQG00000000000000000
+    CaptureProfileID:
+      type: string
+      description: Stable Idenqa capture-profile identifier.
+      pattern: ^prf_[0-9A-HJKMNP-TV-Z]{26}$
+      example: prf_01M11HEQG00000000000000000
+    VerificationSessionID:
+      type: string
+      description: Stable Idenqa verification-session identifier.
+      pattern: ^ver_[0-9A-HJKMNP-TV-Z]{26}$
+      example: ver_01M11HEQG00000000000000000
+    PolicyDecisionID:
+      type: string
+      description: Stable identifier for one immutable policy decision.
+      pattern: ^dec_[0-9A-HJKMNP-TV-Z]{26}$
+      example: dec_01M11HEQG00000000000000000
+    PolicyID:
+      type: string
+      description: Stable identifier for one tenant-owned policy.
+      pattern: ^pol_[0-9A-HJKMNP-TV-Z]{26}$
+      example: pol_01M11HEQG00000000000000000
+    PolicyCheckID:
+      type: string
+      description: Stable identifier for one policy-addressable verification check.
+      pattern: ^chk_[0-9A-HJKMNP-TV-Z]{26}$
+      example: chk_01M11HEQG00000000000000000
+    PolicyAttemptID:
+      type: string
+      description: Stable identifier for one provider or model execution attempt.
+      pattern: ^atm_[0-9A-HJKMNP-TV-Z]{26}$
+      example: atm_01M11HEQG00000000000000000
+    PolicyObservationID:
+      type: string
+      description: Stable identifier for one immutable normalised observation.
+      pattern: ^obs_[0-9A-HJKMNP-TV-Z]{26}$
+      example: obs_01M11HEQG00000000000000000
+    PolicyDigest:
+      type: string
+      description: Lowercase hexadecimal SHA-256 digest of canonical policy data.
+      pattern: ^[0-9a-f]{64}$
+      example: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    PolicyDirective:
+      type: string
+      description: Closed workflow intent selected by deterministic policy resolution.
+      enum:
+        - complete_verified
+        - complete_not_verified
+        - complete_inconclusive
+        - request_input
+        - run_check
+        - retry_check
+        - use_fallback
+        - route_manual_review
+        - fail_workflow
+    PolicyOutcome:
+      type: string
+      description: Authoritative terminal verification conclusion.
+      enum: [verified, not_verified, inconclusive]
+    PolicyActor:
+      type: string
+      description: Class of actor that authored the immutable decision.
+      enum: [machine, human]
+    PolicyRequirementState:
+      type: string
+      description: Closed result state for one policy requirement.
+      enum: [satisfied, not_satisfied, inconclusive, unavailable, prohibited]
+    PolicyFactSourceKind:
+      type: string
+      description: Closed provenance kind for one immutable policy fact.
+      enum: [check, processing_authority, subject_response, review_finding]
+    PolicyDecisionReport:
+      type: object
+      description: Bounded reproduction summary that omits facts, reason codes, canonical JSON, and evidence references.
+      example:
+        schema_major: 1
+        schema_minor: 0
+        decision_id: dec_01M11HEQG00000000000000000
+        tenant_id: ten_01M11HEQG00000000000000000
+        verification_id: ver_01M11HEQG00000000000000000
+        policy_id: pol_01M11HEQG00000000000000000
+        region: ng-1
+        policy_revision: 1
+        policy_digest: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+        evaluator_major: 1
+        evaluator_minor: 0
+        evaluator_digest: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+        snapshot_digest: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+        evaluation_digest: dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+        decision_digest: eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+        bundle_digest: ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+        directive: complete_verified
+        outcome: verified
+        assurance: idenqa.assurance.identity_verified
+        actor: machine
+        fact_count: 1
+        requirement_count: 1
+        evaluated_at: "2026-08-31T12:00:00Z"
+        decided_at: "2026-08-31T12:00:01Z"
+        reproduced: true
+      additionalProperties: false
+      required:
+        - schema_major
+        - schema_minor
+        - decision_id
+        - tenant_id
+        - verification_id
+        - policy_id
+        - region
+        - policy_revision
+        - policy_digest
+        - evaluator_major
+        - evaluator_minor
+        - evaluator_digest
+        - snapshot_digest
+        - evaluation_digest
+        - decision_digest
+        - bundle_digest
+        - directive
+        - outcome
+        - assurance
+        - actor
+        - fact_count
+        - requirement_count
+        - evaluated_at
+        - decided_at
+        - reproduced
+      properties:
+        schema_major:
+          type: integer
+          minimum: 1
+          maximum: 65535
+          example: 1
+        schema_minor:
+          type: integer
+          minimum: 0
+          maximum: 65535
+          example: 0
+        decision_id:
+          $ref: "#/components/schemas/PolicyDecisionID"
+        tenant_id:
+          $ref: "#/components/schemas/TenantID"
+        verification_id:
+          $ref: "#/components/schemas/VerificationSessionID"
+        policy_id:
+          $ref: "#/components/schemas/PolicyID"
+        region:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{0,62}$
+          example: ng-1
+        policy_revision:
+          type: integer
+          minimum: 1
+          maximum: 4294967295
+        policy_digest:
+          $ref: "#/components/schemas/PolicyDigest"
+        evaluator_major:
+          type: integer
+          minimum: 1
+          maximum: 65535
+        evaluator_minor:
+          type: integer
+          minimum: 0
+          maximum: 65535
+        evaluator_digest:
+          $ref: "#/components/schemas/PolicyDigest"
+        snapshot_digest:
+          $ref: "#/components/schemas/PolicyDigest"
+        evaluation_digest:
+          $ref: "#/components/schemas/PolicyDigest"
+        decision_digest:
+          $ref: "#/components/schemas/PolicyDigest"
+        bundle_digest:
+          $ref: "#/components/schemas/PolicyDigest"
+        directive:
+          $ref: "#/components/schemas/PolicyDirective"
+        outcome:
+          $ref: "#/components/schemas/PolicyOutcome"
+        assurance:
+          type: string
+          maxLength: 128
+          pattern: ^$|^[a-z][a-z0-9._:-]*$
+        actor:
+          $ref: "#/components/schemas/PolicyActor"
+        supersedes:
+          $ref: "#/components/schemas/PolicyDecisionID"
+        fact_count:
+          type: integer
+          minimum: 1
+          maximum: 128
+        requirement_count:
+          type: integer
+          minimum: 1
+          maximum: 128
+        evaluated_at:
+          type: string
+          format: date-time
+        decided_at:
+          type: string
+          format: date-time
+        reproduced:
+          type: boolean
+          const: true
+    PolicyDecisionBundle:
+      type: object
+      description: Byte-canonical, self-checking decision reproduction envelope; it never contains raw evidence bytes.
+      additionalProperties: false
+      required:
+        - schema_major
+        - schema_minor
+        - bundle_digest
+        - decision_id
+        - tenant_id
+        - verification_id
+        - snapshot_digest
+        - evaluation_digest
+        - decision_digest
+        - snapshot
+        - evaluation
+        - decision
+      properties:
+        schema_major:
+          type: integer
+          const: 1
+        schema_minor:
+          type: integer
+          const: 0
+        bundle_digest:
+          $ref: "#/components/schemas/PolicyDigest"
+        decision_id:
+          $ref: "#/components/schemas/PolicyDecisionID"
+        tenant_id:
+          $ref: "#/components/schemas/TenantID"
+        verification_id:
+          $ref: "#/components/schemas/VerificationSessionID"
+        snapshot_digest:
+          $ref: "#/components/schemas/PolicyDigest"
+        evaluation_digest:
+          $ref: "#/components/schemas/PolicyDigest"
+        decision_digest:
+          $ref: "#/components/schemas/PolicyDigest"
+        snapshot:
+          $ref: "#/components/schemas/PolicyCanonicalSnapshot"
+        evaluation:
+          $ref: "#/components/schemas/PolicyCanonicalEvaluation"
+        decision:
+          $ref: "#/components/schemas/PolicyCanonicalDecision"
+    PolicyCanonicalSnapshot:
+      type: object
+      description: Exact canonical facts and pinned policy and evaluator inputs.
+      additionalProperties: false
+      required: [schema_major, schema_minor, tenant_id, verification_id, authority_id, acknowledgement_id, region, policy, evaluator, evaluated_at, facts]
+      properties:
+        schema_major:
+          type: integer
+          const: 1
+        schema_minor:
+          type: integer
+          const: 0
+        tenant_id:
+          $ref: "#/components/schemas/TenantID"
+        verification_id:
+          $ref: "#/components/schemas/VerificationSessionID"
+        authority_id:
+          $ref: "#/components/schemas/ProcessingAuthorityID"
+        acknowledgement_id:
+          $ref: "#/components/schemas/SubjectResponseID"
+        region:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^[a-z][a-z0-9._:-]*$
+        policy:
+          $ref: "#/components/schemas/PolicyCanonicalReference"
+        evaluator:
+          $ref: "#/components/schemas/PolicyCanonicalEvaluator"
+        evaluated_at:
+          type: string
+          format: date-time
+        facts:
+          type: array
+          minItems: 1
+          maxItems: 128
+          items:
+            $ref: "#/components/schemas/PolicyCanonicalFact"
+    PolicyCanonicalReference:
+      type: object
+      description: Exact immutable policy revision used for evaluation.
+      additionalProperties: false
+      required: [id, revision, schema_major, schema_minor, digest]
+      properties:
+        id:
+          $ref: "#/components/schemas/PolicyID"
+        revision:
+          type: integer
+          minimum: 1
+          maximum: 4294967295
+        schema_major:
+          type: integer
+          minimum: 1
+          maximum: 65535
+        schema_minor:
+          type: integer
+          minimum: 0
+          maximum: 65535
+        digest:
+          $ref: "#/components/schemas/PolicyDigest"
+    PolicyCanonicalEvaluator:
+      type: object
+      description: Exact evaluator contract and implementation identity.
+      additionalProperties: false
+      required: [major, minor, digest]
+      properties:
+        major:
+          type: integer
+          minimum: 1
+          maximum: 65535
+        minor:
+          type: integer
+          minimum: 0
+          maximum: 65535
+        digest:
+          $ref: "#/components/schemas/PolicyDigest"
+    PolicyCanonicalFact:
+      type: object
+      description: Bounded policy fact with immutable provenance references and no raw evidence.
+      additionalProperties: false
+      required: [key, state, source, observed_at, reason_codes]
+      properties:
+        key:
+          type: string
+          minLength: 1
+          maxLength: 128
+          pattern: ^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$
+        state:
+          $ref: "#/components/schemas/PolicyRequirementState"
+        source:
+          $ref: "#/components/schemas/PolicyCanonicalFactSource"
+        observed_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+          description: Exclusive ticket expiry in UTC.
+        reason_codes:
+          type: array
+          maxItems: 16
+          uniqueItems: true
+          items:
+            type: string
+            minLength: 1
+            maxLength: 100
+            pattern: ^[a-z][a-z0-9._:-]*$
+    PolicyCanonicalFactSource:
+      type: object
+      description: Closed source-reference union; the kind selects the valid provenance fields.
+      additionalProperties: false
+      required: [kind]
+      allOf:
+        - if:
+            properties:
+              kind:
+                const: check
+            required: [kind]
+          then:
+            type: object
+            required: [check_id, check_version, attempt_id, observation_ids, contract_digest, implementation_digest]
+            not:
+              anyOf:
+                - required: [authority_id]
+                - required: [acknowledgement_id]
+                - required: [review_finding]
+        - if:
+            properties:
+              kind:
+                const: processing_authority
+            required: [kind]
+          then:
+            type: object
+            required: [authority_id]
+            not:
+              anyOf:
+                - required: [check_id]
+                - required: [check_version]
+                - required: [attempt_id]
+                - required: [observation_ids]
+                - required: [contract_digest]
+                - required: [implementation_digest]
+                - required: [acknowledgement_id]
+                - required: [review_finding]
+        - if:
+            properties:
+              kind:
+                const: subject_response
+            required: [kind]
+          then:
+            type: object
+            required: [acknowledgement_id]
+            not:
+              anyOf:
+                - required: [check_id]
+                - required: [check_version]
+                - required: [attempt_id]
+                - required: [observation_ids]
+                - required: [contract_digest]
+                - required: [implementation_digest]
+                - required: [authority_id]
+                - required: [review_finding]
+        - if:
+            properties:
+              kind:
+                const: review_finding
+            required: [kind]
+          then:
+            type: object
+            required: [review_finding]
+            not:
+              anyOf:
+                - required: [check_id]
+                - required: [check_version]
+                - required: [attempt_id]
+                - required: [observation_ids]
+                - required: [contract_digest]
+                - required: [implementation_digest]
+                - required: [authority_id]
+                - required: [acknowledgement_id]
+      properties:
+        kind:
+          $ref: "#/components/schemas/PolicyFactSourceKind"
+        check_id:
+          $ref: "#/components/schemas/PolicyCheckID"
+        check_version:
+          type: integer
+          minimum: 1
+          maximum: 9223372036854775807
+        attempt_id:
+          $ref: "#/components/schemas/PolicyAttemptID"
+        observation_ids:
+          type: array
+          minItems: 1
+          maxItems: 64
+          uniqueItems: true
+          items:
+            $ref: "#/components/schemas/PolicyObservationID"
+        contract_digest:
+          $ref: "#/components/schemas/PolicyDigest"
+        implementation_digest:
+          $ref: "#/components/schemas/PolicyDigest"
+        authority_id:
+          $ref: "#/components/schemas/ProcessingAuthorityID"
+        acknowledgement_id:
+          $ref: "#/components/schemas/SubjectResponseID"
+        review_finding:
+          type: string
+          minLength: 1
+          maxLength: 128
+          pattern: ^[a-z][a-z0-9._:-]*$
+    PolicyCanonicalEvaluation:
+      type: object
+      description: Deterministic resolution result for an exact snapshot.
+      additionalProperties: false
+      required: [schema_major, schema_minor, snapshot_digest, results, considered, selected, outcome, reason_codes]
+      if:
+        properties:
+          selected:
+            const: complete_verified
+        required: [selected]
+      then:
+        type: object
+        required: [assurance]
+      properties:
+        schema_major:
+          type: integer
+          const: 1
+        schema_minor:
+          type: integer
+          const: 0
+        snapshot_digest:
+          $ref: "#/components/schemas/PolicyDigest"
+        results:
+          type: array
+          minItems: 1
+          maxItems: 128
+          items:
+            $ref: "#/components/schemas/PolicyCanonicalRequirementResult"
+        considered:
+          type: array
+          minItems: 1
+          maxItems: 128
+          items:
+            $ref: "#/components/schemas/PolicyDirective"
+        selected:
+          type: string
+          description: Terminal directive authorised by the exported immutable decision.
+          enum: [complete_verified, complete_not_verified, complete_inconclusive]
+        outcome:
+          $ref: "#/components/schemas/PolicyOutcome"
+        assurance:
+          type: string
+          minLength: 1
+          maxLength: 128
+          pattern: ^[a-z][a-z0-9._:-]*$
+        reason_codes:
+          type: array
+          maxItems: 256
+          uniqueItems: true
+          items:
+            type: string
+            minLength: 1
+            maxLength: 100
+            pattern: ^[a-z][a-z0-9._:-]*$
+    PolicyCanonicalRequirementResult:
+      type: object
+      description: Exact result and workflow candidate for one policy requirement.
+      additionalProperties: false
+      required: [name, state, contributing_facts, candidate, priority, reason_codes]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 128
+          pattern: ^[a-z][a-z0-9._:-]*$
+        state:
+          $ref: "#/components/schemas/PolicyRequirementState"
+        contributing_facts:
+          type: array
+          minItems: 1
+          maxItems: 128
+          uniqueItems: true
+          items:
+            type: string
+            minLength: 1
+            maxLength: 128
+            pattern: ^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$
+        candidate:
+          $ref: "#/components/schemas/PolicyDirective"
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 1000
+        reason_codes:
+          type: array
+          maxItems: 16
+          uniqueItems: true
+          items:
+            type: string
+            minLength: 1
+            maxLength: 100
+            pattern: ^[a-z][a-z0-9._:-]*$
+    PolicyCanonicalDecision:
+      type: object
+      description: Immutable authoritative terminal decision bound to exact canonical inputs.
+      additionalProperties: false
+      required: [schema_major, schema_minor, id, tenant_id, verification_id, snapshot_digest, evaluation_digest, actor, decided_at]
+      properties:
+        schema_major:
+          type: integer
+          const: 1
+        schema_minor:
+          type: integer
+          const: 0
+        id:
+          $ref: "#/components/schemas/PolicyDecisionID"
+        tenant_id:
+          $ref: "#/components/schemas/TenantID"
+        verification_id:
+          $ref: "#/components/schemas/VerificationSessionID"
+        snapshot_digest:
+          $ref: "#/components/schemas/PolicyDigest"
+        evaluation_digest:
+          $ref: "#/components/schemas/PolicyDigest"
+        actor:
+          $ref: "#/components/schemas/PolicyActor"
+        supersedes:
+          $ref: "#/components/schemas/PolicyDecisionID"
+        decided_at:
+          type: string
+          format: date-time
+    CaptureToken:
+      type: string
+      description: Display-once bearer credential bound to one verification session.
+      minLength: 32
+      maxLength: 2048
+      pattern: ^idq_cap_v1\.[1-9][0-9]{0,4}\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$
+      writeOnly: true
+      example: idq_cap_v1.1.eyJ0b2tlbl9pZCI6ImN0a18wMU0xMUhFUUcwMDAwMDAwMDAwMDAwMDAwMCJ9.c2lnbmF0dXJl
+    NoticeVersionID:
+      description: Stable identifier for one immutable notice version.
+      type: string
+      pattern: ^ntc_[0-9A-HJKMNP-TV-Z]{26}$
+      example: ntc_01M11HEQG00000000000000000
+    ProcessingAuthorityID:
+      description: Stable identifier for one tenant-declared processing authority.
+      type: string
+      pattern: ^aut_[0-9A-HJKMNP-TV-Z]{26}$
+      example: aut_01M11HEQG00000000000000000
+    SubjectID:
+      description: Verification-local PII-free subject identifier.
+      type: string
+      pattern: ^sub_[0-9A-HJKMNP-TV-Z]{26}$
+      example: sub_01M11HEQG00000000000000000
+    SubjectResponseID:
+      description: Stable identifier for one append-only subject response.
+      type: string
+      pattern: ^ack_[0-9A-HJKMNP-TV-Z]{26}$
+      example: ack_01M11HEQG00000000000000000
+    NoticeCopy:
+      description: Mandatory subject-facing notice copy whose legal meaning tenant branding cannot alter.
+      type: object
+      example:
+        title: Identity verification
+        summary: We need to verify your identity.
+        purpose: Your evidence is used only for identity verification.
+        consequences: You may refuse and collection will not continue.
+      additionalProperties: false
+      required: [title, summary, purpose, consequences]
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 8000
+        summary:
+          type: string
+          minLength: 1
+          maxLength: 8000
+        purpose:
+          type: string
+          minLength: 1
+          maxLength: 8000
+        consequences:
+          type: string
+          minLength: 1
+          maxLength: 8000
+    NoticeVersionCreate:
+      description: Request to create one immutable content-addressed notice version.
+      type: object
+      additionalProperties: false
+      required: [key, locale, controller, recipient, copy, effective_at]
+      properties:
+        key:
+          type: string
+          minLength: 3
+          maxLength: 200
+          pattern: ^[a-z][a-z0-9]*([._-][a-z0-9]+)+$
+          example: tenant.notice.identity_verification
+        locale:
+          type: string
+          minLength: 2
+          maxLength: 35
+          pattern: ^[A-Za-z0-9-]+$
+          example: en-NG
+        controller:
+          type: string
+          minLength: 1
+          maxLength: 200
+          example: Example Tenant
+        recipient:
+          type: string
+          minLength: 1
+          maxLength: 200
+          example: Example Recipient
+        copy:
+          $ref: "#/components/schemas/NoticeCopy"
+        effective_at:
+          type: string
+          format: date-time
+          example: "2026-08-27T12:00:00Z"
+    NoticeVersion:
+      description: Immutable content-addressed subject-facing notice version.
+      type: object
+      additionalProperties: false
+      required: [id, key, locale, controller, recipient, copy, effective_at, created_at, digest]
+      properties:
+        id:
+          $ref: "#/components/schemas/NoticeVersionID"
+        key:
+          type: string
+          example: tenant.notice.identity_verification
+        locale:
+          type: string
+          example: en-NG
+        controller:
+          type: string
+          example: Example Tenant
+        recipient:
+          type: string
+          example: Example Recipient
+        copy:
+          $ref: "#/components/schemas/NoticeCopy"
+        effective_at:
+          type: string
+          format: date-time
+          example: "2026-08-27T12:00:00Z"
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-08-27T12:00:00Z"
+        digest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+          example: sha256:284a4418399974a7d1ce691f96ea534e1cd97ee1a9bc0d09de25d4a3b9d48969
+    ProcessingAuthorityDeclare:
+      description: Tenant declaration recorded and enforced without Idenqa selecting or certifying a lawful basis.
+      type: object
+      additionalProperties: false
+      required:
+        - notice_id
+        - category
+        - purpose
+        - jurisdiction
+        - policy_pack
+        - consent_required
+        - recipient_reference
+        - recipient_display_name
+        - regions
+        - retention_reference
+        - valid_from
+        - expires_at
+      properties:
+        notice_id:
+          $ref: "#/components/schemas/NoticeVersionID"
+        category:
+          type: string
+          minLength: 3
+          maxLength: 200
+          pattern: ^[a-z][a-z0-9]*([._-][a-z0-9]+)+$
+          example: tenant.authority.customer_declared
+        purpose:
+          type: string
+          minLength: 3
+          maxLength: 200
+          pattern: ^[a-z][a-z0-9]*([._-][a-z0-9]+)+$
+          example: tenant.purpose.identity_verification
+        jurisdiction:
+          type: string
+          minLength: 3
+          maxLength: 200
+          pattern: ^[a-z][a-z0-9]*([._-][a-z0-9]+)+$
+          example: tenant.jurisdiction.ng
+        policy_pack:
+          type: string
+          minLength: 3
+          maxLength: 200
+          pattern: ^[a-z][a-z0-9]*([._-][a-z0-9]+)+$
+          example: tenant.policy.identity_v1
+        consent_required:
+          type: boolean
+          example: true
+        recipient_reference:
+          type: string
+          minLength: 3
+          maxLength: 200
+          pattern: ^[a-z][a-z0-9]*([._-][a-z0-9]+)+$
+          example: tenant.recipient.primary
+        recipient_display_name:
+          type: string
+          minLength: 1
+          maxLength: 200
+          example: Example Recipient
+        regions:
+          type: array
+          minItems: 1
+          maxItems: 64
+          uniqueItems: true
+          example: [idenqa.region.synthetic]
+          items:
+            type: string
+            minLength: 3
+            maxLength: 200
+            pattern: ^[a-z][a-z0-9]*([._-][a-z0-9]+)+$
+        retention_reference:
+          type: string
+          minLength: 3
+          maxLength: 200
+          pattern: ^[a-z][a-z0-9]*([._-][a-z0-9]+)+$
+          example: tenant.retention.identity_v1
+        valid_from:
+          type: string
+          format: date-time
+          example: "2026-08-27T12:00:00Z"
+        expires_at:
+          type: string
+          format: date-time
+          example: "2026-08-28T12:00:00Z"
+    ProcessingAuthority:
+      description: Current lifecycle projection of one immutable processing-authority declaration.
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - subject_id
+        - verification_id
+        - notice_id
+        - category
+        - purpose
+        - jurisdiction
+        - policy_pack
+        - consent_required
+        - requirement_purposes
+        - evidence_types
+        - recipient_reference
+        - recipient_display_name
+        - regions
+        - retention_reference
+        - state
+        - version
+        - valid_from
+        - expires_at
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/ProcessingAuthorityID"
+        subject_id:
+          $ref: "#/components/schemas/SubjectID"
+        verification_id:
+          $ref: "#/components/schemas/VerificationSessionID"
+        notice_id:
+          $ref: "#/components/schemas/NoticeVersionID"
+        category:
+          type: string
+          example: tenant.authority.customer_declared
+        purpose:
+          type: string
+          example: tenant.purpose.identity_verification
+        jurisdiction:
+          type: string
+          example: tenant.jurisdiction.ng
+        policy_pack:
+          type: string
+          example: tenant.policy.identity_v1
+        consent_required:
+          type: boolean
+          example: true
+        requirement_purposes:
+          type: array
+          example: [idenqa.purpose.identity_verification]
+          items: {type: string}
+        evidence_types:
+          type: array
+          example: [idenqa.evidence.selfie_image]
+          items: {type: string}
+        recipient_reference:
+          type: string
+          example: tenant.recipient.primary
+        recipient_display_name:
+          type: string
+          example: Example Recipient
+        regions:
+          type: array
+          example: [idenqa.region.synthetic]
+          items: {type: string}
+        retention_reference:
+          type: string
+          example: tenant.retention.identity_v1
+        state:
+          type: string
+          enum: [active, restricted, withdrawn, superseded]
+          example: active
+        version:
+          type: integer
+          format: int64
+          minimum: 1
+          example: 1
+        valid_from:
+          type: string
+          format: date-time
+          example: "2026-08-27T12:00:00Z"
+        expires_at:
+          type: string
+          format: date-time
+          example: "2026-08-28T12:00:00Z"
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-08-27T12:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2026-08-27T12:00:00Z"
+    SubjectResponseCreate:
+      description: One explicit acknowledgement, consent, or refusal from the session-bound capture principal.
+      type: object
+      additionalProperties: false
+      required: [action, locale]
+      properties:
+        action:
+          type: string
+          enum: [acknowledge, consent, refuse]
+          example: consent
+        locale:
+          type: string
+          minLength: 2
+          maxLength: 35
+          pattern: ^[A-Za-z0-9-]+$
+          example: en-NG
+        rendered_experience_version:
+          type: string
+          minLength: 3
+          maxLength: 200
+          pattern: ^[a-z][a-z0-9]*([._-][a-z0-9]+)+$
+          example: capture.notice.v1
+    SubjectResponse:
+      description: Append-only receipt of an interaction, not proof of civil identity or understanding.
+      type: object
+      additionalProperties: false
+      required: [id, authority_id, notice_id, subject_id, verification_id, action, locale, recorded_at]
+      properties:
+        id:
+          $ref: "#/components/schemas/SubjectResponseID"
+        authority_id:
+          $ref: "#/components/schemas/ProcessingAuthorityID"
+        notice_id:
+          $ref: "#/components/schemas/NoticeVersionID"
+        subject_id:
+          $ref: "#/components/schemas/SubjectID"
+        verification_id:
+          $ref: "#/components/schemas/VerificationSessionID"
+        action:
+          type: string
+          enum: [acknowledge, consent, refuse]
+          example: consent
+        locale:
+          type: string
+          example: en-NG
+        rendered_experience_version:
+          type: string
+          example: capture.notice.v1
+        recorded_at:
+          type: string
+          format: date-time
+          example: "2026-08-27T12:05:00Z"
+    CaptureAuthoritySnapshot:
+      description: Capture-visible current authority, exact notice, and optional latest response.
+      type: object
+      additionalProperties: false
+      required: [authority, notice]
+      properties:
+        authority:
+          $ref: "#/components/schemas/ProcessingAuthority"
+        notice:
+          $ref: "#/components/schemas/NoticeVersion"
+        latest_response:
+          $ref: "#/components/schemas/SubjectResponse"
+    VerificationCreate:
+      description: Tenant request to snapshot an active published capture profile.
+      type: object
+      additionalProperties: false
+      required: [capture_profile_id, policy_id]
+      properties:
+        capture_profile_id:
+          $ref: "#/components/schemas/CaptureProfileID"
+        policy_id:
+          $ref: "#/components/schemas/PolicyID"
+        verification_ttl_seconds:
+          type: integer
+          format: int64
+          minimum: 1
+          description: Optional tenant-requested lifetime subject to deployment bounds.
+          example: 86400
+        capture_token_ttl_seconds:
+          type: integer
+          format: int64
+          minimum: 1
+          description: Optional initial capture-token lifetime subject to deployment bounds.
+          example: 1800
+    VerificationSession:
+      description: Immutable capture requirements and current lifecycle metadata for one verification.
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - state
+        - version
+        - profile_id
+        - profile_revision
+        - profile_digest
+        - policy_id
+        - region
+        - requirements
+        - created_at
+        - updated_at
+        - expires_at
+      properties:
+        id:
+          $ref: "#/components/schemas/VerificationSessionID"
+        state:
+          type: string
+          enum: [collecting]
+          example: collecting
+        version:
+          type: integer
+          format: int64
+          minimum: 1
+          example: 1
+        profile_id:
+          $ref: "#/components/schemas/CaptureProfileID"
+        profile_revision:
+          type: integer
+          minimum: 1
+          example: 1
+        profile_digest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+          example: sha256:284a4418399974a7d1ce691f96ea534e1cd97ee1a9bc0d09de25d4a3b9d48969
+        policy_id:
+          $ref: "#/components/schemas/PolicyID"
+        region:
+          type: string
+          pattern: ^[a-z][a-z0-9-]{0,62}$
+          description: Immutable processing and storage region selected by the server.
+          example: ng-1
+        requirements:
+          $ref: "#/components/schemas/CaptureProfileDocument"
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-08-27T12:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2026-08-27T12:00:00Z"
+        expires_at:
+          type: string
+          format: date-time
+          example: "2026-08-28T12:00:00Z"
+    VerificationCreated:
+      description: A new verification session and its display-once initial capture credential.
+      type: object
+      additionalProperties: false
+      required: [session, capture_token]
+      properties:
+        session:
+          $ref: "#/components/schemas/VerificationSession"
+        capture_token:
+          $ref: "#/components/schemas/CaptureToken"
+    EvidenceUploadID:
+      type: string
+      description: Stable opaque identifier for one requirement-bound upload intent.
+      pattern: ^upl_[0-9A-HJKMNP-TV-Z]{26}$
+      example: upl_01M11HEQG00000000000000000
+    EvidenceID:
+      type: string
+      description: Stable opaque identifier preallocated for the accepted evidence artefact.
+      pattern: ^evd_[0-9A-HJKMNP-TV-Z]{26}$
+      example: evd_01M11HEQG00000000000000000
+    CaptureFallbackCondition:
+      type: string
+      description: Policy-approved reason for selecting a fallback acquisition branch.
+      enum: [capability_unavailable, method_unavailable, capture_failed]
+    CaptureCompletion:
+      type: object
+      description: Minimal immutable binding for one accepted capture step.
+      additionalProperties: false
+      required:
+        - upload_id
+        - evidence_id
+        - requirement_key
+        - evidence_type
+        - artefact
+        - acquisition_method
+      properties:
+        upload_id:
+          $ref: "#/components/schemas/EvidenceUploadID"
+        evidence_id:
+          $ref: "#/components/schemas/EvidenceID"
+        requirement_key:
+          type: string
+          pattern: ^[a-z][a-z0-9_]{0,63}$
+        evidence_type:
+          type: string
+          minLength: 1
+          maxLength: 200
+        artefact:
+          type: string
+          minLength: 1
+          maxLength: 200
+        acquisition_method:
+          type: string
+          minLength: 1
+          maxLength: 200
+        fallback_condition:
+          type: string
+          $ref: "#/components/schemas/CaptureFallbackCondition"
+          example: capture_failed
+    CaptureProgress:
+      type: object
+      description: Capture-token-scoped accepted completion snapshot.
+      additionalProperties: false
+      required: [verification_id, completions]
+      properties:
+        verification_id:
+          $ref: "#/components/schemas/VerificationSessionID"
+        completions:
+          type: array
+          maxItems: 256
+          example: []
+          items:
+            $ref: "#/components/schemas/CaptureCompletion"
+    CaptureConnection:
+      type: object
+      description: Display-once browser connection material. Treat websocket_url as a secret.
+      example:
+        websocket_url: wss://core.example.test/v1/capture/socket?ticket=idq_wst_v1_REDACTED
+        protocol: idenqa.capture.v1
+        expires_at: "2026-08-30T12:00:30Z"
+      additionalProperties: false
+      required: [websocket_url, protocol, expires_at]
+      properties:
+        websocket_url:
+          type: string
+          format: uri
+          pattern: ^wss?://
+          description: Short-lived URL containing one single-use ticket in its query.
+        protocol:
+          type: string
+          const: idenqa.capture.v1
+        expires_at:
+          type: string
+          format: date-time
+    NativeBootstrapRequest:
+      description: Single-use native application proof and non-authoritative capability advertisement.
+      type: object
+      additionalProperties: false
+      required: [application_id, proof_key, proof_created_at, proof_algorithm, proof_format, proof, capabilities]
+      properties:
+        application_id:
+          type: string
+          minLength: 1
+          maxLength: 255
+          pattern: ^[A-Za-z0-9._-]+$
+          example: dev.idenqa.capture
+        proof_key:
+          type: string
+          minLength: 40
+          maxLength: 512
+          pattern: ^[A-Za-z0-9_-]+$
+          example: QkFTRTY0VVJMX1BMQVRGT1JNX1AyNTZfUFVCTElDX0tFWQ
+        proof_created_at:
+          type: integer
+          format: int64
+          minimum: 1
+          example: 1788523200
+        proof_algorithm:
+          type: string
+          enum: [ES256]
+          example: ES256
+        proof_format:
+          type: string
+          enum: [der]
+          example: der
+        proof:
+          type: string
+          minLength: 40
+          maxLength: 256
+          pattern: ^[A-Za-z0-9_-]+$
+          example: QkFTRTY0VVJMX0RFUl9TSUdOQVRVUkVfVkFMVUUA
+        attestation:
+          type: string
+          minLength: 1
+          maxLength: 16384
+          example: QkFTRTY0VVJMX1BMQVRGT1JNX0FUVEVTVEFUSU9O
+        capabilities:
+          $ref: "#/components/schemas/NativeCapabilities"
+    NativeCapabilities:
+      description: Implemented and currently available SDK methods; this is not assurance evidence.
+      type: object
+      additionalProperties: false
+      required: [platform, sdk_version, implemented_methods, currently_available_methods]
+      properties:
+        platform:
+          type: string
+          enum: [ios, android]
+          example: ios
+        sdk_version:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^[A-Za-z0-9._-]+$
+          example: 0.1.0
+        implemented_methods:
+          type: array
+          maxItems: 64
+          uniqueItems: true
+          items:
+            type: string
+            minLength: 1
+            maxLength: 128
+            pattern: ^[A-Za-z0-9._-]+$
+          example: [camera]
+        currently_available_methods:
+          type: array
+          maxItems: 64
+          uniqueItems: true
+          items:
+            type: string
+            minLength: 1
+            maxLength: 128
+            pattern: ^[A-Za-z0-9._-]+$
+          example: [camera]
+    EvidenceUploadCreate:
+      type: object
+      description: Body-free immutable claim used to issue one evidence-upload intent.
+      additionalProperties: false
+      required:
+        - requirement_key
+        - artefact
+        - acquisition_method
+        - expected_bytes
+        - expected_digest
+        - media_type
+        - region
+      properties:
+        requirement_key:
+          type: string
+          pattern: ^[a-z][a-z0-9_]{0,63}$
+          example: selfie
+        artefact:
+          type: string
+          minLength: 1
+          maxLength: 200
+          example: idenqa.artefact.selfie_image
+        acquisition_method:
+          type: string
+          minLength: 1
+          maxLength: 200
+          example: idenqa.method.file_upload
+        fallback_condition:
+          type: string
+          $ref: "#/components/schemas/CaptureFallbackCondition"
+          example: capability_unavailable
+        expected_bytes:
+          type: integer
+          format: int64
+          minimum: 1
+          maximum: 67108864
+          example: 245760
+        expected_digest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+          example: sha256:284a4418399974a7d1ce691f96ea534e1cd97ee1a9bc0d09de25d4a3b9d48969
+        media_type:
+          type: string
+          enum: [image/jpeg, image/png]
+          example: image/jpeg
+        region:
+          type: string
+          minLength: 1
+          maxLength: 200
+          example: idenqa.region.synthetic
+    EvidenceUpload:
+      type: object
+      description: Safe upload lifecycle and immutable capture binding; integrity digests are intentionally absent.
+      additionalProperties: false
+      required:
+        - id
+        - evidence_id
+        - state
+        - version
+        - attempt
+        - requirement_key
+        - evidence_type
+        - artefact
+        - acquisition_method
+        - assurances
+        - allowed_media_types
+        - maximum_bytes
+        - expected_bytes
+        - media_type
+        - region
+        - created_at
+        - updated_at
+        - expires_at
+      properties:
+        id:
+          $ref: "#/components/schemas/EvidenceUploadID"
+        evidence_id:
+          $ref: "#/components/schemas/EvidenceID"
+        state:
+          type: string
+          enum: [issued, uploading, accepted, rejected, expired]
+          example: issued
+        version:
+          type: integer
+          format: int64
+          minimum: 1
+          example: 1
+        attempt:
+          type: integer
+          minimum: 0
+          example: 0
+        requirement_key:
+          type: string
+          example: selfie
+        evidence_type:
+          type: string
+          example: idenqa.evidence.selfie_image
+        artefact:
+          type: string
+          example: idenqa.artefact.selfie_image
+        acquisition_method:
+          type: string
+          example: idenqa.method.file_upload
+        fallback_condition:
+          type: string
+          $ref: "#/components/schemas/CaptureFallbackCondition"
+          example: capture_failed
+        assurances:
+          type: array
+          example: []
+          items:
+            type: string
+        allowed_media_types:
+          type: array
+          minItems: 1
+          maxItems: 2
+          example: [image/jpeg]
+          items:
+            type: string
+            enum: [image/jpeg, image/png]
+        maximum_bytes:
+          type: integer
+          format: int64
+          minimum: 1
+          maximum: 67108864
+          example: 16777216
+        expected_bytes:
+          type: integer
+          format: int64
+          minimum: 1
+          maximum: 67108864
+          example: 245760
+        media_type:
+          type: string
+          enum: [image/jpeg, image/png]
+          example: image/jpeg
+        region:
+          type: string
+          example: idenqa.region.synthetic
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-08-30T12:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2026-08-30T12:00:00Z"
+        expires_at:
+          type: string
+          format: date-time
+          example: "2026-08-30T12:15:00Z"
+        accepted_at:
+          type: string
+          format: date-time
+          example: "2026-08-30T12:01:00Z"
+    CaptureProfileDocument:
+      description: A complete portable capture-profile document bound to one exact evidence registry revision.
+      $ref: ../../../capture-profile/v1/profile.schema.json
+      x-go-type: json.RawMessage
+    CaptureProfileWrite:
+      description: A complete mutable capture-profile draft representation.
+      type: object
+      additionalProperties: false
+      required: [name, document]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: Standard identity
+        document:
+          $ref: "#/components/schemas/CaptureProfileDocument"
+    CaptureProfileSupersede:
+      description: A complete document from which to create the next draft revision.
+      type: object
+      additionalProperties: false
+      required: [document]
+      properties:
+        document:
+          $ref: "#/components/schemas/CaptureProfileDocument"
+    CaptureProfile:
+      description: Stable capture-profile resource and its current lifecycle pointers.
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+        - state
+        - version
+        - latest_revision
+        - created_at
+        - updated_at
+      properties:
+        id:
+          $ref: "#/components/schemas/CaptureProfileID"
+        name:
+          type: string
+          example: Standard identity
+        state:
+          type: string
+          enum: [draft, active, deactivated]
+          example: draft
+        version:
+          type: integer
+          format: int64
+          minimum: 1
+          example: 1
+        latest_revision:
+          type: integer
+          minimum: 1
+          example: 1
+        draft_revision:
+          type: integer
+          minimum: 1
+          example: 1
+        published_revision:
+          type: integer
+          minimum: 1
+          example: 1
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-08-27T12:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2026-08-27T12:05:00Z"
+        deactivated_at:
+          type: string
+          format: date-time
+          example: "2026-08-28T12:00:00Z"
+    CaptureProfileMutation:
+      description: Safe result snapshot returned by a profile lifecycle mutation or exact replay.
+      type: object
+      additionalProperties: false
+      required:
+        - profile_id
+        - name
+        - state
+        - version
+        - latest_revision
+        - revision
+        - digest
+        - updated_at
+      properties:
+        profile_id:
+          $ref: "#/components/schemas/CaptureProfileID"
+        name:
+          type: string
+          example: Standard identity
+        state:
+          type: string
+          enum: [draft, active, deactivated]
+          example: draft
+        version:
+          type: integer
+          format: int64
+          minimum: 1
+          example: 1
+        latest_revision:
+          type: integer
+          minimum: 1
+          example: 1
+        draft_revision:
+          type: integer
+          minimum: 1
+          example: 1
+        published_revision:
+          type: integer
+          minimum: 1
+          example: 1
+        revision:
+          type: integer
+          minimum: 1
+          example: 1
+        digest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+          example: sha256:284a4418399974a7d1ce691f96ea534e1cd97ee1a9bc0d09de25d4a3b9d48969
+        updated_at:
+          type: string
+          format: date-time
+          example: "2026-08-27T12:05:00Z"
+    CaptureProfileRevision:
+      description: One numbered capture-profile revision and its immutable document after publication.
+      type: object
+      additionalProperties: false
+      required:
+        - profile_id
+        - revision
+        - state
+        - document
+        - digest
+        - created_at
+        - updated_at
+      properties:
+        profile_id:
+          $ref: "#/components/schemas/CaptureProfileID"
+        revision:
+          type: integer
+          minimum: 1
+          example: 1
+        state:
+          type: string
+          enum: [draft, published, superseded, withdrawn]
+          example: published
+        document:
+          $ref: "#/components/schemas/CaptureProfileDocument"
+        digest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+          example: sha256:284a4418399974a7d1ce691f96ea534e1cd97ee1a9bc0d09de25d4a3b9d48969
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-08-27T12:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2026-08-27T12:05:00Z"
+        published_at:
+          type: string
+          format: date-time
+          example: "2026-08-27T12:05:00Z"
+        ended_at:
+          type: string
+          format: date-time
+          example: "2026-09-27T12:05:00Z"
+    CaptureProfileList:
+      description: A bounded descending page of capture-profile resources.
+      type: object
+      additionalProperties: false
+      required: [data, page]
+      properties:
+        data:
+          type: array
+          example: []
+          items:
+            $ref: "#/components/schemas/CaptureProfile"
+        page:
+          $ref: "#/components/schemas/Page"
+    CaptureProfileValidation:
+      description: Successful result of applying the publication gate to the current draft.
+      type: object
+      additionalProperties: false
+      required: [valid, digest]
+      properties:
+        valid:
+          type: boolean
+          const: true
+          example: true
+        digest:
+          type: string
+          pattern: ^sha256:[0-9a-f]{64}$
+          example: sha256:284a4418399974a7d1ce691f96ea534e1cd97ee1a9bc0d09de25d4a3b9d48969
+    RequestID:
+      type: string
+      description: Stable server-issued request correlation identifier.
+      pattern: ^req_[0-9A-HJKMNP-TV-Z]{26}$
+      example: req_01M11HEQG00000000000000000
+    Cursor:
+      type: string
+      minLength: 1
+      maxLength: 1024
+      description: Opaque, integrity-protected continuation state. Clients must not parse it.
+    Page:
+      type: object
+      description: Opaque cursor pagination metadata.
+      example:
+        has_more: false
+      additionalProperties: false
+      required:
+        - has_more
+      properties:
+        next_cursor:
+          $ref: "#/components/schemas/Cursor"
+        has_more:
+          type: boolean
+    ProblemCode:
+      type: string
+      description: Stable machine-readable failure classification.
+      example: NOT_FOUND
+      enum:
+        - INVALID_REQUEST
+        - UNAUTHENTICATED
+        - INSUFFICIENT_SCOPE
+        - PROCESSING_AUTHORITY_REQUIRED
+        - CAPTURE_ORIGIN_NOT_ALLOWED
+        - NOT_FOUND
+        - METHOD_NOT_ALLOWED
+        - CONFLICT
+        - IDEMPOTENCY_CONFLICT
+        - PRECONDITION_FAILED
+        - REQUEST_TOO_LARGE
+        - PRECONDITION_REQUIRED
+        - RATE_LIMITED
+        - REQUEST_CANCELLED
+        - INTERNAL_ERROR
+        - SERVICE_UNAVAILABLE
+        - REQUEST_TIMEOUT
+    Problem:
+      type: object
+      description: Safe RFC 9457 problem details extended with an Idenqa code and request ID.
+      additionalProperties: false
+      required:
+        - type
+        - title
+        - status
+        - code
+        - detail
+        - request_id
+      properties:
+        type:
+          type: string
+          format: uri
+          example: https://idenqa.dev/problems/not-found
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          example: Not found
+        status:
+          type: integer
+          minimum: 400
+          maximum: 599
+          example: 404
+        code:
+          $ref: "#/components/schemas/ProblemCode"
+        detail:
+          type: string
+          minLength: 1
+          maxLength: 500
+          example: The requested resource was not found.
+        request_id:
+          $ref: "#/components/schemas/RequestID"
+  responses:
+    CaptureOriginNotAllowed:
+      description: The browser Origin is missing, malformed, duplicated, or not allowed.
+      headers:
+        X-Request-ID:
+          $ref: "#/components/headers/XRequestID"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            type: https://idenqa.dev/problems/capture-origin-not-allowed
+            title: Capture origin not allowed
+            status: 403
+            code: CAPTURE_ORIGIN_NOT_ALLOWED
+            detail: The browser origin is not permitted for realtime capture.
+            request_id: req_01M11HEQG00000000000000000
+    CaptureProfileMutationCreated:
+      description: The draft was created or an identical completed command was replayed.
+      headers:
+        X-Request-ID:
+          $ref: "#/components/headers/XRequestID"
+        ETag:
+          $ref: "#/components/headers/ETag"
+        Location:
+          description: URI of the stable capture-profile resource.
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/CaptureProfileMutation"
+          examples:
+            created:
+              $ref: "#/components/examples/CaptureProfileMutation"
+    CaptureProfileMutationOK:
+      description: The mutation completed or an identical completed command was replayed.
+      headers:
+        X-Request-ID:
+          $ref: "#/components/headers/XRequestID"
+        ETag:
+          $ref: "#/components/headers/ETag"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/CaptureProfileMutation"
+          examples:
+            updated:
+              $ref: "#/components/examples/CaptureProfileMutation"
+    AuthorityTransitionOK:
+      description: The irreversible authority transition completed or was exactly replayed.
+      headers:
+        X-Request-ID:
+          $ref: "#/components/headers/XRequestID"
+        ETag:
+          $ref: "#/components/headers/ETag"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ProcessingAuthority"
+          example:
+            id: aut_01JQ9M1M16PYB5GJYB4HMA7D72
+            subject_id: sub_01JQ9M1M16PYB5GJYB4HMA7D73
+            verification_id: ver_01JQ9M1M16PYB5GJYB4HMA7D74
+            notice_id: ntc_01JQ9M1M16PYB5GJYB4HMA7D75
+            category: tenant.authority.customer_declared
+            purpose: tenant.purpose.identity_verification
+            jurisdiction: tenant.jurisdiction.ng
+            policy_pack: tenant.policy.identity_v1
+            consent_required: true
+            requirement_purposes: [identity_verification]
+            evidence_types: [document, selfie]
+            recipient_reference: tenant.recipient.primary
+            recipient_display_name: Example Tenant
+            regions: [tenant.region.ng]
+            retention_reference: tenant.retention.identity_v1
+            state: withdrawn
+            version: 2
+            valid_from: "2026-08-27T10:00:00Z"
+            expires_at: "2026-08-28T10:00:00Z"
+            created_at: "2026-08-27T10:00:00Z"
+            updated_at: "2026-08-27T11:00:00Z"
+    InvalidRequest:
+      description: The request did not satisfy the public contract.
+      headers:
+        X-Request-ID:
+          $ref: "#/components/headers/XRequestID"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    Conflict:
+      description: The requested lifecycle transition or idempotency key conflicts with current state.
+      headers:
+        X-Request-ID:
+          $ref: "#/components/headers/XRequestID"
+        Retry-After:
+          $ref: "#/components/headers/RetryAfter"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    RequestTooLarge:
+      description: The request body exceeds the upload intent or deployment limit.
+      headers:
+        X-Request-ID:
+          $ref: "#/components/headers/XRequestID"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    PreconditionFailed:
+      description: The supplied strong entity tag is stale.
+      headers:
+        X-Request-ID:
+          $ref: "#/components/headers/XRequestID"
+        ETag:
+          $ref: "#/components/headers/ETag"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    PreconditionRequired:
+      description: A strong If-Match precondition is required.
+      headers:
+        X-Request-ID:
+          $ref: "#/components/headers/XRequestID"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    Unauthenticated:
+      description: The Bearer credential is missing, malformed, or invalid.
+      headers:
+        X-Request-ID:
+          $ref: "#/components/headers/XRequestID"
+        WWW-Authenticate:
+          $ref: "#/components/headers/WWWAuthenticate"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            type: https://idenqa.dev/problems/unauthenticated
+            title: Unauthenticated
+            status: 401
+            code: UNAUTHENTICATED
+            detail: Authentication is required.
+            request_id: req_01M11HEQG00000000000000000
+    InsufficientScope:
+      description: The authenticated credential lacks the required scope.
+      headers:
+        X-Request-ID:
+          $ref: "#/components/headers/XRequestID"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            type: https://idenqa.dev/problems/insufficient-scope
+            title: Insufficient scope
+            status: 403
+            code: INSUFFICIENT_SCOPE
+            detail: The authenticated credential cannot perform this operation.
+            request_id: req_01M11HEQG00000000000000000
+    ProcessingAuthorityRequired:
+      description: Current declared authority or its required subject response does not permit processing.
+      headers:
+        X-Request-ID:
+          $ref: "#/components/headers/XRequestID"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            type: https://idenqa.dev/problems/processing-authority-required
+            title: Processing authority required
+            status: 403
+            code: PROCESSING_AUTHORITY_REQUIRED
+            detail: A valid processing authority and required subject response are required.
+            request_id: req_01M11HEQG00000000000000000
+    NotFound:
+      description: The resource was absent or was not visible to this tenant.
+      headers:
+        X-Request-ID:
+          $ref: "#/components/headers/XRequestID"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            type: https://idenqa.dev/problems/not-found
+            title: Not found
+            status: 404
+            code: NOT_FOUND
+            detail: The requested resource was not found.
+            request_id: req_01M11HEQG00000000000000000
+    RateLimited:
+      description: The applicable request quota has been exhausted.
+      headers:
+        X-Request-ID:
+          $ref: "#/components/headers/XRequestID"
+        RateLimit:
+          $ref: "#/components/headers/RateLimit"
+        RateLimit-Policy:
+          $ref: "#/components/headers/RateLimitPolicy"
+        Retry-After:
+          $ref: "#/components/headers/RetryAfter"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            type: https://idenqa.dev/problems/rate-limited
+            title: Rate limited
+            status: 429
+            code: RATE_LIMITED
+            detail: The request quota has been exceeded.
+            request_id: req_01M11HEQG00000000000000000
+    InternalError:
+      description: The server could not complete the request.
+      headers:
+        X-Request-ID:
+          $ref: "#/components/headers/XRequestID"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            type: https://idenqa.dev/problems/internal-error
+            title: Internal server error
+            status: 500
+            code: INTERNAL_ERROR
+            detail: The request could not be completed.
+            request_id: req_01M11HEQG00000000000000000
+    ServiceUnavailable:
+      description: A required service is temporarily unavailable.
+      headers:
+        X-Request-ID:
+          $ref: "#/components/headers/XRequestID"
+        Retry-After:
+          $ref: "#/components/headers/RetryAfter"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            type: https://idenqa.dev/problems/service-unavailable
+            title: Service unavailable
+            status: 503
+            code: SERVICE_UNAVAILABLE
+            detail: The service is temporarily unavailable.
+            request_id: req_01M11HEQG00000000000000000
+  examples:
+    PolicyDecisionReport:
+      description: Synthetic safe reproduction report without policy facts or evidence references.
+      value:
+        schema_major: 1
+        schema_minor: 0
+        decision_id: dec_01M11HEQG00000000000000000
+        tenant_id: ten_01M11HEQG00000000000000000
+        verification_id: ver_01M11HEQG00000000000000000
+        policy_id: pol_01M11HEQG00000000000000000
+        region: ng-1
+        policy_revision: 1
+        policy_digest: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+        evaluator_major: 1
+        evaluator_minor: 0
+        evaluator_digest: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+        snapshot_digest: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+        evaluation_digest: dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+        decision_digest: eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+        bundle_digest: ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+        directive: complete_verified
+        outcome: verified
+        assurance: idenqa.assurance.identity_verified
+        actor: machine
+        fact_count: 1
+        requirement_count: 1
+        evaluated_at: "2026-08-31T12:00:00Z"
+        decided_at: "2026-08-31T12:00:01Z"
+        reproduced: true
+    CaptureProfileDocument:
+      description: Synthetic portable selfie-upload profile document.
+      value:
+        schema_version: 1
+        registry:
+          schema_version: 1
+          revision: 1
+          digest: sha256:71ef9df77044f9bf5eeb7ae448da3d98811ff4cb3f2541f459e60b4628a5364f
+        requirements:
+          - key: selfie
+            purpose: idenqa.purpose.identity_verification
+            evidence_type: idenqa.evidence.selfie_image
+            artefacts: [idenqa.artefact.selfie_image]
+            acquisition:
+              strategy: any_of
+              methods: [idenqa.method.file_upload]
+            required_assurances: []
+            constraints: []
+            fallbacks: []
+    CaptureProfileWrite:
+      description: Synthetic profile draft request.
+      value:
+        name: Standard identity
+        document:
+          schema_version: 1
+          registry:
+            schema_version: 1
+            revision: 1
+            digest: sha256:71ef9df77044f9bf5eeb7ae448da3d98811ff4cb3f2541f459e60b4628a5364f
+          requirements:
+            - key: selfie
+              purpose: idenqa.purpose.identity_verification
+              evidence_type: idenqa.evidence.selfie_image
+              artefacts: [idenqa.artefact.selfie_image]
+              acquisition:
+                strategy: any_of
+                methods: [idenqa.method.file_upload]
+              required_assurances: []
+              constraints: []
+              fallbacks: []
+    CaptureProfileSummary:
+      description: Synthetic draft profile resource.
+      value:
+        id: prf_01M11HEQG00000000000000000
+        name: Standard identity
+        state: draft
+        version: 1
+        latest_revision: 1
+        draft_revision: 1
+        created_at: "2026-08-27T12:00:00Z"
+        updated_at: "2026-08-27T12:00:00Z"
+    CaptureProfileMutation:
+      description: Synthetic successful draft mutation.
+      value:
+        profile_id: prf_01M11HEQG00000000000000000
+        name: Standard identity
+        state: draft
+        version: 1
+        latest_revision: 1
+        draft_revision: 1
+        revision: 1
+        digest: sha256:284a4418399974a7d1ce691f96ea534e1cd97ee1a9bc0d09de25d4a3b9d48969
+        updated_at: "2026-08-27T12:00:00Z"
+    CaptureProfileRevision:
+      description: Synthetic published revision response.
+      value:
+        profile_id: prf_01M11HEQG00000000000000000
+        revision: 1
+        state: published
+        document:
+          schema_version: 1
+          registry:
+            schema_version: 1
+            revision: 1
+            digest: sha256:71ef9df77044f9bf5eeb7ae448da3d98811ff4cb3f2541f459e60b4628a5364f
+          requirements:
+            - key: selfie
+              purpose: idenqa.purpose.identity_verification
+              evidence_type: idenqa.evidence.selfie_image
+              artefacts: [idenqa.artefact.selfie_image]
+              acquisition:
+                strategy: any_of
+                methods: [idenqa.method.file_upload]
+              required_assurances: []
+              constraints: []
+              fallbacks: []
+        digest: sha256:284a4418399974a7d1ce691f96ea534e1cd97ee1a9bc0d09de25d4a3b9d48969
+        created_at: "2026-08-27T12:00:00Z"
+        updated_at: "2026-08-27T12:05:00Z"
+        published_at: "2026-08-27T12:05:00Z"
+    CaptureProfileList:
+      description: Synthetic first profile page.
+      value:
+        data: []
+        page:
+          has_more: false
+    CaptureProfileValidation:
+      description: Synthetic successful publication-gate result.
+      value:
+        valid: true
+        digest: sha256:284a4418399974a7d1ce691f96ea534e1cd97ee1a9bc0d09de25d4a3b9d48969
+    ActiveTenant:
+      description: Synthetic active tenant response used by contract conformance tests.
+      value:
+        id: ten_01M11HEQG00000000000000000
+        state: active
+        created_at: "2026-08-27T12:00:00Z"
+        updated_at: "2026-08-27T12:00:00Z"

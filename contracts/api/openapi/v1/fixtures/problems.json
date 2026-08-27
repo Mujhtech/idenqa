@@ -1,0 +1,122 @@
+[
+  {
+    "type": "https://idenqa.dev/problems/invalid-request",
+    "title": "Invalid request",
+    "status": 400,
+    "code": "INVALID_REQUEST",
+    "detail": "The request is invalid.",
+    "request_id": "req_01M11HEQG00000000000000000"
+  },
+  {
+    "type": "https://idenqa.dev/problems/unauthenticated",
+    "title": "Unauthenticated",
+    "status": 401,
+    "code": "UNAUTHENTICATED",
+    "detail": "Authentication is required.",
+    "request_id": "req_01M11HEQG00000000000000000"
+  },
+  {
+    "type": "https://idenqa.dev/problems/insufficient-scope",
+    "title": "Insufficient scope",
+    "status": 403,
+    "code": "INSUFFICIENT_SCOPE",
+    "detail": "The authenticated credential cannot perform this operation.",
+    "request_id": "req_01M11HEQG00000000000000000"
+  },
+  {
+    "type": "https://idenqa.dev/problems/not-found",
+    "title": "Not found",
+    "status": 404,
+    "code": "NOT_FOUND",
+    "detail": "The requested resource was not found.",
+    "request_id": "req_01M11HEQG00000000000000000"
+  },
+  {
+    "type": "https://idenqa.dev/problems/method-not-allowed",
+    "title": "Method not allowed",
+    "status": 405,
+    "code": "METHOD_NOT_ALLOWED",
+    "detail": "The request method is not supported for this resource.",
+    "request_id": "req_01M11HEQG00000000000000000"
+  },
+  {
+    "type": "https://idenqa.dev/problems/conflict",
+    "title": "Conflict",
+    "status": 409,
+    "code": "CONFLICT",
+    "detail": "The request conflicts with the current resource state.",
+    "request_id": "req_01M11HEQG00000000000000000"
+  },
+  {
+    "type": "https://idenqa.dev/problems/idempotency-conflict",
+    "title": "Idempotency conflict",
+    "status": 409,
+    "code": "IDEMPOTENCY_CONFLICT",
+    "detail": "The idempotency key was already used for a different request.",
+    "request_id": "req_01M11HEQG00000000000000000"
+  },
+  {
+    "type": "https://idenqa.dev/problems/precondition-failed",
+    "title": "Precondition failed",
+    "status": 412,
+    "code": "PRECONDITION_FAILED",
+    "detail": "The resource has changed since it was read.",
+    "request_id": "req_01M11HEQG00000000000000000"
+  },
+  {
+    "type": "https://idenqa.dev/problems/request-too-large",
+    "title": "Request too large",
+    "status": 413,
+    "code": "REQUEST_TOO_LARGE",
+    "detail": "The request body exceeds the permitted size.",
+    "request_id": "req_01M11HEQG00000000000000000"
+  },
+  {
+    "type": "https://idenqa.dev/problems/precondition-required",
+    "title": "Precondition required",
+    "status": 428,
+    "code": "PRECONDITION_REQUIRED",
+    "detail": "This operation requires an If-Match header.",
+    "request_id": "req_01M11HEQG00000000000000000"
+  },
+  {
+    "type": "https://idenqa.dev/problems/rate-limited",
+    "title": "Rate limited",
+    "status": 429,
+    "code": "RATE_LIMITED",
+    "detail": "The request quota has been exceeded.",
+    "request_id": "req_01M11HEQG00000000000000000"
+  },
+  {
+    "type": "https://idenqa.dev/problems/request-cancelled",
+    "title": "Request cancelled",
+    "status": 408,
+    "code": "REQUEST_CANCELLED",
+    "detail": "The request was cancelled before completion.",
+    "request_id": "req_01M11HEQG00000000000000000"
+  },
+  {
+    "type": "https://idenqa.dev/problems/internal-error",
+    "title": "Internal server error",
+    "status": 500,
+    "code": "INTERNAL_ERROR",
+    "detail": "The request could not be completed.",
+    "request_id": "req_01M11HEQG00000000000000000"
+  },
+  {
+    "type": "https://idenqa.dev/problems/service-unavailable",
+    "title": "Service unavailable",
+    "status": 503,
+    "code": "SERVICE_UNAVAILABLE",
+    "detail": "The service is temporarily unavailable.",
+    "request_id": "req_01M11HEQG00000000000000000"
+  },
+  {
+    "type": "https://idenqa.dev/problems/request-timeout",
+    "title": "Request timed out",
+    "status": 504,
+    "code": "REQUEST_TIMEOUT",
+    "detail": "The request exceeded its processing deadline.",
+    "request_id": "req_01M11HEQG00000000000000000"
+  }
+]

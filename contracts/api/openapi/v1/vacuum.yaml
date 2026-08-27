@@ -1,0 +1,6 @@
+extends: [[vacuum:oas, recommended]]
+rules:
+  # Public JSON deliberately uses snake_case across languages.
+  camel-case-properties: false
+  # C-01 establishes reusable headers and pagination before their first endpoint.
+  oas3-unused-component: false
