@@ -1,0 +1,210 @@
+package task
+
+import (
+	"context"
+	"errors"
+	"testing"
+	"time"
+
+	modelv1 "github.com/Mujhtech/idenqa/contracts/model/v1"
+	providerv1 "github.com/Mujhtech/idenqa/contracts/provider/v1"
+	"github.com/Mujhtech/idenqa/internal/platform/id"
+	"github.com/Mujhtech/idenqa/internal/platform/postgres"
+	platformtask "github.com/Mujhtech/idenqa/internal/platform/task"
+	"github.com/Mujhtech/idenqa/internal/tenant"
+	"github.com/Mujhtech/idenqa/internal/verification"
+	"github.com/Mujhtech/idenqa/internal/verification/synthetic"
+)
+
+type checkStore struct {
+	check verification.Check
+	saves int
+}
+
+func (store *checkStore) FindCheck(context.Context, tenant.Scope, id.Check) (verification.Check, error) {
+	return store.check, nil
+}
+
+func (store *checkStore) FindCheckWithin(context.Context, tenant.Scope, postgres.Transaction, id.Check) (verification.Check, error) {
+	return store.check, nil
+}
+
+func (store *checkStore) SaveCheckWithin(
+	_ context.Context,
+	_ tenant.Scope,
+	_ postgres.Transaction,
+	commit verification.CheckCommit,
+) (bool, error) {
+	if commit.ExpectedVersion != store.check.Version {
+		return false, verification.ErrCheckVersion
+	}
+	store.check = commit.Check
+	store.saves++
+	return false, nil
+}
+
+type resultIDs struct{ observation int }
+
+func (*resultIDs) NewEvent() (id.Event, error) { return id.ParseEvent("evt_" + taskTestULID) }
+
+func (generator *resultIDs) NewObservation() (id.Observation, error) {
+	values := []string{
+		"obs_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+		"obs_01ARZ3NDEKTSV4RRFFQ69G5FAW",
+	}
+	value, err := id.ParseObservation(values[generator.observation%len(values)])
+	generator.observation++
+	return value, err
+}
+
+func TestExecuteHandlerCommitsProviderResultWithDomainAndTaskFencesSeparated(t *testing.T) {
+	t.Parallel()
+	check, attempt, now := taskRunningCheck(t, verification.RunnerProvider, 41)
+	store := &checkStore{check: check}
+	handler := executeHandler(t, store,
+		synthetic.Provider{Scenario: synthetic.Success, Now: func() time.Time { return now.Add(time.Second) }},
+		synthetic.Model{Scenario: synthetic.Success, Now: func() time.Time { return now.Add(time.Second) }})
+	delivery := executeDelivery(t, check, attempt, now, 99)
+
+	work, prepared := handler.Prepare(t.Context(), delivery)
+	if prepared.Outcome != platformtask.OutcomeComplete || work == nil {
+		t.Fatalf("Prepare() = work %v, result %+v", work != nil, prepared)
+	}
+	committed := work(t.Context(), nil)
+	if committed.Outcome != platformtask.OutcomeComplete || store.saves != 1 ||
+		store.check.State != verification.CheckCompleted || store.check.Outcome != verification.CheckPassed {
+		t.Fatalf("commit = %+v, saves=%d, check=%s/%s", committed, store.saves, store.check.State, store.check.Outcome)
+	}
+	if store.check.Attempts()[0].Fence != 41 || delivery.Fence != 99 {
+		t.Fatal("domain attempt fence was replaced by the Headgate lease fence")
+	}
+}
+
+func TestExecuteHandlerPreservesModelAndOperationalFailureMeaning(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name     string
+		kind     verification.RunnerKind
+		provider providerv1.Executor
+		model    modelv1.Executor
+		state    verification.CheckState
+		outcome  verification.CheckOutcome
+	}{
+		{name: "model inconclusive", kind: verification.RunnerModel,
+			provider: synthetic.Provider{Scenario: synthetic.Success, Now: time.Now},
+			model:    synthetic.Model{Scenario: synthetic.Inconclusive, Now: time.Now},
+			state:    verification.CheckCompleted, outcome: verification.CheckInconclusive},
+		{name: "provider unavailable", kind: verification.RunnerProvider,
+			provider: synthetic.Provider{Scenario: synthetic.Unavailable, Now: time.Now},
+			model:    synthetic.Model{Scenario: synthetic.Success, Now: time.Now},
+			state:    verification.CheckFailed},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			check, attempt, now := taskRunningCheck(t, test.kind, 7)
+			store := &checkStore{check: check}
+			handler := executeHandler(t, store, providerAt(test.provider, now.Add(time.Second)), modelAt(test.model, now.Add(time.Second)))
+			work, result := handler.Prepare(t.Context(), executeDelivery(t, check, attempt, now, 8))
+			if result.Outcome != platformtask.OutcomeComplete || work(t.Context(), nil).Outcome != platformtask.OutcomeComplete {
+				t.Fatalf("execution result = %+v", result)
+			}
+			if store.check.State != test.state || store.check.Outcome != test.outcome {
+				t.Fatalf("check = %s/%s", store.check.State, store.check.Outcome)
+			}
+		})
+	}
+}
+
+func TestExecuteHandlerQuarantinesMalformedResultWithoutWriting(t *testing.T) {
+	t.Parallel()
+	check, attempt, now := taskRunningCheck(t, verification.RunnerProvider, 5)
+	store := &checkStore{check: check}
+	handler := executeHandler(t, store,
+		synthetic.Provider{Scenario: synthetic.Malformed, Now: func() time.Time { return now.Add(time.Second) }},
+		synthetic.Model{Scenario: synthetic.Success, Now: func() time.Time { return now.Add(time.Second) }})
+	work, result := handler.Prepare(t.Context(), executeDelivery(t, check, attempt, now, 6))
+	if result.Outcome != platformtask.OutcomeComplete {
+		t.Fatalf("Prepare() = %+v", result)
+	}
+	if committed := work(t.Context(), nil); committed.Outcome != platformtask.OutcomeQuarantine || store.saves != 0 {
+		t.Fatalf("commit = %+v, saves=%d", committed, store.saves)
+	}
+}
+
+type failingProvider struct{ err error }
+
+func (provider failingProvider) Execute(context.Context, providerv1.Request) (providerv1.Result, error) {
+	return providerv1.Result{}, provider.err
+}
+
+func TestExecuteHandlerClassifiesExternalFailureBeforeTransaction(t *testing.T) {
+	t.Parallel()
+	check, attempt, now := taskRunningCheck(t, verification.RunnerProvider, 5)
+	store := &checkStore{check: check}
+	handler := executeHandler(t, store, failingProvider{err: errors.New("provider unavailable")},
+		synthetic.Model{Scenario: synthetic.Success, Now: time.Now})
+	work, result := handler.Prepare(t.Context(), executeDelivery(t, check, attempt, now, 6))
+	if work != nil || result.Outcome != platformtask.OutcomeRetry || result.Class != platformtask.RetryClassUnavailable || store.saves != 0 {
+		t.Fatalf("Prepare() = work %v, result %+v", work != nil, result)
+	}
+}
+
+func executeHandler(t *testing.T, store CheckStore, provider providerv1.Executor, model modelv1.Executor) *ExecuteHandler {
+	t.Helper()
+	handler, err := NewExecuteHandler(store, &resultIDs{}, provider, model)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return handler
+}
+
+func taskRunningCheck(t *testing.T, kind verification.RunnerKind, fence uint64) (verification.Check, verification.Attempt, time.Time) {
+	t.Helper()
+	now := time.Date(2026, 8, 30, 12, 0, 0, 0, time.UTC)
+	checkID, _ := id.ParseCheck("chk_" + taskTestULID)
+	tenantID, _ := id.ParseTenant("ten_" + taskTestULID)
+	verificationID, _ := id.ParseVerification("ver_" + taskTestULID)
+	attemptID, _ := id.ParseAttempt("atm_" + taskTestULID)
+	check, err := verification.NewCheck(checkID, tenantID, verificationID, "synthetic.check", now)
+	if err != nil {
+		t.Fatal(err)
+	}
+	digest := "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+	attempt := verification.Attempt{ID: attemptID, Number: 1, Fence: fence, RunnerKind: kind,
+		Provenance: verification.Provenance{RunnerID: "synthetic.runner", RunnerVersion: "1.0.0",
+			PackageDigest: digest, ContractMajor: 1, RequestDigest: digest, Configuration: digest},
+		State: verification.AttemptRunning, StartedAt: now, Deadline: now.Add(time.Minute)}
+	if err := check.BeginAttempt(attempt); err != nil {
+		t.Fatal(err)
+	}
+	return check, attempt, now
+}
+
+func executeDelivery(t *testing.T, check verification.Check, attempt verification.Attempt, now time.Time, taskFence uint64) platformtask.Delivery {
+	t.Helper()
+	taskID, _ := id.ParseTask("tsk_" + taskTestULID)
+	scope, _ := tenant.NewScope(check.TenantID)
+	intent, err := NewExecuteIntent(fixedTaskIDs{taskID}, scope, ExecutePayload{CheckID: check.ID, AttemptID: attempt.ID},
+		IntentMetadata{ScheduledAt: now, Deadline: attempt.Deadline})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return platformtask.Delivery{Intent: intent, Attempt: 1, Fence: taskFence}
+}
+
+func providerAt(executor providerv1.Executor, now time.Time) providerv1.Executor {
+	if value, ok := executor.(synthetic.Provider); ok {
+		value.Now = func() time.Time { return now }
+		return value
+	}
+	return executor
+}
+
+func modelAt(executor modelv1.Executor, now time.Time) modelv1.Executor {
+	if value, ok := executor.(synthetic.Model); ok {
+		value.Now = func() time.Time { return now }
+		return value
+	}
+	return executor
+}

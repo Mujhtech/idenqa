@@ -1,0 +1,11 @@
+version: v2
+modules:
+  - path: contracts/runner
+deps:
+  - buf.build/bufbuild/protovalidate
+lint:
+  use:
+    - STANDARD
+breaking:
+  use:
+    - FILE

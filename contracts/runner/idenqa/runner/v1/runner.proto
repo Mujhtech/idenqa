@@ -1,0 +1,341 @@
+syntax = "proto3";
+
+package idenqa.runner.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/Mujhtech/idenqa/internal/gen/proto/runner/v1;runnerv1";
+
+// ProviderRunner is the isolated v1 provider adapter boundary.
+service ProviderRunnerService {
+  // Manifest returns immutable adapter capabilities and restrictions.
+  rpc Manifest(ProviderRunnerServiceManifestRequest) returns (ProviderRunnerServiceManifestResponse);
+  // ValidateConfiguration validates a secret-free external reference.
+  rpc ValidateConfiguration(ProviderRunnerServiceValidateConfigurationRequest) returns (ProviderRunnerServiceValidateConfigurationResponse);
+  // Execute performs one retry-safe provider attempt.
+  rpc Execute(ProviderRunnerServiceExecuteRequest) returns (ProviderRunnerServiceExecuteResponse);
+  // Health returns a bounded, non-sensitive readiness classification.
+  rpc Health(ProviderRunnerServiceHealthRequest) returns (ProviderRunnerServiceHealthResponse);
+}
+
+// ModelRunner is the isolated v1 predictive-model boundary.
+service ModelRunnerService {
+  // Manifest returns immutable model capabilities and restrictions.
+  rpc Manifest(ModelRunnerServiceManifestRequest) returns (ModelRunnerServiceManifestResponse);
+  // ValidateConfiguration validates a secret-free external reference.
+  rpc ValidateConfiguration(ModelRunnerServiceValidateConfigurationRequest) returns (ModelRunnerServiceValidateConfigurationResponse);
+  // Execute performs one retry-safe model attempt.
+  rpc Execute(ModelRunnerServiceExecuteRequest) returns (ModelRunnerServiceExecuteResponse);
+  // Health returns a bounded, non-sensitive readiness classification.
+  rpc Health(ModelRunnerServiceHealthRequest) returns (ModelRunnerServiceHealthResponse);
+}
+
+// ProviderRunnerServiceManifestRequest requests the provider manifest.
+message ProviderRunnerServiceManifestRequest {}
+
+// ProviderRunnerServiceManifestResponse returns the provider manifest.
+message ProviderRunnerServiceManifestResponse {
+  ProviderManifest manifest = 1 [(buf.validate.field).required = true];
+}
+
+// ProviderRunnerServiceValidateConfigurationRequest carries one reference.
+message ProviderRunnerServiceValidateConfigurationRequest {
+  ProviderConfigurationReference configuration = 1 [(buf.validate.field).required = true];
+}
+
+// ProviderRunnerServiceValidateConfigurationResponse returns safe validity.
+message ProviderRunnerServiceValidateConfigurationResponse {
+  ValidationResult validation = 1 [(buf.validate.field).required = true];
+}
+
+// ProviderRunnerServiceExecuteRequest carries one provider attempt.
+message ProviderRunnerServiceExecuteRequest {
+  ProviderRequest request = 1 [(buf.validate.field).required = true];
+}
+
+// ProviderRunnerServiceExecuteResponse returns one provider result.
+message ProviderRunnerServiceExecuteResponse {
+  ProviderResult result = 1 [(buf.validate.field).required = true];
+}
+
+// ProviderRunnerServiceHealthRequest requests provider health.
+message ProviderRunnerServiceHealthRequest {}
+
+// ProviderRunnerServiceHealthResponse returns safe provider health.
+message ProviderRunnerServiceHealthResponse {
+  Health health = 1 [(buf.validate.field).required = true];
+}
+
+// ModelRunnerServiceManifestRequest requests the model manifest.
+message ModelRunnerServiceManifestRequest {}
+
+// ModelRunnerServiceManifestResponse returns the model manifest.
+message ModelRunnerServiceManifestResponse {
+  ModelManifest manifest = 1 [(buf.validate.field).required = true];
+}
+
+// ModelRunnerServiceValidateConfigurationRequest carries one reference.
+message ModelRunnerServiceValidateConfigurationRequest {
+  ModelConfigurationReference configuration = 1 [(buf.validate.field).required = true];
+}
+
+// ModelRunnerServiceValidateConfigurationResponse returns safe validity.
+message ModelRunnerServiceValidateConfigurationResponse {
+  ValidationResult validation = 1 [(buf.validate.field).required = true];
+}
+
+// ModelRunnerServiceExecuteRequest carries one model attempt.
+message ModelRunnerServiceExecuteRequest {
+  ModelRequest request = 1 [(buf.validate.field).required = true];
+}
+
+// ModelRunnerServiceExecuteResponse returns one model result.
+message ModelRunnerServiceExecuteResponse {
+  ModelResult result = 1 [(buf.validate.field).required = true];
+}
+
+// ModelRunnerServiceHealthRequest requests model health.
+message ModelRunnerServiceHealthRequest {}
+
+// ModelRunnerServiceHealthResponse returns safe model health.
+message ModelRunnerServiceHealthResponse {
+  Health health = 1 [(buf.validate.field).required = true];
+}
+
+// Version identifies one major-stable, minor-monotonic contract revision.
+message Version {
+  uint32 major = 1 [(buf.validate.field).uint32.gt = 0];
+  uint32 minor = 2;
+}
+
+// TraceContext carries only W3C propagation values.
+message TraceContext {
+  string traceparent = 1 [(buf.validate.field).string.max_len = 128];
+  string tracestate = 2 [(buf.validate.field).string.max_len = 512];
+}
+
+// EvidenceGrantReference is a purpose-bound controlled-read reference.
+message EvidenceGrantReference {
+  string grant_id = 1 [(buf.validate.field).string = {prefix: "grt_", max_len: 64}];
+  string redemption_id = 2 [(buf.validate.field).string = {prefix: "rdm_", max_len: 64}];
+  string evidence_id = 3 [(buf.validate.field).string = {prefix: "evd_", max_len: 64}];
+  string purpose = 4 [(buf.validate.field).string = {min_len: 1, max_len: 128}];
+  string variant = 5 [(buf.validate.field).string = {min_len: 1, max_len: 128}];
+  google.protobuf.Timestamp expires_at = 6 [(buf.validate.field).required = true];
+}
+
+// ProviderInputReference names an externally resolved structured input. Its
+// value is deliberately absent from the runner transport.
+message ProviderInputReference {
+  string name = 1 [(buf.validate.field).string = {min_len: 1, max_len: 160}];
+  string reference = 2 [(buf.validate.field).string = {min_len: 1, max_len: 512}];
+}
+
+// ValidationResult represents accepted reference validation without details.
+message ValidationResult {
+  bool valid = 1;
+  string code = 2 [(buf.validate.field).string.max_len = 128];
+}
+
+// HealthState is the closed safe runner-health vocabulary.
+enum HealthState {
+  HEALTH_STATE_UNSPECIFIED = 0;
+  HEALTH_STATE_READY = 1;
+  HEALTH_STATE_DEGRADED = 2;
+  HEALTH_STATE_NOT_READY = 3;
+}
+
+// Health is a bounded runner-health snapshot.
+message Health {
+  HealthState state = 1 [(buf.validate.field).enum.defined_only = true];
+  string code = 2 [(buf.validate.field).string = {min_len: 1, max_len: 128}];
+  google.protobuf.Timestamp checked_at = 3 [(buf.validate.field).required = true];
+}
+
+// SignalOutcome is the closed normalised signal vocabulary.
+enum SignalOutcome {
+  SIGNAL_OUTCOME_UNSPECIFIED = 0;
+  SIGNAL_OUTCOME_SATISFIED = 1;
+  SIGNAL_OUTCOME_NOT_SATISFIED = 2;
+  SIGNAL_OUTCOME_INCONCLUSIVE = 3;
+}
+
+// Signal is one bounded normalised observation.
+message Signal {
+  string name = 1 [(buf.validate.field).string = {min_len: 1, max_len: 128}];
+  SignalOutcome outcome = 2 [(buf.validate.field).enum.defined_only = true];
+  repeated string reason_codes = 3 [(buf.validate.field).repeated = {max_items: 32, unique: true, items: {string: {min_len: 1, max_len: 128}}}];
+}
+
+// ResultOutcome separates completed work from operational failure.
+enum ResultOutcome {
+  RESULT_OUTCOME_UNSPECIFIED = 0;
+  RESULT_OUTCOME_COMPLETED = 1;
+  RESULT_OUTCOME_FAILED = 2;
+}
+
+// RetryDisposition is the closed retry vocabulary.
+enum RetryDisposition {
+  RETRY_DISPOSITION_UNSPECIFIED = 0;
+  RETRY_DISPOSITION_NEVER = 1;
+  RETRY_DISPOSITION_BACKOFF = 2;
+  RETRY_DISPOSITION_RECONCILE = 3;
+}
+
+// Failure contains only stable, redacted classifications.
+message Failure {
+  string class = 1 [(buf.validate.field).string = {min_len: 1, max_len: 64}];
+  string code = 2 [(buf.validate.field).string = {min_len: 1, max_len: 128}];
+  RetryDisposition retry = 3 [(buf.validate.field).enum.defined_only = true];
+  google.protobuf.Duration retry_after = 4;
+}
+
+// ProviderPackageProvenance pins the exact adapter package.
+message ProviderPackageProvenance {
+  string adapter_id = 1 [(buf.validate.field).string = {prefix: "pvd_", max_len: 64}];
+  string adapter_version = 2 [(buf.validate.field).string = {min_len: 1, max_len: 128}];
+  string package_digest = 3 [(buf.validate.field).string = {min_len: 1, max_len: 128}];
+  Version contract = 4 [(buf.validate.field).required = true];
+}
+
+// ProviderConfigurationSchema identifies a secret-free schema.
+message ProviderConfigurationSchema {
+  string id = 1 [(buf.validate.field).string = {min_len: 1, max_len: 128}];
+  string digest = 2 [(buf.validate.field).string = {min_len: 1, max_len: 128}];
+}
+
+// ProviderCapability advertises one stable provider check.
+message ProviderCapability {
+  string check = 1 [(buf.validate.field).string = {min_len: 1, max_len: 128}];
+  repeated string accepted_evidence = 2 [(buf.validate.field).repeated = {max_items: 32, unique: true}];
+  repeated string accepted_assurances = 3 [(buf.validate.field).repeated = {max_items: 32, unique: true}];
+  repeated string processing_regions = 4 [(buf.validate.field).repeated = {min_items: 1, max_items: 32, unique: true}];
+  bool supports_idempotency = 5;
+  bool supports_cancellation = 6;
+  repeated string accepted_inputs = 7 [(buf.validate.field).repeated = {max_items: 32, unique: true}];
+}
+
+// ProviderRestrictions pins bounded runner policy.
+message ProviderRestrictions {
+  bool network_required = 1;
+  uint32 maximum_grants = 2 [(buf.validate.field).uint32.lte = 64];
+  uint32 maximum_result_size = 3 [(buf.validate.field).uint32 = {gt: 0, lte: 262144}];
+  google.protobuf.Duration maximum_duration = 4 [(buf.validate.field).required = true];
+}
+
+// ProviderManifest is the immutable provider advertisement.
+message ProviderManifest {
+  ProviderPackageProvenance package = 1 [(buf.validate.field).required = true];
+  ProviderConfigurationSchema configuration = 2 [(buf.validate.field).required = true];
+  repeated ProviderCapability capabilities = 3 [(buf.validate.field).repeated = {min_items: 1, max_items: 64}];
+  ProviderRestrictions restrictions = 4 [(buf.validate.field).required = true];
+}
+
+// ProviderConfigurationReference names externally resolved settings.
+message ProviderConfigurationReference {
+  string provider_id = 1 [(buf.validate.field).string = {prefix: "pvd_", max_len: 64}];
+  string schema_digest = 2 [(buf.validate.field).string = {min_len: 1, max_len: 128}];
+  string secret_reference = 3 [(buf.validate.field).string = {min_len: 1, max_len: 512}];
+  string credential_version = 4 [(buf.validate.field).string = {min_len: 1, max_len: 128}];
+}
+
+// ProviderRequest is the complete immutable provider attempt envelope.
+message ProviderRequest {
+  Version contract = 1 [(buf.validate.field).required = true];
+  string attempt_id = 2 [(buf.validate.field).string = {prefix: "atm_", max_len: 64}];
+  string provider_id = 3 [(buf.validate.field).string = {prefix: "pvd_", max_len: 64}];
+  string tenant_id = 4 [(buf.validate.field).string = {prefix: "ten_", max_len: 64}];
+  string verification_id = 5 [(buf.validate.field).string = {prefix: "ver_", max_len: 64}];
+  string check = 6 [(buf.validate.field).string = {min_len: 1, max_len: 128}];
+  string idempotency_key = 7 [(buf.validate.field).string = {min_len: 1, max_len: 256}];
+  ProviderPackageProvenance adapter = 8 [(buf.validate.field).required = true];
+  ProviderCapability capability = 9 [(buf.validate.field).required = true];
+  ProviderRestrictions restrictions = 10 [(buf.validate.field).required = true];
+  ProviderConfigurationReference configuration = 11 [(buf.validate.field).required = true];
+  repeated EvidenceGrantReference evidence = 12 [(buf.validate.field).repeated.max_items = 64];
+  google.protobuf.Timestamp deadline = 13 [(buf.validate.field).required = true];
+  TraceContext trace = 14 [(buf.validate.field).required = true];
+  repeated ProviderInputReference inputs = 15 [(buf.validate.field).repeated.max_items = 32];
+}
+
+// ProviderResult is the bounded terminal provider result.
+message ProviderResult {
+  Version contract = 1 [(buf.validate.field).required = true];
+  string attempt_id = 2 [(buf.validate.field).string = {prefix: "atm_", max_len: 64}];
+  ResultOutcome outcome = 3 [(buf.validate.field).enum.defined_only = true];
+  repeated Signal signals = 4 [(buf.validate.field).repeated.max_items = 128];
+  Failure failure = 5;
+  google.protobuf.Timestamp completed_at = 6 [(buf.validate.field).required = true];
+}
+
+// ModelProvenance pins every execution-relevant model artefact.
+message ModelProvenance {
+  string model_id = 1 [(buf.validate.field).string = {prefix: "mdl_", max_len: 64}];
+  string model_version = 2 [(buf.validate.field).string = {min_len: 1, max_len: 128}];
+  string model_digest = 3 [(buf.validate.field).string = {min_len: 1, max_len: 128}];
+  string runtime_digest = 4 [(buf.validate.field).string = {min_len: 1, max_len: 128}];
+  string preprocessing_digest = 5 [(buf.validate.field).string = {min_len: 1, max_len: 128}];
+  string output_schema_digest = 6 [(buf.validate.field).string = {min_len: 1, max_len: 128}];
+  Version contract = 7 [(buf.validate.field).required = true];
+}
+
+// ModelCapability advertises one stable evaluation.
+message ModelCapability {
+  string evaluation = 1 [(buf.validate.field).string = {min_len: 1, max_len: 128}];
+  repeated string accepted_evidence = 2 [(buf.validate.field).repeated = {min_items: 1, max_items: 32, unique: true}];
+  repeated string required_assurances = 3 [(buf.validate.field).repeated = {max_items: 32, unique: true}];
+  repeated string output_signals = 4 [(buf.validate.field).repeated = {min_items: 1, max_items: 64, unique: true}];
+}
+
+// ModelRestrictions pins resource policy for one model execution.
+message ModelRestrictions {
+  bool network_allowed = 1;
+  uint32 maximum_grants = 2 [(buf.validate.field).uint32.lte = 64];
+  uint64 maximum_input_bytes = 3 [(buf.validate.field).uint64.gt = 0];
+  uint32 maximum_result_size = 4 [(buf.validate.field).uint32 = {gt: 0, lte: 262144}];
+  google.protobuf.Duration maximum_duration = 5 [(buf.validate.field).required = true];
+}
+
+// ModelManifest is the immutable model advertisement.
+message ModelManifest {
+  ModelProvenance provenance = 1 [(buf.validate.field).required = true];
+  repeated ModelCapability capabilities = 2 [(buf.validate.field).repeated = {min_items: 1, max_items: 64}];
+  ModelRestrictions restrictions = 3 [(buf.validate.field).required = true];
+}
+
+// ModelConfigurationReference names immutable runtime configuration.
+message ModelConfigurationReference {
+  string model_registration_id = 1 [(buf.validate.field).string = {prefix: "mdl_", max_len: 64}];
+  string configuration_digest = 2 [(buf.validate.field).string = {min_len: 1, max_len: 128}];
+  string configuration_reference = 3 [(buf.validate.field).string = {min_len: 1, max_len: 512}];
+}
+
+// ModelRequest is the immutable retry-safe model attempt envelope.
+message ModelRequest {
+  Version contract = 1 [(buf.validate.field).required = true];
+  string attempt_id = 2 [(buf.validate.field).string = {prefix: "atm_", max_len: 64}];
+  string model_registration_id = 3 [(buf.validate.field).string = {prefix: "mdl_", max_len: 64}];
+  string tenant_id = 4 [(buf.validate.field).string = {prefix: "ten_", max_len: 64}];
+  string verification_id = 5 [(buf.validate.field).string = {prefix: "ver_", max_len: 64}];
+  string evaluation = 6 [(buf.validate.field).string = {min_len: 1, max_len: 128}];
+  string idempotency_key = 7 [(buf.validate.field).string = {min_len: 1, max_len: 256}];
+  ModelProvenance provenance = 8 [(buf.validate.field).required = true];
+  ModelCapability capability = 9 [(buf.validate.field).required = true];
+  ModelRestrictions restrictions = 10 [(buf.validate.field).required = true];
+  ModelConfigurationReference configuration = 11 [(buf.validate.field).required = true];
+  repeated EvidenceGrantReference evidence = 12 [(buf.validate.field).repeated.max_items = 64];
+  google.protobuf.Timestamp deadline = 13 [(buf.validate.field).required = true];
+  TraceContext trace = 14 [(buf.validate.field).required = true];
+}
+
+// ModelResult is the bounded terminal model result.
+message ModelResult {
+  Version contract = 1 [(buf.validate.field).required = true];
+  string attempt_id = 2 [(buf.validate.field).string = {prefix: "atm_", max_len: 64}];
+  ResultOutcome outcome = 3 [(buf.validate.field).enum.defined_only = true];
+  repeated Signal signals = 4 [(buf.validate.field).repeated.max_items = 128];
+  Failure failure = 5;
+  google.protobuf.Timestamp completed_at = 6 [(buf.validate.field).required = true];
+}

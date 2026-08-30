@@ -1,0 +1,10 @@
+DROP TABLE IF EXISTS idenqa.verification_reconciliations;
+DROP TABLE IF EXISTS idenqa.verification_result_inbox;
+DROP TABLE IF EXISTS idenqa.verification_attempt_diagnostics;
+DROP TRIGGER IF EXISTS verification_observation_append_only ON idenqa.verification_observations;
+DROP FUNCTION IF EXISTS idenqa.reject_verification_append_only_change();
+DROP TABLE IF EXISTS idenqa.verification_observations;
+DROP TRIGGER IF EXISTS verification_attempt_transition ON idenqa.verification_attempts;
+DROP FUNCTION IF EXISTS idenqa.protect_verification_attempt();
+DROP TABLE IF EXISTS idenqa.verification_attempts;
+DROP TABLE IF EXISTS idenqa.verification_checks;
