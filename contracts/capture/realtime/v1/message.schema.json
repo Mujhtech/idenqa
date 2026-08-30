@@ -1,0 +1,376 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://idenqa.dev/contracts/capture/realtime/v1/message.schema.json",
+  "title": "Idenqa capture realtime message v1",
+  "type": "object",
+  "required": [
+    "version",
+    "message_id",
+    "verification_id",
+    "sequence",
+    "occurred_at",
+    "type",
+    "payload"
+  ],
+  "properties": {
+    "version": { "const": 1 },
+    "message_id": { "$ref": "#/$defs/message_id" },
+    "verification_id": { "$ref": "#/$defs/verification_id" },
+    "connection_id": { "$ref": "#/$defs/connection_id" },
+    "sequence": { "type": "integer", "minimum": 1 },
+    "event_cursor": { "type": "integer", "minimum": 1 },
+    "command_id": { "$ref": "#/$defs/command_id" },
+    "correlation_id": { "$ref": "#/$defs/message_id" },
+    "causation_id": { "$ref": "#/$defs/message_id" },
+    "occurred_at": { "type": "string", "format": "date-time" },
+    "type": { "type": "string" },
+    "payload": { "type": "object" }
+  },
+  "oneOf": [
+    { "$ref": "#/$defs/client_hello_message" },
+    { "$ref": "#/$defs/server_welcome_message" },
+    { "$ref": "#/$defs/server_event_ack_message" },
+    { "$ref": "#/$defs/step_started_message" },
+    { "$ref": "#/$defs/step_failed_message" },
+    { "$ref": "#/$defs/step_cancelled_message" },
+    { "$ref": "#/$defs/capture_command_message" },
+    { "$ref": "#/$defs/command_result_message" },
+    { "$ref": "#/$defs/challenge_request_message" },
+    { "$ref": "#/$defs/challenge_response_message" },
+    { "$ref": "#/$defs/challenge_cancelled_message" },
+    { "$ref": "#/$defs/capture_progress_message" },
+    { "$ref": "#/$defs/verification_check_progress_message" },
+    { "$ref": "#/$defs/session_state_message" },
+    { "$ref": "#/$defs/resync_message" },
+    { "$ref": "#/$defs/draining_message" },
+    { "$ref": "#/$defs/command_accepted_message" },
+    { "$ref": "#/$defs/command_rejected_message" }
+  ],
+  "unevaluatedProperties": false,
+  "$defs": {
+    "message_id": { "type": "string", "pattern": "^msg_[0-9A-HJKMNP-TV-Z]{26}$" },
+    "verification_id": { "type": "string", "pattern": "^ver_[0-9A-HJKMNP-TV-Z]{26}$" },
+    "connection_id": { "type": "string", "pattern": "^con_[0-9A-HJKMNP-TV-Z]{26}$" },
+    "command_id": { "type": "string", "pattern": "^cmd_[0-9A-HJKMNP-TV-Z]{26}$" },
+    "challenge_id": { "type": "string", "pattern": "^chl_[0-9A-HJKMNP-TV-Z]{26}$" },
+    "check_id": { "type": "string", "pattern": "^chk_[0-9A-HJKMNP-TV-Z]{26}$" },
+    "safe_token": { "type": "string", "minLength": 1, "maxLength": 100, "pattern": "^[!-~]+$" },
+    "safe_name": { "type": "string", "minLength": 1, "maxLength": 200, "pattern": "^[a-z0-9_.]+$" },
+    "requirement_key": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,63}$" },
+    "client_hello": {
+      "type": "object",
+      "required": ["sdk_version", "supported_versions"],
+      "properties": {
+        "sdk_version": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[!-~]+$" },
+        "supported_versions": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "uniqueItems": true,
+          "contains": { "const": 1 },
+          "items": { "type": "integer", "minimum": 1, "maximum": 65535 }
+        },
+        "last_acknowledged_server_sequence": { "type": "integer", "minimum": 0 },
+        "last_acknowledged_event_cursor": { "type": "integer", "minimum": 0 },
+        "capabilities": {
+          "type": "array",
+          "maxItems": 32,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[!-~]+$" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "server_welcome": {
+      "type": "object",
+      "required": [
+        "selected_version",
+        "session_version",
+        "ping_interval_ms",
+        "pong_timeout_ms",
+        "idle_timeout_ms"
+      ],
+      "properties": {
+        "selected_version": { "const": 1 },
+        "session_version": { "type": "integer", "minimum": 1 },
+        "ping_interval_ms": { "type": "integer", "minimum": 5000, "maximum": 30000 },
+        "pong_timeout_ms": { "type": "integer", "minimum": 5000, "maximum": 15000 },
+        "idle_timeout_ms": { "type": "integer", "minimum": 10000, "maximum": 120000 }
+      },
+      "additionalProperties": false
+    },
+    "server_event_ack": {
+      "type": "object",
+      "required": ["server_sequence"],
+      "properties": {
+        "server_sequence": { "type": "integer", "minimum": 1 },
+        "event_cursor": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "step_update": {
+      "type": "object",
+      "required": ["requirement_key", "artefact", "acquisition_method"],
+      "properties": {
+        "requirement_key": { "$ref": "#/$defs/requirement_key" },
+        "artefact": { "$ref": "#/$defs/safe_name" },
+        "acquisition_method": { "$ref": "#/$defs/safe_name" },
+        "code": { "$ref": "#/$defs/safe_token" }
+      },
+      "additionalProperties": false
+    },
+    "capture_command": {
+      "type": "object",
+      "required": ["action", "requirement_key", "artefact"],
+      "properties": {
+        "action": { "enum": ["start", "cancel", "retry"] },
+        "requirement_key": { "$ref": "#/$defs/requirement_key" },
+        "artefact": { "$ref": "#/$defs/safe_name" },
+        "acquisition_method": { "$ref": "#/$defs/safe_name" }
+      },
+      "additionalProperties": false
+    },
+    "command_result": {
+      "type": "object",
+      "required": ["outcome"],
+      "properties": {
+        "outcome": { "enum": ["completed", "failed", "cancelled"] },
+        "code": { "$ref": "#/$defs/safe_token" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "outcome": { "const": "completed" } } },
+          "then": { "not": { "required": ["code"] } },
+          "else": { "required": ["code"] }
+        }
+      ],
+      "additionalProperties": false
+    },
+    "challenge_request": {
+      "type": "object",
+      "required": ["challenge_id", "kind", "expires_at"],
+      "properties": {
+        "challenge_id": { "$ref": "#/$defs/challenge_id" },
+        "kind": { "$ref": "#/$defs/safe_token" },
+        "expires_at": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": false
+    },
+    "challenge_response": {
+      "type": "object",
+      "required": ["challenge_id", "outcome"],
+      "properties": {
+        "challenge_id": { "$ref": "#/$defs/challenge_id" },
+        "outcome": { "enum": ["completed", "failed"] },
+        "code": { "$ref": "#/$defs/safe_token" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "outcome": { "const": "completed" } } },
+          "then": { "not": { "required": ["code"] } },
+          "else": { "required": ["code"] }
+        }
+      ],
+      "additionalProperties": false
+    },
+    "challenge_cancelled": {
+      "type": "object",
+      "required": ["challenge_id", "code"],
+      "properties": {
+        "challenge_id": { "$ref": "#/$defs/challenge_id" },
+        "code": { "$ref": "#/$defs/safe_token" }
+      },
+      "additionalProperties": false
+    },
+    "capture_progress": {
+      "type": "object",
+      "required": ["completed_steps", "total_steps"],
+      "properties": {
+        "completed_steps": { "type": "integer", "minimum": 0, "maximum": 256 },
+        "total_steps": { "type": "integer", "minimum": 1, "maximum": 256 }
+      },
+      "additionalProperties": false
+    },
+    "verification_check_progress": {
+      "type": "object",
+      "required": ["check_id", "state", "check_version"],
+      "properties": {
+        "check_id": { "$ref": "#/$defs/check_id" },
+        "state": {
+          "enum": [
+            "queued",
+            "running",
+            "awaiting_input",
+            "awaiting_provider",
+            "completed",
+            "skipped_by_policy",
+            "timed_out",
+            "cancelled",
+            "failed"
+          ]
+        },
+        "check_version": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "session_state": {
+      "type": "object",
+      "required": ["state", "session_version"],
+      "properties": {
+        "state": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[!-~]+$" },
+        "session_version": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "resync": {
+      "type": "object",
+      "required": ["reason"],
+      "properties": { "reason": { "$ref": "#/$defs/safe_token" } },
+      "additionalProperties": false
+    },
+    "draining": {
+      "type": "object",
+      "required": ["retry_after_ms"],
+      "properties": { "retry_after_ms": { "type": "integer", "minimum": 1000, "maximum": 60000 } },
+      "additionalProperties": false
+    },
+    "command_acknowledgement": {
+      "type": "object",
+      "properties": { "code": { "$ref": "#/$defs/safe_token" } },
+      "additionalProperties": false
+    },
+    "client_hello_message": {
+      "properties": {
+        "type": { "const": "client.hello" },
+        "payload": { "$ref": "#/$defs/client_hello" }
+      },
+      "not": { "required": ["command_id"] }
+    },
+    "server_welcome_message": {
+      "required": ["connection_id"],
+      "properties": {
+        "type": { "const": "server.welcome" },
+        "payload": { "$ref": "#/$defs/server_welcome" }
+      },
+      "not": { "required": ["command_id"] }
+    },
+    "server_event_ack_message": {
+      "required": ["connection_id"],
+      "properties": {
+        "type": { "const": "server.event_ack" },
+        "payload": { "$ref": "#/$defs/server_event_ack" }
+      },
+      "not": { "required": ["command_id"] }
+    },
+    "step_started_message": {
+      "required": ["connection_id", "command_id"],
+      "properties": {
+        "type": { "const": "capture.step.started" },
+        "payload": { "$ref": "#/$defs/step_update", "not": { "required": ["code"] } }
+      }
+    },
+    "step_failed_message": {
+      "required": ["connection_id", "command_id"],
+      "properties": {
+        "type": { "const": "capture.step.failed" },
+        "payload": { "$ref": "#/$defs/step_update", "required": ["code"] }
+      }
+    },
+    "step_cancelled_message": {
+      "required": ["connection_id", "command_id"],
+      "properties": {
+        "type": { "const": "capture.step.cancelled" },
+        "payload": { "$ref": "#/$defs/step_update", "required": ["code"] }
+      }
+    },
+    "capture_command_message": {
+      "required": ["connection_id", "command_id"],
+      "properties": {
+        "type": { "const": "capture.command" },
+        "payload": { "$ref": "#/$defs/capture_command" }
+      }
+    },
+    "command_result_message": {
+      "required": ["connection_id", "command_id"],
+      "properties": {
+        "type": { "const": "capture.command_result" },
+        "payload": { "$ref": "#/$defs/command_result" }
+      }
+    },
+    "challenge_request_message": {
+      "required": ["connection_id", "command_id"],
+      "properties": {
+        "type": { "const": "challenge.request" },
+        "payload": { "$ref": "#/$defs/challenge_request" }
+      }
+    },
+    "challenge_response_message": {
+      "required": ["connection_id", "command_id"],
+      "properties": {
+        "type": { "const": "challenge.response" },
+        "payload": { "$ref": "#/$defs/challenge_response" }
+      }
+    },
+    "challenge_cancelled_message": {
+      "required": ["connection_id", "command_id"],
+      "properties": {
+        "type": { "const": "challenge.cancelled" },
+        "payload": { "$ref": "#/$defs/challenge_cancelled" }
+      }
+    },
+    "capture_progress_message": {
+      "required": ["connection_id"],
+      "properties": {
+        "type": { "const": "capture.progress" },
+        "payload": { "$ref": "#/$defs/capture_progress" }
+      },
+      "not": { "required": ["command_id"] }
+    },
+    "verification_check_progress_message": {
+      "required": ["connection_id"],
+      "properties": {
+        "type": { "const": "verification.check.progress" },
+        "payload": { "$ref": "#/$defs/verification_check_progress" }
+      },
+      "not": { "required": ["command_id"] }
+    },
+    "session_state_message": {
+      "required": ["connection_id"],
+      "properties": {
+        "type": { "const": "session.state_changed" },
+        "payload": { "$ref": "#/$defs/session_state" }
+      },
+      "not": { "required": ["command_id"] }
+    },
+    "resync_message": {
+      "required": ["connection_id"],
+      "properties": {
+        "type": { "const": "session.resync_required" },
+        "payload": { "$ref": "#/$defs/resync" }
+      },
+      "not": { "required": ["command_id"] }
+    },
+    "draining_message": {
+      "required": ["connection_id"],
+      "properties": {
+        "type": { "const": "server.draining" },
+        "payload": { "$ref": "#/$defs/draining" }
+      },
+      "not": { "required": ["command_id"] }
+    },
+    "command_accepted_message": {
+      "required": ["connection_id", "command_id"],
+      "properties": {
+        "type": { "const": "command.accepted" },
+        "payload": { "$ref": "#/$defs/command_acknowledgement", "not": { "required": ["code"] } }
+      }
+    },
+    "command_rejected_message": {
+      "required": ["connection_id", "command_id"],
+      "properties": {
+        "type": { "const": "command.rejected" },
+        "payload": { "$ref": "#/$defs/command_acknowledgement", "required": ["code"] }
+      }
+    }
+  }
+}

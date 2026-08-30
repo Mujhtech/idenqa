@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#ffffff" />
+    <title>Idenqa Capture Demo</title>
+    <style>
+      body {
+        background: #f2f4f7;
+        margin: 0;
+        padding: clamp(1rem, 5vw, 3rem);
+      }
+
+      #selection {
+        display: block;
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        margin: 1rem auto;
+        max-width: 44rem;
+      }
+    </style>
+  </head>
+  <body>
+    <idenqa-capture id="capture"></idenqa-capture>
+    <output id="selection" aria-live="polite"></output>
+    <script type="module" src="/demo.ts"></script>
+  </body>
+</html>
