@@ -1,0 +1,2045 @@
+# Idenqa Core Build Plan v0.1
+
+**Status:** Draft for review  
+**Date:** 27 August 2026  
+**Applies to:** Idenqa open-source core, public SDKs, and basic capture packages  
+**Architecture:** `global-identity-core-technical-architecture-v0.6-draft.md`  
+**Repository decisions:** `global-identity-core-repository-structure-and-packages-v0.1-draft.md`
+
+This plan decomposes the Idenqa architecture into small, observable implementation bricks. It controls sequencing and completion evidence; it does not override the architecture or repository/package decisions.
+
+The first walking slice is:
+
+> Create a tenant, authenticate with a scoped API key, publish a capture profile, create a verification session from it, and retrieve the immutable session requirements through the TypeScript SDK.
+
+This slice proves the tenant, access, capture-profile, verification, persistence, idempotency, API, and SDK boundaries without waiting for evidence processing or the production background-work adapter.
+
+---
+
+## 1. How this plan is operated
+
+### 1.1 Brick status
+
+| Status          | Meaning                                                         |
+| --------------- | --------------------------------------------------------------- |
+| **Not started** | Scope is known but work has not begun                           |
+| **Ready**       | Dependencies and decision gates are satisfied                   |
+| **In progress** | This is the active implementation brick                         |
+| **Blocked**     | A named decision or external dependency prevents completion     |
+| **In review**   | Implementation is complete and its exit proof is being reviewed |
+| **Complete**    | Every acceptance check and exit proof has passed                |
+
+Only one brick is normally **In progress**. A second brick may start only when it is independent and the user explicitly approves parallel work.
+
+Do not report percentage completion. Update the tracker using status, evidence, blockers, and the next concrete action.
+
+### 1.2 Required record for every brick
+
+Before a brick moves to **In progress**, record:
+
+- scope and explicit non-goals;
+- decisions and contracts it depends on;
+- migrations, public contracts, and compatibility impact;
+- acceptance tests and the command or interaction used for demonstration;
+- security, privacy, and tenant-isolation considerations.
+
+Before a brick moves to **Complete**, provide:
+
+- passing automated checks;
+- a reproducible local demonstration using synthetic data;
+- updated public contracts and documentation;
+- no unexplained generated changes, migrations, TODOs, or skipped tests;
+- a short completion note in this plan's change log.
+
+### 1.3 Change size
+
+One brick should produce one reviewable change set. Do not combine the next brick because it appears small. Avoid creating empty target directories; add a package or directory only with working code, tests, a contract, or required documentation.
+
+### 1.4 Blocked work
+
+If a brick is blocked:
+
+1. Mark it **Blocked** and name the exact gate.
+2. Record what is already proven and what remains unsafe to claim.
+3. Continue only with an independent brick approved by the user.
+4. Do not introduce a temporary production dependency that contradicts the architecture.
+
+Headgate v0.1.2 is the selected production background-work system. Tests may use the owned deterministic task driver, but another production queue must not be substituted.
+
+---
+
+## 2. Definition of done
+
+Every implementation brick must satisfy the applicable parts of this common definition:
+
+- Formatting, generation, unit tests, integration tests, race tests, linting, migration checks, and vulnerability checks pass.
+- New exported Go APIs have useful documentation and stable names.
+- Domain packages remain independent of transport, storage, task-library, telemetry, and cloud SDK types.
+- Tenant-owned reads and writes are scoped in application code and protected by PostgreSQL row-level security.
+- Consequential commands define authentication, authorisation, idempotency, concurrency, audit, and error behaviour.
+- Public errors have stable codes and do not expose internal causes or cross-tenant resource existence.
+- Logs, traces, events, jobs, and fixtures contain no raw evidence, credentials, or unnecessary identity data.
+- New dependencies have verified versions, licences, maintenance status, transitive graphs, and vulnerability results.
+- Public contract and database changes include compatibility and migration tests.
+- Synthetic fixtures are used until a brick explicitly authorises real provider or identity data.
+- The repository remains buildable and operable without Console, Cloud, or proprietary source.
+
+---
+
+## 3. Just-in-time decision gates
+
+Decisions are made before the first brick that needs them, not all at once.
+
+| Gate  | Required before | Status       | Decision                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| ----- | --------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D-001 | F-01            | **Resolved** | Canonical public repository and Go module path: `github.com/Mujhtech/idenqa`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| D-002 | F-03            | **Resolved** | Chi instrumentation package: `github.com/riandyrn/otelchi`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| D-003 | F-04            | **Resolved** | Embed reviewed SQL migrations in `idenqa`; execute through the Idenqa CLI, never automatically from API or worker startup                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| D-004 | F-06            | **Resolved** | Display-once `idq_v1` tenant API keys with a 256-bit random secret, versioned HMAC-SHA-256 pepper, explicit expiry choice, immutable scope snapshots supporting exact, resource-wildcard, action-wildcard, and full-wildcard patterns limited to tenant-assignable permissions, and linked overlap rotation with irreversible retirement/revocation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| D-005 | C-01            | **Resolved** | OpenAPI 3.1 YAML under `contracts/api/openapi/v1` is authoritative; `oapi-codegen` generates committed Go transport types and a minimal client, Vacuum enforces the lint policy, and oasdiff rejects breaking pull-request changes against the base contract                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| D-006 | C-02            | **Resolved** | Capture profiles pin an immutable registry revision and digest; Idenqa vocabulary uses the reserved `idenqa.<kind>.<name>` namespace, extensions require immutable owner-controlled namespaces, and unknown or unpinned definitions fail closed                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| D-007 | C-05            | **Resolved** | Use a pnpm workspace; strict TypeScript and tsdown produce ESM, CommonJS, declarations, and source maps for Node.js 22+ and modern browsers; Vitest covers package tests; `openapi-typescript` generates committed internal contract types; a handwritten zero-runtime-dependency public facade owns clients, errors, request IDs, idempotency, and `AbortSignal`; generated symbols and Effect types are not public API                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| D-008 | E-02            | **Resolved** | Per-object authenticated streaming encryption behind an owned crypto boundary; unique content keys wrapped through a provider-neutral key-provider port; a versioned file-backed local KEK keyring; optional production KMS adapters; recorded immutable key identity and authenticated context; fail-closed reads; and rewrap-first rotation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| D-009 | E-03            | **Resolved** | E-03 v1 uses requirement-bound single-request HTTP uploads directly from capture clients to Idenqa evidence ingress, then streams through application encryption into object storage. The default per-artefact limit is 16 MiB under a deployment ceiling configurable up to 64 MiB; tenant profiles may only narrow it. Upload intents default to 15 minutes (configurable 5–60), attempts to 10 minutes, and retries restart the complete body. `Content-Length`, exact media type, RFC 9530 `Content-Digest` with SHA-256, independent server digesting, signature checks, and ciphertext verification are mandatory. JPEG and PNG are the initial formats. Completion is idempotent and atomic with evidence metadata and `evidence.ready.v1`; partial or orphan ciphertext is exactly cleaned or durably reconciled. Byte-offset resumption and storage-direct plaintext upload are excluded until a compatible encrypted staging design exists. |
+| D-010 | R-01            | **Resolved** | Use `POST /v1/capture/connections` with the verification inferred from the capture token and a display-once URL carrying a hashed, atomically single-use query ticket. Tickets default to 30 seconds within 10–60 seconds and bind tenant, verification, capture-token record, exact browser origin or native application identity, region, and `idenqa.capture.v1`. The selected 17-message catalogue uses connection-local sequences in R-01, stable command IDs for consequential effects, native ping/pong, compression disabled, and bounded configurable resource limits. Additive optional fields may remain v1; breaking semantics require v2. Durable cursors and replay remain R-02.                                                                                                                                                                                                                                                        |
+| D-011 | W-02            | **Resolved** | Use Headgate v0.1.2 through `github.com/mujhtech/headgate/go` and `github.com/mujhtech/headgate/go/driver/headgatepgx`, with its PostgreSQL backend behind Idenqa's owned `platform/task` contract. Headgate types do not enter domain or public APIs; its non-PostgreSQL backends and optional modules are not selected implicitly.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| D-012 | V-03            | **Resolved** | Use `github.com/google/cel-go` v0.31.0 behind Idenqa-owned contracts. Public policy v1 is bounded canonical JSON with named boolean rules, explicit owned results and exact contributing-fact provenance. CEL sees only `facts: map<string,string>` and `region: string`; macros, comprehensions, field selection, construction, arithmetic, extension functions, native structs, clocks and I/O are excluded.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| D-013 | O-02            | **Resolved** | Deployment defaults are raw and derived evidence 30 days, webhook payloads 7 days, workflow metadata 365 days, reference-only audit records and deletion tombstones 7 years, and backup expiry 35 days. Tenant policy may shorten retention; extension requires an explicit deployment cap. Legal holds override expiry. Processing and storage are immutably pinned to the session region with no silent cross-region fallback.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| D-014 | X-03            | **Resolved** | The first adopter segment is mobile-first regulated African fintech onboarding of adult individuals. The initial country packs are Nigeria, Ghana, Kenya, and South Africa, in English. Smile ID and Dojah are the first real provider adapters, both using tenant-owned credentials behind the isolated provider-runner contract; neither is a hard-coded primary. The shared baseline is live selfie, liveness/PAD, one-to-one face comparison, national identity document, passport and driving-licence capture, document quality, and MRZ/barcode where declared. Initial authority-backed identifiers are Nigeria NIN/VNIN with optional BVN for an explicitly banking-compatible profile, Ghana Card, Kenya National ID or passport, and South Africa National ID. Provider fallback requires equivalent capability, compatible authority/recipient/region, and an explicit policy-approved branch. NFC, voice, KYB, AML, address, tax, phone, non-English localisation, additional countries, and unsupported resident/refugee documents are deferred. |
+| D-015 | F-03            | **Resolved** | Use `github.com/oklog/ulid/v2` v2.1.2 behind Idenqa-owned typed prefixed identifiers                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| D-016 | O-04            | **Resolved** | Support selectable per-process OTLP over gRPC and HTTP/protobuf with export disabled by default; require TLS except for explicit loopback development; support redacting authentication headers, private CA, server-name verification, and paired mTLS credentials; use parent-based configurable trace sampling at a 0.10 default, a bounded 2,048-span queue and 512-span batches with a five-second delay, periodic unsampled metrics at 60 seconds, bounded export timeout and retry, and fail-fast invalid startup configuration                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| D-017 | F-05            | **Resolved** | Use `github.com/spf13/cobra` v1.10.2 through the owned `internal/cli` boundary for all public Go process command trees and shell completion; keep explicit `envconfig` and `godotenv` configuration without Viper                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| D-018 | C-04            | **Resolved** | Use the proposed C-04 contract: immutable active-profile snapshots, dedicated deterministic signed capture tokens with database revocation, bounded configurable lifetimes, read-committed atomic creation, and a safe `verification.created.v1` outbox record                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| D-019 | E-01            | **Resolved** | Use separate `aut_` authority, immutable `ntc_` notice-version, verification-local PII-free `sub_` subject, and append-only `ack_` subject-response records; keep tenant declaration separate from Idenqa enforcement; require explicit consent when configured; and evaluate restriction, withdrawal, expiry, and supersession from current authoritative state                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| D-020 | E-04            | **Resolved** | Use Lit v3.3.3 for the framework-neutral Web Component, retain tsdown for the published library build, use Vite v8.2.2 only for development and browser fixtures, and use `@playwright/test` v1.62.1 for real-browser tests. Vitest remains the pure-logic runner; Effect is excluded.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| D-021 | X-01            | **Resolved** | Use Swift 6.2, Apple first-party frameworks, and iOS 16+ with no third-party Swift runtime dependency. Native bootstrap uses a tenant-backend-delivered single-use Idenqa capture token bound on first redemption to an allow-listed application identifier and SDK-generated hardware-backed P-256 proof key; optional platform attestation supplements but does not replace proof of possession.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| D-022 | O-02            | **Resolved** | The worker owns provider-neutral regional evidence-deletion configuration. A bounded identifier-only PostgreSQL coordinator durably derives versioned Headgate intents from authoritative deletion rows for immediate removal and 35-day backup finalisation; task payloads contain only deletion identifiers and processing never silently crosses regions.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+
+An open gate does not block earlier bricks. Resolve it immediately before its dependent brick becomes **Ready**.
+
+---
+
+## 4. Milestone tracker
+
+| Milestone                         | Bricks                                  | Status          | Exit proof                                                                                                 |
+| --------------------------------- | --------------------------------------- | --------------- | ---------------------------------------------------------------------------------------------------------- |
+| M-0 Repository foundation         | F-01 through F-06                       | **Complete**    | A tenant and scoped API key can be created; authenticated and cross-tenant behaviour is demonstrated       |
+| M-1 Session walking slice         | C-01 through C-05                       | **Complete**    | TypeScript SDK creates and retrieves an idempotent session with an immutable capture-profile snapshot      |
+| M-2 Evidence and capture          | E-01 through E-04, R-01 through R-02    | **Complete**    | Basic Web capture records authority, captures an allowed image, uploads it, reconnects, and resumes safely |
+| M-3 Deterministic verification    | W-01 through W-02 and V-01 through V-04 | **Complete**    | Synthetic evidence produces a reproducible decision and signed webhook without Cloud or Console            |
+| M-4 Operational open-source alpha | O-01 through O-04                       | **Complete**    | Audit verification, retention/deletion, review, recovery, and restore paths are demonstrated               |
+| M-5 External beta expansion       | X-01 through X-04                       | **In progress** | Supported native capture and real providers pass conformance, security, resilience, and release gates      |
+
+### Current position
+
+- **Active bricks:** X-03 and X-04 are **In review**; X-02 is complete
+- **Next boundary:** close the external provider-certification, device, penetration, and production-shaped load/release evidence gates recorded under X-03 and X-04
+- **Blocking decisions:** None in repository code; production provider access still requires tenant credentials, provider agreements, processing-authority compatibility, regional review, and provider-confirmed retention/deletion behaviour
+- **Data policy:** Synthetic data only
+
+---
+
+## 5. M-0 — Repository foundation
+
+### F-01 Repository identity and toolchain bootstrap
+
+**Status:** Complete  
+**Depends on:** D-001
+
+**Objective:** Establish the smallest buildable public repository with its real toolchain and licence.
+
+**Scope:**
+
+- Go 1.26.6 root module using the canonical published module path.
+- Apache-2.0 `LICENSE` and initial dependency-licence policy.
+- Working `cmd/api` process with a startup-safe `/livez` endpoint.
+- Working `cmd/idenqa` command with `version` output.
+- Root `Makefile`, `.gitignore`, `.golangci.yml`, initial CI, and pinned Go tools.
+- `go.work` only when the second real Go module is introduced.
+
+**Exit proof:** A clean checkout can format, lint, test, build both binaries, run the API, call `/livez`, and print the CLI version using documented commands.
+
+**Not included:** PostgreSQL, authentication, domain packages, workers, SDKs, or empty target directories.
+
+**Implementation record:**
+
+- **Resolved decision:** D-001 selected `github.com/Mujhtech/idenqa`, matching the configured public Git remote.
+- **Public contracts:** `GET /livez` returns HTTP 200 with `text/plain; charset=utf-8`, `Cache-Control: no-store`, and `ok`; `idenqa version` prints version, commit, and build date. These bootstrap contracts may be extended compatibly in F-02 and F-03.
+- **Migrations and data:** None. F-01 handles no tenant, subject, evidence, credential, or other identity data.
+- **Security and privacy:** The API binds to loopback by default, uses finite HTTP timeouts, exposes only liveness, and returns no build or environment metadata. CI has read-only repository permissions.
+- **Acceptance evidence:** `env GOTOOLCHAIN=go1.26.6 make verify`; `./bin/idenqa version`; run `./bin/api` and call `curl --fail --show-error http://127.0.0.1:8080/livez`.
+- **Non-goals preserved:** No PostgreSQL, authentication, business domain, worker, SDK, capture, or speculative empty package was introduced.
+
+### F-02 Configuration, lifecycle, and health
+
+**Status:** Complete  
+**Depends on:** F-01
+
+**Objective:** Give every process one explicit startup and shutdown contract.
+
+**Scope:**
+
+- Typed `IDENQA_*` configuration through `envconfig`.
+- Explicit local/test dotenv loading through `godotenv`; process environment wins.
+- Conditional Ozzo use only if typed cross-field validation proves useful.
+- Signal handling, graceful shutdown, startup, liveness, readiness, and safe build metadata.
+- Structured `slog` configuration with secret redaction.
+
+**Exit proof:** Tests cover configuration precedence, invalid configuration, redaction, shutdown deadlines, and readiness changes during drain.
+
+**Not included:** Database readiness, HTTP business routes, or remote secret managers.
+
+**Implementation record:**
+
+- **Configuration contract:** HTTP host and port are configured separately through `IDENQA_HTTP_HOST` and `IDENQA_HTTP_PORT`. `IDENQA_HTTP_TLS_MODE` selects `disabled` or `file`; file mode requires both `IDENQA_HTTP_TLS_CERT_FILE` and `IDENQA_HTTP_TLS_KEY_FILE`. Shutdown and logging configuration remain typed and documented. Unknown `IDENQA_*` variables fail startup. An optional `--env-file` is explicit, cannot override the real process environment, and is not required in production.
+- **Health and lifecycle contracts:** `GET /startupz`, `GET /livez`, and `GET /readyz` are separate. A configured certificate pair is parsed before binding or health transitions; successful listener creation then marks startup and readiness. Drain makes readiness fail before bounded `http.Server.Shutdown`; SIGINT and SIGTERM use the same lifecycle.
+- **Process command contract:** `api` uses the shared Cobra boundary with `--env-file`, `--help`, `--version`, `version`, and generated shell completion. Cobra reads production process arguments directly; the API bootstrap exposes explicit argument injection only for deterministic tests. Startup failures retain structured logging without duplicate plain-text errors.
+- **TLS, logging, and metadata:** Direct TLS uses a synchronously loaded certificate pair and a hard minimum of TLS 1.2. Disabled mode supports local development or termination at a trusted reverse proxy. Certificate and key paths are not logged; initial file rotation requires a graceful restart. Application logs use configurable structured `slog` JSON or text output with secret-like attribute redaction. Startup logs contain only derived address, TLS status, and safe version, commit, and build-date metadata.
+- **Dependencies:** `envconfig` v1.4.0 and stable `godotenv` v1.5.1 were added after version, licence, maintenance, graph, and vulnerability review. Ozzo remains **Conditional** and unadded because F-02 needs no validation framework.
+- **Migrations and data:** None. Health and configuration paths handle no tenant, subject, evidence, credential, or identity data.
+- **Acceptance evidence:** `env GOTOOLCHAIN=go1.26.6 make verify`; run `./bin/api` in file TLS mode with a local test certificate; call `curl --cacert <certificate> https://127.0.0.1:<port>/readyz` and receive `ok`; send SIGINT and observe ordered `api draining` and `api stopped` logs with exit code 0.
+- **Non-goals preserved:** No database readiness, HTTP business routes, remote secret manager, telemetry SDK, or worker lifecycle was introduced.
+
+### F-03 HTTP, identifiers, errors, and telemetry baseline
+
+**Status:** Complete  
+**Depends on:** F-02, D-002, and D-015
+
+**Objective:** Establish stable transport primitives before feature endpoints multiply.
+
+**Scope:**
+
+- Chi routing, `go-chi/render`, request IDs, body limits, recovery, deadlines, and safe CORS defaults.
+- Typed prefixed identifiers, cryptographic generation, injected clock, and deterministic test implementations.
+- Shared success rendering and problem-details error mapping with stable codes.
+- OpenTelemetry providers and Chi route instrumentation using route templates.
+- Attribute allow-lists that prohibit tenant, subject, evidence, and verification IDs as metric labels.
+
+**Exit proof:** Handler tests prove success, error, panic, cancellation, request-ID, `Retry-After`, `WWW-Authenticate`, and redaction behaviour; telemetry tests prove raw paths and identity-derived labels are absent.
+
+**Not included:** Tenant authentication or business resources.
+
+**Implementation record:**
+
+- **HTTP contract:** Chi owns route matching and middleware composition. Idenqa owns server-issued `req_` request IDs and a narrow recovery adapter because Chi's generic recoverer logs panic values and stacks and emits a bare 500; the owned adapter preserves redaction and stable JSON problems. Configurable body and request limits, JSON resource rendering, `Retry-After`, `WWW-Authenticate`, and JSON 404/405 responses are in place. The WebSocket adapter clears the ordinary HTTP read and write deadlines immediately before an accepted upgrade; realtime handlers then own bounded hello, write, heartbeat, session-expiry, and connection-lifetime deadlines.
+- **Capture-browser contract:** `github.com/go-chi/cors` owns CORS header and preflight handling. An Idenqa-supplied exact-origin predicate denies browser access by default when the configured list is empty. Configuration rejects wildcards, paths, credentials, query strings, fragments, and duplicates. Approved preflights use a fixed method and header allow-list without enabling credentialed cookies. A disallowed actual request receives no CORS permission headers; CORS is not an authentication or authorisation boundary.
+- **Identifier contract:** The selected implementation uses `github.com/oklog/ulid/v2` v2.1.2 with an injected clock, cryptographic concurrency-safe monotonic entropy in production, deterministic test sources, validated three-letter lowercase resource prefixes, and resource-specific wrappers beginning with `id.Request`. ULID timestamps are not authoritative business timestamps; authoritative ordering fields remain primary and identifiers act only as stable tie-breakers.
+- **Telemetry contract:** `github.com/riandyrn/otelchi` instruments Chi traces and standard HTTP metrics. An owned tracer-provider wrapper allow-lists route-template, method, scheme, status, and protocol attributes while dropping raw targets, queries, user agents, client addresses, identity-derived labels, error messages, and unapproved baggage propagation. F-03 creates injectable trace and metric providers with safe service metadata and ordered shutdown but intentionally configures no exporter.
+- **Dependencies:** Pinned Chi v5.3.2, `go-chi/cors` v1.2.2, render v1.0.3, `otelchi` v0.12.3, OpenTelemetry v1.46.0, selected ULID v2.1.2, and selected `github.com/coder/websocket` v1.8.15 after release, licence, maintenance, graph, vulnerability, protocol, and explicit acceptance review. The runtime graph does not include Gorilla WebSocket, and the selected WebSocket library remains confined to `internal/transport/realtime`.
+- **Migrations and data:** None. The new boundary handles only synthetic test resources and operational request metadata; no tenant, subject, evidence, or verification persistence exists.
+- **Acceptance evidence:** `env GOTOOLCHAIN=go1.26.6 make verify`; handler tests cover success, unknown errors, panics, cancellation, body limits, request IDs, protocol headers, deny-by-default and exact-origin CORS behaviour, route-template spans, and metric label allow-lists; a local API run proves request IDs, missing CORS permission headers for a denied origin, an allowed capture-origin preflight, and ordered SIGINT drain.
+- **Non-goals preserved:** No tenant authentication, business resources, exporter or collector selection, WebSocket endpoint, evidence bytes, database, task library, or commercial surface was introduced.
+
+### F-04 PostgreSQL, migrations, and integration harness
+
+**Status:** Complete  
+**Depends on:** F-02 and D-003
+
+**Objective:** Make PostgreSQL the tested durable foundation.
+
+**Scope:**
+
+- pgx pool configuration, readiness, timeouts, transaction runner, and shutdown.
+- Versioned migrations with preflight, up, and safe development/test down behaviour.
+- sqlc generation workflow and clean-generation check.
+- PostgreSQL integration-test harness with isolated databases.
+- Migration-from-empty, migration-forward, rollback-policy, and pool-failure tests.
+
+**Exit proof:** A documented command starts PostgreSQL, migrates an empty database, runs integration tests, proves readiness failure/recovery, and produces no uncommitted generated changes.
+
+**Not included:** Tenant tables or domain repositories.
+
+**Implementation record:**
+
+- **Database lifecycle:** Typed configuration owns the PostgreSQL URL, bounded pool sizes and lifetimes, connection timeout, health interval, health timeout, and migration timeout. API composition opens the pool, performs an exact read-only schema check before readiness, closes it during ordered shutdown, and continuously removes and restores readiness as PostgreSQL fails and recovers. API and worker startup never invoke migration code.
+- **Transaction contract:** `internal/platform/postgres` owns explicit read-committed, repeatable-read, and serializable choices plus read-only mode. `WithinTransaction` never retries implicitly, preserves the operation error, and attempts a separately bounded rollback even after caller cancellation. Feature adapters must define narrower ports at their consuming boundaries.
+- **Migration contract:** Paired reviewed SQL files are embedded in `idenqa`. `migrate preflight`, `up`, and `version` are production-safe operations; `down --confirm` rolls back exactly one version only when the environment is explicitly development or test. Migration metadata is fixed at `public.schema_migrations` rather than derived from PostgreSQL's mutable search path. The initial migration creates only the empty `idenqa` application schema; no tenant or domain table exists.
+- **Query and integration workflow:** sqlc v1.31.1 generates the owned connectivity query behind `internal/platform/postgres/sqlgen`, and CI rejects generated drift. The PostgreSQL integration harness creates a cryptographically named database per test, applies migrations from empty, checks exact compatibility, proves transaction rollback, rejects production rollback, permits confirmed test rollback, forces actual connection loss, and proves recovery before dropping the isolated database.
+- **Dependencies:** Pinned pgx v5.10.0 and golang-migrate v4.19.1 as runtime dependencies and sqlc v1.31.1 as a build-only tool after release, licence, maintenance, transitive-graph, and vulnerability review. PostgreSQL 18.4 is pinned by official multi-architecture image digest for local and CI integration tests. Redis, an ORM, and a standalone migration executable were not introduced.
+- **Security and privacy:** Configuration errors and public operational errors do not expose database URLs or credentials. Pool health and migration reports expose only compatibility state. Tests use synthetic schema names and values; F-04 stores no tenant, subject, evidence, verification, or credential data.
+- **Acceptance evidence:** `GOTOOLCHAIN=go1.26.6 make verify` passes formatting, clean sqlc generation, module verification, race-enabled tests, lint with zero issues, `govulncheck` with no reachable vulnerabilities, and both binary builds. Against the pinned PostgreSQL 18.4 harness on configurable port 55433, `idenqa migrate preflight`, `up`, and `version` report the expected `0 -> 1` transition; a confirmed production down is rejected without changing version 1; the race-enabled integration suite passes migration, rollback, transaction, and real readiness failure/recovery tests.
+- **Non-goals preserved:** No tenant model, RLS policy, domain repository, task library, Redis dependency, automatic startup migration, SDK, capture package, Console, or Cloud code was introduced.
+
+### F-05 Tenant persistence and row-level security
+
+**Status:** Complete  
+**Depends on:** F-04
+
+**Objective:** Establish tenant isolation before adding tenant-owned data.
+
+**Scope:**
+
+- Tenant ID, lifecycle state, repository port, PostgreSQL adapter, and migrations.
+- Mandatory tenant scope in application repository operations.
+- PostgreSQL RLS policies and narrow audited administrative bypass.
+- CLI tenant creation, inspection, disablement, and synthetic test fixtures.
+
+**Exit proof:** Integration and security tests attempt cross-tenant reads, writes, identifier probes, missing-scope access, worker-style access, and privileged bypass. All unauthorised paths fail without revealing resource existence.
+
+**Not included:** Human accounts, Console, billing, or tenant configuration beyond what later bricks require.
+
+**Implementation record:**
+
+- **Tenant model:** `internal/tenant` owns typed `ten_` identifiers, the `active` and `disabled` lifecycle states, optimistic versions, UTC lifecycle timestamps, explicit `Scope`, non-disclosing `ErrNotFound`, lifecycle conflict handling, and separate scoped and administrative repository ports. No display name, billing field, Console setting, or other tenant configuration was added.
+- **Application boundary:** Scoped repository calls require a non-zero tenant scope and include the same tenant identifier in application queries. Scope construction is explicitly documented as awaiting authenticated access-context restriction in F-06. Worker-style access uses the same scoped repository and receives no process-specific bypass.
+- **PostgreSQL enforcement:** Migration 2 creates `idenqa.tenants`, enables and forces RLS, and matches rows against the transaction-local `idenqa.tenant_id` setting. Runtime pools may enter a validated, quoted PostgreSQL role at connection creation; production runtime roles must neither own tenant tables nor hold `BYPASSRLS`. Transaction-local scope is set before generated queries and cannot leak through pooled connections.
+- **Administrative boundary:** `IDENQA_DATABASE_ADMIN_URL` is separate from the runtime URL and is required by `idenqa tenant`. The database principal must be a superuser or narrowly provisioned `BYPASSRLS` administrative role. Successful create, inspect, and disable operations require bounded actor and reason assertions and atomically append `idenqa.tenant_admin_audit`. This asserted actor is not authenticated identity; F-06 owns that later contract.
+- **CLI contract:** Cobra v1.10.2 owns the public `idenqa` command tree, POSIX-style flags, help, and shell-completion generation. `idenqa tenant create`, `inspect`, and `disable` produce stable plain output. Inspect and disable require a typed tenant ID; disable additionally requires the expected version and performs a one-way optimistic transition. Invalid arguments use exit code 2 and operational failures use exit code 1 without exposing database credentials. Configuration remains explicit through `envconfig` and `godotenv`; Viper was not added.
+- **Security evidence:** The live suite creates a non-login runtime role, grants only schema/table access, and proves own-tenant reads, non-disclosing cross-tenant identifier probes, cross-tenant write rejection, missing-scope fail-closed behaviour, worker-style isolation, transaction-local scope cleanup, and successful audited privileged operations. The runtime role cannot access the administrative audit table.
+- **Migrations and data:** Migration 2 stores only synthetic tenant lifecycle metadata and administrative audit assertions. It stores no human account, credential, subject, evidence, verification, billing, Console, or Cloud data.
+- **Acceptance evidence:** `GOTOOLCHAIN=go1.26.6 make verify` passes clean sqlc generation, module verification, race-enabled unit tests, lint with zero issues, `govulncheck` with no reachable vulnerabilities, and binary builds. The race-enabled live PostgreSQL 18.4 suite passes tenant RLS and F-04 regression tests. A local CLI demonstration migrates to version 2, creates and inspects a synthetic tenant, disables it with expected version 1, and inspects the resulting disabled version 2.
+- **Non-goals preserved:** No API key, authenticated principal, HTTP tenant endpoint, human account, Console, billing, general audit subsystem, task library, SDK, or capture implementation was introduced.
+
+### F-06 Access context and tenant API keys
+
+**Status:** Complete  
+**Depends on:** F-03, F-05, and D-004
+
+**Objective:** Authenticate tenant backends and authorise operations below the HTTP layer.
+
+**Scope:**
+
+- Principal, credential, scope, effective tenant actor, and access-context types.
+- Display-once API-key creation, secure storage, verification, expiry, revocation, and rotation.
+- HTTP authentication middleware that constructs access context.
+- Application-service authorisation independent of HTTP middleware.
+- CLI API-key creation, listing without secret disclosure, rotation, and revocation.
+
+**Exit proof:** The CLI creates a tenant and API key; the API accepts an authorised request, rejects missing/expired/revoked/wrong-scope credentials, and denies a cross-tenant request with non-disclosing errors.
+
+**Not included:** Capture tokens, workload credentials, human OIDC, support access, or break-glass workflows.
+
+**Selected D-004 contract:**
+
+- Presented keys use `idq_v1_<tenant-ulid-payload>_<key-ulid-payload>_<secret>` with a 32-byte random unpadded-Base64URL secret and are returned exactly once. Only the Bearer header transport is accepted.
+- Stored verification material is a domain-separated HMAC-SHA-256 using a versioned deployment pepper. Verification is constant-time, invalid states are non-disclosing, and unknown identifiers perform dummy-MAC work.
+- The embedded tenant payload is an untrusted lookup hint usable only by the narrow RLS credential-verification adapter. It cannot produce `tenant.Scope` or an access context before the credential and tenant lifecycle are verified.
+- Scope patterns use `<resource>:<action>` and may be exact, `<resource>:*`, `*:<action>`, or `*:*`. Partial globs are rejected. Wildcards resolve only across tenant-assignable permissions, and issuance stores an immutable exact-scope snapshot so future registry additions do not expand existing keys.
+- Creation requires explicit expiry or explicit no-expiry intent, subject to deployment policy. Rotation issues a new display-once credential with bounded overlap and lineage; expiry, retirement, and revocation are irreversible.
+- Application services authorise exact resolved scopes below transport middleware. Invalid credentials return one authentication failure, insufficient scope is distinct only after successful authentication, and cross-tenant resource probes remain non-disclosing.
+
+**Implementation record:**
+
+- **Scope foundation:** `internal/access` now owns validated exact permissions, complete-segment scope patterns, the tenant-assignable registry, deterministic wildcard resolution, immutable requested-pattern and resolved-permission snapshots, defensive copies, and fail-closed authorisation checks. The initial registry contains tenant read, capture-profile read/write, and verification-session create/read permissions; platform-administration permissions are absent by construction.
+- **Credential foundation:** `internal/platform/id` owns the non-secret `key_` identifier. `internal/access` generates and strictly parses the fixed-length `idq_v1` display-once credential with cryptographic entropy, keeps its tenant payload explicitly as an untrusted hint, and redacts ordinary string, Go-syntax, text, and JSON rendering. The access package also owns immutable versioned 32-byte peppers, domain-separated HMAC-SHA-256 digests, defensive digest copies, constant-time verification, and old-version verification during rotation.
+- **Configuration boundary:** `internal/config` strictly decodes the paired `IDENQA_API_KEY_ACTIVE_PEPPER_VERSION` and redacting `IDENQA_API_KEY_PEPPERS` values. Duplicate, zero, malformed, padded, wrong-length, missing-active, and partial configurations fail closed. These values are optional only until an API-key operation is composed; F-06 process composition will require them.
+- **Lifecycle and persistence:** `internal/access` now owns the secret-free API-key aggregate, time-derived expiry, irreversible immediate revocation, irreversible scheduled retirement, optimistic versions, immutable rotation predecessor, and defensive lifecycle values. A scheduled predecessor remains usable only until its bounded deadline and can still be emergency-revoked during overlap. Migration `000003_access` persists only HMAC verification material and immutable scope snapshots, constrains credential metadata and lineage, permits one successor per predecessor, and forces tenant RLS. The PostgreSQL adapter requires an explicit scope for ordinary operations and exposes a separate narrow verification lookup that pairs the untrusted tenant hint with the key identifier without constructing `tenant.Scope`.
+- **Issuance and rotation:** The owned `Issuer` service validates tenant-assignable patterns, snapshots resolved permissions, requires an explicit fixed-expiry or no-expiry intent, applies configurable no-expiry and maximum-lifetime policy, generates and persists verification material before returning the display-once credential, and rotates by atomically creating a same-tenant successor while scheduling its predecessor. Rotation inherits the predecessor label and exact grant, requires the successor to outlive overlap, and applies a deployment-configured maximum overlap. The persistence insert also verifies the owning tenant is active in the same PostgreSQL statement.
+- **Authentication and authorisation:** The transport-neutral `Authenticator` strictly parses a presented credential, performs real or dummy HMAC work, uses only the paired tenant and key hints for a narrow RLS lookup, verifies the stored pepper version and digest, checks key and current tenant lifecycle, and constructs `tenant.Scope` only after every authentication check succeeds. All expected credential failures collapse to `ErrInvalidCredential`; infrastructure and pepper-configuration failures remain operational errors. The resulting `access.Context` carries the API-key principal, verified effective tenant scope, and immutable grant, while application services use its exact-permission `Require` operation independently of HTTP middleware.
+- **HTTP access boundary:** `internal/transport/httpapi` now accepts exactly one `Authorization` field using the case-insensitive Bearer scheme and never reads API keys from query parameters or cookies. Successful authentication is carried through an unexported request-context key. Route permission middleware distinguishes authenticated insufficient scope with a stable 403 response, but application handlers still repeat permission and tenant-boundary checks. Invalid credentials return the same stable 401 problem and Bearer challenge; operational authentication failures return the generic 500 problem and logs never include the credential or wrapped failure text.
+- **API composition and first protected route:** The `api` process now requires a valid active API-key pepper and pepper set before it opens PostgreSQL, then manually composes the scoped access and tenant adapters, transport-neutral authenticator, HTTP access middleware, tenant-read application service, and route. `GET /v1/tenant` exposes safe metadata for only the authenticated tenant; the application service independently requires `tenant:read` and passes the same verified tenant identifier as repository scope and target.
+- **Audited CLI lifecycle:** `idenqa api-key create`, `list`, `rotate`, and `revoke` call access application services through the privileged PostgreSQL adapter. Create accepts repeated exact or wildcard scope patterns and an explicit expiry choice. Rotation inherits the immutable label and grant, applies configured overlap policy, and requires confirmation. Revocation requires confirmation and an expected version. Migration `000004_access_admin` adds a forced-RLS audit table; each successful bypass operation writes its actor, reason, target, and occurrence atomically. Only create and rotate reveal the newly committed credential, exactly once.
+- **Security evidence:** Unit and fuzz tests cover scope syntax and snapshot restoration; fixed credential layout including Base64URL underscores; malformed identifier, separator, alphabet, padding, and length rejection; display redaction; deterministic secret generation and entropy failures; the selected HMAC domain; successful, mismatched, and dummy constant-time comparisons; pepper rotation; explicit expiry/no-expiry choices; lifetime and overlap policy; credential suppression on persistence failure; lifecycle invariants, scheduled retirement, emergency revocation, single public authentication failure, access-context construction, exact application authorisation, strict Bearer extraction, rejection of alternate credential transports, safe 401/403/404/500 mapping, cross-tenant non-disclosure, administrative attribution, stale-version rejection before write, defensive copies, and configuration rejection without partial mutation. The live PostgreSQL suite proves own-tenant access, missing-scope denial, non-disclosing cross-tenant reads, wrong-hint verification denial, atomic successor creation and retirement scheduling, continued overlap usability, emergency revocation, optimistic-conflict rejection, lineage, successful authentication, active-tenant HTTP access, cross-tenant HTTP non-disclosure, disabled-tenant HTTP rejection under a non-owner runtime role, complete CLI create/list/rotate/revoke behavior, secret-free lifecycle output, display-once issuance, and one atomic administrative audit record per successful CLI bypass operation.
+- **Acceptance:** Accepted when the user directed work to proceed to C-01. No F-06 work remains.
+
+---
+
+## 6. M-1 — Session walking slice
+
+### C-01 Public HTTP contract foundation
+
+**Status:** Complete  
+**Depends on:** F-06 and D-005
+
+**Objective:** Establish a versioned public contract before implementing capture-profile endpoints.
+
+**Scope:**
+
+- OpenAPI layout, versioning, generation, linting, compatibility checks, and stable problem details.
+- Pagination and conditional-mutation conventions.
+- `Idempotency-Key`, request ID, deprecation, and rate-limit header definitions.
+- Contract fixtures shared by handlers and SDK conformance tests.
+
+**Exit proof:** Contract lint and compatibility checks pass; a generated or validated minimal client can call a protected test resource and decode every documented error class.
+
+**Not included:** A full generated SDK or capture-profile schema.
+
+**Implementation record:**
+
+- **Selected workflow:** D-005 resolves OpenAPI 3.1 YAML under `contracts/api/openapi/v1` as the public HTTP source of truth. `oapi-codegen` v2.8.0 generates committed Go transport models and a minimal response-aware client, Vacuum v0.30.1 enforces the committed lint ruleset at a 100 quality score, and oasdiff v1.29.1 checks pull-request changes against the base contract. The generator and verification tools are pinned with Go `tool` directives; only `github.com/oapi-codegen/runtime` v1.7.0 enters generated client builds.
+- **Versioned contract:** The initial v1 document contains only the existing protected `GET /v1/tenant` walking resource plus reusable components. URI major versioning is the compatibility boundary. Generated types remain transport contracts and do not replace tenant-domain types, application services, or authorisation.
+- **HTTP conventions:** The contract and companion conventions define direct single-resource responses, collection envelopes, opaque cursor pagination, strong `ETag` and required `If-Match` mutation preconditions, RFC-structured `Idempotency-Key` semantics, server-issued request IDs, stable RFC 9457 problem extensions, rate-limit reporting, and RFC 9745/RFC 8594 deprecation and sunset signalling. Per-operation idempotency retention and distributed rate-limit enforcement remain explicitly unresolved later decisions.
+- **Handler alignment:** The tenant handler serialises the generated v1 tenant representation and returns a strong entity tag derived from its authoritative optimistic version. Browser CORS exposes the contract's safe response headers. Authentication and application-level `tenant:read` authorisation remain unchanged and below the generated client boundary.
+- **Shared fixtures and conformance:** Committed synthetic fixtures cover an active tenant, cursor page metadata, and all 15 stable problem codes. Tests validate typed identifiers and enums, prove the generated client can call the protected handler and decode both success and authentication failure, and decode every error response documented for the walking operation.
+- **Dependency review:** The selected generator and oasdiff are Apache-2.0, Vacuum is MIT, and the generated-client runtime is Apache-2.0. Current signed releases, module versions, the transitive graph, and reachable vulnerabilities were checked before completion. Vacuum's tool-only dependencies, including Viper, are not runtime configuration dependencies and do not change the selected `envconfig`/`godotenv` boundary.
+- **Acceptance evidence:** `GOTOOLCHAIN=go1.26.6 make verify` passes OpenAPI linting, reproducible sqlc and OpenAPI generation, module verification, race-enabled unit and conformance tests, lint with zero issues, `govulncheck` with no reachable vulnerabilities, and both binary builds. `make contract-breaking OPENAPI_BASE=contracts/api/openapi/v1/openapi.yaml` reports no breaking changes. The exact-toolchain live PostgreSQL suite passes the protected HTTP regression path.
+- **Acceptance:** Accepted when the user directed work to continue to C-02. No C-01 work remains.
+
+### C-02 Capture-profile domain and registry
+
+**Status:** Complete  
+**Depends on:** C-01 and D-006
+
+**Objective:** Model tenant-configurable capture requirements without conflating evidence with acquisition.
+
+**Scope:**
+
+- Evidence type, artefact, acquisition method, purpose, assurance, fallback, and capability vocabulary.
+- `any_of` choices and `all_of` requirements.
+- Versioned evidence-type and acquisition-method registry.
+- Profile validation, activation rules, canonical serialisation, and content digest.
+- Built-in synthetic definitions for document front/back and selfie image using file upload or live camera.
+
+**Exit proof:** Domain and property tests prove valid choices, required combinations, fallback conditions, canonical digests, unknown extensions, and rejection of impossible assurance combinations. Uploaded evidence cannot claim live or active-liveness assurance.
+
+**Not included:** Persistence, HTTP endpoints, UI presentation, NFC, video, voice, or real biometric processing.
+
+**Implementation record:**
+
+- **Resolved decision:** D-006 selected pinned, immutable, fail-closed registries. Built-in names use `idenqa.<kind>.<name>`; extensions require an owner-controlled namespace with at least two segments before the kind, such as `com.example.method.secure_camera`. Extensions cannot use or nest beneath the reserved `idenqa` namespace, and a capability advertisement cannot register vocabulary.
+- **Portable contracts:** JSON Schema 2020-12 documents under `contracts/capture-profile/v1` define profile and registry document shapes. A profile pins registry schema version, positive revision, and canonical SHA-256 digest. Unknown, unregistered, wrong-kind, duplicate, stale-registry, and incompatible references fail validation.
+- **Domain ownership:** `internal/evidence` owns evidence types, artefacts, acquisition methods, purposes, assurances, constraints, immutable registry revisions, and registry-bound SDK capability advertisements. `internal/verification` owns ordered capture profiles, requirement expressions, policy-approved fallbacks, validation, canonical serialisation, and content digests. Neither package imports HTTP, PostgreSQL, task, telemetry, provider, or cloud types.
+- **Assurance semantics:** Every `any_of` branch must independently produce all required artefacts and acquisition assurances. Every `all_of` method must produce the artefacts and their assurance sets may combine. Fallbacks pass the same validation and cannot weaken assurance. SDK capabilities only narrow eligible methods and never prove that an individual capture achieved assurance.
+- **Built-in registry:** The synthetic v1 registry defines document front/back and selfie-image artefacts, document-image and selfie-image evidence, file-upload and live-camera methods, identity-verification purpose, bounded constraints, and freshness, live-capture, capture-integrity, passive-liveness, and active-liveness vocabulary. File upload establishes none of those acquisition assurances. Still-image live camera may establish freshness, live capture, and capture-path integrity but cannot by itself establish passive or active liveness.
+- **Canonical form:** Requirements and method order remain semantic. Set-valued artefacts, assurances, constraints, fallback conditions, and string-list values are sorted before compact UTF-8 JSON serialisation; the content identifier is lowercase `sha256:<hex>`. Constraint values are bounded to strings, non-negative integers, booleans, and unique string lists so arbitrary JSON cannot undermine canonicalisation.
+- **Conformance:** Unit, table, property-style, and fuzz tests cover namespaced registry construction, defensive immutability, order-independent registry digests, choices, combined requirements, document artefacts, fallback safety, unknown and registered extensions, registry-bound capabilities, canonical profile digests, and the invariant that uploads cannot establish live or liveness assurance.
+- **Persistence boundary:** The repository database-pattern review confirmed that migrations, SQLC, tenant RLS, optimistic persistence, idempotency, and outbox mechanics remain outside C-02. C-03 reuses the established explicit tenant-scope and transaction patterns and introduces the generic durable idempotency foundation needed by profile commands; C-04 reuses that foundation and adds session/outbox atomicity.
+- **Acceptance evidence:** The exact Go 1.26.6 formatting, OpenAPI lint, reproducible generation, module verification, race-enabled repository test, golangci-lint, govulncheck, and binary-build gates pass. The unchanged OpenAPI compatibility check reports no changes. A bounded profile-invariant fuzz run executed more than 424,000 inputs without allowing file upload to establish live or liveness assurance. C-02 changes no database state, so no new live PostgreSQL proof is required.
+- **Acceptance:** Accepted when the user approved the C-03 lifecycle, cursor, and idempotency recommendations and authorised implementation. No C-02 work remains.
+
+### C-03 Capture-profile persistence and API
+
+**Status:** Complete  
+**Depends on:** C-02
+
+**Objective:** Let a tenant create, publish, retrieve, supersede, and deactivate versioned profiles.
+
+**Scope:**
+
+- Tenant-scoped profile and version repositories with RLS.
+- Create draft, validate, publish, retrieve, list, supersede, and deactivate operations.
+- Optimistic version checks, `ETag`, and `If-Match` for mutable drafts.
+- Immutable published versions and audit events.
+- Stable `prf_` profile identifiers with positive numeric revisions, at most one mutable draft per profile, and immutable published revisions.
+- Generic durable PostgreSQL idempotency records pulled forward from C-04; profile commands use a configurable 24-hour default retention and commit reservation, mutation, audit, and replay result atomically.
+- Short-lived opaque list cursors protected by a dedicated versioned HMAC keyring, bound to tenant and canonical query, and configured separately from credential peppers.
+
+**Selected operation policy:** Profile writes use read-committed transactions, SQL compare-and-swap conditions, and strong `ETag`/`If-Match` preconditions for caller-controlled changes. An advisory transaction lock is used only to suppress concurrent execution of the same scoped idempotency key; it is not an aggregate lock and does not replace optimistic concurrency.
+
+**Exit proof:** API and integration tests prove tenant isolation, optimistic conflicts, immutable published versions, canonical digests, and non-destructive supersession.
+
+**Completion evidence:** The versioned OpenAPI contract and generated Go client cover create, validate, publish, retrieve, list, supersede, and deactivate operations. Application and HTTP tests prove explicit scope checks, strict request headers and bodies, strong preconditions, and replay before new identifier allocation. Live PostgreSQL tests prove forced-RLS tenant isolation, optimistic draft conflicts, database-enforced published-content immutability, non-destructive supersession, atomic audit/idempotency completion, exact replay, and changed-input conflicts. Contract lint scored 100; race tests, static lint, vulnerability analysis, generation, module verification, and binary builds passed with Go 1.26.6.
+
+**Not included:** Verification sessions or a visual profile editor.
+
+### C-04 Verification sessions, idempotency, and outbox
+
+**Status:** Complete  
+**Depends on:** C-03 and D-018
+
+**Objective:** Create the first consequential workflow state with durable retry safety.
+
+**Selected D-018 contract:**
+
+- Create a `ver_` verification from one active published `prf_` profile. The transaction copies the exact published revision, registry reference, canonical document, and digest into an immutable session snapshot; the session starts in `collecting` at aggregate version 1.
+- Keep the initial request intentionally narrow: `capture_profile_id` plus optional bounded verification-session and capture-token lifetimes. Subject records, processing authority, metadata, return URLs, policy selection, and regional routing enter only in their owning later bricks rather than as weak placeholders.
+- Use a dedicated versioned HMAC-SHA-256 capture-token signing keyring, separate from API-key peppers and cursor keys. A token carries only a `ctk_` token ID, tenant ID, `ver_` ID, key version, issued time, and expiry in a canonical authenticated payload. PostgreSQL remains authoritative for active, revoked, expired, and session-terminal checks on every use.
+- Make signed tokens deterministic from persisted non-secret claims so an identical idempotent create retry can reconstruct the same credential without storing a usable bearer token in the idempotency result. Retain retired signing keys until every issued token and replay window under that version has expired.
+- Configure deployment defaults and hard maximums for both lifetimes. An authenticated tenant request may select values within those bounds; future tenant policy may supply defaults but can never exceed the deployment maximum.
+- Use a configurable 24-hour default idempotency retention. Under read committed, take a row-level share lock on the source profile while verifying its active published revision, then atomically commit the session, immutable snapshot, token record, audit event, `verification.created.v1` outbox envelope, and safe replay result. No background task is created in C-04.
+- Expose tenant-authenticated create/get endpoints and a capture-token-authenticated snapshot endpoint. C-04 models token revocation and automatic invalidation at expiry or terminal session state; public token renewal and explicit revocation endpoints remain outside this walking slice unless an immediate consumer requires them.
+
+**Scope:**
+
+- Verification-session state and immutable capture-profile requirement snapshot.
+- Short-lived capture-session token issuance and revocation model.
+- Reuse the durable idempotency records introduced in C-03 for scoped session keys, request fingerprints, pending/completed states, and safe result replay.
+- Optimistic aggregate versioning.
+- Atomic session, idempotency result, audit event, and outbox event transaction.
+- Create and retrieve session endpoints.
+
+**Exit proof:** Tests prove identical retry replay, different-fingerprint conflict, concurrent duplicate suppression, tenant isolation, profile immutability after edit/deactivation, transaction rollback, and outbox atomicity.
+
+**Not included:** Evidence upload, WebSocket, provider execution, or outbox dispatch.
+
+**Implementation record:**
+
+- **Domain and credential contract:** Added typed `ver_`, `ctk_`, and `evt_` identifiers; a collecting version-one session aggregate; immutable canonical profile snapshots; a dedicated redacting `idq_cap_v1` HMAC keyring; deterministic token reconstruction; database-backed expiry and irreversible revocation checks; and transport-neutral tenant and capture authentication contexts.
+- **Configuration contract:** API startup requires purpose-separated capture-token keys before opening PostgreSQL. Deployment configuration defines verification and capture-token defaults and maxima plus idempotency retention; request-selected whole-second lifetimes must be positive, within both maxima, and the capture token cannot outlive its session. Configuration diagnostics, string formatting, and JSON always redact key material.
+- **Persistence and atomicity:** Migration 000006 adds forced-RLS verification sessions, non-secret capture-token records, session audit, and generic outbox intent tables. Read-committed creation reserves the idempotency scope, share-locks the active published profile revision, and commits session snapshot, credential record, audit, `verification.created.v1`, and safe replay references together. PostgreSQL triggers protect snapshot identity/content/lifetime and make credential claims and revocation irreversible. No usable bearer token is stored in PostgreSQL.
+- **Public HTTP contract:** OpenAPI v1 now exposes `POST /v1/verifications`, tenant-authenticated `GET /v1/verifications/{verificationID}`, and capture-token-authenticated `GET /v1/capture/session`. Creation accepts only `capture_profile_id` and optional bounded lifetimes. Capture authentication uses its own Bearer realm and validates signature, exact durable claims, revocation, expiry, tenant binding, session state, and session expiry before returning the immutable requirements.
+- **Security and privacy:** Application predicates and forced RLS both constrain tenant reads and writes. Cross-tenant misses are non-disclosing. The signed capture token contains only non-secret identifiers and times, is explicitly revealed only by the creation response, and is redacted from generic formatting; raw evidence is neither represented nor accepted in this brick. Regional routing, subject data, processing authority, renewal/revocation HTTP endpoints, WebSocket traffic, task creation, and outbox dispatch remain deferred to their owning bricks.
+- **Acceptance evidence:** `GOTOOLCHAIN=go1.26.6 ... make verify` passed formatting, 100-point contract lint, generated-code checks, module verification, race tests, repository lint, vulnerability scanning, and both binary builds; the vulnerability lookup was rerun with network access after the sandbox blocked `vuln.go.dev`. `DATABASE_TEST_URL=postgres://...:55433/idenqa GOTOOLCHAIN=go1.26.6 go test -race -shuffle=on -tags=integration ./test/integration/...` passed against an isolated PostgreSQL 18.4 database. Tests cover exact replay and deterministic token reconstruction, changed fingerprints, concurrent duplicate suppression, forced-RLS isolation, source-profile deactivation, capture authentication, database-enforced immutability and revocation, late outbox failure rollback, and one committed session/token/audit/outbox set.
+
+### C-05 TypeScript SDK walking slice
+
+**Status:** Complete  
+**Depends on:** C-04 and D-007
+
+**Objective:** Prove the core is usable through a public SDK without exposing implementation-specific types.
+
+**Selected D-007 contract:** pnpm owns the TypeScript workspace. Strict TypeScript and tsdown produce ESM, CommonJS, declarations, and source maps for Node.js 22+ and modern browsers. Vitest owns package tests. `openapi-typescript` generates committed internal contract types from the authoritative OpenAPI document, and clean regeneration must produce no diff. A handwritten, zero-runtime-dependency public facade owns client methods, stable errors, request-ID propagation, idempotency-key behaviour, and `AbortSignal` cancellation. Generated symbols are not exported as public SDK API, and Effect is not a dependency.
+
+**Scope:**
+
+- Published-package layout for `@idenqa/sdk`.
+- Typed tenant client for profile and verification-session operations.
+- Capture-session client for retrieving immutable requirements.
+- `Promise`, `AbortSignal`, stable public errors, request IDs, and idempotency keys.
+- Contract conformance tests against the running API.
+
+**Exit proof:** A documented TypeScript program publishes a profile, creates a session, retries it idempotently, and retrieves the immutable requirements. It uses no root internal code and requires no Effect dependency.
+
+**Not included:** Web Components, WebSocket observation, uploads, or Effect adapters.
+
+**Implementation record:**
+
+- **Published boundary:** Added `sdk/typescript` as `@idenqa/sdk` with dependency-free runtime code, Apache-2.0 package licensing, Node.js 22+ and modern-browser Fetch support, ESM and CommonJS builds, declarations, source maps, and verified package exports. Generated OpenAPI symbols and Effect types do not appear in the published declarations.
+- **Client contract:** Added handwritten tenant clients for every current capture-profile operation and verification create/get, plus a capture-token client for immutable session retrieval. Public values use idiomatic camel-case fields except the portable capture-profile document, whose published cross-language JSON field names remain unchanged. Every success carries the server request ID and available ETag or Location metadata.
+- **Reliability and errors:** Consequential calls require a caller-retained plain idempotency key that the SDK safely encodes as an RFC 9651 String. Conditional calls require the exact strong ETag returned by the server. `AbortSignal`, injected Fetch, stable API/transport/protocol errors, retry metadata, URL validation, and credential-safe error paths are covered by tests.
+- **Generation and tooling:** D-007 selected pnpm v11.24.0, TypeScript v5.9.3, tsdown v0.22.14, Vitest v4.1.11, `openapi-typescript` v7.13.0, Prettier v3.9.6, publint v0.3.24, and `@arethetypeswrong/cli` v0.18.5. The latest TypeScript 5.x patch is used because the generator does not declare TypeScript 7 compatibility. Generated private types are committed and checked for drift; an internal correction prevents the external JSON Schema `$defs` keyword from becoming an instance field.
+- **Conformance and security:** Seven isolated SDK tests cover request formation, mapping, metadata, stable problem details, credential redaction, cancellation, protocol violations, and input validation. A reusable synthetic conformance deployment uses only public CLI, API, and SDK surfaces to create and publish a profile, create and exactly replay a verification, retrieve it as the tenant, and bootstrap it with the capture token. The SDK package contains no runtime dependencies; pnpm audit reports no known vulnerabilities.
+- **Acceptance evidence:** `GOCACHE=/private/tmp/idenqa-go-cache GOTOOLCHAIN=go1.26.6 make verify` passed Go and TypeScript formatting, 100-point OpenAPI lint, deterministic sqlc/oapi/OpenAPI-TypeScript generation, module integrity, race-enabled Go tests, SDK tests, Go lint, strict TypeScript checks, Go and npm vulnerability scans, binary and dual-package builds, publint, and all ESM/CommonJS/type-resolution profiles. Against isolated PostgreSQL 18.4 on port 55433, `make sdk-conformance` passed all eight tests including the complete real-API walking slice.
+
+---
+
+## 7. M-2 — Evidence and capture
+
+### E-01 Processing authority, notice, and acknowledgement
+
+**Status:** Complete  
+**Depends on:** C-04
+
+**Objective:** Ensure evidence collection cannot begin without the required processing authority and subject-facing notice state.
+
+**Scope:**
+
+- Processing-purpose, authority, notice-version, recipient, expiry, restriction, withdrawal, and subject-acknowledgement records.
+- Requirement snapshot references to the applicable notice and authority.
+- Application checks before issuing evidence grants.
+- Synthetic consent/acknowledgement flow where consent is the applicable authority.
+
+**Exit proof:** Tests prove missing, expired, withdrawn, wrong-purpose, wrong-recipient, and superseded authority cannot issue an evidence grant; acknowledgement history is immutable and auditable.
+
+**Not included:** Legal conclusions, general terms acceptance, or Console authoring.
+
+**Selected D-019 contract:**
+
+- Add separate `authority`, immutable notice-version, session-subject, and append-only subject-response records. Use Idenqa-owned `aut_`, `ntc_`, `sub_`, and `ack_` identifiers; the first `sub_` is verification-local and contains no direct identity attributes or tenant-supplied PII.
+- A tenant declares a bounded, namespaced authority category, purpose, jurisdiction and policy-pack reference. Idenqa validates structure and enforces the declared scope but does not infer, recommend, rename, or certify a lawful basis. Whether explicit subject consent is required is a separate field and is never inferred from general terms acceptance or the authority-category label.
+- Bind one authority to one verification-local subject and one verification session for this first slice. Snapshot the exact requirement purposes and evidence types, recipient display identity, permitted recipient reference, regions, validity interval, required notice version, and retention consequence reference. Reusable authority templates and cross-verification subject linking remain outside E-01.
+- Make each notice version immutable and content-addressed. It carries a stable semantic notice key, locale, structured mandatory copy, controller and recipient display identity, purpose and consequence copy, effective time, and canonical digest. A changed legal meaning or mandatory copy creates a new version; tenant branding cannot change its meaning.
+- Record `acknowledge`, `consent`, or `refuse` as distinct append-only responses against the exact authority, notice version, verification, subject, locale, capture principal, rendered-experience version when available, and server receipt time. An acknowledgement records an interaction, not proof that a person understood the notice or proof of their civil identity. Consent-required authority accepts only an explicit `consent` response; acknowledgement alone never satisfies it.
+- Refusal blocks evidence collection without producing `not_verified`. Restriction, objection, withdrawal, expiry, or supersession append an audited transition and are evaluated from current authoritative state on every evidence-grant decision. A verification snapshot retains the historical authority and notice references, but it cannot override a later blocking transition.
+- Tenant commands use authenticated application authorisation, idempotency, optimistic concurrency, forced RLS, and atomic audit/outbox intent. Capture responses use the existing capture principal, an idempotency key, and a server-generated receipt time. Neither a tenant assertion nor a capture-token interaction is represented as independently verified subject identity.
+- E-01 adds the public tenant APIs needed to create/read notice versions and declare/read/restrict/withdraw authorities, plus capture APIs to retrieve required notice state and append a subject response. E-03 will consume an owned authority-evaluator port; E-01 proves that evaluator with a synthetic evidence-grant decision rather than issuing a real upload grant early.
+
+**Implementation record:**
+
+- **Owned domain and identifiers:** Added Idenqa-owned `ntc_`, `aut_`, `sub_`, and `ack_` types; immutable content-addressed notice versions; verification-local PII-free subjects; bounded tenant declarations; distinct acknowledge, consent, and refuse receipts; irreversible lifecycle transitions; and a fail-closed synthetic evidence-grant evaluator. Consent-required authority accepts only explicit consent, while refusal, absent response, expiry, restriction, withdrawal, supersession, scope mismatch, recipient mismatch, region mismatch, or notice mismatch blocks processing.
+- **Durable invariants:** Migration 7 adds forced-RLS notice, subject, processing-authority, response, and audit records; immutable verification bindings to the exact subject, authority, and notice; capture-token idempotency principals; append-only history triggers; irreversible optimistic transitions; and atomic audit/outbox/idempotency writes. The binding trigger verifies all referenced records describe the same verification, and rollback removes capture-principal replay records before restoring the former API-key-only foreign key.
+- **Public contract and composition:** Added tenant APIs to create/read notices and declare/read/restrict/withdraw/supersede authority, plus capture-token APIs to retrieve the exact authority-and-notice snapshot and append a subject response. The OpenAPI contract remains the generated source, passes the 100-point lint gate, returns strong authority ETags, preserves stable problem codes, and is composed into the `api` process with manual constructor injection.
+- **Open-source SDK:** Extended the dependency-free `@idenqa/sdk` facade with notice and authority clients and capture authority/response methods. Public types remain handwritten and idiomatic; generated OpenAPI types remain private implementation details; `PROCESSING_AUTHORITY_REQUIRED` is a stable known error code.
+- **Acceptance evidence:** Domain tests cover active, missing-response, acknowledgement-without-consent, refusal, expiry, wrong-purpose, wrong-evidence, wrong-recipient, wrong-region, notice mismatch, restriction, withdrawal, and supersession decisions. Race-enabled isolated PostgreSQL 18.4 tests prove migration 7, exact notice replay, forced-RLS cross-tenant non-disclosure, consistent immutable session binding, append-only response history, auditable irreversible withdrawal, and live blocking after withdrawal. Repository verification passed deterministic generation, 100-point contract lint, race-enabled Go tests, eight SDK tests, Go lint, strict TypeScript checks, Go/npm vulnerability scans with no findings, binary and dual-package builds, publint, and all ESM/CommonJS/type-resolution profiles.
+
+### E-02 Evidence metadata, encryption, and object-storage boundary
+
+**Status:** Complete  
+**Depends on:** E-01 and D-008
+
+**Objective:** Represent and protect evidence without placing raw bytes in the domain or database.
+
+**Scope:**
+
+- Evidence and artefact metadata, lifecycle, integrity, acquisition method, assurance, region, retention class, and content reference.
+- Owned object-store and crypto/KMS ports.
+- Authenticated ciphertext envelope with algorithm, purpose, key version, and authenticated context.
+- S3-compatible storage adapter and local synthetic test implementation.
+- Quarantine and controlled-read grants.
+
+**Exit proof:** Integration tests prove encrypt/store/read, digest mismatch, wrong-tenant denial, wrong-context decryption failure, key-version handling, quarantine denial, and cleanup after failed persistence.
+
+**Not included:** Public uploads, malware scanning implementation, OCR, biometrics, or provider access.
+
+**Selected D-008 contract:**
+
+- Encrypt every evidence object with a unique random content key. Use authenticated streaming encryption behind the owned `platform/crypto` boundary so large evidence does not require whole-object buffering and Idenqa does not invent a chunk-encryption protocol. The selected initial implementation is Tink Go v2.8.0 Streaming AEAD with `AES256_GCM_HKDF_1MB`; Tink types must not cross the owned boundary.
+- Keep content encryption separate from key wrapping. An owned, provider-neutral key-provider port wraps and unwraps only the small content key or streaming keyset and returns a stable provider, immutable key reference, key version, wrapping algorithm, and wrapped value. Raw evidence bytes and provider SDK types must never cross this port.
+- Authenticate a canonical, versioned, non-secret context containing at least tenant, verification, evidence, requirement, artefact, evidence type, object purpose, and content revision. Persist its schema version and digest with the envelope. Wrong tenant, purpose, context, key version, or modified ciphertext must fail closed; there is no silent key or context fallback.
+- Provide a local open-source key provider backed by a versioned file keyring containing 256-bit KEKs and an explicit active version. Initialisation and rotation use atomic file replacement and restrictive permissions suitable for a mounted secret. An in-memory deterministic provider is test-only; inline plaintext environment keys are not a production mode.
+- Production KMS integrations are optional adapters to the same port. They store and use a stable provider-native key identity/version rather than a mutable alias, expose no vendor types, and fail closed when the KMS, key, or authenticated context is unavailable. The first cloud provider is not selected by D-008.
+- Store ciphertext only in the S3-compatible object store. Provider-side storage encryption remains enabled where available but supplements rather than replaces application-layer encryption. Object names are opaque and tenant-scoped; plaintext, unwrapped keys, and raw evidence never enter PostgreSQL, logs, traces, audit payloads, outbox events, or task payloads.
+- Persist the versioned envelope metadata needed to decrypt and verify an object: content algorithm and format version, wrapped content key/keyset, provider and immutable key identity/version, wrapping algorithm, context schema/digest, ciphertext object reference, ciphertext size/digest, and restricted plaintext-integrity metadata. Lifecycle, quarantine, region, and retention metadata remain evidence-domain state.
+- New writes use the active KEK. Normal KEK rotation rewraps the per-object content key/keyset without re-encrypting the evidence object; content re-encryption is reserved for a content-format or algorithm migration. Old keys cannot be retired until audited rewrap and recovery validation completes. Data-key caching and reuse are not part of the baseline.
+- Key destruction is allowed only through the authorised retention/deletion workflow with safety checks and audit evidence. Public and resumable upload mechanics, thresholds, and client-provided integrity rules remain D-009 rather than being folded into this gate.
+
+**Implementation record:**
+
+- **Owned identity and metadata:** Added the documented `evd_` typed identifier and an evidence aggregate containing only tenant, subject, verification, requirement, evidence-type, artefact, acquisition-method, achieved-assurance, region, retention, protected-content, integrity, lifecycle, and optimistic-version metadata. Raw evidence bytes and plaintext keys are absent from domain values.
+- **Assurance and lifecycle invariants:** Available evidence must use an acquisition method that can produce the selected artefact and every recorded assurance according to the pinned registry. Immutable available content can transition through an optimistic, reason-coded quarantine; quarantine and integrity failure deny controlled reads.
+- **Crypto and storage boundaries:** Added provider-neutral authenticated streaming sealer/opener, key wrapper/unwrapper, and versioned object-store ports. Wrapped-key, ciphertext-object, digest, envelope, and authenticated-context values validate bounded metadata and defensively copy sensitive byte slices without importing a provider SDK or cryptographic implementation into the evidence domain.
+- **Authenticated context:** Canonical versioned context binds tenant, verification, evidence, requirement, evidence type, artefact, acquisition method, object purpose, and content revision. Envelope construction fails when its context schema or digest differs from the evidence metadata.
+- **Concrete streaming encryption:** Pinned reviewed Tink Go v2.8.0 and added an `AES256_GCM_HKDF_1MB` adapter that generates a fresh keyset per object, keeps Tink and cleartext-keyset types inside the adapter, authenticates the exact canonical context, records the key purpose in the envelope, returns a stable safe open error while separately classifying proven ciphertext authentication, truncation, size, and checksum failures through an owned integrity sentinel, checks cancellation, and requires callers to wait for successful end-of-stream authentication before committing downstream effects. Context, key, cancellation, destination, and availability failures are not misclassified as evidence corruption.
+- **Local key provider:** Added a versioned file-backed 256-bit AES-GCM KEK keyring with an explicit active version, owner-only files, bounded strict JSON parsing, atomic non-overwriting initialisation and replacement rotation, exact-version unwrap without fallback, purpose/context domain separation, stable redacted errors, best-effort in-memory key clearing, and retention of old versions for rewrap-first rotation. The Cobra `idenqa evidence-key init` setup operation now creates this keyring at one explicit path without replacement, honours pre-mutation cancellation, closes retained key copies before success output, and returns only the non-secret active version. CLI rotation remains unresolved operational policy rather than being inferred from the provider primitive.
+- **Second-slice evidence:** Focused race-enabled tests cover multi-segment encryption, wrong context and purpose, modified and truncated ciphertext, owner-only file enforcement, non-destructive initialisation, exact old-key reads after rotation, and new writes switching to the active version.
+- **Ciphertext storage and persistence:** Added a root-confined local ciphertext adapter with bounded streaming writes, immutable exact versions, atomic publication, owner-only objects, checksum-verifying reads, and idempotent exact-version deletion. The protection workflow encrypts and hashes plaintext while streaming, stores ciphertext first, persists only the exact envelope and object metadata, and performs bounded cancellation-independent compensation when metadata validation or database commit fails. Failed cleanup returns a reconciliation-safe exact object reference without exposing it in ordinary error text.
+- **Durable evidence state:** Migration 8 adds forced-RLS evidence and append-only audit records, pins the immutable evidence registry used to interpret historical assurance, proves that the subject belongs to the same verification, protects content and envelope metadata from mutation, and permits only optimistic available-to-quarantined transitions. The PostgreSQL adapter restores through the exact registry revision and atomically couples creation or lifecycle transition with audit history. Isolated PostgreSQL 18.4 tests prove migration and rollback, ciphertext decryption through DB-restored metadata, cross-tenant non-disclosure, optimistic quarantine with audit history, immutable content metadata, and exact ciphertext compensation after a real foreign-key failure.
+- **Controlled-read contract:** Added opaque `grt_` processing-grant identity, retry-safe `rdm_` redemption identity, and an owned grant aggregate binding tenant, subject, verification, evidence, exact immutable requirement key, authority, subject response, policy, check, separately authenticated runner and workload version, purpose, plaintext-read operation, permitted variant, region, recipient, output destination, configurable maximum uses, a hard-bounded short expiry, use count, and irreversible revocation. Grant issuance resolves the evidence's exact registry, verifies that the purpose and evidence type are paired on that exact session requirement, and re-evaluates current processing authority before persistence. Redemption atomically deduplicates and claims a use before release, returns existing terminal state on replay, re-evaluates live authority and pinned response/policy references, denies quarantined evidence, authenticates the receiver's runner/check/destination binding, and supplies `rdm_` to the receiver as its destination-level commit idempotency key. The receiver stages plaintext transactionally, produces and commits at most once for that key, and on a replay after commit resumes only the missing outcome recording. Complete ciphertext and plaintext integrity are verified before commit; success is recorded afterward with a bounded cancellation-independent context. A proven integrity failure uses the same cancellation-independent bound and may be reported as `integrity_failed` only after an owned quarantine port atomically blocks the asset or durably records a fail-closed incident and reconciliation intent; incomplete quarantine is explicitly reported as an operational failure requiring reconciliation. The PostgreSQL evidence adapter implements the atomic quarantine-and-audit form of this port over migration 8.
+- **Durable controlled-read state:** Migration 9 adds forced-RLS processing grants, immutable redemption attempts, separately append-only terminal outcomes, attributed create/revoke audit history, and an append-only access-attempt audit that records every successful or denied claim invocation without requiring a grant foreign key. Grant creation requires both authenticated-principal and effective-tenant-actor attribution plus a reason. Claiming serializes first on tenant and `rdm_`, then on the grant, so concurrent replay across different grants cannot consume both. Uses increment atomically; missing, mismatched, wrong-runner, not-yet-valid, expired, revoked, and exhausted attempts remain externally indistinguishable while retaining bounded internal reasons. Terminal outcomes must match the durable runner, workload version, and claimed-use ordinal. Expiry is a deterministic boundary preserved by the immutable grant and creation audit; an attempted use at or after that boundary appends an `expired` denial rather than mutating the grant. Revocation is irreversible and atomically audited.
+- **S3-compatible production storage:** Added the independently versioned `github.com/Mujhtech/idenqa/adapters/objectstore/s3` module using AWS SDK for Go v2. The adapter performs bounded non-buffering ciphertext PUTs into random immutable physical versions, conditional creation, exact-version reads and idempotent deletion, end-of-stream size and SHA-256 verification, cancellation-aware producer handling, bounded ambiguous-outcome cleanup, and reconciliation-safe exact-reference return when cleanup fails. Real SDK conformance covers HTTPS and explicitly enabled HTTP, while fake-client fault tests cover oversized and failed producers, precondition ownership, tampering, cancellation, and failed cleanup. The root module remains free of cloud SDK dependencies. The adapter's first independent release must add a compatible released root-module requirement and pass standalone module gates without a local `replace`.
+- **Audited key rewrap:** Added a provider-neutral application workflow that unwraps the exact old envelope under its purpose and authenticated context, wraps with the active KEK, immediately unwraps and constant-time verifies the target, clears plaintext keyset copies, and only then persists. Migration 10 locks the exact aggregate version and atomically updates only wrapped-key metadata, aggregate version, and update time; database triggers forbid accompanying ciphertext, object, content, lifecycle, integrity, or quarantine changes. It appends both the aggregate `rewrap` event and an immutable dual-actor audit containing old and new key identities but no wrapped-key bytes. Available and quarantined assets are supported, stale transitions fail, and old keys remain required until fleet completion and recovery validation. The Cobra `idenqa evidence-key rewrap` command operates on one explicit tenant, evidence ID, and version with confirmation and complete attribution. Fleet discovery, batching, cadence, and provider selection remain unresolved operational policy under repository decision 16 rather than being hidden in this primitive.
+- **Verification:** Exact Go 1.26.6 repository-wide formatting, generation drift, 100-point contract lint, module integrity, race-enabled root and independent S3-adapter tests, SDK tests, Go lint, strict TypeScript checks, Go and npm vulnerability scans, binary and SDK builds, publint, and ESM/CommonJS/type-resolution package checks pass. Focused tests prove fail-closed target verification, unchanged ciphertext reads, stale-version rejection, and preservation of quarantine state. Isolated PostgreSQL 18.4 integration tests additionally prove migration 10 up/down, verified old-to-active key continuity over unchanged ciphertext, forced-RLS persistence, optimistic conflict handling, append-only attributed audit, and immutable evidence fields.
+
+### E-03 Requirement-bound evidence upload
+
+**Status:** Complete  
+**Depends on:** E-02 and D-009
+
+**Objective:** Accept evidence only for an authorised session requirement and artefact.
+
+**Scope:**
+
+- Short-lived upload grants bound to tenant, session, requirement, artefact, acquisition method, media constraints, size/duration, digest, region, encryption, and retention class.
+- Direct upload, completion acknowledgement, integrity verification, expiry, interruption recovery, and orphan cleanup.
+- MIME and file-signature validation, decompression limits, and quarantine hooks.
+- Idempotent finalisation and duplicate upload behaviour.
+
+**Exit proof:** Tests reject arbitrary, expired, replayed, wrong-method, wrong-type, oversized, corrupt, cross-tenant, and profile-disallowed uploads. Successful finalisation records the actual acquisition method without granting unsupported assurance.
+
+**Not included:** Web UI, video-specific processing, NFC, or production malware-vendor selection.
+
+**Selected D-009 contract:**
+
+- Capture clients upload raw bytes only over a dedicated authenticated HTTP evidence-ingress endpoint. The tenant backend and WebSocket control channel never relay evidence bytes. E-03 does not issue storage-direct plaintext URLs; Idenqa streams the request through the selected application encryption into the owned object-store boundary.
+- V1 accepts one complete request per attempt. An interruption abandons and exactly cleans the partial ciphertext, then the same durable upload intent may fence a new attempt that restarts the body. Byte-offset resumption, multipart plaintext staging, and a new chunk-encryption format are excluded. The versioned intent contract leaves room for a later resumable mode when large video or other media requires it and an encryption-compatible staging design is selected.
+- The default effective maximum is 16 MiB per artefact. A deployment may configure its ceiling from 1 MiB through 64 MiB; the immutable tenant-profile `maximum_bytes` constraint may only narrow that ceiling. JPEG and PNG are the initial deployment allow-list, and a tenant profile may narrow but not expand it. Archive formats and non-identity content encoding are rejected in v1.
+- An upload intent has an opaque `upl_` identity and is immutably bound to tenant, capture principal, verification, subject, evidence identity, profile snapshot, requirement, evidence type, artefact, actual acquisition method, legitimate assurances, media constraints, expected byte length and SHA-256 digest, region, retention class, and encryption purpose. Current processing authority is evaluated before issuance and again before acceptance.
+- Intent lifetime defaults to 15 minutes and is configurable from 5 through 60 minutes without exceeding the verification session. A claimed attempt has a separate maximum duration defaulting to 10 minutes. PostgreSQL owns intent state, optimistic version, attempt ordinal, lease, fencing, replay, and reconciliation state; retries never rely on process memory.
+- Initiation requires an idempotency key and immutable request fingerprint. Upload requires `Content-Length`, an exact canonical `Content-Type`, and RFC 9530 `Content-Digest` with SHA-256. Idenqa independently counts and hashes plaintext, compares the declared digest without early-exit leakage, verifies media signature against the allow-list, and records independently verified ciphertext size and checksum. A client digest is an integrity claim, not authentication or assurance proof.
+- Successful acceptance atomically persists available evidence metadata, the upload-intent terminal state, audit history, and `evidence.ready.v1` outbox intent. Repeating a completed request returns the existing result; a different immutable fingerprint, digest, length, method, artefact, or evidence binding conflicts. Capture completion remains separate and occurs only after every required artefact is accepted.
+- Interrupted, expired, rejected, or failed attempts never create available evidence. Exact partial or orphan object versions are deleted synchronously where possible; failure records a durable tenant-scoped reconciliation obligation before reporting recoverable completion. Malware and richer media validation remain owned hooks: when policy requires one, evidence stays pending or quarantined until it succeeds, and absence of a scanner never creates malware-related assurance.
+
+**Implementation record:**
+
+- **First domain slice:** Added the opaque `upl_` typed identifier and a transport-, database-, object-store-, and provider-independent upload-intent aggregate. Its immutable record binds the tenant, capture token, subject, verification, preallocated evidence identity, current authority and subject response, exact profile and registry snapshots, requirement, purpose, evidence type, artefact, actual acquisition method, legitimate canonical assurances, fixed evidence-encryption purpose, media constraints, expected byte length and SHA-256 digest, region, retention class, and absolute lifetime.
+- **Deployment and tenant limits:** Added validated deployment policy values for the selected 16 MiB default and 1–64 MiB bounds, 15-minute default and 5–60-minute intent lifetime, 10-minute default and 1–15-minute attempt timeout, and the initial canonical JPEG/PNG allow-list. Tenant-resolved input may narrow but cannot expand the deployment byte or media limits, and the intent lifetime is capped by session expiry.
+- **Durable lifecycle model:** Added `issued`, `uploading`, `accepted`, `rejected`, and `expired` states with optimistic versions, monotonically increasing whole-body attempt ordinals, bounded attempt leases, stale-worker fencing, complete-body retry, exact accepted-evidence binding, terminal rejection, and explicit expiry. The aggregate contains neither credentials nor raw evidence bytes.
+- **Durable PostgreSQL state:** Migration 11 adds forced-RLS upload intents and append-only lifecycle audit. Database constraints and immutable-transition triggers bind the exact capture token, session profile snapshot, registry revision, subject, authority, response, preallocated evidence identity, requirement, acquisition method, assurance, encryption purpose, media and size policy, placement, expiry, attempt ordinal, and lease. Composite foreign keys prevent a valid-looking profile or registry reference from being substituted for the session snapshot.
+- **Initiation idempotency and attempt fencing:** The PostgreSQL adapter atomically reserves the capture-principal idempotency scope, inserts the intent and attributed audit, completes a secret-free `upl_` replay result, and reconstructs completed replay through tenant RLS. Attempt claim and failure paths lock the row, apply the domain transition, advance the optimistic version and attempt fence, and append `claim`, `retry`, or reason-coded `expire` audit in the same transaction. A mismatched capture principal or cross-tenant lookup remains indistinguishable from absence.
+- **Application issuance workflow:** Added a separate authority-owned application service that consumes authenticated capture context, rechecks the session lifetime, resolves the exact immutable requirement and registry, permits only its artefact and primary or explicitly policy-approved fallback acquisition method, narrows deployment byte and media limits through tenant constraints, and re-evaluates the current authority, notice, response, purpose, evidence type, recipient, and region. Region is selected from the authority allow-list and retention comes only from the authority record. The service allocates `upl_` and `evd_`, creates a capture-principal idempotency fingerprint over the body-free immutable request, and persists through the owned upload boundary. It records only required assurances supported by the selected method, including no unsupported per-method assurance for one leg of an `all_of` acquisition. SDK capability advertisements remain outside this authority decision and do not prove assurance.
+- **Evidence-ingress preflight:** Added a transport-independent application service that loads the tenant-scoped intent, collapses wrong capture-token or verification ownership into non-disclosure, enforces the exact optimistic version and immutable length, media type, and digest binding, and only then atomically claims the fenced whole-body attempt. The HTTP metadata adapter performs no body reads and requires a positive `Content-Length`, one strong `If-Match`, one exact JPEG or PNG `Content-Type`, and one canonical RFC 9530 SHA-256 `Content-Digest`. Chunked, encoded, partial, trailer-based, multi-algorithm, duplicate, parameterised, and malformed variants fail before attempt claim. The narrow v1 wire form is deliberately stricter than the general RFC dictionary grammar. Client digest metadata remains an untrusted integrity claim; independent hashing and media-signature verification belong to the body-processing slice.
+- **Public HTTP and SDK contract:** Published capture-token `POST /v1/evidence-uploads` intent issuance and `PUT /v1/evidence-uploads/{uploadID}` whole-body ingress in the authoritative OpenAPI contract, generated Go and private TypeScript contracts, handwritten dependency-free TypeScript facade, and owned Chi route adapter. The safe response exposes lifecycle, immutable capture binding, constraints, ETag, and location without exposing the integrity digest or object identity. Exact accepted replay accepts the successful attempt's original precondition or terminal ETag and returns before reading the repeated body; a concurrent duplicate conflicts and unrelated stale versions fail their precondition. Route tests prove authenticated request mapping, strict header rejection before application invocation, direct raw-body delivery, and public response metadata. Runnable composition now explicitly enables this surface only when a validated evidence-infrastructure graph is present.
+- **Upload-specific transport safeguards:** The shared Chi boundary now accepts an optional validated upload policy and grants its larger byte ceiling and attempt deadline only to an exact `PUT /v1/evidence-uploads/{canonical upl_ ID}` request. Intent-creation JSON, other methods, malformed identifiers, nested paths, and unrelated routes retain the ordinary limits. Request contexts and connection read/write deadlines use the same selected duration with a bounded I/O grace; the process-level server timeout derives from the longest enabled request class plus a separate outer grace, so its former 15-second backstop cannot terminate a valid upload. The route adapter independently enforces the same deployment byte ceiling. The exception remains off until runnable composition explicitly supplies the policy.
+- **Deployment configuration:** A reusable process-neutral configuration block now decodes the D-009 byte ceiling, intent lifetime, attempt timeout, and canonical media allow-list with their selected defaults; the current API configuration embeds it and a future dedicated evidence process may reuse it without duplicating validation. It delegates all bounds, precision, duplicate, and supported-format checks to the owned domain constructor and exposes one immutable defensive `evidence.UploadPolicy` for issuance, ingress, and transport composition. Unknown or invalid environment input fails startup validation; process environment continues to override an explicitly requested dotenv file. A paired local directory and mounted-keyring configuration explicitly enables the root-local graph, while provider distributions inject owned ports without introducing a fake provider mode into core configuration.
+- **Runnable API composition:** The selected v1 ingress remains in `api`. Its provider-neutral bootstrap input contains only owned immutable-object, key-wrap/unwrap, and lifecycle ports. The root module can opt into a filesystem ciphertext store, Tink streaming encryption, mounted local keyring, PostgreSQL upload/reconciliation state, issuance, acceptance, routes, upload policy, and bounded shutdown as one manually injected graph; cloud SDK types and dependencies do not cross the seam. The production S3 graph is selected for the independent `github.com/Mujhtech/idenqa/distributions/s3` module, and a dedicated `evidence` process remains conditional on demonstrated isolation or scaling needs.
+- **S3 API distribution:** Added the independent module and its thin public `api` entry point using the shared Cobra boundary. It loads the core and provider fields as one strict `IDENQA_*` schema, requires the existing mounted local keyring, validates S3 configuration before composition, opens the independently versioned S3 ciphertext adapter through the AWS external credential and certificate chain, and transfers keyring lifecycle ownership through the provider-neutral API seam. Root configuration and dependencies remain cloud-SDK-free; workspace formatting, module verification, race, lint, vulnerability, and build gates include the distribution.
+- **Live local public flow:** Added an integration-tagged process proof that migrates an isolated PostgreSQL database, provisions a forced-RLS runtime role and tenant credential, loads the real strict API configuration with purpose-separated API-key, cursor, and capture-token secrets, starts the runnable `api` graph, and drives only public HTTP contracts from profile publication through verification, notice, processing authority, subject consent, upload issuance, and raw JPEG upload. It then independently proves PostgreSQL accepted the exact method and atomic terminal facts, the local object is ciphertext rather than plaintext, the mounted keyring decrypts it to the exact submitted bytes under the authenticated evidence context, the reconciliation obligation is retained, and exactly one `evidence.ready.v1` outbox intent exists. The concurrency harness now accepts either valid loser classification from the one-winner upload claim without weakening its success and fencing assertions.
+- **Live S3 public flow:** Added an integration-tagged process proof that builds and starts the independent S3 `api` distribution against isolated PostgreSQL and an owned loopback, filesystem-backed S3 protocol fixture. The production process exercises the real AWS SDK adapter, SigV4 request signing, path-style addressing, `UNSIGNED-PAYLOAD` development transport, and immutable conditional PUT while the fixture validates the signed request and persists bytes with owner-only, create-exclusive filesystem semantics. The same public profile, verification, notice, authority, consent, upload-intent, and raw JPEG flow completes without importing the AWS SDK into the root module. Independent PostgreSQL and provider reads prove the exact durable size and SHA-256, ciphertext-only storage, authenticated-context decryption to the submitted bytes, retained reconciliation, and exactly one `evidence.ready.v1` outbox intent. No third-party S3 emulator is a repository or runtime dependency.
+- **Bounded body validation:** Added a pull-based `io.Reader` that can feed the existing context-aware encryption stream without a pipe, goroutine, complete-body buffer, or raw-byte result. Construction checks the exact JPEG or PNG signature before a consumer can receive plaintext. Reads expose no more than the immutable intended length, detect truncation and one-byte excess, independently compute SHA-256, compare the final digest in constant time, preserve source failures, reject no-progress readers, and expose independently observed byte count and digest only after complete successful consumption. Validation failures abort the encryption read; the crypto adapter may retain its safe redacted sealing error while the reader retains the precise owned rejection classification for orchestration. A stopped consumer cannot obtain a successful result.
+- **Atomic acceptance foundation:** Split streaming protection into a staged `Prepare` operation and exact-version `Discard` compensation while preserving the existing one-step protected-evidence workflow. The owned acceptance mutation carries only the fenced upload identity, validated protected asset metadata, independently observed byte count, event identity, and occurrence time. Its PostgreSQL adapter row-locks the upload, re-applies the aggregate's exact binding, digest, media, attempt, lease, and optimistic-version checks, then atomically inserts the available evidence asset and audit, advances the upload to `accepted` with its attributed audit, and inserts a secret-free `evidence.ready.v1` outbox intent. Any late failure rolls all database effects back; the owning workflow can delete the exact staged ciphertext using cancellation-independent bounded compensation.
+- **Authority-owned acceptance orchestration:** Added one application service that begins the tenant- and capture-principal-scoped preflight before reading bytes, applies the bounded validating reader directly to streaming protection, verifies complete independently observed body facts, rechecks the session after streaming, loads current authority state, requires the exact authority and subject-response identities pinned by the intent, and evaluates current purpose, evidence type, recipient, and region immediately before atomic acceptance. Confirmed pre-commit or rolled-back failures discard the exact staged ciphertext with bounded cancellation-independent cleanup, while body failures preserve their owned classification. PostgreSQL commit errors now distinguish a confirmed transaction rollback from an unconfirmed commit outcome: an unconfirmed outcome must not trigger destructive compensation and instead returns a stable exact-object reconciliation obligation retaining the underlying cause.
+- **Durable exact-object reconciliation:** Migration 12 adds a forced-RLS, append-only-audited write-ahead obligation for every completely staged ciphertext object before acceptance begins. The immutable key is the tenant, upload, and fenced attempt; the record binds the preallocated evidence identity and exact object key, physical version, size, and checksum. Acceptance changes a matching pending obligation to `retained` inside the same evidence/upload/audit/outbox transaction. Confirmed compensation deletes the exact object first and then records `deleted`; if that final database update fails, idempotent recovery can safely repeat the deletion. Pending work is unavailable until the upload-attempt lease expires, then row-locked `SKIP LOCKED` claims use monotonically increasing claim ordinals, optimistic versions, bounded leases, retry delay, and append-only `create`, `claim`, `retry`, `retain`, or `delete` audit. Recovery treats PostgreSQL as authoritative: an accepted upload may retain only an exact matching durable evidence object; a non-accepted upload may delete only after durable evidence absence is established. Missing or inconsistent accepted state fails closed, preserves the object, and schedules a later retry. Production scheduling will enter through the selected Headgate adapter behind the owned task boundary; the existing reconciliation state remains Idenqa-owned.
+- **Durable failure outcomes:** The acceptance workflow now persists every confirmed post-claim failure before returning. Corrupt signatures and current-authority denial use safe reason-coded terminal rejection; transient validation, streaming, protection, event, and confirmed database failures release the fenced attempt for a complete-body retry or atomically expire it when its absolute lifetime has elapsed. Unknown commit outcomes remain deliberately untouched because destructive compensation or attempt reuse could conflict with a committed acceptance. Failure recording runs under a bounded cancellation-independent context and joins persistence failures with the original error. If staging returns an exact object before the normal write-ahead obligation exists, the workflow deletes that exact version first; failed deletion triggers an immediate exact-object obligation write, and a failed or commit-ambiguous first obligation write receives one cancellation-independent idempotent second attempt using the same occurrence time before the upload attempt is released. Late records remain valid after lease expiry or attempt supersession without weakening exact tenant, upload, evidence, attempt, and object binding.
+- **Provider-backed orphan discovery:** The owned object-store boundary now exposes bounded, cursor-paginated inventory records containing only logical key, exact physical version, size, and provider modification time; these records cannot be used for content reads or evidence persistence because they carry no authenticated checksum. Both the root-confined local adapter and independently versioned S3 adapter implement tenant-prefix inventory plus idempotent exact-version deletion. The discovery service constructs the tenant prefix itself, accepts only the canonical Idenqa evidence-key shape and 128-bit lowercase physical versions, ignores malformed or cross-tenant provider entries, and defers every object until the maximum upload-attempt lease plus a provider/application clock-skew allowance has elapsed. PostgreSQL then authoritatively protects exact objects referenced by evidence assets or pending, claimed, or retained reconciliation records. Only an old, canonical, unreferenced object is deleted. Listing, classification, or deletion failure keeps the input cursor so the whole page is safely replayed; storage remains the durable inventory when deletion fails. Production scheduling will enter through the selected Headgate adapter behind the owned task boundary.
+- **Verification:** Deterministic race-enabled domain and application tests cover typed identity, canonical binding, caller-slice isolation, unsupported assurance, format and size rejection, deployment and tenant-policy narrowing, session lifetime before and after streaming, requirement, artefact, method, fallback, current-authority, pinned-response and region denial, `all_of` assurance non-overclaiming, attempt claiming and lease fencing, stale completion, full-body retry, exact-evidence acceptance, rejection, expiry, preflight non-disclosure, immutable-metadata mismatch, strict request framing, canonical digest parsing, no preflight body reads, JPEG/PNG signature checks before plaintext output, exact and multi-read stream completion, truncation, bounded excess, independent digest mismatch, incomplete consumption, source failure, no-progress input, preparation without premature metadata persistence, exact staged-object discard, current-authority denial after protection, event-generation and confirmed-acceptance failure compensation, joined cleanup failure, write-ahead reconciliation, fenced recovery, authoritative retain/delete decisions, fail-closed retry without deletion for inconsistent accepted state, durable reason-coded rejection, durable retry or expiry for every confirmed failure class, unknown-commit preservation, second-chance exact-object obligation recording, bounded provider pagination, tenant-prefix confinement, young-object deferral, malformed-key refusal, reference preservation, exact orphan deletion, and same-page replay after classification or deletion failure. Fuzz targets cover both RFC 9530 digest parsing and file-signature classification; the signature target completed more than 400,000 executions without failure. A real Tink/local-object-store composition test proves an invalid body aborts protection and cannot persist available evidence while its owned classification remains recoverable. Isolated PostgreSQL 18.4 tests additionally prove migrations 11 and 12, signed capture authentication through current-authority resolution into durable issuance, exact initiation replay and fingerprint conflict, forced-RLS non-disclosure, preflight ownership and immutable metadata enforcement, one-winner concurrent fenced preflight, stale-version rejection, durable retry, expiry, and reason-coded rejection, exact capture-principal audit, immutable bindings, append-only history, atomic evidence/upload/audit/outbox acceptance with an exact `retained` obligation, complete database rollback after a deliberately failing final event insert, lease-expiry reconciliation deletion, authoritative inventory-reference classification, preservation of accepted ciphertext, and discovery and deletion of one old unreferenced local-store object. Process-level public-flow proofs cover both the root-local composition and the independent S3 distribution, including independent ciphertext-at-rest, authenticated decryption, reconciliation, and exact outbox assertions. The exact Go 1.26.6 full repository formatting, generation, module, race, SDK, lint, type, vulnerability, build, packaging, and shuffled PostgreSQL integration gates pass.
+- **Acceptance state:** The user accepted E-03 after both local and S3-distribution public-flow proofs passed. CLI rotation, fleet rewrap completion, recovery validation, and KEK retirement approval remain separate unresolved operational policy.
+
+### E-04 Basic open-source Web capture
+
+**Status:** Complete  
+**Depends on:** C-05, E-03, and D-007
+
+**Objective:** Deliver the first usable self-hosted and embeddable capture experience.
+
+**Scope:**
+
+- Lit-based, framework-neutral `@idenqa/capture` Web Component using `@idenqa/sdk`.
+- Capture-token validation, notice display, acknowledgement, and requirement rendering.
+- Tenant-configured `any_of` choice between supported selfie/document file upload and live camera capture.
+- Required document front/back `all_of` flow.
+- Local progress, retry, cancellation, accessibility, localisation fallback, and safe presentation defaults.
+- Upload through requirement-bound grants; raw bytes stay local until direct upload.
+
+**Exit proof:** The same package runs in plain HTML and a framework host. Automated browser tests cover file-only, live-only, choice, required front/back, denied methods, permissions, cancellation, accessibility, and interrupted upload.
+
+**Not included:** Tenant visual editor, React runtime requirement, video liveness, NFC, voice, or provider results.
+
+**Implementation record:**
+
+- **Package and planner foundation:** Added the open-source `capture/web` workspace package published as `@idenqa/capture`, depending only on the public `@idenqa/sdk` runtime contract. Its pure TypeScript planner consumes the immutable verification-session snapshot and an explicit host capability advertisement, separately records methods implemented by the integration and methods currently usable by the device, preserves tenant method order, retains every required artefact, expands `all_of` acquisition into separately required method legs, and exposes `any_of` choices only from the intersection of allowed and available methods. When the primary acquisition cannot run, it distinguishes `method_unavailable` from `capability_unavailable` and selects only an ordered fallback approved for the actual reason; capture-failure fallbacks remain unavailable until a real capture attempt fails. Missing methods, inconsistent advertisements, duplicate or malformed snapshot values, unsupported strategy, and empty required structures fail closed through stable capture-plan errors. Capability advertisements influence method selection but do not create or prove assurance.
+- **Planner verification:** Focused strict TypeScript, Vitest, ESM/CommonJS/declaration/source-map build, publint, and package-resolution checks pass. Tests cover ordered selfie upload/live choice, required document front/back artefacts, `all_of` method legs, reason-specific policy-approved fallback, denial of a fallback approved for a different reason, denied methods, and malformed duplicate capability input. That first renderer-independent slice added neither a rendering framework nor Effect; the following rendering slice selected Lit while keeping Effect excluded.
+- **Lit rendering and browser harness:** Resolved D-020 with exact pins for Lit v3.3.3, development-only Vite v8.2.2, and `@playwright/test` v1.62.1; tsdown remains the published-library builder and Effect remains excluded. Added explicit, collision-safe custom-element registration without import side effects, an open-Shadow-DOM `<idenqa-capture>` renderer, semantic hierarchical headings, labelled method groups, native buttons, visible keyboard focus, 44 px touch targets, polite selection status, forced-colour support, responsive layout, safe empty preparation state, reason-specific fallback copy, and composed typed method-selection events carrying identifiers only. Capture tokens are not accepted as attributes and no raw evidence or assurance claim enters the component. A Vite plain-HTML fixture and pinned Chromium Playwright harness prove semantic rendering, keyboard activation, selection state, event delivery, required front/back display, and no horizontal overflow at 320 px. The skill-guided Web Interface Guidelines review passes after adding explicit group semantics and intentional tap highlighting.
+- **Dependency evidence:** Registry and upstream review found current actively maintained releases with Lit under BSD-3-Clause, Vite under MIT, and Playwright under Apache-2.0. The resolved production graph is Lit plus five BSD/MIT packages; Vite and Playwright remain development-only. The workspace supply-chain policy, production-licence inventory, and npm vulnerability audit pass with no known vulnerabilities. The published component entry keeps Lit and `@idenqa/sdk` external and is 14.06 kB ESM, 4.03 kB gzip, in this slice.
+- **Capture-token and notice flow:** Added an SDK-backed capture-flow controller and programmatic component `start` boundary. The capture token is passed directly to the private controller and never becomes an attribute, reactive property, rendered value, event detail, URL, or log. Session and authority requests share cancellation; their verification, subject, authority, notice, latest-response, recipient, and permitted purpose/evidence scope must correlate before rendering proceeds. The component displays the immutable notice title, summary, purpose, consequences, controller, and recipient as escaped exact text in the notice locale, then records only the response appropriate to policy: explicit consent when required, acknowledgement otherwise, or refusal in either case. Capture methods remain absent until the latest response permits collection; refusal and inactive authority block them. One idempotency key is retained across retries of the same response, safe events contain only action and receipt identifiers, and failed, cancelled, refused, blocked, or detached experiences discard their private controller reference. The browser proof also exposed and fixed an SDK browser-compatibility defect by invoking native `fetch` without rebinding it to the transport instance.
+- **Notice-flow verification:** Fifteen Vitest tests now cover planner and orchestration behaviour including exact identifier and authority-scope correlation, consent, acknowledgement, refusal, inactive authority, and retry-key reuse. Four Chromium tests prove exact notice presentation, capture gating, programmatic bearer use without DOM exposure, explicit consent, refusal, semantic controls, keyboard activation, and 320 px layout. Strict TypeScript, dual ESM/CommonJS/declaration/source-map build, publint, and package-resolution checks pass; the published capture entry remains externalised from Lit and `@idenqa/sdk` and is 26.00 kB ESM, 6.62 kB gzip, after this slice.
+- **File-upload acquisition and recovery:** Added a labelled native file input for an integrated file-upload step while retaining the programmatic method-selection event in standalone planner mode. The controller resolves the exact requirement, tenant media and byte constraints, selected authority region, artefact, fallback reason, and acquisition method; rejects non-JPEG/PNG media, oversized input, and signature mismatches before issuing an intent; computes the canonical SHA-256 digest with browser Web Crypto; and sends the original raw `Blob` directly through the public SDK without serialising its filename, bytes, or digest into DOM or events. The file remains in browser memory only for the active attempt and retry and is released after acceptance, cancellation, restart, refusal, blocking, or component detachment. A safe `idenqa-evidence-accepted` event contains only upload, evidence, requirement, and artefact identifiers.
+- **Interrupted-upload recovery:** Added capture-token `GET /v1/evidence-uploads/{uploadID}` to OpenAPI, generated contracts, the TypeScript SDK, and the owned Chi adapter. It uses the same application-level tenant, capture-token, and verification binding as upload preflight, hides binding mismatches as not found, exposes no digest or object identity, and returns the current strong ETag. After an ambiguous PUT, the Web controller reads that snapshot before retrying: accepted returns immediately, issued restarts the complete body with the recovered ETag, uploading asks the subject to retry later, and rejected or expired fails closed. Initiation retains one idempotency key and is not duplicated for the same prepared file.
+- **Upload verification:** Nineteen Vitest tests cover the planner, notice flow, canonical file policy, signature and size rejection, digesting, immutable intent metadata, initiation-key reuse after an ambiguous response, one-time successful issuance, and recovered-ETag PUT retry. Five Chromium tests prove the accessible labelled input, policy-derived `accept`, exact raw PNG body, content digest, ETag, region, requirement binding, accepted status, filename non-disclosure, notice gating, keyboard operation, and mobile layout. Go handler and application tests prove safe recovery responses and exact capture-principal binding. The exact Go 1.26.6 full repository formatting, 100-point OpenAPI lint, reproducible generation, module verification, shuffled race tests, Go/TypeScript lint and type checks, Go and npm vulnerability scans, binary and dual-package builds, publint, and package-resolution gates pass. The published capture entry is 40.92 kB ESM and 9.82 kB gzip after this slice.
+- **Live-camera acquisition:** Added an integrated still-image camera path that requests video without audio, selects the subject-facing camera for a selfie and the environment-facing camera for other artefacts, waits for non-zero video metadata before enabling capture, and encodes an allowed JPEG or PNG frame locally. The subject can cancel an active preview, review, retake, retry an upload, or accept the photo. Camera tracks and temporary preview URLs are released on every terminal, replacement, restart, cancellation, flow-abort, and detach path. Raw frames remain browser-local until the existing direct upload path sends the `Blob`; DOM, events, logs, planner state, and upload metadata receive no raw bytes.
+- **Capture-failure fallback:** The planner now distinguishes initial method or capability unavailability from a runtime `capture_failed` event. A real camera start or frame-capture failure can replace only the exact failed step and only with the first usable fallback whose immutable profile condition includes `capture_failed`; absent or unusable policy fails closed and leaves an actionable camera retry. Subject cancellation is not classified as failure and never activates the fallback. The resulting upload intent carries both the selected fallback acquisition method and `capture_failed` binding, while live-camera uploads carry `idenqa.method.live_camera`; capability advertisements still cannot establish assurance.
+- **Camera verification:** Twenty-six Vitest tests cover camera constraints, permission classification, track cleanup, live-camera upload binding, runtime replanning, initial-plan non-activation, and absent-fallback denial in addition to the earlier planner, notice, and upload cases. Eight Chromium tests use a fake media device to prove readiness gating, capture/review/upload, permission-failure fallback, cancellation without fallback, file upload, notice/response gating, semantic keyboard operation, and narrow-screen layout. The exact Go 1.26.6 full repository formatting, 100-point OpenAPI lint, reproducible generation, module verification, shuffled race tests, Go/TypeScript lint and type checks, reachable Go and npm vulnerability scans, binary and dual-package builds, publint, and package-resolution gates pass. The published capture entry is 57.05 kB ESM and 12.97 kB gzip after this slice. Multi-artefact completion, `any_of` choice locking, framework-host conformance, localisation fallback, and the final E-04 acceptance review remain outstanding.
+- **Step completion and method locking:** Added one component-owned completion record per exact planned step. The stable key includes requirement, artefact, ordered method options, and fallback condition, so required front/back artefacts and separate `all_of` method legs cannot overwrite one another. A newly accepted upload records only safe identifiers and its acquisition method, releases transient bodies, tracks, and preview URLs, and removes all alternative controls for the satisfied `any_of` step. While one integrated method is active, its alternative cannot begin; changing method after a recoverable error clears the abandoned method’s transient state before proceeding. Restart, cancellation, plan replacement, and detach clear local completion state.
+- **Progress and capture-completion contract:** Added a native progress element with locale-aware completed and total counts at both plan and requirement level. Completion copy says that required evidence capture is complete and verification may continue; it does not claim verification completion or tenant acceptance. Every newly completed step emits `idenqa-capture-progress`, and the final step emits one `idenqa-capture-complete`; both carry only the verification ID and counts. The existing accepted-evidence event now also identifies the acquisition method while retaining identifier-only evidence references.
+- **Progress verification:** Twenty-six Vitest tests remain green. Ten Chromium tests now additionally prove that accepting file upload removes the alternative live-camera control for an `any_of` step, emits the exact one-time capture-completion detail, and advances a required document front/back flow independently from 0 of 2 through 1 of 2 to 2 of 2 before showing completion. The exact Go 1.26.6 full repository formatting, 100-point OpenAPI lint, reproducible generation, module verification, shuffled race tests, Go/TypeScript lint and type checks, reachable Go and npm vulnerability scans, binary and dual-package builds, publint, and package-resolution gates pass. The published capture entry is 61.90 kB ESM and 13.86 kB gzip after this slice. The Web Interface Guidelines review found no issues in the changed progress and locking UI. Localisation fallback, framework-host conformance, completion recovery across a fresh page load, and the final E-04 acceptance review remain outstanding.
+- **Localisation fallback:** Added a public, optional catalogue for package-owned interface copy. The canonical server-notice locale controls `lang`, text direction, number formatting, and catalogue selection; resolution merges built-in English, base-language, then exact-locale entries. Invalid locales, duplicate canonical locale keys, unknown message keys, empty values, and changed template placeholders fail closed. Legal notice title, summary, purpose, consequences, controller, and recipient remain exact server copy outside the catalogue, so optional interface fallback cannot alter the notice or its receipt semantics.
+- **Framework-host conformance:** Added a React 19 development fixture that mounts the same explicitly registered custom element, starts it programmatically without putting the capture token in the DOM, and observes the composed completion event in React state. React, React DOM, and their type packages are exact-pinned development dependencies only; neither the published runtime dependency set nor built entry contains React. The original plain-HTML fixture remains unchanged as the framework-free proof.
+- **Localisation and host verification:** Thirty-five Vitest tests now include exact/base/English message resolution, interpolation, placeholder preservation, locale-aware number formatting, RTL presentation, and invalid-catalogue rejection. Eleven Chromium tests prove a `fr-CA` React host receives exact-locale and base-language translations, English fallback, canonical `lang`/`dir`, file capture, and the composed completion event. The exact Go 1.26.6 full repository formatting, 100-point OpenAPI lint, reproducible generation, module verification, shuffled race tests, Go/TypeScript lint and type checks, reachable Go and npm vulnerability scans, binary and dual-package builds, publint, and package-resolution gates pass. The published capture entry is 71.08 kB ESM and 15.98 kB gzip. The Web Interface Guidelines review found no issues. Completion recovery across a fresh page load and the final E-04 acceptance review remain outstanding.
+- **Authoritative fresh-page recovery:** Added capture-token `GET /v1/capture/progress` as a bounded application read over accepted PostgreSQL upload intents. The exact tenant, capture-token, and verification binding is enforced both in the query and application projection. Its public response contains only upload and evidence identifiers plus the immutable requirement key, evidence type, artefact, actual acquisition method, and optional fallback condition; it excludes bytes, filenames, digests, object identity, and subject data. Migration 13 persists the previously missing fallback condition as immutable constrained intent metadata, allowing a runtime `capture_failed` plan to be reconstructed instead of inferred from current device capabilities. The public TypeScript SDK exposes the same read without Effect.
+- **Recovery validation and presentation:** Every capture start concurrently loads the session, authority, and authoritative progress. The controller reconstructs a persisted capture-failure branch only when it identifies one exact step, requires each completion to match exactly one current planned step, rejects repeated logical steps, and fails closed on session mismatch or ambiguity. The component restores progress without browser persistence, does not issue or upload evidence again, and re-emits safe progress and completion events for the fresh host while deliberately not re-emitting the evidence-accepted event. Go application and HTTP tests prove accepted-only minimal projection and exact authenticated principal use; SDK and controller tests prove wire mapping and no duplicate issuance; the twelfth Chromium scenario starts the component again after acceptance and proves 1-of-1 recovery with exactly one original intent and body upload. The exact Go 1.26.6 `make verify` gate passes formatting, 100-point OpenAPI lint, deterministic generation, module verification, shuffled race tests, 36 Web Vitest tests, 12 Chromium tests, Go and TypeScript lint/type checks, reachable-vulnerability and npm audits, all binary and package builds, publint, and package-resolution checks. The isolated PostgreSQL 18.4 integration suite passes from migrations through version 13. The published capture entry is 74.64 kB ESM and 16.59 kB gzip after recovery support.
+- **Acceptance:** The user accepted E-04 by directing work to continue into R-01. The implemented scope covers plain HTML and React hosts, file-only, live-only, `any_of` choice locking, required front/back, policy-approved unavailability and runtime capture-failure fallbacks, permission failure, cancellation, accessibility, localisation fallback, interrupted-attempt ETag recovery, and fresh-page accepted-completion recovery. Realtime transport and durable event replay remain R-01 and R-02 rather than being hidden in E-04.
+
+### R-01 WebSocket control channel
+
+**Status:** Complete  
+**Depends on:** C-04, E-04, and D-010
+
+**Objective:** Add bidirectional, versioned communication for active capture without making the socket authoritative.
+
+**Scope:**
+
+- `github.com/coder/websocket` adapter behind owned realtime ports.
+- Single-use connection tickets, origin/application binding, subprotocol negotiation, hello/welcome, acknowledgements, command IDs, cursors, heartbeat, limits, and close reasons.
+- Safe progress, challenges, capture commands, and session-state events.
+- Bounded per-connection queues, slow-consumer handling, drain, and compression disabled initially.
+
+**Exit proof:** Protocol and load tests cover authentication, ticket reuse, version rejection, command deduplication, ordering, heartbeats, slow consumers, oversized messages, shutdown, and absence of raw evidence or reusable credentials.
+
+**Not included:** Durable replay or multi-node wake-up.
+
+**Implementation record:** D-010 is resolved. The dependency-free `internal/realtime` package owns immutable v1 envelopes, the closed message catalogue, validated deployment limits, strict JSON wire mapping, and typed `con_`, `msg_`, `cmd_`, `chl_`, and non-secret `wst_` record identifiers. `contracts/capture/realtime/v1` publishes the correlated JSON message schema plus bootstrap, redaction, sequencing, versioning, and limit rules. Focused tests cover every catalogue payload, invalid envelopes and command binding, defensive copies, unsafe limit values, schema completeness, raw-byte exclusion, full wire round trips, direction checks, unknown fields, duplicate keys, forbidden `null`, trailing values, exact UTC timestamps, and type-specific field presence. Ticket persistence, redemption, browser HTTP issuance, the reviewed WebSocket admission adapter, hello/welcome exchange, PostgreSQL current-authority loading, native heartbeat, strict established sequencing, bounded outbound queues, slow-consumer handling, server drain, capture-step command deduplication, expired-unused-ticket cleanup, idle enforcement, runnable API registration, public TypeScript observation, Capture Web recovery, and bounded browser-client load proof are recorded below. Native-application bootstrap remains deferred until an authenticated native-application identity mechanism is selected.
+
+**Ticket persistence record:** Migration 14 adds a forced-RLS, tenant-scoped connection-ticket table containing only a versioned domain-separated SHA-256 digest of a 256-bit display-once secret. The immutable record binds tenant, verification, capture-token record, exact browser origin or authenticated native application identity, region, protocol, 10–60-second lifetime, and eventual `con_` identity. Issuance locks and rechecks the capture token and session through ticket expiry. Redemption locks the same authority against revocation and uses one conditional `UPDATE ... RETURNING`, making expiry exclusive, redemption irreversible, and concurrent use single-winner. Owned services collapse malformed, unknown, mismatched, expired, revoked, and reused credentials to one public error. Unit race tests cover parsing, redaction, digesting, binding validation, lifetime and service failure paths. A real PostgreSQL 18.4 integration proof covers forced-RLS lookup, wrong origin, tenant hint, secret and region, capture-token expiry capping, exact expiry, irreversible redemption, absence of the raw ticket in storage, and two concurrent redemptions with exactly one success. Browser HTTP issuance, bounded expired-unused-ticket cleanup, load behaviour, and SDK observation are recorded below; proxy redaction deployment guidance and native bootstrap remain subsequent work.
+
+**Browser HTTP issuance record:** Published capture-token `POST /v1/capture/connections` in OpenAPI, generated Go/TypeScript contracts, the owned Chi adapter, and the dependency-free public TypeScript SDK. Issuance requires exactly one configured allowed `Origin`, constructs the display-once URL only from a validated operator-supplied public WebSocket endpoint, binds an explicit regional data-plane identifier, returns `Cache-Control: no-store`, and does not accept an idempotency key because response replay would redisclose secret material. Missing, duplicate, malformed, and disallowed origins fail before issuance; authority loss during the authentication-to-persistence race collapses to capture authentication failure. API process composition now requires `IDENQA_REGION`, `IDENQA_REALTIME_WEBSOCKET_URL`, and at least one browser origin, while ticket lifetime defaults to 30 seconds within 10–60 seconds; CLI-only administration does not require those API deployment values. The region is not inferred and does not resolve the separate D-013 session/retention pinning decision. Handler tests prove exact principal and origin binding, configured-host construction despite attacker-controlled `Host`, one-ticket query shape, no-store response, secret-free logs, fail-closed origins, and unavailable-authority collapse. The focused WebSocket adapter review and upgrade/redemption boundary are recorded below.
+
+**WebSocket admission-adapter record:** The user selected `github.com/coder/websocket` v1.8.15 after review of its signed current release, active maintenance, ISC licence, Go 1.23 floor, zero transitive module requirements, published security state, Autobahn conformance, context support, native ping/pong, close semantics, and message-limit API. The library is confined to `internal/transport/realtime` behind an owned bounded text-connection type. Idenqa performs exact Origin comparison rather than delegating to pattern matching, requires the exact v1 subprotocol offer before upgrade, explicitly disables compression, applies the selected inbound and outbound message ceiling, and uses a request-independent bounded context after hijacking. Ticket query shape is deliberately collapsed into the same atomic redemption path, so every invalid ticket class receives the same generic policy-violation close without credential or query logging. Real loopback race tests prove successful upgrade and exact binding, pre-redemption Origin and protocol rejection, disabled compression, invalid-ticket collapse, binary-frame rejection, outbound bounds, 32 concurrent admissions, and survival beyond inherited HTTP server deadlines. The route is registered in the runnable API only after current-session authority loading and the established loop were present.
+
+**Strict framing and hello/welcome record:** Added explicit client and server v1 codecs for the complete 17-message catalogue rather than exposing `encoding/json` or WebSocket-library types to protocol consumers. Decoding accepts exactly one object, rejects unknown fields, duplicate keys, `null`, non-object payloads, trailing values, wrong-direction types, non-UTC timestamps, malformed owned identifiers, invalid duration conversion, and fields forbidden by a type-specific payload. The hello handler requires `client.hello` as client sequence one with no established connection, command, correlation, or causation binding; it binds the verification to the redeemed ticket, reloads current session authority through an owned port, emits server sequence-one `server.welcome`, and caps the delegated session context at authoritative session expiry. Protocol and unavailable-session failures use generic policy close classification. The handler deliberately delegates established traffic through a separate owned interface.
+
+**Current-authority and established-loop record:** Added a narrow tenant-scoped PostgreSQL reader that proves the exact ticket was redeemed for the connection, rechecks the capture token and collecting session at an explicit observation time, and returns only the current optimistic session version and absolute session expiry. It runs in a read-only forced-RLS transaction and collapses missing, mismatched, revoked, inactive, and expired authority to one owned unavailable error. The established loop starts client sequence two and server sequence two after hello/welcome, rejects binding or sequence gaps after emitting `session.resync_required`, validates monotonic acknowledgements against actually sent messages, and uses bounded native ping/pong. A cursor from a previous connection forces resynchronisation because R-01 sequences are connection-local. The runnable API composes this reader, hello handler, established loop, socket route, and the supported capture-step command service. PostgreSQL 18.4 integration tests prove current authority and exact capture-token-expiry exclusion; loopback and race tests prove deadline clearing, heartbeat, sequencing, resync, acknowledgement, rejection, and API registration.
+
+**Outbound backpressure and drain record:** Replaced direct established-session writes with one connection-owned writer and a non-blocking bounded queue using the selected depth. Sequence allocation occurs only after a queue slot is secured. The same boundary enforces the selected unacknowledged-command ceiling; monotonic cumulative acknowledgements release command allowance only through a sequence actually written to that connection. Queue or acknowledgement exhaustion returns one slow-consumer classification and closes with retryable WebSocket status 1013 without exposing payloads. A connection lifecycle rejects new socket admissions with HTTP 503 and `Retry-After` before ticket redemption once drain starts, tracks all admitted handlers across hijacking, sends established clients `server.draining` with the initial five-second reconnect hint, and closes them with WebSocket status 1012. API HTTP shutdown and realtime drain execute concurrently under the same shutdown deadline, and either failure remains observable. Focused race, queue-capacity, acknowledgement, overload-close, lifecycle, drain-message, and process-shutdown tests pass alongside the exact Go 1.26.6 full repository verification gate.
+
+**Capture-step command, cleanup, and idle record:** Migration 15 adds forced-RLS, append-only client-command records with an exact tenant, verification, and capture-token foreign-key binding. The application service accepts only `capture.step.started`, `capture.step.failed`, and `capture.step.cancelled`; it rechecks the exact redeemed ticket plus current token/session authority, validates the requirement, artefact, and primary-or-fallback acquisition method against the immutable session snapshot, and durably records a safe activity result. A domain-separated fingerprint excludes connection-local message and connection IDs so the same `cmd_` replays after reconnect, while changed input returns `state_conflict`. Policy and authority rejections are also retained for stable replay. Acceptance does not claim evidence, assurance, capture completion, or verification completion. `capture.command_result` and challenge effects remain `not_supported` until server-issued command or challenge authority exists. A separate bounded tenant-scoped cleanup service deletes only expired never-redeemed tickets using ordered `SKIP LOCKED` batches; redeemed records remain because established authority and command attribution depend on them, and Headgate scheduling remains outside this brick. Established connections now enforce the selected idle deadline with a resettable timer; inbound traffic and successful native ping/pong count as transport activity, and expiry closes retryably with WebSocket status 1001. Focused unit/race tests and the full shuffled PostgreSQL 18.4 integration suite prove exact replay, changed-input conflict, policy and revocation rejection, RLS isolation, append-only records, bounded cleanup, redeemed-ticket retention, and idle reset/expiry. The exact Go 1.26.6 full repository verification gate passes.
+
+**Browser observation and load record:** The zero-runtime-dependency public TypeScript SDK now exposes `CaptureClient.observe(session, options)` as a bounded `AsyncIterable`. It owns fresh-ticket reconnects, strict duplicate-key and closed-catalogue decoding, exact verification/connection/sequence binding, cumulative acknowledgements, redacted failures, and stable `cmd_` replay with new connection-local message identities. Capture Web owns one observation for the active flow, reports safe started/failed/cancelled activity, emits a composed safe host event, and treats progress, state-change, and resync messages only as prompts for authoritative REST session/authority/progress recovery. Unit conformance proves malformed-message rejection, command settlement, reconnect replay, REST recovery, and 32 concurrent bounded browser observations; the server adapter independently proves 32 concurrent real loopback admissions. Raw evidence and reusable credentials remain absent. Native bootstrap is not inferred from browser Origin and remains a separate unresolved identity decision.
+
+### R-02 Durable realtime replay and REST recovery
+
+**Status:** Complete  
+**Depends on:** R-01
+
+**Objective:** Make reconnect and multi-node operation correct without sticky sessions or Redis.
+
+**Scope:**
+
+- Capture-visible durable event table, server cursor, acknowledgement position, retention, and replay.
+- PostgreSQL `LISTEN/NOTIFY` as a wake-up optimisation only.
+- Reconnect to any API node, replay-gap detection, `session.resync_required`, REST snapshot recovery, conditional polling fallback, and bounded reconnect policy.
+- Extend the existing TypeScript `AsyncIterable` observation API with durable server cursors and replay across nodes.
+
+**Exit proof:** Multi-node integration tests kill connections and API nodes, drop notifications, expire replay history, and prove ordered replay or authoritative REST resynchronisation without losing committed state.
+
+**Not included:** Operational Console streams or SSE dashboards.
+
+**Implemented contract record:** Added a verification-local durable `event_cursor`, additive v1 hello and acknowledgement fields, a closed safe durable-payload set, explicit ahead and retained-history gap semantics, and strict Go, JSON Schema, and TypeScript codecs. Connection-local sequences still reset on every socket and are not mistaken for durable positions.
+
+**PostgreSQL record:** Migration 16 adds forced-RLS per-verification streams, append-only safe events, exact capture-token acknowledgements, monotonic cursor assignment, bounded prefix retention, and tenant-scoped cleanup. Event expiry may not decrease within a stream, so deleting expired batches cannot create an undetected interior gap. Runtime cleanup can lock and delete events but the append-only trigger still rejects updates.
+
+**Atomic publication record:** Evidence acceptance now commits the accepted upload, audits, evidence-ready outbox intent, safe aggregate capture progress, assigned event cursor, and notification intent in one tenant-scoped transaction. Progress counts logical immutable-profile slots rather than duplicate accepted upload attempts; evidence bytes and integrity material never enter the control stream.
+
+**Replay and acknowledgement record:** Any API node rechecks the exact redeemed ticket, current capture token, and session before bounded replay or acknowledgement. Reconnect replays contiguous pages through the one-writer bounded queue, binds each durable cursor to its connection-local sequence, rejects forged or ahead acknowledgements, persists monotonic position, and emits `session.resync_required` for ahead or expired history.
+
+**Live multi-node record:** Established connections reread PostgreSQL after a process-wide `LISTEN/NOTIFY` wake-up and also every 500 ms. Notifications contain routing identifiers only and are explicitly lossy; polling remains active, so correctness does not depend on notification delivery, sticky sessions, Redis, or one API process.
+
+**REST recovery record:** `GET /v1/capture/progress` now returns a strong opaque ETag, accepts `If-None-Match`, and returns bodyless 304 with request correlation. Its accepted-completion digest is stable and contains no evidence bytes, filenames, object identity, or integrity material.
+
+**Public SDK record:** The dependency-free public TypeScript SDK carries durable cursors across fresh connection tickets, acknowledges exact durable events, rejects invalid cursor placement, and exposes typed conditional progress polling without requiring Effect.
+
+**Capture Web record:** Capture Web continues to recover snapshots after progress, state, and resync events. If the SDK's bounded WebSocket reconnect budget is exhausted by a transport failure, it falls back to conditional REST polling; its interval defaults to two seconds and is configurable from 250 ms through 30 seconds. Protocol failures still fail closed rather than being hidden by polling.
+
+**Verification record:** Focused Go race tests prove strict cursor framing, replay delivery, acknowledgement persistence, backpressure compatibility, and notification-independent polling. The isolated PostgreSQL 18.4 suite proves atomic event publication, idempotent append, a second adapter instance replaying the same stream, monotonic acknowledgement, bounded expiry cleanup, and explicit retained-history gaps. SDK tests prove cross-node cursor carry and exact acknowledgement; Capture Web unit and Chromium suites prove recovery compatibility.
+
+**Acceptance:** Accepted by the user's direction to proceed into the selected W-01/W-02 batch. Authenticated native bootstrap remains deliberately deferred; deployment-wide default retention and region-pinning policy remain D-013.
+
+---
+
+## 8. M-3 — Deterministic verification
+
+### W-01 Owned task contract and deterministic driver
+
+**Status:** Complete  
+**Depends on:** C-04
+
+**Objective:** Define Idenqa's background-execution needs without leaking or guessing the production library API.
+
+**Scope:**
+
+- Owned versioned task names and opaque payloads.
+- Transactional task intent, uniqueness, scheduling, retry classification, retry budget, lease, heartbeat, fencing, cancellation, quarantine, and drain semantics.
+- Deterministic test driver with controllable clock, attempts, failures, duplicates, lease loss, and crash points.
+- Outbox dispatcher contract and inbox deduplication.
+
+**Exit proof:** State-machine tests prove duplicate delivery, stale-worker fencing, retry exhaustion, cancellation, poison work, transaction rollback, and rolling payload compatibility.
+
+**Not included:** A production queue adapter or another queue dependency.
+
+**Implementation record:** Added the dependency-free owned `platform/task` contract with prefixed `tsk_` identities, immutable object-shaped payloads, exact task names and versions, explicit retry classifications, bounded deterministic exponential backoff and jitter, mandatory bounded retention, safe correlation and trace metadata, explicit handler outcomes, narrow enqueue/dispatcher/inbox ports, and exact-version rolling registry semantics. The deterministic driver supports atomic staged enqueue and rollback, idempotent identifier replay, semantic uniqueness, delayed work, attempt and crash-attempt separation, monotonically fenced leases, heartbeat, stale-worker rejection, cancellation, poison-work quarantine, retry exhaustion, unsupported-version quarantine, and graceful drain. A reusable `tasktest` conformance suite plus focused race and lint tests prove duplicate delivery, fencing, retry exhaustion, cancellation, quarantine, transaction rollback, deterministic time, and rolling payload compatibility without importing Headgate.
+
+### W-02 Production background-work adapter
+
+**Status:** Complete  
+**Depends on:** W-01 and D-011
+
+**Objective:** Integrate Headgate v0.1.2's Go SDK and PostgreSQL driver without changing domain or public contracts.
+
+**Scope:**
+
+- Adapter under `platform/task` using `github.com/mujhtech/headgate/go` and `github.com/mujhtech/headgate/go/driver/headgatepgx`.
+- Reviewed Headgate migration composition and installation identity; API and worker startup never migrate automatically.
+- Atomic application-state and Headgate enqueue transactions through the supported pgx transaction adapter, without direct writes to Headgate tables.
+- Worker composition, queue configuration, transactional enqueue, leases, heartbeats, retries, fencing, cancellation, telemetry, graceful drain, and operational CLI commands.
+- Conformance suite shared with the deterministic driver.
+
+**Exit proof:** The production adapter passes the task conformance suite and crash/restart integration tests; replacing it with the deterministic driver changes no domain API.
+
+**Not included:** Library features not required by Idenqa's owned contract.
+
+**Progress rule:** W-02 becomes **Ready** after W-01 and the remaining schema, migration, queue, partitioning, retention, and telemetry integration details are recorded. M-3 cannot be marked complete until W-02 passes.
+
+**Implementation record:** Pinned Headgate v0.1.2 core, pgx driver, and migration-only modules after release, licence, maintenance, API, dependency-graph, and initial vulnerability review. Added the library-confined adapter that maps owned task identity, payload version, tenant-scoped uniqueness, queue, partition, schedule, deadline, retry budget, retention, safe correlation, and W3C trace context into Headgate envelopes. Headgate's compile-time dispatch kinds are confined to four internal queue carriers; the original Idenqa task name, idempotency key, and exact payload version remain durable metadata because Headgate does not return its uniqueness field on a claim. Transactional enqueue uses Headgate's supported `headgatepgx.WrapTx(pgx.Tx)` and `Client.EnqueueTx` path over the same caller-owned application transaction; the adapter never writes Headgate tables directly. Equivalent duplicate enqueue is an idempotent success while changed identity or content remains a conflict. The worker bridge reconstructs the owned immutable intent, presents Headgate's current fence and a one-based attempt to the handler, and maps complete, retry class, cancel, poison, missing-handler, and unsupported-version outcomes without leaking library types. Added the `worker` Cobra binary with configurable per-queue concurrency, leases, polling, memory restart guard, cancellation, bounded graceful drain, and exact application-plus-Headgate schema preflight. Crash quarantine and deployment-wide fallback retry values configure the pgx store that enforces them. Headgate v0.1.2 does not invoke its declared `Config.RetryPolicy`, so an Idenqa-owned Store decorator retains the claimed durable retry policy for that lease and supplies the supported explicit Ack delay computed from the task's initial backoff, cap, deterministic jitter, task identity, and one-based attempt. Restarted workers reconstruct it from durable metadata. Added `idenqa migrate headgate preflight|version|up|down`, where startup never migrates, `up` creates only the validated dedicated namespace before applying Headgate's pinned migrations, and production rollback is prohibited. Both `api` and `worker` validate the Headgate schema through their caller-owned pool before serving or admitting work; API readiness continues checking it without opening a parallel connection lifecycle. Fleet policy is reconciled idempotently before worker admission. Selected configurable per-minute defaults are `verification=120` with burst 20, `evidence=60` with burst 10, `delivery=300` with burst 50, and `maintenance=30` with burst 5; corresponding per-tenant partition concurrency ceilings are 4, 2, 8, and 1. Saturation queues rather than discarding or cancelling work. Headgate lifecycle events feed bounded Idenqa OpenTelemetry metrics and consumer spans without tenant, task ID, fingerprint, or payload metric labels. The shared conformance contract now separates portable durable-queue behaviour from the deterministic driver's single-process drain extension, because a separate API intentionally continues enqueueing while one worker drains. The PostgreSQL production adapter passes idempotent replay, stale-worker fencing, heartbeat, task-specific retry exhaustion, cancellation, snapshot, schema, rate-policy, crash-reclaim, and replacement-worker proofs under the race detector. W-02 is complete; each future concrete task must still select its bounded retention duration when introduced. The exact Go 1.26.6 full race, lint, vet, build, module-integrity, and vulnerability gates pass.
+
+### V-01 Provider, model, and runner contracts
+
+**Status:** Complete  
+**Depends on:** W-01
+
+**Objective:** Define replaceable provider and model execution boundaries before adding real integrations.
+
+**Scope:**
+
+- Versioned capability manifests, configuration validation, request/result envelopes, attempts, stable error classification, idempotency, restrictions, and health.
+- Provider and model runner protobuf/gRPC contracts with deadlines, cancellation, authentication, and OpenTelemetry propagation.
+- Evidence access through scoped grants rather than task payload bytes.
+- Contract compatibility and conformance harnesses.
+
+**Exit proof:** A deliberately non-conforming adapter is rejected by the conformance suite; runner tests prove deadline, cancellation, authentication, result-size, and secret/evidence isolation.
+
+**Not included:** Real providers or predictive models.
+
+**Implementation record:** Added public dependency-free Go v1 contracts under `contracts/provider/v1` and `contracts/model/v1`, plus `pvd_`, `mdl_`, and shared `atm_` owned identifiers. Provider attempts pin contract version, adapter identity/version/package digest, capability and restriction snapshot, provider registration and credential-reference version, stable idempotency key, exact deadline, W3C trace context, and the existing `grt_`/`rdm_` controlled-read references. Model attempts additionally pin model, runtime, preprocessing, configuration, and output-schema digests with bounded input, result, duration, grant-count, and network policy. Neither envelope can represent raw evidence, credentials, object-store locations, tenant keys, arbitrary maps, or dynamic values. Both contracts define major-stable/minor-monotonic compatibility, bounded stable results, retry-aware redacted failures, safe health classifications, and narrow adapter ports. Public provider and model conformance harnesses validate the advertised manifest against the pinned request, configuration acceptance, health, exact attempt/result binding, and the pinned result-size ceiling; deliberately incorrect adapters are rejected under the race detector. The user selected the reviewed gRPC, Protobuf, Buf, Protovalidate, Go generator, and `otelgrpc` stack plus per-runner bearer credentials over server-authenticated TLS. The authoritative typed Protobuf v1 source, STANDARD lint and lock configuration, reproducible committed Go bindings, Protovalidate boundary enforcement, TLS-only current/previous credential rotation, non-disclosing authentication, required capped deadlines, cancellation propagation, W3C OpenTelemetry propagation, provider and model service/client adapters, 320 KiB wire bound, 256 KiB result bound, and closed-schema isolation are implemented. Real TLS in-memory runner tests prove both adapter round trips, missing and wrong credential rejection, rotation overlap, deadline rejection, cancellation reaching execution, shared client/server trace identity, malformed-request rejection, oversized-result rejection, and the inability of request schemas to represent bytes, maps, plaintext, object-store locations, tenant keys, or runner credentials. V-01 is complete; real providers and predictive models remain later work outside this contract brick.
+
+### V-02 Synthetic provider, checks, and normalised signals
+
+**Status:** Complete  
+**Depends on:** V-01 and E-03
+
+**Objective:** Run a complete provider attempt using synthetic evidence and deterministic outcomes.
+
+**Scope:**
+
+- Mock provider and model adapters with controllable success, rejection, timeout, malformed result, duplicate callback, and inconclusive outcomes.
+- Verification checks, attempt history, normalised observations and signals, provenance, and aggregate versions.
+- Inbox deduplication, reconciliation hooks, and capture-safe progress events.
+
+**Exit proof:** Synthetic scenarios deterministically exercise success, failure, retry, duplicate, inconclusive, cancellation, and stale-worker paths while preserving immutable attempt history.
+
+**Not included:** Real identity providers, real PII, or final policy decisions.
+
+**First twenty-task implementation record:** The first V-02 batch completed the following bounded tasks:
+
+1. Added owned sortable `chk_` check identifiers.
+2. Added owned sortable `obs_` observation identifiers.
+3. Encoded the architecture's closed check-state vocabulary.
+4. Kept completed `passed`, `not_passed`, and `inconclusive` outcomes separate from execution state.
+5. Added provider-versus-model runner provenance without importing transport types.
+6. Added bounded normalised signal outcomes and stable reason codes.
+7. Added owned retry dispositions that do not control identity policy.
+8. Added append-only `atm_` attempt history with monotonic attempt numbers and fences.
+9. Pinned runner, contract, package, request, and configuration provenance on every attempt and observation.
+10. Added optimistic check aggregate versions and defensive history copies.
+11. Added exact-binding provider-result normalisation.
+12. Added exact-binding model-result normalisation.
+13. Added a deterministic synthetic provider executor with success, rejection, inconclusive, unavailable, malformed, timeout, and cancellation behaviour.
+14. Added the corresponding deterministic synthetic model executor.
+15. Proved satisfied signals complete a check as passed without creating a final verification decision.
+16. Proved a defined synthetic non-match is normalised evidence and not an operational transport error.
+17. Proved inconclusive runner output remains inconclusive.
+18. Proved unavailability, deadline, cancellation, and retry preserve operational meaning and immutable earlier attempts.
+19. Added equivalent-duplicate detection, conflicting-terminal diagnostics, stale-fence rejection, and a reconciliation hook.
+20. Added a tenant-scoped optimistic memory repository, capture-safe progress-publisher boundary, and deterministic race-tested scenario coverage.
+
+**Second twenty-task implementation record:** The PostgreSQL durability batch completed the following bounded tasks:
+
+1. Advanced the embedded core schema contract to migration 17.
+2. Added tenant-scoped versioned `verification_checks` with closed state/outcome constraints.
+3. Added ordered `verification_attempts` with exact check, verification, fence, runner, contract, package, request, configuration, deadline, and terminal-result bindings.
+4. Added a database trigger permitting only the single running-to-terminal attempt transition and freezing terminal attempts and provenance.
+5. Added immutable `verification_observations` with exact attempt and check lineage.
+6. Added append-only enforcement for observations so stored evidence meaning cannot be rewritten or deleted.
+7. Added protected duplicate, conflict, and stale-delivery diagnostics.
+8. Added an append-only exact-result inbox keyed by tenant, attempt, and safe result fingerprint.
+9. Added durable reconciliation records with availability, claim count, claim token, bounded lease, reclaim, and fenced resolution state.
+10. Enabled and forced tenant RLS, installed explicit tenant policies, and revoked public access on every new table.
+11. Added full aggregate and attempt restoration that revalidates identifiers, state, provenance, history order, observations, failure meaning, and the semantic terminal digest.
+12. Added exact provider/model result fingerprints and validated application-level result receipts.
+13. Added tenant-scoped PostgreSQL check creation and complete aggregate loading.
+14. Added optimistic check updates guarded by the expected aggregate version.
+15. Added atomic result-inbox claiming so an equivalent delivery cannot reapply its state effect.
+16. Added atomic running-attempt finalisation and immutable observation insertion with stale-fence rejection.
+17. Added atomic `verification.check.progress.v1` outbox intents containing only verification ID, check ID, state, version, and occurrence time.
+18. Added atomic stale/conflict reconciliation requests plus `SKIP LOCKED` leasing, expired-lease reclaim, exact-token resolution, and stale-token rejection.
+19. Proved forced-RLS cross-tenant hiding, exact replay, immutable history restoration, append-only enforcement, outbox-triggered transaction rollback, stale delivery, and fenced reconciliation against PostgreSQL under the race detector.
+20. Regenerated committed sqlc bindings and extended deterministic tests for atomic inbox replay and tampered-terminal restoration.
+
+**Third thirty-task implementation record:** The approved transactional execution batch completed the following bounded tasks:
+
+1. Selected `verification.execute` as the durable execution task name.
+2. Selected exact payload version 1 rather than inferring compatibility.
+3. Limited the execution payload to `check_id` and `attempt_id`.
+4. Selected the `verification` queue and tenant-ID partition.
+5. Selected `verification.execute:<attempt_id>` as the semantic idempotency key.
+6. Selected five attempts with one-second initial and 30-second maximum backoff.
+7. Selected deterministic 20% retry jitter.
+8. Bound the task deadline to the durable attempt deadline with a ten-minute cap.
+9. Selected 30-day successful Headgate metadata retention.
+10. Selected `verification.reconcile` and exact payload version 1.
+11. Limited the reconciliation payload to the same two opaque identifiers.
+12. Selected the maintenance queue and `verification.reconcile:<attempt_id>` idempotency key.
+13. Selected eight reconciliation attempts with 30-second initial and 15-minute maximum backoff.
+14. Selected deterministic 20% reconciliation jitter, a 24-hour deadline, and 30-day successful metadata retention.
+15. Added strict payload decoding that rejects unknown fields, scalars, malformed IDs, and trailing JSON.
+16. Added constructors whose type surface cannot carry evidence bytes, credentials, results, claims, or object locations.
+17. Preserved the original owned task payload through Headgate's private typed queue carriers.
+18. Added durable schedule and retention headers so typed dispatch reconstructs the complete owned intent.
+19. Added an owned transactional-handler contract that prepares external work before opening PostgreSQL.
+20. Changed the Headgate bridge to use typed `Job.Once` for transactional handlers.
+21. Fixed the retry-policy decorator so it preserves `TransactionalStore` only for capable backends.
+22. Delayed retry-bookkeeping release until the fenced completion transaction commits.
+23. Added caller-owned-transaction check loading with mandatory tenant scope.
+24. Added caller-owned-transaction check saving without creating a nested transaction.
+25. Added exact provider-result execution and fingerprinted inbox receipts.
+26. Added exact model-result execution and fingerprinted inbox receipts.
+27. Kept immutable domain-attempt fences separate from changing Headgate lease fences.
+28. Composed the V-02 synthetic provider, model, identifier generator, PostgreSQL store, and exact handler in `worker`.
+29. Proved approved intent values, strict decoding, operational failure meaning, malformed-result quarantine, and fence separation with deterministic tests and fuzz seeds.
+30. Added PostgreSQL integration proofs that a live fence commits the effect with task completion while a stolen fence rolls both back, terminal-result replay survives persistence canonicalisation, and a restricted process role can validate and use an explicitly migrated Headgate schema without owning or migrating it.
+
+**Fourth thirty-task implementation record:** The approved reconciliation and capture-safe progress batch completed the following bounded tasks:
+
+1. Advanced the embedded application schema contract to migration 18.
+2. Added an explicit migration preflight that refuses ambiguous duplicate reconciliation rows instead of silently deleting history.
+3. Coalesced future reconciliation reasons to one durable lifecycle per tenant, check, and attempt.
+4. Extended the durable realtime table's closed message catalogue with `verification.check.progress`.
+5. Preserved command-ID prohibition for that non-consequential progress event at the database boundary.
+6. Added a bounded, ordered installation-wide due-reconciliation discovery function.
+7. Added a bounded installation-wide pending-progress-tenant discovery function.
+8. Made both cross-tenant functions `SECURITY DEFINER`, fixed their search paths, disabled row-security ambiguity, revoked public execution, and required explicit runtime grants.
+9. Kept both system functions identifier-only so they cannot expose outcomes, signals, evidence, or provider data.
+10. Added an exact tenant/check/attempt reconciliation claim rather than allowing a task to consume another item.
+11. Distinguished an already resolved or absent target from an active application-lease conflict.
+12. Added caller-owned-transaction reconciliation resolution for atomic Headgate completion.
+13. Added the strict version-1 `verification.reconcile` transactional handler.
+14. Made application reconciliation leases validated deployment configuration with the selected two-minute default.
+15. Kept reconciliation from mutating a check outcome or authoring a policy or verification decision.
+16. Added the immediate startup reconciliation sweep.
+17. Added configurable minute-based recurring sweeps and identifier discovery capped at 100, with independent enqueues so one uniqueness replay cannot suppress unrelated work.
+18. Added an Idenqa-owned Headgate duty adapter and installation-wide reconciliation duty identity.
+19. Generated a lowercase deployment-safe worker identity when an explicit deployment worker ID is absent.
+20. Added tenant-ID-only PostgreSQL progress notifications in the same transaction as each check-progress outbox intent.
+21. Added one worker-owned dedicated notification listener with invalid-payload rejection and no payload logging.
+22. Added the configurable one-second durable fallback poll so notification loss never affects correctness.
+23. Re-entered mandatory tenant scope after every identifier-only system discovery result.
+24. Strictly decoded and cross-checked outbox event ID, aggregate ID/version, session, occurrence time, type, and schema before publication.
+25. Atomically appended a durable realtime event and marked its exact outbox source published.
+26. Used the immutable verification-session expiry as the event's replay boundary and made repeated projection idempotent.
+27. Added the closed Go and public JSON Schema payload carrying only check ID, operational state, and check version.
+28. Added strict TypeScript SDK decoding, durable cursor acknowledgement, reconnect replay typing, and safe documentation.
+29. Made Capture Web expose the generic safe realtime event and reread authoritative REST snapshots after check progress.
+30. Added deterministic unit proofs plus a restricted-role PostgreSQL proof for system discovery, notification hints, exact claiming, projection atomicity, idempotence, publication, and forbidden-field absence.
+
+V-02 is **Complete**. Its synthetic success, failure, retry, duplicate, inconclusive, cancellation, stale-worker, reconciliation, and capture-safe progress paths are implemented without inferring a final policy or verification decision. Final decision authorship remains owned by V-03.
+
+### V-03 Deterministic policy and decision snapshots
+
+**Status:** Complete  
+**Depends on:** V-02 and D-012
+
+**Objective:** Turn normalised evidence into reproducible decisions through deterministic policy.
+
+**Scope:**
+
+- Idenqa-owned typed policy contract with the agreed initial CEL-backed expression subset.
+- Type checking, bounded evaluation, activation, canonical digest, simulation, and stable reason codes.
+- Immutable evaluation and decision snapshots containing exact inputs, policy and evaluator versions, outcomes, lineage, and supersession.
+- Reproduction CLI and policy test kit.
+
+**Exit proof:** The same snapshot reproduces the same decision; tests cover unknowns, conflicts, limits, version mismatch, stale facts, inconclusive outcomes, and attempts by non-deterministic outputs to authorise consequential actions.
+
+**Not included:** AI-written policy activation or adaptive routing.
+
+**First fifty-task implementation record:** The approved CEL-independent V-03 foundation brick completed the following bounded tasks:
+
+1. Add owned sortable `pol_` policy identifiers without exposing ULID.
+2. Add owned sortable `dec_` decision identifiers matching the public architecture examples.
+3. Extend deterministic identifier generation and strict prefix parsing tests for both types.
+4. Add stable policy validation, conflict, version, and reproduction error categories.
+5. Encode the five closed requirement states without treating the zero value as valid.
+6. Encode the nine closed workflow directives without permitting arbitrary effects.
+7. Encode the three closed terminal decision outcomes separately from directives.
+8. Add bounded lowercase policy, requirement, fact, assurance, region, and reason tokens.
+9. Add an exact policy reference containing identity, revision, schema version, and canonical digest.
+10. Add an exact evaluator reference containing semantic version and implementation digest.
+11. Reject zero, unsupported, malformed, or inconsistent policy and evaluator references.
+12. Add a bounded namespaced fact key that cannot carry an arbitrary object or dynamic value.
+13. Add closed fact source kinds for check, processing authority, subject response, and review finding.
+14. Bind check facts to exact check, aggregate version, attempt, and observation identifiers.
+15. Bind authority facts to an exact processing-authority identifier.
+16. Bind subject-response facts to an exact acknowledgement identifier.
+17. Reserve typed review-finding source bindings without implementing manual review.
+18. Require every fact to carry an explicit UTC observation time.
+19. Support explicit fact expiry and reject stale facts at the chosen evaluation time.
+20. Bound and validate stable fact reason codes.
+21. Pin source contract and implementation digests where a check fact depends on provider or model work.
+22. Prevent raw evidence, signal values, credentials, object locations, or arbitrary maps from being representable in fact types.
+23. Defensively copy all fact reason and source-reference collections.
+24. Canonically order facts independently of input order.
+25. Reject duplicate fact keys even when their apparent states agree.
+26. Report conflicting duplicate facts through the owned conflict error.
+27. Add an immutable decision snapshot binding tenant and verification identities.
+28. Bind the exact processing-authority and subject-response references used by the snapshot.
+29. Bind the exact policy and evaluator references used by the snapshot.
+30. Make evaluation time explicit and prohibit direct clock reads in snapshot construction.
+31. Bound the number of facts and aggregate reason-code volume in one snapshot.
+32. Canonically serialise the snapshot with a closed versioned representation.
+33. Compute a lowercase SHA-256 digest over canonical snapshot bytes.
+34. Restore stored snapshots only when their canonical digest matches.
+35. Reject tampered, reordered-with-changed-meaning, stale, or version-incompatible snapshots.
+36. Add bounded requirement results with exact contributing fact references.
+37. Require every contributing fact reference to exist in the immutable snapshot.
+38. Reject duplicate requirement names and duplicate contributing fact references.
+39. Bind each requirement result to one closed workflow directive candidate.
+40. Add bounded explicit policy priority for deterministic directive selection.
+41. Select the lowest policy priority independently of result input order.
+42. Report equal-priority incompatible directives as a policy conflict.
+43. Require `complete_verified` to have only satisfied requirements.
+44. Prevent prohibited, unavailable, or inconclusive requirements from silently becoming verified.
+45. Keep non-terminal directives separate from terminal decision outcomes.
+46. Canonically order requirement results and aggregate stable reason codes.
+47. Create immutable decisions containing snapshot, evaluation, lineage, actor class, and supersession.
+48. Reproduce a stored decision from its snapshot and requirement results without contacting providers or models.
+49. Reject reproduction when policy, evaluator, snapshot, evaluation, or selected-directive meaning differs.
+50. Add deterministic, table-driven, race, fuzz-seed, aliasing, stale-fact, conflict, limit, and non-terminal-authorisation tests for the complete foundation.
+
+This first brick did not resolve D-012. It deferred the CEL dependency, compiler adapter, public policy document syntax, initial expression subset, activation workflow, PostgreSQL decision persistence, reproduction CLI, and public policy test kit. The second brick below implements only the CEL-independent durable representation; the other items remain deferred.
+
+**Planner verification:** The CEL-independent domain package exposes no expression-engine, transport, persistence, provider, model, telemetry, task-library, or cloud dependency. Deterministic and table-driven tests cover identifier prefixes, source-union validation, canonical order, defensive copies, stale and future facts, duplicate and conflicting bindings, version and digest mismatch, bounded inputs, priority conflicts, all five requirement states, terminal and non-terminal authorisation, supersession, and exact reproduction. The seeded fuzz target proves result-order stability. Focused tests pass under the race detector and the focused `golangci-lint` gate reports no issues on Go 1.26.6.
+
+**Second fifty-task implementation record:** The next CEL-independent V-03 durability brick completed the following bounded tasks:
+
+1. Add an owned maximum canonical snapshot byte limit before JSON decoding.
+2. Decode stored snapshot JSON through the closed canonical schema rather than an arbitrary map.
+3. Reject unknown snapshot fields.
+4. Reject duplicate snapshot fields through exact canonical-byte comparison.
+5. Reject trailing JSON values and non-object snapshot input.
+6. Reject unsupported snapshot schema versions before restoration.
+7. Parse every owned identifier in a stored snapshot through its exact prefix parser.
+8. Restore every closed fact-source variant from reference-only canonical fields.
+9. Rebuild stored snapshots through the same validation and canonicalisation path as new snapshots.
+10. Require both canonical bytes and the supplied snapshot digest to match the rebuilt snapshot exactly.
+11. Add an owned maximum canonical evaluation byte limit before JSON decoding.
+12. Decode stored evaluation JSON through the closed canonical schema rather than an arbitrary map.
+13. Reject unknown, duplicate, trailing, and non-object evaluation input.
+14. Require the stored evaluation to name the exact supplied snapshot digest.
+15. Restore bounded requirement results and contributing fact keys through owned validators.
+16. Re-run deterministic priority, conflict, terminal-outcome, and assurance resolution during restoration.
+17. Require canonical evaluation bytes to match the recomputed evaluation exactly.
+18. Require the supplied evaluation digest to match the recomputed evaluation digest.
+19. Reject stored selected directives, outcomes, considered directives, or reason codes that differ from recomputed meaning.
+20. Add table-driven snapshot and evaluation restoration tests for valid, malformed, oversized, non-canonical, and tampered input.
+21. Add a closed versioned canonical decision envelope.
+22. Bind the decision envelope to the exact decision, tenant, verification, snapshot, and evaluation identifiers or digests.
+23. Bind actor class, supersession, and explicit UTC decision time into the envelope.
+24. Compute a lowercase SHA-256 decision digest over canonical envelope bytes.
+25. Return defensive copies of canonical decision bytes.
+26. Restore a stored decision only through strict envelope decoding.
+27. Require envelope identities to agree with the reconstructed snapshot and evaluation.
+28. Re-run terminal authorisation and decision construction during restoration.
+29. Require canonical envelope bytes and the supplied decision digest to match exactly.
+30. Add decision-envelope aliasing, version, identity, lineage, and tamper tests.
+31. Add stable decision-not-found and decision-conflict errors without exposing PostgreSQL errors.
+32. Define the narrow decision repository interface at the consuming policy boundary.
+33. Add an immutable tenant-owned policy snapshot table.
+34. Add an immutable tenant-owned policy evaluation table.
+35. Add an immutable tenant-owned verification decision table.
+36. Bind every durable record to an existing tenant and verification through composite foreign keys.
+37. Permit at most one root decision for a tenant verification.
+38. Permit at most one direct successor for a superseded decision.
+39. Add database checks for identifier prefixes, schema versions, digests, outcomes, actors, and canonical byte limits.
+40. Reject update and delete operations for snapshots, evaluations, and decisions with append-only triggers.
+41. Enable and force tenant row-level security on all three tables.
+42. Revoke public privileges on all three tables and their append-only trigger function.
+43. Add parameterised insert, exact-find, and latest-lineage queries.
+44. Regenerate checked-in sqlc models and query code deterministically.
+45. Add a PostgreSQL repository constructor over the owned transaction boundary.
+46. Append snapshot, evaluation, and decision atomically with exact idempotent replay and changed-meaning conflict.
+47. Restore an exact decision by tenant scope and decision identifier.
+48. Restore the latest decision for a tenant-scoped verification without crossing lineage.
+49. Prove RLS non-disclosure, append-only enforcement, exact replay, conflict, lineage, and concurrent single-successor behaviour against PostgreSQL.
+50. Run focused and repository-wide generation, formatting, race, lint, vulnerability, build, migration, and document-integrity gates and record the remaining D-012 boundary.
+
+This second brick still does not select CEL, define a public policy document, activate policy, run provider or model work, author decisions from workflow tasks, expose a public API, or add the reproduction CLI and public policy test kit. It establishes only the durable owned representation those later surfaces can safely consume.
+
+**Planner verification:** Migration 19, deterministic sqlc generation, strict canonical restoration, repository reads, exact append replay, changed-meaning conflict, terminal-evaluation foreign keys, one-root and one-successor lineage, and leaf-based latest lookup are implemented. Unit and race tests cover malformed, oversized, non-canonical, duplicate-field, identity, digest, actor, supersession, and derived-meaning tampering. The isolated PostgreSQL 18.4 proof covers migration, forced RLS non-disclosure, append-only mutation refusal, exact replay, changed replay, cross-tenant lookup, root conflict, concurrent successor single-winner behaviour, and latest-lineage restoration. The full shuffled PostgreSQL integration suite and exact Go 1.26.6 repository formatting, generation, race, lint, vulnerability, module, and build gates pass. V-03 remains **In progress** because D-012, expression compilation, public policy syntax, activation, workflow authorship, the reproduction CLI, and the public policy test kit remain unresolved or unimplemented.
+
+**Third fifty-task implementation record:** The next CEL-independent V-03 reproduction-tooling brick completed the following bounded tasks:
+
+1. Version the portable decision-bundle schema independently of a future public policy language.
+2. Bound the complete portable bundle before decoding.
+3. Add an immutable owned decision-bundle type.
+4. Carry the exact canonical snapshot, evaluation, and decision bytes in the bundle.
+5. Bind the bundle to exact decision, tenant, and verification identifiers.
+6. Bind the bundle to exact snapshot, evaluation, and decision digests.
+7. Compute a SHA-256 digest over the complete canonical bundle payload.
+8. Emit a closed canonical envelope containing that payload digest.
+9. Return defensive copies of canonical bundle bytes.
+10. Return a defensive copy of the restored decision.
+11. Reproduce and strictly restore a decision before exporting a bundle.
+12. Decode portable bundles only through the closed envelope schema.
+13. Reject unknown and duplicate envelope fields.
+14. Reject malformed, trailing, non-object, empty, and non-canonical envelopes.
+15. Reject unsupported bundle schema versions.
+16. Recompute and verify the bundle-payload digest before nested restoration.
+17. Restore the embedded snapshot through the original strict canonical path.
+18. Restore and re-resolve the embedded evaluation through the original deterministic path.
+19. Restore and re-authorise the embedded decision through the original terminal path.
+20. Cross-check every outer identity and digest against the restored nested values.
+21. Rebuild and require exact canonical outer-envelope bytes after restoration.
+22. Keep offline restoration free of database, provider, model, network, storage, task, and expression-engine dependencies.
+23. Add a bounded structured reproduction report.
+24. Exclude facts, requirement details, reason codes, evidence references, and canonical payloads from that report.
+25. Report the exact policy identifier, revision, and digest.
+26. Report the exact evaluator semantic version and implementation digest.
+27. Report the snapshot, evaluation, decision, and bundle digests.
+28. Report the selected directive and terminal outcome separately.
+29. Report assurance, actor class, and optional supersession without arbitrary metadata.
+30. Report explicit evaluation and decision times plus bounded fact and requirement counts.
+31. Provide deterministic JSON encoding for the safe report.
+32. Add the Cobra `idenqa policy decision` command hierarchy.
+33. Classify missing operations, positional arguments, and malformed flags as usage errors.
+34. Parse the required tenant identifier through the exact `ten_` parser.
+35. Parse the required decision identifier through the exact `dec_` parser.
+36. Close output selection to `summary`, `json`, or `bundle`.
+37. Load the optional explicit dotenv file through the existing API configuration path.
+38. Open a small runtime-role PostgreSQL pool through the owned platform boundary.
+39. Refuse reproduction against a database that is not at the exact current migration version.
+40. Fetch the exact decision through the mandatory tenant-scoped repository.
+41. Honour command cancellation before repository composition and throughout lookup.
+42. Add a stable single-line summary that does not print facts or reason codes.
+43. Add newline-terminated machine-readable JSON report output.
+44. Write bundle output as exact canonical bytes without an injected newline.
+45. Verify a portable bundle offline from bounded standard input.
+46. Verify a portable bundle offline from an explicitly named local file.
+47. Stop reading after one byte beyond the owned bundle limit and reject empty input.
+48. Add deterministic unit, table, aliasing, tamper, fuzz-seed, cancellation, I/O, and Cobra contract tests.
+49. Prove durable reproduction and file-based offline verification against an isolated PostgreSQL installation under the restricted runtime role.
+50. Run the exact Go, integration, lint, vulnerability, build, module, and documentation-integrity gates and record the remaining D-012 boundary.
+
+This third brick does not select CEL, define or activate a public policy document, author decisions from workflow tasks, expose a decision API, or decide the public policy-testkit package split. It makes already-authoritative durable decisions reproducible through an owned operational surface while D-012 and the public test-kit boundary remain unresolved.
+
+**Planner verification:** The portable envelope is self-checking but is not described as a digital signature or external trust anchor. Online reproduction first uses the mandatory tenant scope and exact schema preflight; offline verification uses only the supplied bounded canonical bundle. Unit and seeded fuzz tests reject envelope, nested-payload, digest, identity, schema, size, and canonical-byte tampering. The isolated PostgreSQL proof exports a durable decision through the restricted runtime role and verifies the resulting file without reopening the repository. Exact Go 1.26.6 repository gates pass. V-03 remains **In progress** because D-012, expression compilation, public policy syntax, activation, workflow decision authorship, the public decision API, and the public policy test kit remain unresolved or unimplemented.
+
+**Fourth fifty-task implementation record:** The CEL-independent V-03 public decision-read brick completed the following bounded tasks:
+
+1. Add the tenant-assignable `decisions:read` permission.
+2. Add the separately assignable `decisions:export` permission.
+3. Register both permissions in the immutable tenant permission registry.
+4. Preserve whole-resource, whole-action, and complete wildcard resolution for the new permissions.
+5. Prove existing immutable API-key grants do not expand when the registry gains decision permissions.
+6. Reuse the owned tenant-scoped decision repository through a narrow application boundary.
+7. Add a decision-reader constructor with explicit repository injection.
+8. Recheck `decisions:read` inside the application service independently of HTTP middleware.
+9. Recheck `decisions:export` inside the application service independently of HTTP middleware.
+10. Read one exact tenant-owned decision by `dec_` identifier.
+11. Read the latest tenant-owned decision for one `ver_` verification identifier.
+12. Strictly reproduce every read decision before returning public meaning.
+13. Export only the already-defined byte-exact portable decision bundle.
+14. Preserve owned not-found classification while wrapping unexpected repository failures with operation context.
+15. Propagate the request context unchanged through application and persistence boundaries.
+16. Add a dedicated decision HTTP route adapter.
+17. Require explicit access middleware, application service, and logger dependencies in its constructor.
+18. Register `GET /v1/decisions/{decisionID}` for exact safe decision summaries.
+19. Register `GET /v1/verifications/{verificationID}/decision` for the current lineage leaf.
+20. Register `GET /v1/decisions/{decisionID}/bundle` for explicit portable export.
+21. Require `decisions:read` at both summary routes.
+22. Require `decisions:export` at the bundle route without treating read permission as export authority.
+23. Parse exact path identifier types and collapse malformed identifiers to the same non-disclosing not-found response.
+24. Map tenant-invisible and absent decisions to the existing generic public 404 contract.
+25. Return only the bounded safe reproduction report from summary endpoints.
+26. Derive a strong opaque summary ETag from the immutable decision digest.
+27. Mark authenticated decision responses private and non-cacheable by shared caches.
+28. Support exact `If-None-Match` handling and body-free 304 responses for summaries.
+29. Publish portable exports as `application/vnd.idenqa.decision-bundle.v1+json`.
+30. Write bundle responses as exact canonical bytes without re-encoding or an injected newline.
+31. Support exact `If-None-Match` handling for immutable bundles.
+32. Add one response helper that writes already-validated canonical JSON with explicit content type.
+33. Keep decision routes unavailable to capture-token authentication.
+34. Compose the existing PostgreSQL policy store in the API process.
+35. Compose the authorised decision reader over that store.
+36. Register decision routes through the same public router and lifecycle as existing tenant APIs.
+37. Leave database readiness and exact migration preflight behaviour unchanged.
+38. Add the safe latest-decision operation to the public OpenAPI contract.
+39. Add the exact-decision operation and identifier parameter to the public OpenAPI contract.
+40. Add the explicit decision-bundle export operation and media type to the public OpenAPI contract.
+41. Define a closed safe decision-report schema matching the owned report vocabulary.
+42. Define closed bundle, snapshot, evaluation, decision, fact-source, and requirement-result schemas matching canonical v1 bytes.
+43. Publish decision identifiers, digests, directives, outcomes, actors, assurance, ETag, and error responses with exact constraints.
+44. Regenerate checked-in Go and TypeScript OpenAPI bindings deterministically.
+45. Add public TypeScript wire and ergonomic decision/report/bundle types without importing root internals.
+46. Add an `IdenqaClient.decisions` surface for exact read, latest read, and explicit bundle export.
+47. Preserve request cancellation, strong ETags, conditional reads, and stable response metadata in the SDK.
+48. Add table-driven permission, application, HTTP, OpenAPI, generated-contract, and SDK tests for success and denial paths.
+49. Prove real API-key authentication, permission separation, forced-RLS tenant isolation, exact bundle export, and 304 behaviour against isolated PostgreSQL.
+50. Run exact Go 1.26.6 formatting, generation, race, full integration, lint, vulnerability, module, build, browser, package, and documentation-integrity gates.
+
+This batch does not select CEL, define or activate a public policy document, author decisions from workflow tasks, expose raw evidence, or decide the public policy-testkit package split. The summary surface is safe tenant-backend data; the richer portable bundle requires its own export permission because it contains immutable fact and provenance references even though it contains no raw evidence bytes.
+
+**Planner verification:** `decisions:read` and `decisions:export` are distinct immutable grant permissions at both middleware and application boundaries. The API process composes the tenant-scoped PostgreSQL repository through the owned reader and exposes exact, latest, and explicit bundle routes. Summary responses contain only the bounded reproduction report; exports preserve byte-exact canonical JSON under a versioned vendor media type. Strong digest ETags, private revalidation, body-free 304 responses, malformed-identifier non-disclosure, and generic tenant-invisible 404s are covered by route and generated-client tests. OpenAPI publishes closed report and complete canonical bundle schemas, while the dependency-free TypeScript SDK exposes ergonomic reports and preserves both exact canonical bundle text and its typed portable document. The isolated PostgreSQL 18.4 proof uses real API-key authentication to verify RLS isolation, exact export, latest lineage, and conditional reads. Exact Go 1.26.6 formatting, 100-point contract lint, deterministic generation, race, Go and browser tests, lint, vulnerability, build, and package gates pass. V-03 remains **In progress** because D-012, expression compilation, public policy syntax and activation, workflow decision authorship, and the public policy test-kit boundary remain unresolved or unimplemented.
+
+**Fifth fifty-task implementation record:** The CEL-neutral V-03 machine-decision-authoring seam completed the following bounded tasks:
+
+1. Define the two-method decision repository interface at the authoring consumer boundary.
+2. Define an authoritative input-loader port without persistence or expression-engine types.
+3. Define an owned evaluator port that accepts only an immutable policy snapshot.
+4. Define a closed evaluator output containing bounded requirement results and assurance.
+5. Keep CEL, SQL, HTTP, task-library, provider, model, storage, and telemetry types outside the authoring contract.
+6. Require the caller to allocate the exact replayable `dec_` decision identifier.
+7. Require the caller to identify the exact `ver_` verification.
+8. Carry an optional exact predecessor for linear supersession.
+9. Require explicit evaluation and decision times instead of reading a clock.
+10. Carry the exact processing-authority reference through the owned author input.
+11. Carry the exact subject-response reference through the owned author input.
+12. Carry the bounded explicit region through the owned author input.
+13. Carry the exact policy identity, revision, schema, and digest through the owned author input.
+14. Carry only the already-owned reference-only fact representation through the owned author input.
+15. Require repository, input-loader, and evaluator dependencies in the author constructor.
+16. Reject zero tenant scope, decision identity, or verification identity before reaching dependencies.
+17. Reject zero or non-UTC evaluation and decision times.
+18. Reject reversed time order and self-supersession.
+19. Honour caller cancellation before the first repository operation.
+20. Look up the exact decision identifier before resolving fresh inputs.
+21. Treat an exact durable decision as an idempotent replay.
+22. Require replayed tenant and verification identities to match the request.
+23. Require replayed authorship to be the machine actor class.
+24. Require replayed predecessor and both explicit times to match the request.
+25. Reproduce every durable replay before returning it.
+26. Classify changed replay meaning as a decision conflict without invoking the evaluator.
+27. Pass the unchanged context, tenant scope, verification identity, and evaluation time to the input loader.
+28. Pin the evaluator's exact semantic and implementation reference into the snapshot before evaluation.
+29. Re-enter the original snapshot constructor for all authoritative inputs.
+30. Defensively isolate loader-owned fact and reason-code slices through canonical snapshot construction.
+31. Pass the same request context and immutable snapshot to the evaluator.
+32. Recheck cancellation after input loading and after evaluation.
+33. Re-enter the original deterministic resolver for every evaluator output.
+34. Reject unknown facts, invalid result meaning, missing verified assurance, and other malformed evaluator output.
+35. Refuse every non-terminal workflow directive as machine-decision authority.
+36. Construct successful decisions only through the original terminal-authorisation path with `machine` actor class.
+37. Append the complete immutable decision through the exact tenant scope.
+38. Preserve stable policy and cancellation classifications while wrapping unexpected dependency failures with operation context.
+39. On an append conflict, reread the exact decision to distinguish a concurrent replay from changed meaning.
+40. Accept a concurrent replay only when its complete canonical decision digest matches the candidate.
+41. Fail closed when concurrent evaluator output differs under the same decision identity.
+42. Read the authored decision back from durable storage before returning success.
+43. Reject a durable read-back whose canonical decision digest differs from the candidate.
+44. Reproduce the durable read-back before returning it to the caller.
+45. Prove machine-authored verified, not-verified, and inconclusive terminal outcomes independently.
+46. Prove invalid requests, dependency failures, cancellation boundaries, replay conflicts, and non-terminal denial.
+47. Prove loader and evaluator slice mutation cannot change an authored snapshot or evaluation.
+48. Prove 32 concurrent exact authoring requests converge on one canonical decision under the race detector.
+49. Prove exact authoring replay and cross-tenant non-disclosure through the restricted PostgreSQL role and forced RLS.
+50. Run focused and repository-wide formatting, generation, race, integration, lint, vulnerability, build, package, and documentation-integrity gates.
+
+This batch does not select CEL, define a public policy document, implement active-policy resolution, register a durable workflow task, expose an authoring API, or decide the public policy-testkit package split. `policy.Author` is the owned application seam those later adapters will call: an input loader must still resolve current authoritative state, and an evaluator implementation must still be selected behind D-012 before production composition can author a decision.
+
+**Planner verification:** The author owns idempotent machine-decision semantics without owning expression syntax or activation. Exact decision identity, verification identity, lineage, evaluation time, and decision time form the replay boundary. Existing durable meaning is reproduced before reuse; changed replay meaning fails closed. Fresh inputs re-enter canonical snapshot validation, evaluator output re-enters deterministic resolution, and only an authorised terminal evaluation can reach immutable persistence. Focused race tests cover all three terminal outcomes, invalid requests, malformed and non-terminal output, cancellation before each consequential boundary, dependency failures, changed replay meaning, slice aliasing, and 32 concurrent exact requests. The isolated PostgreSQL proof uses the restricted runtime role to show exact authoring replay and forced-RLS cross-tenant non-disclosure. D-012, the production input resolver and evaluator adapter, public policy syntax and activation, durable workflow triggering, and the public policy-testkit split remain unresolved or unimplemented.
+
+**Sixth fifty-task implementation record:** The selected CEL v1 compiler and evaluator brick completed the following bounded tasks:
+
+1. Resolve D-012 by selecting CEL behind Idenqa-owned contracts.
+2. Select and pin `github.com/google/cel-go` v0.31.0 as a direct dependency.
+3. Verify the selected tagged release and active upstream maintenance after the `cel-expr` repository move.
+4. Verify that v0.31.0 is outside the only published affected advisory range.
+5. Verify Apache-2.0 and BSD-3-Clause dependency licensing against the core distribution.
+6. Review the direct transitive graph and preserve module checksums.
+7. Add the dependency-free public `contracts/policy/v1` Go contract.
+8. Close the initial public schema at major 1, minor 0.
+9. Bound one public policy document at 128 KiB.
+10. Publish the existing closed requirement-state and workflow-directive vocabularies.
+11. Bind every document to one `pol_` identifier, positive revision and optional verified assurance.
+12. Represent policy meaning as at most 128 uniquely named rules.
+13. Give every rule one bounded boolean condition and one explicit owned result.
+14. Require state, directive, priority, contributing facts and reason codes in every result.
+15. Bound expression bytes, facts, reasons, token lengths and priority.
+16. Accept only valid UTF-8 JSON at the public parse boundary.
+17. Reject unknown JSON fields at every document level.
+18. Reject duplicate JSON fields before typed decoding.
+19. Reject trailing JSON values, malformed values, empty input and oversized input.
+20. Normalize rule, contributing-fact and reason-code order without mutating caller slices.
+21. Produce deterministic canonical JSON independent of input slice order.
+22. Define policy identity as SHA-256 over canonical document bytes.
+23. Add byte-exact canonical parsing for immutable stored and activated documents.
+24. Publish a closed JSON Schema matching the Go contract and limits.
+25. Document JSON as v1 policy identity and reserve YAML only as a future authoring format.
+26. Add the private `internal/policy/cel` adapter package.
+27. Keep every `cel-go` type confined to that adapter.
+28. Expose only `facts: map<string,string>` and `region: string` to expressions.
+29. Construct a fresh primitive activation map and never register native Go structs.
+30. Disable every CEL macro, including comprehensions.
+31. Enforce expression byte, parser recursion, AST depth and 64-node limits.
+32. Enforce a 1,000-unit runtime evaluation-cost ceiling.
+33. Compile and type-check every expression as boolean before use.
+34. Audit the checked AST against an explicit operator allow-list.
+35. Permit fact access only through a static string index of `facts`.
+36. Require statically referenced facts to exactly equal declared contributing facts.
+37. Reject functions, receiver calls, dynamic indexing, field selection, construction, arithmetic, conditionals, unknown identifiers and non-boolean output.
+38. Compile immutable CEL programs once for concurrent reuse.
+39. Pin the exact adapter version, CEL release, subset and limits in an evaluator digest.
+40. Require snapshot policy identity, revision, schema and digest to match the compiled document.
+41. Require the snapshot evaluator reference to match the compiled adapter.
+42. Honour cancellation before evaluation, between rules and before returning output.
+43. Evaluate only matching rules and fail closed when none match.
+44. Translate matched results into Idenqa-owned requirement results without engine types.
+45. Fail closed on missing facts, CEL runtime errors, non-boolean values and nil evaluators.
+46. Add table-driven public-contract validation, canonicalization, aliasing and tamper tests.
+47. Add closed-subset compiler tests for every excluded expression category and complexity limit.
+48. Add terminal-outcome, region, mismatch, no-match, missing-fact, cancellation, mutation and 64-way concurrency tests plus seeded fuzzing and race execution.
+49. Run module tidy and checksum verification with the dependency promoted to direct status.
+50. Run focused and repository-wide formatting, generation, race, lint, vulnerability, module, build, package and documentation-integrity gates.
+
+This batch selects and implements the initial public syntax and CEL compiler/evaluator only. It does not activate a policy, resolve authoritative production inputs, register a durable policy-evaluation task, expose policy administration APIs, or decide the public policy-testkit split. Policy documents remain engine-neutral public JSON; CEL is a private replaceable adapter.
+
+**Planner verification:** Public v1 meaning is bounded, closed, canonical and independently digestible. The checked-AST allow-list is narrower than CEL itself and the activation map contains only owned primitive values, so CEL cannot reflect domain objects or obtain providers, models, storage, networks, filesystems, tasks or clocks. Focused unit, seeded fuzz, race, vet and lint tests cover canonical restoration, malformed documents, subset escapes, complexity limits, all three terminal outcomes, region input, exact provenance, snapshot mismatch, missing facts, cancellation, caller mutation and concurrent reuse. Exact repository-wide gates pass. V-03 remains **In progress** because policy revision persistence and activation, the production authoritative-input resolver, durable workflow triggering and the public policy-testkit split remain unresolved or unimplemented.
+
+**Seventh fifty-task implementation record:** The durable policy revision and optimistic activation brick completed the following bounded tasks:
+
+1. Add an owned immutable `policy.Revision` independent of SQL and CEL types.
+2. Restore revisions only from byte-exact canonical public v1 JSON.
+3. Recompute the public digest instead of trusting persisted metadata.
+4. Parse the document's `pol_` identity through the owned identifier package.
+5. Pin schema major, schema minor, numeric revision and digest in the owned reference.
+6. Pin the exact evaluator implementation reference used during compilation.
+7. Require an explicit UTC registration time instead of reading a clock.
+8. Defensively copy canonical bytes at construction and access boundaries.
+9. Reject persisted reference, evaluator or canonical mismatches during restoration.
+10. Add an immutable `policy.Activation` carrying the active revision.
+11. Give every policy a monotonic optimistic activation version.
+12. Record the exact previous active revision, with zero reserved for first activation.
+13. Attribute every activation to an owned `key_` API-key record.
+14. Require an explicit UTC activation time no earlier than revision registration.
+15. Reject activation records that claim a revision replaced itself.
+16. Define the compiler interface at the policy-catalog consumer boundary.
+17. Keep compiler output limited to the owned evaluator reference.
+18. Split immutable revision and active-pointer repository ports by consumption.
+19. Compose those narrow ports only for the catalog application service.
+20. Require explicit repository and compiler dependencies at construction.
+21. Reject zero tenant scope and non-UTC registration requests before compilation.
+22. Honour caller cancellation before and after policy compilation.
+23. Compile canonical policy meaning before any durable registration attempt.
+24. Re-enter complete revision validation after successful compilation.
+25. Append only validated, successfully compiled revisions.
+26. Read every registered revision back from authoritative storage.
+27. Verify read-back reference, evaluator, timestamp and canonical bytes exactly.
+28. Make exact immutable registration retries converge without allocating new identity.
+29. Classify changed meaning under one policy revision as a revision conflict.
+30. Reject invalid activation scope, identity, revision, expected version, actor or time.
+31. Require expected activation version zero for the first activation.
+32. Use read-committed transactions and row locking for one policy's active pointer.
+33. Compare the stored activation version before switching the pointer.
+34. Advance activation version by exactly one in the SQL compare-and-swap.
+35. Reject stale concurrent activation attempts deterministically.
+36. Reject no-op activation of the already active revision.
+37. Permit a previously registered revision to be selected through the same activation primitive.
+38. Leave rollback authorisation, approval and operational policy outside this primitive.
+39. Append previous revision, new revision, actor and time as immutable activation history.
+40. Commit the active pointer and activation history in one transaction.
+41. Roll back the pointer when actor attribution or history persistence fails.
+42. Add migration `000020_policy_catalog` with policy roots, revisions and activation history.
+43. Enforce document size, identifier, version, digest and lifecycle constraints in PostgreSQL.
+44. Enforce foreign keys from active pointers and history to exact tenant-owned revisions.
+45. Protect revision and activation-history rows with database append-only triggers.
+46. Enable and force tenant row-level security on all three policy-catalog tables.
+47. Generate parameterised sqlc queries for append, exact read, lock, compare-and-swap and active read.
+48. Add unit tests for byte ownership, restoration, cancellation, compiler failure and activation validation.
+49. Prove exact replay, forced-RLS isolation, failed-history rollback, append-only enforcement and concurrent activation against PostgreSQL 18.4.
+50. Run focused formatting, generation, race, lint, migration and documentation-integrity gates before the repository-wide verification gate.
+
+This batch does not expose policy administration APIs, define approval or rollback authorisation, choose tenant-to-policy assignment, construct a production evaluator cache, resolve authoritative facts, register a durable workflow task, or decide the public policy-testkit split. The activation primitive can select any registered immutable revision; treating such a switch as an operational rollback and authorising it remain higher-level policy decisions.
+
+**Planner verification:** Migration 20 stores canonical revisions separately from the mutable active pointer and appends actor-attributed activation history in the same transaction as every successful compare-and-swap. Exact registration retries reproduce durable meaning; changed bytes, evaluator identity or registration time conflict. Forced RLS prevents cross-tenant reads and writes, while foreign keys and append-only triggers defend exact revision lineage. A live PostgreSQL 18.4 race proves two switches with expected version 1 produce one version-2 winner and one conflict; failed cross-tenant actor attribution leaves version 1 active. V-03 remains **In progress** because active evaluator resolution, authoritative fact loading, durable workflow triggering, administration and the public policy-testkit boundary remain unimplemented.
+
+**Eighth fifty-task implementation record:** The exact-revision evaluator resolution and authoritative-input coordination brick completed the following bounded tasks:
+
+1. Expose the selected CEL implementation reference independently of compiling a policy document.
+2. Keep the implementation digest identical between compiler, direct evaluator and resolving evaluator paths.
+3. Add a CEL-confined immutable revision-reader port at its consuming boundary.
+4. Implement `policy.Evaluator` through an exact-revision `policycel.Resolver`.
+5. Require an explicit positive evaluator-cache capacity at construction.
+6. Reject cache capacities above the hard 4,096-entry process ceiling.
+7. Avoid a hidden default memory budget in the resolver constructor.
+8. Key cached evaluators by exact tenant identity.
+9. Key cached evaluators by exact policy identity and numeric revision.
+10. Include public schema major and minor in the cache key.
+11. Include the canonical public policy digest in the cache key.
+12. Include evaluator major, minor and implementation digest in the cache key.
+13. Resolve the tenant scope from the already validated immutable decision snapshot.
+14. Read the exact snapshot-pinned revision rather than following the mutable active pointer.
+15. Verify the durable revision reference equals the snapshot reference before compilation.
+16. Verify the durable evaluator reference equals the running resolver identity.
+17. Compile only the immutable canonical bytes returned by the catalog.
+18. Verify the compiled public digest and evaluator identity again after compilation.
+19. Fail closed on catalog absence, corruption, compiler failure or identity mismatch.
+20. Preserve caller cancellation before revision lookup, after lookup and after compilation.
+21. Keep compiled programs private to `internal/policy/cel`.
+22. Bound the compiled cache with deterministic least-recently-used eviction.
+23. Promote cache hits without recompiling immutable meaning.
+24. Deduplicate concurrent cold resolution for one exact cache key.
+25. Perform cold compilation synchronously without starting background goroutines.
+26. Allow waiting callers to cancel independently of the cold-resolution owner.
+27. Prevent a cancelled waiter from cancelling a successful owner.
+28. Permit a live waiter to retry when the cold-resolution owner is cancelled.
+29. Avoid caching failed or cancelled resolution attempts.
+30. Keep identical policy references isolated across tenant cache namespaces.
+31. Add the CEL-neutral `policy.AuthoritativeState` projection.
+32. Restrict that projection to policy, authority and acknowledgement identities, region and owned facts.
+33. Document that authoritative sources must never return raw evidence or provider payloads.
+34. Require one atomic authoritative-state source instead of stitching independent mutable reads in the loader.
+35. Leave tenant-to-policy assignment inside that explicit source contract rather than inventing assignment semantics.
+36. Add a narrow active-policy reader at the input-loader consumer boundary.
+37. Implement `policy.InputLoader` through `policy.ActiveInputLoader`.
+38. Require explicit authoritative-state and active-policy dependencies at construction.
+39. Reject zero tenant, verification, policy, authority and acknowledgement identities.
+40. Reject invalid evaluation time, region, fact count and aggregate reason count.
+41. Revalidate every authoritative fact at the exact evaluation time.
+42. Reject duplicate fact keys before policy lookup.
+43. Resolve the active revision only after the atomic authoritative projection validates.
+44. Verify the returned active revision belongs to the selected policy identity.
+45. Defensively copy facts and nested reason-code and provenance slices on output.
+46. Pin the active immutable revision into `AuthorInput` before evaluation starts.
+47. Prove an activation switch between input loading and evaluation cannot change the pinned decision revision.
+48. Add race tests for cache hits, 32-way cold resolution, waiter cancellation, owner cancellation, eviction and tenant isolation.
+49. Add table-driven input validation, ownership, cancellation, dependency-failure and activation-race tests.
+50. Pass exact Go 1.26.6 formatting, generation, module, race, Go and TypeScript lint, vulnerability, build, browser and package-publication gates.
+
+This batch does not choose tenant-to-policy assignment, add an immutable session processing-region field, map durable check signals to public policy fact keys, implement the PostgreSQL authoritative-state projection, register the durable policy-authoring task, expose policy administration APIs, or decide the public policy-testkit split. Those concerns remain explicit rather than being hidden inside the cache or CEL adapter.
+
+**Planner verification:** The resolving evaluator follows the exact immutable reference in the snapshot, so an activation change after input loading cannot alter decision meaning. Its bounded LRU cache deduplicates a cold key, permits independent cancellation and never caches failure. The active input loader validates one atomically supplied reference-only authoritative projection and then pins the active revision without deciding how tenants assign policies or how checks become fact keys. Focused race tests include a deliberate revision-1-to-revision-2 activation switch before evaluation; the authored result remains revision 1. The exact Go 1.26.6 full repository gate passes. V-03 remains **In progress** because the authoritative PostgreSQL projection and its region/fact-mapping decisions, durable workflow triggering, administration and the public policy-testkit boundary remain unimplemented.
+
+**Ninth fifty-task implementation record:** The immutable session-region and authoritative PostgreSQL projection brick completed the following bounded tasks:
+
+1. Add the processing region to the verification-session aggregate.
+2. Validate session regions with the selected deployment-safe lowercase token contract.
+3. Require a valid region when creating a session.
+4. Require a valid region when restoring durable session state.
+5. Expose the immutable region through a read-only session accessor.
+6. Inject the API process region into the session application service.
+7. Reject construction of a session service with an invalid region.
+8. Include the server-selected region in the canonical creation-idempotency input.
+9. Carry the region through the owned session creation mutation.
+10. Prevent a caller request body from choosing the session region.
+11. Pass the validated API configuration region at process composition.
+12. Add migration 21's nullable upgrade-safe session-region column.
+13. Constrain every non-null stored region to the selected syntax and length.
+14. Leave pre-existing rows null instead of inventing historical placement.
+15. Add region to new verification-session inserts.
+16. Add region to session and capture-context reads.
+17. Restore every new session with its exact persisted region.
+18. Fail closed when an upgraded legacy row has no pinned region.
+19. Extend the immutable session-snapshot trigger to cover region.
+20. Restore the prior trigger exactly in the down migration.
+21. Include region in the safe verification-created outbox payload.
+22. Add domain tests for region retention and malformed-region rejection.
+23. Add service tests proving the configured region reaches persistence.
+24. Add integration assertions for stored region and mutation rejection.
+25. Define an explicit transaction-aware policy-selection port in the PostgreSQL adapter.
+26. Leave tenant-to-policy assignment semantics outside the adapter.
+27. Define an explicit fact-projector port in the PostgreSQL adapter.
+28. Leave check-signal-to-public-fact-key semantics outside the adapter.
+29. Define a bounded CEL-neutral authoritative projection record.
+30. Represent exact authority and subject-response references in that projection.
+31. Represent completed checks without raw evidence or provider payloads.
+32. Retain exact accepted attempt identity and attempt number.
+33. Retain runner kind, identity, version and package digest.
+34. Retain contract version, request digest, configuration digest and result digest.
+35. Retain only normalised signal outcome, safe reason codes and observation time.
+36. Force application tenant scope before authoritative reads.
+37. Use one read-only repeatable-read transaction for assignment and state.
+38. Select the active processing authority valid at the explicit evaluation instant.
+39. Select the latest subject response visible at that instant.
+40. Select only completed checks visible at that instant.
+41. Select the latest completed attempt that produced each completed check.
+42. Order checks and observations deterministically.
+43. Bound the projection to 128 checks and 64 observations per check.
+44. Query one sentinel row above the aggregate limit to detect overflow.
+45. Reject malformed durable identifiers and invalid timestamps.
+46. Reject inconsistent attempt provenance across rows for the same check.
+47. Reject duplicate observation identifiers and oversized projections.
+48. Return the selected policy, exact authority, response, region and projected facts through the owned source contract.
+49. Add focused tests for transaction options, forced scope, exact aggregation, missing-region failure and inconsistent provenance.
+50. Run generation, focused Go tests, documentation integrity and the exact Go 1.26.6 repository verification gate.
+
+This batch does not choose tenant-to-policy assignment or public fact-key semantics and therefore does not compose the source into the API or worker. It also does not register the durable policy-authoring task, expose policy administration APIs, define activation approval, or decide the public policy-testkit split. Those remain explicit V-03 work.
+
+**Planner verification:** New sessions carry one server-selected immutable region through domain state, idempotency, PostgreSQL, capture lookup and creation events. Legacy sessions without trustworthy historical placement fail closed. The authoritative source applies forced RLS scope and uses one read-only repeatable-read snapshot for the injected assignment strategy, time-valid authority, latest response and exact completed-check provenance. Its bounded strategy input contains no evidence bytes or provider payloads. Focused tests prove the transaction contract, tenant scope, aggregation and fail-closed paths; generation and exact Go 1.26.6 repository gates pass. V-03 remains **In progress** because policy assignment, public fact mapping, durable triggering, administration and the public policy-testkit boundary remain unresolved or unimplemented.
+
+**Tenth fifty-task implementation record:** The transactionally fenced durable policy-authoring foundation completed the following bounded tasks:
+
+1. Extract replay-neutral machine-decision construction into `policy.Builder`.
+2. Keep authoritative input and evaluator dependencies explicit and consumer owned.
+3. Preserve exact identifier, lineage and UTC-time validation before construction.
+4. Load authoritative input at the request's exact evaluation time.
+5. Re-enter the canonical immutable snapshot constructor.
+6. Preserve the exact policy and evaluator references supplied by authoritative input.
+7. Evaluate deterministic policy meaning without opening a persistence transaction.
+8. Re-enter the owned deterministic result resolver.
+9. Reject non-terminal machine evaluation results.
+10. Preserve machine actor attribution for authored decisions.
+11. Keep decision persistence out of the builder contract.
+12. Refactor synchronous `policy.Author` to reuse the builder.
+13. Preserve the synchronous author's replay-first durable lookup.
+14. Preserve exact replay without authoritative loading or reevaluation.
+15. Preserve concurrent exact-append recovery in synchronous authorship.
+16. Export one owned exact author-request replay validator.
+17. Require replay validation to reproduce complete canonical decision meaning.
+18. Add tenant-scoped decision append through a caller-owned transaction.
+19. Add tenant-scoped exact decision read through a caller-owned transaction.
+20. Force application tenant scope on each caller-owned transaction path.
+21. Share one append-validation implementation across owned and caller transactions.
+22. Share one immutable persistence implementation across both append paths.
+23. Share one strict restoration implementation across both read paths.
+24. Preserve predecessor locking, one-root and one-successor lineage enforcement.
+25. Fail closed when a required caller-owned transaction is absent.
+26. Define the versioned `policy.author` v1 task key.
+27. Assign policy authorship to the selected verification queue.
+28. Restrict the task payload to reference-only durable meaning.
+29. Pin decision, verification and optional predecessor identifiers exactly.
+30. Pin exact UTC evaluation and decision timestamps.
+31. Decode the task payload through a strict bounded JSON contract.
+32. Reject unknown fields, trailing values and malformed identifiers or timestamps.
+33. Reject self-supersession and decision times before evaluation.
+34. Partition every intent by its tenant identifier.
+35. Derive deterministic task idempotency from the decision identifier.
+36. Cap the authoring task deadline at two minutes.
+37. Select a bounded five-attempt exponential retry policy with jitter.
+38. Select 30-day successful task-metadata retention for `policy.author` v1.
+39. Define a narrow consumer-side decision-builder interface for the handler.
+40. Define a narrow consumer-side transactional decision-store interface.
+41. Quarantine every nontransactional handler invocation.
+42. Pre-read durable exact replay before performing evaluation.
+43. Prepare authoritative loading and deterministic evaluation outside the effect transaction.
+44. Recheck for a concurrent exact replay inside the effect transaction.
+45. Append, reread and compare exact canonical decision meaning inside that transaction.
+46. Commit the decision effect atomically with Headgate's live `job.Once` completion fence.
+47. Quarantine malformed, changed-meaning and semantic policy failures.
+48. Classify cancellation, conflicts and infrastructure failures into bounded retry classes.
+49. Add focused race, strict-contract and live PostgreSQL rollback-and-commit proofs.
+50. Run documentation integrity and the exact Go 1.26.6 repository verification gates.
+
+This batch does not choose tenant-to-policy assignment or public fact-key semantics. It therefore does not register the handler in the production worker, choose the exact workflow event that enqueues it, compose the authoritative source, expose policy administration APIs, define activation approval, or decide the public policy-testkit split. Those remain explicit V-03 work rather than being hidden behind a placeholder strategy.
+
+**Planner verification:** The task contains identifiers and exact workflow times but no facts, policy document, evidence, provider data or reason codes. Existing exact decisions bypass evaluation. Fresh deterministic work is prepared outside the database transaction, while exact replay verification, immutable append and canonical reread execute inside the same Headgate fence-verified transaction that completes the job. A simulated lost fence rolls back the decision, and a committed caller-owned transaction remains readable through the ordinary tenant-scoped repository. Focused policy race and lint gates plus the shuffled PostgreSQL integration suite pass. V-03 remains **In progress** because tenant assignment, public fact mapping, the production enqueue trigger and handler composition, administration and the public policy-testkit boundary remain unresolved or unimplemented.
+
+**Eleventh fifty-task implementation record:** The deterministic policy-simulation and portable-fixture foundation completed the following bounded tasks:
+
+1. Define an owned compiled simulation-program contract over the existing evaluator boundary.
+2. Define a narrow consumer-owned simulation-compiler port.
+3. Keep CEL implementation types outside policy-domain contracts.
+4. Require one byte-exact canonical policy document per simulation.
+5. Require explicit synthetic tenant, verification, authority and subject-response identifiers.
+6. Require an explicit validated simulation region.
+7. Require an explicit UTC evaluation time without reading a clock.
+8. Accept only the existing typed reference-only fact vocabulary.
+9. Propagate caller cancellation before compilation, evaluation and resolution.
+10. Enforce the public policy document byte limit before parsing or compiling.
+11. Parse supplied policy bytes through the strict canonical v1 contract.
+12. Parse the supplied policy identity through the owned `pol_` identifier parser.
+13. Recompute the canonical public policy digest independently.
+14. Pass a defensive copy of policy bytes into the compiler.
+15. Compile supplied meaning without catalog registration or activation.
+16. Preserve context cancellation through the CEL compiler adapter.
+17. Require the compiled program's policy digest to match canonical meaning exactly.
+18. Pin the compiled evaluator identity into the synthetic snapshot.
+19. Derive the exact policy reference from canonical public meaning.
+20. Construct simulation inputs through the production immutable snapshot constructor.
+21. Reuse production bounds, stale-fact checks, canonical ordering and source validation.
+22. Evaluate through the existing owned deterministic evaluator port.
+23. Re-enter production directive precedence and result resolution.
+24. Preserve both terminal and non-terminal simulation outcomes.
+25. Prevent simulation from creating an authoritative decision.
+26. Prevent simulation from changing an active policy pointer.
+27. Keep repositories, tasks, providers, models, networks and filesystems out of its type surface.
+28. Return one immutable simulation containing exact policy, snapshot and evaluation meaning.
+29. Defensively copy canonical policy bytes on input and output.
+30. Return an immutable defensive snapshot copy.
+31. Return an immutable defensive evaluation copy.
+32. Validate policy identity, revision, schema and digest against the resulting snapshot.
+33. Reproduce the resulting evaluation from its canonical bytes and digest.
+34. Version the portable simulation bundle independently at v1.
+35. Bound the complete bundle independently of its nested limits.
+36. Close the bundle over canonical policy, snapshot and evaluation bytes.
+37. Carry exact policy, evaluator, snapshot and evaluation digests in the envelope.
+38. Digest the complete bundle payload independently of nested digests.
+39. Define a bounded safe simulation report.
+40. Omit facts, source references, reason codes, expressions and canonical inputs from that report.
+41. Restore bundles through closed unknown-field-rejecting decoding.
+42. Reject trailing, duplicate, non-canonical and oversized envelope encodings.
+43. Restore nested canonical snapshot and evaluation meaning through owned validators.
+44. Cross-check tenant, verification, policy revision and every nested digest.
+45. Require byte-exact bundle reconstruction after restoration.
+46. Implement the simulation compiler port in the selected CEL adapter.
+47. Add table-driven terminal and non-terminal simulation proofs.
+48. Add invalid-input, cancellation, aliasing, ordering and concurrent-reuse race proofs.
+49. Add envelope, nested-field, identity, digest, duplicate-field, size and seeded-fuzz tamper proofs.
+50. Run documentation integrity and the exact Go 1.26.6 repository verification gates.
+
+This batch does not expose an HTTP or CLI administration surface, read tenant production state, register or activate a policy, enqueue `policy.author`, choose tenant assignment or public fact mapping, or select the public policy-testkit package split. The internal simulator and portable bundle are a stable engine-neutral foundation those later surfaces may consume after their explicit decisions.
+
+**Planner verification:** Canonical supplied policy meaning compiles without registration, activation or persistence and evaluates only explicit synthetic reference-only facts through the same snapshot, evaluator and resolver used by production. Terminal and non-terminal paths are deterministic under input reordering and concurrent reuse. The portable bundle restores byte-exact policy, snapshot and evaluation meaning without CEL or PostgreSQL; a safe report excludes synthetic facts, provenance, reasons and expressions. Table-driven, race and seeded-fuzz tests reject malformed, non-canonical, mismatched, oversized and tampered meaning. Exact Go 1.26.6 repository gates pass. V-03 remains **In progress** because the public policy-testkit split, tenant assignment, public fact mapping, production trigger composition, activation approval and administration remain unresolved or unimplemented.
+
+**Twelfth fifty-task implementation record:** The internal deterministic policy-scenario-suite foundation completed the following bounded tasks:
+
+1. Define an internal named policy-scenario contract over the existing simulator.
+2. Keep the scenario contract independent of CEL implementation types.
+3. Reuse the existing explicit synthetic simulation input without adding production-state access.
+4. Define exact expected meaning through owned requirement results and optional assurance.
+5. Resolve every expectation through the production deterministic resolver.
+6. Prevent the suite from maintaining a second directive-precedence implementation.
+7. Bound one suite run to at most 256 scenarios.
+8. Require at least one scenario per run.
+9. Bound each scenario name through the existing token rules.
+10. Require every scenario name to be unique.
+11. Sort scenarios by canonical name before execution.
+12. Make result order independent of caller input order.
+13. Propagate cancellation before any scenario work begins.
+14. Recheck cancellation before every scenario.
+15. Propagate simulator compilation and evaluation failures with scenario context.
+16. Reject malformed expected meaning with scenario context.
+17. Treat an expectation mismatch as report data rather than an execution failure.
+18. Continue after a mismatch so one run retains every mismatch.
+19. Compare actual and expected canonical evaluation digests.
+20. Preserve the exact expected evaluation digest per result.
+21. Preserve the existing safe actual simulation report per result.
+22. Preserve the self-checking portable actual simulation bundle per result.
+23. Keep facts out of the suite report.
+24. Keep source provenance out of the suite report.
+25. Keep CEL expressions out of the suite report.
+26. Keep requirement details out of the suite report.
+27. Keep reason codes out of the suite report.
+28. Keep canonical policy bytes out of the suite report.
+29. Reuse simulation-report identifiers, versions and digests without widening them.
+30. Mark the suite passed only when every scenario matches.
+31. Version the suite report with the simulation-report schema version.
+32. Canonically encode the safe report payload before digesting it.
+33. Compute a SHA-256 digest over the complete safe suite payload.
+34. Exclude the digest field itself from the digested payload.
+35. Return an input-order-independent suite digest.
+36. Defensively clone scenario result slices before returning.
+37. Defensively clone safe case-report slices before returning.
+38. Defensively clone portable bundle bytes through result accessors.
+39. Preserve immutable simulation meaning through result accessors.
+40. Keep the suite sequential and free of internally spawned goroutines.
+41. Reject nil simulator construction.
+42. Reject nil suite use without panicking.
+43. Add all-match and multiple-mismatch unit proofs.
+44. Add caller-order reversal and stable-digest proofs.
+45. Add empty, invalid-name, duplicate-name and maximum-bound proofs.
+46. Add invalid-expectation and cancellation-stop proofs.
+47. Add returned-state ownership and safe-field-omission proofs.
+48. Add concurrent deterministic suite-reuse race proofs.
+49. Add seeded fuzz coverage for scenario-order invariance.
+50. Run documentation integrity and the exact Go 1.26.6 repository verification gates.
+
+This batch does not publish a policy-testkit module, define its conformance API, load tenant production state, persist a scenario, register or activate a policy, author a decision, enqueue a task, or expose an HTTP, CLI, Console or Cloud surface. The public package split remains an explicit decision.
+
+**Planner verification:** Named scenarios reuse the selected CEL compiler only through the existing owned simulator and reuse the production snapshot and resolver contracts for both actual and expected meaning. Canonical ordering produces stable results and a stable safe digest regardless of input order. Multiple mismatches remain visible together; invalid expectations and cancellation fail closed. Focused race and seeded-fuzz tests prove bounds, aliasing, safe report omission and concurrent reuse. V-03 remains **In progress** because the public policy-testkit boundary, tenant assignment, public fact mapping, production trigger composition, activation approval and administration remain unresolved or unimplemented.
+
+**Thirteenth fifty-task implementation record:** The tenant-scoped metadata-only policy-catalog inspection foundation completed the following bounded tasks:
+
+1. Define immutable revision metadata without canonical policy bytes.
+2. Preserve exact policy identifier, revision, schema and digest in revision metadata.
+3. Preserve exact evaluator version and digest in revision metadata.
+4. Preserve the explicit UTC registration time in revision metadata.
+5. Restore revision metadata only through owned validation.
+6. Define immutable activation metadata without canonical policy bytes.
+7. Bind each activation metadata row to exact revision metadata.
+8. Preserve the monotonic activation version.
+9. Preserve the previous revision with zero only representing no predecessor.
+10. Preserve the actor API-key record identifier.
+11. Preserve the explicit UTC activation time.
+12. Reject activation time before revision registration.
+13. Reject a selected revision that names itself as previous.
+14. Define a narrow consumer-owned revision-inspection repository port.
+15. Define a narrow consumer-owned activation-inspection repository port.
+16. Compose those ports only at the catalog-inspector boundary.
+17. Keep SQL and pgx types outside policy-domain contracts.
+18. Bound returned catalog pages to at most 100 items.
+19. Require callers to choose a valid explicit page limit.
+20. Use zero only as the internal newest-page boundary.
+21. Use exclusive numeric revision boundaries for older revision pages.
+22. Use exclusive monotonic-version boundaries for older activation pages.
+23. Leave public cursor encoding unresolved.
+24. Fetch one extra metadata row to determine whether older data exists.
+25. Return an explicit `HasMore` value.
+26. Return a next exclusive boundary only when older data exists.
+27. Return revisions newest first.
+28. Return activations newest first.
+29. Require strict descending order from the repository.
+30. Reject duplicate or increasing revision rows.
+31. Reject duplicate or increasing activation versions.
+32. Reject repository rows for a different policy.
+33. Reject repository rows outside the requested exclusive boundary.
+34. Reject a repository response larger than the requested lookahead.
+35. Propagate cancellation before repository access.
+36. Preserve repository failures with operation context.
+37. Defensively clone returned revision-page slices.
+38. Defensively clone returned activation-page slices.
+39. Add metadata-only parameterised revision-list SQL.
+40. Add metadata-only parameterised activation-history SQL.
+41. Join activation history to revision identity without selecting canonical bytes.
+42. Reuse migration 20 primary-key ordering without a schema change.
+43. Generate checked-in sqlc query methods and rows.
+44. Execute both reads through the existing read-only tenant-scoped transaction helper.
+45. Validate every generated numeric conversion before narrowing it.
+46. Restore durable identifiers and timestamps through owned parsers and constructors.
+47. Add unit proofs for paging, boundaries, ordering, cancellation and slice ownership.
+48. Extend the live catalog proof with two-page revision and activation history reads.
+49. Prove empty cross-tenant pages through the restricted role and forced RLS.
+50. Run documentation integrity and the exact Go 1.26.6 repository verification gates.
+
+This batch does not add a mutable catalog operation, public API, CLI command, permission, opaque public cursor, activation approval, rollback authorisation, step-up authentication, dual control, Console screen or Cloud dependency. It inspects only existing immutable revision and activation-history metadata; the administration surface remains unresolved.
+
+**Planner verification:** Metadata-only SQL omits canonical policy documents and returns strict newest-first pages using exclusive numeric boundaries. The application boundary validates policy identity, ordering, bounds and durable metadata before returning immutable pages. The live PostgreSQL proof uses the restricted runtime role to show correct two-page revision and activation history plus empty cross-tenant results under forced RLS. Focused race tests, sqlc generation and exact Go 1.26.6 repository gates pass.
+
+**Selected assignment-and-trigger implementation record:** Migration 22 adds nullable upgrade-safe policy and decision assignments plus capture-completion time. New API and TypeScript SDK creation contracts require the policy identifier; application idempotency includes it; new sessions use a generated stable decision identifier; and PostgreSQL protects both assignments from mutation. Existing rows stay null and fail closed. Final accepted capture progress records completion atomically. `SessionPolicySelector` reads only the pinned assignment, while `DirectFactProjector` preserves validated namespaced signal keys and the three normalised outcomes with exact check provenance and duplicate-key rejection. The worker composes the active catalog loader, exact CEL resolver, decision builder and fenced `policy.author` handler. A bounded installation-wide scheduler discovers only sessions with completed capture, at least one check, every v1 required check terminal, and no decision, then enqueues a stable intent under a Headgate duty.
+
+**Completion record:** The dependency-light public `conformance/policy` package now exercises any implementation of the public `contracts/policy/v1` engine boundary. Its reusable suite proves exact deterministic results, defensive input ownership, cancellation, and rejection of a deliberately non-conforming engine without importing internal policy or CEL implementations. Together with the immutable snapshot, simulation, portable reproduction, assignment, fact-projection, and fenced-authoring proofs above, this satisfies V-03's exit proof. Policy administration and activation authorisation remain a separate unresolved operational surface and are not required to reproduce or test policy meaning.
+
+### V-04 Signed webhook delivery and Go SDK
+
+**Status:** Complete  
+**Depends on:** V-03 and W-02
+
+**Objective:** Complete the first tenant-facing verification lifecycle.
+
+**Scope:**
+
+- Webhook endpoint configuration, secret rotation, canonical signing, delivery intents, attempts, retry schedule, disablement, replay, and safe diagnostics.
+- SSRF and DNS-rebinding protections.
+- Go SDK for API calls, webhook verification, and public provider/model test helpers appropriate to this stage.
+- At-least-once delivery with tenant-side event-ID deduplication guidance.
+
+**Exit proof:** A synthetic verification produces a reproducible decision and signed webhook. Tests cover duplicate delivery, timestamp window, signature rotation, endpoint failures, retry exhaustion, manual replay, SSRF, and tenant isolation.
+
+**Not included:** Exactly-once external delivery or commercial webhook dashboards.
+
+**Completion record:** The dependency-light `sdk/go` module provides an explicit `net/http` client and canonical v1 webhook verification over timestamp, event identifier, and exact body bytes, with a caller-selected replay window, constant-time comparison, active-plus-overlap secret rotation, and durable event-ID deduplication guidance. Migration 23 adds forced-RLS endpoint, append-only wrapped-secret, delivery, and append-only attempt state. The owned application boundary separates `webhooks:configure` from `webhooks:replay`, returns plaintext signing material only at creation or rotation, wraps stored material through the owned KMS port, records disablement, and creates explicit replay lineage. The strict reference-only `webhook.deliver` v1 Headgate task performs at-least-once delivery, suppresses terminal duplicate effects, records bounded safe attempts, and enforces retry exhaustion. Callback transport pins approved public DNS answers per attempt, requires HTTPS and TLS 1.2+, rejects credentials, redirects, internal addresses, DNS rebinding and unbounded response bodies, and classifies retryable failures. Unit, SDK, and restricted-role PostgreSQL tests cover duplicate handling, timestamp windows, secret overlap, failure then success, exhaustion, disablement, replay, SSRF, RLS isolation, and durable attempts. A deterministic synthetic CEL decision produces the same evaluation digest twice and an exact-body signed webhook whose HMAC verifies independently, satisfying the M-3 exit proof without Cloud or Console. A future public administration transport may consume the completed application boundary but is not part of this brick's delivery contract.
+
+---
+
+## 9. M-4 — Operational open-source alpha
+
+### O-01 Audit chain, checkpoints, and verification tool
+
+**Status:** Complete  
+**Depends on:** V-04
+
+**Objective:** Make consequential history independently verifiable.
+
+**Scope:** Append-only audit records, tenant sequence, previous-event hashes, signed checkpoints, key history, export, and an open verification command that detects gaps, reordering, mutation, and invalid signatures.
+
+**Exit proof:** Tampering fixtures prove the verifier detects deletion, mutation, reordering, wrong keys, and broken checkpoints; valid exports verify outside the running core.
+
+**Completion record:** The selected v1 format is a closed canonical tenant-sequenced SHA-256 record chain with exact previous-record linkage and Ed25519-signed checkpoints identified by immutable key IDs. Migration 24 adds forced-RLS tenant heads, append-only audit records, public-key history, and append-only checkpoints. The PostgreSQL adapter allocates each tenant sequence under a serializable head lock, persists bounded reference-only records, validates checkpoint key registration and validity, and exports one repeatable-read snapshot with the required public keys. `audit:export` is rechecked at the application boundary. `idenqa audit verify --export-file --keys-file` verifies bounded exports without a database, running core, Cloud, or Console. Unit and restricted-role PostgreSQL proofs detect deletion, mutation, reordering, previous-hash breaks, wrong keys, and broken signatures while accepting a valid independently exported chain and preserving cross-tenant non-disclosure. Integrating additional consequential operations into the audit ledger remains incremental work for their owning bricks; O-01 establishes and proves the common durable mechanism.
+
+### O-02 Retention, legal hold, and deletion
+
+**Status:** Complete  
+**Depends on:** E-02, O-01, and D-013
+
+**Objective:** Implement data lifecycle as observable workflows rather than ad hoc deletes.
+
+**Scope:** Typed retention resolution, legal holds, scheduled expiry, deletion tombstones, object and derived-artefact deletion, event/job minimisation, backup-expiry boundary, and authorised deletion CLI/API operations.
+
+**Exit proof:** Deterministic lifecycle tests prove precedence, holds, retries, partial failure recovery, derived-copy cleanup, tombstone replay, auditability, and the documented backup boundary.
+
+**Completion record:** D-013 and D-022 are recorded in the integrated architecture. Typed resolution enforces class defaults, tenant shortening, capped extension, obligation intersection, legal-hold precedence, UTC time, and immutable region. The observable workflow owns exact raw and derived targets, replay-safe deletion, bounded classified partial failure, retry of only remaining copies, the 35-day backup boundary, and a reference-only seven-year tombstone digest. Migrations 25, 27, and 28 add forced-RLS lifecycle state, immutable tombstones, terminal evidence-content deletion, and bounded identifier-only system discovery. The worker composes the regional provider-neutral object deleter and schedules `privacy.delete` v1 through Headgate at startup and reconciliation ticks under a singleton duty. Stable workflow-version idempotency, eight bounded attempts, replay-safe exact-object removal, authoritative tenant-scoped reload, and the durable request row prevent lost or duplicated effects without putting evidence references in task payloads. The public API exposes scoped deletion and legal-hold operations without accepting caller-supplied object references or returning target references. Unit/race and live PostgreSQL 18.4 tests cover precedence, holds, partial recovery, raw/derived cleanup, stale transitions, append-only history, atomic audit, replay, due-work discovery across forced RLS, and cross-tenant non-disclosure.
+
+### O-03 Manual review, correction, and appeal
+
+**Status:** Complete  
+**Depends on:** V-03 and O-01
+
+**Objective:** Represent human resolution without letting transport or UI become the authority.
+
+**Scope:** Review cases, assignment/claiming, evidence grants, reasoned outcomes, dual control where required, correction, appeal, supersession, and non-disclosing application APIs usable without Console.
+
+**Exit proof:** Concurrency and authorisation tests cover double claim, stale decisions, insufficient authority, prohibited evidence access, dual-control separation, correction lineage, and appeal outcomes.
+
+**Completion record:** The transport-independent review aggregate owns certified claiming, optimistic versions, narrow expiring regional evidence grants, immutable reasoned findings, single or dual oversight, independent correction, and independent appeal assignment and resolution with exact successor lineage. Migration 26 adds forced-RLS cases, append-only findings, and appeals linked to immutable verification decisions. The PostgreSQL application adapter restores aggregates, checks reviewer-bound regional grant metadata without reading evidence, applies optimistic case and appeal transitions, inserts findings immutably, and appends the common reference-only audit chain in the same serializable transaction. Scoped public HTTP routes expose safe case state, assignment, findings, correction, and appeal operations without grant details or evidence bytes; the authenticated API key remains the audit actor while the tenant asserts the human reviewer identity. Unit/race and live PostgreSQL tests prove stale/double-claim exclusion, insufficient authority, region-denied evidence, dual-control separation, self-correction and self-appeal rejection, overturned appeal lineage, immutable findings, atomic audit, and cross-tenant non-disclosure.
+
+### O-04 Recovery, backup, observability, and operational CLI
+
+**Status:** Complete  
+**Depends on:** O-01 through O-03
+
+**Objective:** Make the open-source core diagnosable and recoverable without commercial tooling.
+
+**Scope:** Backup/restore procedures and tests, reconciliation commands, failed-work inspection and recovery, webhook replay, migration preflight, health diagnostics, SLOs, alerts, rate limits, backpressure, runbooks, and failure injection.
+
+**Exit proof:** A clean environment is restored from backup, reconciled, and verified; controlled dependency, database, storage, worker, and realtime failures produce bounded behaviour and actionable safe diagnostics.
+
+**Completion record:** A bounded version-1 regional backup manifest requires PostgreSQL, evidence, keyring, and audit components with exact byte lengths and SHA-256 digests, rejects traversal and schema/retention drift, and verifies restored files beneath an opened root without exposing content or paths. `idenqa recovery verify` provides the manifest verifier; `idenqa recovery reconcile` reports payload-free outbox, evidence, verification, deletion, lease, tombstone, and audit-head state and fails closed without an administrative PostgreSQL role. `idenqa work list` and confirmed `idenqa work retry` expose bounded payload-free Headgate inspection and exact recovery. The runbook records the 35-day boundary, tombstone-before-access ordering, staged service enablement, proposed RPO/RTO/SLOs, safe alerts, backpressure, and controlled database, storage, worker, realtime, and webhook failure exercises. Deterministic failure tests cover tampering, traversal, cancellation, dependency loss, bounded retry, lease recovery, slow consumers, and webhook exhaustion. D-016 is resolved and both OTLP transports are integrated with disabled-by-default export, TLS/mTLS, redacting headers, parent-based sampling, bounded trace batching, and periodic metrics. A PostgreSQL 17 logical backup at schema 27 was restored into an empty isolated database on 2026-09-04; migration preflight, exact sentinel verification, and the reconciliation command completed with `ready=true` and zero structural gaps.
+
+---
+
+## 10. M-5 — External beta expansion
+
+These bricks are sequenced after the open-source alpha. Their exact scope depends on the first adopter segment.
+
+### X-01 Swift and Kotlin SDK foundations
+
+**Status:** Complete  
+**Depends on:** M-3 completion
+
+Deliver idiomatic native API clients, secure token storage boundaries, capture-session state, capability advertisement, direct upload, realtime observation, cancellation, and conformance tests. Native SDKs own raw mobile capture; cross-platform bridges do not.
+
+**Completion record:** D-021 selects the Swift 6.2/iOS 16+ foundation and proof-bound native bootstrap. `sdk/swift` uses Apple first-party frameworks for cancellable HTTPS and WebSocket observation, actor-isolated ordered state, direct upload, Keychain token storage, a non-exportable Secure Enclave P-256 proof key, and one-shot AVFoundation JPEG capture. `sdk/kotlin` targets API 26+ with cancellable coroutine HTTP, Flow-based OkHttp WebSockets, direct upload, synchronised ordered state, AES-GCM token protection through Android Keystore, a hardware-backed P-256 proof key, and one-shot Camera2 JPEG capture. Both consume shared published bootstrap and realtime fixtures, sign the same versioned canonical proof transcript, expose optional attestation-provider boundaries, and advertise capabilities without claiming assurance. Migration 29 and the native bootstrap service atomically bind the single-use token to an allow-listed application and proof-key digest, append reference-only audit, reject replay generically, and keep the immutable region in the public session contract. Strict Swift, Android, Go, OpenAPI, and live PostgreSQL 18.4 tests pass.
+
+### X-02 Advanced acquisition and biometrics
+
+**Status:** Complete  
+**Depends on:** X-01
+
+Add selected video liveness, face comparison, NFC/document-chip, barcode, voice, and quality components only as required by adopter demand. Each method declares what assurance it can establish and passes platform-specific security, accessibility, performance, and conformance tests.
+
+**Selected boundary:** D-014 requires provider-neutral live selfie, liveness/PAD, one-to-one face comparison, document front/back capture, capture-quality checks, and MRZ/barcode where a pack and provider declare support. NFC and voice remain deferred rather than being implied by the broader brick description.
+
+**Completion record:** Added the versioned provider-neutral acquisition-plan schema and a Pan-African onboarding fixture that keep evidence type, artefact, acquisition method, local quality, and ordered liveness prompts distinct. Swift and Kotlin expose equivalent bounded acquisition coordinators and platform image-quality assessors over their existing native camera sources. Both enforce the server challenge deadline, reject non-live-camera artefacts and failed quality policy before returning frames, preserve the ordered challenge transcript, and explicitly do not turn local prompts, face count, or image measurements into PAD, face-match, document-authenticity, MRZ, or barcode assurance. The Android library declares camera permission and both SDK guides record host permission duties. Deterministic native tests cover ordering, deadline cancellation, default capture, capability semantics, and quality rejection; the selected boundary continues to defer NFC and voice.
+
+### X-03 Real providers and global packs
+
+**Status:** In review  
+**Depends on:** V-01, X-02 as required, and D-014
+
+Add at least two materially different real provider adapters, tenant-owned credentials, capability and restriction manifests, initial document/jurisdiction packs, health and fallback, contract tests, and provider-replacement demonstration.
+
+**Selected boundary:** Implement Smile ID and Dojah for the D-014 Nigeria, Ghana, Kenya, and South Africa packs. Provider catalogues are reverified when the brick starts and frozen into reviewed manifests; loss of a selected capability reopens D-014 instead of causing an unreviewed provider or semantic substitution.
+
+**Exit proof:** Both adapters pass the public conformance suite without provider types crossing the owned contract. Official sandboxes or provider-approved fixtures exercise success, no-record, invalid-input, authentication, throttling, transient failure, callback or polling where applicable, reconciliation, and deletion behaviour. Every country has at least one complete authority-backed or document-plus-biometric path. A controlled provider outage demonstrates policy-approved replacement for an actually equivalent path without changing evidence meaning, assurance claims, processing authority, region, idempotency, or final-decision reproducibility.
+
+**Implementation record:** Provider contract v1.1 adds bounded, capability-declared opaque structured-input references while keeping their values inside the runner, and the Protobuf runner envelope carries those references without provider-native types or dummy evidence grants for input-only authority lookup. Reviewed versioned manifests and root-module adapters implement Dojah synchronous liveness, face comparison, document analysis, and selected authority lookup plus Smile ID signed prep, bounded upload package, signed polling, duplicate-job reconciliation, and provider-neutral result/failure normalisation. Both use tenant-owned credential resolvers and purpose-bound evidence/input resolvers. Focused conformance and race suites cover success, no-record/inconclusive handling, invalid input, authentication, throttling, transient failure, signed polling, duplicate reconciliation, and invalid response signatures. Deterministic routing proves an outage can select only an explicitly approved exact semantic equivalent.
+
+**Review gates still open:** Tenant-owned official sandbox or provider-approved fixture runs, provider/account confirmation for every declared country/product, callback operation where enabled, contractual retention and deletion exercises, and jurisdiction/recipient/region approval remain external evidence. No production capability or deletion guarantee is inferred from the public catalogues.
+
+### X-04 External beta hardening and release
+
+**Status:** In review  
+**Depends on:** X-01 through X-03 and M-4 completion
+
+Complete threat-model review, penetration testing, load and soak tests, mixed-version deployment tests, migration rehearsals, backup restoration, SBOMs, signed artefacts, provenance, licence and vulnerability gates, operator documentation, SDK/capture documentation, and an external-beta release checklist.
+
+**Exit proof:** The published core, SDKs, capture package, adapters, contracts, migration tooling, and recovery documentation run without Console, Cloud, proprietary endpoints, or undocumented operator access.
+
+**Implementation record:** Added the external-beta threat model, release checklist, provider-operations runbook, coordinated vulnerability-disclosure policy, weekly dependency-update configuration, CodeQL and dependency-vulnerability workflow, native SDK workflow, and a tag release pipeline. GoReleaser builds the three public binaries for Linux and macOS on amd64 and arm64 with trimmed paths, SHA-256 checksums, SPDX archive SBOMs, and GitHub artifact provenance. A tag cannot release until the repository gate and Swift/Kotlin suites pass. The checklist keeps self-hosted Core, SDKs, Capture Web, adapters, migrations, audit, and recovery independent of Console and Cloud.
+
+**Review gates still open:** A signed candidate tag, clean-room provenance verification, independent penetration test, production-shaped load and 24-hour soak, mixed-version and scaled migration rehearsal, supported-device accessibility/interruption testing, provider certification, legal/regional review, and incident exercises require deployed environments or external reviewers. X-04 and M-5 must not be marked complete until their immutable evidence links and owners are recorded in the checklist.
+
+---
+
+## 11. Demonstrations at milestone boundaries
+
+### M-0 demonstration
+
+1. Start the API and PostgreSQL from a clean checkout.
+2. Run migrations and readiness checks.
+3. Create two tenants and one scoped API key.
+4. Call an authorised endpoint successfully.
+5. Demonstrate missing-scope, revoked-key, and cross-tenant denial.
+
+### M-1 demonstration
+
+1. Publish a profile allowing selfie upload or live capture and requiring document front and back.
+2. Create a verification session with an idempotency key.
+3. Repeat the request and receive the same result.
+4. Change the request under the same key and receive an idempotency conflict.
+5. Supersede the source profile.
+6. Retrieve the unchanged session snapshot through `@idenqa/sdk`.
+
+### M-2 demonstration
+
+1. Open the basic capture component in plain HTML.
+2. Present the correct notice and record acknowledgement.
+3. Offer only profile-approved methods supported by the device.
+4. Capture or upload the required synthetic images.
+5. Interrupt the upload and WebSocket connection.
+6. Reconnect, replay or resynchronise, finish capture, and preserve the authoritative session state.
+
+### M-3 demonstration
+
+1. Process the synthetic evidence with the mock provider through the runner contract.
+2. Exercise one retry and one duplicate result.
+3. Produce normalised signals and a deterministic policy decision.
+4. Reproduce the decision from its immutable snapshot.
+5. Deliver and verify a signed webhook.
+6. Run the entire path without Console, Cloud, or real PII.
+
+### M-4 demonstration
+
+1. Export and independently verify the audit chain.
+2. Place and release a legal hold.
+3. Execute deletion and prove object and derived-copy handling.
+4. Run a manual correction or appeal that supersedes a decision without rewriting history.
+5. Restore a clean deployment from backup and reconcile pending work.
+
+### M-5 demonstration
+
+1. Complete a supported native capture flow.
+2. Run the same customer workflow against two real providers without changing the customer API.
+3. Exercise provider failure and policy-approved fallback.
+4. Pass security, conformance, migration, restore, load, and release checks.
+
+---
+
+## 12. Progress update template
+
+Use this format when a brick changes status:
+
+```markdown
+### Brick F-01 — Repository identity and toolchain bootstrap
+
+- Status: In review
+- Decisions resolved: D-001
+- Completed: Go module, API liveness, CLI version, CI
+- Evidence: `make verify`; `idenqa version`; `curl /livez`
+- Remaining: Review only
+- Blockers: None
+- Next action: Accept F-01 or return it with specific findings
+```
+
+The evidence field must contain commands, test results, contract fixtures, or a reproducible user-visible interaction. “Code complete” is not sufficient evidence.
+
+---
+
+## 13. Plan change log
+
+| Date           | Change                                                                                                                                                                     | Decision                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 27 August 2026 | Created build plan and decomposed the architecture into monitored bricks                                                                                                   | Draft awaiting user review                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| 27 August 2026 | Started F-01 and resolved D-001 from the configured public Git remote                                                                                                      | Selected module path: `github.com/Mujhtech/idenqa`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| 27 August 2026 | Implemented F-01 and passed its automated and local runtime evidence                                                                                                       | F-01 moved to **In review**; F-02 has not started                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| 27 August 2026 | User accepted F-01 and authorised continuation                                                                                                                             | F-01 moved to **Complete** and F-02 moved to **In progress**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| 27 August 2026 | Implemented F-02 and passed exact-toolchain verification and signal-driven runtime evidence                                                                                | F-02 moved to **In review**; F-03 has not started                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| 27 August 2026 | Reopened F-02 after review to separate HTTP host and port and add direct certificate-file TLS                                                                              | F-02 moved back to **In progress** pending revised evidence                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| 27 August 2026 | User selected the exact `otelchi` implementation for F-03                                                                                                                  | D-002 resolved as `github.com/riandyrn/otelchi`; version selection remains subject to the F-03 dependency review                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| 27 August 2026 | Implemented and verified separate HTTP host/port configuration and certificate-file TLS                                                                                    | F-02 returned to **In review** after exact-toolchain, HTTPS readiness, and graceful-shutdown evidence passed                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| 27 August 2026 | User accepted F-02 and authorised continuation                                                                                                                             | F-02 moved to **Complete** and F-03 moved to **In progress**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| 27 August 2026 | Implemented and verified the F-03 HTTP, identifier, error, and telemetry foundation                                                                                        | F-03 moved to **In review**; D-015 records the remaining ULID acceptance decision                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| 27 August 2026 | User accepted `github.com/oklog/ulid/v2` v2.1.2 for Idenqa-owned typed prefixed identifiers                                                                                | D-015 resolved; F-03 remains **In review** pending brick acceptance                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| 27 August 2026 | User accepted the intentionally exporter-free F-03 telemetry boundary and authorised continuation                                                                          | F-03 moved to **Complete**; D-003 is the next decision gate for F-04                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| 27 August 2026 | User selected embedded migrations through `idenqa` and approved the reviewed F-04 dependency pins                                                                          | D-003 resolved; F-04 moved to **In progress** with pgx v5.10.0, golang-migrate v4.19.1, and sqlc v1.31.1 selected                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| 27 August 2026 | Implemented and verified the PostgreSQL pool, embedded migrations, sqlc workflow, CLI operations, and isolated integration harness                                         | F-04 moved to **In review** after exact Go 1.26.6 verification and live PostgreSQL failure/recovery evidence passed; F-05 has not started                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| 27 August 2026 | User accepted F-04 and authorised continuation                                                                                                                             | F-04 moved to **Complete** and F-05 moved to **In progress**; F-06 remains gated by F-05 acceptance and D-004                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| 27 August 2026 | Implemented and verified tenant lifecycle persistence, forced RLS, scoped repositories, audited CLI administration, and cross-tenant security tests                        | F-05 moved to **In review** after exact Go 1.26.6 verification, live PostgreSQL isolation tests, and the synthetic CLI lifecycle passed; F-06 has not started                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| 27 August 2026 | User accepted F-05, recalled the documented Cobra direction, and authorised continuation                                                                                   | F-05 moved to **Complete**; D-017 resolved Cobra v1.10.2 as the CLI framework before F-06                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| 27 August 2026 | Replaced the temporary standard-library flag dispatch with a tested Cobra command tree and generated shell completion                                                      | The existing version, migration, tenant, exit-code, cancellation, output, and explicit configuration boundaries were preserved; F-06 remains gated only by D-004                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| 27 August 2026 | User selected Cobra for the API and a reusable owned CLI package for all Go processes                                                                                      | Added `internal/cli`, migrated `api` and `idenqa` to its fresh-root, version, completion, test-argument, output, and exit-classification conventions; binary-specific configuration and composition remain in their bootstrap packages                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| 27 August 2026 | User approved the D-004 tenant API-key contract with wildcard support for either scope segment                                                                             | D-004 resolved with immutable registry snapshots for exact, resource-wildcard, action-wildcard, and full-wildcard grants; F-06 moved to **In progress**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| 27 August 2026 | Implemented the first F-06 slice: owned permission, scope-pattern, tenant registry, wildcard resolution, and immutable grant snapshots                                     | Exact, `resource:*`, `*:action`, and `*:*` behavior is executable and tested; credential secrets and persistence have not started                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| 27 August 2026 | Implemented the second F-06 slice: typed key identifiers, strict display-once credentials, redacting pepper configuration, and versioned HMAC verification                 | The selected `idq_v1` wire format and cryptographic verification boundary are executable and tested; lifecycle persistence and authenticated request composition remain next                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| 27 August 2026 | Implemented and live-tested the third F-06 slice: API-key lifecycle aggregate, migration, forced RLS, scoped persistence, narrow verification lookup, and rotation lineage | No plaintext credential is persisted; lifecycle writes are irreversible and version checked; live PostgreSQL evidence passed for tenant isolation, verification hints, revocation, conflict handling, and lineage                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| 27 August 2026 | Implemented and live-tested the fourth F-06 slice: explicit-expiry issuance policy and atomic bounded-overlap rotation                                                     | Issuance returns credential material only after persistence; rotation inherits the exact grant, schedules irreversible retirement, permits emergency revocation during overlap, and is bounded by deployment configuration                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| 27 August 2026 | Implemented and live-tested the fifth F-06 slice: tenant API-key authentication and transport-neutral application authority                                                | Malformed and unknown credentials receive dummy-MAC work; all expected invalid states are non-disclosing; tenant lifecycle is read with the key; only successful verification constructs an access context and effective tenant scope                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| 27 August 2026 | Implemented and verified the sixth F-06 slice: strict Bearer HTTP authentication, request authority propagation, and route permission enforcement                          | Query, cookie, malformed, duplicate, invalid, wrong-scope, cross-tenant, and operational-failure paths have stable non-disclosing responses; application authorisation remains explicit below middleware                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| 27 August 2026 | Implemented the seventh F-06 slice: API process authentication composition and the first protected application route                                                       | API startup now requires versioned pepper configuration before opening PostgreSQL; `GET /v1/tenant` is wired through real RLS adapters and repeats `tenant:read` plus verified-scope enforcement below HTTP                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| 27 August 2026 | Implemented and verified the final F-06 slice: audited CLI API-key lifecycle operations                                                                                    | Create, list, bounded-overlap rotation, and optimistic revocation passed exact-toolchain unit and live PostgreSQL tests; display-once and secret-free output contracts plus atomic audit records were proven; F-06 moved to **In review**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| 27 August 2026 | User accepted F-06 and authorised continuation                                                                                                                             | F-06 moved to **Complete** and C-01 reached the D-005 decision gate                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| 27 August 2026 | User selected the Go-native OpenAPI workflow                                                                                                                               | D-005 resolved OpenAPI 3.1 YAML, `oapi-codegen`, Vacuum, and oasdiff as the public-contract source, generation, lint, and compatibility workflow                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| 27 August 2026 | Implemented and verified the C-01 public HTTP contract foundation                                                                                                          | The generated client called the protected tenant handler and decoded the documented success and error responses; exact-toolchain contract, race, lint, vulnerability, build, and live PostgreSQL checks passed; C-01 moved to **In review**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| 27 August 2026 | User accepted C-01 and authorised continuation                                                                                                                             | C-01 moved to **Complete** and C-02 reached the D-006 decision gate                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| 27 August 2026 | User selected pinned, namespaced, fail-closed registry extensions                                                                                                          | D-006 resolved the exact capture-profile pinning, vocabulary ownership, extension namespace, immutability, and unknown-definition rules                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| 27 August 2026 | Implemented the C-02 capture-profile domain and registry                                                                                                                   | Portable schemas, bounded domain vocabulary, built-in synthetic definitions, assurance-preserving acquisition and fallback validation, capability filtering, canonical digests, and conformance tests were added; C-02 moved to **In review**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| 27 August 2026 | User accepted C-02 and approved the C-03 persistence recommendations                                                                                                       | C-02 moved to **Complete**; C-03 moved to **In progress** with stable `prf_` IDs and numeric revisions, one mutable draft, immutable published revisions, a dedicated HMAC cursor keyring, and the generic durable idempotency foundation pulled forward from C-04                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| 27 August 2026 | Implemented and verified C-03 capture-profile persistence and API                                                                                                          | Versioned lifecycle APIs, dedicated signed cursors, generic durable idempotency, forced-RLS persistence, optimistic concurrency, immutable publication, audit, and non-destructive supersession passed contract, race, lint, vulnerability, build, and live PostgreSQL evidence; C-03 moved to **In review** and C-04 has not started                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| 27 August 2026 | User accepted C-03 and authorised continuation                                                                                                                             | C-03 moved to **Complete**; C-04 reached D-018 because exact idempotent replay must not persist a usable capture bearer token                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| 27 August 2026 | User approved the recommended D-018 verification-session contract                                                                                                          | D-018 resolved immutable active-profile snapshots, dedicated deterministic signed capture tokens with database-backed revocation, bounded configurable lifetimes, and atomic audit/outbox/idempotency creation; C-04 moved to **In progress**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| 27 August 2026 | Implemented and verified C-04 verification-session creation and capture bootstrap                                                                                          | Immutable profile snapshots, deterministic redacting capture tokens, bounded configuration, forced-RLS atomic persistence, audit/outbox intent, tenant and capture authentication, and public create/get/bootstrap endpoints passed exact Go 1.26.6 contract, race, lint, vulnerability, build, and isolated PostgreSQL evidence; C-04 moved to **In review** and C-05 has not started                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| 27 August 2026 | User accepted C-04 and authorised continuation                                                                                                                             | C-04 moved to **Complete**; C-05 reached the D-007 TypeScript SDK tooling and generated-code decision gate                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| 27 August 2026 | User approved the recommended D-007 TypeScript SDK contract                                                                                                                | D-007 resolved pnpm, strict TypeScript, tsdown dual output, Node.js 22+ and modern browsers, Vitest, committed internal OpenAPI types, and a handwritten zero-runtime-dependency public facade; C-05 moved to **In progress**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| 27 August 2026 | Implemented and verified the C-05 TypeScript SDK walking slice                                                                                                             | The dependency-free public facade, private generated contract types, ESM/CommonJS packaging, stable errors and metadata, idempotency and cancellation, unit tests, package checks, and real-API profile/session/capture conformance passed; C-05 moved to **In review** and E-01 has not started                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| 27 August 2026 | User accepted C-05 and authorised continuation                                                                                                                             | C-05 and M-1 moved to **Complete**; E-01 reached D-019 because the architecture had not yet fixed resource identities, notice versioning, subject-response meaning, or live restriction and withdrawal semantics                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| 27 August 2026 | Drafted the recommended D-019 processing-authority contract for review                                                                                                     | E-01 is **Blocked** pending approval of separate authority, immutable notice-version, verification-local subject, recipient snapshot, append-only response, consent-specific, and live blocking-transition semantics                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| 27 August 2026 | User approved the recommended D-019 processing-authority contract                                                                                                          | D-019 resolved separate authority, immutable notice-version, verification-local subject, recipient snapshot, append-only response, consent-specific, and live blocking-transition semantics; E-01 moved to **In progress**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| 27 August 2026 | Implemented and verified E-01 processing authority, notice, and subject responses                                                                                          | Owned domain types, immutable and forced-RLS PostgreSQL records, atomic idempotency/audit/outbox behavior, tenant and capture APIs, the open-source TypeScript SDK, and fail-closed grant evaluation passed contract, race, lint, vulnerability, package, and live PostgreSQL gates; E-01 moved to **In review**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| 28 August 2026 | User accepted E-01 and authorised continuation                                                                                                                             | E-01 moved to **Complete**; E-02 reached D-008 because its content-encryption format, local key provider, production KMS boundary, and rotation semantics were not yet selected                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| 28 August 2026 | Drafted the recommended D-008 evidence-encryption and key-provider contract for review                                                                                     | E-02 is **Blocked** pending approval of per-object streaming encryption, unique content keys, a provider-neutral wrapping port, a versioned file-backed local keyring, optional fail-closed KMS adapters, authenticated context, and rewrap-first rotation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| 28 August 2026 | User approved D-008 and authorised E-02 implementation                                                                                                                     | D-008 resolved the per-object streaming-encryption, key-wrapping, local-keyring, production-adapter, authenticated-context, fail-closed, and rewrap-first rotation contract; E-02 moved to **In progress**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| 28 August 2026 | Implemented and verified the first E-02 evidence-boundary slice                                                                                                            | Added `evd_` identity, protected evidence metadata, registry-backed assurance checks, quarantine/read-denial transitions, canonical authenticated context, and narrow crypto, KMS, and object-store ports; focused race and lint checks passed without adding a provider or cryptographic dependency                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| 28 August 2026 | Implemented the second E-02 encryption and local-key-provider slice                                                                                                        | Pinned Tink Go v2.8.0; added per-object `AES256_GCM_HKDF_1MB` streaming encryption, purpose-bound envelopes, a versioned owner-only local KEK keyring, atomic rotation with exact old-version reads, fail-closed context/purpose/tamper/truncation handling, and focused race tests                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| 28 August 2026 | Implemented and verified the third E-02 ciphertext-storage and durable-metadata slice                                                                                      | Added root-confined immutable local ciphertext storage, streaming protect/store/persist orchestration, exact-version compensation, immutable registry pinning, migration 8 evidence metadata and audit records, subject-verification consistency, forced RLS, and optimistic quarantine persistence; full race, lint, vulnerability, build, package, and isolated PostgreSQL 18.4 checks pass                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| 28 August 2026 | Implemented the fourth E-02 controlled-read contract slice                                                                                                                 | Added `grt_` grants and retry-safe `rdm_` redemptions; exact session-requirement, purpose, evidence, runner, check, destination, time, and use binding; replay short-circuiting and destination commit deduplication; live authority and consent re-evaluation; post-commit outcome recovery; full ciphertext/plaintext integrity classification; and cancellation-independent PostgreSQL quarantine with atomic audit. PostgreSQL grant, redemption, outcome, expiry, and revocation records remain the next E-02 sub-brick                                                                                                                                                                                                                                                                                                             |
+| 28 August 2026 | Implemented and verified the fifth E-02 durable controlled-read-state slice                                                                                                | Migration 9 and its PostgreSQL adapter add forced-RLS grant state, serialized retry-safe redemption claims, immutable terminal outcomes, deterministic expiry denial, irreversible revocation, dual-actor mutation attribution, and append-only auditing of every successful or denied access attempt. Race, lint, vulnerability, build, package, migration, isolation, immutability, chronology, and concurrency gates pass; S3-compatible production storage remains the next E-02 sub-brick.                                                                                                                                                                                                                                                                                                                                          |
+| 28 August 2026 | Implemented and verified the sixth E-02 S3-compatible production-storage slice                                                                                             | Added an independently versioned AWS SDK v2 adapter with bounded streaming writes, immutable conditional versions, verified exact reads, idempotent deletion, ambiguous-outcome compensation, HTTPS and explicit-HTTP conformance, fault tests, and root-module cloud-SDK isolation. Rewrap execution remains the final E-02 sub-brick; standalone adapter publication awaits the first compatible core release.                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| 28 August 2026 | Implemented and live-tested the final E-02 audited key-rewrap slice                                                                                                        | Added verify-before-persist old-to-active rewrap, plaintext-key clearing, optimistic migration 10 updates restricted to wrapped-key metadata, dual-actor append-only audit, available/quarantined support, and the exact-target `idenqa evidence-key rewrap` Cobra command. Exact Go 1.26.6 full repository gates and isolated PostgreSQL 18.4 integration tests pass; E-02 moved to **In review** pending user acceptance.                                                                                                                                                                                                                                                                                                                                                                                                              |
+| 28 August 2026 | User accepted E-02 and the recommended D-009 upload contract                                                                                                               | E-02 moved to **Complete**. D-009 selected requirement-bound encrypted single-request uploads, bounded deployment and tenant limits, 15-minute intents, 10-minute fenced attempts, mandatory SHA-256 `Content-Digest`, JPEG/PNG signature validation, full-body interruption retry, idempotent acceptance, and durable exact-object cleanup/reconciliation. E-03 moved to **In progress**; byte-offset resumption remains conditional on an encryption-compatible future design.                                                                                                                                                                                                                                                                                                                                                         |
+| 28 August 2026 | Implemented and verified the first E-03 upload-intent domain slice                                                                                                         | Added `upl_` identity, immutable requirement and policy binding, fixed encryption purpose, validated deployment/tenant limit narrowing, durable lifecycle states, optimistic versions, whole-body attempt ordinals, bounded leases, stale-attempt fencing, exact-evidence acceptance, terminal rejection and expiry, and deterministic race tests. Persistence, HTTP ingress, streaming protection, atomic finalisation, and cleanup remain later E-03 slices.                                                                                                                                                                                                                                                                                                                                                                           |
+| 28 August 2026 | Implemented and verified the second E-03 durable upload-state slice                                                                                                        | Migration 11 and the PostgreSQL adapter add forced-RLS immutable upload bindings, exact session/profile/registry foreign keys, capture-principal initiation idempotency, secret-free replay, append-only attributed lifecycle audit, row-locked optimistic claim/retry/expiry transitions, and concurrent attempt fencing. Go 1.26.6 race, lint, generation, vulnerability, migration, isolation, immutability, concurrency, and full PostgreSQL 18.4 integration gates pass; authority resolution and evidence ingress remain the next slices.                                                                                                                                                                                                                                                                                          |
+| 28 August 2026 | Implemented and verified the third E-03 application issuance slice                                                                                                         | Added authority-owned upload issuance from authenticated capture context, exact requirement and approved-fallback resolution, tenant constraint narrowing, live authority/notice/response/purpose/recipient/region evaluation, authority-derived retention, method-specific assurance binding, generated upload/evidence identities, and canonical capture-principal idempotency. Unit and live PostgreSQL 18.4 integration tests prove fail-closed selection, `all_of` non-overclaiming, signed-capture issuance, replay, and fingerprint conflict; HTTP evidence ingress remains next.                                                                                                                                                                                                                                                 |
+| 28 August 2026 | Implemented and verified the fourth E-03 evidence-ingress preflight slice                                                                                                  | Added body-free ownership and immutable-metadata validation, strong-version preconditions, canonical RFC 9530 SHA-256 digest parsing, strict whole-request framing, non-disclosing capture-principal checks, and durable attempt fencing before any evidence byte is read. Race tests, digest fuzz coverage, and the live PostgreSQL 18.4 concurrent scenario pass; streaming body validation and protection remain next.                                                                                                                                                                                                                                                                                                                                                                                                                |
+| 28 August 2026 | Implemented and verified the fifth E-03 bounded body-validation slice                                                                                                      | Added a pull-based reader that checks JPEG/PNG signatures before plaintext output, caps reads at the immutable intended length, rejects truncation and excess, independently hashes and constant-time verifies SHA-256, withholds results until complete consumption, preserves I/O classifications, and plugs directly into streaming encryption without buffering or goroutines. Race, adversarial, 400,000-execution fuzz, and real Tink/local-store composition tests pass; acceptance orchestration remains next.                                                                                                                                                                                                                                                                                                                   |
+| 28 August 2026 | Implemented and verified the sixth E-03 atomic acceptance-foundation slice                                                                                                 | Split protected evidence into prepare/commit/discard stages and added one owned PostgreSQL transaction for available evidence, evidence audit, fenced upload acceptance, capture-principal upload audit, and secret-free `evidence.ready.v1` outbox intent. Exact Go 1.26.6 repository gates and live PostgreSQL 18.4 tests prove successful atomic acceptance, late outbox-failure rollback, no premature metadata persistence, and exact staged-ciphertext discard; authority re-evaluation and end-to-end ingress orchestration remain next.                                                                                                                                                                                                                                                                                          |
+| 29 August 2026 | Implemented and verified the seventh E-03 authority-owned acceptance-orchestration slice                                                                                   | Joined authenticated preflight, bounded body validation, streaming protection, post-stream session and exact pinned-authority re-evaluation, atomic acceptance, and exact-object compensation. PostgreSQL commit errors now distinguish confirmed rollback from unknown outcome so ciphertext is retained under a typed reconciliation obligation when commit may have succeeded. Deterministic race tests, exact Go 1.26.6 full gates, and live PostgreSQL 18.4 Tink/local-storage composition pass; durable reconciliation, rejection persistence, and HTTP/public contracts remain next.                                                                                                                                                                                                                                              |
+| 29 August 2026 | Implemented and verified the eighth E-03 durable exact-object-reconciliation slice                                                                                         | Migration 12 and the owned recovery workflow add a per-staged-object write-ahead obligation, atomic `retained` acceptance, post-delete `deleted` resolution, forced tenant RLS, immutable exact-object binding, append-only lifecycle audit, delayed `SKIP LOCKED` claims, claim fencing, retry leases, and authoritative fail-closed retain/delete decisions. Exact Go 1.26.6 full gates and live PostgreSQL 18.4 tests prove atomic retention plus lease-expiry recovery through idempotent exact-version deletion; the narrow pre-obligation dual-dependency orphan case, rejection persistence, and HTTP/public contracts remain next.                                                                                                                                                                                               |
+| 29 August 2026 | Implemented and verified the ninth E-03 durable failure-outcomes slice                                                                                                     | Confirmed post-claim failures now persist a safe reason-coded terminal rejection or a fenced retry/expiry transition before returning, while unknown commit outcomes remain untouched. Exact objects produced before normal write-ahead recording are deleted or durably recorded, with a bounded cancellation-independent idempotent second obligation attempt after simultaneous database-write and deletion failure. Exact Go 1.26.6 full gates and live PostgreSQL 18.4 tests pass; provider-backed discovery for failure of deletion plus both obligation writes, HTTP/public contracts, and transport replay remain next.                                                                                                                                                                                                          |
+| 29 August 2026 | Implemented and verified the tenth E-03 provider-backed orphan-discovery slice                                                                                             | Added a checksum-free exact inventory reference, bounded cursor pagination and exact inventory deletion to the owned object-store contract, with local and S3 adapter implementations. Tenant-scoped discovery waits through the maximum lease plus clock-skew allowance, rejects non-canonical entries, asks PostgreSQL whether evidence or active reconciliation state protects each exact version, deletes only old unreferenced ciphertext, and replays the same page after dependency failure. Exact Go 1.26.6 full gates and live PostgreSQL 18.4 tests pass; HTTP/public contracts and transport replay remain next.                                                                                                                                                                                                              |
+| 30 August 2026 | Implemented and verified the eleventh E-03 public upload-contract slice                                                                                                    | Added capture-token intent issuance and raw whole-body ingress to OpenAPI, generated Go/TypeScript contracts, the owned Chi adapter, safe evidence-upload resources, strict public error mapping, concurrent-duplicate conflict, completed replay without a body read, and dependency-free TypeScript `Blob` upload methods. Exact Go 1.26.6 full repository formatting, 100-point contract lint, deterministic generation, module, race, SDK, lint, type, vulnerability, build, and package gates pass. Runnable API/evidence-process storage composition and live public end-to-end proof remain next because adapter distribution composition is still an explicit repository decision.                                                                                                                                               |
+| 30 August 2026 | Implemented and verified the twelfth E-03 upload-transport safeguards slice                                                                                                | Added an opt-in validated upload policy to the shared HTTP boundary; only canonical whole-body upload PUTs receive the deployment byte ceiling and attempt deadline. Ordinary JSON, other methods, malformed IDs, and nested paths retain their shorter limits. Request contexts, connection I/O deadlines, route-level byte enforcement, and the server's longest-request backstop now agree, while WebSocket upgrades remain independently governed. Exact Go 1.26.6 full repository formatting, contract, generation, module, race, SDK, lint, type, vulnerability, build, and package gates pass; focused tests prove narrow matching, oversized rejection, dedicated deadline propagation, and a server timeout longer than the attempt lease. Runnable storage/KMS composition and live public end-to-end proof remain unresolved. |
+| 30 August 2026 | Implemented and verified the thirteenth E-03 deployment-configuration slice                                                                                                | Added a reusable process-neutral `IDENQA_EVIDENCE_UPLOAD_*` configuration block for the selected byte ceiling, intent lifetime, attempt timeout, and JPEG/PNG allow-list defaults; the API embeds it and a future dedicated evidence process may reuse it. Startup validation delegates to the owned domain policy constructor, and one immutable defensive policy is available to all composition consumers. Exact Go 1.26.6 full repository formatting, contract, generation, module, race, SDK, lint, type, vulnerability, build, and package gates pass; focused tests prove defaults, overrides, invalid bounds and formats, and caller-slice isolation. Runnable storage/KMS composition and live public end-to-end proof remain unresolved.                                                                                       |
+| 30 August 2026 | User selected API ingress plus an independent S3 distribution module; implemented the fourteenth E-03 runnable-composition slice                                           | Selected `github.com/Mujhtech/idenqa/distributions/s3` for the production S3 graph while retaining evidence ingress in `api`. Added provider-neutral object/key/lifecycle injection, opt-in root-local storage and mounted-keyring configuration, manual composition of PostgreSQL state through HTTP routes, and bounded provider shutdown without adding cloud SDKs to the root. Exact Go 1.26.6 full repository gates pass and focused tests prove paired configuration plus route activation; S3 distribution implementation, keyring setup, and live public flow remain next.                                                                                                                                                                                                                                                       |
+| 30 August 2026 | Implemented and verified the fifteenth E-03 local-keyring setup slice                                                                                                      | Added `idenqa evidence-key init --keyring-file`: atomic non-overwriting owner-only initialization, pre-mutation cancellation, closed in-memory key copies, secret- and path-free output/errors, and a stable active-version result. Focused race tests prove loadability, permissions, cancellation, duplicate refusal, and byte-for-byte preservation; exact Go 1.26.6 full repository gates pass. S3 distribution composition and live public flow remain next; rotation and key retirement stay unresolved operational policy.                                                                                                                                                                                                                                                                                                        |
+| 30 August 2026 | Implemented and verified the sixteenth E-03 S3 API-distribution slice                                                                                                      | Added the independent `github.com/Mujhtech/idenqa/distributions/s3` module and its public `api` binary, strict combined core/provider configuration, pre-composition S3 validation, shared mounted-keyring contract, AWS external credential and certificate chain, manual provider-neutral API composition, lifecycle ownership, workspace build and quality gates, and operator documentation. Exact Go 1.26.6 full repository gates pass, including real S3 HTTP/TLS conformance, race, lint, vulnerability, build, and SDK/package checks. Live public capture-token proof against PostgreSQL and real encrypted local and S3-compatible storage remains next.                                                                                                                                                                       |
+| 30 August 2026 | Implemented and verified the seventeenth E-03 live local public-flow slice                                                                                                 | Added a process-level integration proof using the runnable root `api`, strict purpose-separated configuration, isolated PostgreSQL with the production runtime role and RLS, mounted local keyring, encrypted local object storage, and public HTTP contracts from profile publication through authority, consent, upload issuance, and raw evidence acceptance. Independent database and ciphertext inspection proves the exact submitted bytes are encrypted at rest, decrypt correctly only through the authenticated evidence context, retain the reconciliation obligation, and atomically emit one `evidence.ready.v1` outbox intent. Integration-tagged lint, the full shuffled race-enabled PostgreSQL 18.4 suite, and exact Go 1.26.6 repository gates pass. Equivalent S3-compatible live proof remains next.                  |
+| 30 August 2026 | Implemented and verified the eighteenth E-03 live S3-distribution public-flow slice                                                                                        | Added a process-level proof that builds and runs the independent S3 `api` distribution against isolated PostgreSQL and an owned loopback S3 protocol fixture. The real AWS SDK adapter signs and conditionally writes encrypted evidence while independent provider and database inspection proves durable integrity, ciphertext-only storage, authenticated decryption, retained reconciliation, and one atomic `evidence.ready.v1` intent. No cloud SDK enters the root module and no third-party S3 emulator is added. Exact Go 1.26.6 focused S3, shuffled race-enabled PostgreSQL integration, and full repository gates pass; E-03 moved to **In review** pending user acceptance.                                                                                                                                                 |
+| 30 August 2026 | User accepted E-03; implemented and verified the first E-04 Web-capture planner slice                                                                                      | E-03 moved to **Complete** and E-04 to **In progress**. Added `capture/web` as the open-source `@idenqa/capture` workspace package with a renderer-independent, fail-closed planner over public SDK session contracts. Focused tests prove ordered upload/live choices, document front/back artefacts, `all_of` method legs, approved fallback, denied methods, and malformed-input rejection; strict type, dual-package build, publint, and consumer-resolution checks pass. D-020 remains open before adding Lit or browser-test dependencies.                                                                                                                                                                                                                                                                                         |
+| 30 August 2026 | User approved D-020; implemented and browser-tested the second E-04 rendering slice                                                                                        | Selected Lit v3.3.3, development-only Vite v8.2.2, and Playwright v1.62.1 while retaining tsdown and excluding Effect. Added explicit custom-element registration, accessible responsive plan rendering, reason-specific fallback copy, keyboard-operable method selection, safe composed events, and a plain-HTML fixture. Supply-chain, licence, audit, strict type, unit, build, package, and pinned-Chromium browser gates pass; capture-token orchestration and notice/response remain next.                                                                                                                                                                                                                                                                                                                                        |
+| 30 August 2026 | Implemented and browser-tested the third E-04 capture-token and notice-response slice                                                                                      | Added the SDK-backed flow controller and programmatic component start boundary, fail-closed identifier and authority-scope correlation, exact escaped notice rendering, policy-correct acknowledgement/consent/refusal, retry-stable idempotency, cancellation and credential-reference cleanup, capture gating, and safe receipt events. The browser proof found and fixed native `fetch` receiver rebinding in the TypeScript SDK. Fifteen unit tests and four Chromium tests pass alongside strict type, build, publint, and package-resolution gates; file-upload acquisition and requirement-bound upload orchestration remain next.                                                                                                                                                                                                |
+| 30 August 2026 | Implemented and browser-tested the fourth E-04 file-upload and interruption-recovery slice                                                                                 | Added policy-bound JPEG/PNG selection, byte and signature validation, browser SHA-256 preparation, immutable requirement-bound issuance, direct raw-blob upload, safe identifier-only acceptance events, retry-stable initiation, and current-ETag recovery after ambiguous attempts. OpenAPI, Go HTTP/application boundaries, generated contracts, and the TypeScript SDK now expose a capture-bound safe upload snapshot GET without digest or object identity. Nineteen unit tests, five Chromium tests, and exact Go 1.26.6 full repository gates pass; live-camera acquisition and capture-failure fallback remain next.                                                                                                                                                                                                            |
+| 30 August 2026 | Implemented and browser-tested the fifth E-04 live-camera and capture-failure-fallback slice                                                                               | Added video-only facing-mode camera acquisition, usable-frame readiness gating, local still encoding and review, retake/cancel/retry cleanup, and live-camera-bound direct upload. Runtime `capture_failed` replanning is limited to an immutable policy-approved fallback; absence fails closed and cancellation never activates fallback. Twenty-six unit tests, eight Chromium tests, and exact Go 1.26.6 full repository gates pass; step completion, `any_of` locking, and multi-artefact progress remain next.                                                                                                                                                                                                                                                                                                                     |
+| 30 August 2026 | Implemented and browser-tested the sixth E-04 completion, method-locking, and multi-artefact-progress slice                                                                | Added exact planned-step completion state, active-method exclusion, post-acceptance `any_of` locking, native locale-aware progress, explicit separation of capture from verification completion, and safe progress/completion events. Browser proofs cover a locked upload/camera choice and required document front/back progression from 0 of 2 to 2 of 2. Twenty-six unit tests, ten Chromium tests, and exact Go 1.26.6 full repository gates pass; localisation fallback and framework-host conformance remain next.                                                                                                                                                                                                                                                                                                                |
+| 30 August 2026 | Implemented and browser-tested the seventh E-04 localisation-fallback and framework-host-conformance slice                                                                 | Added validated exact/base/English fallback for package-owned copy while preserving exact server notice content, canonical locale formatting and RTL direction, and a React 19 development fixture that consumes the same custom element and composed completion event. React remains outside runtime dependencies and the published bundle. Thirty-five unit tests and eleven Chromium tests pass; fresh-page completion recovery and the final E-04 acceptance review remain next.                                                                                                                                                                                                                                                                                                                                                     |
+| 30 August 2026 | Implemented and verified the eighth E-04 authoritative fresh-page-recovery slice                                                                                           | Added bounded capture-token `GET /v1/capture/progress`, migration 13 immutable fallback binding, PostgreSQL accepted-progress projection, generated Go and TypeScript contracts, public SDK mapping, fail-closed plan reconstruction, and browser presentation recovery without local persistence or duplicate upload. Exact Go 1.26.6 full gates, 36 Web unit tests, 12 Chromium scenarios, and the isolated PostgreSQL 18.4 migration/integration suite pass. E-04 moved to **In review** pending user acceptance; R-01 remains next afterward.                                                                                                                                                                                                                                                                                        |
+| 30 August 2026 | User accepted E-04 and opened the R-01 protocol-decision review                                                                                                            | E-04 moved to **Complete** and R-01 to **In progress — decision review**. D-010 now explicitly includes browser-compatible connection-ticket transport in addition to the message catalogue, lifetime, limits, and version policy. No WebSocket dependency or implementation is added before those public and security-sensitive rules are accepted.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| 30 August 2026 | User approved D-010; implemented and verified the first R-01 owned-protocol slice                                                                                          | Selected the browser-compatible single-use query-ticket bootstrap, exact v1 catalogue, connection-local sequencing, stable command binding, version policy, native heartbeat, disabled compression, and bounded defaults. Added dependency-free immutable Go protocol types and realtime identifiers plus the public correlated JSON schema and operating rules. Focused race tests cover all payloads, invalid envelopes, defensive copies, limit bounds, schema completeness, and raw-byte exclusion. Ticket persistence/redemption, HTTP issuance, WebSocket framing and load proof remain next; `github.com/coder/websocket` is still Proposed.                                                                                                                                                                                      |
+| 30 August 2026 | Implemented and verified the second R-01 single-use-ticket persistence slice                                                                                               | Added redacting 256-bit `idq_wst_v1` credentials, domain-separated versioned SHA-256 persistence digests, exact browser/native client bindings, owned issuance/redemption services, migration 14 forced RLS, and a tenant-scoped PostgreSQL adapter. Shared authority locks linearize issuance and redemption against capture-token revocation; one conditional update makes concurrent redemption single-winner and irreversible. Unit race/lint tests and a live PostgreSQL 18.4 proof cover malformed and mismatched credentials, exact expiry, authority lifetime capping, storage secrecy, reversal rejection, and concurrent use. HTTP issuance and the focused WebSocket adapter review remain next.                                                                                                                              |
+| 30 August 2026 | Implemented and verified the third R-01 browser connection-issuance slice                                                                                                  | Published capture-token `POST /v1/capture/connections`, explicit regional/public-WebSocket configuration, exact allowed-Origin binding, no-store display-once responses, generated Go/TypeScript contracts, and the public SDK method. Host and forwarding headers cannot select the returned endpoint; connection issuance intentionally does not replay an idempotent secret response. Focused Go and SDK tests cover exact authority inputs, one-ticket URL construction, origin denial before issuance, authentication-race collapse, redaction, configuration bounds, and SDK mapping. The exact Go 1.26.6 full repository gate and isolated PostgreSQL 18.4 integration suite pass; WebSocket adapter review is next.                                                                                                              |
+| 30 August 2026 | User selected `github.com/coder/websocket` v1.8.15; implemented and verified the fourth R-01 admission-adapter slice                                                       | Selected the current signed, ISC-licensed, zero-transitive-dependency release after maintenance, security, protocol, and API review. Added the library-confined `internal/transport/realtime` adapter with exact Origin and v1 offer checks before upgrade, atomic generic ticket redemption after upgrade, disabled compression, request-independent bounded lifetime, text-only frames, inbound/outbound message limits, native ping, and static close reasons. Real loopback race tests cover successful binding, pre-redemption denial, invalid ticket-shape collapse, binary refusal, size enforcement, and 32 concurrent admissions. Strict JSON framing plus hello/welcome and runnable API registration remain next.                                                                                                             |
+| 30 August 2026 | Selected Headgate v0.1.2 and implemented the fifth R-01 strict-framing and hello/welcome slice                                                                             | Resolved D-011 with Headgate's Go and PostgreSQL modules behind `platform/task`, while leaving its optional modules and W-02 deployment details explicit. Added complete direction-aware v1 JSON mapping with ambiguous-input rejection plus ticket-bound `client.hello`/`server.welcome` admission and session-expiry delegation. The exact Go 1.26.6 full repository gate passes; PostgreSQL authority loading, the established loop, and runnable API registration remain next.                                                                                                                                                                                                                                                                                                                                                       |
+| 30 August 2026 | Implemented and verified the sixth R-01 current-authority and established-connection slice                                                                                  | Added an exact redeemed-ticket PostgreSQL authority reader with forced RLS and current token/session checks, strict connection-local client sequencing and server acknowledgements, resync on stale cursors or gaps, bounded native heartbeat, fail-closed consequential commands, inherited HTTP deadline clearing, and runnable API socket registration. PostgreSQL 18.4 integration, focused race/loopback tests, and the exact Go 1.26.6 full repository gate pass. Bounded outbound queues, slow-consumer handling, drain, application effects, cleanup, native bootstrap, and SDK observation remain.                                                                                                                                                                                                                      |
+| 30 August 2026 | Implemented and verified the seventh R-01 outbound-backpressure and server-drain slice                                                                                      | Added the selected bounded per-connection queue, one writer owner, enqueue-time sequence assignment, cumulative acknowledgement accounting, the unacknowledged-command ceiling, retryable 1013 slow-consumer closure, pre-redemption drain refusal, tracked hijacked connections, flushed `server.draining`, 1012 restart closure, and concurrent HTTP/realtime shutdown under one deadline. Focused lint and race tests plus the exact Go 1.26.6 full repository gate pass.                                                                                                                                                                                                                                                                                                                          |
+| 30 August 2026 | Implemented and verified the eighth R-01 command-deduplication, ticket-cleanup, and idle-enforcement slice                                                                  | Added migration 15 append-only forced-RLS capture-step command records, connection-independent domain-separated `cmd_` fingerprints, atomic current-authority and immutable-profile validation, stable replay and changed-input conflict, and fail-closed unsupported command/challenge effects. Added bounded tenant-scoped `SKIP LOCKED` cleanup for expired never-redeemed tickets while retaining redeemed authority records, plus transport-activity idle enforcement with successful ping/pong resets and retryable 1001 closure. Focused race tests, the full shuffled PostgreSQL 18.4 integration suite, and exact Go 1.26.6 repository gates pass. Native bootstrap, SDK observation, and load proof remain.                                                                                                                                                                                                          |
+| 30 August 2026 | Implemented and verified the ninth R-01 public observation, Capture Web recovery, and browser-load slice                                                                   | Added the dependency-free `CaptureClient.observe` bounded async stream with fresh-ticket reconnect, strict v1 decoding, cumulative acknowledgements, redaction, and stable command replay. Capture Web now shares one live observation, reports safe step activity, exposes safe composed events, and performs REST recovery after progress, state, or resync signals. SDK and Web tests prove malformed-frame rejection, reconnect replay, REST refresh, and 32 concurrent browser observations alongside the existing 32-connection real server admission proof. R-01 moved to **In review**; authenticated native bootstrap remains deferred pending its identity decision.                                                                                                                                                                                |
+| 30 August 2026 | User continued from R-01; implemented and verified the ten-slice R-02 durable recovery batch                                                                              | R-01 moved to **Complete**. Added the durable event contract, migration 16, replay/acknowledgement/retention adapter, atomic evidence-progress publication, cross-node reconnect replay, lossy PostgreSQL notification wake-ups with correctness polling, conditional REST snapshots, public SDK cursor and polling support, Capture Web transport-failure fallback, and multi-node/expiry verification. Exact Go 1.26.6 race and repository gates, the shuffled isolated PostgreSQL 18.4 suite, 18 SDK tests, 38 Capture Web unit tests, and 12 Chromium scenarios pass. R-02 is **In review**; native bootstrap and D-013 deployment defaults remain separate.                                                                                                                 |
+| 30 August 2026 | Accepted R-02, completed W-01, and opened W-02 with the Headgate pgx adapter foundation                                                                                   | R-02 moved to **Complete**, closing M-2. Added the owned versioned task contract, deterministic transactional driver, exact handler registry, retry and crash accounting, leases, heartbeats, fencing, cancellation, quarantine, graceful drain, deterministic inbox, and reusable conformance suite. Pinned Headgate v0.1.2 core and pgx modules and added an adapter using its supported caller-owned transaction path. Selected the `headgate` schema, explicit migrations, four queues, tenant partitioning, mandatory bounded task retention, and application-owned telemetry. Focused race and lint gates pass; W-02 worker execution, operational migration commands, lifecycle hooks, and PostgreSQL crash/restart conformance remain. |
+| 30 August 2026 | Implemented and verified the next ten W-02 worker, migration, telemetry, and recovery tasks                                                                              | Added private queue carriers over the exact owned task registry, full result and retry classification, configurable queue and lifecycle controls, the Cobra `worker` process, bounded graceful drain and memory restart guard, explicit release-pinned `idenqa migrate headgate` operations, application-owned OpenTelemetry metrics and consumer spans, focused worker/configuration/CLI tests, and an isolated PostgreSQL 18.4 crash-lease/replacement-worker proof. Runtime startup never migrates. Crash quarantine plus deployment-wide retry base and cap are configured on the pgx store that enforces them. The final API audit found that Headgate v0.1.2 does not invoke its declared `Config.RetryPolicy`, so production enforcement of the durable task-specific timing and jitter contract remains explicit W-02 work rather than being falsely claimed complete. Exact Go 1.26.6 race, lint, vet, build, module-integrity, and vulnerability gates pass. API startup compatibility, task-specific retry timing, and fleet-wide rate-class values remain before W-02 completion. |
+| 30 August 2026 | Completed W-02 with the next ten compatibility, policy, and conformance tasks                                                                                           | Added the claimed-envelope Ack-delay adapter for exact task-specific backoff and deterministic jitter, corrected one-based delivery attempts, preserved idempotency identity across Headgate claims, assigned all queues to configurable rate classes, selected per-queue rate/burst and per-tenant concurrency defaults, reconciled fleet policy before admission, added pooled Headgate compatibility checks to API startup and readiness, split portable conformance from the single-process drain extension, and passed the PostgreSQL production adapter through the shared contract plus crash/replacement proof twice under the race detector. W-02 is **Complete**; V-01 is next. |
+| 30 August 2026 | Implemented and verified the first twenty V-01 owned-contract and conformance tasks                                                                                     | Added dependency-free public provider and model v1 manifests, pinned provenance and restrictions, reference-only configuration, scoped evidence grants, immutable request/result envelopes, attempt idempotency, stable signal/failure/health classifications, narrow execution ports, `pvd_`/`mdl_`/`atm_` identities, compatibility checks, and public conformance harnesses that reject deliberately incorrect adapters. Focused race and lint gates pass. V-01 remains **In progress** because gRPC, Protobuf, Buf, and Protovalidate are still Proposed; isolated-runner authentication, deadline, cancellation, trace, size, and evidence/secret-isolation proofs are next. |
+| 30 August 2026 | Implemented and verified the next twenty V-01 dependency, protocol, and isolated-runner tasks                                                                          | Selected and pinned the reviewed gRPC, Protobuf, Buf, Protovalidate, generator, and `otelgrpc` stack plus TLS-only per-runner bearer authentication. Added the typed v1 provider/model services, STANDARD lint and reproducible generation, committed bindings, strict validation, service and client adapters, current/previous credential rotation, TLS 1.2+ helpers, required capped deadlines, cancellation and W3C trace propagation, dual message-size enforcement, and closed-schema isolation. Real TLS race tests prove provider/model round trips, authentication denial and overlap, deadline policy, cancellation, client/server trace continuity, malformed input rejection, oversized-result rejection, and absence of raw evidence, byte fields, maps, object-store locations, tenant keys, and credentials. The full formatting, contract lint, generation drift, module integrity, race, Go/TypeScript lint and typecheck, reachability-aware vulnerability, npm audit, build, browser, and package-publication gates pass on the available Go 1.26.7 patch toolchain while the module remains pinned to Go 1.26.6. V-01 moved to **In review**. |
+| 30 August 2026 | Implemented the fourth thirty-task V-02 reconciliation and capture-safe-progress batch                                                                                | Added migration 18, bounded identifier-only system discovery, explicit restricted-role grants, exact reconciliation claims, transactional fenced resolution, Headgate singleton scheduling, validated deployment controls, tenant-only notification hints, durable fallback polling, atomic outbox-to-realtime projection, and the closed `verification.check.progress` Go/JSON/TypeScript/Capture Web contract. Deterministic unit and focused PostgreSQL 18.4 proofs cover duty election, lease conflicts, exact routing, notification loss tolerance, publication idempotence, and forbidden-field absence. V-02 moved to **In review** without introducing a final policy or verification decision. |
+| 30 August 2026 | Implemented and verified the first fifty-task V-03 CEL-independent policy foundation                                                                                | Added `pol_` and `dec_` identifiers, closed fact and result vocabularies, reference-only provenance, immutable canonical snapshots, bounded deterministic resolution, terminal-authorisation invariants, lineage, supersession, and exact stored-decision reproduction. Focused Go 1.26.6 race tests, seeded fuzzing, and lint pass. D-012 remained open; that brick deferred `cel-go`, expression compilation, public syntax, activation, PostgreSQL persistence, the reproduction CLI, and the public test kit. |
+| 30 August 2026 | Implemented and verified the second fifty-task V-03 durable decision foundation                                                                                       | Added strict bounded canonical restoration for snapshots, evaluations, and decisions; canonical decision digests; migration 19; generated parameterised queries; and the tenant-scoped PostgreSQL repository. Forced RLS, append-only triggers, terminal-evaluation foreign keys, one-root and one-successor constraints, predecessor locking, exact replay, changed-meaning conflict, and leaf lookup preserve linear immutable lineage. Exact Go 1.26.6 full gates and the shuffled PostgreSQL 18.4 integration suite pass. V-03 remains **In progress** without selecting CEL or implementing expression syntax, activation, workflow authorship, the reproduction CLI, or the public policy test kit. |
+| 30 August 2026 | Implemented and verified the third fifty-task V-03 decision-reproduction tooling foundation                                                                           | Added the bounded closed portable decision bundle, payload and nested digests, strict offline reconstruction, safe structured report, and Cobra `idenqa policy decision reproduce` and `verify` commands. Online export uses exact schema preflight and tenant-scoped restricted-role persistence; offline verification accepts byte-exact bounded file or standard-input bundles without reopening the repository. Exact Go 1.26.6 full gates and the isolated PostgreSQL proof pass. V-03 remains **In progress** without selecting CEL or implementing public policy syntax, activation, workflow decision authorship, the public decision API, or the public policy test kit. |
+| 31 August 2026 | Implemented and verified the fourth fifty-task V-03 public decision-read foundation                                                                                    | Added separate immutable `decisions:read` and `decisions:export` authority, application rechecks, exact and latest safe reports, explicit byte-canonical bundle export, digest ETags and 304 revalidation, API composition, closed OpenAPI schemas, generated Go and TypeScript contracts, and the dependency-free `IdenqaClient.decisions` facade. Unit and generated-client tests cover non-disclosing identifiers, scope separation, safe reports, exact bytes, media type, metadata, and cancellation-ready requests. A real API key and the restricted PostgreSQL role prove forced-RLS isolation, exact export, latest lineage, and conditional reads. Exact Go 1.26.6 full repository and Chromium gates pass. D-012, public policy syntax and activation, workflow decision authorship, and the public test-kit boundary remain unresolved. |
+| 31 August 2026 | Implemented and verified the fifth fifty-task V-03 CEL-neutral machine-authoring seam                                                                                | Added consumer-owned input, evaluator, and persistence ports plus a replay-safe `policy.Author` that pins decision identity, verification, lineage, and explicit time; re-enters canonical snapshot construction and deterministic resolution; permits only terminal machine decisions; rereads and reproduces durable results; and accepts concurrent replay only on an exact canonical digest. Focused race tests cover all terminal outcomes, malformed and non-terminal output, cancellation, dependency errors, changed replay meaning, aliasing, and 32 concurrent exact requests. The restricted PostgreSQL role proves exact authoring replay and forced-RLS cross-tenant non-disclosure. D-012, production input/evaluator adapters, public syntax and activation, durable workflow triggering, and the public policy-testkit split remain unresolved. |
+| 31 August 2026 | Resolved D-012 and implemented the sixth fifty-task V-03 CEL v1 compiler and evaluator foundation                                                                    | Selected and pinned `cel-go` v0.31.0; added the dependency-free public v1 canonical JSON policy contract and schema; confined CEL to a private adapter exposing only primitive fact states and region; disabled macros; allow-listed checked boolean AST operations; enforced byte, node, depth, cost and exact-provenance limits; pinned evaluator meaning; and translated matches into owned results. Focused fuzz, race, vet and lint tests cover malformed and non-canonical documents, subset escapes, terminal outcomes, mismatch, missing facts, cancellation, mutation and concurrent reuse. Policy activation, production input resolution, durable triggering and the public policy-testkit split remain future V-03 work. |
+| 31 August 2026 | Implemented and verified the seventh fifty-task V-03 durable revision and activation foundation                                                                     | Added compiler-before-write immutable canonical revisions, exact evaluator pinning, migration 20, generated queries, forced-RLS policy roots and append-only revision/history tables, explicit expected-version compare-and-swap, atomic actor-attributed activation history, exact registration replay and active lookup. Unit and live PostgreSQL 18.4 race tests prove byte ownership, compiler failure isolation, cross-tenant non-disclosure, stale-switch conflict, failed-history rollback and database immutability. Active evaluator resolution, authoritative inputs, workflow triggering, administration and the public policy-testkit split remain future V-03 work. |
+| 31 August 2026 | Implemented and verified the eighth fifty-task V-03 exact evaluator and input-coordination foundation                                                               | Added the exact snapshot-pinned CEL resolver with an explicit bounded LRU, tenant-complete keys, cold-resolution deduplication, independent cancellation, immutable revision and evaluator verification, and no background goroutines. Added the atomic reference-only authoritative-state contract plus active input loader without inventing tenant assignment, region pinning or signal-to-fact mapping. Race tests prove cache isolation, eviction, cancellation recovery and an activation switch before evaluation cannot change the pinned revision. Exact Go 1.26.6 full repository and browser gates pass. The PostgreSQL authoritative projection, workflow triggering, administration and public policy-testkit split remain future V-03 work. |
+| 31 August 2026 | Implemented and verified the ninth fifty-task V-03 immutable-region and authoritative-source foundation                                                            | Added server-selected immutable session-region pinning through idempotency, domain, migration 21, PostgreSQL, capture restoration and safe creation events, with fail-closed legacy null handling. Added a tenant-forced, read-only repeatable-read authoritative PostgreSQL source that loads time-valid authority, latest response and bounded exact completed-check provenance without evidence bytes or provider payloads. Policy assignment and fact mapping remain injected unresolved strategies, so production composition, durable triggering, administration and the public policy-testkit split remain future V-03 work. |
+| 31 August 2026 | Implemented and verified the tenth fifty-task V-03 transactionally fenced durable-authoring foundation                                                            | Extracted replay-neutral deterministic decision construction, added tenant-scoped caller-transaction append and exact reads, and defined the strict reference-only `policy.author` v1 Headgate contract and handler. Authoritative loading and evaluation occur outside the effect transaction; exact replay, append and canonical reread commit with Headgate's live completion fence. Focused race, payload-isolation and PostgreSQL rollback/commit proofs pass. Assignment, fact mapping, the production enqueue trigger and handler composition, administration and the public policy-testkit split remain explicit future V-03 work. |
+| 31 August 2026 | Implemented and verified the eleventh fifty-task V-03 deterministic simulation and portable-fixture foundation                                                     | Added the CEL-neutral simulator over explicit synthetic reference-only inputs, compiled canonical supplied policy without registration or activation, reused production snapshot/evaluation resolution for terminal and non-terminal paths, and added the separately versioned self-checking simulation bundle plus safe report. Determinism, cancellation, aliasing, concurrent reuse, malformed input and envelope/nested tampering are covered by race and seeded-fuzz tests. The public policy-testkit package split, assignment, fact mapping, production composition, activation approval and administration remain unresolved. |
+| 1 September 2026 | Implemented and verified the twelfth fifty-task V-03 internal policy-scenario-suite foundation                                                                    | Added bounded uniquely named scenarios over the existing simulator, exact expectations resolved through production semantics, canonical name ordering, all-mismatch retention, self-checking actual bundles and an input-order-independent safe suite digest. Focused race and seeded-fuzz tests cover bounds, invalid expectations, cancellation, aliasing, omission and concurrent reuse. The public policy-testkit package and conformance API remain unresolved. |
+| 1 September 2026 | Implemented and verified the thirteenth fifty-task V-03 metadata-only catalog-inspection foundation                                                               | Added immutable revision and activation metadata, bounded newest-first internal paging with exclusive numeric boundaries, metadata-only parameterised SQL, generated sqlc methods, read-only tenant-scoped PostgreSQL restoration and fail-closed ordering validation. Unit and live restricted-role tests prove two-page history and forced-RLS cross-tenant non-disclosure. Public administration, permissions, cursor encoding and activation approval remain unresolved. |
+| 1 September 2026 | Closed the reviewed V-01 and V-02 bricks                                                                                                                           | Re-ran the exact Go 1.26.6 repository gate and shuffled restricted-role PostgreSQL integration suite. Provider/model contract conformance, isolated runner security, synthetic attempts, reconciliation, and capture-safe progress satisfy their recorded exit proofs; real provider integrations remain later work. |
+| 1 September 2026 | Completed V-03 with the public policy conformance boundary                                                                                                         | Added dependency-light `conformance/policy` over `contracts/policy/v1`, including deterministic result, ownership, cancellation, and deliberately non-conforming engine proofs. The completed public surface does not import internal CEL or domain implementations. Policy administration and activation authorisation remain a separate unresolved operational surface. |
+| 1 September 2026 | Completed V-04 signed webhook delivery and closed M-3                                                                                                              | Added migration 23, forced-RLS webhook state, KMS-wrapped rotating secrets, separate configuration/replay authority, reference-only Headgate execution, retry exhaustion, disablement, replay lineage, DNS-pinned HTTPS delivery, SDK verification guidance, and deterministic synthetic-decision-to-HMAC proof. Restricted-role integration and exact repository gates pass. |
+| 1 September 2026 | Completed O-01 independently verifiable audit history                                                                                                              | Selected and implemented the canonical SHA-256 tenant chain with Ed25519 checkpoints, migration 24, serialised tenant sequence allocation, forced RLS, append-only records and checkpoints, key history, authorised repeatable-read export, and offline Cobra verification. Unit and PostgreSQL fixtures detect deletion, mutation, reordering, wrong keys, and broken signatures. |
+| 4 September 2026 | User approved D-021 and D-022; completed the remaining O-02 and X-01 work                                                                                           | Selected Swift 6.2/iOS 16+, proof-bound native bootstrap, and worker-owned regional deletion. Added migrations 28 and 29, durable privacy discovery and Headgate execution, worker object-deletion composition, Keychain/Keystore token protection, hardware-backed P-256 proof keys, native camera sources, shared public fixtures, the native bootstrap API, immutable region contract, and replay-safe database binding. Focused Go, Swift, Android, OpenAPI, and PostgreSQL 18.4 proofs pass. O-02 and X-01 moved to **Complete**, M-4 closed, and no brick remains in progress. |
+| 4 September 2026 | User selected the Pan-African fintech option for D-014                                                                                                               | D-014 resolved mobile-first regulated fintech onboarding for adult individuals in Nigeria, Ghana, Kenya, and South Africa; Smile ID and Dojah as tenant-credentialed isolated adapters; exact initial authority and document packs; equivalent-capability policy-approved fallback; and explicit deferrals. X-02 moved to **Ready**. |
+| 4 September 2026 | Implemented the final three external-beta bricks through their repository-owned boundaries                                                                           | Completed X-02's acquisition contract and native coordinators. Added provider contract v1.1 opaque inputs, Dojah and Smile ID HTTP adapters, frozen manifests, exact fallback selection and conformance tests; X-03 moved to **In review** pending official-account, deletion and regional evidence. Added threat/release/runbook/disclosure documents, native/security/release automation, SPDX SBOM and provenance configuration; X-04 moved to **In review** pending independent penetration, device, load/soak, migration, incident and signed-candidate evidence. |
