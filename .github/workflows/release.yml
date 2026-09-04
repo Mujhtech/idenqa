@@ -1,0 +1,81 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  swift-sdk:
+    runs-on: macos-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: sdk/swift
+    steps:
+      - uses: actions/checkout@v6.0.2
+      - run: swift --version
+      - run: swift test
+
+  kotlin-sdk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: sdk/kotlin
+    steps:
+      - uses: actions/checkout@v6.0.2
+      - uses: actions/setup-java@v5.6.0
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+          cache-dependency-path: |
+            sdk/kotlin/*.gradle.kts
+            sdk/kotlin/gradle/wrapper/gradle-wrapper.properties
+            sdk/kotlin/idenqa/*.gradle.kts
+      - run: ./gradlew :idenqa:test --no-daemon
+
+  release:
+    needs: [swift-sdk, kotlin-sdk]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@v6.0.2
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v7.0.0
+        with:
+          go-version: 1.26.6
+          cache: true
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: 22.22.3
+      - run: corepack pnpm install --frozen-lockfile
+      - name: Verify release source
+        run: make verify
+      - name: Install the pinned SBOM generator
+        uses: anchore/sbom-action/download-syft@v0.24.0
+        with:
+          syft-version: v1.42.3
+      - name: Build release and SPDX SBOMs
+        uses: goreleaser/goreleaser-action@v7
+        with:
+          distribution: goreleaser
+          version: v2.17.1
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Attest archives, checksums, and SBOMs
+        uses: actions/attest@v4.1.0
+        with:
+          subject-path: |
+            dist/*.tar.gz
+            dist/checksums.txt
+            dist/*.spdx.json
