@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://idenqa.dev/contracts/capture/native/v1/bootstrap-request.schema.json",
+  "title": "Idenqa native bootstrap request v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["application_id", "proof_key", "proof_created_at", "proof_algorithm", "proof_format", "proof", "capabilities"],
+  "properties": {
+    "application_id": { "type": "string", "minLength": 1, "maxLength": 255, "pattern": "^[A-Za-z0-9._-]+$" },
+    "proof_key": { "type": "string", "minLength": 40, "maxLength": 512, "pattern": "^[A-Za-z0-9_-]+$" },
+    "proof_created_at": { "type": "integer", "minimum": 1 },
+    "proof_algorithm": { "const": "ES256" },
+    "proof_format": { "const": "der" },
+    "proof": { "type": "string", "minLength": 40, "maxLength": 256, "pattern": "^[A-Za-z0-9_-]+$" },
+    "attestation": { "type": "string", "minLength": 1, "maxLength": 16384 },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["platform", "sdk_version", "implemented_methods", "currently_available_methods"],
+      "properties": {
+        "platform": { "enum": ["ios", "android"] },
+        "sdk_version": { "type": "string", "minLength": 1, "maxLength": 64, "pattern": "^[A-Za-z0-9._-]+$" },
+        "implemented_methods": { "type": "array", "maxItems": 64, "uniqueItems": true, "items": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[A-Za-z0-9._-]+$" } },
+        "currently_available_methods": { "type": "array", "maxItems": 64, "uniqueItems": true, "items": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[A-Za-z0-9._-]+$" } }
+      }
+    }
+  }
+}

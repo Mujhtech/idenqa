@@ -1,0 +1,49 @@
+{
+  "schema_version": "1.0",
+  "plan_id": "plan.pan_african_individual.v1",
+  "session_id": "ver_01K4AR9V8FQ2G7ZXCPNM5T6JWH",
+  "requirements": [
+    {
+      "id": "document.front",
+      "evidence_type": "idenqa.evidence.document_image",
+      "artefact": "idenqa.artefact.document_front",
+      "acquisition_method": "idenqa.method.live_camera",
+      "camera": "back",
+      "quality": {
+        "minimum_width": 1280,
+        "minimum_height": 720,
+        "maximum_bytes": 10485760,
+        "minimum_brightness": 0.15,
+        "maximum_brightness": 0.92,
+        "minimum_contrast": 0.08,
+        "minimum_sharpness": 0.12,
+        "maximum_glare": 0.18,
+        "required_face_count": 0
+      },
+      "challenges": []
+    },
+    {
+      "id": "selfie.live",
+      "evidence_type": "idenqa.evidence.selfie_image",
+      "artefact": "idenqa.artefact.selfie_image",
+      "acquisition_method": "idenqa.method.live_camera",
+      "camera": "front",
+      "quality": {
+        "minimum_width": 720,
+        "minimum_height": 720,
+        "maximum_bytes": 8388608,
+        "minimum_brightness": 0.18,
+        "maximum_brightness": 0.9,
+        "minimum_contrast": 0.08,
+        "minimum_sharpness": 0.1,
+        "maximum_glare": 0.2,
+        "required_face_count": 1
+      },
+      "challenges": [
+        { "id": "challenge.neutral", "prompt": "neutral", "maximum_duration_ms": 5000 },
+        { "id": "challenge.turn_left", "prompt": "turn_left", "maximum_duration_ms": 5000 },
+        { "id": "challenge.turn_right", "prompt": "turn_right", "maximum_duration_ms": 5000 }
+      ]
+    }
+  ]
+}

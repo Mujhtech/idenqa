@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://idenqa.dev/contracts/capture/acquisition/v1/acquisition.schema.json",
+  "title": "Idenqa capture acquisition plan v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "plan_id", "session_id", "requirements"],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "plan_id": { "$ref": "#/$defs/reference" },
+    "session_id": { "type": "string", "pattern": "^ver_[0-9A-HJKMNP-TV-Z]{26}$" },
+    "requirements": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 16,
+      "items": { "$ref": "#/$defs/requirement" }
+    }
+  },
+  "$defs": {
+    "name": { "type": "string", "minLength": 1, "maxLength": 160, "pattern": "^[a-z0-9._-]+$" },
+    "reference": { "type": "string", "minLength": 1, "maxLength": 160, "pattern": "^[A-Za-z0-9._:-]+$" },
+    "quality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["minimum_width", "minimum_height", "maximum_bytes"],
+      "properties": {
+        "minimum_width": { "type": "integer", "minimum": 320, "maximum": 16384 },
+        "minimum_height": { "type": "integer", "minimum": 320, "maximum": 16384 },
+        "maximum_bytes": { "type": "integer", "minimum": 1024, "maximum": 20971520 },
+        "minimum_brightness": { "type": "number", "minimum": 0, "maximum": 1 },
+        "maximum_brightness": { "type": "number", "minimum": 0, "maximum": 1 },
+        "minimum_contrast": { "type": "number", "minimum": 0, "maximum": 1 },
+        "minimum_sharpness": { "type": "number", "minimum": 0, "maximum": 1 },
+        "maximum_glare": { "type": "number", "minimum": 0, "maximum": 1 },
+        "required_face_count": { "type": "integer", "minimum": 0, "maximum": 4 }
+      }
+    },
+    "challenge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "prompt", "maximum_duration_ms"],
+      "properties": {
+        "id": { "$ref": "#/$defs/reference" },
+        "prompt": { "enum": ["neutral", "turn_left", "turn_right", "look_up", "look_down", "blink"] },
+        "maximum_duration_ms": { "type": "integer", "minimum": 500, "maximum": 15000 }
+      }
+    },
+    "requirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "evidence_type", "artefact", "acquisition_method", "camera", "quality", "challenges"],
+      "properties": {
+        "id": { "$ref": "#/$defs/reference" },
+        "evidence_type": { "$ref": "#/$defs/name" },
+        "artefact": { "$ref": "#/$defs/name" },
+        "acquisition_method": { "const": "idenqa.method.live_camera" },
+        "camera": { "enum": ["front", "back"] },
+        "quality": { "$ref": "#/$defs/quality" },
+        "challenges": {
+          "type": "array",
+          "maxItems": 8,
+          "items": { "$ref": "#/$defs/challenge" }
+        }
+      }
+    }
+  }
+}
