@@ -1,0 +1,69 @@
+{
+  "schema_version": "1.1",
+  "package": {
+    "adapter_id": "smileid",
+    "adapter_version": "0.1.0",
+    "package_digest": "sha256:1cf0a62a1a739943e1ade0ed763ebbf9c20dce9969b4e3b6809bce820e15b46c",
+    "contract": { "major": 1, "minor": 1 }
+  },
+  "configuration": {
+    "id": "smileid.tenant.v1",
+    "digest": "sha256:6c970ac324797952f7d25b4dd847db9b9b65a86a7fdc9c42e85e36bd72a480a1"
+  },
+  "capabilities": [
+    {
+      "check": "idenqa.check.document_biometric",
+      "accepted_evidence": ["idenqa.evidence.document_image", "idenqa.evidence.selfie_image"],
+      "accepted_inputs": ["idenqa.input.country", "idenqa.input.id_type", "idenqa.input.id_number"],
+      "accepted_assurances": [
+        "idenqa.assurance.capture_quality",
+        "idenqa.assurance.active_liveness",
+        "idenqa.assurance.face_match_1to1",
+        "idenqa.assurance.document_authenticity"
+      ],
+      "processing_regions": ["africa"],
+      "supports_idempotency": true
+    },
+    {
+      "check": "idenqa.check.authority_biometric",
+      "accepted_evidence": ["idenqa.evidence.selfie_image"],
+      "accepted_inputs": ["idenqa.input.country", "idenqa.input.id_type", "idenqa.input.id_number"],
+      "accepted_assurances": [
+        "idenqa.assurance.active_liveness",
+        "idenqa.assurance.face_match_1to1"
+      ],
+      "processing_regions": ["africa"],
+      "supports_idempotency": true
+    }
+  ],
+  "restrictions": {
+    "network_required": true,
+    "maximum_grants": 16,
+    "maximum_result_size": 32768,
+    "maximum_duration": 600000000000
+  },
+  "catalogue_review": {
+    "reviewed_at": "2026-09-04",
+    "upstream_contract": "Smile ID REST API v1 / info package API v2.0",
+    "modes": ["sandbox", "production"],
+    "credential_ownership": "tenant",
+    "countries": {
+      "NG": ["NIN", "NIN_V2", "BVN", "PASSPORT", "DRIVERS_LICENSE", "DOCUMENT_IMAGE"],
+      "GH": ["GHANA_CARD", "PASSPORT", "DRIVERS_LICENSE", "DOCUMENT_IMAGE"],
+      "KE": ["NATIONAL_ID", "PASSPORT", "DRIVERS_LICENSE", "DOCUMENT_IMAGE"],
+      "ZA": ["NATIONAL_ID", "PASSPORT", "DRIVERS_LICENSE", "DOCUMENT_IMAGE"]
+    },
+    "callbacks": true,
+    "polling": true,
+    "provider_idempotency": "partner_params.job_id",
+    "deletion": "must be exercised through the contracted Smile ID privacy process; no public per-job delete endpoint was declared in the reviewed REST catalogue",
+    "retention": "must be fixed in the tenant provider agreement before production enablement",
+    "sources": [
+      "https://docs.usesmileid.com/integration-options/rest-api/products",
+      "https://docs.usesmileid.com/integration-options/rest-api/signing-your-api-request/generate-signature",
+      "https://docs.usesmileid.com/rest-api/utilities",
+      "https://docs.usesmileid.com/products/for-individuals-kyc/biometric-kyc",
+      "https://docs.usesmileid.com/products/for-individuals-kyc/document-verification/document-verification"
+    ]
+  }
+}
