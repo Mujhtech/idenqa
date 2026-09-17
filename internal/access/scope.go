@@ -14,6 +14,45 @@ const maxScopeSegmentLength = 64
 type Permission string
 
 const (
+	// PermissionSubjectsRead permits tenant subject metadata and exact external-reference lookup.
+	PermissionSubjectsRead Permission = "subjects:read"
+	// PermissionSubjectsWrite permits subject lifecycle updates and explicit verification links.
+	PermissionSubjectsWrite Permission = "subjects:write"
+	// PermissionSubjectsDelete requests deletion of identity data and all linked verification evidence.
+	PermissionSubjectsDelete Permission = "subjects:delete"
+	// PermissionIdentityRead permits identity record metadata and exact identifier lookup.
+	PermissionIdentityRead Permission = "identity:read"
+	// PermissionIdentityWrite permits attributed observations and immutable derived records.
+	PermissionIdentityWrite Permission = "identity:write"
+	// PermissionIdentityReveal permits audited decryption of structured identity values.
+	PermissionIdentityReveal Permission = "identity:reveal"
+	// PermissionIdentityConfigure activates versioned corroboration and provider-lineage rules.
+	PermissionIdentityConfigure Permission = "identity:configure"
+
+	// PermissionFraudRead inspects safe fraud configuration and receipts.
+	PermissionFraudRead Permission = "fraud:read"
+	// PermissionFraudWrite ingests configured tenant sources and proposes hypotheses.
+	PermissionFraudWrite Permission = "fraud:write"
+	// PermissionFraudConfigure activates versioned tenant fraud rules.
+	PermissionFraudConfigure Permission = "fraud:configure"
+	// PermissionModelsRead permits model registry inspection.
+	PermissionModelsRead Permission = "models:read"
+	// PermissionModelsWrite permits immutable evaluation model and threshold registration.
+	PermissionModelsWrite Permission = "models:write"
+	// PermissionModelsActivate permits audited evaluation deployment changes.
+	PermissionModelsActivate Permission = "models:activate"
+	// PermissionPoliciesRead permits policy catalog and source inspection.
+	PermissionPoliciesRead Permission = "policies:read"
+	// PermissionPoliciesWrite permits immutable revision creation and validation.
+	PermissionPoliciesWrite Permission = "policies:write"
+	// PermissionPoliciesActivate permits version-checked activation and rollback.
+	PermissionPoliciesActivate Permission = "policies:activate"
+	// PermissionWebhooksRead permits safe webhook configuration and delivery inspection.
+	PermissionWebhooksRead Permission = "webhooks:read"
+	// PermissionWebhooksConfigure permits endpoint creation, disablement and rotation.
+	PermissionWebhooksConfigure Permission = "webhooks:configure"
+	// PermissionWebhooksReplay permits deliberate failed delivery replay.
+	PermissionWebhooksReplay Permission = "webhooks:replay"
 	// PermissionTenantRead permits reading the authenticated tenant's safe metadata.
 	PermissionTenantRead Permission = "tenant:read"
 	// PermissionCaptureProfilesRead permits reading capture profiles.
@@ -22,6 +61,8 @@ const (
 	PermissionCaptureProfilesWrite Permission = "capture_profiles:write"
 	// PermissionVerificationSessionsCreate permits creating verification sessions.
 	PermissionVerificationSessionsCreate Permission = "verification_sessions:create"
+	// PermissionVerificationSessionsCancel permits stopping an active verification.
+	PermissionVerificationSessionsCancel Permission = "verification_sessions:cancel"
 	// PermissionVerificationSessionsRead permits reading verification sessions.
 	PermissionVerificationSessionsRead Permission = "verification_sessions:read"
 	// PermissionNoticesRead permits reading immutable notice versions.
@@ -40,12 +81,26 @@ const (
 	PermissionReviewsRead Permission = "reviews:read"
 	// PermissionReviewsWrite permits attributed review and correction actions.
 	PermissionReviewsWrite Permission = "reviews:write"
+	// PermissionReviewsAdmin manages tenant review operations and operator assignments.
+	PermissionReviewsAdmin Permission = "reviews:admin"
 	// PermissionAppealsWrite permits attributed appeal actions.
 	PermissionAppealsWrite Permission = "appeals:write"
 	// PermissionDeletionsWrite permits observable tenant deletion workflows.
 	PermissionDeletionsWrite Permission = "deletions:write"
 	// PermissionLegalHoldsWrite permits legal-hold creation and release.
 	PermissionLegalHoldsWrite Permission = "legal_holds:write"
+	// PermissionProposalsRead permits reading proposal and accepted-command records.
+	PermissionProposalsRead Permission = "proposals:read"
+	// PermissionProposalsWrite permits creating bounded proposals.
+	PermissionProposalsWrite Permission = "proposals:write"
+	// PermissionProposalsApprove permits guardrail-checked approval and execution of proposals.
+	PermissionProposalsApprove Permission = "proposals:approve"
+	// PermissionProposalsConfigure permits versioned automation-mode configuration.
+	PermissionProposalsConfigure Permission = "proposals:configure"
+	// PermissionPromptsRead permits prompt registry inspection.
+	PermissionPromptsRead Permission = "prompts:read"
+	// PermissionPromptsWrite permits immutable prompt registration.
+	PermissionPromptsWrite Permission = "prompts:write"
 )
 
 // ParsePermission validates an exact resource-action permission.
@@ -116,7 +171,8 @@ func NewRegistry(permissions ...Permission) (Registry, error) {
 
 // TenantRegistry returns the initial tenant-assignable permission registry.
 func TenantRegistry() Registry {
-	return Registry{permissions: []Permission{
+	return Registry{permissions: []Permission{PermissionSubjectsRead, PermissionSubjectsWrite, PermissionSubjectsDelete, PermissionIdentityRead, PermissionIdentityWrite, PermissionIdentityReveal, PermissionIdentityConfigure, PermissionFraudRead, PermissionFraudWrite, PermissionFraudConfigure,
+		PermissionModelsRead, PermissionModelsWrite, PermissionModelsActivate,
 		PermissionAuthoritiesRead,
 		PermissionAuthoritiesWrite,
 		PermissionCaptureProfilesRead,
@@ -130,9 +186,23 @@ func TenantRegistry() Registry {
 		PermissionNoticesWrite,
 		PermissionReviewsRead,
 		PermissionReviewsWrite,
+		PermissionReviewsAdmin,
 		PermissionTenantRead,
 		PermissionVerificationSessionsCreate,
+		PermissionVerificationSessionsCancel,
 		PermissionVerificationSessionsRead,
+		PermissionPoliciesRead,
+		PermissionPoliciesWrite,
+		PermissionPoliciesActivate,
+		PermissionWebhooksConfigure,
+		PermissionWebhooksRead,
+		PermissionWebhooksReplay,
+		PermissionProposalsRead,
+		PermissionProposalsWrite,
+		PermissionProposalsApprove,
+		PermissionProposalsConfigure,
+		PermissionPromptsRead,
+		PermissionPromptsWrite,
 	}}
 }
 
