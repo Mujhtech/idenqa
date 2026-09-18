@@ -10,6 +10,8 @@ import (
 )
 
 var (
+	// ErrEvaluationNotFound identifies an evaluation without a durable receipt.
+	ErrEvaluationNotFound = errors.New("review: evaluation not found")
 	// ErrInvalid means review meaning is malformed or unauthorised.
 	ErrInvalid = errors.New("review: invalid operation")
 	// ErrConflict means a stale version, duplicate claim, or changed replay.
@@ -55,6 +57,8 @@ const (
 	CaseAwaitingSecond CaseState = "awaiting_second"
 	// CaseResolved has the required immutable findings.
 	CaseResolved CaseState = "resolved"
+	// CaseEscalated retains conflicting independent findings without accepting a resolution.
+	CaseEscalated CaseState = "escalated"
 )
 
 // Oversight pins whether one or two independent findings are required.
@@ -103,6 +107,7 @@ type Case struct {
 	ID                  id.ReviewCase
 	VerificationID      id.Verification
 	ChallengedDecision  id.Decision
+	RoutingRequest      id.Decision
 	SupersedesDecision  id.Decision
 	Region              string
 	RequiredCertificate string
@@ -110,6 +115,7 @@ type Case struct {
 	State               CaseState
 	AssignedReviewer    string
 	Findings            []Finding
+	PermittedFindings   []PermittedFinding
 	Version             int64
 	CreatedAt           time.Time
 	UpdatedAt           time.Time
@@ -124,9 +130,21 @@ func NewCase(identifier id.ReviewCase, verification id.Verification, challenged 
 	return result, nil
 }
 
+// NewRoutedCase opens review from a nonterminal evaluation, never a fake decision.
+func NewRoutedCase(identifier id.ReviewCase, verification id.Verification, request id.Decision, region, certificate string, oversight Oversight, now time.Time) (Case, error) {
+	value := Case{ID: identifier, VerificationID: verification, RoutingRequest: request, Region: region, RequiredCertificate: certificate, Oversight: oversight, State: CaseOpen, Version: 1, CreatedAt: now, UpdatedAt: now}
+	if err := value.Validate(); err != nil {
+		return Case{}, err
+	}
+	return value, nil
+}
+
 // Validate checks durable review meaning without consulting transport state.
 func (review Case) Validate() error {
-	if review.ID.IsZero() || review.VerificationID.IsZero() || review.ChallengedDecision.IsZero() || !bounded(review.Region, 63) || !bounded(review.RequiredCertificate, 128) ||
+	if ValidateFindingRules(review.PermittedFindings) != nil {
+		return ErrInvalid
+	}
+	if review.ID.IsZero() || review.VerificationID.IsZero() || (review.ChallengedDecision.IsZero() == review.RoutingRequest.IsZero()) || !bounded(review.Region, 64) || !bounded(review.RequiredCertificate, 128) ||
 		(review.Oversight != OversightSingle && review.Oversight != OversightDual) || review.Version < 1 || review.CreatedAt.IsZero() || review.CreatedAt.Location() != time.UTC || review.UpdatedAt.Before(review.CreatedAt) || review.UpdatedAt.Location() != time.UTC {
 		return ErrInvalid
 	}
@@ -152,7 +170,10 @@ func (review Case) SubmitFinding(principal Principal, finding Finding, grants []
 	if review.Validate() != nil || expectedVersion != review.Version || (review.State != CaseClaimed && review.State != CaseAwaitingSecond) {
 		return Case{}, ErrConflict
 	}
-	if !principal.permits(PermissionFind) || principal.ID != finding.ReviewerID || finding.ID.IsZero() || !validResolution(finding.Resolution) || !bounded(finding.ReasonCode, 128) || finding.RecordedAt.Before(review.UpdatedAt) || finding.RecordedAt.Location() != time.UTC || len(finding.GrantIDs) == 0 {
+	if !slices.Contains(principal.Certifications, review.RequiredCertificate) || !principal.permits(PermissionFind) || principal.ID != finding.ReviewerID || finding.ID.IsZero() || !validResolution(finding.Resolution) || !bounded(finding.ReasonCode, 128) || finding.RecordedAt.Before(review.UpdatedAt) || finding.RecordedAt.Location() != time.UTC || len(finding.GrantIDs) == 0 {
+		return Case{}, ErrForbidden
+	}
+	if !review.RoutingRequest.IsZero() && (!ValidTime(finding.RecordedAt) || !slices.Contains(review.PermittedFindings, PermittedFinding{Resolution: finding.Resolution, ReasonCode: finding.ReasonCode})) {
 		return Case{}, ErrForbidden
 	}
 	if review.State == CaseClaimed && principal.ID != review.AssignedReviewer {
@@ -175,9 +196,12 @@ func (review Case) SubmitFinding(principal Principal, finding Finding, grants []
 	next := review
 	next.Findings = append(append([]Finding(nil), review.Findings...), cloneFinding(finding))
 	next.Version, next.UpdatedAt = review.Version+1, finding.RecordedAt
-	if review.Oversight == OversightDual && len(next.Findings) == 1 {
+	switch {
+	case review.Oversight == OversightDual && len(next.Findings) == 1:
 		next.State, next.AssignedReviewer = CaseAwaitingSecond, ""
-	} else {
+	case review.Oversight == OversightDual && next.Findings[0].Resolution != finding.Resolution:
+		next.State = CaseEscalated
+	default:
 		next.State = CaseResolved
 	}
 	return next, nil
@@ -185,7 +209,7 @@ func (review Case) SubmitFinding(principal Principal, finding Finding, grants []
 
 // AuthorCorrection records only supersession lineage; prior decisions remain immutable.
 func (review Case) AuthorCorrection(principal Principal, superseding id.Decision, expectedVersion int64, now time.Time) (Case, error) {
-	if review.Validate() != nil || review.State != CaseResolved || expectedVersion != review.Version || superseding.IsZero() || superseding.String() == review.ChallengedDecision.String() || now.Before(review.UpdatedAt) || now.Location() != time.UTC {
+	if review.Validate() != nil || review.ChallengedDecision.IsZero() || review.State != CaseResolved || expectedVersion != review.Version || superseding.IsZero() || superseding.String() == review.ChallengedDecision.String() || now.Before(review.UpdatedAt) || now.Location() != time.UTC {
 		return Case{}, ErrConflict
 	}
 	if !principal.permits(PermissionResolve) || slices.ContainsFunc(review.Findings, func(finding Finding) bool { return finding.ReviewerID == principal.ID }) {
@@ -206,6 +230,8 @@ const (
 	AppealIndependentReview AppealState = "independent_review"
 	// AppealResolved has one immutable reasoned outcome.
 	AppealResolved AppealState = "resolved"
+	// AppealAwaitingInput retains the independent reviewer while fresh evidence is collected.
+	AppealAwaitingInput AppealState = "awaiting_input"
 )
 
 // AppealOutcome is the closed independent-review result.
@@ -238,8 +264,8 @@ type Appeal struct {
 // Resolve records a reasoned independent outcome. An overturned decision must
 // identify its immutable successor; other outcomes must not invent one.
 func (appeal Appeal) Resolve(principal Principal, outcome AppealOutcome, reasonCode string, superseding id.Decision, expectedVersion int64, now time.Time) (Appeal, error) {
-	if appeal.ID.IsZero() || appeal.CaseID.IsZero() || appeal.ChallengedDecision.IsZero() || appeal.State != AppealIndependentReview ||
-		appeal.Version != expectedVersion || now.IsZero() || now.Location() != time.UTC || now.After(appeal.Deadline) {
+	if appeal.ID.IsZero() || appeal.CaseID.IsZero() || appeal.ChallengedDecision.IsZero() || (appeal.State != AppealIndependentReview && appeal.State != AppealAwaitingInput) ||
+		appeal.Version != expectedVersion || now.IsZero() || now.Location() != time.UTC || !now.Before(appeal.Deadline) {
 		return Appeal{}, ErrConflict
 	}
 	if !principal.permits(PermissionAppeal) || principal.ID != appeal.AssignedReviewer ||
@@ -250,6 +276,9 @@ func (appeal Appeal) Resolve(principal Principal, outcome AppealOutcome, reasonC
 	}
 	next := appeal
 	next.State, next.Outcome, next.ReasonCode = AppealResolved, outcome, reasonCode
+	if outcome == AppealMoreInput {
+		next.State = AppealAwaitingInput
+	}
 	next.SupersedingDecision, next.Version = superseding, appeal.Version+1
 	return next, nil
 }

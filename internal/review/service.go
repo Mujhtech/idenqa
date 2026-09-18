@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/Mujhtech/idenqa/internal/access"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
+	"github.com/Mujhtech/idenqa/internal/platform/idempotency"
 	"github.com/Mujhtech/idenqa/internal/tenant"
 )
 
@@ -37,14 +39,36 @@ type Service struct {
 	repository  Repository
 	identifiers IdentifierGenerator
 	now         func() time.Time
+	authority   Authority
 }
 
-// NewService constructs the review application service.
+// NewService constructs the review application service without reviewer authority.
+// Reviewer mutations fail closed; API composition uses NewAuthorizedService.
 func NewService(repository Repository, identifiers IdentifierGenerator, now func() time.Time) (*Service, error) {
 	if repository == nil || identifiers == nil || now == nil {
 		return nil, ErrInvalid
 	}
 	return &Service{repository: repository, identifiers: identifiers, now: now}, nil
+}
+
+// NewAuthorizedService resolves reviewer privileges at the application boundary.
+func NewAuthorizedService(repository Repository, identifiers IdentifierGenerator, now func() time.Time, authority Authority) (*Service, error) {
+	if authority == nil {
+		return nil, ErrInvalid
+	}
+	service, err := NewService(repository, identifiers, now)
+	if err != nil {
+		return nil, err
+	}
+	service.authority = authority
+	return service, nil
+}
+
+func (service *Service) reviewer(ctx context.Context, scope tenant.Scope, actor Actor, region string) (Principal, error) {
+	if service.authority == nil || actor.ID == "" || scope.ID().IsZero() {
+		return Principal{}, ErrForbidden
+	}
+	return service.authority.ResolveReviewer(ctx, scope, actor, region, service.now().UTC())
 }
 
 // OpenCase creates one review case linked to an immutable decision.
@@ -75,8 +99,12 @@ func (service *Service) FindCase(ctx context.Context, scope tenant.Scope, actor 
 }
 
 // Claim applies certification and optimistic assignment rules.
-func (service *Service) Claim(ctx context.Context, scope tenant.Scope, actor Actor, principal Principal, identifier id.ReviewCase, expectedVersion int64) (Case, error) {
+func (service *Service) Claim(ctx context.Context, scope tenant.Scope, actor Actor, identifier id.ReviewCase, expectedVersion int64) (Case, error) {
 	value, err := service.repository.FindCase(ctx, scope, identifier)
+	if err != nil {
+		return Case{}, err
+	}
+	principal, err := service.reviewer(ctx, scope, actor, value.Region)
 	if err != nil {
 		return Case{}, err
 	}
@@ -92,12 +120,16 @@ func (service *Service) Claim(ctx context.Context, scope tenant.Scope, actor Act
 
 // SubmitFinding resolves grant metadata inside the tenant boundary before the
 // aggregate sees it; evidence content never enters this service.
-func (service *Service) SubmitFinding(ctx context.Context, scope tenant.Scope, actor Actor, principal Principal, caseID id.ReviewCase, resolution Resolution, reasonCode string, grantIDs []id.Grant, expectedVersion int64) (Case, error) {
+func (service *Service) SubmitFinding(ctx context.Context, scope tenant.Scope, actor Actor, caseID id.ReviewCase, resolution Resolution, reasonCode string, grantIDs []id.Grant, expectedVersion int64) (Case, error) {
 	value, err := service.repository.FindCase(ctx, scope, caseID)
 	if err != nil {
 		return Case{}, err
 	}
-	now := service.now().UTC()
+	principal, err := service.reviewer(ctx, scope, actor, value.Region)
+	if err != nil {
+		return Case{}, err
+	}
+	now := service.now().UTC().Truncate(time.Microsecond)
 	grants, err := service.repository.FindGrants(ctx, scope, principal.ID, value.Region, grantIDs, now)
 	if err != nil {
 		return Case{}, err
@@ -118,8 +150,12 @@ func (service *Service) SubmitFinding(ctx context.Context, scope tenant.Scope, a
 }
 
 // Correct records immutable decision supersession lineage.
-func (service *Service) Correct(ctx context.Context, scope tenant.Scope, actor Actor, principal Principal, caseID id.ReviewCase, superseding id.Decision, expectedVersion int64) (Case, error) {
+func (service *Service) Correct(ctx context.Context, scope tenant.Scope, actor Actor, caseID id.ReviewCase, superseding id.Decision, expectedVersion int64) (Case, error) {
 	value, err := service.repository.FindCase(ctx, scope, caseID)
+	if err != nil {
+		return Case{}, err
+	}
+	principal, err := service.reviewer(ctx, scope, actor, value.Region)
 	if err != nil {
 		return Case{}, err
 	}
@@ -135,18 +171,21 @@ func (service *Service) Correct(ctx context.Context, scope tenant.Scope, actor A
 
 // RequestAppeal creates an independent-review workflow from a resolved case.
 func (service *Service) RequestAppeal(ctx context.Context, scope tenant.Scope, actor Actor, caseID id.ReviewCase, deadline time.Time) (Appeal, error) {
+	return service.requestAppeal(ctx, scope, actor, caseID, deadline, nil)
+}
+func (service *Service) requestAppeal(ctx context.Context, scope tenant.Scope, actor Actor, caseID id.ReviewCase, deadline time.Time, retry *idempotency.Request) (Appeal, error) {
 	value, err := service.repository.FindCase(ctx, scope, caseID)
 	if err != nil {
 		return Appeal{}, err
 	}
-	if value.State != CaseResolved || actor.ID == "" {
+	if value.ChallengedDecision.IsZero() || actor.ID == "" {
 		return Appeal{}, ErrConflict
 	}
 	identifier, err := service.identifiers.NewAppeal()
 	if err != nil {
 		return Appeal{}, err
 	}
-	now := service.now().UTC()
+	now := service.now().UTC().Truncate(time.Microsecond)
 	if !deadline.After(now) || deadline.Location() != time.UTC {
 		return Appeal{}, ErrInvalid
 	}
@@ -155,6 +194,15 @@ func (service *Service) RequestAppeal(ctx context.Context, scope tenant.Scope, a
 		reviewers = append(reviewers, finding.ReviewerID)
 	}
 	appeal := Appeal{ID: identifier, CaseID: value.ID, ChallengedDecision: value.ChallengedDecision, OriginalReviewers: reviewers, State: AppealRequested, Deadline: deadline, Version: 1}
+	if retry != nil {
+		repository, ok := service.repository.(interface {
+			CreateAppealWithKey(context.Context, tenant.Scope, Actor, Appeal, time.Time, idempotency.Request) (Appeal, error)
+		})
+		if !ok {
+			return Appeal{}, ErrForbidden
+		}
+		return repository.CreateAppealWithKey(ctx, scope, actor, appeal, now, *retry)
+	}
 	if err := service.repository.CreateAppeal(ctx, scope, actor, appeal, now); err != nil {
 		return Appeal{}, err
 	}
@@ -162,12 +210,20 @@ func (service *Service) RequestAppeal(ctx context.Context, scope tenant.Scope, a
 }
 
 // AssignAppeal assigns an independent reviewer optimistically.
-func (service *Service) AssignAppeal(ctx context.Context, scope tenant.Scope, actor Actor, principal Principal, identifier id.Appeal, expectedVersion int64) (Appeal, error) {
+func (service *Service) AssignAppeal(ctx context.Context, scope tenant.Scope, actor Actor, identifier id.Appeal, expectedVersion int64) (Appeal, error) {
 	appeal, err := service.repository.FindAppeal(ctx, scope, identifier)
 	if err != nil {
 		return Appeal{}, err
 	}
-	now := service.now().UTC()
+	value, err := service.repository.FindCase(ctx, scope, appeal.CaseID)
+	if err != nil {
+		return Appeal{}, err
+	}
+	principal, err := service.reviewer(ctx, scope, actor, value.Region)
+	if err != nil {
+		return Appeal{}, err
+	}
+	now := service.now().UTC().Truncate(time.Microsecond)
 	next, err := appeal.Assign(principal, expectedVersion, now)
 	if err != nil {
 		return Appeal{}, err
@@ -179,12 +235,20 @@ func (service *Service) AssignAppeal(ctx context.Context, scope tenant.Scope, ac
 }
 
 // ResolveAppeal records a bounded independent outcome and optional successor.
-func (service *Service) ResolveAppeal(ctx context.Context, scope tenant.Scope, actor Actor, principal Principal, identifier id.Appeal, outcome AppealOutcome, reason string, superseding id.Decision, expectedVersion int64) (Appeal, error) {
+func (service *Service) ResolveAppeal(ctx context.Context, scope tenant.Scope, actor Actor, identifier id.Appeal, outcome AppealOutcome, reason string, superseding id.Decision, expectedVersion int64) (Appeal, error) {
 	appeal, err := service.repository.FindAppeal(ctx, scope, identifier)
 	if err != nil {
 		return Appeal{}, err
 	}
-	now := service.now().UTC()
+	value, err := service.repository.FindCase(ctx, scope, appeal.CaseID)
+	if err != nil {
+		return Appeal{}, err
+	}
+	principal, err := service.reviewer(ctx, scope, actor, value.Region)
+	if err != nil {
+		return Appeal{}, err
+	}
+	now := service.now().UTC().Truncate(time.Microsecond)
 	next, err := appeal.Resolve(principal, outcome, reason, superseding, expectedVersion, now)
 	if err != nil {
 		return Appeal{}, err
@@ -198,4 +262,38 @@ func (service *Service) ResolveAppeal(ctx context.Context, scope tenant.Scope, a
 // IsExpectedFailure reports safe non-disclosing caller failures.
 func IsExpectedFailure(err error) bool {
 	return errors.Is(err, ErrInvalid) || errors.Is(err, ErrConflict) || errors.Is(err, ErrForbidden)
+}
+
+// WithdrawAppeal permits the authenticated requester to cancel an open appeal.
+func (service *Service) WithdrawAppeal(ctx context.Context, auth access.Context, identifier id.Appeal, version int64) (Appeal, error) {
+	if err := auth.Require(access.PermissionAppealsWrite); err != nil {
+		return Appeal{}, err
+	}
+	repository, ok := service.repository.(interface {
+		WithdrawAppeal(context.Context, tenant.Scope, Actor, id.Appeal, int64) (Appeal, error)
+	})
+	if !ok {
+		return Appeal{}, ErrForbidden
+	}
+	return repository.WithdrawAppeal(ctx, auth.TenantScope(), Actor{auth.Principal().KeyID().String()}, identifier, version)
+}
+
+// ReadAppeal returns a tenant-scoped appeal representation.
+func (service *Service) ReadAppeal(ctx context.Context, auth access.Context, identifier id.Appeal) (Appeal, error) {
+	if err := auth.Require(access.PermissionReviewsRead); err != nil {
+		return Appeal{}, err
+	}
+	return service.repository.FindAppeal(ctx, auth.TenantScope(), identifier)
+}
+
+// RequestAppealWithKey authorizes idempotent appeal intake.
+func (service *Service) RequestAppealWithKey(ctx context.Context, auth access.Context, caseID id.ReviewCase, deadline time.Time, key string) (Appeal, error) {
+	if err := auth.Require(access.PermissionAppealsWrite); err != nil {
+		return Appeal{}, err
+	}
+	retry, err := idempotency.NewRequest(auth.TenantScope().ID(), auth.Principal().KeyID(), "reviews.appeal.request", key, []byte(caseID.String()+"/"+deadline.UTC().Format(time.RFC3339Nano)), service.now().UTC().Truncate(time.Microsecond), 24*time.Hour)
+	if err != nil {
+		return Appeal{}, err
+	}
+	return service.requestAppeal(ctx, auth.TenantScope(), Actor{auth.Principal().KeyID().String()}, caseID, deadline, &retry)
 }

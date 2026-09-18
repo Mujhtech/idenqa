@@ -45,6 +45,11 @@ func TestCaseConcurrencyAuthorityDualControlAndCorrection(t *testing.T) {
 	secondGrantID, _ := generator.NewGrant()
 	secondFindingID, _ := generator.NewFinding()
 	secondFinding := review.Finding{ID: secondFindingID, ReviewerID: second.ID, Resolution: review.ResolutionSatisfy, ReasonCode: "second_approval", GrantIDs: []id.Grant{secondGrantID}, RecordedAt: now.Add(3 * time.Minute)}
+	uncertified := second
+	uncertified.Certifications = nil
+	if _, err := awaiting.SubmitFinding(uncertified, secondFinding, []review.EvidenceGrant{{ID: secondGrantID, ReviewerID: second.ID, Region: "ng-1", ExpiresAt: now.Add(time.Hour)}}, awaiting.Version); !errors.Is(err, review.ErrForbidden) {
+		t.Fatalf("uncertified second reviewer error = %v", err)
+	}
 	resolved, err := awaiting.SubmitFinding(second, secondFinding, []review.EvidenceGrant{{ID: secondGrantID, ReviewerID: second.ID, Region: "ng-1", ExpiresAt: now.Add(time.Hour)}}, awaiting.Version)
 	if err != nil || resolved.State != review.CaseResolved {
 		t.Fatalf("second finding = %+v, %v", resolved, err)

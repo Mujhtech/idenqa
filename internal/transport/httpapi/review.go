@@ -18,19 +18,22 @@ import (
 // ReviewService is the non-disclosing application capability used by HTTP.
 type ReviewService interface {
 	FindCase(context.Context, tenant.Scope, review.Actor, id.ReviewCase) (review.Case, error)
-	Claim(context.Context, tenant.Scope, review.Actor, review.Principal, id.ReviewCase, int64) (review.Case, error)
-	SubmitFinding(context.Context, tenant.Scope, review.Actor, review.Principal, id.ReviewCase, review.Resolution, string, []id.Grant, int64) (review.Case, error)
-	Correct(context.Context, tenant.Scope, review.Actor, review.Principal, id.ReviewCase, id.Decision, int64) (review.Case, error)
+	Claim(context.Context, tenant.Scope, review.Actor, id.ReviewCase, int64) (review.Case, error)
+	SubmitFinding(context.Context, tenant.Scope, review.Actor, id.ReviewCase, review.Resolution, string, []id.Grant, int64) (review.Case, error)
+	Correct(context.Context, tenant.Scope, review.Actor, id.ReviewCase, id.Decision, int64) (review.Case, error)
 	RequestAppeal(context.Context, tenant.Scope, review.Actor, id.ReviewCase, time.Time) (review.Appeal, error)
-	AssignAppeal(context.Context, tenant.Scope, review.Actor, review.Principal, id.Appeal, int64) (review.Appeal, error)
-	ResolveAppeal(context.Context, tenant.Scope, review.Actor, review.Principal, id.Appeal, review.AppealOutcome, string, id.Decision, int64) (review.Appeal, error)
+	AssignAppeal(context.Context, tenant.Scope, review.Actor, id.Appeal, int64) (review.Appeal, error)
+	ResolveAppeal(context.Context, tenant.Scope, review.Actor, id.Appeal, review.AppealOutcome, string, id.Decision, int64) (review.Appeal, error)
 }
 
 // ReviewRoutes exposes safe tenant administration without evidence bytes.
 type ReviewRoutes struct {
-	access  *AccessMiddleware
-	service ReviewService
-	logger  *slog.Logger
+	queue     ReviewQueue
+	cursors   ProfileCursor
+	recapture RecaptureService
+	access    *AccessMiddleware
+	service   ReviewService
+	logger    *slog.Logger
 }
 
 // NewReviewRoutes constructs the review HTTP boundary.
@@ -43,26 +46,43 @@ func NewReviewRoutes(accessMiddleware *AccessMiddleware, service ReviewService, 
 
 // Register adds authenticated review and appeal routes.
 func (routes *ReviewRoutes) Register(router chi.Router) {
+	routes.registerAppealLifecycle(router)
+	if routes.queue != nil {
+		routes.RegisterQueue(router, routes.queue, routes.cursors)
+	}
 	read := []func(http.Handler) http.Handler{routes.access.Authenticate, routes.access.Require(access.PermissionReviewsRead)}
 	write := []func(http.Handler) http.Handler{routes.access.Authenticate, routes.access.Require(access.PermissionReviewsWrite)}
 	appeal := []func(http.Handler) http.Handler{routes.access.Authenticate, routes.access.Require(access.PermissionAppealsWrite)}
-	router.With(read...).Get("/v1/review-cases/{caseID}", routes.find)
-	router.With(write...).Post("/v1/review-cases/{caseID}/claim", routes.claim)
-	router.With(write...).Post("/v1/review-cases/{caseID}/findings", routes.finding)
-	router.With(write...).Post("/v1/review-cases/{caseID}/corrections", routes.correct)
-	router.With(appeal...).Post("/v1/review-cases/{caseID}/appeals", routes.requestAppeal)
-	router.With(appeal...).Post("/v1/appeals/{appealID}/assign", routes.assignAppeal)
-	router.With(appeal...).Post("/v1/appeals/{appealID}/resolve", routes.resolveAppeal)
+	if routes.recapture != nil {
+		if _, ok := routes.recapture.(recaptureReevaluator); ok {
+			router.With(write...).Post("/review-cases/{caseID}/recaptures/reevaluations", routes.reevaluateRecapture)
+		}
+
+		if _, ok := routes.recapture.(recaptureAcknowledger); ok {
+			router.With(write...).Post("/review-cases/{caseID}/recaptures/acknowledgements", routes.acknowledgeRecapture)
+		}
+		if _, ok := routes.recapture.(recaptureReader); ok {
+			router.With(read...).Get("/review-cases/{caseID}/recaptures", routes.listRecaptures)
+		}
+		router.With(routes.access.Authenticate, routes.access.Require(access.PermissionReviewsWrite), routes.access.Require(access.PermissionVerificationSessionsCreate)).Post("/review-cases/{caseID}/recaptures", routes.createRecapture)
+		if _, ok := routes.recapture.(recaptureRenewer); ok {
+			router.With(routes.access.Authenticate, routes.access.Require(access.PermissionReviewsWrite), routes.access.Require(access.PermissionVerificationSessionsCreate)).Post("/review-cases/{caseID}/recaptures/renew", routes.renewRecapture)
+		}
+	}
+	router.With(read...).Get("/review-cases/{caseID}", routes.find)
+	router.With(write...).Post("/review-cases/{caseID}/claim", routes.claim)
+	router.With(write...).Post("/review-cases/{caseID}/findings", routes.finding)
+	router.With(write...).Post("/review-cases/{caseID}/corrections", routes.correct)
+	router.With(appeal...).Post("/review-cases/{caseID}/appeals", routes.requestAppeal)
+	router.With(appeal...).Post("/appeals/{appealID}/assign", routes.assignAppeal)
+	router.With(appeal...).Post("/appeals/{appealID}/resolve", routes.resolveAppeal)
 }
 
 type reviewerRequest struct {
-	ReviewerID      string   `json:"reviewer_id"`
-	Certifications  []string `json:"certifications"`
-	ExpectedVersion int64    `json:"expected_version"`
+	ExpectedVersion int64 `json:"expected_version"`
 }
 
 type findingRequest struct {
-	ReviewerID      string            `json:"reviewer_id"`
 	Resolution      review.Resolution `json:"resolution"`
 	ReasonCode      string            `json:"reason_code"`
 	GrantIDs        []string          `json:"grant_ids"`
@@ -70,7 +90,6 @@ type findingRequest struct {
 }
 
 type correctionRequest struct {
-	ReviewerID            string `json:"reviewer_id"`
 	SupersedingDecisionID string `json:"superseding_decision_id"`
 	ExpectedVersion       int64  `json:"expected_version"`
 }
@@ -78,7 +97,6 @@ type appealRequest struct {
 	Deadline time.Time `json:"deadline"`
 }
 type appealResolutionRequest struct {
-	ReviewerID            string               `json:"reviewer_id"`
 	Outcome               review.AppealOutcome `json:"outcome"`
 	ReasonCode            string               `json:"reason_code"`
 	SupersedingDecisionID string               `json:"superseding_decision_id"`
@@ -88,7 +106,8 @@ type appealResolutionRequest struct {
 type reviewResource struct {
 	ID                    string           `json:"id"`
 	VerificationID        string           `json:"verification_id"`
-	ChallengedDecisionID  string           `json:"challenged_decision_id"`
+	ChallengedDecisionID  string           `json:"challenged_decision_id,omitempty"`
+	RoutingRequestID      string           `json:"routing_request_id,omitempty"`
 	SupersedingDecisionID string           `json:"superseding_decision_id,omitempty"`
 	Region                string           `json:"region"`
 	Oversight             review.Oversight `json:"oversight"`
@@ -98,12 +117,15 @@ type reviewResource struct {
 	Version               int64            `json:"version"`
 }
 type appealResource struct {
-	ID               string               `json:"id"`
-	CaseID           string               `json:"case_id"`
-	State            review.AppealState   `json:"state"`
-	Outcome          review.AppealOutcome `json:"outcome,omitempty"`
-	AssignedReviewer string               `json:"assigned_reviewer,omitempty"`
-	Version          int64                `json:"version"`
+	Deadline              time.Time            `json:"deadline"`
+	ReasonCode            string               `json:"reason_code,omitempty"`
+	SupersedingDecisionID string               `json:"superseding_decision_id,omitempty"`
+	ID                    string               `json:"id"`
+	CaseID                string               `json:"case_id"`
+	State                 review.AppealState   `json:"state"`
+	Outcome               review.AppealOutcome `json:"outcome,omitempty"`
+	AssignedReviewer      string               `json:"assigned_reviewer,omitempty"`
+	Version               int64                `json:"version"`
 }
 
 func (routes *ReviewRoutes) authority(request *http.Request) (access.Context, review.Actor, bool) {
@@ -118,9 +140,6 @@ func (routes *ReviewRoutes) caseID(request *http.Request) (id.ReviewCase, error)
 }
 func (routes *ReviewRoutes) appealID(request *http.Request) (id.Appeal, error) {
 	return id.ParseAppeal(chi.URLParam(request, "appealID"))
-}
-func principal(identifier string, permissions ...review.Permission) review.Principal {
-	return review.Principal{ID: identifier, Permissions: permissions}
 }
 
 func (routes *ReviewRoutes) find(writer http.ResponseWriter, request *http.Request) {
@@ -157,9 +176,7 @@ func (routes *ReviewRoutes) claim(writer http.ResponseWriter, request *http.Requ
 		routes.problem(writer, request, invalidRequest(err))
 		return
 	}
-	p := principal(body.ReviewerID, review.PermissionClaim)
-	p.Certifications = append([]string(nil), body.Certifications...)
-	value, err := routes.service.Claim(request.Context(), authority.TenantScope(), actor, p, identifier, body.ExpectedVersion)
+	value, err := routes.service.Claim(request.Context(), authority.TenantScope(), actor, identifier, body.ExpectedVersion)
 	if err != nil {
 		routes.problem(writer, request, err)
 		return
@@ -191,7 +208,7 @@ func (routes *ReviewRoutes) finding(writer http.ResponseWriter, request *http.Re
 		}
 		grants = append(grants, parsed)
 	}
-	value, err := routes.service.SubmitFinding(request.Context(), authority.TenantScope(), actor, principal(body.ReviewerID, review.PermissionFind), identifier, body.Resolution, body.ReasonCode, grants, body.ExpectedVersion)
+	value, err := routes.service.SubmitFinding(request.Context(), authority.TenantScope(), actor, identifier, body.Resolution, body.ReasonCode, grants, body.ExpectedVersion)
 	if err != nil {
 		routes.problem(writer, request, err)
 		return
@@ -219,7 +236,7 @@ func (routes *ReviewRoutes) correct(writer http.ResponseWriter, request *http.Re
 		routes.problem(writer, request, review.ErrInvalid)
 		return
 	}
-	value, err := routes.service.Correct(request.Context(), authority.TenantScope(), actor, principal(body.ReviewerID, review.PermissionResolve), identifier, decision, body.ExpectedVersion)
+	value, err := routes.service.Correct(request.Context(), authority.TenantScope(), actor, identifier, decision, body.ExpectedVersion)
 	if err != nil {
 		routes.problem(writer, request, err)
 		return
@@ -242,7 +259,19 @@ func (routes *ReviewRoutes) requestAppeal(writer http.ResponseWriter, request *h
 		routes.problem(writer, request, invalidRequest(err))
 		return
 	}
-	value, err := routes.service.RequestAppeal(request.Context(), authority.TenantScope(), actor, identifier, body.Deadline)
+	var value review.Appeal
+	if enhanced, ok := routes.service.(interface {
+		RequestAppealWithKey(context.Context, access.Context, id.ReviewCase, time.Time, string) (review.Appeal, error)
+	}); ok {
+		key, keyErr := parseIdempotencyKey(request.Header.Values("Idempotency-Key"))
+		if keyErr != nil {
+			routes.problem(writer, request, keyErr)
+			return
+		}
+		value, err = enhanced.RequestAppealWithKey(request.Context(), authority, identifier, body.Deadline, key)
+	} else {
+		value, err = routes.service.RequestAppeal(request.Context(), authority.TenantScope(), actor, identifier, body.Deadline)
+	}
 	if err != nil {
 		routes.problem(writer, request, err)
 		return
@@ -265,7 +294,7 @@ func (routes *ReviewRoutes) assignAppeal(writer http.ResponseWriter, request *ht
 		routes.problem(writer, request, invalidRequest(err))
 		return
 	}
-	value, err := routes.service.AssignAppeal(request.Context(), authority.TenantScope(), actor, principal(body.ReviewerID, review.PermissionAppeal), identifier, body.ExpectedVersion)
+	value, err := routes.service.AssignAppeal(request.Context(), authority.TenantScope(), actor, identifier, body.ExpectedVersion)
 	if err != nil {
 		routes.problem(writer, request, err)
 		return
@@ -296,7 +325,7 @@ func (routes *ReviewRoutes) resolveAppeal(writer http.ResponseWriter, request *h
 			return
 		}
 	}
-	value, err := routes.service.ResolveAppeal(request.Context(), authority.TenantScope(), actor, principal(body.ReviewerID, review.PermissionAppeal), identifier, body.Outcome, body.ReasonCode, successor, body.ExpectedVersion)
+	value, err := routes.service.ResolveAppeal(request.Context(), authority.TenantScope(), actor, identifier, body.Outcome, body.ReasonCode, successor, body.ExpectedVersion)
 	if err != nil {
 		routes.problem(writer, request, err)
 		return
@@ -304,10 +333,10 @@ func (routes *ReviewRoutes) resolveAppeal(writer http.ResponseWriter, request *h
 	routes.writeAppeal(writer, request, http.StatusOK, value)
 }
 func (routes *ReviewRoutes) writeCase(writer http.ResponseWriter, request *http.Request, value review.Case) {
-	routes.write(writer, request, http.StatusOK, reviewResource{ID: value.ID.String(), VerificationID: value.VerificationID.String(), ChallengedDecisionID: value.ChallengedDecision.String(), SupersedingDecisionID: value.SupersedesDecision.String(), Region: value.Region, Oversight: value.Oversight, State: value.State, AssignedReviewer: value.AssignedReviewer, FindingCount: len(value.Findings), Version: value.Version})
+	routes.write(writer, request, http.StatusOK, reviewResource{ID: value.ID.String(), VerificationID: value.VerificationID.String(), ChallengedDecisionID: value.ChallengedDecision.String(), RoutingRequestID: value.RoutingRequest.String(), SupersedingDecisionID: value.SupersedesDecision.String(), Region: value.Region, Oversight: value.Oversight, State: value.State, AssignedReviewer: value.AssignedReviewer, FindingCount: len(value.Findings), Version: value.Version})
 }
 func (routes *ReviewRoutes) writeAppeal(writer http.ResponseWriter, request *http.Request, status int, value review.Appeal) {
-	routes.write(writer, request, status, appealResource{ID: value.ID.String(), CaseID: value.CaseID.String(), State: value.State, Outcome: value.Outcome, AssignedReviewer: value.AssignedReviewer, Version: value.Version})
+	routes.write(writer, request, status, appealResource{Deadline: value.Deadline, ReasonCode: value.ReasonCode, SupersedingDecisionID: nullableDecisionString(value.SupersedingDecision), ID: value.ID.String(), CaseID: value.CaseID.String(), State: value.State, Outcome: value.Outcome, AssignedReviewer: value.AssignedReviewer, Version: value.Version})
 }
 func (routes *ReviewRoutes) write(writer http.ResponseWriter, request *http.Request, status int, value any) {
 	writer.Header().Set("Cache-Control", "no-store")
@@ -319,4 +348,19 @@ func (routes *ReviewRoutes) problem(writer http.ResponseWriter, request *http.Re
 	if writeErr := respond.WriteProblem(writer, request, err, requestIDString(request.Context())); writeErr != nil {
 		routes.logger.ErrorContext(request.Context(), "write review failure response")
 	}
+}
+
+// WithQueue attaches the bounded review queue reader.
+func (routes *ReviewRoutes) WithQueue(queue ReviewQueue, cursors ProfileCursor) *ReviewRoutes {
+	result := *routes
+	result.queue = queue
+	result.cursors = cursors
+	return &result
+}
+
+func nullableDecisionString(value id.Decision) string {
+	if value.IsZero() {
+		return ""
+	}
+	return value.String()
 }
