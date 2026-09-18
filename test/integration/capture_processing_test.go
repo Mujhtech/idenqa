@@ -56,7 +56,7 @@ func assertCapturedProcessing(t *testing.T, admin, runtime *pg.Pool, scope tenan
 	if err != nil {
 		t.Fatal(err)
 	}
-	failing, err := verificationpostgres.NewProcessingStore(runtime, syntheticplan.Plan{}, ids, failingProcessingEnqueuer{adapter}, clock.System{})
+	failing, err := verificationpostgres.NewProcessingStore(runtime, integrationProtector{}, syntheticplan.Plan{}, ids, failingProcessingEnqueuer{adapter}, clock.System{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -142,7 +142,7 @@ func assertCapturedProcessing(t *testing.T, admin, runtime *pg.Pool, scope tenan
 	stop()
 	receiver.enableSuccess()
 	stopRestart := startWorker()
-	planner, err := verificationpostgres.NewProcessingStore(runtime, syntheticplan.Plan{}, ids, adapter, clock.System{})
+	planner, err := verificationpostgres.NewProcessingStore(runtime, integrationProtector{}, syntheticplan.Plan{}, ids, adapter, clock.System{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -208,7 +208,7 @@ func TestCaptureProcessingConcurrentStartAndDenials(t *testing.T) {
 				case "expired":
 					source.now = f.creation.Session.ExpiresAt()
 				case "cancelled":
-					lifecycle, err := verificationpostgres.NewLifecycleStore(f.runtime, source)
+					lifecycle, err := verificationpostgres.NewLifecycleStore(f.runtime, integrationProtector{}, source)
 					if err != nil {
 						t.Fatal(err)
 					}
@@ -216,7 +216,7 @@ func TestCaptureProcessingConcurrentStartAndDenials(t *testing.T) {
 						t.Fatal(err)
 					}
 				}
-				planner, err := verificationpostgres.NewProcessingStore(f.runtime, syntheticplan.Plan{}, f.ids, processingProbe{}, source)
+				planner, err := verificationpostgres.NewProcessingStore(f.runtime, integrationProtector{}, syntheticplan.Plan{}, f.ids, processingProbe{}, source)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -295,7 +295,7 @@ func TestCaptureProcessingRejectsPreparedResultsAfterInvalidation(t *testing.T) 
 					t.Fatal(err)
 				}
 				source := fixedIntegrationClock{now: f.now}
-				planner, err := verificationpostgres.NewProcessingStore(f.runtime, syntheticplan.Plan{}, f.ids, processingProbe{}, source)
+				planner, err := verificationpostgres.NewProcessingStore(f.runtime, integrationProtector{}, syntheticplan.Plan{}, f.ids, processingProbe{}, source)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -310,7 +310,7 @@ func TestCaptureProcessingRejectsPreparedResultsAfterInvalidation(t *testing.T) 
 				if err != nil {
 					t.Fatal(err)
 				}
-				primitive, err := verificationpostgres.NewCheckStore(f.runtime)
+				primitive, err := verificationpostgres.NewCheckStore(f.runtime, integrationProtector{})
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -340,7 +340,7 @@ func TestCaptureProcessingRejectsPreparedResultsAfterInvalidation(t *testing.T) 
 				case "expired":
 					source.now = f.creation.Session.ExpiresAt()
 				case "cancelled":
-					lifecycle, err := verificationpostgres.NewLifecycleStore(f.runtime, source)
+					lifecycle, err := verificationpostgres.NewLifecycleStore(f.runtime, integrationProtector{}, source)
 					if err != nil {
 						t.Fatal(err)
 					}
@@ -348,7 +348,7 @@ func TestCaptureProcessingRejectsPreparedResultsAfterInvalidation(t *testing.T) 
 						t.Fatal(err)
 					}
 				}
-				guarded, err := verificationpostgres.NewGuardedCheckStore(f.runtime, source)
+				guarded, err := verificationpostgres.NewGuardedCheckStore(f.runtime, integrationProtector{}, source)
 				if err != nil {
 					t.Fatal(err)
 				}

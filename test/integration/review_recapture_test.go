@@ -25,7 +25,7 @@ import (
 
 func testLinkedRecapture(t *testing.T, f captureAcceptanceFixture, value review.Case, candidate review.Evaluation, terminal bool) {
 	t.Helper()
-	store, err := reviewpostgres.NewRecaptureStore(f.runtime, f.catalog, fixedIntegrationClock{now: f.now})
+	store, err := reviewpostgres.NewRecaptureStore(f.runtime, integrationProtector{}, f.catalog, fixedIntegrationClock{now: f.now})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -154,11 +154,11 @@ func testRecaptureRenewal(t *testing.T, f captureAcceptanceFixture, store *revie
 	if _, err := store.RenewRecapture(t.Context(), f.scope, value.ID, value.Version, input); !errors.Is(err, review.ErrInvalid) {
 		t.Fatalf("future renewal=%v", err)
 	}
-	store, err = reviewpostgres.NewRecaptureStore(f.runtime, f.catalog, fixedIntegrationClock{now: at})
+	store, err = reviewpostgres.NewRecaptureStore(f.runtime, integrationProtector{}, f.catalog, fixedIntegrationClock{now: at})
 	if err != nil {
 		t.Fatal(err)
 	}
-	rollbackStore, err := reviewpostgres.NewRecaptureStore(recaptureRollback{f.runtime}, f.catalog, fixedIntegrationClock{now: at})
+	rollbackStore, err := reviewpostgres.NewRecaptureStore(recaptureRollback{f.runtime}, integrationProtector{}, f.catalog, fixedIntegrationClock{now: at})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -176,7 +176,7 @@ func testRecaptureRenewal(t *testing.T, f captureAcceptanceFixture, store *revie
 	if renewed.Session.ID() != child.Session.ID() || renewed.Credential.ID() == child.Credential.ID() || renewed.Credential.ExpiresAt().After(child.Session.ExpiresAt()) {
 		t.Fatal("invalid renewal")
 	}
-	responseStore, err := authoritypostgres.NewWithClock(f.runtime, fixedIntegrationClock{now: at})
+	responseStore, err := authoritypostgres.NewWithClock(f.runtime, integrationProtector{}, fixedIntegrationClock{now: at})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -219,7 +219,7 @@ func testRecaptureRenewal(t *testing.T, f captureAcceptanceFixture, store *revie
 		t.Fatal(err)
 	}
 	decision := integrationDecision(t, f.ids, f.scope.ID(), child.Session.ID(), decisionID, id.Decision{}, policy.ActorMachine, at)
-	policies, err := policypostgres.New(f.runtime)
+	policies, err := policypostgres.New(f.runtime, integrationProtector{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -276,7 +276,7 @@ func testRecaptureAcknowledgement(t *testing.T, f captureAcceptanceFixture, stor
 	if _, err := store.AcknowledgeRecapture(t.Context(), f.scope, stale); !errors.Is(err, review.ErrConflict) {
 		t.Fatalf("stale case=%v", err)
 	}
-	rollback, err := reviewpostgres.NewRecaptureStore(recaptureRollback{f.runtime}, f.catalog, fixedIntegrationClock{now: at})
+	rollback, err := reviewpostgres.NewRecaptureStore(recaptureRollback{f.runtime}, integrationProtector{}, f.catalog, fixedIntegrationClock{now: at})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -325,7 +325,7 @@ func testRecaptureReevaluation(t *testing.T, f captureAcceptanceFixture, store *
 	if _, err := store.ReevaluateRecapture(t.Context(), f.scope, wrong); !errors.Is(err, review.ErrConflict) {
 		t.Fatalf("wrong child=%v", err)
 	}
-	rollback, err := reviewpostgres.NewRecaptureStore(recaptureRollback{f.runtime}, f.catalog, fixedIntegrationClock{now: at})
+	rollback, err := reviewpostgres.NewRecaptureStore(recaptureRollback{f.runtime}, integrationProtector{}, f.catalog, fixedIntegrationClock{now: at})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -351,7 +351,7 @@ func testRecaptureReevaluation(t *testing.T, f captureAcceptanceFixture, store *
 			t.Fatalf("reeval replay=%v", err)
 		}
 	}
-	policies, err := policypostgres.New(f.runtime)
+	policies, err := policypostgres.New(f.runtime, integrationProtector{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -359,12 +359,12 @@ func testRecaptureReevaluation(t *testing.T, f captureAcceptanceFixture, store *
 	if err != nil {
 		t.Fatal(err)
 	}
-	completion, err := verificationpostgres.NewCompletionStore(f.runtime, f.ids, fixedIntegrationClock{now: at})
+	completion, err := verificationpostgres.NewCompletionStore(f.runtime, integrationProtector{}, f.ids, fixedIntegrationClock{now: at})
 	if err != nil {
 		t.Fatal(err)
 	}
 	evaluator := &recaptureEvaluator{reference: routing.Snapshot().Evaluator(), terminal: terminal}
-	evaluations, err := reviewpostgres.NewEvaluationStore(f.runtime, evaluator, completion, fixedIntegrationClock{now: at})
+	evaluations, err := reviewpostgres.NewEvaluationStore(f.runtime, integrationProtector{}, evaluator, completion, fixedIntegrationClock{now: at})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -431,11 +431,11 @@ func testRecaptureReevaluation(t *testing.T, f captureAcceptanceFixture, store *
 		t.Fatalf("tampered recapture=%v", err)
 	}
 	if terminal {
-		failingCompletion, err := verificationpostgres.NewCompletionStore(f.runtime, failingCompletionIdentifiers{}, fixedIntegrationClock{now: at})
+		failingCompletion, err := verificationpostgres.NewCompletionStore(f.runtime, integrationProtector{}, failingCompletionIdentifiers{}, fixedIntegrationClock{now: at})
 		if err != nil {
 			t.Fatal(err)
 		}
-		failing, err := reviewpostgres.NewEvaluationStore(f.runtime, evaluator, failingCompletion, fixedIntegrationClock{now: at})
+		failing, err := reviewpostgres.NewEvaluationStore(f.runtime, integrationProtector{}, evaluator, failingCompletion, fixedIntegrationClock{now: at})
 		if err != nil {
 			t.Fatal(err)
 		}

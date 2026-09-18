@@ -111,13 +111,22 @@ func (handler *Handler) Prepare(ctx context.Context, work platformtask.Delivery)
 		return nil, platformtask.Retry(platformtask.RetryClassUnavailable, errors.New("delivery: unwrap signing secret"))
 	}
 	defer clear(secret)
-	signature, err := delivery.Sign(secret, intent.EventID, now, intent.Body)
+	body := intent.Body
+	if intent.BodyWrapping != nil {
+		plaintext, unwrapErr := handler.unwrapper.Unwrap(ctx, webhookBodyPurposeForTask(), *intent.BodyWrapping, delivery.BodyContext(scope.ID().String(), intent.EventID.String()))
+		if unwrapErr != nil {
+			return nil, platformtask.Retry(platformtask.RetryClassUnavailable, errors.New("delivery: unwrap event body"))
+		}
+		defer clear(plaintext)
+		body = plaintext
+	}
+	signature, err := delivery.Sign(secret, intent.EventID, now, body)
 	if err != nil {
 		return nil, platformtask.Quarantine(err)
 	}
 	sendContext, cancel := context.WithDeadline(ctx, deadline)
 	defer cancel()
-	diagnostic, succeeded, retry, sendErr := handler.sender.Send(sendContext, endpoint.URL, signature, intent.Body)
+	diagnostic, succeeded, retry, sendErr := handler.sender.Send(sendContext, endpoint.URL, signature, body)
 	if sendErr != nil && succeeded {
 		return nil, platformtask.Quarantine(delivery.ErrInvalid)
 	}
@@ -190,6 +199,10 @@ func callbackBackoff(deliveryID id.Delivery, attempt int32, retryAfter time.Dura
 func webhookSecretPurposeForTask() kms.Purpose {
 	purpose, _ := kms.NewPurpose("delivery.webhook-secret")
 	return purpose
+}
+
+func webhookBodyPurposeForTask() kms.Purpose {
+	return delivery.BodyPurpose()
 }
 
 var _ platformtask.TransactionalHandler = (*Handler)(nil)

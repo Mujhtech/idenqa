@@ -165,7 +165,7 @@ func TestVerificationSessionAtomicSnapshotReplayAndIsolation(t *testing.T) {
 		t.Fatalf("publish capture profile: %v", err)
 	}
 
-	sessionStore, err := verificationpostgres.NewSessionStore(runtimePool, catalog)
+	sessionStore, err := verificationpostgres.NewSessionStore(runtimePool, integrationProtector{}, catalog)
 	if err != nil {
 		t.Fatalf("new session store: %v", err)
 	}
@@ -915,7 +915,7 @@ func TestVerificationSessionAtomicSnapshotReplayAndIsolation(t *testing.T) {
 	}
 
 	transitionAt := mutation.CreatedAt.Add(time.Second)
-	lifecycle, err := verificationpostgres.NewLifecycleStore(runtimePool, fixedIntegrationClock{now: transitionAt})
+	lifecycle, err := verificationpostgres.NewLifecycleStore(runtimePool, integrationProtector{}, fixedIntegrationClock{now: transitionAt})
 	if err != nil {
 		t.Fatal(err)
 	}

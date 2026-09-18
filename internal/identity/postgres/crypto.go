@@ -12,7 +12,6 @@ import (
 	"errors"
 
 	"github.com/Mujhtech/idenqa/internal/identity"
-	platformcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto"
 	"github.com/Mujhtech/idenqa/internal/platform/kms"
 	pg "github.com/Mujhtech/idenqa/internal/platform/postgres"
 	"github.com/Mujhtech/idenqa/internal/tenant"
@@ -35,8 +34,7 @@ func token(key []byte, parts ...string) (string, error) {
 	return hex.EncodeToString(mac.Sum(nil)), nil
 }
 func (s *Store) wrapNew(ctx context.Context, domain, tenantID, region, reference string) ([]byte, []byte, error) {
-	wrapper, ok := s.keys.(platformcrypto.KeyWrapper)
-	if !ok {
+	if s.wrapper == nil {
 		return nil, nil, identity.ErrUnavailable
 	}
 	key := make([]byte, 32)
@@ -53,7 +51,7 @@ func (s *Store) wrapNew(ctx context.Context, domain, tenantID, region, reference
 		clear(key)
 		return nil, nil, e
 	}
-	wrapped, e := wrapper.Wrap(ctx, purpose, key, aad)
+	wrapped, e := s.wrapper.Wrap(ctx, purpose, key, aad)
 	if e != nil {
 		clear(key)
 		return nil, nil, e

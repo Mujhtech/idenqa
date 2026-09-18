@@ -6,6 +6,7 @@ import (
 
 	authoritypostgres "github.com/Mujhtech/idenqa/internal/authority/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
+	platformcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	platformpostgres "github.com/Mujhtech/idenqa/internal/platform/postgres"
 	"github.com/Mujhtech/idenqa/internal/policy"
@@ -31,15 +32,15 @@ type EvaluationStore struct {
 }
 
 // NewEvaluationStore requires the same completion adapter used for ordinary decisions.
-func NewEvaluationStore(pool transactionRunner, evaluator policy.Evaluator, completion reviewCompletion, source clock.Clock) (*EvaluationStore, error) {
+func NewEvaluationStore(pool transactionRunner, wrapper platformcrypto.KeyWrapper, evaluator policy.Evaluator, completion reviewCompletion, source clock.Clock) (*EvaluationStore, error) {
 	if evaluator == nil || completion == nil || source == nil {
 		return nil, review.ErrInvalid
 	}
-	cases, err := NewWithClock(pool, source)
+	cases, err := NewWithClock(pool, wrapper, source)
 	if err != nil {
 		return nil, err
 	}
-	policies, err := policypostgres.NewGuarded(pool, source)
+	policies, err := policypostgres.NewGuarded(pool, wrapper, source)
 	if err != nil {
 		return nil, err
 	}

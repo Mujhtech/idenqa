@@ -10,6 +10,7 @@ import (
 	"time"
 
 	auditpostgres "github.com/Mujhtech/idenqa/internal/audit/postgres"
+	platformcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/platform/idempotency"
 	retrydb "github.com/Mujhtech/idenqa/internal/platform/idempotency/postgres"
@@ -28,8 +29,8 @@ type ManagementStore struct {
 }
 
 // NewManagementStore constructs tenant-scoped public administration persistence.
-func NewManagementStore(pool transactionRunner, now func() time.Time) (*ManagementStore, error) {
-	store, err := New(pool)
+func NewManagementStore(pool transactionRunner, wrapper platformcrypto.KeyWrapper, now func() time.Time) (*ManagementStore, error) {
+	store, err := New(pool, wrapper)
 	if err != nil {
 		return nil, err
 	}

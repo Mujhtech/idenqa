@@ -11,6 +11,7 @@ import (
 	"github.com/Mujhtech/idenqa/internal/delivery"
 	deliverypostgres "github.com/Mujhtech/idenqa/internal/delivery/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
+	platformcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	platformpostgres "github.com/Mujhtech/idenqa/internal/platform/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/postgres/sqlgen"
@@ -31,18 +32,19 @@ type CompletionStore struct {
 	identifiers CompletionIdentifiers
 	clock       clock.Clock
 	lifecycle   *LifecycleStore
+	wrapper     platformcrypto.KeyWrapper
 }
 
 // NewCompletionStore constructs the internal machine-decision completion adapter.
-func NewCompletionStore(pool transactionRunner, identifiers CompletionIdentifiers, source clock.Clock) (*CompletionStore, error) {
+func NewCompletionStore(pool transactionRunner, wrapper platformcrypto.KeyWrapper, identifiers CompletionIdentifiers, source clock.Clock) (*CompletionStore, error) {
 	if identifiers == nil || source == nil {
 		return nil, errors.New("verification postgres: completion dependencies are required")
 	}
-	lifecycle, err := NewLifecycleStore(pool, source)
+	lifecycle, err := NewLifecycleStore(pool, wrapper, source)
 	if err != nil {
 		return nil, err
 	}
-	return &CompletionStore{identifiers: identifiers, clock: source, lifecycle: lifecycle}, nil
+	return &CompletionStore{identifiers: identifiers, clock: source, lifecycle: lifecycle, wrapper: wrapper}, nil
 }
 
 // completionChecks builds the per-check snapshot for the completion event.
@@ -167,7 +169,7 @@ AND state NOT IN ('completed','skipped_by_policy','timed_out','cancelled','faile
 	if err != nil {
 		return err
 	}
-	if _, err := deliverypostgres.EmitEventWithin(ctx, tx, event, seed); err != nil {
+	if _, err := deliverypostgres.EmitEventWithin(ctx, tx, store.wrapper, event, seed); err != nil {
 		return fmt.Errorf("emit completion event: %w", err)
 	}
 	return nil

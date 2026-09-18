@@ -15,6 +15,7 @@ import (
 	"github.com/Mujhtech/idenqa/internal/model"
 	modelpostgres "github.com/Mujhtech/idenqa/internal/model/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
+	platformcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	pg "github.com/Mujhtech/idenqa/internal/platform/postgres"
 	"github.com/Mujhtech/idenqa/internal/tenant"
@@ -33,7 +34,7 @@ type modelRuntime struct {
 	signals     []string
 }
 
-func configuredModel(ctx context.Context, configuration config.Worker, pool *pg.Pool, ids *id.Generator) (*modelRuntime, error) {
+func configuredModel(ctx context.Context, configuration config.Worker, pool *pg.Pool, ids *id.Generator, wrapper platformcrypto.KeyWrapper) (*modelRuntime, error) {
 	if configuration.ModelRuntimeFile == "" {
 		return nil, nil
 	}
@@ -57,7 +58,7 @@ func configuredModel(ctx context.Context, configuration config.Worker, pool *pg.
 	executors := modelExecutors{}
 	connections := runtimeConnections{}
 	for _, setting := range settings {
-		item, err := configuredModelSettings(ctx, setting, pool, ids)
+		item, err := configuredModelSettings(ctx, setting, pool, ids, wrapper)
 		if err != nil {
 			return nil, err
 		}
@@ -73,7 +74,7 @@ func configuredModel(ctx context.Context, configuration config.Worker, pool *pg.
 	accepted = true
 	return &modelRuntime{plan: combined, preparation: combined, requests: items[0].requests, executor: executors, connection: connections, signals: combined.signals}, nil
 }
-func configuredModelSettings(ctx context.Context, settings config.ModelRuntime, pool *pg.Pool, ids *id.Generator) (*modelRuntime, error) {
+func configuredModelSettings(ctx context.Context, settings config.ModelRuntime, pool *pg.Pool, ids *id.Generator, wrapper platformcrypto.KeyWrapper) (*modelRuntime, error) {
 
 	plan, err := model.NewPlan(settings.Binding, settings.Manifest)
 	if err != nil {
@@ -137,7 +138,7 @@ func configuredModelSettings(ctx context.Context, settings config.ModelRuntime, 
 	if err != nil {
 		return nil, err
 	}
-	preparation := &modelpostgres.Preparation{Plan: plan, Requests: requests, IDs: ids, Catalog: catalog, Clock: clock.System{}}
+	preparation := &modelpostgres.Preparation{Plan: plan, Requests: requests, IDs: ids, Catalog: catalog, Clock: clock.System{}, Wrapper: wrapper}
 	accepted = true
 	return &modelRuntime{plan: plan, requests: requests, preparation: preparation, executor: executor, connection: connection, signals: plan.Capability.OutputSignals}, nil
 }

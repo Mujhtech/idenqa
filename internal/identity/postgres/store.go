@@ -45,17 +45,18 @@ type DeletionStopper interface {
 // Store owns immutable records and rebuildable current projections.
 type Store struct {
 	pool    transactionRunner
+	wrapper platformcrypto.KeyWrapper
 	keys    platformcrypto.KeyUnwrapper
 	ids     IdentifierGenerator
 	stopper DeletionStopper
 }
 
 // New composes the identity adapter. Missing KMS fails closed only on protected-data operations.
-func New(pool transactionRunner, keys platformcrypto.KeyUnwrapper, ids IdentifierGenerator, stopper DeletionStopper) (*Store, error) {
+func New(pool transactionRunner, wrapper platformcrypto.KeyWrapper, keys platformcrypto.KeyUnwrapper, ids IdentifierGenerator, stopper DeletionStopper) (*Store, error) {
 	if pool == nil || ids == nil {
 		return nil, identity.ErrInvalid
 	}
-	return &Store{pool, keys, ids, stopper}, nil
+	return &Store{pool: pool, wrapper: wrapper, keys: keys, ids: ids, stopper: stopper}, nil
 }
 
 func setScope(ctx context.Context, tx pg.Transaction, scope tenant.Scope) error {
@@ -245,7 +246,7 @@ func (s *Store) catalogueEvent(ctx context.Context, tx pg.Transaction, scope ten
 	}
 	fields["subject"] = nested
 
-	return deliverypostgres.EmitCatalogueEvent(ctx, tx, scope.ID().String(), subject.Region, eventType, seed, c.At, fields)
+	return deliverypostgres.EmitCatalogueEvent(ctx, tx, s.wrapper, scope.ID().String(), subject.Region, eventType, seed, c.At, fields)
 }
 
 func (s *Store) event(ctx context.Context, tx pg.Transaction, scope tenant.Scope, actor, aggregate string, version int64, kind, digest string, at time.Time) error {

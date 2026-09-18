@@ -63,7 +63,7 @@ func TestReviewRoutingAtomicReplayAndAuthority(t *testing.T) {
 				if scenario == "expired" {
 					source.now = f.creation.Session.ExpiresAt()
 				}
-				store, err := reviewpostgres.NewRoutingStore(f.runtime, f.ids, source, rules)
+				store, err := reviewpostgres.NewRoutingStore(f.runtime, integrationProtector{}, f.ids, source, rules)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -120,7 +120,7 @@ func TestReviewRoutingAtomicReplayAndAuthority(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				cases, err := reviewpostgres.New(f.runtime)
+				cases, err := reviewpostgres.New(f.runtime, integrationProtector{})
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -152,7 +152,7 @@ func TestReviewRoutingAtomicReplayAndAuthority(t *testing.T) {
 				}
 				revokeProcessingAuthority(t, f, "withdrawal")
 				// Reconstruct the adapter with expired time and no routing rules, as after restart/config removal.
-				store, err = reviewpostgres.NewRoutingStore(f.runtime, f.ids, fixedIntegrationClock{now: f.creation.Session.ExpiresAt()}, nil)
+				store, err = reviewpostgres.NewRoutingStore(f.runtime, integrationProtector{}, f.ids, fixedIntegrationClock{now: f.creation.Session.ExpiresAt()}, nil)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -205,7 +205,7 @@ func TestPolicyWorkflowRoutingTransitions(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				store, err := reviewpostgres.NewRoutingStore(f.runtime, f.ids, fixedIntegrationClock{now: f.now}, nil)
+				store, err := reviewpostgres.NewRoutingStore(f.runtime, integrationProtector{}, f.ids, fixedIntegrationClock{now: f.now}, nil)
 				if err != nil {
 					t.Fatal(err)
 				}

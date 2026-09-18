@@ -163,7 +163,7 @@ func runAuthorityPersistenceInRegion(t *testing.T, exercise func(captureAcceptan
 		t.Fatalf("persist published authority profile: %v", err)
 	}
 
-	sessionStore, err := verificationpostgres.NewSessionStore(runtimePool, catalog)
+	sessionStore, err := verificationpostgres.NewSessionStore(runtimePool, integrationProtector{}, catalog)
 	if err != nil {
 		t.Fatalf("new session store: %v", err)
 	}
@@ -175,7 +175,7 @@ func runAuthorityPersistenceInRegion(t *testing.T, exercise func(captureAcceptan
 		t.Fatalf("create authority session: %v", err)
 	}
 
-	store, err := authoritypostgres.NewWithClock(runtimePool, fixedIntegrationClock{now: now.Add(8 * time.Minute)})
+	store, err := authoritypostgres.NewWithClock(runtimePool, integrationProtector{}, fixedIntegrationClock{now: now.Add(8 * time.Minute)})
 	if err != nil {
 		t.Fatalf("new authority store: %v", err)
 	}
@@ -288,7 +288,7 @@ func runAuthorityPersistenceInRegion(t *testing.T, exercise func(captureAcceptan
 		})
 		return
 	}
-	evidenceStore, err := evidencepostgres.NewWithClock(runtimePool, catalog, fixedIntegrationClock{now: now.Add(8 * time.Minute)})
+	evidenceStore, err := evidencepostgres.NewWithClock(runtimePool, integrationProtector{}, catalog, fixedIntegrationClock{now: now.Add(8 * time.Minute)})
 	if err != nil {
 		t.Fatalf("new evidence store: %v", err)
 	}

@@ -212,7 +212,7 @@ func openPolicyRepository(ctx context.Context, envFile string) (policy.Repositor
 		pool.Close()
 		return nil, nil, fmt.Errorf("check database schema: %w", err)
 	}
-	repository, err := policypostgres.New(pool)
+	repository, err := policypostgres.New(pool, nil)
 	if err != nil {
 		pool.Close()
 		return nil, nil, err

@@ -49,7 +49,7 @@ func TestCaptureAcceptanceObservesExpiryAfterTokenLock(t *testing.T) {
 		_, mutations := f.prepare(t)
 		var source captureClock
 		source.microseconds.Store(f.now.UnixMicro())
-		store, err := evidencepostgres.NewWithClock(f.runtime, f.catalog, &source)
+		store, err := evidencepostgres.NewWithClock(f.runtime, integrationProtector{}, f.catalog, &source)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -116,7 +116,7 @@ func TestCaptureAcceptanceSerializesFinalSteps(t *testing.T) {
 	runAuthorityPersistence(t, func(f captureAcceptanceFixture) {
 		store, mutations := f.prepare(t)
 		barrier := &capturePublicationBarrier{Pool: f.runtime, reached: make(chan int32, 1), release: make(chan struct{})}
-		blockedStore, err := evidencepostgres.NewWithClock(barrier, f.catalog, fixedIntegrationClock{now: f.now})
+		blockedStore, err := evidencepostgres.NewWithClock(barrier, integrationProtector{}, f.catalog, fixedIntegrationClock{now: f.now})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -216,12 +216,12 @@ func TestCaptureAcceptanceRechecksAuthorityAndExpiry(t *testing.T) {
 					}
 				case "elapsed_lease":
 					var err error
-					store, err = evidencepostgres.NewWithClock(f.runtime, f.catalog, fixedIntegrationClock{now: f.now.Add(10 * time.Minute)})
+					store, err = evidencepostgres.NewWithClock(f.runtime, integrationProtector{}, f.catalog, fixedIntegrationClock{now: f.now.Add(10 * time.Minute)})
 					if err != nil {
 						t.Fatal(err)
 					}
 				case "cancelled_session":
-					lifecycle, err := verificationpostgres.NewLifecycleStore(f.runtime, fixedIntegrationClock{now: f.now})
+					lifecycle, err := verificationpostgres.NewLifecycleStore(f.runtime, integrationProtector{}, fixedIntegrationClock{now: f.now})
 					if err != nil {
 						t.Fatal(err)
 					}
@@ -249,7 +249,7 @@ func TestCaptureAcceptanceRechecksAuthorityAndExpiry(t *testing.T) {
 
 func (f captureAcceptanceFixture) prepare(t *testing.T) (*evidencepostgres.Store, []evidence.UploadAcceptance) {
 	t.Helper()
-	store, err := evidencepostgres.NewWithClock(f.runtime, f.catalog, fixedIntegrationClock{now: f.now})
+	store, err := evidencepostgres.NewWithClock(f.runtime, integrationProtector{}, f.catalog, fixedIntegrationClock{now: f.now})
 	if err != nil {
 		t.Fatal(err)
 	}

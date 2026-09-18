@@ -34,31 +34,6 @@ type FanoutEvent struct {
 	CreatedAt      time.Time
 }
 
-// ParseFanoutEvent validates one stored canonical body against the catalogue.
-func ParseFanoutEvent(identifier id.Event, tenantID id.Tenant, body []byte, state, cursor string, delivered int, createdAt time.Time) (FanoutEvent, error) {
-	parsed, err := webhookv1.Parse(body)
-	if err != nil || parsed.ID != identifier.String() || parsed.TenantID != tenantID.String() {
-		return FanoutEvent{}, ErrInvalid
-	}
-	if state != string(EventPending) && state != string(EventCompleted) {
-		return FanoutEvent{}, ErrInvalid
-	}
-	if delivered < 0 || createdAt.IsZero() || len(cursor) > 64 || identifier.IsZero() || tenantID.IsZero() {
-		return FanoutEvent{}, ErrInvalid
-	}
-
-	return FanoutEvent{
-		ID:             identifier,
-		TenantID:       tenantID,
-		Type:           parsed.Type,
-		Body:           append([]byte(nil), body...),
-		State:          EventState(state),
-		Cursor:         cursor,
-		DeliveredCount: delivered,
-		CreatedAt:      createdAt.UTC(),
-	}, nil
-}
-
 // EventData marshals canonical, sorted reference-only event data.
 func EventData(fields map[string]any) (json.RawMessage, error) {
 	encoded, err := json.Marshal(fields)

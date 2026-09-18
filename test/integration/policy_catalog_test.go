@@ -74,7 +74,7 @@ func TestPolicyCatalogDurabilityActivationConcurrencyAndIsolation(t *testing.T) 
 	if err := accessStore.Create(ctx, secondScope, secondActor); err != nil {
 		t.Fatal(err)
 	}
-	store, err := policypostgres.New(runtimePool)
+	store, err := policypostgres.New(runtimePool, integrationProtector{})
 	if err != nil {
 		t.Fatal(err)
 	}

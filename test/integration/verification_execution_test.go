@@ -51,7 +51,7 @@ func TestVerificationExecutionDurabilityIsolationInboxAndReconciliation(t *testi
 		t.Fatal(err)
 	}
 	defer runtimePool.Close()
-	store, err := verificationpostgres.NewCheckStore(runtimePool)
+	store, err := verificationpostgres.NewCheckStore(runtimePool, integrationProtector{})
 	if err != nil {
 		t.Fatal(err)
 	}

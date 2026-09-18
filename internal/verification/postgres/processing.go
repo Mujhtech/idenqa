@@ -9,6 +9,7 @@ import (
 	"github.com/Mujhtech/idenqa/internal/authority"
 	authoritypostgres "github.com/Mujhtech/idenqa/internal/authority/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
+	platformcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	platformpostgres "github.com/Mujhtech/idenqa/internal/platform/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/postgres/sqlgen"
@@ -58,11 +59,11 @@ func (store *ProcessingStore) WithPreparation(preparation PlannedCheckPreparatio
 }
 
 // NewProcessingStore constructs the owned atomic processing adapter.
-func NewProcessingStore(pool transactionRunner, planner verification.CheckPlanner, identifiers PlanIdentifiers, enqueuer ProcessingEnqueuer, source clock.Clock) (*ProcessingStore, error) {
+func NewProcessingStore(pool transactionRunner, wrapper platformcrypto.KeyWrapper, planner verification.CheckPlanner, identifiers PlanIdentifiers, enqueuer ProcessingEnqueuer, source clock.Clock) (*ProcessingStore, error) {
 	if pool == nil || planner == nil || identifiers == nil || enqueuer == nil || source == nil {
 		return nil, errors.New("verification postgres: processing dependencies are required")
 	}
-	lifecycle, err := NewLifecycleStore(pool, source)
+	lifecycle, err := NewLifecycleStore(pool, wrapper, source)
 	if err != nil {
 		return nil, err
 	}

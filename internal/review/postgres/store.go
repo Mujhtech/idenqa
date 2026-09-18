@@ -15,6 +15,7 @@ import (
 	auditpostgres "github.com/Mujhtech/idenqa/internal/audit/postgres"
 	deliverypostgres "github.com/Mujhtech/idenqa/internal/delivery/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
+	platformcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	platformpostgres "github.com/Mujhtech/idenqa/internal/platform/postgres"
 	"github.com/Mujhtech/idenqa/internal/review"
@@ -31,19 +32,20 @@ type Store struct {
 	authority review.Authority
 	pool      transactionRunner
 	clock     clock.Clock
+	wrapper   platformcrypto.KeyWrapper
 }
 
 // New constructs the review PostgreSQL adapter.
-func New(pool transactionRunner) (*Store, error) {
+func New(pool transactionRunner, wrapper platformcrypto.KeyWrapper) (*Store, error) {
 	if pool == nil {
 		return nil, errors.New("review postgres: pool is required")
 	}
-	return &Store{pool: pool, clock: clock.System{}}, nil
+	return &Store{pool: pool, clock: clock.System{}, wrapper: wrapper}, nil
 }
 
 // NewWithClock supplies an explicit current-authority clock for review writes.
-func NewWithClock(pool transactionRunner, source clock.Clock) (*Store, error) {
-	store, err := New(pool)
+func NewWithClock(pool transactionRunner, wrapper platformcrypto.KeyWrapper, source clock.Clock) (*Store, error) {
+	store, err := New(pool, wrapper)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +88,7 @@ func (store *Store) CreateCaseWithin(ctx context.Context, scope tenant.Scope, tx
 		return err
 	}
 
-	return deliverypostgres.EmitCatalogueEvent(ctx, tx, scope.ID().String(), value.Region, webhookv1.CaseCreated,
+	return deliverypostgres.EmitCatalogueEvent(ctx, tx, store.wrapper, scope.ID().String(), value.Region, webhookv1.CaseCreated,
 		"case.created:"+value.ID.String()+":"+strconv.FormatInt(value.Version, 10), value.UpdatedAt,
 		map[string]any{"case_id": value.ID.String(), "verification_id": value.VerificationID.String(),
 			"case": map[string]any{"id": value.ID.String(), "type": "review_case", "verification_id": value.VerificationID.String(), "state": string(value.State), "required_certification": value.RequiredCertificate}})
@@ -289,7 +291,7 @@ func (store *Store) SaveCase(ctx context.Context, scope tenant.Scope, actor revi
 		}
 		if eventType != "" {
 			seed := string(eventType) + ":" + value.ID.String() + ":" + strconv.FormatInt(value.Version, 10)
-			if err := deliverypostgres.EmitCatalogueEvent(ctx, tx, scope.ID().String(), value.Region, eventType, seed, value.UpdatedAt, fields); err != nil {
+			if err := deliverypostgres.EmitCatalogueEvent(ctx, tx, store.wrapper, scope.ID().String(), value.Region, eventType, seed, value.UpdatedAt, fields); err != nil {
 				return err
 			}
 		}
@@ -477,7 +479,7 @@ func (store *Store) SaveAppeal(ctx context.Context, scope tenant.Scope, actor re
 			fields["outcome"] = string(value.Outcome)
 			fields["appeal"].(map[string]any)["outcome"] = string(value.Outcome)
 		}
-		return deliverypostgres.EmitCatalogueEvent(ctx, tx, scope.ID().String(), related.Region, webhookv1.AppealUpdated,
+		return deliverypostgres.EmitCatalogueEvent(ctx, tx, store.wrapper, scope.ID().String(), related.Region, webhookv1.AppealUpdated,
 			"appeal.updated:"+value.ID.String()+":"+strconv.FormatInt(value.Version, 10), now, fields)
 	})
 }

@@ -168,15 +168,15 @@ func executeEvidenceKeyRewrap(command *cobra.Command, options *evidenceKeyOption
 	if err != nil {
 		return cli.RuntimeError("compose evidence-key registry", err)
 	}
-	store, err := evidencepostgres.New(pool, catalog)
-	if err != nil {
-		return cli.RuntimeError("compose evidence-key persistence", err)
-	}
 	keyring, err := local.Open(options.keyringFile)
 	if err != nil {
 		return cli.RuntimeError("open evidence keyring", err)
 	}
 	defer func() { _ = keyring.Close() }()
+	store, err := evidencepostgres.New(pool, keyring, catalog)
+	if err != nil {
+		return cli.RuntimeError("compose evidence-key persistence", err)
+	}
 	rewrapper, err := evidence.NewRewrapper(store, store, keyring, keyring)
 	if err != nil {
 		return cli.RuntimeError("compose evidence-key rewrap", err)

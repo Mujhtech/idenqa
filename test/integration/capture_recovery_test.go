@@ -30,7 +30,7 @@ func TestCaptureRecoveryRetainsProgressWithFreshAuthorization(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		sessions, err := verificationpostgres.NewSessionStore(f.runtime, f.catalog)
+		sessions, err := verificationpostgres.NewSessionStore(f.runtime, integrationProtector{}, f.catalog)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -88,7 +88,7 @@ func TestCaptureRecoveryRetainsProgressWithFreshAuthorization(t *testing.T) {
 		if current.Record().CaptureTokenID != oldRecord.CaptureTokenID || current.Record().ResponseID != oldRecord.ResponseID {
 			t.Fatal("original provenance changed")
 		}
-		currentUploads, err := evidencepostgres.NewWithClock(f.runtime, f.catalog, fixedIntegrationClock{now: at})
+		currentUploads, err := evidencepostgres.NewWithClock(f.runtime, integrationProtector{}, f.catalog, fixedIntegrationClock{now: at})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -96,7 +96,7 @@ func TestCaptureRecoveryRetainsProgressWithFreshAuthorization(t *testing.T) {
 			t.Fatal("old pending upload committed")
 		}
 		// A replacement response is appended; the old response is never rewritten.
-		authorities, err := authoritypostgres.NewWithClock(f.runtime, fixedIntegrationClock{now: at})
+		authorities, err := authoritypostgres.NewWithClock(f.runtime, integrationProtector{}, fixedIntegrationClock{now: at})
 		if err != nil {
 			t.Fatal(err)
 		}

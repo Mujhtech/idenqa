@@ -20,6 +20,7 @@ import (
 	"github.com/Mujhtech/idenqa/internal/evidence"
 	evidencepostgres "github.com/Mujhtech/idenqa/internal/evidence/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
+	platformcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto"
 	tinkcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto/tink"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/platform/kms"
@@ -43,6 +44,7 @@ type providerEvidenceRoutes struct {
 	opener     evidence.ContentOpener
 	catalog    evidence.Catalog
 	ids        *id.Generator
+	keys       platformcrypto.KeyWrapper
 }
 type providerBoundTransaction struct{ tx pg.Transaction }
 
@@ -86,7 +88,7 @@ func newProviderEvidenceRoutes(configuration config.API, pool database, infrastr
 	if err != nil {
 		return nil, err
 	}
-	return &providerEvidenceRoutes{pool, plan, sha256.Sum256([]byte("Bearer " + credential)), objects, opener, catalog, ids}, nil
+	return &providerEvidenceRoutes{pool: pool, plan: plan, credential: sha256.Sum256([]byte("Bearer " + credential)), objects: objects, opener: opener, catalog: catalog, ids: ids, keys: infrastructure.keys}, nil
 }
 func (routes *providerEvidenceRoutes) RegisterInternal(router chi.Router) {
 	router.Post("/provider-evidence", routes.read)
@@ -166,15 +168,15 @@ func (routes *providerEvidenceRoutes) read(w http.ResponseWriter, r *http.Reques
 			return evidence.ErrReadDenied
 		}
 		bound := providerBoundTransaction{tx}
-		store, err := evidencepostgres.New(bound, routes.catalog)
+		store, err := evidencepostgres.New(bound, routes.keys, routes.catalog)
 		if err != nil {
 			return err
 		}
-		authorities, err := authoritypostgres.New(bound)
+		authorities, err := authoritypostgres.New(bound, routes.keys)
 		if err != nil {
 			return err
 		}
-		sessions, err := verificationpostgres.NewSessionStore(bound, routes.catalog)
+		sessions, err := verificationpostgres.NewSessionStore(bound, routes.keys, routes.catalog)
 		if err != nil {
 			return err
 		}

@@ -226,6 +226,36 @@ const replay = await idenqa.webhooks.replay(
 
 Create/rotate return the unpadded Base64URL `signingSecret` only once. Their idempotent retries return the original safe metadata with `replayed: true` and no secret. If the initial secret is lost, perform a new authorised rotation after any active previous-key overlap. Never log the response or put signing material in capture clients. Inspection excludes payloads and keys. Replay is available only for exhausted deliveries on enabled endpoints and preserves the signed event ID and exact body; receiver event-ID deduplication still applies.
 
+Verify the signature over the exact raw body before parsing it. A `verification.completed` payload carries the nested resource snapshot, so a receiver can persist the verification and its checks without a follow-up read:
+
+```ts
+type CompletedCheck = { id: string; state: string; outcome?: string };
+type VerificationCompleted = {
+  id: string;
+  type: "verification.completed";
+  schema_version: "1.0";
+  data: {
+    verification_id: string;
+    decision_id: string;
+    verification: {
+      id: string;
+      status: string;
+      decision_outcome?: string;
+      completed_at?: string;
+      checks?: CompletedCheck[];
+    };
+  };
+};
+
+const event = JSON.parse(rawBody) as VerificationCompleted;
+await storeCompletion(event.data.verification_id, event.data.verification.status);
+for (const check of event.data.verification.checks ?? []) {
+  await recordCheck(event.data.verification_id, check);
+}
+```
+
+The envelope is byte-stable across retries and replays; deduplicate on `event.id` instead of assuming one successful attempt. Bodies are KMS-encrypted at rest and delivery inspection never returns raw payloads, so the verified receiver copy is the only plaintext that leaves the boundary.
+
 The equivalent self-hosted CLI calls the same API:
 
 ```sh

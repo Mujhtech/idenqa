@@ -11,6 +11,7 @@ import (
 
 	authoritypostgres "github.com/Mujhtech/idenqa/internal/authority/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
+	platformcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/platform/idempotency"
 	idempg "github.com/Mujhtech/idenqa/internal/platform/idempotency/postgres"
@@ -32,15 +33,15 @@ type FollowupStore struct {
 }
 
 // NewFollowupStore constructs transactional policy follow-up.
-func NewFollowupStore(pool transactionRunner, authority review.Authority, evaluator policy.Evaluator, ids *id.Generator, source clock.Clock) (*FollowupStore, error) {
+func NewFollowupStore(pool transactionRunner, wrapper platformcrypto.KeyWrapper, authority review.Authority, evaluator policy.Evaluator, ids *id.Generator, source clock.Clock) (*FollowupStore, error) {
 	if authority == nil || evaluator == nil || ids == nil {
 		return nil, review.ErrInvalid
 	}
-	store, err := NewWithClock(pool, source)
+	store, err := NewWithClock(pool, wrapper, source)
 	if err != nil {
 		return nil, err
 	}
-	policies, err := policypostgres.New(pool)
+	policies, err := policypostgres.New(pool, wrapper)
 	if err != nil {
 		return nil, err
 	}

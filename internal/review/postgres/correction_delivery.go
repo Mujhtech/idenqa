@@ -42,7 +42,7 @@ func (s *FollowupStore) notifyCorrection(ctx context.Context, tx pg.Transaction,
 	if _, err := tx.Exec(ctx, `INSERT INTO idenqa.outbox_events(id,tenant_id,aggregate_type,aggregate_id,aggregate_version,event_type,schema_version,payload,occurred_at,created_at) VALUES($1,$2,'review.case',$3,$4,'verification.decision.corrected',1,$5,$6,$6)`, eventID, scope.ID().String(), value.ID.String(), value.Version+1, body, input.At); err != nil {
 		return err
 	}
-	if _, err := deliverypostgres.EmitEventWithin(ctx, tx, event, seed); err != nil {
+	if _, err := deliverypostgres.EmitEventWithin(ctx, tx, s.wrapper, event, seed); err != nil {
 		return err
 	}
 

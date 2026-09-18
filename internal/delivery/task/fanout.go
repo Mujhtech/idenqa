@@ -154,6 +154,9 @@ func (handler *FanoutHandler) Prepare(_ context.Context, work platformtask.Deliv
 		if event.State == delivery.EventCompleted {
 			return platformtask.Complete()
 		}
+		if event.BodyWrapping == nil {
+			return platformtask.Quarantine(delivery.ErrInvalid)
+		}
 		endpoints, err := handler.repository.SubscribedEndpointsWithin(ctx, scope, tx, event.Type, event.Cursor, FanoutBatch+1)
 		if err != nil {
 			return taskError(err)

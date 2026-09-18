@@ -12,6 +12,7 @@ import (
 	authoritypostgres "github.com/Mujhtech/idenqa/internal/authority/postgres"
 	deliverypostgres "github.com/Mujhtech/idenqa/internal/delivery/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
+	platformcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	platformpostgres "github.com/Mujhtech/idenqa/internal/platform/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/postgres/sqlgen"
@@ -33,8 +34,9 @@ type transactionRunner interface {
 
 // Store is the PostgreSQL adapter for immutable decision lineage.
 type Store struct {
-	pool  transactionRunner
-	clock clock.Clock
+	pool    transactionRunner
+	clock   clock.Clock
+	wrapper platformcrypto.KeyWrapper
 }
 
 var _ policy.Repository = (*Store)(nil)
@@ -42,17 +44,17 @@ var _ policy.CatalogRepository = (*Store)(nil)
 
 // New constructs the persistence primitive. Callers own lifecycle and
 // authority validation; runnable policy authors use NewGuarded.
-func New(pool transactionRunner) (*Store, error) {
+func New(pool transactionRunner, wrapper platformcrypto.KeyWrapper) (*Store, error) {
 	if pool == nil {
 		return nil, errors.New("policy postgres: pool is required")
 	}
-	return &Store{pool: pool}, nil
+	return &Store{pool: pool, wrapper: wrapper}, nil
 }
 
 // NewGuarded rechecks lifecycle and current processing authority in the same
 // transaction as each newly authored decision.
-func NewGuarded(pool transactionRunner, source clock.Clock) (*Store, error) {
-	store, err := New(pool)
+func NewGuarded(pool transactionRunner, wrapper platformcrypto.KeyWrapper, source clock.Clock) (*Store, error) {
+	store, err := New(pool, wrapper)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +124,7 @@ func (store *Store) AppendWithin(
 			return err
 		}
 	}
-	return appendDecision(ctx, transaction, queries, scope, decision)
+	return appendDecision(ctx, transaction, queries, store.wrapper, scope, decision)
 }
 
 func validateAppend(scope tenant.Scope, decision policy.Decision) error {
@@ -147,6 +149,7 @@ func appendDecision(
 	ctx context.Context,
 	transaction platformpostgres.Transaction,
 	queries *sqlgen.Queries,
+	wrapper platformcrypto.KeyWrapper,
 	scope tenant.Scope,
 	decision policy.Decision,
 ) error {
@@ -192,7 +195,7 @@ func appendDecision(
 			"decided_at":      decision.DecidedAt().UTC().Format(time.RFC3339),
 		},
 	}
-	if err := deliverypostgres.EmitCatalogueEvent(ctx, transaction, scope.ID().String(), snapshot.Region(), webhookv1.DecisionCreated, "decision.created:"+decision.ID().String(), decision.DecidedAt(), fields); err != nil {
+	if err := deliverypostgres.EmitCatalogueEvent(ctx, transaction, wrapper, scope.ID().String(), snapshot.Region(), webhookv1.DecisionCreated, "decision.created:"+decision.ID().String(), decision.DecidedAt(), fields); err != nil {
 		return err
 	}
 	if !decision.Supersedes().IsZero() {
@@ -212,7 +215,7 @@ func appendDecision(
 			"previous_decision_id": decision.Supersedes().String(),
 		}
 		seed := "decision.superseded:" + decision.Supersedes().String() + ":" + decision.ID().String()
-		if err := deliverypostgres.EmitCatalogueEvent(ctx, transaction, scope.ID().String(), snapshot.Region(), webhookv1.DecisionSuperseded, seed, decision.DecidedAt(), superseded); err != nil {
+		if err := deliverypostgres.EmitCatalogueEvent(ctx, transaction, wrapper, scope.ID().String(), snapshot.Region(), webhookv1.DecisionSuperseded, seed, decision.DecidedAt(), superseded); err != nil {
 			return err
 		}
 	}

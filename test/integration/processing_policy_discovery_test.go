@@ -34,7 +34,7 @@ func TestPolicyDiscoveryExcludesIneligibleProcessingBeforeBatchLimit(t *testing.
 VALUES ($1,$2,$3,'synthetic.discovery','cancelled',1,$4,$4)`, f.scope.ID().String(), checkID.String(), f.creation.Session.ID().String(), f.now); err != nil {
 					t.Fatal(err)
 				}
-				store, err := policypostgres.New(f.runtime)
+				store, err := policypostgres.New(f.runtime, integrationProtector{})
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -49,7 +49,7 @@ VALUES ($1,$2,$3,'synthetic.discovery','cancelled',1,$4,$4)`, f.scope.ID().Strin
 					}
 				}
 				assertTargets(f.now, 0)
-				lifecycle, err := verificationpostgres.NewLifecycleStore(f.runtime, fixedIntegrationClock{now: f.now})
+				lifecycle, err := verificationpostgres.NewLifecycleStore(f.runtime, integrationProtector{}, fixedIntegrationClock{now: f.now})
 				if err != nil {
 					t.Fatal(err)
 				}

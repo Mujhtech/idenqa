@@ -40,7 +40,7 @@ func TestVerificationCompletionAtomicReplayAndAuthority(t *testing.T) {
 			runAuthorityPersistence(t, func(f captureAcceptanceFixture) {
 				decision := prepareCompletion(t, f)
 				source := fixedIntegrationClock{now: f.now}
-				decisions, err := policypostgres.NewGuarded(f.runtime, source)
+				decisions, err := policypostgres.NewGuarded(f.runtime, integrationProtector{}, source)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -49,7 +49,7 @@ func TestVerificationCompletionAtomicReplayAndAuthority(t *testing.T) {
 					t.Fatal(err)
 				}
 				complete := func(failAfter bool) error {
-					store, err := verificationpostgres.NewCompletionStore(f.runtime, f.ids, source)
+					store, err := verificationpostgres.NewCompletionStore(f.runtime, integrationProtector{}, f.ids, source)
 					if err != nil {
 						return err
 					}
@@ -206,7 +206,7 @@ func prepareCompletion(t *testing.T, f captureAcceptanceFixture) policy.Decision
 		t.Fatal(err)
 	}
 	source := fixedIntegrationClock{now: f.now}
-	planner, err := verificationpostgres.NewProcessingStore(f.runtime, syntheticplan.Plan{}, f.ids, processingProbe{}, source)
+	planner, err := verificationpostgres.NewProcessingStore(f.runtime, integrationProtector{}, syntheticplan.Plan{}, f.ids, processingProbe{}, source)
 	if err != nil {
 		t.Fatal(err)
 	}

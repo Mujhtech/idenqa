@@ -14,6 +14,7 @@ import (
 	"github.com/Mujhtech/idenqa/internal/authority"
 	deliverypostgres "github.com/Mujhtech/idenqa/internal/delivery/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
+	platformcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/platform/idempotency"
 	idempotencypostgres "github.com/Mujhtech/idenqa/internal/platform/idempotency/postgres"
@@ -33,19 +34,22 @@ type transactionRunner interface {
 
 // Store implements forced-RLS notice, authority, and response persistence.
 type Store struct {
-	pool  transactionRunner
-	clock clock.Clock
+	pool    transactionRunner
+	clock   clock.Clock
+	wrapper platformcrypto.KeyWrapper
 }
 
 // New constructs the authority PostgreSQL adapter.
-func New(pool transactionRunner) (*Store, error) { return NewWithClock(pool, clock.System{}) }
+func New(pool transactionRunner, wrapper platformcrypto.KeyWrapper) (*Store, error) {
+	return NewWithClock(pool, wrapper, clock.System{})
+}
 
 // NewWithClock supplies a deterministic clock for live response-credential checks.
-func NewWithClock(pool transactionRunner, source clock.Clock) (*Store, error) {
+func NewWithClock(pool transactionRunner, wrapper platformcrypto.KeyWrapper, source clock.Clock) (*Store, error) {
 	if pool == nil || source == nil {
-		return nil, errors.New("authority postgres: transaction runner is required")
+		return nil, errors.New("authority postgres: transaction runner and clock are required")
 	}
-	return &Store{pool: pool, clock: source}, nil
+	return &Store{pool: pool, clock: source, wrapper: wrapper}, nil
 }
 
 // CreateNotice atomically reserves idempotency and appends the notice, audit, and outbox intent.
@@ -205,7 +209,7 @@ func (store *Store) Declare(ctx context.Context, scope tenant.Scope, mutation au
 		if region == "" {
 			return completeReference(ctx, queries, mutation.Idempotency, 201, map[string]string{"authority_id": record.ID.String()}, record.CreatedAt)
 		}
-		if err := deliverypostgres.EmitCatalogueEvent(ctx, tx, scope.ID().String(), region, webhookv1.ProcessingAuthorityCreated,
+		if err := deliverypostgres.EmitCatalogueEvent(ctx, tx, store.wrapper, scope.ID().String(), region, webhookv1.ProcessingAuthorityCreated,
 			"processing_authority.created:"+record.ID.String(), record.CreatedAt,
 			map[string]any{"authority_id": record.ID.String(), "verification_id": record.VerificationID.String(),
 				"authority": map[string]any{"id": record.ID.String(), "type": "processing_authority", "verification_id": record.VerificationID.String(), "state": string(record.State), "notice_id": record.NoticeID.String()}}); err != nil {
@@ -332,7 +336,7 @@ func (store *Store) Transition(ctx context.Context, scope tenant.Scope, mutation
 		if region == "" {
 			return completeReference(ctx, queries, mutation.Idempotency, 200, map[string]string{"authority_id": record.ID.String()}, record.UpdatedAt)
 		}
-		if err := deliverypostgres.EmitCatalogueEvent(ctx, tx, scope.ID().String(), region, webhookv1.ProcessingAuthorityRestricted,
+		if err := deliverypostgres.EmitCatalogueEvent(ctx, tx, store.wrapper, scope.ID().String(), region, webhookv1.ProcessingAuthorityRestricted,
 			"processing_authority.restricted:"+record.ID.String()+":"+strconv.FormatInt(record.Version, 10), record.UpdatedAt,
 			map[string]any{"authority_id": record.ID.String(), "verification_id": record.VerificationID.String(), "state": string(record.State),
 				"authority": map[string]any{"id": record.ID.String(), "type": "processing_authority", "verification_id": record.VerificationID.String(), "state": string(record.State)}}); err != nil {
@@ -443,7 +447,7 @@ func (store *Store) AppendResponse(ctx context.Context, scope tenant.Scope, muta
 				return err
 			}
 			if region != "" {
-				if err := deliverypostgres.EmitCatalogueEvent(ctx, tx, scope.ID().String(), region, eventType,
+				if err := deliverypostgres.EmitCatalogueEvent(ctx, tx, store.wrapper, scope.ID().String(), region, eventType,
 					string(eventType)+":"+record.ID.String(), record.RecordedAt,
 					map[string]any{"verification_id": record.VerificationID.String(), "authority_id": record.AuthorityID.String(),
 						"authority": map[string]any{"id": record.AuthorityID.String(), "type": "processing_authority", "verification_id": record.VerificationID.String(), "state": string(state.State), "action": string(record.Action), "notice_id": record.NoticeID.String()}}); err != nil {

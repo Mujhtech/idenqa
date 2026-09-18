@@ -13,6 +13,7 @@ import (
 	"github.com/Mujhtech/idenqa/internal/access"
 	deliverypostgres "github.com/Mujhtech/idenqa/internal/delivery/postgres"
 	"github.com/Mujhtech/idenqa/internal/evidence"
+	platformcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/platform/idempotency"
 	idempotencypostgres "github.com/Mujhtech/idenqa/internal/platform/idempotency/postgres"
@@ -36,15 +37,16 @@ const (
 type SessionStore struct {
 	pool    transactionRunner
 	catalog evidence.Catalog
+	wrapper platformcrypto.KeyWrapper
 }
 
 // NewSessionStore constructs a verification-session PostgreSQL adapter.
-func NewSessionStore(pool transactionRunner, catalog evidence.Catalog) (*SessionStore, error) {
+func NewSessionStore(pool transactionRunner, wrapper platformcrypto.KeyWrapper, catalog evidence.Catalog) (*SessionStore, error) {
 	if pool == nil || catalog.IsZero() {
 		return nil, errors.New("verification postgres: session pool and registry catalog are required")
 	}
 
-	return &SessionStore{pool: pool, catalog: catalog}, nil
+	return &SessionStore{pool: pool, catalog: catalog, wrapper: wrapper}, nil
 }
 
 // Create atomically reserves idempotency, locks the selected active published
@@ -520,7 +522,7 @@ func (store *SessionStore) insertCreation(
 		return fmt.Errorf("insert verification outbox intent: %w", err)
 	}
 	seed := "verification.created:" + session.ID().String() + ":" + strconv.FormatInt(session.Version(), 10)
-	if err := deliverypostgres.EmitCatalogueEvent(ctx, tx, session.TenantID().String(), session.Region(), webhookv1.VerificationCreated, seed, session.CreatedAt(), map[string]any{
+	if err := deliverypostgres.EmitCatalogueEvent(ctx, tx, store.wrapper, session.TenantID().String(), session.Region(), webhookv1.VerificationCreated, seed, session.CreatedAt(), map[string]any{
 		"verification_id": session.ID().String(),
 		"version":         session.Version(),
 		"verification": map[string]any{

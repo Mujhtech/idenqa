@@ -7,6 +7,7 @@ import (
 
 	"github.com/Mujhtech/idenqa/internal/evidence"
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
+	platformcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/platform/idempotency"
 	idempg "github.com/Mujhtech/idenqa/internal/platform/idempotency/postgres"
@@ -27,12 +28,12 @@ type RecaptureStore struct {
 }
 
 // NewRecaptureStore joins the owned review and session adapters.
-func NewRecaptureStore(pool transactionRunner, catalog evidence.Catalog, source clock.Clock) (*RecaptureStore, error) {
-	cases, err := NewWithClock(pool, source)
+func NewRecaptureStore(pool transactionRunner, wrapper platformcrypto.KeyWrapper, catalog evidence.Catalog, source clock.Clock) (*RecaptureStore, error) {
+	cases, err := NewWithClock(pool, wrapper, source)
 	if err != nil {
 		return nil, err
 	}
-	sessions, err := verificationpostgres.NewSessionStore(pool, catalog)
+	sessions, err := verificationpostgres.NewSessionStore(pool, wrapper, catalog)
 	if err != nil {
 		return nil, err
 	}

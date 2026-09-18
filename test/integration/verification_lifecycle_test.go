@@ -190,7 +190,7 @@ func TestVerificationLifecycleExpiryAndCompletion(t *testing.T) {
 	if _, err := f.store.Apply(t.Context(), f.scope, complete); !errors.Is(err, verification.ErrSessionConflict) {
 		t.Fatalf("completion without persisted decision = %v", err)
 	}
-	policyStore, err := policypostgres.New(f.runtime)
+	policyStore, err := policypostgres.New(f.runtime, integrationProtector{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -249,7 +249,7 @@ FROM idenqa.verification_sessions WHERE id=$2`, siblingID.String(), f.verificati
 	}
 
 	// A pinned old command cannot bypass the current observation deadline.
-	expiredStore, err := verificationpostgres.NewLifecycleStore(f.runtime, lifecycleClock{f.now.Add(time.Hour)})
+	expiredStore, err := verificationpostgres.NewLifecycleStore(f.runtime, integrationProtector{}, lifecycleClock{f.now.Add(time.Hour)})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -329,7 +329,7 @@ func newLifecycleFixture(t *testing.T) lifecycleFixture {
 		t.Fatal(err)
 	}
 	t.Cleanup(runtime.Close)
-	store, err := verificationpostgres.NewLifecycleStore(runtime, lifecycleClock{now.Add(2 * time.Minute)})
+	store, err := verificationpostgres.NewLifecycleStore(runtime, integrationProtector{}, lifecycleClock{now.Add(2 * time.Minute)})
 	if err != nil {
 		t.Fatal(err)
 	}

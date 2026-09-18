@@ -55,7 +55,7 @@ func TestAcceptedReviewEvaluationAtomicCompletionAndReplay(t *testing.T) {
 			runAuthorityPersistenceInRegion(t, func(f captureAcceptanceFixture) {
 				value, routing := prepareEvaluationReview(t, f)
 				source := fixedIntegrationClock{now: f.now}
-				cases, err := reviewpostgres.NewWithClock(f.runtime, source)
+				cases, err := reviewpostgres.NewWithClock(f.runtime, integrationProtector{}, source)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -133,11 +133,11 @@ func TestAcceptedReviewEvaluationAtomicCompletionAndReplay(t *testing.T) {
 				if scenario == "terminal" {
 					identifiers = failingCompletionIdentifiers{}
 				}
-				completion, err := verificationpostgres.NewCompletionStore(f.runtime, identifiers, source)
+				completion, err := verificationpostgres.NewCompletionStore(f.runtime, integrationProtector{}, identifiers, source)
 				if err != nil {
 					t.Fatal(err)
 				}
-				evaluations, err := reviewpostgres.NewEvaluationStore(f.runtime, evaluator, completion, source)
+				evaluations, err := reviewpostgres.NewEvaluationStore(f.runtime, integrationProtector{}, evaluator, completion, source)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -167,7 +167,7 @@ func TestAcceptedReviewEvaluationAtomicCompletionAndReplay(t *testing.T) {
 					if err != nil {
 						t.Fatal(err)
 					}
-					guarded, err := policypostgres.NewGuarded(f.runtime, source)
+					guarded, err := policypostgres.NewGuarded(f.runtime, integrationProtector{}, source)
 					if err != nil {
 						t.Fatal(err)
 					}
@@ -205,11 +205,11 @@ func TestAcceptedReviewEvaluationAtomicCompletionAndReplay(t *testing.T) {
 						t.Fatalf("partial evaluation=%d %v", count, err)
 					}
 				}
-				completion, err = verificationpostgres.NewCompletionStore(f.runtime, f.ids, source)
+				completion, err = verificationpostgres.NewCompletionStore(f.runtime, integrationProtector{}, f.ids, source)
 				if err != nil {
 					t.Fatal(err)
 				}
-				evaluations, err = reviewpostgres.NewEvaluationStore(f.runtime, evaluator, completion, source)
+				evaluations, err = reviewpostgres.NewEvaluationStore(f.runtime, integrationProtector{}, evaluator, completion, source)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -277,7 +277,7 @@ func prepareEvaluationReview(t *testing.T, f captureAcceptanceFixture) (review.C
 		t.Fatal(err)
 	}
 	rules := []review.RoutingRule{{TenantID: f.scope.ID().String(), PolicyID: snapshot.Policy().ID.String(), Revision: snapshot.Policy().Revision, PolicyDigest: snapshot.Policy().Digest, RequiredCertificate: "document.level2", Oversight: review.OversightSingle, PermittedFindings: []review.PermittedFinding{{Resolution: review.ResolutionSatisfy, ReasonCode: "document_reviewed"}}}}
-	store, err := reviewpostgres.NewRoutingStore(f.runtime, f.ids, fixedIntegrationClock{now: f.now}, rules)
+	store, err := reviewpostgres.NewRoutingStore(f.runtime, integrationProtector{}, f.ids, fixedIntegrationClock{now: f.now}, rules)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -298,7 +298,7 @@ func prepareEvaluationReview(t *testing.T, f captureAcceptanceFixture) (review.C
 	if err != nil {
 		t.Fatal(err)
 	}
-	cases, err := reviewpostgres.New(f.runtime)
+	cases, err := reviewpostgres.New(f.runtime, integrationProtector{})
 	if err != nil {
 		t.Fatal(err)
 	}

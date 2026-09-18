@@ -378,7 +378,7 @@ func (store *Store) AcceptUpload(
 		for index, assurance := range record.Assurances {
 			assurances[index] = string(assurance)
 		}
-		if err := deliverypostgres.EmitCatalogueEvent(ctx, tx, scope.ID().String(), record.Region, webhookv1.EvidenceReady, seed, mutation.OccurredAt, map[string]any{
+		if err := deliverypostgres.EmitCatalogueEvent(ctx, tx, store.wrapper, scope.ID().String(), record.Region, webhookv1.EvidenceReady, seed, mutation.OccurredAt, map[string]any{
 			"evidence_id":        record.ID.String(),
 			"verification_id":    record.VerificationID.String(),
 			"evidence_type":      string(record.EvidenceType),

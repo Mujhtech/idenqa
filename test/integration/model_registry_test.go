@@ -150,7 +150,7 @@ func TestModelRegistryAtomicHistoryIsolationAndRetirement(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	checkStore, err := verificationpostgres.NewCheckStore(runtime)
+	checkStore, err := verificationpostgres.NewCheckStore(runtime, integrationProtector{})
 	if err != nil {
 		t.Fatal(err)
 	}

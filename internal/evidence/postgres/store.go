@@ -35,6 +35,7 @@ type Store struct {
 	pool    transactionRunner
 	catalog evidence.Catalog
 	clock   clock.Clock
+	wrapper platformcrypto.KeyWrapper
 }
 
 var _ evidence.IntegrityQuarantiner = (*Store)(nil)
@@ -57,17 +58,17 @@ func (store *Store) QuarantineIntegrity(
 }
 
 // New constructs an evidence PostgreSQL adapter.
-func New(pool transactionRunner, catalog evidence.Catalog) (*Store, error) {
-	return NewWithClock(pool, catalog, clock.System{})
+func New(pool transactionRunner, wrapper platformcrypto.KeyWrapper, catalog evidence.Catalog) (*Store, error) {
+	return NewWithClock(pool, wrapper, catalog, clock.System{})
 }
 
 // NewWithClock constructs an adapter with an explicit commit-time observation clock.
-func NewWithClock(pool transactionRunner, catalog evidence.Catalog, source clock.Clock) (*Store, error) {
+func NewWithClock(pool transactionRunner, wrapper platformcrypto.KeyWrapper, catalog evidence.Catalog, source clock.Clock) (*Store, error) {
 	if pool == nil || catalog.IsZero() || source == nil {
 		return nil, errors.New("evidence postgres: pool and registry catalog are required")
 	}
 
-	return &Store{pool: pool, catalog: catalog, clock: source}, nil
+	return &Store{pool: pool, catalog: catalog, clock: source, wrapper: wrapper}, nil
 }
 
 // Create inserts protected evidence metadata and its first audit record atomically.

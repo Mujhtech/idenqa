@@ -8,6 +8,7 @@ import (
 
 	authoritypostgres "github.com/Mujhtech/idenqa/internal/authority/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
+	platformcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	platformpostgres "github.com/Mujhtech/idenqa/internal/platform/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/postgres/sqlgen"
@@ -35,7 +36,7 @@ type RoutingStore struct {
 }
 
 // NewRoutingStore has no implicit reviewer certification or oversight defaults.
-func NewRoutingStore(pool transactionRunner, ids routingIdentifiers, source clock.Clock, rules []review.RoutingRule) (*RoutingStore, error) {
+func NewRoutingStore(pool transactionRunner, wrapper platformcrypto.KeyWrapper, ids routingIdentifiers, source clock.Clock, rules []review.RoutingRule) (*RoutingStore, error) {
 	if ids == nil || source == nil || len(rules) > 256 {
 		return nil, review.ErrInvalid
 	}
@@ -60,15 +61,15 @@ func NewRoutingStore(pool transactionRunner, ids routingIdentifiers, source cloc
 		}
 		seen[key] = true
 	}
-	policies, err := policypostgres.New(pool)
+	policies, err := policypostgres.New(pool, wrapper)
 	if err != nil {
 		return nil, err
 	}
-	cases, err := New(pool)
+	cases, err := New(pool, wrapper)
 	if err != nil {
 		return nil, err
 	}
-	lifecycle, err := verificationpostgres.NewLifecycleStore(pool, source)
+	lifecycle, err := verificationpostgres.NewLifecycleStore(pool, wrapper, source)
 	if err != nil {
 		return nil, err
 	}

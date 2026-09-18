@@ -12,6 +12,7 @@ import (
 	authoritypostgres "github.com/Mujhtech/idenqa/internal/authority/postgres"
 	deliverypostgres "github.com/Mujhtech/idenqa/internal/delivery/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
+	platformcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/platform/outbox"
 	platformpostgres "github.com/Mujhtech/idenqa/internal/platform/postgres"
@@ -31,23 +32,24 @@ const (
 
 // CheckStore persists verification execution state under forced tenant RLS.
 type CheckStore struct {
-	pool  transactionRunner
-	clock clock.Clock
+	pool    transactionRunner
+	clock   clock.Clock
+	wrapper platformcrypto.KeyWrapper
 }
 
 // NewCheckStore constructs the persistence primitive. Callers must provide
 // lifecycle and authority validation; runnable workers use NewGuardedCheckStore.
-func NewCheckStore(pool transactionRunner) (*CheckStore, error) {
+func NewCheckStore(pool transactionRunner, wrapper platformcrypto.KeyWrapper) (*CheckStore, error) {
 	if pool == nil {
 		return nil, errors.New("verification postgres: check pool is required")
 	}
-	return &CheckStore{pool: pool}, nil
+	return &CheckStore{pool: pool, wrapper: wrapper}, nil
 }
 
 // NewGuardedCheckStore rechecks lifecycle and authority before dispatch and
 // inside every consequential check commit.
-func NewGuardedCheckStore(pool transactionRunner, source clock.Clock) (*CheckStore, error) {
-	store, err := NewCheckStore(pool)
+func NewGuardedCheckStore(pool transactionRunner, wrapper platformcrypto.KeyWrapper, source clock.Clock) (*CheckStore, error) {
+	store, err := NewCheckStore(pool, wrapper)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +101,7 @@ func (store *CheckStore) CreateCheckWithin(
 	if region == "" {
 		return nil
 	}
-	return deliverypostgres.EmitCatalogueEvent(ctx, transaction, scope.ID().String(), region, webhookv1.CheckStarted,
+	return deliverypostgres.EmitCatalogueEvent(ctx, transaction, store.wrapper, scope.ID().String(), region, webhookv1.CheckStarted,
 		"check.started:"+check.ID.String()+":"+strconv.FormatInt(check.Version, 10), check.CreatedAt,
 		map[string]any{"verification_id": check.VerificationID.String(), "check_id": check.ID.String(), "version": check.Version,
 			"check": map[string]any{"id": check.ID.String(), "type": "verification.check", "verification_id": check.VerificationID.String(), "state": string(check.State), "version": check.Version}})
@@ -188,7 +190,7 @@ func (store *CheckStore) SaveCheckWithin(
 			return false, err
 		}
 	}
-	return saveCheck(ctx, transaction, queries, scope, commit)
+	return saveCheck(ctx, transaction, queries, store.wrapper, scope, commit)
 }
 
 func findResultReplay(ctx context.Context, transaction platformpostgres.Transaction, scope tenant.Scope, commit verification.CheckCommit) (bool, error) {
@@ -213,6 +215,7 @@ func saveCheck(
 	ctx context.Context,
 	transaction platformpostgres.Transaction,
 	queries *sqlgen.Queries,
+	wrapper platformcrypto.KeyWrapper,
 	scope tenant.Scope,
 	commit verification.CheckCommit,
 ) (bool, error) {
@@ -291,7 +294,7 @@ func saveCheck(
 		if region == "" {
 			return nil
 		}
-		return deliverypostgres.EmitCatalogueEvent(ctx, transaction, scope.ID().String(), region, eventType,
+		return deliverypostgres.EmitCatalogueEvent(ctx, transaction, wrapper, scope.ID().String(), region, eventType,
 			string(eventType)+":"+check.ID.String()+":"+strconv.FormatInt(check.Version, 10), check.UpdatedAt,
 			map[string]any{"verification_id": check.VerificationID.String(), "check_id": check.ID.String(), "version": check.Version, "outcome": string(check.Outcome),
 				"check": map[string]any{"id": check.ID.String(), "type": "verification.check", "verification_id": check.VerificationID.String(), "state": string(check.State), "outcome": string(check.Outcome), "version": check.Version}})

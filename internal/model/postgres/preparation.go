@@ -11,6 +11,7 @@ import (
 	evidencepostgres "github.com/Mujhtech/idenqa/internal/evidence/postgres"
 	"github.com/Mujhtech/idenqa/internal/model"
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
+	platformcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	pg "github.com/Mujhtech/idenqa/internal/platform/postgres"
 	"github.com/Mujhtech/idenqa/internal/tenant"
@@ -31,6 +32,7 @@ type Preparation struct {
 	IDs      *id.Generator
 	Catalog  evidence.Catalog
 	Clock    clock.Clock
+	Wrapper  platformcrypto.KeyWrapper
 }
 
 // Prepare returns a request-bound provenance and a transaction-local append closure.
@@ -46,15 +48,15 @@ func (preparation *Preparation) Prepare(ctx context.Context, tx pg.Transaction, 
 		return fail(err)
 	}
 	bound := boundTransaction{tx}
-	assets, err := evidencepostgres.New(bound, preparation.Catalog)
+	assets, err := evidencepostgres.New(bound, preparation.Wrapper, preparation.Catalog)
 	if err != nil {
 		return fail(err)
 	}
-	authorities, err := authoritypostgres.New(bound)
+	authorities, err := authoritypostgres.New(bound, preparation.Wrapper)
 	if err != nil {
 		return fail(err)
 	}
-	sessions, err := verificationpostgres.NewSessionStore(bound, preparation.Catalog)
+	sessions, err := verificationpostgres.NewSessionStore(bound, preparation.Wrapper, preparation.Catalog)
 	if err != nil {
 		return fail(err)
 	}

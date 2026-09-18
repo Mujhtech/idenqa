@@ -304,7 +304,7 @@ func (journey *providerPublicJourney) run(t *testing.T, admin, runtime *pg.Pool,
 	if err != nil {
 		t.Fatal(err)
 	}
-	planner, err := verificationpostgres.NewProcessingStore(runtime, plan, ids, failingProcessingEnqueuer{adapter}, clock.System{})
+	planner, err := verificationpostgres.NewProcessingStore(runtime, integrationProtector{}, plan, ids, failingProcessingEnqueuer{adapter}, clock.System{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -495,7 +495,7 @@ func TestProviderDiscoveryEnforcesExactTenantPolicyAndProfile(t *testing.T) {
 			{"exact", exact, 1}, {"other tenant", providerDiscoveryRoute{otherTenant.String(), exact.policy, exact.profile}, 0}, {"other policy", providerDiscoveryRoute{exact.tenant, otherPolicy.String(), exact.profile}, 0}, {"other profile", providerDiscoveryRoute{exact.tenant, exact.policy, "sha256:other"}, 0},
 		} {
 			t.Run(test.name, func(t *testing.T) {
-				planner, err := verificationpostgres.NewProcessingStore(f.runtime, test.route, f.ids, processingProbe{}, fixedIntegrationClock{now: f.now})
+				planner, err := verificationpostgres.NewProcessingStore(f.runtime, integrationProtector{}, test.route, f.ids, processingProbe{}, fixedIntegrationClock{now: f.now})
 				if err != nil {
 					t.Fatal(err)
 				}

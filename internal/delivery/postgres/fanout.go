@@ -2,6 +2,8 @@ package postgres
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"time"
@@ -9,39 +11,36 @@ import (
 	webhookv1 "github.com/Mujhtech/idenqa/contracts/webhook/v1"
 	"github.com/Mujhtech/idenqa/internal/delivery"
 	deliverytask "github.com/Mujhtech/idenqa/internal/delivery/task"
+	platformcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
-	"github.com/Mujhtech/idenqa/internal/platform/kms"
 	platformpostgres "github.com/Mujhtech/idenqa/internal/platform/postgres"
 	"github.com/Mujhtech/idenqa/internal/tenant"
 	"github.com/jackc/pgx/v5"
 )
 
 // EmitEventWithin stores one canonical catalogue event exactly once per dedupe
-// key inside the owning domain transaction. Fanout discovery schedules it.
-func EmitEventWithin(ctx context.Context, tx platformpostgres.Transaction, event webhookv1.Event, dedupeKey string) (bool, error) {
-	return EmitEventWithinWrapped(ctx, tx, event, dedupeKey, nil)
-}
-
-// EmitEventWithinWrapped stores one canonical catalogue event exactly once per
-// dedupe key. A non-nil wrapping means body stores KMS-wrapped ciphertext.
-func EmitEventWithinWrapped(ctx context.Context, tx platformpostgres.Transaction, event webhookv1.Event, dedupeKey string, wrapping *kms.WrappedKey) (bool, error) {
-	if tx == nil || len(dedupeKey) == 0 || len(dedupeKey) > 512 {
+// key inside the owning domain transaction. The body is always KMS-wrapped
+// under the delivery body purpose, so no catalogue payload rests in plaintext.
+func EmitEventWithin(ctx context.Context, tx platformpostgres.Transaction, wrapper platformcrypto.KeyWrapper, event webhookv1.Event, dedupeKey string) (bool, error) {
+	if tx == nil || wrapper == nil || len(dedupeKey) == 0 || len(dedupeKey) > 512 {
 		return false, delivery.ErrInvalid
 	}
 	body, err := event.Canonical()
 	if err != nil {
 		return false, delivery.ErrInvalid
 	}
-	digest, err := event.Digest()
+	wrapped, err := wrapper.Wrap(ctx, delivery.BodyPurpose(), body, delivery.BodyContext(event.TenantID, event.ID))
+	clear(body)
 	if err != nil {
-		return false, delivery.ErrInvalid
+		return false, fmt.Errorf("wrap webhook event body: %w", err)
 	}
-	provider, reference, keyVersion, algorithm := nullableBodyWrapping(wrapping)
+	record := wrapped.Record()
+	digest := sha256.Sum256(record.Ciphertext)
 	tag, err := tx.Exec(ctx, `INSERT INTO idenqa.webhook_events
 		(tenant_id,id,event_type,schema_version,dedupe_key,body,body_digest,state,cursor,delivered_count,created_at,body_provider,body_reference,body_key_version,body_algorithm)
 		VALUES ($1,$2,$3,$4,$5,$6,$7,'pending','',0,$8,$9,$10,$11,$12)
 		ON CONFLICT (tenant_id,dedupe_key) DO NOTHING`,
-		event.TenantID, event.ID, string(event.Type), event.SchemaVersion, dedupeKey, body, digest, event.CreatedAt, provider, reference, keyVersion, algorithm)
+		event.TenantID, event.ID, string(event.Type), event.SchemaVersion, dedupeKey, record.Ciphertext, hex.EncodeToString(digest[:]), event.CreatedAt, record.Provider, record.Reference, record.Version, record.Algorithm)
 	if err != nil {
 		return false, fmt.Errorf("emit webhook event: %w", err)
 	}
@@ -49,9 +48,9 @@ func EmitEventWithinWrapped(ctx context.Context, tx platformpostgres.Transaction
 	return tag.RowsAffected() == 1, nil
 }
 
-// EmitCatalogueEvent builds and stores one canonical catalogue event exactly
-// once per stable seed inside the owning domain transaction.
-func EmitCatalogueEvent(ctx context.Context, tx platformpostgres.Transaction, tenantID, region string, eventType webhookv1.Type, seed string, occurredAt time.Time, fields map[string]any) error {
+// EmitCatalogueEvent builds, wraps and stores one canonical catalogue event
+// exactly once per stable seed inside the owning domain transaction.
+func EmitCatalogueEvent(ctx context.Context, tx platformpostgres.Transaction, wrapper platformcrypto.KeyWrapper, tenantID, region string, eventType webhookv1.Type, seed string, occurredAt time.Time, fields map[string]any) error {
 	data, err := delivery.EventData(fields)
 	if err != nil {
 		return err
@@ -60,7 +59,7 @@ func EmitCatalogueEvent(ctx context.Context, tx platformpostgres.Transaction, te
 	if err != nil {
 		return err
 	}
-	if _, err := EmitEventWithin(ctx, tx, event, seed); err != nil {
+	if _, err := EmitEventWithin(ctx, tx, wrapper, event, seed); err != nil {
 		return err
 	}
 
@@ -90,16 +89,8 @@ func (store *Store) FanoutEventWithin(ctx context.Context, scope tenant.Scope, t
 		return delivery.FanoutEvent{}, err
 	}
 	wrapping, err := restoreBodyWrapping(body, provider, reference, keyVersion, algorithm)
-	if err != nil {
+	if err != nil || wrapping == nil {
 		return delivery.FanoutEvent{}, delivery.ErrInvalid
-	}
-	if wrapping == nil {
-		event, err := delivery.ParseFanoutEvent(eventID, scope.ID(), body, state, cursor, delivered, createdAt)
-		if err != nil || string(event.Type) != eventType {
-			return delivery.FanoutEvent{}, delivery.ErrInvalid
-		}
-
-		return event, nil
 	}
 	_ = schemaVersion
 

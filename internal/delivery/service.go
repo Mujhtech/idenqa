@@ -205,6 +205,7 @@ func (manager *Manager) Replay(ctx context.Context, scope tenant.Scope, original
 		return Intent{}, err
 	}
 	replay.ReplayOf = original.ID
+	replay.BodyWrapping = original.BodyWrapping
 	if err := manager.repository.CreateDelivery(ctx, scope, replay); err != nil {
 		return Intent{}, err
 	}

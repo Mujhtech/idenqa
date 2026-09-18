@@ -54,7 +54,7 @@ func TestPrivacyAndReviewForcedRLSHistoryAndConcurrency(t *testing.T) {
 	defer runtime.Close()
 	firstScope, _ := tenant.NewScope(firstTenant)
 	decision := newIntegrationDecision(t, ids, firstTenant, verificationID, id.Decision{}, now)
-	decisionStore, _ := policypostgres.New(runtime)
+	decisionStore, _ := policypostgres.New(runtime, integrationProtector{})
 	if err := decisionStore.Append(ctx, firstScope, decision); err != nil {
 		t.Fatal(err)
 	}
@@ -155,7 +155,7 @@ func TestPrivacyCoordinationDiscoversOnlyDueWorkAcrossTenantRLS(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer runtime.Close()
-	store, err := privacypostgres.New(runtime)
+	store, err := privacypostgres.New(runtime, integrationProtector{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -238,12 +238,12 @@ func TestEvidenceDeletionMarksMetadataAfterExactObjectRemoval(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	privacyStore, _ := privacypostgres.New(runtime)
+	privacyStore, _ := privacypostgres.New(runtime, integrationProtector{})
 	targets, err := privacyStore.EvidenceTargets(ctx, scope, verificationID.String(), "ng-1")
 	if err != nil || len(targets) != 1 {
 		t.Fatalf("targets=%d error=%v", len(targets), err)
 	}
-	eraser, err := privacypostgres.NewEvidenceEraser(runtime, objects, func() time.Time { return now.Add(time.Second) })
+	eraser, err := privacypostgres.NewEvidenceEraser(runtime, objects, integrationProtector{}, func() time.Time { return now.Add(time.Second) })
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -305,12 +305,12 @@ func TestPrivacyAndReviewAdaptersCommitAtomicAudit(t *testing.T) {
 	defer runtime.Close()
 	scope, _ := tenant.NewScope(tenantID)
 	decision := newIntegrationDecision(t, ids, tenantID, verificationID, id.Decision{}, now)
-	decisionStore, _ := policypostgres.New(runtime)
+	decisionStore, _ := policypostgres.New(runtime, integrationProtector{})
 	if err := decisionStore.Append(ctx, scope, decision); err != nil {
 		t.Fatal(err)
 	}
 
-	privacyStore, err := privacypostgres.New(runtime)
+	privacyStore, err := privacypostgres.New(runtime, integrationProtector{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -351,7 +351,7 @@ func TestPrivacyAndReviewAdaptersCommitAtomicAudit(t *testing.T) {
 		t.Fatalf("replayed=%d error=%v", replayed, err)
 	}
 
-	reviewStore, err := reviewpostgres.New(runtime)
+	reviewStore, err := reviewpostgres.New(runtime, integrationProtector{})
 	if err != nil {
 		t.Fatal(err)
 	}

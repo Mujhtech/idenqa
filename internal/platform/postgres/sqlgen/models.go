@@ -1391,6 +1391,10 @@ type IdenqaWebhookDelivery struct {
 	CreatedAt        pgtype.Timestamptz
 	UpdatedAt        pgtype.Timestamptz
 	LastDiscoveredAt pgtype.Timestamptz
+	BodyProvider     *string
+	BodyReference    *string
+	BodyKeyVersion   *string
+	BodyAlgorithm    *string
 }
 
 type IdenqaWebhookDeliveryAttempt struct {
@@ -1419,6 +1423,26 @@ type IdenqaWebhookEndpoint struct {
 	Version                  int64
 	CreatedAt                pgtype.Timestamptz
 	UpdatedAt                pgtype.Timestamptz
+	EventTypes               []string
+}
+
+type IdenqaWebhookEvent struct {
+	TenantID       string
+	ID             string
+	EventType      string
+	SchemaVersion  string
+	DedupeKey      string
+	Body           []byte
+	BodyDigest     string
+	State          string
+	Cursor         string
+	DeliveredCount int32
+	CreatedAt      pgtype.Timestamptz
+	CompletedAt    pgtype.Timestamptz
+	BodyProvider   *string
+	BodyReference  *string
+	BodyKeyVersion *string
+	BodyAlgorithm  *string
 }
 
 type IdenqaWebhookSecret struct {

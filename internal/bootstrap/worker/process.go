@@ -146,7 +146,7 @@ func NewProcessWithInfrastructure(ctx context.Context, configuration config.Work
 		connectionPool.Close()
 		return nil, err
 	}
-	checkStore, err := verificationpostgres.NewGuardedCheckStore(connectionPool, clock.System{})
+	checkStore, err := verificationpostgres.NewGuardedCheckStore(connectionPool, deliveryInfrastructure.wrapper, clock.System{})
 	if err != nil {
 		connectionPool.Close()
 		return nil, fmt.Errorf("construct verification check store: %w", err)
@@ -156,7 +156,7 @@ func NewProcessWithInfrastructure(ctx context.Context, configuration config.Work
 		connectionPool.Close()
 		return nil, fmt.Errorf("construct worker identifiers: %w", err)
 	}
-	realProvider, err := configuredProvider(ctx, configuration, connectionPool, identifiers)
+	realProvider, err := configuredProvider(ctx, configuration, connectionPool, identifiers, deliveryInfrastructure.wrapper)
 	if err != nil {
 		connectionPool.Close()
 		return nil, err
@@ -167,7 +167,7 @@ func NewProcessWithInfrastructure(ctx context.Context, configuration config.Work
 			_ = realProvider.connection.Close()
 		}
 	}()
-	realModel, err := configuredModel(ctx, configuration, connectionPool, identifiers)
+	realModel, err := configuredModel(ctx, configuration, connectionPool, identifiers, deliveryInfrastructure.wrapper)
 	if err != nil {
 		connectionPool.Close()
 		return nil, err
@@ -180,7 +180,7 @@ func NewProcessWithInfrastructure(ctx context.Context, configuration config.Work
 	}()
 	var processing *verificationpostgres.ProcessingStore
 	if configuration.SyntheticProcessing {
-		processing, err = verificationpostgres.NewProcessingStore(connectionPool, syntheticplan.Plan{}, identifiers, adapter, clock.System{})
+		processing, err = verificationpostgres.NewProcessingStore(connectionPool, deliveryInfrastructure.wrapper, syntheticplan.Plan{}, identifiers, adapter, clock.System{})
 		if err != nil {
 			connectionPool.Close()
 			return nil, fmt.Errorf("construct synthetic processing planner: %w", err)
@@ -200,7 +200,7 @@ func NewProcessWithInfrastructure(ctx context.Context, configuration config.Work
 			connectionPool.Close()
 			return nil, composeErr
 		}
-		processing, err = verificationpostgres.NewProcessingStore(connectionPool, combined, identifiers, adapter, clock.System{})
+		processing, err = verificationpostgres.NewProcessingStore(connectionPool, deliveryInfrastructure.wrapper, combined, identifiers, adapter, clock.System{})
 		if err != nil {
 			connectionPool.Close()
 			return nil, err
@@ -276,18 +276,18 @@ func NewProcessWithInfrastructure(ctx context.Context, configuration config.Work
 		connectionPool.Close()
 		return nil, fmt.Errorf("register verification reconcile handler: %w", err)
 	}
-	policyStore, err := policypostgres.NewGuarded(connectionPool, clock.System{})
+	policyStore, err := policypostgres.NewGuarded(connectionPool, deliveryInfrastructure.wrapper, clock.System{})
 	if err != nil {
 		connectionPool.Close()
 		return nil, fmt.Errorf("construct policy store: %w", err)
 	}
-	stopStore, err := verificationpostgres.NewStopStore(connectionPool, identifiers, clock.System{})
+	stopStore, err := verificationpostgres.NewStopStore(connectionPool, deliveryInfrastructure.wrapper, identifiers, clock.System{})
 	if err != nil {
 		connectionPool.Close()
 		return nil, err
 	}
 
-	identityStore, err := identitypostgres.New(connectionPool, deliveryInfrastructure.unwrapper, identifiers, stopStore)
+	identityStore, err := identitypostgres.New(connectionPool, deliveryInfrastructure.wrapper, deliveryInfrastructure.unwrapper, identifiers, stopStore)
 	if err != nil {
 		connectionPool.Close()
 		return nil, err
@@ -321,7 +321,7 @@ func NewProcessWithInfrastructure(ctx context.Context, configuration config.Work
 		connectionPool.Close()
 		return nil, fmt.Errorf("construct policy decision builder: %w", err)
 	}
-	completion, err := verificationpostgres.NewCompletionStore(connectionPool, identifiers, clock.System{})
+	completion, err := verificationpostgres.NewCompletionStore(connectionPool, deliveryInfrastructure.wrapper, identifiers, clock.System{})
 	if err != nil {
 		connectionPool.Close()
 		return nil, fmt.Errorf("construct verification completion: %w", err)
@@ -331,7 +331,7 @@ func NewProcessWithInfrastructure(ctx context.Context, configuration config.Work
 		connectionPool.Close()
 		return nil, fmt.Errorf("load review routing: %w", err)
 	}
-	reviewRouting, err := reviewpostgres.NewRoutingStore(connectionPool, identifiers, clock.System{}, reviewRules)
+	reviewRouting, err := reviewpostgres.NewRoutingStore(connectionPool, deliveryInfrastructure.wrapper, identifiers, clock.System{}, reviewRules)
 	if err != nil {
 		connectionPool.Close()
 		return nil, fmt.Errorf("construct review routing: %w", err)
@@ -341,7 +341,7 @@ func NewProcessWithInfrastructure(ctx context.Context, configuration config.Work
 		connectionPool.Close()
 		return nil, fmt.Errorf("construct policy author handler: %w", err)
 	}
-	reviewEvaluations, err := reviewpostgres.NewEvaluationStore(connectionPool, policyEvaluator, completion, clock.System{})
+	reviewEvaluations, err := reviewpostgres.NewEvaluationStore(connectionPool, deliveryInfrastructure.wrapper, policyEvaluator, completion, clock.System{})
 	if err != nil {
 		connectionPool.Close()
 		return nil, err
@@ -426,12 +426,12 @@ func NewProcessWithInfrastructure(ctx context.Context, configuration config.Work
 	}
 	var privacyCoordinator *privacytask.Coordinator
 	if infrastructure.enabled() {
-		privacyStore, err := privacypostgres.New(connectionPool)
+		privacyStore, err := privacypostgres.New(connectionPool, deliveryInfrastructure.wrapper)
 		if err != nil {
 			connectionPool.Close()
 			return nil, fmt.Errorf("construct worker privacy persistence: %w", err)
 		}
-		evidenceEraser, err := privacypostgres.NewEvidenceEraser(connectionPool, infrastructure.objects, time.Now)
+		evidenceEraser, err := privacypostgres.NewEvidenceEraser(connectionPool, infrastructure.objects, deliveryInfrastructure.wrapper, time.Now)
 		if err != nil {
 			connectionPool.Close()
 			return nil, fmt.Errorf("construct worker evidence eraser: %w", err)

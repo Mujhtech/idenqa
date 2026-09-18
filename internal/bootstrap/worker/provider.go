@@ -15,6 +15,7 @@ import (
 	"github.com/Mujhtech/idenqa/internal/evidence"
 	runnerv1 "github.com/Mujhtech/idenqa/internal/gen/proto/runner/v1"
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
+	platformcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	pg "github.com/Mujhtech/idenqa/internal/platform/postgres"
 	"github.com/Mujhtech/idenqa/internal/provider"
@@ -33,7 +34,7 @@ type providerRuntime struct {
 	connection  *grpc.ClientConn
 }
 
-func configuredProvider(ctx context.Context, configuration config.Worker, pool *pg.Pool, ids *id.Generator) (*providerRuntime, error) {
+func configuredProvider(ctx context.Context, configuration config.Worker, pool *pg.Pool, ids *id.Generator, wrapper platformcrypto.KeyWrapper) (*providerRuntime, error) {
 	if configuration.ProviderRuntimeFile == "" {
 		return nil, nil
 	}
@@ -111,7 +112,7 @@ func configuredProvider(ctx context.Context, configuration config.Worker, pool *
 	if err != nil {
 		return nil, err
 	}
-	preparation := &providerpostgres.Preparation{Plan: plan, Requests: requests, IDs: ids, Catalog: catalog, Clock: clock.System{}}
+	preparation := &providerpostgres.Preparation{Plan: plan, Requests: requests, IDs: ids, Catalog: catalog, Clock: clock.System{}, Wrapper: wrapper}
 	accepted = true
 	return &providerRuntime{plan, requests, preparation, executor, connection}, nil
 }

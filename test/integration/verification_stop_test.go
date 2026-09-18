@@ -41,7 +41,7 @@ func TestVerificationStopCancellationReplayAndIsolation(t *testing.T) {
 	f := newLifecycleFixture(t)
 	source := &captureClock{}
 	source.microseconds.Store(f.now.Add(time.Minute).UnixMicro())
-	store, err := verificationpostgres.NewStopStore(f.runtime, f.ids, source)
+	store, err := verificationpostgres.NewStopStore(f.runtime, integrationProtector{}, f.ids, source)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -85,7 +85,7 @@ func TestVerificationStopExpiryRollbackAndDiscovery(t *testing.T) {
 	f := newLifecycleFixture(t)
 	source := &captureClock{}
 	source.microseconds.Store(f.now.Add(time.Hour).UnixMicro())
-	store, err := verificationpostgres.NewStopStore(f.runtime, f.ids, source)
+	store, err := verificationpostgres.NewStopStore(f.runtime, integrationProtector{}, f.ids, source)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -137,7 +137,7 @@ func TestVerificationStopSubjectBindingAndPendingUploads(t *testing.T) {
 	runAuthorityPersistence(t, func(f captureAcceptanceFixture) {
 		uploads, mutations := f.prepare(t)
 		source := fixedIntegrationClock{now: f.now}
-		store, err := verificationpostgres.NewStopStore(f.runtime, f.ids, source)
+		store, err := verificationpostgres.NewStopStore(f.runtime, integrationProtector{}, f.ids, source)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -161,15 +161,15 @@ func TestVerificationStopCancellationRacesCompletion(t *testing.T) {
 	runAuthorityPersistence(t, func(f captureAcceptanceFixture) {
 		decision := prepareCompletion(t, f)
 		source := fixedIntegrationClock{now: f.now}
-		stops, err := verificationpostgres.NewStopStore(f.runtime, f.ids, source)
+		stops, err := verificationpostgres.NewStopStore(f.runtime, integrationProtector{}, f.ids, source)
 		if err != nil {
 			t.Fatal(err)
 		}
-		decisions, err := policypostgres.NewGuarded(f.runtime, source)
+		decisions, err := policypostgres.NewGuarded(f.runtime, integrationProtector{}, source)
 		if err != nil {
 			t.Fatal(err)
 		}
-		completion, err := verificationpostgres.NewCompletionStore(f.runtime, f.ids, source)
+		completion, err := verificationpostgres.NewCompletionStore(f.runtime, integrationProtector{}, f.ids, source)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -230,7 +230,7 @@ func TestVerificationStopObservesTokenExpiryAfterLock(t *testing.T) {
 	runAuthorityPersistence(t, func(f captureAcceptanceFixture) {
 		source := &captureClock{}
 		source.microseconds.Store(f.now.UnixMicro())
-		store, err := verificationpostgres.NewStopStore(f.runtime, f.ids, source)
+		store, err := verificationpostgres.NewStopStore(f.runtime, integrationProtector{}, f.ids, source)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -279,7 +279,7 @@ func TestVerificationStopCancellationRollsBackReplayOnAuditFailure(t *testing.T)
 	if _, err := f.admin.Native().Exec(t.Context(), `INSERT INTO idenqa.outbox_events (id,tenant_id,aggregate_type,aggregate_id,aggregate_version,event_type,schema_version,payload,occurred_at,created_at) VALUES ($1,$2,'verification',$3,99,'synthetic.conflict.v1',1,'{}',$4,$4)`, collision.String(), f.scope.ID().String(), f.verificationID.String(), f.now); err != nil {
 		t.Fatal(err)
 	}
-	store, err := verificationpostgres.NewStopStore(f.runtime, stopEventID{collision}, source)
+	store, err := verificationpostgres.NewStopStore(f.runtime, integrationProtector{}, stopEventID{collision}, source)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -296,7 +296,7 @@ func TestVerificationStopCancellationRollsBackReplayOnAuditFailure(t *testing.T)
 	if err := f.admin.Native().QueryRow(t.Context(), `SELECT count(*) FROM idenqa.idempotency_records WHERE tenant_id=$1`, f.scope.ID().String()).Scan(&reservations); err != nil || reservations != 0 {
 		t.Fatalf("partial replay reservation: %d %v", reservations, err)
 	}
-	store, err = verificationpostgres.NewStopStore(f.runtime, f.ids, source)
+	store, err = verificationpostgres.NewStopStore(f.runtime, integrationProtector{}, f.ids, source)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -311,15 +311,15 @@ func TestVerificationStopDeadlineWinsWaitingCompletionAndCancellation(t *testing
 		decision := prepareCompletion(t, f)
 		source := &captureClock{}
 		source.microseconds.Store(f.now.UnixMicro())
-		stops, err := verificationpostgres.NewStopStore(f.runtime, f.ids, source)
+		stops, err := verificationpostgres.NewStopStore(f.runtime, integrationProtector{}, f.ids, source)
 		if err != nil {
 			t.Fatal(err)
 		}
-		decisions, err := policypostgres.NewGuarded(f.runtime, source)
+		decisions, err := policypostgres.NewGuarded(f.runtime, integrationProtector{}, source)
 		if err != nil {
 			t.Fatal(err)
 		}
-		completion, err := verificationpostgres.NewCompletionStore(f.runtime, f.ids, source)
+		completion, err := verificationpostgres.NewCompletionStore(f.runtime, integrationProtector{}, f.ids, source)
 		if err != nil {
 			t.Fatal(err)
 		}

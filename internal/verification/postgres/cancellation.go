@@ -9,6 +9,7 @@ import (
 
 	"github.com/Mujhtech/idenqa/internal/access"
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
+	platformcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/platform/idempotency"
 	idempotencypostgres "github.com/Mujhtech/idenqa/internal/platform/idempotency/postgres"
@@ -32,11 +33,11 @@ type StopStore struct {
 }
 
 // NewStopStore constructs cancellation and task-owned expiry persistence.
-func NewStopStore(pool transactionRunner, identifiers StopIdentifiers, source clock.Clock) (*StopStore, error) {
+func NewStopStore(pool transactionRunner, wrapper platformcrypto.KeyWrapper, identifiers StopIdentifiers, source clock.Clock) (*StopStore, error) {
 	if identifiers == nil {
 		return nil, errors.New("verification postgres: stop identifiers are required")
 	}
-	lifecycle, err := NewLifecycleStore(pool, source)
+	lifecycle, err := NewLifecycleStore(pool, wrapper, source)
 	if err != nil {
 		return nil, err
 	}

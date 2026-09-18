@@ -311,7 +311,7 @@ func newProcess(
 
 		return nil, fmt.Errorf("construct tenant routes: %w", err)
 	}
-	policyStore, err := policypostgres.New(connectionPool)
+	policyStore, err := policypostgres.New(connectionPool, infrastructure.keys)
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
 		connectionPool.Close()
@@ -332,7 +332,7 @@ func newProcess(
 
 		return nil, fmt.Errorf("construct policy decision routes: %w", err)
 	}
-	reviewStore, err := reviewpostgres.New(connectionPool)
+	reviewStore, err := reviewpostgres.New(connectionPool, infrastructure.keys)
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
 		connectionPool.Close()
@@ -364,7 +364,7 @@ func newProcess(
 		connectionPool.Close()
 		return nil, fmt.Errorf("construct review routes: %w", err)
 	}
-	recaptureStore, err := reviewpostgres.NewRecaptureStore(connectionPool, catalog, clock.System{})
+	recaptureStore, err := reviewpostgres.NewRecaptureStore(connectionPool, infrastructure.keys, catalog, clock.System{})
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
 		connectionPool.Close()
@@ -415,7 +415,7 @@ func newProcess(
 
 		return nil, fmt.Errorf("construct capture profile routes: %w", err)
 	}
-	sessionStore, err := verificationpostgres.NewSessionStore(connectionPool, catalog)
+	sessionStore, err := verificationpostgres.NewSessionStore(connectionPool, infrastructure.keys, catalog)
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
 		connectionPool.Close()
@@ -495,7 +495,7 @@ func newProcess(
 
 		return nil, fmt.Errorf("construct capture outcome routes: %w", err)
 	}
-	stopStore, err := verificationpostgres.NewStopStore(connectionPool, identifiers, clock.System{})
+	stopStore, err := verificationpostgres.NewStopStore(connectionPool, infrastructure.keys, identifiers, clock.System{})
 	if err != nil {
 		connectionPool.Close()
 		return nil, err
@@ -543,7 +543,7 @@ func newProcess(
 			return nil, fmt.Errorf("construct native bootstrap routes: %w", err)
 		}
 	}
-	authorityStore, err := authoritypostgres.New(connectionPool)
+	authorityStore, err := authoritypostgres.New(connectionPool, infrastructure.keys)
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
 		connectionPool.Close()
@@ -715,7 +715,7 @@ func newProcess(
 		return nil, fmt.Errorf("construct realtime socket routes: %w", err)
 	}
 
-	identityStore, err := identitypostgres.New(connectionPool, infrastructure.keys, identifiers, stopStore)
+	identityStore, err := identitypostgres.New(connectionPool, infrastructure.keys, infrastructure.keys, identifiers, stopStore)
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
 		connectionPool.Close()
@@ -769,7 +769,7 @@ func newProcess(
 		connectionPool.Close()
 		return nil, err
 	}
-	policyManagementStore, err := policypostgres.NewManagementStore(connectionPool, time.Now)
+	policyManagementStore, err := policypostgres.NewManagementStore(connectionPool, infrastructure.keys, time.Now)
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
 		connectionPool.Close()
@@ -872,7 +872,7 @@ func newProcess(
 		return nil, fmt.Errorf("construct proposal routes: %w", err)
 	}
 
-	reviewPolicyStore, err := policypostgres.New(connectionPool)
+	reviewPolicyStore, err := policypostgres.New(connectionPool, infrastructure.keys)
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
 		connectionPool.Close()
@@ -884,7 +884,7 @@ func newProcess(
 		connectionPool.Close()
 		return nil, err
 	}
-	followupStore, err := reviewpostgres.NewFollowupStore(connectionPool, reviewAuthority, reviewEvaluator, identifiers, clock.System{})
+	followupStore, err := reviewpostgres.NewFollowupStore(connectionPool, infrastructure.keys, reviewAuthority, reviewEvaluator, identifiers, clock.System{})
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
 		connectionPool.Close()
@@ -939,7 +939,7 @@ func newProcess(
 			connectionPool.Close()
 			return nil, fmt.Errorf("review evidence requires controlled object reads")
 		}
-		reviewEvidenceStore, err := reviewpostgres.NewEvidenceStore(connectionPool, reviewAuthority, catalog, identifiers, clock.System{}, streaming, reviewObjects)
+		reviewEvidenceStore, err := reviewpostgres.NewEvidenceStore(connectionPool, infrastructure.keys, reviewAuthority, catalog, identifiers, clock.System{}, streaming, reviewObjects)
 		if err != nil {
 			_ = providers.Shutdown(context.Background())
 			connectionPool.Close()
@@ -959,20 +959,20 @@ func newProcess(
 		}
 		routes = append(routes, reviewEvidenceRoutes)
 
-		evidenceStore, err := evidencepostgres.New(connectionPool, catalog)
+		evidenceStore, err := evidencepostgres.New(connectionPool, infrastructure.keys, catalog)
 		if err != nil {
 			_ = providers.Shutdown(context.Background())
 			connectionPool.Close()
 
 			return nil, fmt.Errorf("construct evidence persistence: %w", err)
 		}
-		privacyStore, err := privacypostgres.New(connectionPool)
+		privacyStore, err := privacypostgres.New(connectionPool, infrastructure.keys)
 		if err != nil {
 			_ = providers.Shutdown(context.Background())
 			connectionPool.Close()
 			return nil, fmt.Errorf("construct privacy persistence: %w", err)
 		}
-		evidenceEraser, err := privacypostgres.NewEvidenceEraser(connectionPool, infrastructure.objects, time.Now)
+		evidenceEraser, err := privacypostgres.NewEvidenceEraser(connectionPool, infrastructure.objects, infrastructure.keys, time.Now)
 		if err != nil {
 			_ = providers.Shutdown(context.Background())
 			connectionPool.Close()

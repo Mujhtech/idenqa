@@ -11,6 +11,7 @@ import (
 	webhookv1 "github.com/Mujhtech/idenqa/contracts/webhook/v1"
 	deliverypostgres "github.com/Mujhtech/idenqa/internal/delivery/postgres"
 	"github.com/Mujhtech/idenqa/internal/evidence"
+	platformcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/platform/objectstore"
 	platformpostgres "github.com/Mujhtech/idenqa/internal/platform/postgres"
@@ -34,15 +35,16 @@ type evidenceReference struct {
 type EvidenceEraser struct {
 	pool    transactionRunner
 	objects objectDeleter
+	wrapper platformcrypto.KeyWrapper
 	now     func() time.Time
 }
 
 // NewEvidenceEraser constructs the exact evidence target eraser.
-func NewEvidenceEraser(pool transactionRunner, objects objectDeleter, now func() time.Time) (*EvidenceEraser, error) {
+func NewEvidenceEraser(pool transactionRunner, objects objectDeleter, wrapper platformcrypto.KeyWrapper, now func() time.Time) (*EvidenceEraser, error) {
 	if pool == nil || objects == nil || now == nil {
 		return nil, privacy.ErrInvalid
 	}
-	return &EvidenceEraser{pool: pool, objects: objects, now: now}, nil
+	return &EvidenceEraser{pool: pool, objects: objects, wrapper: wrapper, now: now}, nil
 }
 
 // EvidenceTargets plans raw and derived evidence ciphertext from authoritative
@@ -178,7 +180,7 @@ func (eraser *EvidenceEraser) Delete(ctx context.Context, target privacy.Target)
 		if err != nil {
 			return err
 		}
-		if err := deliverypostgres.EmitCatalogueEvent(ctx, tx, reference.TenantID, reference.Region, webhookv1.EvidenceDeleted,
+		if err := deliverypostgres.EmitCatalogueEvent(ctx, tx, eraser.wrapper, reference.TenantID, reference.Region, webhookv1.EvidenceDeleted,
 			"evidence.deleted:"+reference.EvidenceID, now, map[string]any{
 				"evidence_id":     reference.EvidenceID,
 				"verification_id": verificationID,

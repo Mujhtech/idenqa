@@ -942,7 +942,7 @@ func assertPersistedEncryptedEvidence(
 	if err != nil {
 		t.Fatalf("new evidence catalog: %v", err)
 	}
-	store, err := evidencepostgres.New(runtimePool, catalog)
+	store, err := evidencepostgres.New(runtimePool, integrationProtector{}, catalog)
 	if err != nil {
 		t.Fatalf("new evidence persistence: %v", err)
 	}

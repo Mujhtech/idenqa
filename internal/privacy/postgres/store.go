@@ -13,6 +13,7 @@ import (
 	webhookv1 "github.com/Mujhtech/idenqa/contracts/webhook/v1"
 	auditpostgres "github.com/Mujhtech/idenqa/internal/audit/postgres"
 	deliverypostgres "github.com/Mujhtech/idenqa/internal/delivery/postgres"
+	platformcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	platformpostgres "github.com/Mujhtech/idenqa/internal/platform/postgres"
 	"github.com/Mujhtech/idenqa/internal/privacy"
@@ -26,14 +27,17 @@ type transactionRunner interface {
 
 // Store persists deletion transitions, legal holds, tombstones, and their
 // reference-only audit records atomically.
-type Store struct{ pool transactionRunner }
+type Store struct {
+	pool    transactionRunner
+	wrapper platformcrypto.KeyWrapper
+}
 
 // New constructs the privacy PostgreSQL adapter.
-func New(pool transactionRunner) (*Store, error) {
+func New(pool transactionRunner, wrapper platformcrypto.KeyWrapper) (*Store, error) {
 	if pool == nil {
 		return nil, errors.New("privacy postgres: pool is required")
 	}
-	return &Store{pool: pool}, nil
+	return &Store{pool: pool, wrapper: wrapper}, nil
 }
 
 // Create persists a new deletion request and exact target set.
@@ -54,7 +58,7 @@ func (store *Store) CreateWithin(ctx context.Context, scope tenant.Scope, tx pla
 	if err := insertDeletion(ctx, tx, scope, deletion); err != nil {
 		return err
 	}
-	return appendDeletionEvent(ctx, tx, scope, actor, deletion, "privacy.deletion.requested")
+	return appendDeletionEvent(ctx, tx, store.wrapper, scope, actor, deletion, "privacy.deletion.requested")
 }
 func insertDeletion(ctx context.Context, tx platformpostgres.Transaction, scope tenant.Scope, deletion privacy.Deletion) error {
 	_, err := tx.Exec(ctx, `INSERT INTO idenqa.deletion_requests
@@ -360,7 +364,7 @@ func (store *Store) writeEvent(ctx context.Context, scope tenant.Scope, actor pr
 		if err := mutate(ctx, tx); err != nil {
 			return err
 		}
-		return appendDeletionEvent(ctx, tx, scope, actor, deletion, eventType)
+		return appendDeletionEvent(ctx, tx, store.wrapper, scope, actor, deletion, eventType)
 	})
 }
 
@@ -401,7 +405,7 @@ func nullableTime(value time.Time) any {
 
 var _ privacy.Repository = (*Store)(nil)
 
-func appendDeletionEvent(ctx context.Context, tx platformpostgres.Transaction, scope tenant.Scope, actor privacy.Actor, deletion privacy.Deletion, eventType string) error {
+func appendDeletionEvent(ctx context.Context, tx platformpostgres.Transaction, wrapper platformcrypto.KeyWrapper, scope tenant.Scope, actor privacy.Actor, deletion privacy.Deletion, eventType string) error {
 
 	digest := sha256.Sum256([]byte(fmt.Sprintf("%s\n%s\n%s\n%d\n", eventType, deletion.AggregateID, deletion.ID.String(), deletion.Version)))
 	if _, err := auditpostgres.AppendInTransaction(ctx, tx, scope, auditpostgres.Event{
@@ -416,7 +420,7 @@ func appendDeletionEvent(ctx context.Context, tx platformpostgres.Transaction, s
 		return nil
 	}
 
-	return deliverypostgres.EmitCatalogueEvent(ctx, tx, scope.ID().String(), deletion.Region, webhookv1.DeletionRequestUpdated,
+	return deliverypostgres.EmitCatalogueEvent(ctx, tx, wrapper, scope.ID().String(), deletion.Region, webhookv1.DeletionRequestUpdated,
 		"deletion_request.updated:"+deletion.ID.String()+":"+strconv.FormatInt(deletion.Version, 10), deletion.UpdatedAt,
 		map[string]any{"deletion_id": deletion.ID.String(), "state": string(deletion.State),
 			"deletion": map[string]any{"id": deletion.ID.String(), "type": "deletion_request", "state": string(deletion.State)}})

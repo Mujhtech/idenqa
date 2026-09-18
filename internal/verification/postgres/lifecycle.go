@@ -13,6 +13,7 @@ import (
 	auditpostgres "github.com/Mujhtech/idenqa/internal/audit/postgres"
 	deliverypostgres "github.com/Mujhtech/idenqa/internal/delivery/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
+	platformcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	platformpostgres "github.com/Mujhtech/idenqa/internal/platform/postgres"
 	"github.com/Mujhtech/idenqa/internal/tenant"
@@ -26,16 +27,17 @@ const lifecycleEvent = "verification.transitioned.v1"
 // services must authorise the transition cause and validate current authority.
 // It is deliberately not composed into a public state-setting transport.
 type LifecycleStore struct {
-	pool  transactionRunner
-	clock clock.Clock
+	pool    transactionRunner
+	clock   clock.Clock
+	wrapper platformcrypto.KeyWrapper
 }
 
 // NewLifecycleStore constructs an adapter with an explicit observation clock.
-func NewLifecycleStore(pool transactionRunner, source clock.Clock) (*LifecycleStore, error) {
+func NewLifecycleStore(pool transactionRunner, wrapper platformcrypto.KeyWrapper, source clock.Clock) (*LifecycleStore, error) {
 	if pool == nil || source == nil {
 		return nil, errors.New("verification postgres: lifecycle pool and clock are required")
 	}
-	return &LifecycleStore{pool: pool, clock: source}, nil
+	return &LifecycleStore{pool: pool, clock: source, wrapper: wrapper}, nil
 }
 
 // Apply commits an already-authorised transition in a serializable transaction.
@@ -91,7 +93,7 @@ func (store *LifecycleStore) ApplyWithin(ctx context.Context, scope tenant.Scope
 	if err := validateCompletion(ctx, tx, scope, command); err != nil {
 		return verification.LifecycleReceipt{}, err
 	}
-	if err := persistLifecycle(ctx, tx, scope, command, current, next, canonical, digest); err != nil {
+	if err := persistLifecycle(ctx, tx, store.wrapper, scope, command, current, next, canonical, digest); err != nil {
 		return verification.LifecycleReceipt{}, err
 	}
 	return lifecycleReceipt(command, current.State), nil
@@ -154,7 +156,7 @@ AND decided_at <= $4 AND outcome IN ('verified', 'not_verified', 'inconclusive')
 	return nil
 }
 
-func persistLifecycle(ctx context.Context, tx platformpostgres.Transaction, scope tenant.Scope, command verification.LifecycleCommand, current, next verification.Lifecycle, canonical []byte, digest string) error {
+func persistLifecycle(ctx context.Context, tx platformpostgres.Transaction, wrapper platformcrypto.KeyWrapper, scope tenant.Scope, command verification.LifecycleCommand, current, next verification.Lifecycle, canonical []byte, digest string) error {
 	var decision *string
 	if !command.DecisionID.IsZero() {
 		value := command.DecisionID.String()
@@ -190,7 +192,7 @@ VALUES ($1,$2,'verification',$3,$4,$5,1,$6,$7,$7)`, command.EventID.String(), sc
 		return err
 	}
 
-	return emitLifecycleWebhook(ctx, tx, scope, command, next)
+	return emitLifecycleWebhook(ctx, tx, wrapper, scope, command, next)
 }
 
 var lifecycleWebhookEvents = map[verification.SessionState]webhookv1.Type{
@@ -207,7 +209,7 @@ var lifecycleWebhookEvents = map[verification.SessionState]webhookv1.Type{
 // emitLifecycleWebhook publishes the catalogue transition, if one is selected.
 // Completion is published by the completion effect because it carries the
 // subject and decision references.
-func emitLifecycleWebhook(ctx context.Context, tx platformpostgres.Transaction, scope tenant.Scope, command verification.LifecycleCommand, next verification.Lifecycle) error {
+func emitLifecycleWebhook(ctx context.Context, tx platformpostgres.Transaction, wrapper platformcrypto.KeyWrapper, scope tenant.Scope, command verification.LifecycleCommand, next verification.Lifecycle) error {
 	eventType, exists := lifecycleWebhookEvents[next.State]
 	if !exists {
 		return nil
@@ -224,7 +226,7 @@ func emitLifecycleWebhook(ctx context.Context, tx platformpostgres.Transaction, 
 	fields := map[string]any{"verification_id": command.VerificationID.String(), "version": next.Version,
 		"verification": map[string]any{"id": command.VerificationID.String(), "type": "verification.session", "status": string(next.State), "version": next.Version}}
 
-	return deliverypostgres.EmitCatalogueEvent(ctx, tx, scope.ID().String(), region, eventType, seed, command.OccurredAt, fields)
+	return deliverypostgres.EmitCatalogueEvent(ctx, tx, wrapper, scope.ID().String(), region, eventType, seed, command.OccurredAt, fields)
 }
 
 func lifecycleCommandDigest(command verification.LifecycleCommand) ([]byte, string, error) {

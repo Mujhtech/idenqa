@@ -297,7 +297,7 @@ func (journey *providerPublicJourney) runModel(t *testing.T, admin, runtime *pg.
 	if err != nil {
 		t.Fatal(err)
 	}
-	planner, err := verificationpostgres.NewProcessingStore(runtime, plan, ids, failingProcessingEnqueuer{adapter}, clock.System{})
+	planner, err := verificationpostgres.NewProcessingStore(runtime, integrationProtector{}, plan, ids, failingProcessingEnqueuer{adapter}, clock.System{})
 	if err != nil {
 		t.Fatal(err)
 	}

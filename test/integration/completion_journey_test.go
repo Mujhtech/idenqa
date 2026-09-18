@@ -118,7 +118,7 @@ func (receiver *journeyReceiver) infrastructure(t *testing.T, path string) boots
 	if err != nil {
 		t.Fatal(err)
 	}
-	infrastructure, err := bootstrapworker.NewDeliveryInfrastructure(keys, receiver, journeyKeys{keys})
+	infrastructure, err := bootstrapworker.NewDeliveryInfrastructure(keys, keys, receiver, journeyKeys{keys})
 	if err != nil {
 		t.Fatal(err)
 	}

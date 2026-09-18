@@ -13,6 +13,7 @@ import (
 	"github.com/Mujhtech/idenqa/internal/evidence"
 	evidencepostgres "github.com/Mujhtech/idenqa/internal/evidence/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
+	platformcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/platform/idempotency"
 	idempg "github.com/Mujhtech/idenqa/internal/platform/idempotency/postgres"
@@ -37,19 +38,20 @@ type EvidenceStore struct {
 	catalog   evidence.Catalog
 	ids       *id.Generator
 	clock     clock.Clock
+	wrapper   platformcrypto.KeyWrapper
 	opener    evidence.ContentOpener
 	objects   evidence.ObjectReader
 }
 
 // NewEvidenceStore constructs the transactional evidence access adapter.
-func NewEvidenceStore(pool transactionRunner, authority review.Authority, catalog evidence.Catalog, ids *id.Generator, source clock.Clock, opener evidence.ContentOpener, objects evidence.ObjectReader) (*EvidenceStore, error) {
+func NewEvidenceStore(pool transactionRunner, wrapper platformcrypto.KeyWrapper, authority review.Authority, catalog evidence.Catalog, ids *id.Generator, source clock.Clock, opener evidence.ContentOpener, objects evidence.ObjectReader) (*EvidenceStore, error) {
 	if pool == nil || authority == nil || catalog.IsZero() || ids == nil || source == nil || opener == nil || objects == nil {
 		return nil, review.ErrInvalid
 	}
-	return &EvidenceStore{pool, authority, catalog, ids, source, opener, objects}, nil
+	return &EvidenceStore{pool: pool, authority: authority, catalog: catalog, ids: ids, clock: source, wrapper: wrapper, opener: opener, objects: objects}, nil
 }
 func (s *EvidenceStore) eligible(ctx context.Context, scope tenant.Scope, tx pg.Transaction, actor review.Actor, caseID id.ReviewCase, version int64) (review.Case, review.Principal, error) {
-	cases, err := NewWithClock(boundTransaction{tx}, s.clock)
+	cases, err := NewWithClock(boundTransaction{tx}, s.wrapper, s.clock)
 	if err != nil {
 		return review.Case{}, review.Principal{}, err
 	}
@@ -106,15 +108,15 @@ func (s *EvidenceStore) eligible(ctx context.Context, scope tenant.Scope, tx pg.
 }
 func (s *EvidenceStore) composition(tx pg.Transaction) (*evidencepostgres.Store, *authority.Service, error) {
 	bound := boundTransaction{tx}
-	assets, err := evidencepostgres.New(bound, s.catalog)
+	assets, err := evidencepostgres.New(bound, s.wrapper, s.catalog)
 	if err != nil {
 		return nil, nil, err
 	}
-	authorities, err := authoritypostgres.NewWithClock(bound, s.clock)
+	authorities, err := authoritypostgres.NewWithClock(bound, s.wrapper, s.clock)
 	if err != nil {
 		return nil, nil, err
 	}
-	sessions, err := verificationpostgres.NewSessionStore(bound, s.catalog)
+	sessions, err := verificationpostgres.NewSessionStore(bound, s.wrapper, s.catalog)
 	if err != nil {
 		return nil, nil, err
 	}

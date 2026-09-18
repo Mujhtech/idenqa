@@ -69,7 +69,7 @@ func TestPolicyDecisionDurabilityIsolationLineageAndImmutability(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer runtimePool.Close()
-	store, err := policypostgres.New(runtimePool)
+	store, err := policypostgres.New(runtimePool, integrationProtector{})
 	if err != nil {
 		t.Fatal(err)
 	}

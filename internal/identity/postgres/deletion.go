@@ -78,7 +78,7 @@ func (s *Store) requestDeletion(ctx context.Context, tx pg.Transaction, scope te
 		return identity.Result{}, e
 	}
 	deletion.BackupRetention = privacy.SelectedDefaults()[privacy.DataClassBackup]
-	store, e := privacypg.New(s.pool)
+	store, e := privacypg.New(s.pool, s.wrapper)
 	if e != nil {
 		return identity.Result{}, e
 	}
