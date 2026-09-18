@@ -168,6 +168,13 @@ func TestGeneratorCreatesVerificationEvidenceUploadCaptureTokenEventAndGrantIDs(
 	if parsed, parseErr := id.ParseCaptureToken(token.String()); parseErr != nil || parsed.String() != token.String() {
 		t.Fatalf("ParseCaptureToken() = %q, %v", parsed, parseErr)
 	}
+	outcomeToken, err := generator.NewOutcomeToken()
+	if err != nil {
+		t.Fatalf("NewOutcomeToken() error = %v", err)
+	}
+	if parsed, parseErr := id.ParseOutcomeToken(outcomeToken.String()); parseErr != nil || parsed.String() != outcomeToken.String() {
+		t.Fatalf("ParseOutcomeToken() = %q, %v", parsed, parseErr)
+	}
 	event, err := generator.NewEvent()
 	if err != nil {
 		t.Fatalf("NewEvent() error = %v", err)

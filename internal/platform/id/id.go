@@ -393,6 +393,40 @@ func (token CaptureToken) String() string { return token.value.String() }
 // IsZero reports whether the capture-token record identifier is uninitialised.
 func (token CaptureToken) IsZero() bool { return token.value.IsZero() }
 
+// OutcomeTokenPrefix is the public prefix for outcome-token record identifiers.
+const OutcomeTokenPrefix Prefix = "otk"
+
+// OutcomeToken is a typed outcome-token record identifier.
+type OutcomeToken struct {
+	value Value
+}
+
+// NewOutcomeToken generates an outcome-token record identifier.
+func (generator *Generator) NewOutcomeToken() (OutcomeToken, error) {
+	value, err := generator.New(OutcomeTokenPrefix)
+	if err != nil {
+		return OutcomeToken{}, err
+	}
+
+	return OutcomeToken{value: value}, nil
+}
+
+// ParseOutcomeToken parses an outcome-token record identifier.
+func ParseOutcomeToken(encoded string) (OutcomeToken, error) {
+	value, err := Parse(OutcomeTokenPrefix, encoded)
+	if err != nil {
+		return OutcomeToken{}, err
+	}
+
+	return OutcomeToken{value: value}, nil
+}
+
+// String returns the stable public outcome-token record identifier.
+func (token OutcomeToken) String() string { return token.value.String() }
+
+// IsZero reports whether the outcome-token record identifier is uninitialised.
+func (token OutcomeToken) IsZero() bool { return token.value.IsZero() }
+
 // EventPrefix is the public prefix for durable event identifiers.
 const EventPrefix Prefix = "evt"
 
@@ -1032,6 +1066,78 @@ func (finding Finding) String() string { return finding.value.String() }
 
 // IsZero reports whether the finding identifier is uninitialised.
 func (finding Finding) IsZero() bool { return finding.value.IsZero() }
+
+// ProposalPrefix is the public prefix for AI proposal records.
+const ProposalPrefix Prefix = "prp"
+
+// Proposal identifies one immutable AI proposal.
+type Proposal struct{ value Value }
+
+// NewProposal generates a proposal identifier.
+func (generator *Generator) NewProposal() (Proposal, error) {
+	value, err := generator.New(ProposalPrefix)
+	return Proposal{value: value}, err
+}
+
+// ParseProposal parses a proposal identifier.
+func ParseProposal(encoded string) (Proposal, error) {
+	value, err := Parse(ProposalPrefix, encoded)
+	return Proposal{value: value}, err
+}
+
+// String returns the stable proposal identifier.
+func (proposal Proposal) String() string { return proposal.value.String() }
+
+// IsZero reports whether the proposal identifier is uninitialised.
+func (proposal Proposal) IsZero() bool { return proposal.value.IsZero() }
+
+// AcceptedCommandPrefix is the public prefix for deterministic accepted commands.
+const AcceptedCommandPrefix Prefix = "acc"
+
+// AcceptedCommand identifies one deterministic command derived from a proposal.
+type AcceptedCommand struct{ value Value }
+
+// NewAcceptedCommand generates an accepted-command identifier.
+func (generator *Generator) NewAcceptedCommand() (AcceptedCommand, error) {
+	value, err := generator.New(AcceptedCommandPrefix)
+	return AcceptedCommand{value: value}, err
+}
+
+// ParseAcceptedCommand parses an accepted-command identifier.
+func ParseAcceptedCommand(encoded string) (AcceptedCommand, error) {
+	value, err := Parse(AcceptedCommandPrefix, encoded)
+	return AcceptedCommand{value: value}, err
+}
+
+// String returns the stable accepted-command identifier.
+func (command AcceptedCommand) String() string { return command.value.String() }
+
+// IsZero reports whether the accepted-command identifier is uninitialised.
+func (command AcceptedCommand) IsZero() bool { return command.value.IsZero() }
+
+// PromptPrefix is the public prefix for prompt registry records.
+const PromptPrefix Prefix = "prm"
+
+// Prompt identifies one versioned prompt.
+type Prompt struct{ value Value }
+
+// NewPrompt generates a prompt identifier.
+func (generator *Generator) NewPrompt() (Prompt, error) {
+	value, err := generator.New(PromptPrefix)
+	return Prompt{value: value}, err
+}
+
+// ParsePrompt parses a prompt identifier.
+func ParsePrompt(encoded string) (Prompt, error) {
+	value, err := Parse(PromptPrefix, encoded)
+	return Prompt{value: value}, err
+}
+
+// String returns the stable prompt identifier.
+func (prompt Prompt) String() string { return prompt.value.String() }
+
+// IsZero reports whether the prompt identifier is uninitialised.
+func (prompt Prompt) IsZero() bool { return prompt.value.IsZero() }
 
 // AppealPrefix is the public prefix for appeals and reconsiderations.
 const AppealPrefix Prefix = "apl"
