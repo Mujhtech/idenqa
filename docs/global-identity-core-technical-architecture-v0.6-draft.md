@@ -453,6 +453,10 @@ Subject IDs must not be globally linkable by default.
 
 The subject's structured claims form a current tenant-scoped projection. That mutable projection is never used by reference to reproduce an earlier decision; decisions use immutable snapshots.
 
+The 9 September 2026 implementation decision selects the full persistent subject model alongside the earlier verification-local authority subject. Persistent subjects receive separate IDs and explicit immutable tenant-authorised verification links. Shared external references or identifiers do not merge subjects. Values are separately encrypted with per-subject keys; current record heads are rebuildable from append-only supersession. The repository/package draft section 6.3 owns the exact storage, API, source-trust, retention and bounded-deletion contract.
+
+Subject deletion covers structured identity values and all evidence of explicitly linked verifications, stops active linked sessions atomically, respects subject/verification holds and waits for backup expiry after erasure before proof completion. Old reference-only decision provenance remains immutable. Public identity APIs and the tenant TypeScript client are open-source core capabilities.
+
 #### Identifier
 
 - Type
@@ -502,6 +506,8 @@ Claims used for decisioning resolve to immutable observations and normalised fac
 - Supersession reference
 
 Several facts or signals derived from the same document, registry, portrait, device observation, upstream broker, or provider subcontractor are not independent merely because they have different IDs. Assurance evaluation uses lineage groups to prevent correlated transformations of one underlying source from being counted as independent corroboration.
+
+The selected initial general observation API accepts tenant-attested typed values and trusted imports of completed Core provider/model check outcomes. It does not assert that every provider already extracts structured fields. Identifier verification state is source-attributed tenant reporting, not an independent policy signal. Source-root correlation and immutable configuration/identity receipts determine independent corroboration; the explicitly approved alpha `identity` policy source carries the receipt digest without plaintext values. Existing snapshots reproduce from their original immutable bytes.
 
 #### Evidence
 
@@ -795,6 +801,38 @@ A completed check result is:
 
 ---
 
+### 12.4 Lifecycle transition contract and staged activation
+
+The lifecycle gap is being closed through L-01 (transition contract and durable primitive) and L-02 (running-process integration) in the build plan. These scopes do not imply that the full workflow is already runnable.
+
+| Source              | Permitted next states                                                                                 | Owning cause and required evidence                                                                                                      |
+| ------------------- | ----------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `created`           | `collecting`, `cancelled`, `failed`                                                                   | Creation/activation application; authorised cancellation or operational failure                                                         |
+| `collecting`        | `awaiting_input`, `processing`, `cancelled`, `expired`, `failed`                                      | Input request; authoritative capture completion and approved work intent; cancellation, elapsed deadline or operational failure         |
+| `awaiting_input`    | `collecting`, `manual_review`, `cancelled`, `expired`, `failed`                                       | Policy-approved resumption to capture or review; cancellation, elapsed deadline or operational failure                                  |
+| `processing`        | `awaiting_external`, `awaiting_input`, `manual_review`, `completed`, `cancelled`, `expired`, `failed` | Pending external work; input request; bounded review routing; immutable decision; cancellation, elapsed deadline or operational failure |
+| `awaiting_external` | `processing`, `cancelled`, `expired`, `failed`                                                        | Deduplicated authorised callback/poll result; cancellation, elapsed deadline or operational failure                                     |
+| `manual_review`     | `awaiting_input`, `completed`, `cancelled`, `expired`, `failed`                                       | Policy-permitted input request or decision derived from accepted findings; cancellation, elapsed deadline or operational failure        |
+| Any terminal state  | None                                                                                                  | Reconsideration appends decision history or creates a new verification; it does not reopen the workflow                                 |
+
+Each transition has one stable event identity, expected aggregate version, target state, authenticated principal reference, and UTC occurrence time at exact microsecond precision. Finer timestamps are rejected rather than silently rounded. Completion additionally references an existing immutable decision for the same tenant and verification. A decision reference is not a replacement for policy validation, processing authority or review authorisation. Operational failure, cancellation and expiry carry no identity outcome or completion-decision reference.
+
+The persistence primitive locks the tenant-scoped parent session, rejects stale versions and regressing time, and commits the next version, append-only replay receipt, common audit-chain record and reference-only outbox event together. Exact retries return the original receipt even after later transitions; reusing the event identity with changed meaning conflicts. Caller-owned effect transactions must include any resulting task intent and, when invoked by a task, current Headgate fenced completion. A failed effect must roll back every lifecycle write.
+
+New work cannot advance an elapsed session. Expiry is valid at or after its deadline; other transitions require both occurrence and application observation before that deadline. Exact committed replay remains valid after expiry. The initial create API continues to return an atomically activated `collecting` session. The existing diagram has no `created -> expired` edge; expiry of a future separately persisted pre-activation phase remains unresolved and must not be invented by a worker.
+
+Before runtime activation, all consequential writers must participate in parent-session locking and repeat their current authority and lifecycle checks in the effect transaction. This includes upload acceptance and capture-progress calculation, check result persistence, and policy authoring. A pre-execution check alone does not protect against cancellation, expiry or authority withdrawal while external work is running. The selected 6 September 2026 alpha contract expansion publishes all ten workflow states through the existing v1 session schema and SDK. Its compatibility exception is limited to the exact nine added values on existing response paths; clients built against the collecting-only alpha must update before new runtime states are emitted. No generic public state-setting endpoint is permitted. The first primitive does not by itself authorise or activate cancellation, automatic expiry, review or provider callbacks.
+
+The first L-02 prerequisite implements this locking and revalidation for upload acceptance, authority transitions and subject responses. Final uploads serialize before progress calculation, while capture-token locking protects against concurrent revocation. Acceptance observes the clock after lock acquisition and re-enters the owned authority evaluator against the current exact response. The runnable worker now composes guarded check and policy writers. Verification-creation retries preserve the original creation state, version and timestamp; current retrieval exposes the latest lifecycle. The subsequent L-02 processing slice activates `collecting -> processing` for the explicitly enabled synthetic fixture plan.
+
+Completed capture is a durable scheduling source. The worker discovers it after startup or polling and commits the immutable check/attempt plan, bounded execution intents, transition receipt, audit and outbox in one serializable transaction. Acceptance and processing start are separate commits; a stopped worker cannot lose the accepted capture. Concurrent starts serialize on the parent, and replay cannot duplicate the committed plan. Authority/response writers fence the parent row so stale serializable snapshots abort. Check/policy effects recheck current authority at commit, while exact committed receipts remain replayable. Headgate establishes serializable isolation before claiming an effect and retains queue-lease fencing.
+
+`IDENQA_WORKER_SYNTHETIC_PROCESSING=true` opts a synthetic-data installation into the two-check v1 fixture plan; the default is false. These synthetic signals establish no real identity or acquisition assurance. Production check selection remains TBD. The policy worker now atomically commits its immutable decision, session completion, receipt/audit/outbox and completion delivery intents/tasks. Completion rechecks current authority and the assigned decision; exact replay preserves the original event and endpoint snapshot. Processing remains distinct from verification completion and tenant action. The complete synthetic API/worker journey is covered by L-02; production runner selection remains outside that proof.
+
+L-03 connects tenant and subject cancellation plus automatic expiry. Tenant cancellation requires `verification_sessions:cancel`; subject cancellation uses only the verification bound to a current signed capture credential. Both require an expected version and principal-scoped idempotency key, returning the original cancellation receipt on an authorised exact retry within retention. Fresh cancellation at or after the immutable deadline conflicts; the worker records expiry through a tenant-scoped, serializable Headgate effect. Durable bounded discovery runs at startup and on periodic sweeps, including deadlines elapsed during downtime. Completion, cancellation and expiry compete on the parent session and preserve one terminal transition with atomic audit/outbox effects. Upload initiation/claim and accepted evidence, check and policy effects cannot advance stopped sessions. Cancellation is distinct from consent withdrawal, deletion and an identity outcome. Resumption, review routing, external-provider reconciliation and any separately persisted created-phase expiry retain their own unresolved contracts.
+
+D-027 separates subject outcome observation from capture authority. Verification and recapture creation atomically issue one deterministic `idq_out_v1` outcome bearer backed by a tenant-scoped `otk_` credential row and a purpose-specific HMAC keyring. The token binds its record, tenant, verification, key version, issuance and expiry, is independently revocable, and authenticates only the closed subject-safe outcome projection. It cannot load or exercise capture authority or call authority-response, evidence, cancellation, realtime, decision-detail or tenant operations. Outcome expiry is the immutable session expiry plus a bounded post-expiry interval: 24 hours by default, 168 hours as the default deployment maximum and 30 days as the hard cap. The tenant backend delivers capture and outcome credentials separately at trusted bootstrap; neither belongs in URLs, HTML, persistent browser storage, analytics or logs. Capture tokens remain bounded by session expiry and are never accepted after expiry. No v1 outcome renewal exists; an eligible recapture capture-token renewal reconstructs the existing child outcome credential. Core, rather than browser time, remains the sole source of an `expired` state.
+
 ## 13. End-to-end verification flow
 
 ```mermaid
@@ -806,7 +844,7 @@ sequenceDiagram
     participant Policy as Policy engine
 
     App->>Core: Create verification
-    Core-->>App: Session and capture token
+    Core-->>App: Session, capture token, and outcome token
     App->>Vault: Direct encrypted evidence upload
     Vault-->>Core: Evidence ready event
     Core->>Intel: Run permitted checks
@@ -921,7 +959,9 @@ The core uses platform-defined assurance dimensions. An assurance profile is a t
 
 Jurisdiction packs may map profiles to frameworks such as NIST Identity Assurance Levels, eID schemes, or sector-specific customer classifications. A mapping is a versioned record containing the source framework, target profile, jurisdiction and use case, evidence constraints, rationale, known gaps, approver, and review date.
 
-An assurance profile is versioned and immutable after use.
+An assurance profile is versioned and immutable after use. The initial Core implementation makes published revisions immutable immediately and pins the exact requested revision at session creation through a version-checked future-session policy assignment. Typed achieved assurance is evaluated independently per dimension using recorded source times and conservative source independence; missing assurance prevents verified completion. Recapture preserves the parent request, and review does not refresh old evidence. Existing unprofiled decisions retain their historical policy label without gaining typed assurance.
+
+The implementation's additive canonical context binds applicable identity/evidence/check/review references, configured authority/region/transfer-policy context, and exact profile/threshold/provider/model/runtime/preprocessing/configuration/policy/evaluator versions. It preserves legacy canonical bytes. Ordinary reports expose requested and achieved summaries; detailed references remain subject to export permission. Production defaults, framework mappings, and biometric calibration remain unresolved. The authoritative initial API and package details are recorded in repository/package section 6.7 and the [assurance operational guide](assurance-profiles-v0.1.md).
 
 ```yaml
 name: global-individual-substantial
@@ -1093,16 +1133,20 @@ D-014 selects mobile-first regulated African fintechs onboarding adult individua
 
 Smile ID and Dojah are the first real adapters. Both run out of process through the public provider-runner contract, consume tenant-owned credential references, declare exact sandbox or production account mode, and pin their country, product, region, retention, callback, deletion, and result restrictions. Neither is hard-coded as the primary provider. A tenant may select either, and deterministic policy may use the other only when it exposes equivalent semantics and the active processing authority permits that provider, recipient, region, and purpose. Registry lookup, document verification, and biometric verification are distinct capabilities; fallback cannot silently replace one with another.
 
+**Implementation update — 7 September 2026:** PR-01 connects one explicit Dojah document-analysis route through the authenticated runner, controlled evidence gateway and PostgreSQL-backed request/dispatch receipts to policy and signed-webhook completion. Local fixtures prove the integrated path; official sandbox, production account, regional/recipient and deletion evidence remain outstanding. This does not select a universal primary, enable automatic fallback or establish identity assurance from document quality alone. See the [runtime guide](provider-runtime-v0.1.md) for exact deployment and ambiguous-call recovery limits.
+
+**PR-02 extension — 7 September 2026:** Smile ID document-biometric execution now uses one initial submission followed by durable status-only polling. Atomic PostgreSQL dispatch ownership, immutable provider identity and fenced leases prevent re-upload or duplicate submission after restart or ambiguous acknowledgement. The optional runner `Advance` RPC separates pending progress from terminal results. Two controlled JPEG grants and pinned opaque country/document-type references support the bounded route. Static selfies do not establish liveness; unresolved jobs become operational timeouts rather than negative evidence. Reviewed origin/path checks and DNS-pinned HTTPS constrain upload destinations. Local fixtures prove restart through policy and signed-webhook completion; official-account, deletion and production approval gates remain open.
+
 Provider contract v1.1 carries structured subject values only as bounded, uniquely named opaque input references declared by the pinned capability. An input-only authority lookup needs no dummy evidence grant, and a request declaring contract v1.0 cannot carry the additive field. The isolated runner resolves each value for one purpose-bound attempt; values do not enter the public request envelope, task payload, logs, traces, audit payloads, or manifests. This is additive within provider contract major version 1 and is carried by the Protobuf runner transport without exposing provider-native types.
 
 The shared acquisition baseline is live selfie, liveness or presentation-attack detection, one-to-one face comparison, national identity document, passport and driving-licence capture, document front/back handling, capture-quality checks, and MRZ or barcode parsing where the exact pack and provider declare support. The initial authority-backed identifiers are:
 
-| Country | Authority-backed v1 identifiers | Initial image-document pack |
-| --- | --- | --- |
-| Nigeria | NIN/VNIN; BVN only for an explicitly banking-compatible tenant profile | NIN slip or national ID, passport, driving licence |
-| Ghana | Ghana Card | Ghana Card, passport, driving licence |
-| Kenya | National ID or passport | National ID, passport, driving licence |
-| South Africa | National ID | National ID or green book, passport, driving licence |
+| Country      | Authority-backed v1 identifiers                                        | Initial image-document pack                          |
+| ------------ | ---------------------------------------------------------------------- | ---------------------------------------------------- |
+| Nigeria      | NIN/VNIN; BVN only for an explicitly banking-compatible tenant profile | NIN slip or national ID, passport, driving licence   |
+| Ghana        | Ghana Card                                                             | Ghana Card, passport, driving licence                |
+| Kenya        | National ID or passport                                                | National ID, passport, driving licence               |
+| South Africa | National ID                                                            | National ID or green book, passport, driving licence |
 
 Every item still requires a tested immutable pack revision. A provider's broader catalogue is not automatically supported by Idenqa. Resident, refugee, alien, voter, tax, phone, bank-account, or other identifiers remain `provider_only` or unsupported until explicitly packed and tested. NFC, voice, KYB, AML, address verification, non-English localisation, and additional countries are deferred. Production enablement separately requires provider agreements, tenant credentials, data-residency and cross-border review, processing-authority compatibility, representative test evidence, and deletion/reconciliation validation.
 
@@ -1234,6 +1278,10 @@ It may not independently:
 
 ### 18.4 Agent proposal contract
 
+`SignalModel` and `ProposalModel` are separate contracts with different authority. `SignalModel` (`evidence references -> scored signals -> deterministic policy`) is the selected predictive contract in `contracts/model/v1`. `ProposalModel` (`redacted bounded context -> non-authoritative proposal -> guardrails/human approval -> deterministic command`) is **Proposed** for Milestone 6 and must not be conflated with signal execution.
+
+**Baseline shape (selected intent):**
+
 ```go
 type AgentProposal struct {
     ProposalID     string
@@ -1250,27 +1298,68 @@ type AgentProposal struct {
 }
 ```
 
-An agent proposal is accepted only after:
+**Proposed v1 refinement (not Selected — implements gap-audit section 3, repository/package section 6.14):**
 
-1. Output schema validation
-2. Evidence-reference validation
+```go
+// Proposed — contracts/proposal/v1
+type AgentProposal struct {
+    ProposalID     string            // tenant-scoped, immutable, stable idempotency key
+    TenantID       string
+    VerificationID string
+    Mode           AutomationMode    // pinned at session creation
+    Actions        []BoundedAction   // closed allow-list; kind + JSON-Schema args
+    EvidenceRefs   []string          // references only; raw bytes never in envelope
+    SignalRefs     []string
+    ModelID        string            // pinned
+    ModelVersion   string            // pinned
+    PromptVersion  string            // pinned
+    ContextDigest  string            // hash of redacted BoundedContext
+    ExpiresAt      time.Time
+    Supersedes     *string           // optional predecessor ProposalID
+    Status         ProposalStatus    // pending|approved|rejected|expired|cancelled|superseded
+    CreatedAt      time.Time
+}
+
+type BoundedAction struct {
+    Kind string          `json:"kind"` // allow-list: suggest_route, summarize_case, draft_policy_diff, ...
+    Args json.RawMessage `json:"args"` // validated against per-Kind closed schema
+}
+
+type AcceptedCommand struct {
+    CommandID  string    // deterministic, versioned, replayable without re-querying model
+    ProposalID string
+    Kind       string
+    Args       json.RawMessage // bounded, canonical
+    CreatedAt  time.Time
+}
+```
+
+Properties: immutable after creation; expiry, cancellation, supersession, and rejection are append-only state transitions with `expected_version` and UTC microsecond `occurred_at` (same pattern as section 12 lifecycle). `AgentProposal` never carries raw evidence, biometric templates, national identifier values, credentials, or provider payloads — only validated references. `AcceptedCommand` is recorded separately from the model response and is the only replay source.
+
+An agent proposal is accepted only after **deterministic, fail-closed guardrails** (Proposed):
+
+1. Output schema validation (closed JSON Schema per `kind`; unknown `kind`/fields, oversized `args`, duplicate keys fail closed)
+2. Evidence/signal-reference validation (must resolve to session-owned immutable observations/signals)
 3. Tool and action allow-list validation
-4. Tenant-policy validation
-5. Jurisdiction and residency validation
+4. Tenant-policy validation (workflow's configured mode permits the `kind`)
+5. Jurisdiction, residency, and processing-authority validation (no cross-region transfer, no `lawful_basis` selection, no consent override)
 6. Cost and rate-limit validation
-7. Human approval when required
+7. Raw-evidence/sensitive-context restriction (reject if context contains raw bytes, PII values, or credentials)
+8. Human approval when `kind` is high-risk or when `human_required` mode is set
+9. Deterministic execution of the stored `AcceptedCommand` (direct tool execution by the model is prohibited)
+10. Immutable audit linkage `proposal -> validation -> approval -> command -> effect -> result`
 
-The executor records the accepted proposal and executes a deterministic command. Replay uses the stored accepted command rather than asking the model to recreate it.
+The executor records the accepted proposal and executes a deterministic command. Replay uses the stored accepted command rather than asking the model to recreate it. No accepted AI action may verify/reject a subject, grant evidence access, activate a policy, select a lawful basis, override consent, change retention, transfer evidence across regions, confirm a sanctions match, or change biometric thresholds — enforced by guardrails, not by model instruction.
 
 ### 18.5 Automation modes
 
-Each workflow declares an AI authority level:
+Each workflow declares an AI authority level. **Proposed pinning:** tenant and workflow configuration store an immutable versioned record (`tenant_id, workflow, mode, allow_list_version, cost_limits, prompt/model pins`) that is pinned at session creation and travels with the session (mirrs assurance-profile pinning in section 15). Unknown mode or `kind` fails closed with `rejected` and audit. Default for version one is `disabled` while AI remains off.
 
-- **disabled:** no non-deterministic AI
-- **assist:** summarisation and explanation only
-- **recommend:** proposals require deterministic or human approval
-- **guardrailed_auto:** allow-listed proposals may execute after deterministic approval
-- **human_required:** AI assists but a human must decide
+- **disabled:** no non-deterministic AI — Model is not invoked (selected default for v1)
+- **assist:** summarisation and explanation only — proposals visible in review workspace, no auto-accept (Proposed)
+- **recommend:** proposals require deterministic or human approval — guardrail-passed proposals surfaced as one-click approvals (Proposed)
+- **guardrailed_auto:** allow-listed proposals may execute after deterministic approval — only low-risk `kinds` may auto-accept after guardrail pass; else escalate (Proposed)
+- **human_required:** AI assists but a human must decide — all proposals require explicit human approval before an `AcceptedCommand` is recorded (Proposed)
 
 ### 18.6 Natural-language policy compiler
 
@@ -1291,6 +1380,10 @@ The compiler produces an inactive policy draft. Before activation it must:
 - Multimodal processing of raw evidence requires an approved model, region, purpose, and retention policy.
 - Prompts and responses containing sensitive data inherit evidence classification.
 - Customer data is excluded from training unless separately and explicitly authorised.
+
+### 18.8 Proposed persistence and operational boundaries (Proposed)
+
+PostgreSQL is the authoritative store for proposals and accepted commands (forced RLS, tenant predicates, append-only transitions, stable `proposal_id` event identity, and audit-chain linkage). `platform/task` (Headgate) is the only queue adapter for proposal intents where durable scheduling is required; `internal/proposal` must not import HTTP routers, SQL drivers, task-library types, telemetry SDKs, object-store SDKs, KMS SDKs, or cloud-provider SDKs, and must own narrow consumer interfaces like other bounded contexts (see repository/package section 6.14). Prompt registry, generative-model registry, impact assessments, evaluation/monitoring, and cost/rate records are Proposed and sequenced after the guardrail foundation. Production KMS/HSM selection for any prompt/response wrapping remains TBD and must not be selected by this draft.
 
 ---
 
@@ -1489,6 +1582,10 @@ The graph stores tokenised nodes and evidence-backed relationships:
 
 AI may develop hypotheses from the graph, but graph evidence and deterministic policy control any action.
 
+### 21.4 Implemented tenant-local baseline
+
+The initial baseline is implemented in `internal/fraud` and its PostgreSQL adapter. The user selected single-key `fraud:configure` activation with version checks/audit and exact trusted-template portrait reuse. Evidence-backed tenant/region tokens, current-purpose/authority guards, twelve deterministic no-risk signals, correlation deduplication, immutable receipts and non-authoritative hypotheses feed the policy source inside one database snapshot. Missing inputs remain inconclusive; evidence deletion and hold-aware expiry remove correlation material. Public API and TypeScript clients provide tenant operations without Console or Cloud. The repository/package draft section 6.6.1 and [tenant fraud and risk v0.1](tenant-fraud-risk-v0.1.md) specify exact counting, provenance and operational bounds. Production source/model acceptance, portrait similarity and cross-tenant intelligence are not claimed by this implementation.
+
 ---
 
 ## 22. Workflow and policy engine
@@ -1546,11 +1643,11 @@ The API process assigns its validated deployment region and accepts the tenant-s
 
 The durable authoring boundary is `policy.author` v1 on the verification queue. Its tenant-partitioned, decision-idempotent payload pins only the decision, verification and optional predecessor identifiers plus exact UTC evaluation and decision times; authoritative facts and policy meaning are reloaded from PostgreSQL and raw evidence never enters the task payload. The production trigger creates the versioned intent after capture completion when every required verification check is terminal. Rediscovery uses a stable decision identity and readiness time, so at-least-once scheduling remains an exact idempotent replay. A transactional handler performs authoritative loading and deterministic evaluation before opening the effect transaction. It then rechecks exact replay, appends the immutable decision and rereads its canonical meaning inside Headgate's fence-verified `job.Once` transaction, so a lost completion fence rolls the decision effect back. Existing exact decisions bypass evaluation, concurrent exact creation is reproducible, semantic poison quarantines, and retryable failures remain bounded.
 
-Policy simulation is an effect-free path over supplied synthetic inputs, not a production-state preview. It accepts one byte-exact canonical policy document and explicit reference-only tenant, verification, authority, subject-response, region, fact and evaluation-time values. The document compiles under the selected evaluator without registration or activation, then uses the same immutable snapshot, owned evaluator output and deterministic resolution contracts as production. Simulation may return terminal or non-terminal directives but never creates a decision, changes workflow state or contacts a repository, provider, model, network, filesystem or clock. A separately versioned bounded bundle carries canonical policy, snapshot and evaluation meaning with nested and envelope digests; offline restoration re-enters owned snapshot and evaluation validation without CEL or PostgreSQL. Its safe report omits facts, source references, reason codes, expressions and canonical input bytes. The internal simulator and bundle are implemented, while the future public policy-testkit module location and conformance API remain unresolved.
+Policy simulation is an effect-free path over supplied synthetic inputs, not a production-state preview. It accepts one byte-exact canonical policy document and explicit reference-only tenant, verification, authority, subject-response, region, fact and evaluation-time values. The document compiles under the selected evaluator without registration or activation, then uses the same immutable snapshot, owned evaluator output and deterministic resolution contracts as production. Simulation may return terminal or non-terminal directives but never creates a decision, changes workflow state or contacts a repository, provider, model, network, filesystem or clock. A separately versioned bounded bundle carries canonical policy, snapshot and evaluation meaning with nested and envelope digests; offline restoration re-enters owned snapshot and evaluation validation without CEL or PostgreSQL. Its safe report omits facts, source references, reason codes, expressions and canonical input bytes. The internal simulator and bundle are implemented. The public engine conformance boundary is selected and implemented as root-module `conformance/policy`; public simulation transport and CLI commands remain separate gaps.
 
-The internal scenario-suite foundation layers bounded named examples over that simulator without changing its authority. At most 256 unique scenarios run sequentially in canonical name order. Expected requirement results are resolved against each synthetic snapshot through the same owned production resolver, so an expectation cannot invent a second directive-precedence model. Mismatches remain safe report data and are all retained; malformed meaning, cancellation and execution failures fail the run. Each actual result remains available as a self-checking simulation bundle, while the order-independent suite report contains only safe simulation summaries and exact actual/expected evaluation digests. It excludes facts, provenance, expressions, requirement details, reasons and canonical policy bytes. This does not select the future public policy-testkit package or conformance API.
+The internal scenario-suite foundation layers bounded named examples over that simulator without changing its authority. At most 256 unique scenarios run sequentially in canonical name order. Expected requirement results are resolved against each synthetic snapshot through the same owned production resolver, so an expectation cannot invent a second directive-precedence model. Mismatches remain safe report data and are all retained; malformed meaning, cancellation and execution failures fail the run. Each actual result remains available as a self-checking simulation bundle, while the order-independent suite report contains only safe simulation summaries and exact actual/expected evaluation digests. It excludes facts, provenance, expressions, requirement details, reasons and canonical policy bytes. This scenario foundation remains distinct from the subsequently selected `conformance/policy` engine boundary and does not expose public simulation or regression commands.
 
-Read-only catalog inspection is a separate internal application seam, not policy administration. Revision pages contain exact policy and evaluator identity plus registration time; activation-history pages additionally contain the monotonic version, selected and previous revision, actor and activation time. Both are metadata-only, newest first, bounded to 100 returned items and use exclusive numeric boundaries internally. PostgreSQL forces tenant scope in read-only transactions, does not select canonical policy bytes, and validates durable identity, versions, timestamps and strict ordering before returning. Cross-tenant reads produce empty pages. Public cursor encoding, authorisation scopes, HTTP or CLI presentation, activation approval, rollback treatment and Console behaviour remain unresolved.
+Read-only catalog inspection is a separate internal application seam, not policy administration. Revision pages contain exact policy and evaluator identity plus registration time; activation-history pages additionally contain the monotonic version, selected and previous revision, actor and activation time. Both are metadata-only, newest first, bounded to 100 returned items and use exclusive numeric boundaries internally. PostgreSQL forces tenant scope in read-only transactions, does not select canonical policy bytes, and validates durable identity, versions, timestamps and strict ordering before returning. Cross-tenant reads produce empty pages. P-01 exposes this seam through signed public cursors, API, TypeScript and CLI with the permission and rollback contract in section 29.10. Console behaviour remains separate.
 
 Every requirement evaluates to exactly one of:
 
@@ -1702,6 +1799,22 @@ A reviewer supplies an immutable finding and selects from policy-permitted resol
 
 Reviewers cannot bypass processing authority, consent, residency, tenant isolation, evidence integrity, or prohibited-processing controls. Policy activators cannot approve affected exceptional cases alone when dual control applies; reviewers cannot approve their own access escalation; and platform support requires a time-bound delegated tenant grant to act as a reviewer.
 
+**Selected — 7 September 2026:** Initial recapture uses a new verification session linked to the review case. The child requires fresh subject authorization and reruns its configured checks; original evidence, findings and decisions remain immutable. In-place capture rounds are deferred. Child creation and linkage must commit atomically with audit and optimistic/idempotent controls. Reviewer findings remain policy inputs, and child completion does not itself supersede an original decision. The implemented authority prerequisite and outstanding workflow gates are recorded in [manual review and linked recapture](manual-review-recapture-v0.1.md).
+
+**Implemented routing increment:** A nonterminal `route_manual_review` result now atomically stores canonical evaluation provenance, an immutable routing receipt, its review case and the manual-review lifecycle transition with audit/outbox. It creates no terminal identity decision. Replay restores saved inputs and the original case/transition. Exact policy revision/digest mappings supply initial certification and oversight; accepted findings now trigger durable `review.evaluate` work against the original pinned policy and facts plus `review.resolution`. Explicit permitted resolution/reason pairs are immutable per case, and conflicting dual findings escalate without evaluation. The fenced effect persists an immutable receipt; terminal results use the shared decision/completion transaction and nonterminal results retain manual review. Current authority and case-bound grant checks guard acceptance, and exact replay restores saved provenance. The full public review-policy schema, just-in-time evidence grant issuance, escalation resolution and consequential follow-up actions remain unresolved implementation work.
+
+**Linked recapture increment — 7 September 2026:** The user selected exact parent policy and capture-profile revisions for the child. `review` now authorizes and records linked creation after a persisted `request_input` evaluation; `verification/postgres` creates a fresh collecting session in the same transaction. Migration 41 enforces immutable tenant-scoped case/version uniqueness. Separate `reviews.recapture` idempotency and durable linkage restore the same child; policy loading preserves its parent revision while using fresh child observations. The internal route requires both review-write and session-create scopes plus current certified operator authority. Rollback, replay, fresh-child state, pinned inputs and transport guards have synthetic boundary tests. Generated public contracts, complete subject-facing handoff and correction/supersession remain pending; subsequent increments below implement Core credential recovery and explicit follow-up. See [manual review and linked recapture](manual-review-recapture-v0.1.md).
+
+**Selected child-outcome behavior and recovery increment — 7 September 2026:** The child's committed outcome is attached to its original case for authorized follow-up; it does not automatically re-evaluate the parent. A reference-only read projection follows immutable linkage to child completion and exposes current token/expiry metadata without bearer credentials. The initial expired-token renewal increment supported only sessions before any subject response or upload intent, with current reviewer authority, child/session locks, original deadline limits, irreversible old-token revocation, distinct idempotency and atomic audit. Creation/renewal responses include handoff expiry metadata. Synthetic tests cover renewal rollback/replay, stale-token denial and child-outcome visibility with unchanged parent state. Full subject-facing handoff, generated contracts and correction/supersession remain pending; O-03 is still in progress. See [manual review and linked recapture](manual-review-recapture-v0.1.md).
+
+**Selected acknowledgement increment — 7 September 2026:** The first follow-up action records an audited acknowledgement of the child's exact completed outcome, leaving parent state and decisions unchanged. Migration 42 binds an immutable receipt to tenant/case/version, exact child/decision, stable operator and API-key actor. The internal acknowledgement route requires review-write scope, current `reviews:resolve` authority and case certification; closed request bodies cannot assert reviewer identity. Receipt, audit and distinct idempotency commit atomically, and retries preserve original attribution. Status clears the follow-up flag for the acknowledged outcome. Synthetic tests cover denial, rollback, replay, immutability and absence of additional workflow effects. Correction/supersession remains pending; the following increment implements Core progress-preserving recovery. See [manual review and linked recapture](manual-review-recapture-v0.1.md).
+
+**Selected progress-preserving recovery — 8 September 2026:** Replacement credentials continue the same child with fresh subject authorization. Migration 44 records immutable credential lineage, retains accepted artefacts with original provenance and marks unfinished uploads abandoned. Recovery atomically revokes the old credential and fences the session; fresh authorization is required for upload and processing. REST and durable progress include explicitly retained artefacts, including repeated recovery. Original deadlines and reconciliation duties remain intact. This implements Core recovery; subject-facing visual and interaction acceptance remains pending. See [manual review and linked recapture](manual-review-recapture-v0.1.md).
+
+**Implemented explicit recapture follow-up — 8 September 2026:** A reviewer with current `reviews:resolve` authority may request parent policy re-evaluation after acknowledging the exact child decision. Migration 45 atomically records immutable acknowledgement-bound lineage, a new case version, audit, idempotency and durable evaluation intent. The existing fenced worker preserves the parent’s pinned policy and original fact timestamps and adds `review.recapture` from the child’s immutable outcome. Only policy may complete the parent; nonterminal results keep manual review. Child completion does not automatically schedule evaluation. Controlled evidence access, escalation/correction/supersession, generated public contracts and accepted subject-facing UI remain pending. See [manual review and linked recapture](manual-review-recapture-v0.1.md).
+
+**Review operations increment — 8 September 2026:** Core now includes `reviews:admin` versioned tenant-attested operator administration, pinned review settings, bounded queue/priority/SLA/sampling operations, controlled case-bound redacted evidence display, independent supervisor arbitration, policy-authored correction successors and appeal withdrawal/expiry/history. Public OpenAPI/TypeScript operations and Capture Web linked-session handoff are implemented. External certificate verification and accepted composed reviewer/subject journeys remain outstanding; O-03 stays **In progress**. No new tests were requested for this increment. See [manual review and linked recapture](manual-review-recapture-v0.1.md#6-review-operations-and-public-integration) for exact boundaries and migration permissions.
+
 ### 23.3 Review copilot
 
 The copilot may:
@@ -1786,7 +1899,7 @@ Customer-managed key unavailability fails closed for new decryption and sensitiv
 - Short-lived capture tokens for applicants
 - SSO and SCIM for operator access
 - RBAC plus attribute-based restrictions
-- Step-up authentication for raw evidence and policy activation
+- Step-up authentication for raw evidence and future operator policy-activation surfaces; the selected initial-core tenant API-key exception is specified in section 29.10.
 - Just-in-time privilege for administrative access
 
 Principal types include tenant services, applicant capture sessions, tenant operators and reviewers, platform operators and support personnel, provider and model workloads, internal services, and automated retention, deletion, and reconciliation actors.
@@ -2113,11 +2226,11 @@ The object-store contract also supports bounded tenant-prefix inventory for resi
 
 ### 28.3 Headgate background execution
 
-Headgate v0.1.2 is the selected production job system. Idenqa integrates its Go SDK and PostgreSQL driver behind the owned `platform/task` port. Headgate uses PostgreSQL for policy admission, scheduling, claims, leases, attempts, and worker execution state; the domain remains authoritative for verification and other business state.
+Headgate v0.1.10 is the selected production job system. Idenqa integrates its Go SDK and PostgreSQL driver behind the owned `platform/task` port. Headgate uses PostgreSQL for policy admission, scheduling, claims, leases, attempts, and worker execution state; the domain remains authoritative for verification and other business state.
 
 Application state and resulting job enqueueing normally commit in one PostgreSQL transaction through Headgate's supported pgx transaction adapter. A workflow whose authoritative row is itself a durable, bounded discovery source may instead use stable reconciliation-backed submission, as selected for privacy deletion; a crash cannot erase the source intent and duplicate submissions converge on the versioned idempotency key. Idenqa does not write Headgate's internal tables directly. Job payloads are versioned, contain opaque references rather than evidence bytes or identity claims, and are handled at least once with idempotent effects and Idenqa-owned fencing on consequential commits. Headgate types do not cross into domain packages, public contracts, or SDKs.
 
-Headgate's MySQL and Redis backends, Rust SDK, workflow module, UI, and optional integrations are not selected implicitly. The selected production layout uses a dedicated `headgate` schema in the same PostgreSQL database, a stable deployment-unique installation identity, explicit release-pinned migrations outside runtime startup, and `verification`, `evidence`, `delivery`, and `maintenance` queues and rate classes. The explicit `idenqa migrate headgate` path uses Headgate's coordinated v0.1.2 migration module; it is migration-only and does not introduce another execution backend. Both API and worker validate compatibility through their caller-owned pool and never migrate at startup. Deployment grants the restricted runtime role `USAGE` and the required Headgate table and sequence privileges without granting schema ownership or migration authority. Tenant work is partitioned by tenant ID; installation-wide maintenance uses an explicit system partition. Every owned task declares bounded retention. Private queue carrier kinds reconcile Headgate's compile-time registration with Idenqa's runtime exact-name/version registry; Idenqa identity, idempotency key, retry policy, and exact version remain durable metadata, while Headgate types remain confined to the adapter. Headgate lifecycle events connect to Idenqa-owned telemetry hooks and process-owned OpenTelemetry providers; Headgate does not install exporters or global providers. Process concurrency, fleet rate and burst, per-tenant partition concurrency, leases, polling, crash limits, fallback retry base and cap, graceful shutdown, and the memory guard are validated deployment configuration. Saturation queues work. Headgate v0.1.2 does not invoke its declared retry-policy hook, so the Idenqa Store decorator derives exact task-specific retry delays from the claimed durable envelope and supplies them through Headgate's supported Ack delay override. The PostgreSQL production adapter passes the portable owned conformance contract plus crash/replacement tests. Retention durations for task types not yet introduced remain owned by their future task definitions.
+Headgate's MySQL and Redis backends, Rust SDK, workflow module, UI, and optional integrations are not selected implicitly. The selected production layout uses a dedicated `headgate` schema in the same PostgreSQL database, a stable deployment-unique installation identity, explicit release-pinned migrations outside runtime startup, and `verification`, `evidence`, `delivery`, and `maintenance` queues and rate classes. The explicit `idenqa migrate headgate` path uses Headgate's coordinated v0.1.10 migration module; it is migration-only and does not introduce another execution backend. Both API and worker validate compatibility through their caller-owned pool and never migrate at startup. Deployment grants the restricted runtime role `USAGE` and the required Headgate table and sequence privileges without granting schema ownership or migration authority. Tenant work is partitioned by tenant ID; installation-wide maintenance uses an explicit system partition. Every owned task declares bounded retention. Private queue carrier kinds reconcile Headgate's compile-time registration with Idenqa's runtime exact-name/version registry; Idenqa identity, idempotency key, retry policy, and exact version remain durable metadata, while Headgate types remain confined to the adapter. Headgate lifecycle events connect to Idenqa-owned telemetry hooks and process-owned OpenTelemetry providers; Headgate does not install exporters or global providers. Process concurrency, fleet rate and burst, per-tenant partition concurrency, leases, polling, crash limits, fallback retry base and cap, graceful shutdown, and the memory guard are validated deployment configuration. Saturation queues work. Headgate v0.1.10 does not invoke its declared retry-policy hook, so the Idenqa Store decorator derives exact task-specific retry delays from the claimed durable envelope and supplies them through Headgate's supported Ack delay override. The PostgreSQL production adapter passes the portable owned conformance contract plus crash/replacement tests. Retention durations for task types not yet introduced remain owned by their future task definitions.
 
 ### 28.4 Redis
 
@@ -2170,7 +2283,7 @@ The system promises at-least-once execution with idempotent effects. It does not
 
 ### 29.2 Authentication
 
-Server integrations use scoped API credentials or OAuth client credentials. Applicant-facing calls use verification-scoped short-lived tokens that cannot enumerate subjects or access unrelated evidence.
+Server integrations use scoped API credentials or OAuth client credentials. Subject capture calls use a verification-scoped short-lived capture token that cannot enumerate subjects or access unrelated evidence. The subject-safe outcome read uses the separate D-027 outcome token, which has an independently bounded post-expiry lifetime and no capture powers. The two bearer formats, signing domains, durable records and middleware are not interchangeable.
 
 ### 29.3 Core endpoints
 
@@ -2187,6 +2300,8 @@ POST   /v1/verifications/{verification_id}/resume
 GET    /v1/verifications/{verification_id}/decisions
 POST   /v1/verifications/{verification_id}/reconsiderations
 GET    /v1/decisions/{decision_id}
+
+GET    /v1/capture/outcome
 
 POST   /v1/evidence/upload-intents
 GET    /v1/evidence/{evidence_id}
@@ -2283,6 +2398,7 @@ Content-Type: application/json
     "experience_version": 7,
     "locale": "en-GB"
   },
+  "outcome_token_expires_at": "2026-08-28T17:30:00Z",
   "created_at": "2026-08-26T17:30:00Z",
   "expires_at": "2026-08-27T17:30:00Z"
 }
@@ -2347,6 +2463,16 @@ Provider-specific errors are mapped to stable platform codes while raw provider 
 
 ---
 
+### 29.10 Initial-core policy administration
+
+**Selected and implemented — P-01, 6 September 2026:** A tenant can create an inactive policy, validate without effects, append immutable revisions, retrieve source and inspect metadata/history, activate, and roll back through ten core API operations and equivalent TypeScript/CLI methods. `policies:read`, `policies:write` and `policies:activate` are separate application permissions. One authorised API key with the dedicated activation permission, expected activation version and audited reason is sufficient for initial-core activation or rollback; a second approver and step-up are not required. This exception does not authorise AI activation or define future operator/Console approval workflows.
+
+The server assigns policy identity and revision 1. Append requires `expected_revision` and creates exactly the next revision. Activate/rollback require an explicit target, `expected_version` (zero for first activation) and a non-sensitive reason. Rollback selects a previously activated revision and appends history; it never rewrites a revision or old activation. All mutations require idempotency and commit the receipt, reference-only audit/outbox and state atomically under tenant scoping and forced RLS. Validation does not persist or activate. Signed bounded cursors protect metadata pagination; only explicit revision retrieval returns source. The authoritative [API conventions](../contracts/api/openapi/v1/conventions.md#policy-administration) define retention, input and response rules.
+
+Activation may affect sessions that have not yet authored a decision snapshot: creation pins policy ID, while snapshot authorship pins the active revision. Existing snapshots and decisions retain exact meaning. Public simulation, diff/regression commands, production check planning and remaining lifecycle branches are outside P-01.
+
+---
+
 ## 30. Webhooks
 
 ### 30.1 Event types
@@ -2393,7 +2519,7 @@ Provider-specific errors are mapped to stable platform codes while raw provider 
 - Delivery logs without sensitive payloads
 - Signing-key identifiers, rotation, and overlapping verification windows
 
-The selected v1 implementation stores endpoint configuration, KMS-wrapped append-only signing-secret versions, delivery state, replay lineage, and append-only attempt diagnostics under forced tenant row-level security. `webhooks:configure` and `webhooks:replay` are separate application permissions. `webhook.deliver` v1 is reference-only Headgate work with eight bounded attempts, one-second-to-one-hour backoff with deterministic jitter, and 30-day successful metadata retention. Each HTTPS attempt pins policy-approved public DNS answers, requires TLS 1.2 or newer, refuses redirects and unsafe address classes, and bounds response processing. Tenant receivers verify the timestamp, event ID, and exact body bytes using an active-plus-overlap secret set and durably deduplicate the signed event ID.
+The selected v1 implementation stores endpoint configuration, KMS-wrapped append-only signing-secret versions, delivery state, replay lineage, and append-only attempt diagnostics under forced tenant row-level security. `webhooks:configure` and `webhooks:replay` are separate application permissions. The `webhook.deliver` v2 task is the only registered delivery task and pins a delivery ID and logical callback attempt; pre-release development retains no v1 compatibility path. Eight callback attempts and the original 24-hour delivery window remain bounded independently of infrastructure retries. Each fenced effect commits bounded attempt diagnostics — including, when the receiver returned content, a sanitised response excerpt capped at 4096 bytes with a truncation flag — and any successor task together, then completes the old task. External HTTP may repeat across a crash; its signed event ID and body remain stable. Backoff preserves explicit Retry-After or uses deterministic 20% jitter, with 30-day successful task retention. Bounded PostgreSQL recovery discovery rotates its scheduling cursor past existing pending work; expired or disabled deliveries are finalised without HTTP. Each HTTPS attempt pins policy-approved public DNS answers, requires TLS 1.2 or newer, refuses redirects and unsafe address classes, and bounds response processing. Tenant receivers verify the timestamp, event ID, and exact body bytes using an active-plus-overlap secret set and durably deduplicate the signed event ID.
 
 ### 30.3 Event envelope
 
@@ -2415,6 +2541,23 @@ The selected v1 implementation stores endpoint configuration, KMS-wrapped append
 
 Webhook payloads contain resource references and safe summary fields. Customers retrieve authoritative details through the API.
 
+### 30.4 Public administration and inspection
+
+**Implemented — H-01, 6 September 2026:** Tenant backends can manage endpoints and inspect deliveries through the core API, TypeScript SDK and CLI. The application layer repeats the exact permission check; caller-supplied tenant identifiers are not authority.
+
+| Operation                   | Public route                                                  | Permission                             |
+| --------------------------- | ------------------------------------------------------------- | -------------------------------------- |
+| Create / list endpoints     | `POST` / `GET /v1/webhook-endpoints`                          | `webhooks:configure` / `webhooks:read` |
+| Get endpoint                | `GET /v1/webhook-endpoints/{endpointID}`                      | `webhooks:read`                        |
+| Rotate / disable endpoint   | `POST /v1/webhook-endpoints/{endpointID}/rotate` / `/disable` | `webhooks:configure`                   |
+| List endpoint deliveries    | `GET /v1/webhook-endpoints/{endpointID}/deliveries`           | `webhooks:read`                        |
+| Inspect delivery / attempts | `GET /v1/webhook-deliveries/{deliveryID}` / `/attempts`       | `webhooks:read`                        |
+| Replay exhausted delivery   | `POST /v1/webhook-deliveries/{deliveryID}/replay`             | `webhooks:replay`                      |
+
+Mutations require `Idempotency-Key`; rotation and disablement compare `expected_version`. Configuration/replay state, the safe command receipt, common audit and reference-only outbox commit atomically with any replay task. Create/rotate reveal the unpadded Base64URL signing secret only in the first successful response. Their retries return the original metadata with `replayed: true` and no signing secret. A lost secret requires another authorised rotation after any active overlap; a rotation cannot truncate the existing previous-key overlap. Inspection is bounded and excludes keys, event payloads and signatures; attempt inspection returns only safe status metadata plus at most 4096 bytes of UTF-8-sanitised receiver response content with a truncation flag, treated as untrusted content. Cursors are signed and bound to tenant and collection scope.
+
+Manual replay creates a distinct delivery linked by `replay_of`, preserving the exact original body and signed event ID. It requires an exhausted source and enabled endpoint, starts a fresh bounded delivery window and retains event-ID deduplication at the receiver. The CLI writes display-once material only to a newly created owner-only file and requires confirmation for rotate, disable and replay. General subscriptions, event catalogue/schema evolution and scalable fanout remain separate gaps.
+
 ---
 
 ## 31. Idenqa Capture SDKs
@@ -2434,6 +2577,27 @@ SDK languages, native UI modules, and cross-platform wrappers may ship increment
 - Flutter plugin backed by the native iOS and Android SDKs
 - React Native module backed by the native iOS and Android SDKs
 - Server-driven API for custom interfaces
+
+#### 31.1.1 Open-source Capture Web experience contract
+
+The basic hosted or embeddable Capture Web application is a subject-facing product surface, not a visual dump of the capture-plan contract. Its safe default experience must be usable without Console, Cloud, tenant styling, or application-specific UI code. Development fixtures and conformance harnesses may expose internal state for testing, but they are not the product demo and do not satisfy this contract.
+
+The default journey must:
+
+- use a mobile-first, responsive, single-column layout and present one primary task per screen;
+- introduce the verification clearly, present required notice or consent content, and show progress using subject-friendly step counts;
+- guide selfie and document capture with concise preparation, positioning, lighting, privacy, permission, and error-recovery instructions;
+- offer only acquisition methods permitted by the immutable session profile and actually supported by the integration and device, using a dedicated choice screen when policy allows a subject choice;
+- keep document front, document back, selfie, review, retake, upload, processing, interruption recovery, and completion as distinct understandable states;
+- provide camera framing, readiness feedback, capture, preview, retake, confirmation, upload progress, and actionable retry behaviour;
+- avoid domain and implementation vocabulary such as artefact, `any_of`, strategy, method identifier, grant, intent, or provider payload in subject-facing copy;
+- distinguish capture completion, verification processing, verification completion, and the tenant's later business decision;
+- ship with an intentional accessible safe-default visual system covering semantic colour, typography, spacing, radius, focus, touch targets, high contrast, reduced motion, light and dark modes, text expansion, right-to-left layout, and screen-reader semantics; and
+- allow versioned tenant branding and copy only through the portable experience contract, never through executable tenant code or overrides that weaken mandatory disclosures, accessibility, capture integrity, or verification policy.
+
+The selected screen grammar is `getting started -> required notice or consent -> optional server-authorised country/document choice -> preparation -> capture -> review (use or retake) -> processing -> authoritative success, targeted retry, or terminal failure`. Screens without a meaningful policy-approved subject choice are omitted. Country input that determines policy or profile belongs before session creation and cannot mutate an immutable session snapshot; any in-session choice must already be bounded by the authoritative contract. The shorter liveness branch is `preparation -> guided live capture -> processing -> authoritative outcome`. A capture failure must not be labelled a verification failure, and neither capture completion nor local adapter return may render a verification-success screen. CSS custom properties customize permitted local appearance only; the versioned experience configuration controls optional screen presence and order, structured copy, approved assets, targeting, and policy-bound presentation branches.
+
+Completion requires a reproducible journey against a running self-hosted Core using a real session plus separately delivered capture and outcome tokens with synthetic evidence. Unit tests, mocked browser tests, a hard-coded capture plan, narrow-screen overflow checks, or framework-host fixtures are necessary evidence but are not sufficient user-experience acceptance. The safe-default journey must also receive an explicit user-facing design and interaction review before the Capture Web milestone is marked complete.
 
 ### 31.2 Mobile SDK architecture
 
@@ -2713,7 +2877,7 @@ The technology choices are provisional and replaceable behind interfaces.
 - Go
 - Chi HTTP router
 - PostgreSQL
-- Headgate v0.1.2 with its Go SDK and PostgreSQL driver behind `platform/task`
+- Headgate v0.1.10 with its Go SDK and PostgreSQL driver behind `platform/task`
 - Redis only as an optional rate-limit or ephemeral-coordination accelerator, never authoritative workflow state
 - Transactional PostgreSQL outbox
 - S3-compatible object storage
@@ -2731,15 +2895,18 @@ The technology choices are provisional and replaceable behind interfaces.
 
 ### 33.3 Model runtime
 
-Model runners communicate through versioned gRPC or HTTP contracts and OCI containers. Implementations may use:
+**Selected — 7 September 2026:** ONNX Runtime is the initial inference runtime for locally hosted predictive models, behind the isolated model-runner boundary and the selected versioned gRPC transport. The Go core remains independent of ONNX types, native libraries and binding language. Model and runtime artefacts must be packaged and pinned for OCI deployment. **Selected first capability:** PAD / liveness. The reference implementation uses official Python ONNX Runtime 1.29.0 with CPUExecutionProvider in an isolated subprocess, pinned native/model/configuration semantics, scoped evidence redemption and durable Core requests/receipts. The initial passive-PAD output is evaluation-only and always inconclusive. A pinned YuNet/contextual crop path and offline, aggregate-only evaluation runner now exercise the same image pipeline; see [PAD evaluation](pad-evaluation-v0.1.md). An evaluation-only [face-matching reference](face-matching-runtime-v0.1.md) additionally binds document and selfie grants to one attempt, extracts one face from each and compares embeddings inside the native workload; only an inconclusive signal reaches policy. [Composed runtime](composed-verification-runtime-v0.1.md) now joins the document-provider route with PAD and matching under the same tenant/policy/profile, using atomic preparation and existing policy completion gates; duplicate signal sources are rejected. An accepted trained model, real-data acceptance of contextual preprocessing, capture/temporal provenance, quality thresholds, hardened OCI image and hardware/resource acceptance remain TBD in the repository/package draft; [runtime evidence](onnx-runtime-v0.1.md) does not establish production liveness.
 
-- ONNX Runtime
+The runtime choice does not select a model, training pipeline or assurance threshold. Production activation requires model-specific licence/provenance and evaluation evidence. The replaceable model boundary continues to permit alternative implementations where appropriate:
+
 - Python ML services
 - Hardware-accelerated commercial SDKs
 - Customer-supplied inference servers
 - On-device inference for safe capture checks
 
 The Go core does not depend on one ML language or framework.
+
+**Evaluation registry increment — 8 September 2026:** One tenant API key with `models:activate`, optimistic version checks and audit is **Selected** for evaluation deployment activation/retirement/rollback. Independent immutable model and threshold revisions bind execution provenance, configuration and declared regions; production approval remains unavailable. PostgreSQL atomically commits registry state, history, audit, outbox and replay receipts. Optional registry pins fence new preparation under the activation lock while preserving existing requests. The implementation includes per-dispatch readiness checks and experimental aggregate gates; it does not yet provide live rollout automation or hardened deployment. See [model registry](model-registry-v0.1.md).
 
 ### 33.4 Infrastructure
 
@@ -3179,6 +3346,10 @@ Every policy release includes:
 
 ### 37.8 Experience and accessibility tests
 
+- Complete mobile-first hosted and embedded journeys against a running self-hosted Core, not only mocked transport or hard-coded plan fixtures
+- One-primary-task-per-screen sequencing for introduction, notice or consent, method choice, preparation, capture, review, upload, recovery, processing, and completion
+- Subject-facing copy review proving that internal contract and orchestration terminology is absent
+- Camera framing, readiness, preview, retake, confirmation, permission denial, device unavailability, and policy-approved fallback
 - Golden rendering across supported Web, iOS, Android, Flutter, and React Native combinations
 - Light mode, dark mode, high contrast, large text, reduced motion, and right-to-left layout
 - Minimum contrast, touch target, focus order, screen-reader labels, and non-colour error meaning
@@ -3897,7 +4068,7 @@ The later Cloud module is ready for beta when:
 - Go and Chi reference backend
 - React and TanStack Start commercial dashboard
 - Apache License 2.0
-- Headgate v0.1.2 with its PostgreSQL backend behind the owned task boundary
+- Headgate v0.1.10 with its PostgreSQL backend behind the owned task boundary
 - Redis only as an optional rate-limit or ephemeral-coordination accelerator
 - Kubernetes and Helm production reference
 - OCI and gRPC model and adapter runners

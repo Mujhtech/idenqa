@@ -7,7 +7,7 @@ written threat-based justification.
 ## Build and supply chain
 
 - [ ] The tag is signed, protected, immutable, and matches the reviewed commit.
-- [ ] `make verify` passes from a clean checkout with Go 1.26.6 and the pinned Node/pnpm toolchain.
+- [ ] `make verify` passes from a clean checkout with Go 1.27.1 and the pinned Node/pnpm toolchain.
 - [ ] Generated OpenAPI, Protobuf, SQL, TypeScript, and lock files are unchanged.
 - [ ] Root, S3 adapter, S3 distribution, and SDK dependency graphs are verified.
 - [ ] Reachable vulnerability, SAST, secret, and licence-policy gates pass.
