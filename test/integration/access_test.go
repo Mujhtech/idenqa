@@ -223,7 +223,9 @@ func TestAPIKeyPersistenceIsolationAndLifecycle(t *testing.T) {
 		t.Fatalf("new tenant routes: %v", err)
 	}
 	router := chi.NewRouter()
-	tenantRoutes.Register(router)
+	router.Route(httpapi.VersionPrefix, func(versioned chi.Router) {
+		tenantRoutes.Register(versioned)
+	})
 	router.With(accessMiddleware.Authenticate, accessMiddleware.Require(access.PermissionTenantRead)).Get(
 		"/tenants/{tenantID}",
 		func(writer http.ResponseWriter, request *http.Request) {

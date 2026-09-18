@@ -179,9 +179,11 @@ func TestVerificationSessionAtomicSnapshotReplayAndIsolation(t *testing.T) {
 		t.Fatalf("Create(replay) error = %v", err)
 	}
 	if replayed.Session.ID().String() != created.Session.ID().String() ||
-		replayed.Credential.ID().String() != created.Credential.ID().String() {
-		t.Fatalf("replay identities = %s/%s, want %s/%s",
-			replayed.Session.ID(), replayed.Credential.ID(), created.Session.ID(), created.Credential.ID())
+		replayed.Credential.ID().String() != created.Credential.ID().String() ||
+		replayed.OutcomeCredential.ID().String() != created.OutcomeCredential.ID().String() {
+		t.Fatalf("replay identities = %s/%s/%s, want %s/%s/%s",
+			replayed.Session.ID(), replayed.Credential.ID(), replayed.OutcomeCredential.ID(),
+			created.Session.ID(), created.Credential.ID(), created.OutcomeCredential.ID())
 	}
 	conflictingMutation := mutation
 	conflictingMutation.Idempotency = integrationIdempotencyRequest(
@@ -225,6 +227,57 @@ func TestVerificationSessionAtomicSnapshotReplayAndIsolation(t *testing.T) {
 	}
 	if firstToken.Reveal() != replayedToken.Reveal() {
 		t.Fatal("replay did not reconstruct the exact capture token")
+	}
+	outcomeKeyring, err := access.NewOutcomeTokenKeyring(1, map[access.OutcomeTokenKeyVersion][]byte{
+		1: bytes.Repeat([]byte{8}, 32),
+	})
+	if err != nil {
+		t.Fatalf("new outcome-token keyring: %v", err)
+	}
+	outcomeSigner, err := access.NewOutcomeTokenSigner(
+		outcomeKeyring,
+		fixedIntegrationClock{now: mutation.SessionExpiresAt.Add(time.Minute)},
+	)
+	if err != nil {
+		t.Fatalf("new outcome-token signer: %v", err)
+	}
+	outcomeToken, err := outcomeSigner.Sign(created.OutcomeCredential)
+	if err != nil {
+		t.Fatalf("sign outcome credential: %v", err)
+	}
+	replayedOutcomeToken, err := outcomeSigner.Sign(replayed.OutcomeCredential)
+	if err != nil || replayedOutcomeToken.Reveal() != outcomeToken.Reveal() {
+		t.Fatalf("replay did not reconstruct the exact outcome token: %v", err)
+	}
+	outcomeAuthenticator, err := verification.NewOutcomeAuthenticator(
+		sessionStore,
+		outcomeSigner,
+		fixedIntegrationClock{now: mutation.SessionExpiresAt.Add(time.Minute)},
+	)
+	if err != nil {
+		t.Fatalf("new outcome authenticator: %v", err)
+	}
+	if authenticated, err := outcomeAuthenticator.Authenticate(ctx, outcomeToken.Reveal()); err != nil ||
+		authenticated.VerificationID().String() != created.Session.ID().String() {
+		t.Fatalf("outcome authentication after session expiry = %s, %v", authenticated.VerificationID(), err)
+	}
+	expiredCaptureSigner, err := access.NewCaptureTokenSigner(
+		keyring,
+		fixedIntegrationClock{now: mutation.SessionExpiresAt.Add(time.Minute)},
+	)
+	if err != nil {
+		t.Fatalf("new expired capture-token signer: %v", err)
+	}
+	expiredCaptureAuthenticator, err := verification.NewCaptureAuthenticator(
+		sessionStore,
+		expiredCaptureSigner,
+		fixedIntegrationClock{now: mutation.SessionExpiresAt.Add(time.Minute)},
+	)
+	if err != nil {
+		t.Fatalf("new expired capture authenticator: %v", err)
+	}
+	if _, err := expiredCaptureAuthenticator.Authenticate(ctx, firstToken.Reveal()); !errors.Is(err, access.ErrInvalidCaptureToken) {
+		t.Fatalf("Authenticate(expired capture token) error = %v, want invalid capture token", err)
 	}
 	claims, err := signer.Verify(firstToken.Reveal())
 	if err != nil {
@@ -672,6 +725,34 @@ func TestVerificationSessionAtomicSnapshotReplayAndIsolation(t *testing.T) {
 	err = adminPool.WithinTransaction(ctx, idenqapostgres.TransactionOptions{}, func(ctx context.Context, tx idenqapostgres.Transaction) error {
 		_, err := tx.Exec(
 			ctx,
+			"UPDATE idenqa.outcome_tokens SET revoked_at = $2 WHERE id = $1",
+			created.OutcomeCredential.ID().String(),
+			mutation.CreatedAt.Add(time.Second),
+		)
+
+		return err
+	})
+	if err != nil {
+		t.Fatalf("revoke outcome token record: %v", err)
+	}
+	if _, err := outcomeAuthenticator.Authenticate(ctx, outcomeToken.Reveal()); !errors.Is(err, access.ErrInvalidOutcomeToken) {
+		t.Fatalf("Authenticate(revoked outcome) error = %v, want invalid outcome token", err)
+	}
+	err = adminPool.WithinTransaction(ctx, idenqapostgres.TransactionOptions{}, func(ctx context.Context, tx idenqapostgres.Transaction) error {
+		_, err := tx.Exec(
+			ctx,
+			"UPDATE idenqa.outcome_tokens SET revoked_at = NULL WHERE id = $1",
+			created.OutcomeCredential.ID().String(),
+		)
+
+		return err
+	})
+	if err == nil {
+		t.Fatal("database allowed outcome-token revocation reversal")
+	}
+	err = adminPool.WithinTransaction(ctx, idenqapostgres.TransactionOptions{}, func(ctx context.Context, tx idenqapostgres.Transaction) error {
+		_, err := tx.Exec(
+			ctx,
 			"UPDATE idenqa.capture_tokens SET revoked_at = $2 WHERE id = $1",
 			created.Credential.ID().String(),
 			mutation.CreatedAt.Add(time.Second),
@@ -795,13 +876,16 @@ func TestVerificationSessionAtomicSnapshotReplayAndIsolation(t *testing.T) {
 		t.Fatal("session snapshot changed after source profile deactivation")
 	}
 
-	var sessions, tokens, audits, events int
+	var sessions, tokens, outcomeTokens, audits, events int
 	var replayBody []byte
 	err = adminPool.WithinTransaction(ctx, idenqapostgres.TransactionOptions{ReadOnly: true}, func(ctx context.Context, tx idenqapostgres.Transaction) error {
 		if err := tx.QueryRow(ctx, "SELECT count(*) FROM idenqa.verification_sessions WHERE tenant_id = $1", firstTenant.ID().String()).Scan(&sessions); err != nil {
 			return err
 		}
 		if err := tx.QueryRow(ctx, "SELECT count(*) FROM idenqa.capture_tokens WHERE tenant_id = $1", firstTenant.ID().String()).Scan(&tokens); err != nil {
+			return err
+		}
+		if err := tx.QueryRow(ctx, "SELECT count(*) FROM idenqa.outcome_tokens WHERE tenant_id = $1", firstTenant.ID().String()).Scan(&outcomeTokens); err != nil {
 			return err
 		}
 		if err := tx.QueryRow(ctx, "SELECT count(*) FROM idenqa.verification_session_audit WHERE tenant_id = $1", firstTenant.ID().String()).Scan(&audits); err != nil {
@@ -822,11 +906,38 @@ func TestVerificationSessionAtomicSnapshotReplayAndIsolation(t *testing.T) {
 	if err != nil {
 		t.Fatalf("inspect committed verification records: %v", err)
 	}
-	if sessions != 1 || tokens != 1 || audits != 1 || events != 1 {
-		t.Fatalf("session/token/audit/outbox counts = %d/%d/%d/%d, want 1/1/1/1", sessions, tokens, audits, events)
+	if sessions != 1 || tokens != 1 || outcomeTokens != 1 || audits != 1 || events != 1 {
+		t.Fatalf("session/capture/outcome/audit/outbox counts = %d/%d/%d/%d/%d, want 1/1/1/1/1", sessions, tokens, outcomeTokens, audits, events)
 	}
-	if bytes.Contains(replayBody, []byte("idq_cap_v1")) || bytes.Contains(replayBody, []byte(firstToken.Reveal())) {
+	if bytes.Contains(replayBody, []byte("idq_cap_v1")) || bytes.Contains(replayBody, []byte(firstToken.Reveal())) ||
+		bytes.Contains(replayBody, []byte("idq_out_v1")) || bytes.Contains(replayBody, []byte(outcomeToken.Reveal())) {
 		t.Fatalf("idempotency result contains bearer token: %s", replayBody)
+	}
+
+	transitionAt := mutation.CreatedAt.Add(time.Second)
+	lifecycle, err := verificationpostgres.NewLifecycleStore(runtimePool, fixedIntegrationClock{now: transitionAt})
+	if err != nil {
+		t.Fatal(err)
+	}
+	transitionID, err := generator.NewEvent()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := lifecycle.Apply(ctx, firstScope, verification.LifecycleCommand{
+		EventID: transitionID, VerificationID: created.Session.ID(), ExpectedVersion: 1,
+		Target: verification.SessionStateProcessing, ActorID: actor.ID().String(), OccurredAt: transitionAt,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	afterTransition, err := sessionStore.Create(ctx, firstScope, mutation)
+	if err != nil || afterTransition.Session.State() != created.Session.State() ||
+		afterTransition.Session.Version() != created.Session.Version() ||
+		!afterTransition.Session.UpdatedAt().Equal(created.Session.UpdatedAt()) {
+		t.Fatalf("creation replay after transition changed its original result: %+v, %v", afterTransition, err)
+	}
+	current, err := sessionStore.FindSession(ctx, firstScope, created.Session.ID())
+	if err != nil || current.State() != verification.SessionStateProcessing || current.Version() != 2 {
+		t.Fatalf("current session must still expose its transition: %+v, %v", current, err)
 	}
 }
 
@@ -839,8 +950,13 @@ func newIntegrationSessionMutation(
 	policyID id.Policy,
 	now time.Time,
 	idempotencyKey string,
+	regions ...string,
 ) verification.SessionCreateMutation {
 	t.Helper()
+	region := "local"
+	if len(regions) > 0 {
+		region = regions[0]
+	}
 	sessionID, err := generator.NewVerification()
 	if err != nil {
 		t.Fatalf("new verification id: %v", err)
@@ -848,6 +964,10 @@ func newIntegrationSessionMutation(
 	tokenID, err := generator.NewCaptureToken()
 	if err != nil {
 		t.Fatalf("new capture-token id: %v", err)
+	}
+	outcomeTokenID, err := generator.NewOutcomeToken()
+	if err != nil {
+		t.Fatalf("new outcome-token id: %v", err)
 	}
 	eventID, err := generator.NewEvent()
 	if err != nil {
@@ -863,23 +983,26 @@ func newIntegrationSessionMutation(
 		actor,
 		verification.OperationCreateVerification,
 		idempotencyKey,
-		[]byte(`{"capture_profile_id":"`+profileID.String()+`","policy_id":"`+policyID.String()+`","verification_ttl_seconds":86400,"capture_token_ttl_seconds":1800,"region":"local"}`),
+		[]byte(`{"capture_profile_id":"`+profileID.String()+`","policy_id":"`+policyID.String()+`","verification_ttl_seconds":86400,"capture_token_ttl_seconds":1800,"outcome_token_post_expiry_ttl_seconds":86400,"region":"`+region+`"}`),
 		now,
 	)
 
 	return verification.SessionCreateMutation{
 		SessionID:          sessionID,
 		CaptureTokenID:     tokenID,
+		OutcomeTokenID:     outcomeTokenID,
 		EventID:            eventID,
 		ProfileID:          profileID,
 		PolicyID:           policyID,
 		DecisionID:         decisionID,
-		Region:             "local",
+		Region:             region,
 		Actor:              actor,
 		CaptureKeyVersion:  1,
+		OutcomeKeyVersion:  1,
 		CreatedAt:          now,
 		SessionExpiresAt:   now.Add(24 * time.Hour),
 		CaptureTokenExpiry: now.Add(30 * time.Minute),
+		OutcomeTokenExpiry: now.Add(48 * time.Hour),
 		Idempotency:        request,
 	}
 }

@@ -355,17 +355,25 @@ func TestPrivacyAndReviewAdaptersCommitAtomicAudit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	reviewService, err := review.NewService(reviewStore, ids, func() time.Time { return clockNow })
+	reviewKey, err := ids.NewAPIKey()
 	if err != nil {
 		t.Fatal(err)
 	}
-	reviewActor := review.Actor{ID: "tenant-api-key"}
+	reviewAuthority, err := review.NewRegistry([]review.Assignment{{TenantID: scope.ID().String(), APIKeyID: reviewKey.String(), OperatorID: "reviewer-1", Permissions: []review.Permission{review.PermissionClaim}, Certifications: []string{"document.level2"}, Regions: []string{"ng-1"}, NotBefore: clockNow.Add(-time.Hour), ExpiresAt: clockNow.Add(time.Hour)}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	reviewService, err := review.NewAuthorizedService(reviewStore, ids, func() time.Time { return clockNow }, reviewAuthority)
+	if err != nil {
+		t.Fatal(err)
+	}
+	reviewActor := review.Actor{ID: reviewKey.String()}
 	caseValue, err := reviewService.OpenCase(ctx, scope, reviewActor, verificationID, decision.ID(), "ng-1", "document.level2", review.OversightDual)
 	if err != nil {
 		t.Fatal(err)
 	}
 	clockNow = clockNow.Add(time.Second)
-	claimed, err := reviewService.Claim(ctx, scope, reviewActor, review.Principal{ID: "reviewer-1", Permissions: []review.Permission{review.PermissionClaim}, Certifications: []string{"document.level2"}}, caseValue.ID, caseValue.Version)
+	claimed, err := reviewService.Claim(ctx, scope, reviewActor, caseValue.ID, caseValue.Version)
 	if err != nil || claimed.State != review.CaseClaimed {
 		t.Fatalf("claim=%s error=%v", claimed.State, err)
 	}

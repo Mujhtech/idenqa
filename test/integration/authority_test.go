@@ -17,7 +17,6 @@ import (
 	authoritypostgres "github.com/Mujhtech/idenqa/internal/authority/postgres"
 	"github.com/Mujhtech/idenqa/internal/evidence"
 	evidencepostgres "github.com/Mujhtech/idenqa/internal/evidence/postgres"
-	"github.com/Mujhtech/idenqa/internal/platform/clock"
 	platformcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto"
 	tinkcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto/tink"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
@@ -34,6 +33,15 @@ import (
 )
 
 func TestAuthorityPersistenceReplayIsolationAndImmutability(t *testing.T) {
+	runAuthorityPersistence(t, nil)
+}
+
+// The optional exercise reuses the authorised fixture with two required steps.
+func runAuthorityPersistence(t *testing.T, exercise func(captureAcceptanceFixture)) {
+	runAuthorityPersistenceInRegion(t, exercise, "local", "tenant.region.ng")
+}
+
+func runAuthorityPersistenceInRegion(t *testing.T, exercise func(captureAcceptanceFixture), sessionRegion, evidenceRegion string) {
 	database := createIsolatedDatabase(t)
 	ctx := t.Context()
 	migrator, err := idenqapostgres.OpenMigrator(ctx, migrationConfig(database.url))
@@ -52,7 +60,8 @@ func TestAuthorityPersistenceReplayIsolationAndImmutability(t *testing.T) {
 		t.Fatalf("open admin pool: %v", err)
 	}
 	defer adminPool.Close()
-	generator, err := id.NewSystemGenerator()
+	now := time.Date(2026, time.September, 5, 12, 0, 0, 0, time.UTC)
+	generator, err := id.NewGenerator(fixedIntegrationClock{now: now}, bytes.NewReader(bytes.Repeat([]byte{17}, 8192)))
 	if err != nil {
 		t.Fatalf("new identifier generator: %v", err)
 	}
@@ -60,7 +69,7 @@ func TestAuthorityPersistenceReplayIsolationAndImmutability(t *testing.T) {
 	if err != nil {
 		t.Fatalf("new tenant store: %v", err)
 	}
-	tenantAdmin, err := tenant.NewAdmin(tenantStore, generator, clock.System{})
+	tenantAdmin, err := tenant.NewAdmin(tenantStore, generator, fixedIntegrationClock{now: now})
 	if err != nil {
 		t.Fatalf("new tenant admin: %v", err)
 	}
@@ -89,7 +98,6 @@ func TestAuthorityPersistenceReplayIsolationAndImmutability(t *testing.T) {
 	if err != nil {
 		t.Fatalf("new other scope: %v", err)
 	}
-	now := time.Now().UTC().Truncate(time.Second)
 	policyID := seedIntegrationPolicy(t, adminPool, owner.ID(), generator, now)
 	actor := newIntegrationKey(t, generator, owner.ID(), now, id.APIKey{})
 	accessStore, err := accesspostgres.New(runtimePool)
@@ -116,9 +124,15 @@ func TestAuthorityPersistenceReplayIsolationAndImmutability(t *testing.T) {
 	if err != nil {
 		t.Fatalf("new profile id: %v", err)
 	}
+	document := integrationProfileDocument(t, registry, evidence.MethodLiveCamera)
+	if exercise != nil {
+		second := document.Requirements[0]
+		second.Key = "selfie_secondary"
+		document.Requirements = append(document.Requirements, second)
+	}
 	profile, draft, err := verification.NewCaptureProfile(
 		profileID, owner.ID(), "Authority profile",
-		integrationProfileDocument(t, registry, evidence.MethodLiveCamera), registry, now,
+		document, registry, now,
 	)
 	if err != nil {
 		t.Fatalf("new profile: %v", err)
@@ -154,14 +168,14 @@ func TestAuthorityPersistenceReplayIsolationAndImmutability(t *testing.T) {
 		t.Fatalf("new session store: %v", err)
 	}
 	sessionMutation := newIntegrationSessionMutation(
-		t, generator, owner.ID(), actor.ID(), profileID, policyID, now.Add(2*time.Minute), "authority-session-create",
+		t, generator, owner.ID(), actor.ID(), profileID, policyID, now.Add(2*time.Minute), "authority-session-create", sessionRegion,
 	)
 	created, err := sessionStore.Create(ctx, ownerScope, sessionMutation)
 	if err != nil {
 		t.Fatalf("create authority session: %v", err)
 	}
 
-	store, err := authoritypostgres.New(runtimePool)
+	store, err := authoritypostgres.NewWithClock(runtimePool, fixedIntegrationClock{now: now.Add(8 * time.Minute)})
 	if err != nil {
 		t.Fatalf("new authority store: %v", err)
 	}
@@ -195,8 +209,8 @@ func TestAuthorityPersistenceReplayIsolationAndImmutability(t *testing.T) {
 	}
 
 	requirements := created.Session.Requirements().Requirements
-	if len(requirements) != 1 {
-		t.Fatalf("requirement count = %d, want 1", len(requirements))
+	if len(requirements) != len(document.Requirements) {
+		t.Fatalf("requirement count = %d, want %d", len(requirements), len(document.Requirements))
 	}
 	authorityID, _ := generator.NewAuthority()
 	subjectID, _ := generator.NewSubject()
@@ -209,7 +223,7 @@ func TestAuthorityPersistenceReplayIsolationAndImmutability(t *testing.T) {
 		IsConsentRequired: true, RequirementPurposes: []string{string(requirements[0].Purpose)},
 		EvidenceTypes:      []string{string(requirements[0].EvidenceType)},
 		RecipientReference: "tenant.recipient.primary", RecipientDisplayName: notice.Recipient(),
-		Regions: []string{"tenant.region.ng"}, RetentionReference: "tenant.retention.identity_v1",
+		Regions: []string{evidenceRegion}, RetentionReference: "tenant.retention.identity_v1",
 		ValidFrom: now, ExpiresAt: created.Session.ExpiresAt(), CreatedAt: now.Add(4 * time.Minute),
 		CreatedBy: actor.ID(),
 	})
@@ -261,12 +275,20 @@ func TestAuthorityPersistenceReplayIsolationAndImmutability(t *testing.T) {
 	if err := authority.Evaluate(storedAuthority, storedNotice, snapshot.Response, authority.GrantRequest{
 		TenantID: owner.ID(), VerificationID: created.Session.ID(), SubjectID: storedAuthority.SubjectID(),
 		Purpose: string(requirements[0].Purpose), EvidenceType: string(requirements[0].EvidenceType),
-		RecipientReference: "tenant.recipient.primary", Region: "tenant.region.ng",
+		RecipientReference: "tenant.recipient.primary", Region: evidenceRegion,
 	}, now.Add(6*time.Minute)); err != nil {
 		t.Fatalf("evaluate consented authority: %v", err)
 	}
 
-	evidenceStore, err := evidencepostgres.New(runtimePool, catalog)
+	if exercise != nil {
+		exercise(captureAcceptanceFixture{
+			admin: adminPool, runtime: runtimePool, scope: ownerScope, authorities: store,
+			creation: created, registry: registry, catalog: catalog,
+			ids: generator, declaration: storedAuthority, now: now.Add(8 * time.Minute),
+		})
+		return
+	}
+	evidenceStore, err := evidencepostgres.NewWithClock(runtimePool, catalog, fixedIntegrationClock{now: now.Add(8 * time.Minute)})
 	if err != nil {
 		t.Fatalf("new evidence store: %v", err)
 	}

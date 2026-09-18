@@ -6,12 +6,14 @@ cd "$repository_root"
 
 database_url=${DATABASE_TEST_URL:?DATABASE_TEST_URL must identify an isolated PostgreSQL database}
 api_port=${IDENQA_SDK_CONFORMANCE_PORT:-18080}
+unset IDENQA_SDK_CONFORMANCE_PORT
 base_url="http://127.0.0.1:${api_port}"
 
 # Fixed synthetic keys are confined to this isolated conformance deployment.
 pepper=QkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkI
 cursor_key=Q0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0M
 capture_key=REREREREREREREREREREREREREREREREREREREREREQ
+outcome_key=U0ZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkY
 
 export IDENQA_ENVIRONMENT=test
 export IDENQA_DATABASE_URL=$database_url
@@ -25,6 +27,8 @@ export IDENQA_CURSOR_ACTIVE_KEY_VERSION=1
 export IDENQA_CURSOR_KEYS="1=${cursor_key}"
 export IDENQA_CAPTURE_TOKEN_ACTIVE_KEY_VERSION=1
 export IDENQA_CAPTURE_TOKEN_KEYS="1=${capture_key}"
+export IDENQA_OUTCOME_TOKEN_ACTIVE_KEY_VERSION=1
+export IDENQA_OUTCOME_TOKEN_KEYS="1=${outcome_key}"
 export IDENQA_HTTP_HOST=127.0.0.1
 export IDENQA_HTTP_PORT=$api_port
 export IDENQA_LOG_LEVEL=error

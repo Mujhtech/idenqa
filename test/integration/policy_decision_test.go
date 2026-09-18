@@ -177,7 +177,9 @@ func TestPolicyDecisionDurabilityIsolationLineageAndImmutability(t *testing.T) {
 		t.Fatal(err)
 	}
 	router := chi.NewRouter()
-	decisionRoutes.Register(router)
+	router.Route(httpapi.VersionPrefix, func(versioned chi.Router) {
+		decisionRoutes.Register(versioned)
+	})
 	serveDecision := func(credential, path, etag string) *httptest.ResponseRecorder {
 		request := httptest.NewRequestWithContext(ctx, http.MethodGet, path, nil)
 		request.Header.Set("Authorization", "Bearer "+credential)
@@ -244,7 +246,7 @@ func TestPolicyDecisionDurabilityIsolationLineageAndImmutability(t *testing.T) {
 	t.Setenv("IDENQA_DATABASE_ROLE", runtimeRole)
 	var cliOutput, cliError bytes.Buffer
 	code := bootstrapidenqa.Run([]string{
-		"policy", "decision", "reproduce", "--tenant", firstTenant.String(),
+		"policy", "decision", "reproduce", "--env-file", "", "--tenant", firstTenant.String(),
 		"--id", root.ID().String(), "--output", "bundle",
 	}, &cliOutput, &cliError, buildinfo.Info{})
 	if code != 0 {

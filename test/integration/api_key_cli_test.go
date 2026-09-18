@@ -161,6 +161,7 @@ func TestAPIKeyCLILifecycleAndAudit(t *testing.T) {
 }
 
 func runCLI(t *testing.T, args ...string) string {
+	args = append(args, "--env-file", "")
 	t.Helper()
 
 	var stdout bytes.Buffer

@@ -96,6 +96,7 @@ func TestDeliveryAndAuditDurabilityIsolationAndTamperEvidence(t *testing.T) {
 	if err != nil || stored.State != delivery.StateDelivered {
 		t.Fatalf("stored=%#v err=%v", stored, err)
 	}
+	testDeliveryRuntimeRollback(t, runtime, deliveryStore, firstScope, generator, manager, endpoint.ID, now)
 	auditStore, _ := auditpostgres.New(runtime)
 	public, private, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {

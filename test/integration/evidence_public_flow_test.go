@@ -62,6 +62,7 @@ func TestPublicEvidenceUploadFlowThroughRunnableLocalAPI(t *testing.T) {
 		}
 	})
 	backend := publicFlowBackend{
+		verifyProcessing: true,
 		start: func(
 			t *testing.T,
 			databaseURL string,
@@ -216,7 +217,9 @@ func TestPublicEvidenceUploadFlowThroughS3Distribution(t *testing.T) {
 }
 
 type publicFlowBackend struct {
-	start func(
+	verifyProcessing bool
+	providerJourney  *providerPublicJourney
+	start            func(
 		t *testing.T,
 		databaseURL string,
 		runtimeRole string,
@@ -287,7 +290,10 @@ func runPublicEvidenceUploadFlow(t *testing.T, backend publicFlowBackend) {
 	if err != nil {
 		t.Fatalf("new tenant scope: %v", err)
 	}
-	policyID := seedIntegrationPolicy(t, adminPool, owner.ID(), generator, time.Now().UTC().Truncate(time.Second))
+	var policyID id.Policy
+	if !backend.verifyProcessing && backend.providerJourney == nil {
+		policyID = seedIntegrationPolicy(t, adminPool, owner.ID(), generator, time.Now().UTC().Truncate(time.Second))
+	}
 
 	runtimeRole := database.createRuntimeRole(t)
 	database.grantHeadgateRuntime(t, runtimeRole)
@@ -332,12 +338,27 @@ func runPublicEvidenceUploadFlow(t *testing.T, backend publicFlowBackend) {
 
 	client := &http.Client{Timeout: 10 * time.Second}
 	backendCredential := presentedKey.Reveal()
+	if backend.verifyProcessing {
+		policyID = assertPublicPolicyAdministration(t, client, baseURL, backendCredential, adminPool, runtimePool, scope, peppers)
+	}
 	registry, err := evidence.BuiltInRegistry()
 	if err != nil {
 		t.Fatalf("load built-in evidence registry: %v", err)
 	}
+	if backend.providerJourney != nil {
+		policyID = createProviderFixturePolicy(t, client, baseURL, backendCredential, backend.providerJourney.smile, backend.providerJourney.model, backend.providerJourney.matching, backend.providerJourney.composed)
+	}
+	document := integrationProfileDocument(t, registry, evidence.MethodLiveCamera)
+	requirement, artefact := "selfie", string(evidence.ArtefactSelfieImage)
+	if backend.providerJourney != nil && (!backend.providerJourney.model || backend.providerJourney.matching) {
+		document = providerDocumentProfile(t, registry)
+		if backend.providerJourney.smile || backend.providerJourney.matching {
+			document = smileDocumentProfile(t, registry)
+		}
+		requirement, artefact = "document", string(evidence.ArtefactDocumentFront)
+	}
 	profileDocument, err := verification.CanonicalJSON(
-		integrationProfileDocument(t, registry, evidence.MethodLiveCamera),
+		document,
 		registry,
 	)
 	if err != nil {
@@ -429,13 +450,16 @@ func runPublicEvidenceUploadFlow(t *testing.T, backend publicFlowBackend) {
 	}
 
 	body := append([]byte{0xff, 0xd8, 0xff, 0xe0}, bytes.Repeat([]byte("private selfie"), 8)...)
+	if backend.providerJourney != nil && backend.providerJourney.model {
+		body = padFixtureJPEG(t)
+	}
 	digest := platformcrypto.Sum(body)
 	var upload openapiv1.EvidenceUpload
 	uploadHeaders := performPublicJSONRequest(t, client, publicJSONRequest{
 		Method: http.MethodPost, URL: baseURL + "/v1/evidence-uploads",
 		Bearer: captureToken, IdempotencyKey: "public-flow-evidence-upload",
 		Body: openapiv1.EvidenceUploadCreate{
-			RequirementKey: "selfie", Artefact: string(evidence.ArtefactSelfieImage),
+			RequirementKey: requirement, Artefact: artefact,
 			AcquisitionMethod: string(evidence.MethodLiveCamera), ExpectedBytes: int64(len(body)),
 			ExpectedDigest: string(digest), MediaType: openapiv1.EvidenceUploadCreateMediaType("image/jpeg"),
 			Region: "tenant.region.ng",
@@ -474,9 +498,44 @@ func runPublicEvidenceUploadFlow(t *testing.T, backend publicFlowBackend) {
 		t.Fatalf("accepted upload state, timestamp, or acquisition method is invalid")
 	}
 
+	if backend.providerJourney != nil && (backend.providerJourney.smile || backend.providerJourney.matching) {
+		uploadSmileSelfie(t, client, baseURL, captureToken, body)
+	}
 	assertPersistedEncryptedEvidence(
 		t, adminPool, runtimePool, scope, registry, upload, body, keyringFile, backend.readCiphertext,
 	)
+	if backend.providerJourney != nil {
+		digest, err := verification.Digest(document, registry)
+		if err != nil {
+			t.Fatal(err)
+		}
+		restart := func() {
+			stopPublicFlowProcess(t, process)
+			process = backend.start(t, database.url, runtimeRole, port, keyringFile, pepperMaterial)
+			waitForPublicAPIReadiness(t, baseURL, process)
+		}
+		backend.providerJourney.run(t, adminPool, runtimePool, scope, creation.Session.ID, policyID.String(), digest, baseURL, backendCredential, keyringFile, restart, body)
+	}
+	if backend.verifyProcessing {
+		verificationID, err := id.ParseVerification(creation.Session.ID)
+		if err != nil {
+			t.Fatal(err)
+		}
+		assertPublicCancellation(t, client, baseURL, backendCredential, profile.ProfileID, policyID.String())
+		decisionID := assertCapturedProcessing(t, adminPool, runtimePool, scope, verificationID, client, baseURL, backendCredential)
+		var current openapiv1.VerificationSession
+		performPublicJSONRequest(t, client, publicJSONRequest{Method: http.MethodGet, URL: baseURL + "/v1/verifications/" + verificationID.String(), Bearer: backendCredential, WantStatus: http.StatusOK, Result: &current})
+		if current.State != openapiv1.VerificationSessionStateCompleted || current.Version != 3 {
+			t.Fatalf("public completed session = %#v", current)
+		}
+		var report openapiv1.PolicyDecisionReport
+		performPublicJSONRequest(t, client, publicJSONRequest{Method: http.MethodGet, URL: baseURL + "/v1/decisions/" + decisionID.String(), Bearer: backendCredential, WantStatus: http.StatusOK, Result: &report})
+
+	}
+	if backend.verifyProcessing {
+		assertPublicWebhookManagement(t, client, baseURL, backendCredential, keyringFile, adminPool, runtimePool, scope, peppers)
+	}
+
 }
 
 func newFullScopeIntegrationCredential(
@@ -556,8 +615,10 @@ func setPublicFlowCoreEnvironment(
 	pepperSecret := base64.RawURLEncoding.EncodeToString(pepperMaterial)
 	cursorSecret := base64.RawURLEncoding.EncodeToString(bytes.Repeat([]byte{0x32}, 32))
 	captureTokenSecret := base64.RawURLEncoding.EncodeToString(bytes.Repeat([]byte{0x33}, 32))
+	outcomeTokenSecret := base64.RawURLEncoding.EncodeToString(bytes.Repeat([]byte{0x34}, 32))
 	values := map[string]string{
 		"IDENQA_ENVIRONMENT":                      "test",
+		"IDENQA_HEADGATE_INSTALLATION_ID":         "idenqa-test",
 		"IDENQA_DATABASE_URL":                     databaseURL,
 		"IDENQA_DATABASE_ROLE":                    runtimeRole,
 		"IDENQA_API_KEY_ACTIVE_PEPPER_VERSION":    "1",
@@ -566,6 +627,8 @@ func setPublicFlowCoreEnvironment(
 		"IDENQA_CURSOR_KEYS":                      "1=" + cursorSecret,
 		"IDENQA_CAPTURE_TOKEN_ACTIVE_KEY_VERSION": "1",
 		"IDENQA_CAPTURE_TOKEN_KEYS":               "1=" + captureTokenSecret,
+		"IDENQA_OUTCOME_TOKEN_ACTIVE_KEY_VERSION": "1",
+		"IDENQA_OUTCOME_TOKEN_KEYS":               "1=" + outcomeTokenSecret,
 		"IDENQA_REGION":                           "local",
 		"IDENQA_REALTIME_WEBSOCKET_URL":           "ws://127.0.0.1:" + strconv.Itoa(port) + "/v1/capture/socket",
 		"IDENQA_HTTP_CORS_ALLOWED_ORIGINS":        "http://localhost:3000",
