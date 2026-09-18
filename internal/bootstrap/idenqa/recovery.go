@@ -30,7 +30,7 @@ func newRecoveryCommand() *cobra.Command {
 	_ = verify.MarkFlagDirname("backup-root")
 	command.AddCommand(verify)
 	reconcile := &cobra.Command{Use: "reconcile", Short: "Inspect restored durable state without payloads", Args: cli.UsageArgs(cobra.NoArgs), RunE: func(command *cobra.Command, _ []string) error { return executeRecoveryReconcile(command, options) }}
-	reconcile.Flags().StringVar(&options.envFile, "env-file", "", "load local configuration from this dotenv file")
+	reconcile.Flags().StringVar(&options.envFile, "env-file", config.DefaultEnvFile, "load local configuration from this dotenv file")
 	command.AddCommand(reconcile)
 	return command
 }

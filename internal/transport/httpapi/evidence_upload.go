@@ -75,9 +75,9 @@ func NewEvidenceUploadRoutes(
 
 // Register adds upload intent issuance and whole-body evidence ingress.
 func (routes *EvidenceUploadRoutes) Register(router chi.Router) {
-	router.With(routes.capture.Authenticate).Post("/v1/evidence-uploads", routes.issue)
-	router.With(routes.capture.Authenticate).Get("/v1/evidence-uploads/{uploadID}", routes.find)
-	router.With(routes.capture.Authenticate).Put("/v1/evidence-uploads/{uploadID}", routes.upload)
+	router.With(routes.capture.Authenticate).Post("/evidence-uploads", routes.issue)
+	router.With(routes.capture.Authenticate).Get("/evidence-uploads/{uploadID}", routes.find)
+	router.With(routes.capture.Authenticate).Put("/evidence-uploads/{uploadID}", routes.upload)
 }
 
 func (routes *EvidenceUploadRoutes) find(writer http.ResponseWriter, request *http.Request) {

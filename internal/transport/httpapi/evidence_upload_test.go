@@ -20,7 +20,6 @@ import (
 	platformcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/verification"
-	"github.com/go-chi/chi/v5"
 )
 
 func TestEvidenceUploadRoutesIssueAndStreamExactIntent(t *testing.T) {
@@ -38,8 +37,7 @@ func TestEvidenceUploadRoutesIssueAndStreamExactIntent(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewEvidenceUploadRoutes() error = %v", err)
 	}
-	router := chi.NewRouter()
-	routes.Register(router)
+	router := versionedRouter(t, routes)
 
 	createBody, err := json.Marshal(openapiv1.EvidenceUploadCreate{
 		RequirementKey: "selfie", Artefact: string(evidence.ArtefactSelfieImage),
@@ -128,8 +126,7 @@ func TestEvidenceUploadRoutesRejectBeforeApplication(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewEvidenceUploadRoutes() error = %v", err)
 	}
-	router := chi.NewRouter()
-	routes.Register(router)
+	router := versionedRouter(t, routes)
 	request := httptest.NewRequestWithContext(
 		t.Context(), http.MethodPut, "/v1/evidence-uploads/"+fixture.upload.ID().String(),
 		bytes.NewReader([]byte("jpeg")),

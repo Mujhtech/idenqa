@@ -1,3 +1,5 @@
+import type { AssuranceSummary, DecisionContext } from "./assurance.js";
+import type { WirePolicyDefinition, WirePolicyDocument } from "./wire.js";
 export type TenantID = string;
 export type CaptureProfileID = string;
 export type VerificationID = string;
@@ -28,9 +30,10 @@ export type PolicyActor = "machine" | "human";
 export type PolicyRequirementState =
   "satisfied" | "not_satisfied" | "inconclusive" | "unavailable" | "prohibited";
 export type PolicyFactSourceKind =
-  "check" | "processing_authority" | "subject_response" | "review_finding";
+  "check" | "processing_authority" | "subject_response" | "review_finding" | "fraud" | "identity";
 
 export interface PolicyDecisionReport {
+  readonly typedAssurance?: AssuranceSummary;
   readonly schemaMajor: number;
   readonly schemaMinor: number;
   readonly decisionId: DecisionID;
@@ -83,6 +86,8 @@ export interface PolicyCanonicalFactSource {
   readonly authority_id?: ProcessingAuthorityID;
   readonly acknowledgement_id?: SubjectResponseID;
   readonly review_finding?: string;
+  readonly fraud_receipt?: string;
+  readonly identity_receipt?: string;
 }
 
 export interface PolicyCanonicalFact {
@@ -95,6 +100,7 @@ export interface PolicyCanonicalFact {
 }
 
 export interface PolicyCanonicalSnapshot {
+  readonly context?: DecisionContext;
   readonly schema_major: 1;
   readonly schema_minor: 0;
   readonly tenant_id: TenantID;
@@ -173,7 +179,18 @@ export interface CaptureConnection {
 
 export type CaptureProfileState = "draft" | "active" | "deactivated";
 export type CaptureProfileRevisionState = "draft" | "published" | "superseded" | "withdrawn";
-export type VerificationState = "collecting";
+/** Workflow state; the identity outcome is available through the decision resource. */
+export type VerificationState =
+  | "created"
+  | "collecting"
+  | "awaiting_input"
+  | "processing"
+  | "awaiting_external"
+  | "manual_review"
+  | "completed"
+  | "cancelled"
+  | "expired"
+  | "failed";
 export type AcquisitionStrategy = "any_of" | "all_of";
 export type CaptureFallbackReason =
   "capability_unavailable" | "method_unavailable" | "capture_failed";
@@ -285,6 +302,7 @@ export interface VerificationCreate {
   readonly policyId: PolicyID;
   readonly verificationTtlSeconds?: number;
   readonly captureTokenTtlSeconds?: number;
+  readonly outcomeTokenPostExpiryTtlSeconds?: number;
 }
 
 export interface VerificationSession {
@@ -305,6 +323,9 @@ export interface VerificationCreated {
   readonly session: VerificationSession;
   /** Display-once bearer credential. Never log or persist this value casually. */
   readonly captureToken: string;
+  /** Display-once, read-only bearer credential. Keep it separate from capture authority. */
+  readonly outcomeToken: string;
+  readonly outcomeTokenExpiresAt: string;
 }
 
 export interface NoticeCopy {
@@ -445,6 +466,25 @@ export interface CaptureProgress {
   readonly completions: readonly CaptureCompletion[];
 }
 
+export type CaptureOutcomeState =
+  | "capture_required"
+  | "processing"
+  | "action_required"
+  | "verified"
+  | "not_verified"
+  | "inconclusive"
+  | "cancelled"
+  | "expired"
+  | "failed";
+
+/** Subject-safe authoritative state; detailed policy and diagnostic data is intentionally absent. */
+export interface CaptureOutcome {
+  readonly verificationId: VerificationID;
+  readonly state: CaptureOutcomeState;
+  readonly sessionVersion: number;
+  readonly updatedAt: string;
+}
+
 export interface EvidenceUploadOptions extends ConditionalRequestOptions {
   /** Canonical `sha256:<lowercase hex>` digest supplied when the intent was created. */
   readonly digest: string;
@@ -498,4 +538,143 @@ export interface TenantClientOptions extends ClientOptions {
 
 export interface CaptureClientOptions extends ClientOptions {
   readonly captureToken: string;
+}
+
+export interface OutcomeClientOptions extends ClientOptions {
+  readonly outcomeToken: string;
+}
+
+/** Original committed cancellation receipt; cancellation is not an identity outcome. */
+export interface VerificationCancellation {
+  readonly eventId: string;
+  readonly verificationId: VerificationID;
+  readonly state: "cancelled";
+  readonly version: number;
+  readonly occurredAt: string;
+}
+
+export type WebhookEndpointID = string;
+export type WebhookDeliveryID = string;
+export interface WebhookEndpoint {
+  readonly id: WebhookEndpointID;
+  readonly url: string;
+  readonly version: number;
+  readonly secretVersion: number;
+  readonly previousValidUntil?: string;
+  readonly disabledAt?: string;
+  readonly disabledReason?: string;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+export interface WebhookDelivery {
+  readonly id: WebhookDeliveryID;
+  readonly endpointId: WebhookEndpointID;
+  readonly eventId: string;
+  readonly eventType: string;
+  readonly state: "pending" | "delivered" | "exhausted" | "cancelled";
+  readonly attemptCount: number;
+  readonly maxAttempts: number;
+  readonly nextAttemptAt: string;
+  readonly deliveredAt?: string;
+  readonly replayOf?: WebhookDeliveryID;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+export interface WebhookAttempt {
+  readonly number: number;
+  readonly secretVersion: number;
+  readonly statusCode: number;
+  readonly errorClass: string;
+  readonly retryAfterMs: number;
+  /** UTF-8 sanitised receiver response excerpt, at most 4096 bytes. Untrusted receiver content. */
+  readonly responseBody: string | null;
+  readonly responseTruncated: boolean;
+  readonly completedAt: string;
+}
+export interface WebhookEndpointMutation {
+  readonly endpoint: WebhookEndpoint;
+  readonly replayed: boolean;
+  /** Display-once unpadded Base64URL secret. Absent on idempotent replay. Never log it. */
+  readonly signingSecret?: string;
+}
+export interface WebhookDeliveryMutation {
+  readonly delivery: WebhookDelivery;
+  readonly replayed: boolean;
+}
+export interface WebhookListOptions extends RequestOptions {
+  readonly limit?: number;
+  readonly cursor?: Cursor;
+}
+export interface WebhookEndpointList {
+  readonly data: readonly WebhookEndpoint[];
+  readonly page: Page;
+}
+export interface WebhookDeliveryList {
+  readonly data: readonly WebhookDelivery[];
+  readonly page: Page;
+}
+export interface WebhookAttemptList {
+  readonly data: readonly WebhookAttempt[];
+}
+
+export type PolicyDefinition = WirePolicyDefinition;
+export type PolicyDocument = WirePolicyDocument;
+export interface PolicySummary {
+  readonly id: string;
+  readonly latestRevision: number;
+  readonly activeRevision?: number;
+  readonly activationVersion: number;
+  readonly createdAt: string;
+  readonly activatedAt?: string;
+}
+export interface PolicyRevisionInfo {
+  readonly policyId: string;
+  readonly revision: number;
+  readonly schemaMajor: number;
+  readonly schemaMinor: number;
+  readonly digest: string;
+  readonly evaluatorMajor: number;
+  readonly evaluatorMinor: number;
+  readonly evaluatorDigest: string;
+  readonly createdAt: string;
+}
+export interface PolicyActivationInfo {
+  readonly policyId: string;
+  readonly revision: number;
+  readonly previousRevision: number;
+  readonly version: number;
+  readonly actorId: string;
+  readonly activatedAt: string;
+}
+export interface PolicyValidation {
+  readonly valid: boolean;
+  readonly ruleCount: number;
+  readonly evaluatorMajor: number;
+  readonly evaluatorMinor: number;
+  readonly evaluatorDigest: string;
+}
+export interface PolicyRevisionDocument extends PolicyRevisionInfo {
+  readonly document: PolicyDocument;
+}
+export interface PolicyMutation {
+  readonly policy: PolicySummary;
+  readonly revision?: PolicyRevisionInfo;
+  readonly activation?: PolicyActivationInfo;
+  readonly replayed: boolean;
+}
+export interface PolicyListOptions extends RequestOptions {
+  readonly limit?: number;
+  readonly cursor?: Cursor;
+}
+export interface PolicyList {
+  readonly data: readonly PolicySummary[];
+  readonly page: Page;
+}
+export interface PolicyRevisionList {
+  readonly data: readonly PolicyRevisionInfo[];
+  readonly page: Page;
+}
+export interface PolicyActivationList {
+  readonly data: readonly PolicyActivationInfo[];
+  readonly page: Page;
 }

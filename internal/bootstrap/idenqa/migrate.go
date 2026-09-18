@@ -31,7 +31,7 @@ func newMigrationCommand() *cobra.Command {
 			return cli.UsageError(errors.New("migrate requires an operation"))
 		},
 	}
-	command.PersistentFlags().StringVar(&options.envFile, "env-file", "", "load local configuration from this dotenv file")
+	command.PersistentFlags().StringVar(&options.envFile, "env-file", config.DefaultEnvFile, "load local configuration from this dotenv file")
 	command.AddCommand(
 		newMigrationOperationCommand("preflight", options),
 		newMigrationOperationCommand("up", options),

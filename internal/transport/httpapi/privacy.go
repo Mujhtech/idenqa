@@ -42,10 +42,10 @@ func NewPrivacyRoutes(accessMiddleware *AccessMiddleware, service PrivacyService
 func (routes *PrivacyRoutes) Register(router chi.Router) {
 	deletions := []func(http.Handler) http.Handler{routes.access.Authenticate, routes.access.Require(access.PermissionDeletionsWrite)}
 	holds := []func(http.Handler) http.Handler{routes.access.Authenticate, routes.access.Require(access.PermissionLegalHoldsWrite)}
-	router.With(deletions...).Post("/v1/deletions", routes.requestDeletion)
-	router.With(deletions...).Post("/v1/deletions/{deletionID}/run", routes.runDeletion)
-	router.With(holds...).Post("/v1/legal-holds", routes.createHold)
-	router.With(holds...).Post("/v1/legal-holds/{holdID}/release", routes.releaseHold)
+	router.With(deletions...).Post("/deletions", routes.requestDeletion)
+	router.With(deletions...).Post("/deletions/{deletionID}/run", routes.runDeletion)
+	router.With(holds...).Post("/legal-holds", routes.createHold)
+	router.With(holds...).Post("/legal-holds/{holdID}/release", routes.releaseHold)
 }
 
 type deletionRequest struct {

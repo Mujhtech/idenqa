@@ -40,7 +40,7 @@ func newTenantCommand() *cobra.Command {
 			return cli.UsageError(errors.New("tenant requires an operation"))
 		},
 	}
-	command.PersistentFlags().StringVar(&options.envFile, "env-file", "", "load local configuration from this dotenv file")
+	command.PersistentFlags().StringVar(&options.envFile, "env-file", config.DefaultEnvFile, "load local configuration from this dotenv file")
 	command.PersistentFlags().StringVar(&options.actor, "actor", "", "operator assertion recorded in the audit trail")
 	command.PersistentFlags().StringVar(&options.reason, "reason", "", "reason recorded in the audit trail")
 	command.AddCommand(

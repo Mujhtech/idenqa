@@ -49,15 +49,15 @@ func (routes *DecisionRoutes) Register(router chi.Router) {
 	router.With(
 		routes.access.Authenticate,
 		routes.access.Require(access.PermissionDecisionsRead),
-	).Get("/v1/decisions/{decisionID}", routes.find)
+	).Get("/decisions/{decisionID}", routes.find)
 	router.With(
 		routes.access.Authenticate,
 		routes.access.Require(access.PermissionDecisionsRead),
-	).Get("/v1/verifications/{verificationID}/decision", routes.findLatest)
+	).Get("/verifications/{verificationID}/decision", routes.findLatest)
 	router.With(
 		routes.access.Authenticate,
 		routes.access.Require(access.PermissionDecisionsExport),
-	).Get("/v1/decisions/{decisionID}/bundle", routes.export)
+	).Get("/decisions/{decisionID}/bundle", routes.export)
 }
 
 func (routes *DecisionRoutes) find(writer http.ResponseWriter, request *http.Request) {
@@ -178,7 +178,8 @@ func decisionReportResource(report policy.ReproductionReport) openapiv1.PolicyDe
 	}
 
 	return openapiv1.PolicyDecisionReport{
-		SchemaMajor: int(report.SchemaMajor), SchemaMinor: int(report.SchemaMinor),
+		TypedAssurance: assuranceSummaryResource(report.TypedAssurance),
+		SchemaMajor:    int(report.SchemaMajor), SchemaMinor: int(report.SchemaMinor),
 		DecisionID: report.DecisionID, TenantID: report.TenantID,
 		VerificationID: report.VerificationID, PolicyID: report.PolicyID,
 		PolicyRevision: int(report.PolicyRevision), PolicyDigest: report.PolicyDigest,
@@ -199,4 +200,18 @@ func decisionETag(digest string) string { return strconv.Quote("sha256:" + diges
 func setDecisionCacheHeaders(writer http.ResponseWriter, etag string) {
 	writer.Header().Set("ETag", etag)
 	writer.Header().Set("Cache-Control", "private, no-cache")
+}
+
+func assuranceSummaryResource(value *policy.AssuranceSummary) *openapiv1.AssuranceSummary {
+	if value == nil {
+		return nil
+	}
+	result := &openapiv1.AssuranceSummary{Achieved: value.Achieved, Dimensions: []openapiv1.AssuranceDimensionSummary{}}
+	if value.Requested != nil {
+		result.Requested = &openapiv1.AssuranceSelection{Name: value.Requested.Name, Revision: int(value.Requested.Revision), Digest: value.Requested.Digest}
+	}
+	for _, d := range value.Dimensions {
+		result.Dimensions = append(result.Dimensions, openapiv1.AssuranceDimensionSummary{Dimension: openapiv1.AssuranceDimension(d.Dimension), Property: d.Property, Satisfied: d.Satisfied, IndependentSources: d.IndependentSources})
+	}
+	return result
 }

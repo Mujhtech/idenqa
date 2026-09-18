@@ -148,7 +148,11 @@ func TestTransactionalHandlerCommitsEffectWithHeadgateCompletion(t *testing.T) {
 			}
 			intent := integrationIntent(t)
 			registry := task.NewRegistry()
+			var isolation string
 			handler := transactionalProbe{work: func(ctx context.Context, delivery task.Delivery, transaction platformpostgres.Transaction) task.Result {
+				if err := transaction.QueryRow(ctx, "SHOW transaction_isolation").Scan(&isolation); err != nil {
+					return task.Retry(task.RetryClassUnavailable, err)
+				}
 				if _, err := transaction.Exec(ctx, "INSERT INTO "+table+" (task_id) VALUES ($1)", delivery.Intent.ID().String()); err != nil {
 					return task.Retry(task.RetryClassUnavailable, err)
 				}
@@ -170,12 +174,26 @@ func TestTransactionalHandlerCommitsEffectWithHeadgateCompletion(t *testing.T) {
 				t.Fatal(err)
 			}
 			_, _ = worker.Drain(t.Context(), 1)
+			if isolation != "serializable" {
+				t.Fatalf("effect transaction isolation = %q, want serializable", isolation)
+			}
 			var count int
 			if err := probePool.QueryRow(t.Context(), "SELECT count(*) FROM "+table).Scan(&count); err != nil {
 				t.Fatal(err)
 			}
 			if count != test.want {
 				t.Fatalf("effect rows = %d, want %d", count, test.want)
+			}
+			job, err := store.GetJob(t.Context(), intent.ID().String(), false)
+			if err != nil {
+				t.Fatal(err)
+			}
+			wantState := "completed"
+			if test.steal {
+				wantState = "cancelled"
+			}
+			if job.State != wantState {
+				t.Fatalf("job state = %q, want %q", job.State, wantState)
 			}
 		})
 	}

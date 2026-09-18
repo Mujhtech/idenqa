@@ -63,12 +63,12 @@ func (routes *VerificationRoutes) Register(router chi.Router) {
 	router.With(
 		routes.access.Authenticate,
 		routes.access.Require(access.PermissionVerificationSessionsCreate),
-	).Post("/v1/verifications", routes.create)
+	).Post("/verifications", routes.create)
 	router.With(
 		routes.access.Authenticate,
 		routes.access.Require(access.PermissionVerificationSessionsRead),
-	).Get("/v1/verifications/{verificationID}", routes.find)
-	router.With(routes.capture.Authenticate).Get("/v1/capture/session", routes.captureSession)
+	).Get("/verifications/{verificationID}", routes.find)
+	router.With(routes.capture.Authenticate).Get("/capture/session", routes.captureSession)
 }
 
 func (routes *VerificationRoutes) create(writer http.ResponseWriter, request *http.Request) {
@@ -114,8 +114,15 @@ func (routes *VerificationRoutes) create(writer http.ResponseWriter, request *ht
 
 		return
 	}
+	outcomePostTTL, err := optionalSeconds(body.OutcomeTokenPostExpiryTTLSeconds)
+	if err != nil {
+		routes.problem(writer, request, invalidRequest(err))
+
+		return
+	}
 	created, err := routes.service.Create(request.Context(), authority, key, verification.SessionCreateInput{
-		ProfileID: profileID, PolicyID: policyID, VerificationTTL: verificationTTL, CaptureTokenTTL: captureTTL,
+		ProfileID: profileID, PolicyID: policyID, VerificationTTL: verificationTTL,
+		CaptureTokenTTL: captureTTL, OutcomePostTTL: outcomePostTTL,
 	})
 	if err != nil {
 		routes.problem(writer, request, err)
@@ -184,8 +191,12 @@ func (routes *VerificationRoutes) createdResponse(
 		return openapiv1.VerificationCreated{}, err
 	}
 	encoded := created.CaptureToken.Reveal()
+	outcomeToken := created.OutcomeToken.Reveal()
 
-	return openapiv1.VerificationCreated{Session: session, CaptureToken: &encoded}, nil
+	return openapiv1.VerificationCreated{
+		Session: session, CaptureToken: &encoded, OutcomeToken: &outcomeToken,
+		OutcomeTokenExpiresAt: created.OutcomeCredential.ExpiresAt(),
+	}, nil
 }
 
 func (routes *VerificationRoutes) sessionResponse(

@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	connectionPath      = "/v1/capture/socket"
+	connectionPath      = "/capture/socket"
 	rejectedCloseReason = "connection rejected"
 	failedCloseReason   = "connection failed"
 	drainingCloseReason = "server draining"
@@ -132,7 +132,8 @@ func NewRoutes(
 	}, nil
 }
 
-// Register adds the capture WebSocket endpoint.
+// Register adds the capture WebSocket endpoint. The path is relative to the
+// public API version prefix applied by process composition.
 func (routes *Routes) Register(router chi.Router) {
 	router.Get(connectionPath, routes.connect)
 }

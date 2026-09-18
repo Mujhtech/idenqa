@@ -33,6 +33,11 @@ type Dependencies struct {
 	AllowedOrigins       []string
 }
 
+// VersionPrefix is the public API major-version path boundary. Public route
+// groups register paths relative to it; process composition mounts it exactly
+// once so the version appears in a single place.
+const VersionPrefix = "/v1"
+
 // RegisterRoutes adds application routes to router.
 type RegisterRoutes func(router chi.Router)
 

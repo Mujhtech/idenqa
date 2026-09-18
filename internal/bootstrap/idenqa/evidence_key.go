@@ -48,7 +48,7 @@ func newEvidenceKeyCommand() *cobra.Command {
 			return cli.UsageError(errors.New("evidence-key requires an operation"))
 		},
 	}
-	command.PersistentFlags().StringVar(&options.envFile, "env-file", "", "load local configuration from this dotenv file")
+	command.PersistentFlags().StringVar(&options.envFile, "env-file", config.DefaultEnvFile, "load local configuration from this dotenv file")
 	initialize := &cobra.Command{
 		Use:   "init",
 		Short: "Create a new local evidence KEK keyring",
@@ -164,11 +164,7 @@ func executeEvidenceKeyRewrap(command *cobra.Command, options *evidenceKeyOption
 	if err := pool.Check(ctx, migrations.LatestVersion); err != nil {
 		return cli.RuntimeError("check evidence-key database schema", err)
 	}
-	registry, err := evidence.BuiltInRegistry()
-	if err != nil {
-		return cli.RuntimeError("compose evidence-key registry", err)
-	}
-	catalog, err := evidence.NewCatalog(registry)
+	catalog, err := evidence.BuiltInCatalog()
 	if err != nil {
 		return cli.RuntimeError("compose evidence-key registry", err)
 	}

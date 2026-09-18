@@ -9,7 +9,6 @@ import (
 
 	"github.com/Mujhtech/idenqa/internal/evidence"
 	openapiv1 "github.com/Mujhtech/idenqa/internal/gen/openapi/v1"
-	"github.com/go-chi/chi/v5"
 )
 
 type captureProgressFinderStub struct {
@@ -43,8 +42,7 @@ func TestCaptureProgressRoutesUseExactAuthenticatedPrincipal(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	router := chi.NewRouter()
-	routes.Register(router)
+	router := versionedRouter(t, routes)
 	request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/v1/capture/progress", nil)
 	request.Header.Set("Authorization", "Bearer "+fixture.token)
 	response := httptest.NewRecorder()

@@ -99,15 +99,15 @@ func (routes *ProfileRoutes) Register(router chi.Router) {
 		routes.access.Authenticate,
 		routes.access.Require(access.PermissionCaptureProfilesWrite),
 	}
-	router.With(read...).Get("/v1/capture-profiles", routes.list)
-	router.With(write...).Post("/v1/capture-profiles", routes.create)
-	router.With(read...).Get("/v1/capture-profiles/{profileID}", routes.find)
-	router.With(write...).Put("/v1/capture-profiles/{profileID}/draft", routes.updateDraft)
-	router.With(write...).Post("/v1/capture-profiles/{profileID}/validate", routes.validateDraft)
-	router.With(write...).Post("/v1/capture-profiles/{profileID}/publish", routes.publish)
-	router.With(write...).Post("/v1/capture-profiles/{profileID}/supersede", routes.supersede)
-	router.With(write...).Post("/v1/capture-profiles/{profileID}/deactivate", routes.deactivate)
-	router.With(read...).Get("/v1/capture-profiles/{profileID}/revisions/{revision}", routes.findRevision)
+	router.With(read...).Get("/capture-profiles", routes.list)
+	router.With(write...).Post("/capture-profiles", routes.create)
+	router.With(read...).Get("/capture-profiles/{profileID}", routes.find)
+	router.With(write...).Put("/capture-profiles/{profileID}/draft", routes.updateDraft)
+	router.With(write...).Post("/capture-profiles/{profileID}/validate", routes.validateDraft)
+	router.With(write...).Post("/capture-profiles/{profileID}/publish", routes.publish)
+	router.With(write...).Post("/capture-profiles/{profileID}/supersede", routes.supersede)
+	router.With(write...).Post("/capture-profiles/{profileID}/deactivate", routes.deactivate)
+	router.With(read...).Get("/capture-profiles/{profileID}/revisions/{revision}", routes.findRevision)
 }
 
 func (routes *ProfileRoutes) create(writer http.ResponseWriter, request *http.Request) {

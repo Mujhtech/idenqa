@@ -44,7 +44,7 @@ func (routes *TenantRoutes) Register(router chi.Router) {
 	router.With(
 		routes.access.Authenticate,
 		routes.access.Require(access.PermissionTenantRead),
-	).Get("/v1/tenant", routes.current)
+	).Get("/tenant", routes.current)
 }
 
 func (routes *TenantRoutes) current(writer http.ResponseWriter, request *http.Request) {

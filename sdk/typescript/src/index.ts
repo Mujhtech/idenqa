@@ -5,6 +5,7 @@ export {
   AuthoritiesClient,
   DecisionsClient,
   IdenqaClient,
+  OutcomeClient,
   VerificationsClient,
   createIdempotencyKey,
 } from "./client.js";
@@ -28,6 +29,7 @@ export type {
   AcquisitionStrategy,
   CaptureAcquisition,
   CaptureClientOptions,
+  OutcomeClientOptions,
   CaptureAuthoritySnapshot,
   CaptureConstraint,
   CaptureConstraintValue,
@@ -47,6 +49,8 @@ export type {
   CaptureProfileValidation,
   CaptureProfileWrite,
   CaptureProgress,
+  CaptureOutcome,
+  CaptureOutcomeState,
   CaptureRequirement,
   ClientOptions,
   ConditionalIdempotentRequestOptions,
@@ -104,5 +108,91 @@ export type {
   VerificationCreated,
   VerificationID,
   VerificationSession,
+  VerificationCancellation,
   VerificationState,
 } from "./types.js";
+
+export { WebhooksClient } from "./client.js";
+export type {
+  WebhookEndpoint,
+  WebhookDelivery,
+  WebhookAttempt,
+  WebhookEndpointMutation,
+  WebhookDeliveryMutation,
+  WebhookEndpointList,
+  WebhookDeliveryList,
+  WebhookAttemptList,
+  WebhookEndpointID,
+  WebhookDeliveryID,
+  WebhookListOptions,
+} from "./types.js";
+
+export { PoliciesClient } from "./client.js";
+export type {
+  PolicySummary,
+  PolicyRevisionInfo,
+  PolicyRevisionDocument,
+  PolicyActivationInfo,
+  PolicyValidation,
+  PolicyMutation,
+  PolicyList,
+  PolicyRevisionList,
+  PolicyActivationList,
+  PolicyDefinition,
+  PolicyDocument,
+  PolicyListOptions,
+} from "./types.js";
+
+export { ReviewsClient } from "./reviews.js";
+export type { ReviewRequestOptions, ReviewMutationOptions } from "./reviews.js";
+
+export { createReviewViewer } from "./review-viewer.js";
+export type { ReviewDisplay, ReviewViewer } from "./review-viewer.js";
+
+export { FraudClient } from "./fraud.js";
+export type {
+  FraudConfiguration,
+  FraudInput,
+  FraudProposal,
+  FraudResult,
+  FraudRequestOptions,
+  FraudMutationOptions,
+} from "./fraud.js";
+
+export { IdentityClient } from "./identity.js";
+export type {
+  IdentitySubjectID,
+  IdentityRecordID,
+  IdentityValue,
+  IdentitySubject,
+  IdentityIdentifierInput,
+  IdentityIdentifier,
+  IdentityRecordInput,
+  IdentityRecord,
+  IdentitySourceBinding,
+  IdentityRequirement,
+  IdentityConfiguration,
+  IdentityFinding,
+  IdentityReceipt,
+  IdentityResult,
+  IdentityIdentifierLookup,
+  IdentityRequestOptions,
+  IdentityMutationOptions,
+  IdentityListOptions,
+} from "./identity.js";
+
+export * from "./assurance.js";
+
+export { ProposalsClient } from "./proposals.js";
+export type {
+  Proposal,
+  ProposalActionKind,
+  ProposalActionInput,
+  ProposalMode,
+  ProposalRequestInput,
+  ProposalStatus,
+  ProposalRequestOptions,
+  ProposalMutationOptions,
+  ModeConfig,
+  Prompt,
+} from "./proposals.js";

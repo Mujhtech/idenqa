@@ -14,6 +14,7 @@ import (
 	"github.com/Mujhtech/idenqa/internal/platform/idempotency"
 	"github.com/Mujhtech/idenqa/internal/policy"
 	"github.com/Mujhtech/idenqa/internal/privacy"
+	"github.com/Mujhtech/idenqa/internal/proposal"
 	"github.com/Mujhtech/idenqa/internal/review"
 	"github.com/Mujhtech/idenqa/internal/tenant"
 	"github.com/Mujhtech/idenqa/internal/verification"
@@ -295,6 +296,27 @@ func Map(err error) *Error {
 			"The evidence upload outcome is being reconciled.",
 			err,
 		).WithRetryAfter(time.Second)
+	}
+	if errors.Is(err, proposal.ErrInvalid) {
+		return New(http.StatusBadRequest, CodeInvalidRequest, "Invalid request", "The proposal request is invalid.", err)
+	}
+	if errors.Is(err, proposal.ErrNotFound) {
+		return New(http.StatusNotFound, CodeNotFound, "Not found", "The requested proposal was not found.", err)
+	}
+	if errors.Is(err, proposal.ErrConflict) {
+		return New(http.StatusConflict, CodeConflict, "Conflict", "The proposal conflicts with current state.", err)
+	}
+	if errors.Is(err, proposal.ErrNotAllowed) {
+		return New(http.StatusForbidden, CodeInsufficientScope, "Forbidden", "The proposal operation is not allowed.", err)
+	}
+	if errors.Is(err, proposal.ErrRateLimited) {
+		return New(http.StatusTooManyRequests, CodeRateLimited, "Rate limited", "The proposal operation is rate limited.", err).WithRetryAfter(time.Second)
+	}
+	if errors.Is(err, proposal.ErrModeDisabled) {
+		return New(http.StatusForbidden, CodeInsufficientScope, "Forbidden", "AI proposals are disabled for this workflow.", err)
+	}
+	if errors.Is(err, proposal.ErrApprovalNeeded) {
+		return New(http.StatusForbidden, CodeInsufficientScope, "Forbidden", "Human approval is required for this proposal.", err)
 	}
 	if errors.Is(err, verification.ErrProfileUnavailable) {
 		return New(

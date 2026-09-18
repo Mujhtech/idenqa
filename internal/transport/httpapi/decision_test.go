@@ -14,7 +14,6 @@ import (
 	openapiv1 "github.com/Mujhtech/idenqa/internal/gen/openapi/v1"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/policy"
-	"github.com/go-chi/chi/v5"
 )
 
 func TestDecisionRoutesReadExactAndLatestSafeReports(t *testing.T) {
@@ -287,8 +286,7 @@ func decisionHTTPRouter(
 	if err != nil {
 		t.Fatal(err)
 	}
-	router := chi.NewRouter()
-	routes.Register(router)
+	router := versionedRouter(t, routes)
 
 	return router
 }

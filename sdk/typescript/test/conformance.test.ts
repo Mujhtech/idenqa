@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   CaptureClient,
   IdenqaClient,
+  OutcomeClient,
   createIdempotencyKey,
   type CaptureProfileDocument,
 } from "../src/index.js";
@@ -46,6 +47,15 @@ conformance("running Idenqa Core", () => {
     const captureSnapshot = await capture.getSession();
     expect(captureSnapshot.data).toEqual(tenantSnapshot.data);
     expect(captureSnapshot.requestId).toMatch(/^req_/);
+
+    const outcome = new OutcomeClient({ baseUrl, outcomeToken: first.data.outcomeToken });
+    const subjectOutcome = await outcome.getOutcome();
+    expect(subjectOutcome.data).toMatchObject({
+      verificationId: first.data.session.id,
+      state: "capture_required",
+      sessionVersion: 1,
+    });
+    expect(subjectOutcome.requestId).toMatch(/^req_/);
   });
 });
 

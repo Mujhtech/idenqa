@@ -10,6 +10,11 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Mujhtech/idenqa/internal/fraud"
+	fraudpostgres "github.com/Mujhtech/idenqa/internal/fraud/postgres"
+	"github.com/Mujhtech/idenqa/internal/identity"
+	identitypostgres "github.com/Mujhtech/idenqa/internal/identity/postgres"
+
 	"github.com/Mujhtech/idenqa/db/migrations"
 	"github.com/Mujhtech/idenqa/internal/access"
 	accesspostgres "github.com/Mujhtech/idenqa/internal/access/postgres"
@@ -17,8 +22,12 @@ import (
 	authoritypostgres "github.com/Mujhtech/idenqa/internal/authority/postgres"
 	"github.com/Mujhtech/idenqa/internal/buildinfo"
 	"github.com/Mujhtech/idenqa/internal/config"
+	"github.com/Mujhtech/idenqa/internal/delivery"
+	deliverypostgres "github.com/Mujhtech/idenqa/internal/delivery/postgres"
 	"github.com/Mujhtech/idenqa/internal/evidence"
 	evidencepostgres "github.com/Mujhtech/idenqa/internal/evidence/postgres"
+	"github.com/Mujhtech/idenqa/internal/model"
+	modelpostgres "github.com/Mujhtech/idenqa/internal/model/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
 	tinkcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto/tink"
 	"github.com/Mujhtech/idenqa/internal/platform/cursor"
@@ -29,9 +38,12 @@ import (
 	taskheadgate "github.com/Mujhtech/idenqa/internal/platform/task/headgate"
 	"github.com/Mujhtech/idenqa/internal/platform/telemetry"
 	"github.com/Mujhtech/idenqa/internal/policy"
+	policycel "github.com/Mujhtech/idenqa/internal/policy/cel"
 	policypostgres "github.com/Mujhtech/idenqa/internal/policy/postgres"
 	"github.com/Mujhtech/idenqa/internal/privacy"
 	privacypostgres "github.com/Mujhtech/idenqa/internal/privacy/postgres"
+	"github.com/Mujhtech/idenqa/internal/proposal"
+	proposalpostgres "github.com/Mujhtech/idenqa/internal/proposal/postgres"
 	"github.com/Mujhtech/idenqa/internal/realtime"
 	realtimepostgres "github.com/Mujhtech/idenqa/internal/realtime/postgres"
 	"github.com/Mujhtech/idenqa/internal/review"
@@ -193,6 +205,10 @@ func newProcess(
 	if err != nil {
 		return nil, err
 	}
+	outcomeSigner, err := configuredOutcomeSigner(configuration)
+	if err != nil {
+		return nil, err
+	}
 	connectionPool, err := openDatabase(ctx, postgres.Config{
 		URL:                 configuration.DatabaseURL,
 		Role:                configuration.DatabaseRole,
@@ -244,10 +260,9 @@ func newProcess(
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
 		connectionPool.Close()
-
-		return nil, fmt.Errorf("construct built-in evidence registry: %w", err)
+		return nil, err
 	}
-	catalog, err := evidence.NewCatalog(registry)
+	catalog, err := evidence.BuiltInCatalog()
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
 		connectionPool.Close()
@@ -323,7 +338,21 @@ func newProcess(
 		connectionPool.Close()
 		return nil, fmt.Errorf("construct review persistence: %w", err)
 	}
-	reviewService, err := review.NewService(reviewStore, identifiers, time.Now)
+	reviewAuthorityFile := config.ReviewAuthorityFile{Path: configuration.ReviewAuthorityFile}
+	if err := reviewAuthorityFile.Validate(); err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, fmt.Errorf("validate review authority: %w", err)
+	}
+	reviewAuthority, err := reviewpostgres.NewAuthority(connectionPool, reviewAuthorityFile)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, err
+	}
+
+	reviewStore = reviewStore.WithAuthority(reviewAuthority)
+	reviewService, err := review.NewAuthorizedService(reviewStore, identifiers, time.Now, reviewAuthority)
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
 		connectionPool.Close()
@@ -335,6 +364,24 @@ func newProcess(
 		connectionPool.Close()
 		return nil, fmt.Errorf("construct review routes: %w", err)
 	}
+	recaptureStore, err := reviewpostgres.NewRecaptureStore(connectionPool, catalog, clock.System{})
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, err
+	}
+	recaptureStore = recaptureStore.WithReviewerAuthority(reviewAuthority)
+	recaptureService, err := review.NewRecaptureService(
+		recaptureStore, reviewAuthority, identifiers, captureSigner, outcomeSigner, clock.System{},
+		configuration.VerificationDefaultTTL, configuration.CaptureTokenDefaultTTL,
+		configuration.OutcomeTokenDefaultPostTTL, configuration.VerificationIdempotencyTTL,
+	)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, err
+	}
+	reviewRoutes = reviewRoutes.WithRecapture(recaptureService).WithQueue(reviewStore, cursorCodec)
 	profileStore, err := verificationpostgres.New(connectionPool, catalog)
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
@@ -379,12 +426,15 @@ func newProcess(
 		sessionStore,
 		identifiers,
 		captureSigner,
+		outcomeSigner,
 		clock.System{},
 		verification.SessionLifetimes{
 			VerificationDefault:  configuration.VerificationDefaultTTL,
 			VerificationMaximum:  configuration.VerificationMaximumTTL,
 			CaptureTokenDefault:  configuration.CaptureTokenDefaultTTL,
 			CaptureTokenMaximum:  configuration.CaptureTokenMaximumTTL,
+			OutcomePostDefault:   configuration.OutcomeTokenDefaultPostTTL,
+			OutcomePostMaximum:   configuration.OutcomeTokenMaximumPostTTL,
 			IdempotencyRetention: configuration.VerificationIdempotencyTTL,
 		},
 		configuration.Region,
@@ -413,6 +463,58 @@ func newProcess(
 
 		return nil, fmt.Errorf("construct capture access middleware: %w", err)
 	}
+	captureOutcomeService, err := verification.NewCaptureOutcomeService(sessionStore)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+
+		return nil, fmt.Errorf("construct capture outcome service: %w", err)
+	}
+	outcomeAuthenticator, err := verification.NewOutcomeAuthenticator(sessionStore, outcomeSigner, clock.System{})
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+
+		return nil, fmt.Errorf("construct outcome authenticator: %w", err)
+	}
+	captureOutcomeMiddleware, err := httpapi.NewOutcomeAccessMiddleware(outcomeAuthenticator, logger)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+
+		return nil, fmt.Errorf("construct capture outcome access middleware: %w", err)
+	}
+	captureOutcomeRoutes, err := httpapi.NewCaptureOutcomeRoutes(
+		captureOutcomeMiddleware,
+		captureOutcomeService,
+		logger,
+	)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+
+		return nil, fmt.Errorf("construct capture outcome routes: %w", err)
+	}
+	stopStore, err := verificationpostgres.NewStopStore(connectionPool, identifiers, clock.System{})
+	if err != nil {
+		connectionPool.Close()
+		return nil, err
+	}
+	cancellationService, err := verification.NewCancellationService(stopStore, clock.System{}, configuration.VerificationIdempotencyTTL)
+	if err != nil {
+		connectionPool.Close()
+		return nil, err
+	}
+	cancellationMiddleware, err := httpapi.NewCaptureAccessMiddleware(verification.CancellationAuthenticator{Authenticator: captureAuthenticator}, logger)
+	if err != nil {
+		connectionPool.Close()
+		return nil, err
+	}
+	cancellationRoutes, err := httpapi.NewCancellationRoutes(accessMiddleware, cancellationMiddleware, cancellationService, logger)
+	if err != nil {
+		connectionPool.Close()
+		return nil, err
+	}
 	verificationRoutes, err := httpapi.NewVerificationRoutes(
 		accessMiddleware,
 		captureMiddleware,
@@ -426,7 +528,7 @@ func newProcess(
 
 		return nil, fmt.Errorf("construct verification routes: %w", err)
 	}
-	var nativeBootstrapRoutes routeRegistrar
+	var nativeBootstrapRoutes RouteRegistrar
 	if len(configuration.NativeApplicationIDs) > 0 {
 		nativeBootstrapService, err := verification.NewNativeBootstrapService(sessionStore, clock.System{}, configuration.NativeApplicationIDs)
 		if err != nil {
@@ -612,9 +714,199 @@ func newProcess(
 
 		return nil, fmt.Errorf("construct realtime socket routes: %w", err)
 	}
-	routes := []routeRegistrar{
-		tenantRoutes, decisionRoutes, reviewRoutes, profileRoutes, verificationRoutes, authorityRoutes, connectionRoutes, realtimeRoutes,
+
+	identityStore, err := identitypostgres.New(connectionPool, infrastructure.keys, identifiers, stopStore)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, err
 	}
+	identityService, err := identity.NewService(identityStore, time.Now, configuration.Region)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, err
+	}
+	identityRoutes, err := httpapi.NewIdentityRoutes(accessMiddleware, identityService, logger)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, err
+	}
+	fraudStore, err := fraudpostgres.New(connectionPool, infrastructure.keys)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, err
+	}
+	fraudService, err := fraud.NewService(fraudStore, time.Now)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, err
+	}
+	fraudRoutes, err := httpapi.NewFraudRoutes(accessMiddleware, fraudService, logger)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, err
+	}
+	modelStore, err := modelpostgres.NewRegistryStore(connectionPool, time.Now)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, err
+	}
+	modelService, err := model.NewManagement(modelStore, identifiers, time.Now, configuration.VerificationIdempotencyTTL)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, err
+	}
+	modelRoutes, err := httpapi.NewModelRoutes(accessMiddleware, modelService, logger)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, err
+	}
+	policyManagementStore, err := policypostgres.NewManagementStore(connectionPool, time.Now)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, err
+	}
+	policyManagement, err := policy.NewManagement(policyManagementStore, policycel.Compiler{}, identifiers, time.Now, configuration.VerificationIdempotencyTTL)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, err
+	}
+	policyRoutes, err := httpapi.NewPolicyRoutes(accessMiddleware, policyManagement, cursorCodec, logger)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, err
+	}
+	assuranceStore, err := policypostgres.NewAssuranceStore(connectionPool, identifiers)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, err
+	}
+	assuranceService, err := policy.NewAssuranceManagement(assuranceStore, time.Now)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, err
+	}
+	assuranceRoutes, err := httpapi.NewAssuranceRoutes(accessMiddleware, assuranceService, logger)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, err
+	}
+	webhookStore, err := deliverypostgres.NewManagementStore(connectionPool, webhookEnqueuer{connectionPool, configuration}, identifiers, time.Now)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, err
+	}
+	webhookService, err := delivery.NewManagement(webhookStore, identifiers, infrastructure.keys, time.Now, configuration.VerificationIdempotencyTTL)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, err
+	}
+	webhookRoutes, err := httpapi.NewWebhookRoutes(accessMiddleware, webhookService, cursorCodec, logger)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, err
+	}
+	reviewManagement, err := review.NewManagement(reviewStore, time.Now)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, err
+	}
+	reviewManagementRoutes, err := httpapi.NewReviewManagementRoutes(accessMiddleware, reviewManagement, logger)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, err
+	}
+	proposalStore, err := proposalpostgres.New(connectionPool, clock.System{})
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, fmt.Errorf("construct proposal persistence: %w", err)
+	}
+	referenceModel, err := proposal.NewReferenceModel(identifiers, clock.System{})
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, fmt.Errorf("construct proposal reference model: %w", err)
+	}
+	proposalService, err := proposal.NewService(proposal.ServiceConfig{
+		Generator: identifiers,
+		Clock:     clock.System{},
+		Proposals: proposalStore,
+		Commands:  proposalStore,
+		Modes:     proposalpostgres.NewModeStore(connectionPool),
+		Registry:  proposalpostgres.NewRegistryStore(connectionPool),
+		Model:     referenceModel,
+		Evidence:  proposalpostgres.NewEvidenceChecker(connectionPool),
+		Authority: proposalpostgres.NewAuthorityChecker(connectionPool, clock.System{}),
+		Region:    proposalpostgres.NewRegionValidator(connectionPool, clock.System{}),
+		Limiter:   proposal.NewInMemoryLimiter(100),
+	})
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, fmt.Errorf("construct proposal service: %w", err)
+	}
+	proposalRoutes, err := httpapi.NewProposalRoutes(accessMiddleware, proposalService, logger)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, fmt.Errorf("construct proposal routes: %w", err)
+	}
+
+	reviewPolicyStore, err := policypostgres.New(connectionPool)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, err
+	}
+	reviewEvaluator, err := policycel.NewResolver(reviewPolicyStore, 256)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, err
+	}
+	followupStore, err := reviewpostgres.NewFollowupStore(connectionPool, reviewAuthority, reviewEvaluator, identifiers, clock.System{})
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, err
+	}
+	followupService, err := review.NewFollowupService(followupStore, time.Now)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, err
+	}
+	followupRoutes, err := httpapi.NewReviewFollowupRoutes(accessMiddleware, followupService, logger)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, err
+	}
+
+	routes := []RouteRegistrar{
+		assuranceRoutes, identityRoutes, fraudRoutes, followupRoutes, reviewManagementRoutes, proposalRoutes, tenantRoutes, modelRoutes, policyRoutes, webhookRoutes, decisionRoutes, reviewRoutes, profileRoutes, verificationRoutes, captureOutcomeRoutes, cancellationRoutes, authorityRoutes, connectionRoutes, realtimeRoutes,
+	}
+	internalRoutes := []InternalRouteRegistrar{}
 	if nativeBootstrapRoutes != nil {
 		routes = append(routes, nativeBootstrapRoutes)
 	}
@@ -641,6 +933,32 @@ func newProcess(
 
 			return nil, fmt.Errorf("construct evidence streaming encryption: %w", err)
 		}
+		reviewObjects, ok := infrastructure.objects.(evidence.ObjectReader)
+		if !ok {
+			_ = providers.Shutdown(context.Background())
+			connectionPool.Close()
+			return nil, fmt.Errorf("review evidence requires controlled object reads")
+		}
+		reviewEvidenceStore, err := reviewpostgres.NewEvidenceStore(connectionPool, reviewAuthority, catalog, identifiers, clock.System{}, streaming, reviewObjects)
+		if err != nil {
+			_ = providers.Shutdown(context.Background())
+			connectionPool.Close()
+			return nil, err
+		}
+		reviewEvidenceService, err := review.NewEvidenceService(reviewEvidenceStore, time.Now)
+		if err != nil {
+			_ = providers.Shutdown(context.Background())
+			connectionPool.Close()
+			return nil, err
+		}
+		reviewEvidenceRoutes, err := httpapi.NewReviewEvidenceRoutes(accessMiddleware, reviewEvidenceService, logger)
+		if err != nil {
+			_ = providers.Shutdown(context.Background())
+			connectionPool.Close()
+			return nil, err
+		}
+		routes = append(routes, reviewEvidenceRoutes)
+
 		evidenceStore, err := evidencepostgres.New(connectionPool, catalog)
 		if err != nil {
 			_ = providers.Shutdown(context.Background())
@@ -660,7 +978,13 @@ func newProcess(
 			connectionPool.Close()
 			return nil, fmt.Errorf("construct evidence eraser: %w", err)
 		}
-		privacyService, err := privacy.NewService(privacyStore, evidenceEraser, identifiers, time.Now)
+		identityEraser, err := identitypostgres.NewEraser(identityStore, evidenceEraser, time.Now)
+		if err != nil {
+			_ = providers.Shutdown(context.Background())
+			connectionPool.Close()
+			return nil, err
+		}
+		privacyService, err := privacy.NewService(privacyStore, identityEraser, identifiers, time.Now)
 		if err != nil {
 			_ = providers.Shutdown(context.Background())
 			connectionPool.Close()
@@ -685,6 +1009,7 @@ func newProcess(
 
 			return nil, fmt.Errorf("construct evidence protector: %w", err)
 		}
+		protector = protector.WithCatalog(catalog)
 		issuer, err := authority.NewUploadService(
 			authorityStore,
 			evidenceStore,
@@ -754,6 +1079,24 @@ func newProcess(
 		routes = append(routes, uploadRoutes, progressRoutes, privacyRoutes)
 		uploadPolicy = &policy
 	}
+	if configuration.ProviderRuntimeFile != "" {
+		providerRoutes, err := newProviderEvidenceRoutes(configuration, connectionPool, infrastructure, catalog)
+		if err != nil {
+			_ = providers.Shutdown(context.Background())
+			connectionPool.Close()
+			return nil, err
+		}
+		internalRoutes = append(internalRoutes, providerRoutes)
+	}
+	if configuration.ModelRuntimeFile != "" {
+		modelRoutes, err := newModelEvidenceRoutes(configuration, connectionPool, infrastructure, catalog)
+		if err != nil {
+			_ = providers.Shutdown(context.Background())
+			connectionPool.Close()
+			return nil, err
+		}
+		internalRoutes = append(internalRoutes, modelRoutes)
+	}
 	httpServer, err := NewServer(address, state, httpapi.Dependencies{
 		Logger:               logger,
 		IDs:                  identifiers,
@@ -763,7 +1106,7 @@ func newProcess(
 		MaxBodyBytes:         configuration.HTTPMaxBodyBytes,
 		AllowedOrigins:       configuration.HTTPCORSAllowedOrigins,
 		EvidenceUploadPolicy: uploadPolicy,
-	}, routes...)
+	}, routes, internalRoutes)
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
 		connectionPool.Close()
@@ -871,6 +1214,27 @@ func configuredCaptureSigner(configuration config.API) (*access.CaptureTokenSign
 	signer, err := access.NewCaptureTokenSigner(keyring, clock.System{})
 	if err != nil {
 		return nil, fmt.Errorf("configure capture-token signer: %w", err)
+	}
+
+	return signer, nil
+}
+
+func configuredOutcomeSigner(configuration config.API) (*access.OutcomeTokenSigner, error) {
+	configured := configuration.OutcomeTokenKeys.Values()
+	keys := make(map[access.OutcomeTokenKeyVersion][]byte, len(configured))
+	for version, material := range configured {
+		keys[access.OutcomeTokenKeyVersion(version)] = material
+	}
+	keyring, err := access.NewOutcomeTokenKeyring(
+		access.OutcomeTokenKeyVersion(configuration.OutcomeTokenActiveVersion),
+		keys,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("configure outcome-token keys: %w", err)
+	}
+	signer, err := access.NewOutcomeTokenSigner(keyring, clock.System{})
+	if err != nil {
+		return nil, fmt.Errorf("configure outcome-token signer: %w", err)
 	}
 
 	return signer, nil

@@ -13,7 +13,7 @@ interface TransportOptions {
 }
 
 interface JSONRequest {
-  readonly method: "GET" | "POST" | "PUT";
+  readonly method: "GET" | "POST" | "PUT" | "DELETE";
   readonly path: string;
   readonly bearerToken: string;
   readonly body?: unknown;
@@ -128,6 +128,72 @@ export class JSONTransport {
     return "allowNotModified" in request
       ? { ...successful, notModified: false as const }
       : successful;
+  }
+
+  async requestBytes(request: JSONRequest): Promise<SDKResponse<Uint8Array>> {
+    let response: Response;
+    try {
+      response = await this.#fetch(new URL(stripLeadingSlash(request.path), this.#baseUrl), {
+        method: request.method,
+        headers: {
+          Accept: "image/png, application/problem+json",
+          Authorization: `Bearer ${request.bearerToken}`,
+        },
+        cache: "no-store",
+        redirect: "error",
+        ...(request.signal === undefined ? {} : { signal: request.signal }),
+      });
+    } catch (cause) {
+      throw new IdenqaTransportError(
+        "Evidence display request failed.",
+        request.signal?.aborted === true || isAbortError(cause),
+        cause,
+      );
+    }
+    const requestId = optionalHeader(response.headers, "X-Request-ID");
+    if (!response.ok) throw await apiError(response, requestId);
+    if (
+      !requestId ||
+      response.headers.get("Content-Type")?.split(";", 1)[0] !== "image/png" ||
+      !response.body
+    ) {
+      await response.body?.cancel();
+      throw new IdenqaProtocolError(
+        "Invalid evidence display response.",
+        response.status,
+        requestId,
+      );
+    }
+    const reader = response.body.getReader();
+    const chunks: Uint8Array[] = [];
+    let total = 0;
+    try {
+      for (;;) {
+        const next = await reader.read();
+        if (next.done) break;
+        total += next.value.byteLength;
+        if (total > 50 * 1024 * 1024) {
+          next.value.fill(0);
+          throw new IdenqaProtocolError(
+            "Evidence display exceeds the size limit.",
+            response.status,
+            requestId,
+          );
+        }
+        chunks.push(next.value);
+      }
+      const data = new Uint8Array(total);
+      let offset = 0;
+      for (const chunk of chunks) {
+        data.set(chunk, offset);
+        offset += chunk.length;
+      }
+      return { data, requestId };
+    } finally {
+      for (const chunk of chunks) chunk.fill(0);
+      await reader.cancel();
+      reader.releaseLock();
+    }
   }
 
   async requestCanonicalJSON<T>(

@@ -9,9 +9,14 @@ import (
 	"sync"
 	"time"
 
+	fraudpostgres "github.com/Mujhtech/idenqa/internal/fraud/postgres"
+	identitypostgres "github.com/Mujhtech/idenqa/internal/identity/postgres"
+
 	"github.com/Mujhtech/idenqa/db/migrations"
 	"github.com/Mujhtech/idenqa/internal/buildinfo"
 	"github.com/Mujhtech/idenqa/internal/config"
+	deliverypostgres "github.com/Mujhtech/idenqa/internal/delivery/postgres"
+	deliverytask "github.com/Mujhtech/idenqa/internal/delivery/task"
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/platform/postgres"
@@ -25,15 +30,24 @@ import (
 	"github.com/Mujhtech/idenqa/internal/privacy"
 	privacypostgres "github.com/Mujhtech/idenqa/internal/privacy/postgres"
 	privacytask "github.com/Mujhtech/idenqa/internal/privacy/task"
+	reviewpostgres "github.com/Mujhtech/idenqa/internal/review/postgres"
+	reviewtask "github.com/Mujhtech/idenqa/internal/review/task"
 	verificationpostgres "github.com/Mujhtech/idenqa/internal/verification/postgres"
 	"github.com/Mujhtech/idenqa/internal/verification/synthetic"
+	"github.com/Mujhtech/idenqa/internal/verification/syntheticplan"
 	verificationtask "github.com/Mujhtech/idenqa/internal/verification/task"
 )
 
 // Process owns the worker runtime and every resource composed for it.
 type Process struct {
+	identity               *identitypostgres.Store
+	reviewWorker           *reviewtask.Worker
+	providerConnection     interface{ Close() error }
 	worker                 *taskheadgate.Worker
 	coordinator            *verificationtask.Coordinator
+	fraud                  *fraudpostgres.Store
+	processing             *verificationpostgres.ProcessingStore
+	processingBatch        int
 	policyCoordinator      *policytask.Coordinator
 	privacyCoordinator     *privacytask.Coordinator
 	duties                 *taskheadgate.Adapter
@@ -41,6 +55,9 @@ type Process struct {
 	providers              *telemetry.Providers
 	database               *postgres.Pool
 	evidence               EvidenceLifecycle
+	deliveryLifecycle      EvidenceLifecycle
+	deliveryCoordinator    *deliverytask.Coordinator
+	expiryCoordinator      *verificationtask.ExpiryCoordinator
 	logger                 *slog.Logger
 	workerID               string
 	reconciliationInterval time.Duration
@@ -71,10 +88,27 @@ func NewProcessWithEvidence(
 	registry *task.Registry,
 	infrastructure EvidenceInfrastructure,
 ) (*Process, error) {
+	delivery, err := configuredLocalDelivery(configuration)
+	if err != nil {
+		if infrastructure.enabled() {
+			_ = infrastructure.lifecycle.Shutdown(context.Background())
+		}
+		return nil, err
+	}
+	return NewProcessWithInfrastructure(ctx, configuration, logger, build, registry, infrastructure, delivery)
+}
+
+// NewProcessWithInfrastructure composes provider-neutral evidence and signed delivery resources.
+func NewProcessWithInfrastructure(ctx context.Context, configuration config.Worker, logger *slog.Logger, build buildinfo.Info, registry *task.Registry, infrastructure EvidenceInfrastructure, deliveryInfrastructure DeliveryInfrastructure) (*Process, error) {
 	constructed := false
 	defer func() {
-		if !constructed && infrastructure.enabled() {
-			_ = infrastructure.lifecycle.Shutdown(context.Background())
+		if !constructed {
+			if infrastructure.enabled() {
+				_ = infrastructure.lifecycle.Shutdown(context.Background())
+			}
+			if deliveryInfrastructure.enabled() {
+				_ = deliveryInfrastructure.lifecycle.Shutdown(context.Background())
+			}
 		}
 	}()
 	if logger == nil || registry == nil {
@@ -111,7 +145,7 @@ func NewProcessWithEvidence(
 		connectionPool.Close()
 		return nil, err
 	}
-	checkStore, err := verificationpostgres.NewCheckStore(connectionPool)
+	checkStore, err := verificationpostgres.NewGuardedCheckStore(connectionPool, clock.System{})
 	if err != nil {
 		connectionPool.Close()
 		return nil, fmt.Errorf("construct verification check store: %w", err)
@@ -121,6 +155,61 @@ func NewProcessWithEvidence(
 		connectionPool.Close()
 		return nil, fmt.Errorf("construct worker identifiers: %w", err)
 	}
+	realProvider, err := configuredProvider(ctx, configuration, connectionPool, identifiers)
+	if err != nil {
+		connectionPool.Close()
+		return nil, err
+	}
+	providerTransferred := false
+	defer func() {
+		if realProvider != nil && !providerTransferred {
+			_ = realProvider.connection.Close()
+		}
+	}()
+	realModel, err := configuredModel(ctx, configuration, connectionPool, identifiers)
+	if err != nil {
+		connectionPool.Close()
+		return nil, err
+	}
+	modelTransferred := false
+	defer func() {
+		if realModel != nil && !modelTransferred {
+			_ = realModel.connection.Close()
+		}
+	}()
+	var processing *verificationpostgres.ProcessingStore
+	if configuration.SyntheticProcessing {
+		processing, err = verificationpostgres.NewProcessingStore(connectionPool, syntheticplan.Plan{}, identifiers, adapter, clock.System{})
+		if err != nil {
+			connectionPool.Close()
+			return nil, fmt.Errorf("construct synthetic processing planner: %w", err)
+		}
+		logger.WarnContext(ctx, "synthetic processing enabled: fixture checks do not verify identity")
+	}
+	routes := []executionRoute{}
+	if realProvider != nil {
+		routes = append(routes, executionRoute{realProvider.plan, realProvider.preparation, realProvider.plan.OutputSignals()})
+	}
+	if realModel != nil {
+		routes = append(routes, executionRoute{realModel.plan, realModel.preparation, realModel.signals})
+	}
+	if len(routes) > 0 {
+		combined, composeErr := composeRoutes(routes)
+		if composeErr != nil {
+			connectionPool.Close()
+			return nil, composeErr
+		}
+		processing, err = verificationpostgres.NewProcessingStore(connectionPool, combined, identifiers, adapter, clock.System{})
+		if err != nil {
+			connectionPool.Close()
+			return nil, err
+		}
+		if err := processing.WithPreparation(combined); err != nil {
+			connectionPool.Close()
+			return nil, err
+		}
+	}
+
 	workerID := configuration.WorkerID
 	if workerID == "" {
 		generatedWorkerID, generateErr := identifiers.NewTask()
@@ -130,19 +219,50 @@ func NewProcessWithEvidence(
 		}
 		workerID = strings.ToLower(generatedWorkerID.String())
 	}
-	executeHandler, err := verificationtask.NewExecuteHandler(
+	executeHandler, err := verificationtask.NewExecuteHandlerWithRequests(
 		checkStore,
 		identifiers,
 		synthetic.Provider{Scenario: synthetic.Success, Now: clock.System{}.Now},
 		synthetic.Model{Scenario: synthetic.Success, Now: clock.System{}.Now},
+		syntheticRequests{enabled: configuration.SyntheticProcessing},
 	)
 	if err != nil {
 		connectionPool.Close()
 		return nil, fmt.Errorf("construct verification execute handler: %w", err)
 	}
+	if realProvider != nil {
+		executeHandler, err = verificationtask.NewExecuteHandlerWithRequests(checkStore, identifiers, realProvider.executor, synthetic.Model{Scenario: synthetic.Success, Now: clock.System{}.Now}, realProvider.requests)
+		if err != nil {
+			connectionPool.Close()
+			return nil, err
+		}
+	}
+	if err := executeHandler.WithModelRequests(syntheticModelRequests{enabled: configuration.SyntheticProcessing}); err != nil {
+		connectionPool.Close()
+		return nil, err
+	}
+	if realModel != nil {
+		if realProvider != nil {
+			executeHandler, err = verificationtask.NewExecuteHandlerWithRequests(checkStore, identifiers, realProvider.executor, realModel.executor, realProvider.requests)
+		} else {
+			executeHandler, err = verificationtask.NewExecuteHandlerWithRequests(checkStore, identifiers, synthetic.Provider{Scenario: synthetic.Success, Now: clock.System{}.Now}, realModel.executor, syntheticRequests{})
+		}
+		if err != nil {
+			connectionPool.Close()
+			return nil, err
+		}
+		if err := executeHandler.WithModelRequests(realModel.requests); err != nil {
+			connectionPool.Close()
+			return nil, err
+		}
+	}
 	if err := registry.Register(verificationtask.ExecuteKey, executeHandler); err != nil {
 		connectionPool.Close()
 		return nil, fmt.Errorf("register verification execute handler: %w", err)
+	}
+	if err := registry.Register(verificationtask.AsyncExecuteKey, executeHandler); err != nil {
+		connectionPool.Close()
+		return nil, err
 	}
 	reconcileHandler, err := verificationtask.NewReconcileHandler(
 		checkStore, identifiers, clock.System{}, configuration.ReconciliationItemLease,
@@ -155,18 +275,36 @@ func NewProcessWithEvidence(
 		connectionPool.Close()
 		return nil, fmt.Errorf("register verification reconcile handler: %w", err)
 	}
-	policyStore, err := policypostgres.New(connectionPool)
+	policyStore, err := policypostgres.NewGuarded(connectionPool, clock.System{})
 	if err != nil {
 		connectionPool.Close()
 		return nil, fmt.Errorf("construct policy store: %w", err)
 	}
+	stopStore, err := verificationpostgres.NewStopStore(connectionPool, identifiers, clock.System{})
+	if err != nil {
+		connectionPool.Close()
+		return nil, err
+	}
+
+	identityStore, err := identitypostgres.New(connectionPool, deliveryInfrastructure.unwrapper, identifiers, stopStore)
+	if err != nil {
+		connectionPool.Close()
+		return nil, err
+	}
+	fraudStore, err := fraudpostgres.New(connectionPool, deliveryInfrastructure.unwrapper)
+	if err != nil {
+		connectionPool.Close()
+		return nil, err
+	}
 	policySource, err := policypostgres.NewSource(
 		connectionPool, policypostgres.SessionPolicySelector{}, policypostgres.DirectFactProjector{},
+		fraudStore, identityStore, reviewpostgres.RecaptureFactProjector{},
 	)
 	if err != nil {
 		connectionPool.Close()
 		return nil, fmt.Errorf("construct authoritative policy source: %w", err)
 	}
+	policySource.EnableDecisionContext()
 	policyInputs, err := policy.NewActiveInputLoader(policySource, policyStore)
 	if err != nil {
 		connectionPool.Close()
@@ -182,10 +320,39 @@ func NewProcessWithEvidence(
 		connectionPool.Close()
 		return nil, fmt.Errorf("construct policy decision builder: %w", err)
 	}
-	policyHandler, err := policytask.NewHandler(policyStore, policyBuilder)
+	completion, err := verificationpostgres.NewCompletionStore(connectionPool, identifiers, adapter, clock.System{})
+	if err != nil {
+		connectionPool.Close()
+		return nil, fmt.Errorf("construct verification completion: %w", err)
+	}
+	reviewRules, err := config.LoadReviewRouting(configuration.ReviewRoutingFile)
+	if err != nil {
+		connectionPool.Close()
+		return nil, fmt.Errorf("load review routing: %w", err)
+	}
+	reviewRouting, err := reviewpostgres.NewRoutingStore(connectionPool, identifiers, clock.System{}, reviewRules)
+	if err != nil {
+		connectionPool.Close()
+		return nil, fmt.Errorf("construct review routing: %w", err)
+	}
+	policyHandler, err := policytask.NewHandlerWithRouting(policyStore, policyBuilder, completion, reviewRouting)
 	if err != nil {
 		connectionPool.Close()
 		return nil, fmt.Errorf("construct policy author handler: %w", err)
+	}
+	reviewEvaluations, err := reviewpostgres.NewEvaluationStore(connectionPool, policyEvaluator, completion, clock.System{})
+	if err != nil {
+		connectionPool.Close()
+		return nil, err
+	}
+	reviewWorker, err := reviewtask.New(reviewEvaluations, identifiers, adapter, clock.System{})
+	if err != nil {
+		connectionPool.Close()
+		return nil, err
+	}
+	if err := registry.Register(reviewtask.EvaluationKey, reviewWorker); err != nil {
+		connectionPool.Close()
+		return nil, err
 	}
 	if err := registry.Register(policytask.AuthorKey, policyHandler); err != nil {
 		connectionPool.Close()
@@ -205,6 +372,42 @@ func NewProcessWithEvidence(
 		connectionPool.Close()
 		return nil, fmt.Errorf("construct policy coordinator: %w", err)
 	}
+	expiryHandler, err := verificationtask.NewExpiryHandler(stopStore)
+	if err != nil {
+		connectionPool.Close()
+		return nil, err
+	}
+	if err := registry.Register(verificationtask.ExpireKey, expiryHandler); err != nil {
+		connectionPool.Close()
+		return nil, err
+	}
+	expiryCoordinator, err := verificationtask.NewExpiryCoordinator(stopStore, identifiers, adapter, clock.System{})
+	if err != nil {
+		connectionPool.Close()
+		return nil, err
+	}
+	var deliveryCoordinator *deliverytask.Coordinator
+	if deliveryInfrastructure.enabled() {
+		store, err := deliverypostgres.New(connectionPool)
+		if err != nil {
+			connectionPool.Close()
+			return nil, err
+		}
+		handler, err := deliverytask.NewHandler(store, deliveryInfrastructure.unwrapper, deliveryInfrastructure.sender, identifiers, adapter, clock.System{}.Now)
+		if err != nil {
+			connectionPool.Close()
+			return nil, fmt.Errorf("construct webhook handler: %w", err)
+		}
+		if err := registry.Register(deliverytask.DeliverKey, handler); err != nil {
+			connectionPool.Close()
+			return nil, err
+		}
+		deliveryCoordinator, err = deliverytask.NewCoordinator(store, identifiers, adapter, clock.System{}, deliverytask.CoordinationBatch)
+		if err != nil {
+			connectionPool.Close()
+			return nil, err
+		}
+	}
 	var privacyCoordinator *privacytask.Coordinator
 	if infrastructure.enabled() {
 		privacyStore, err := privacypostgres.New(connectionPool)
@@ -217,7 +420,12 @@ func NewProcessWithEvidence(
 			connectionPool.Close()
 			return nil, fmt.Errorf("construct worker evidence eraser: %w", err)
 		}
-		privacyService, err := privacy.NewService(privacyStore, evidenceEraser, identifiers, time.Now)
+		identityEraser, err := identitypostgres.NewEraser(identityStore, evidenceEraser, time.Now)
+		if err != nil {
+			connectionPool.Close()
+			return nil, err
+		}
+		privacyService, err := privacy.NewService(privacyStore, identityEraser, identifiers, time.Now)
 		if err != nil {
 			connectionPool.Close()
 			return nil, fmt.Errorf("construct worker privacy service: %w", err)
@@ -308,11 +516,27 @@ func NewProcessWithEvidence(
 	if listenErr != nil {
 		logger.WarnContext(ctx, "verification progress notification listener unavailable; using durable polling")
 	}
-	process := &Process{
-		worker: backgroundWorker, coordinator: coordinator, policyCoordinator: policyCoordinator, privacyCoordinator: privacyCoordinator, duties: adapter,
+	var providerConnection interface{ Close() error }
+	if realProvider != nil {
+		providerConnection = realProvider.connection
+		providerTransferred = true
+	}
+	if realModel != nil {
+		if providerConnection != nil {
+			providerConnection = runtimeConnections{providerConnection, realModel.connection}
+		} else {
+			providerConnection = realModel.connection
+		}
+		modelTransferred = true
+	}
+	process := &Process{providerConnection: providerConnection,
+		deliveryCoordinator: deliveryCoordinator,
+		expiryCoordinator:   expiryCoordinator,
+		processing:          processing, processingBatch: configuration.ReconciliationBatchSize,
+		identity: identityStore, fraud: fraudStore, reviewWorker: reviewWorker, worker: backgroundWorker, coordinator: coordinator, policyCoordinator: policyCoordinator, privacyCoordinator: privacyCoordinator, duties: adapter,
 		progressListener: progressListener, providers: providers, database: connectionPool,
-		evidence: infrastructure.lifecycle,
-		logger:   logger, workerID: workerID,
+		evidence: infrastructure.lifecycle, deliveryLifecycle: deliveryInfrastructure.lifecycle,
+		logger: logger, workerID: workerID,
 		reconciliationInterval: configuration.ReconciliationSweepInterval,
 		progressPollInterval:   configuration.ProgressPollInterval,
 	}
@@ -363,6 +587,9 @@ func (process *Process) runCoordination(ctx context.Context) {
 		notificationWait.Go(func() { process.forwardProgressNotifications(ctx, notifications) })
 	}
 	defer notificationWait.Wait()
+	process.scheduleExpirations(ctx)
+	process.scheduleWebhookDeliveries(ctx)
+	process.startCapturedSessions(ctx)
 	process.scheduleReconciliations(ctx)
 	process.schedulePolicyAuthorships(ctx)
 	process.schedulePrivacyDeletions(ctx)
@@ -375,6 +602,9 @@ func (process *Process) runCoordination(ctx context.Context) {
 			process.scheduleReconciliations(ctx)
 			process.schedulePrivacyDeletions(ctx)
 		case <-progressTicker.C:
+			process.scheduleExpirations(ctx)
+			process.scheduleWebhookDeliveries(ctx)
+			process.startCapturedSessions(ctx)
 			process.projectPendingProgress(ctx)
 			process.schedulePolicyAuthorships(ctx)
 		case tenantID := <-notifications:
@@ -385,6 +615,30 @@ func (process *Process) runCoordination(ctx context.Context) {
 				process.logger.DebugContext(ctx, "projected notified verification progress", "count", projected)
 			}
 		}
+	}
+}
+
+func (process *Process) scheduleWebhookDeliveries(ctx context.Context) {
+	if process.deliveryCoordinator == nil {
+		return
+	}
+	scheduled, err := process.deliveryCoordinator.ScheduleReadyDeliveries(ctx)
+	if err != nil && !errors.Is(err, context.Canceled) {
+		process.logger.ErrorContext(ctx, "schedule webhook deliveries", "error", err)
+	} else if scheduled > 0 {
+		process.logger.DebugContext(ctx, "scheduled webhook deliveries", "count", scheduled)
+	}
+}
+
+func (process *Process) startCapturedSessions(ctx context.Context) {
+	if process.processing == nil {
+		return
+	}
+	started, err := process.processing.Sweep(ctx, process.processingBatch)
+	if err != nil && !errors.Is(err, context.Canceled) {
+		process.logger.ErrorContext(ctx, "start captured verifications", "error", err)
+	} else if started > 0 {
+		process.logger.InfoContext(ctx, "started captured verifications", "count", started)
 	}
 }
 
@@ -414,6 +668,21 @@ func (process *Process) schedulePolicyAuthorships(ctx context.Context) {
 	claimed, err := process.duties.RunDuty(
 		ctx, taskheadgate.DutyPolicyAuthorship, process.workerID, lease,
 		func(ctx context.Context) error {
+			if process.identity != nil {
+				if err := process.identity.Cleanup(ctx, time.Now().UTC()); err != nil {
+					return err
+				}
+			}
+			if process.fraud != nil {
+				if err := process.fraud.Cleanup(ctx); err != nil {
+					return err
+				}
+			}
+			if process.reviewWorker != nil {
+				if err := process.reviewWorker.Schedule(ctx); err != nil {
+					return err
+				}
+			}
 			scheduled, err := process.policyCoordinator.ScheduleReadyAuthorships(ctx)
 			if err == nil && scheduled > 0 {
 				process.logger.InfoContext(ctx, "scheduled policy authorship", "count", scheduled)
@@ -495,9 +764,24 @@ func (process *Process) Close(ctx context.Context) error {
 		process.progressListener.Close()
 	}
 	err := process.providers.Shutdown(ctx)
+	if process.providerConnection != nil {
+		err = errors.Join(err, process.providerConnection.Close())
+	}
 	if process.evidence != nil {
 		err = errors.Join(err, process.evidence.Shutdown(ctx))
 	}
+	if process.deliveryLifecycle != nil {
+		err = errors.Join(err, process.deliveryLifecycle.Shutdown(ctx))
+	}
 	process.database.Close()
 	return err
+}
+
+func (process *Process) scheduleExpirations(ctx context.Context) {
+	if process.expiryCoordinator == nil {
+		return
+	}
+	if _, err := process.expiryCoordinator.ScheduleExpired(ctx); err != nil && !errors.Is(err, context.Canceled) {
+		process.logger.ErrorContext(ctx, "schedule verification expirations", "error", err)
+	}
 }

@@ -22,6 +22,10 @@ import (
 
 const allowedOrigin = "https://capture.example"
 
+// versionPrefix mirrors the public API version prefix applied by process
+// composition.
+const versionPrefix = "/v1"
+
 type redeemerStub struct {
 	mu         sync.Mutex
 	ticket     core.Ticket
@@ -267,7 +271,9 @@ func TestRoutesClearInheritedHTTPDeadlinesBeforeUpgrade(t *testing.T) {
 		return connection.Write(ctx, payload)
 	}))
 	router := chi.NewRouter()
-	routes.Register(router)
+	router.Route(versionPrefix, func(versioned chi.Router) {
+		routes.Register(versioned)
+	})
 	server := httptest.NewUnstartedServer(router)
 	server.Config.ReadTimeout = httpTimeout
 	server.Config.WriteTimeout = httpTimeout
@@ -489,7 +495,9 @@ func newTestRoutesWithLifecycle(
 func newTestServer(t *testing.T, routes *Routes) *httptest.Server {
 	t.Helper()
 	router := chi.NewRouter()
-	routes.Register(router)
+	router.Route(versionPrefix, func(versioned chi.Router) {
+		routes.Register(versioned)
+	})
 	server := httptest.NewServer(router)
 	t.Cleanup(server.Close)
 
@@ -526,7 +534,7 @@ func dialWithContext(
 	if subprotocol != "" {
 		options.Subprotocols = []string{subprotocol}
 	}
-	endpoint := "ws" + strings.TrimPrefix(server.URL, "http") + connectionPath + query
+	endpoint := "ws" + strings.TrimPrefix(server.URL, "http") + versionPrefix + connectionPath + query
 
 	return websocket.Dial(ctx, endpoint, options)
 }

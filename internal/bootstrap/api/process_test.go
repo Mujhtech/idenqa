@@ -255,6 +255,47 @@ func TestNewProcessRequiresCaptureTokenKeysBeforeOpeningDatabase(t *testing.T) {
 	}
 }
 
+func TestNewProcessRequiresOutcomeTokenKeysBeforeOpeningDatabase(t *testing.T) {
+	t.Parallel()
+
+	configuration := config.API{HTTPHost: "127.0.0.1", HTTPPort: 8080}
+	configureTestRealtime(&configuration)
+	encoded := base64.RawURLEncoding.EncodeToString(bytes.Repeat([]byte{7}, 32))
+	if err := configuration.APIKeyPeppers.Decode("1=" + encoded); err != nil {
+		t.Fatalf("decode test API key pepper: %v", err)
+	}
+	configuration.APIKeyActivePepperVersion = 1
+	if err := configuration.CursorKeys.Decode("1=" + encoded); err != nil {
+		t.Fatalf("decode test cursor key: %v", err)
+	}
+	configuration.CursorActiveKeyVersion = 1
+	configuration.CursorTTL = 15 * time.Minute
+	if err := configuration.CaptureTokenKeys.Decode("1=" + encoded); err != nil {
+		t.Fatalf("decode test capture-token key: %v", err)
+	}
+	configuration.CaptureTokenActiveVersion = 1
+	opened := false
+	_, err := newProcess(
+		context.Background(),
+		configuration,
+		slog.New(slog.NewTextHandler(io.Discard, nil)),
+		&health.State{},
+		buildinfo.Info{},
+		func(context.Context, postgres.Config) (database, error) {
+			opened = true
+
+			return &fakeDatabase{}, nil
+		},
+		EvidenceInfrastructure{},
+	)
+	if err == nil || !strings.Contains(err.Error(), "configure outcome-token keys") {
+		t.Fatalf("newProcess() error = %v, want outcome-token configuration error", err)
+	}
+	if opened {
+		t.Fatal("database opened before mandatory outcome-token key validation")
+	}
+}
+
 func TestNewProcessRejectsIncompatibleHeadgateSchema(t *testing.T) {
 	t.Parallel()
 	configuration := config.API{
@@ -596,10 +637,16 @@ func configureTestSecrets(t *testing.T, configuration *config.API) {
 		t.Fatalf("decode test capture-token key: %v", err)
 	}
 	configuration.CaptureTokenActiveVersion = 1
+	if err := configuration.OutcomeTokenKeys.Decode("1=" + encoded); err != nil {
+		t.Fatalf("decode test outcome-token key: %v", err)
+	}
+	configuration.OutcomeTokenActiveVersion = 1
 	configuration.VerificationDefaultTTL = 24 * time.Hour
 	configuration.VerificationMaximumTTL = 7 * 24 * time.Hour
 	configuration.CaptureTokenDefaultTTL = 30 * time.Minute
 	configuration.CaptureTokenMaximumTTL = 2 * time.Hour
+	configuration.OutcomeTokenDefaultPostTTL = 24 * time.Hour
+	configuration.OutcomeTokenMaximumPostTTL = 7 * 24 * time.Hour
 	configuration.VerificationIdempotencyTTL = 24 * time.Hour
 	configureTestRealtime(configuration)
 }

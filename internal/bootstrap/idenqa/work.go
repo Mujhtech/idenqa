@@ -21,17 +21,33 @@ type workOptions struct {
 
 func newWorkCommand() *cobra.Command {
 	options := &workOptions{}
-	command := &cobra.Command{Use: "work", Short: "Inspect and recover durable background work", Args: cli.UsageArgs(cobra.NoArgs), RunE: func(*cobra.Command, []string) error { return cli.UsageError(errors.New("work requires an operation")) }}
-	command.PersistentFlags().StringVar(&options.envFile, "env-file", "", "load local configuration from this dotenv file")
-	list := &cobra.Command{Use: "list", Short: "List payload-free work metadata in one state", Args: cli.UsageArgs(cobra.NoArgs), RunE: func(command *cobra.Command, _ []string) error { return executeWorkList(command, options) }}
+	command := &cobra.Command{
+		Use:   "work",
+		Short: "Inspect and recover durable background work",
+		Args:  cli.UsageArgs(cobra.NoArgs),
+		RunE:  func(*cobra.Command, []string) error { return cli.UsageError(errors.New("work requires an operation")) },
+	}
+	command.PersistentFlags().StringVar(&options.envFile, "env-file", config.DefaultEnvFile, "load local configuration from this dotenv file")
+	list := &cobra.Command{
+		Use:   "list",
+		Short: "List payload-free work metadata in one state",
+		Args:  cli.UsageArgs(cobra.NoArgs),
+		RunE:  func(command *cobra.Command, _ []string) error { return executeWorkList(command, options) },
+	}
 	list.Flags().StringVar(&options.state, "state", "quarantined", "exact Headgate state to inspect")
 	list.Flags().Uint32Var(&options.limit, "limit", 100, "maximum records (1-1000)")
-	retry := &cobra.Command{Use: "retry", Short: "Retry one exact terminal task", Args: cli.UsageArgs(cobra.NoArgs), PreRunE: func(*cobra.Command, []string) error {
-		if options.taskID == "" || !options.confirmed {
-			return cli.UsageError(errors.New("work retry requires --task-id and --confirm"))
-		}
-		return nil
-	}, RunE: func(command *cobra.Command, _ []string) error { return executeWorkRetry(command, options) }}
+	retry := &cobra.Command{
+		Use:   "retry",
+		Short: "Retry one exact terminal task",
+		Args:  cli.UsageArgs(cobra.NoArgs),
+		PreRunE: func(*cobra.Command, []string) error {
+			if options.taskID == "" || !options.confirmed {
+				return cli.UsageError(errors.New("work retry requires --task-id and --confirm"))
+			}
+			return nil
+		},
+		RunE: func(command *cobra.Command, _ []string) error { return executeWorkRetry(command, options) },
+	}
 	retry.Flags().StringVar(&options.taskID, "task-id", "", "exact durable task identifier")
 	retry.Flags().BoolVar(&options.confirmed, "confirm", false, "confirm retry of the exact task")
 	command.AddCommand(list, retry)
@@ -39,7 +55,7 @@ func newWorkCommand() *cobra.Command {
 }
 
 func openWorkAdapter(ctx context.Context, options *workOptions) (*taskheadgate.Adapter, *pgxpool.Pool, error) {
-	configuration, err := config.LoadAPI(options.envFile)
+	configuration, err := config.LoadWorker(options.envFile)
 	if err != nil {
 		return nil, nil, err
 	}

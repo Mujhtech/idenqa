@@ -6,8 +6,10 @@ import {
   IdenqaClient,
   IdenqaProtocolError,
   IdenqaTransportError,
+  OutcomeClient,
   createIdempotencyKey,
   type CaptureProfileDocument,
+  type VerificationState,
 } from "../src/index.js";
 
 const document: CaptureProfileDocument = {
@@ -32,6 +34,50 @@ const document: CaptureProfileDocument = {
 };
 
 describe("IdenqaClient", () => {
+  it.each([
+    "created",
+    "collecting",
+    "awaiting_input",
+    "processing",
+    "awaiting_external",
+    "manual_review",
+    "completed",
+    "cancelled",
+    "expired",
+    "failed",
+  ] satisfies VerificationState[])(
+    "preserves the %s workflow state on retrieval",
+    async (state) => {
+      const client = new IdenqaClient({
+        baseUrl: "https://core.example.test",
+        apiKey: "idq_v1.secret",
+        fetch: async () =>
+          jsonResponse(
+            {
+              id: "ver_01M11HEQG00000000000000000",
+              state,
+              version: 2,
+              profile_id: "prf_01M11HEQG00000000000000000",
+              profile_revision: 1,
+              profile_digest: document.registry.digest,
+              policy_id: "pol_01M11HEQG00000000000000000",
+              region: "tenant.region.ng",
+              requirements: document,
+              created_at: "2026-09-06T12:00:00Z",
+              updated_at: "2026-09-06T12:01:00Z",
+              expires_at: "2026-09-06T13:00:00Z",
+            },
+            200,
+            { ETag: '"2"', "X-Request-ID": "req_lifecycle" },
+          ),
+      });
+      const response = await client.verifications.get("ver_01M11HEQG00000000000000000");
+      expect(response.data.state).toBe(state);
+      expect(response.etag).toBe('"2"');
+      expect(response.data).not.toHaveProperty("outcome");
+    },
+  );
+
   it("reads exact and latest decision reports through the public facade", async () => {
     const report = decisionReport();
     const fetchMock = vi.fn<typeof fetch>(async (input, init) => {
@@ -351,7 +397,40 @@ function decisionReport() {
   };
 }
 
-describe("CaptureClient evidence uploads", () => {
+describe("Capture and outcome clients", () => {
+  it("reads the subject-safe authoritative outcome without decision internals", async () => {
+    const fetchMock = vi.fn<typeof fetch>(async (input, init) => {
+      expect(String(input)).toBe("https://core.example.test/v1/capture/outcome");
+      expect(init?.method).toBe("GET");
+      expect(new Headers(init?.headers).get("Authorization")).toBe("Bearer outcome-token");
+      return jsonResponse(
+        {
+          verification_id: "ver_01M11HEQG00000000000000000",
+          state: "verified",
+          session_version: 4,
+          updated_at: "2026-08-30T12:00:04Z",
+        },
+        200,
+        { "X-Request-ID": "req_outcome" },
+      );
+    });
+    const client = new OutcomeClient({
+      baseUrl: "https://core.example.test",
+      outcomeToken: "outcome-token",
+      fetch: fetchMock,
+    });
+
+    await expect(client.getOutcome()).resolves.toEqual({
+      data: {
+        verificationId: "ver_01M11HEQG00000000000000000",
+        state: "verified",
+        sessionVersion: 4,
+        updatedAt: "2026-08-30T12:00:04Z",
+      },
+      requestId: "req_outcome",
+    });
+  });
+
   it("issues display-once realtime connection material without a request body", async () => {
     const fetchMock = vi.fn<typeof fetch>(async (input, init) => {
       expect(String(input)).toBe("https://core.example.test/v1/capture/connections");
@@ -579,3 +658,52 @@ function jsonResponse(
     },
   });
 }
+
+describe("verification cancellation", () => {
+  it("maps tenant and subject cancellation without losing retry identity", async () => {
+    const requests: Request[] = [];
+    const fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      requests.push(new Request(input, init));
+      return jsonResponse(
+        {
+          event_id: "evt_01M11HEQG00000000000000000",
+          verification_id: "ver_01M11HEQG00000000000000000",
+          state: "cancelled",
+          version: 3,
+          occurred_at: "2026-09-06T12:00:00Z",
+        },
+        200,
+        { "X-Request-ID": "req_cancel" },
+      );
+    });
+    const client = new IdenqaClient({
+      baseUrl: "https://core.example.test",
+      apiKey: "tenant-token",
+      fetch,
+    });
+    const capture = new CaptureClient({
+      baseUrl: "https://core.example.test",
+      captureToken: "subject-token",
+      fetch,
+    });
+    const result = await client.verifications.cancel("ver_01M11HEQG00000000000000000", 2, {
+      idempotencyKey: "cancel-1",
+    });
+    await client.verifications.cancel("ver_01M11HEQG00000000000000000", 2, {
+      idempotencyKey: "cancel-1",
+    });
+    await capture.cancel(2, { idempotencyKey: "cancel-subject" });
+    expect(result.data.state).toBe("cancelled");
+    expect(result.data.version).toBe(3);
+    expect(
+      requests[0]!.url.endsWith("/v1/verifications/ver_01M11HEQG00000000000000000/cancel"),
+    ).toBe(true);
+    expect(requests[2]!.url.endsWith("/v1/capture/cancel")).toBe(true);
+    expect(requests[0]!.headers.get("Idempotency-Key")).toBe(
+      requests[1]!.headers.get("Idempotency-Key"),
+    );
+    expect(requests[2]!.headers.get("Authorization")).toBe("Bearer subject-token");
+    expect(await requests[0]!.json()).toEqual({ expected_version: 2 });
+    await expect(capture.cancel(0, { idempotencyKey: "invalid" })).rejects.toThrow();
+  });
+});

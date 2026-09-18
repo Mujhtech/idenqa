@@ -3,15 +3,17 @@ package headgate
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"time"
 
 	"github.com/Mujhtech/idenqa/internal/platform/task"
+	"github.com/jackc/pgx/v5"
 	libheadgate "github.com/mujhtech/headgate/go"
 )
 
 // retryStore supplies the task-specific delay that Headgate's PostgreSQL Ack
-// boundary already supports. Headgate v0.1.2 does not call Config.RetryPolicy,
+// boundary already supports. Headgate v0.1.10 does not call Config.RetryPolicy,
 // so the claimed durable envelope is retained only for the lifetime of its
 // lease and translated at Ack time.
 type retryStore struct {
@@ -55,6 +57,22 @@ func (store *transactionalRetryStore) BeginTx(ctx context.Context) (libheadgate.
 	transaction, err := store.transactional.BeginTx(ctx)
 	if err != nil {
 		return nil, err
+	}
+	// The pinned driver begins without reading data. Set isolation here, before
+	// job.Once claims its effect: changing it inside the handler is too late.
+	pgxTransaction, ok := transaction.Unwrap().(pgx.Tx)
+	if !ok {
+		err = fmt.Errorf("%w: transactional handler requires pgx", task.ErrInvalid)
+	} else {
+		_, err = pgxTransaction.Exec(ctx, "SET TRANSACTION ISOLATION LEVEL SERIALIZABLE")
+	}
+	if err != nil {
+		rollbackContext, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
+		defer cancel()
+		return nil, errors.Join(
+			fmt.Errorf("begin serializable task effect: %w", err),
+			store.transactional.RollbackTx(rollbackContext, transaction),
+		)
 	}
 	return &retryTransaction{transaction: transaction}, nil
 }

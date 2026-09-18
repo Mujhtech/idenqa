@@ -18,6 +18,7 @@ import (
 	"github.com/Mujhtech/idenqa/internal/platform/telemetry"
 	"github.com/Mujhtech/idenqa/internal/tenant"
 	"github.com/Mujhtech/idenqa/internal/transport/httpapi"
+	"github.com/go-chi/chi/v5"
 )
 
 func TestLive(t *testing.T) {
@@ -77,6 +78,69 @@ func TestUnknownRoute(t *testing.T) {
 	}
 }
 
+func TestHandlerMountsPublicAndInternalVersionedRoutes(t *testing.T) {
+	t.Parallel()
+
+	dependencies, _ := newTestHTTPComponents(t)
+	handler, err := bootstrapapi.NewHandler(
+		&health.State{},
+		dependencies,
+		[]bootstrapapi.RouteRegistrar{stubRouteRegistrar{register: func(router chi.Router) {
+			router.Get("/genuine", func(writer http.ResponseWriter, _ *http.Request) {
+				writer.WriteHeader(http.StatusNoContent)
+			})
+		}}},
+		[]bootstrapapi.InternalRouteRegistrar{stubInternalRouteRegistrar{register: func(router chi.Router) {
+			router.Post("/evidence", func(writer http.ResponseWriter, _ *http.Request) {
+				writer.WriteHeader(http.StatusNoContent)
+			})
+		}}},
+	)
+	if err != nil {
+		t.Fatalf("NewHandler() error = %v", err)
+	}
+
+	tests := []struct {
+		name       string
+		method     string
+		path       string
+		wantStatus int
+	}{
+		{name: "public route below version prefix", method: http.MethodGet, path: "/v1/genuine", wantStatus: http.StatusNoContent},
+		{name: "public route outside version prefix", method: http.MethodGet, path: "/genuine", wantStatus: http.StatusNotFound},
+		{name: "internal route below internal prefix", method: http.MethodPost, path: "/internal/v1/evidence", wantStatus: http.StatusNoContent},
+		{name: "internal route below public prefix", method: http.MethodPost, path: "/v1/internal/v1/evidence", wantStatus: http.StatusNotFound},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			request := httptest.NewRequestWithContext(context.Background(), test.method, test.path, nil)
+			response := httptest.NewRecorder()
+			handler.ServeHTTP(response, request)
+
+			if got := response.Code; got != test.wantStatus {
+				t.Fatalf("status = %d, want %d", got, test.wantStatus)
+			}
+		})
+	}
+}
+
+type stubRouteRegistrar struct {
+	register func(chi.Router)
+}
+
+func (stub stubRouteRegistrar) Register(router chi.Router) {
+	stub.register(router)
+}
+
+type stubInternalRouteRegistrar struct {
+	register func(chi.Router)
+}
+
+func (stub stubInternalRouteRegistrar) RegisterInternal(router chi.Router) {
+	stub.register(router)
+}
+
 func TestHealthLifecycle(t *testing.T) {
 	t.Parallel()
 
@@ -120,7 +184,13 @@ func TestServerAllowsTheConfiguredEvidenceUploadAttemptAtTheSocketLayer(t *testi
 	dependencies, tenantRoutes := newTestHTTPComponents(t)
 	policy := evidence.DefaultUploadPolicy()
 	dependencies.EvidenceUploadPolicy = &policy
-	server, err := bootstrapapi.NewServer("127.0.0.1:0", &health.State{}, dependencies, tenantRoutes)
+	server, err := bootstrapapi.NewServer(
+		"127.0.0.1:0",
+		&health.State{},
+		dependencies,
+		[]bootstrapapi.RouteRegistrar{tenantRoutes},
+		nil,
+	)
 	if err != nil {
 		t.Fatalf("NewServer() error = %v", err)
 	}
@@ -146,7 +216,12 @@ func newTestHandler(t *testing.T, state *health.State) http.Handler {
 	t.Helper()
 
 	dependencies, tenantRoutes := newTestHTTPComponents(t)
-	handler, err := bootstrapapi.NewHandler(state, dependencies, tenantRoutes)
+	handler, err := bootstrapapi.NewHandler(
+		state,
+		dependencies,
+		[]bootstrapapi.RouteRegistrar{tenantRoutes},
+		nil,
+	)
 	if err != nil {
 		t.Fatalf("NewHandler() error = %v", err)
 	}

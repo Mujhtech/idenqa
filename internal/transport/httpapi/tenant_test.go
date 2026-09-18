@@ -11,7 +11,6 @@ import (
 	"github.com/Mujhtech/idenqa/internal/access"
 	openapiv1 "github.com/Mujhtech/idenqa/internal/gen/openapi/v1"
 	"github.com/Mujhtech/idenqa/internal/tenant"
-	"github.com/go-chi/chi/v5"
 )
 
 func TestTenantRoutesReturnAuthenticatedTenant(t *testing.T) {
@@ -28,8 +27,7 @@ func TestTenantRoutesReturnAuthenticatedTenant(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewTenantRoutes() error = %v", err)
 	}
-	router := chi.NewRouter()
-	routes.Register(router)
+	router := versionedRouter(t, routes)
 	request := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/v1/tenant", nil)
 	request.Header.Set("Authorization", "Bearer "+fixture.encoded)
 	response := httptest.NewRecorder()
@@ -71,8 +69,7 @@ func TestTenantRoutesSupportGeneratedClient(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewTenantRoutes() error = %v", err)
 	}
-	router := chi.NewRouter()
-	routes.Register(router)
+	router := versionedRouter(t, routes)
 
 	client, err := openapiv1.NewClientWithResponses(
 		"http://idenqa.test",
@@ -129,8 +126,7 @@ func TestTenantRoutesMapApplicationFailure(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewTenantRoutes() error = %v", err)
 	}
-	router := chi.NewRouter()
-	routes.Register(router)
+	router := versionedRouter(t, routes)
 	request := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/v1/tenant", nil)
 	request.Header.Set("Authorization", "Bearer "+fixture.encoded)
 	response := httptest.NewRecorder()

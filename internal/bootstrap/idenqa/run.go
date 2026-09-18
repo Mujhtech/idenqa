@@ -33,9 +33,16 @@ func newRootCommand(info buildinfo.Info) *cobra.Command {
 		Version: info.String(),
 	})
 	root.AddCommand(
-		newMigrationCommand(), newTenantCommand(), newAPIKeyCommand(),
-		newEvidenceKeyCommand(), newPolicyCommand(),
-		newAuditCommand(), newRecoveryCommand(), newWorkCommand(),
+		newMigrationCommand(),
+		newTenantCommand(),
+		newAPIKeyCommand(),
+		newEvidenceKeyCommand(),
+		newPolicyCommand(),
+		newAuditCommand(),
+		newRecoveryCommand(),
+		newWorkCommand(),
+		newWebhookCommand(),
+		newProposalCommand(),
 	)
 
 	return root

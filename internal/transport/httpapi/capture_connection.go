@@ -65,7 +65,7 @@ func NewCaptureConnectionRoutes(
 
 // Register adds browser connection-ticket issuance.
 func (routes *CaptureConnectionRoutes) Register(router chi.Router) {
-	router.With(routes.capture.Authenticate).Post("/v1/capture/connections", routes.issue)
+	router.With(routes.capture.Authenticate).Post("/capture/connections", routes.issue)
 }
 
 func (routes *CaptureConnectionRoutes) issue(writer http.ResponseWriter, request *http.Request) {

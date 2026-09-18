@@ -16,16 +16,34 @@ const (
 	readHeaderTimeout = 5 * time.Second
 	idleTimeout       = 60 * time.Second
 	serverIOGrace     = 30 * time.Second
+
+	// internalAPIVersionPrefix is the versioned boundary for process-owned
+	// routes that are not part of the public API.
+	internalAPIVersionPrefix = "/internal/v1"
 )
+
+// RouteRegistrar registers a public route group. Register receives the
+// sub-router mounted at httpapi.VersionPrefix, so paths are relative to /v1.
+type RouteRegistrar interface {
+	Register(chi.Router)
+}
+
+// InternalRouteRegistrar registers a process-owned route group outside the
+// public API. RegisterInternal receives the sub-router mounted at
+// internalAPIVersionPrefix, so paths are relative to /internal/v1.
+type InternalRouteRegistrar interface {
+	RegisterInternal(chi.Router)
+}
 
 // NewServer builds the API server with conservative timeout defaults.
 func NewServer(
 	address string,
 	state *health.State,
 	dependencies httpapi.Dependencies,
-	routes ...routeRegistrar,
+	routes []RouteRegistrar,
+	internalRoutes []InternalRouteRegistrar,
 ) (*http.Server, error) {
-	handler, err := NewHandler(state, dependencies, routes...)
+	handler, err := NewHandler(state, dependencies, routes, internalRoutes)
 	if err != nil {
 		return nil, err
 	}
@@ -50,13 +68,14 @@ func NewServer(
 func NewHandler(
 	state *health.State,
 	dependencies httpapi.Dependencies,
-	routes ...routeRegistrar,
+	routes []RouteRegistrar,
+	internalRoutes []InternalRouteRegistrar,
 ) (http.Handler, error) {
 	if len(routes) == 0 {
 		return nil, errors.New("API routes are required")
 	}
-	for _, routes := range routes {
-		if routes == nil {
+	for _, registrar := range routes {
+		if registrar == nil {
 			return nil, errors.New("API routes are required")
 		}
 	}
@@ -69,14 +88,17 @@ func NewHandler(
 		router.Get("/readyz", func(writer http.ResponseWriter, _ *http.Request) {
 			healthResponse(writer, state.Ready())
 		})
-		for _, routes := range routes {
-			routes.Register(router)
-		}
+		router.Route(internalAPIVersionPrefix, func(internal chi.Router) {
+			for _, registrar := range internalRoutes {
+				registrar.RegisterInternal(internal)
+			}
+		})
+		router.Route(httpapi.VersionPrefix, func(versioned chi.Router) {
+			for _, registrar := range routes {
+				registrar.Register(versioned)
+			}
+		})
 	})
-}
-
-type routeRegistrar interface {
-	Register(chi.Router)
 }
 
 func live(writer http.ResponseWriter, _ *http.Request) {

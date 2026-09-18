@@ -16,7 +16,6 @@ import (
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/transport/httpapi/apierror"
 	"github.com/Mujhtech/idenqa/internal/verification"
-	"github.com/go-chi/chi/v5"
 )
 
 func TestProfileRoutesCreateStrictDraft(t *testing.T) {
@@ -48,8 +47,7 @@ func TestProfileRoutesCreateStrictDraft(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewProfileRoutes() error = %v", err)
 	}
-	router := chi.NewRouter()
-	routes.Register(router)
+	router := versionedRouter(t, routes)
 	canonical, err := verification.CanonicalJSON(document, registry)
 	if err != nil {
 		t.Fatalf("CanonicalJSON() error = %v", err)
@@ -105,8 +103,7 @@ func TestProfileRoutesRejectInvalidHeadersAndBodies(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewProfileRoutes() error = %v", err)
 	}
-	router := chi.NewRouter()
-	routes.Register(router)
+	router := versionedRouter(t, routes)
 
 	tests := []struct {
 		name       string
@@ -193,8 +190,7 @@ func TestProfileRoutesEnforceReadAndWriteScopes(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewProfileRoutes() error = %v", err)
 	}
-	router := chi.NewRouter()
-	routes.Register(router)
+	router := versionedRouter(t, routes)
 	request := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/v1/capture-profiles", nil)
 	request.Header.Set("Authorization", "Bearer "+fixture.encoded)
 	response := httptest.NewRecorder()

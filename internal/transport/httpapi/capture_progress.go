@@ -43,7 +43,7 @@ func NewCaptureProgressRoutes(
 
 // Register adds the exact capture-token-scoped recovery endpoint.
 func (routes *CaptureProgressRoutes) Register(router chi.Router) {
-	router.With(routes.capture.Authenticate).Get("/v1/capture/progress", routes.find)
+	router.With(routes.capture.Authenticate).Get("/capture/progress", routes.find)
 }
 
 func (routes *CaptureProgressRoutes) find(writer http.ResponseWriter, request *http.Request) {

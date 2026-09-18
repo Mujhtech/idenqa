@@ -1,4 +1,46 @@
 import type {
+  WirePolicySummary,
+  WirePolicyRevisionInfo,
+  WirePolicyRevisionDocument,
+  WirePolicyActivationInfo,
+  WirePolicyValidation,
+  WirePolicyMutation,
+  WirePolicyList,
+  WirePolicyRevisionList,
+  WirePolicyActivationList,
+} from "./wire.js";
+import type {
+  PolicySummary,
+  PolicyRevisionInfo,
+  PolicyRevisionDocument,
+  PolicyActivationInfo,
+  PolicyValidation,
+  PolicyMutation,
+  PolicyList,
+  PolicyRevisionList,
+  PolicyActivationList,
+} from "./types.js";
+import type {
+  WireWebhookEndpoint,
+  WireWebhookDelivery,
+  WireWebhookAttempt,
+  WireWebhookEndpointMutation,
+  WireWebhookDeliveryMutation,
+  WireWebhookEndpointList,
+  WireWebhookDeliveryList,
+  WireWebhookAttemptList,
+} from "./wire.js";
+import type {
+  WebhookEndpoint,
+  WebhookDelivery,
+  WebhookAttempt,
+  WebhookEndpointMutation,
+  WebhookDeliveryMutation,
+  WebhookEndpointList,
+  WebhookDeliveryList,
+  WebhookAttemptList,
+} from "./types.js";
+import type {
   CaptureProfile,
   CaptureProfileList,
   CaptureProfileMutation,
@@ -6,11 +48,13 @@ import type {
   CaptureProfileValidation,
   VerificationCreated,
   VerificationSession,
+  VerificationCancellation,
   NoticeVersion,
   ProcessingAuthority,
   SubjectResponse,
   CaptureAuthoritySnapshot,
   CaptureProgress,
+  CaptureOutcome,
   CaptureConnection,
   EvidenceUpload,
   PolicyDecisionBundle,
@@ -24,11 +68,13 @@ import type {
   WireCaptureProfileValidation,
   WireVerificationCreated,
   WireVerificationSession,
+  WireVerificationCancellation,
   WireNoticeVersion,
   WireProcessingAuthority,
   WireSubjectResponse,
   WireCaptureAuthoritySnapshot,
   WireCaptureProgress,
+  WireCaptureOutcome,
   WireCaptureConnection,
   WireEvidenceUpload,
   WirePolicyDecisionBundle,
@@ -119,6 +165,8 @@ export function verificationCreated(value: WireVerificationCreated): Verificatio
   return {
     session: verificationSession(value.session),
     captureToken: value.capture_token,
+    outcomeToken: value.outcome_token,
+    outcomeTokenExpiresAt: value.outcome_token_expires_at,
   };
 }
 
@@ -238,6 +286,15 @@ export function captureProgress(value: WireCaptureProgress): CaptureProgress {
   };
 }
 
+export function captureOutcome(value: WireCaptureOutcome): CaptureOutcome {
+  return {
+    verificationId: value.verification_id,
+    state: value.state,
+    sessionVersion: value.session_version,
+    updatedAt: value.updated_at,
+  };
+}
+
 export function captureConnection(value: WireCaptureConnection): CaptureConnection {
   return {
     websocketUrl: value.websocket_url,
@@ -266,6 +323,7 @@ export function policyDecisionReport(value: WirePolicyDecisionReport): PolicyDec
     directive: value.directive,
     outcome: value.outcome,
     assurance: value.assurance,
+    ...(value.typed_assurance === undefined ? {} : { typedAssurance: value.typed_assurance }),
     actor: value.actor,
     ...(value.supersedes === undefined ? {} : { supersedes: value.supersedes }),
     factCount: value.fact_count,
@@ -281,4 +339,175 @@ export function policyDecisionBundle(
   canonical: string,
 ): PolicyDecisionBundle {
   return { canonical, document: value };
+}
+
+export function verificationCancellation(
+  value: WireVerificationCancellation,
+): VerificationCancellation {
+  return {
+    eventId: value.event_id,
+    verificationId: value.verification_id,
+    state: value.state,
+    version: value.version,
+    occurredAt: value.occurred_at,
+  };
+}
+
+export function webhookEndpoint(value: WireWebhookEndpoint): WebhookEndpoint {
+  return {
+    id: value.id,
+    url: value.url,
+    version: value.version,
+    secretVersion: value.secret_version,
+    ...(value.previous_valid_until === undefined
+      ? {}
+      : { previousValidUntil: value.previous_valid_until }),
+    ...(value.disabled_at === undefined ? {} : { disabledAt: value.disabled_at }),
+    ...(value.disabled_reason === undefined ? {} : { disabledReason: value.disabled_reason }),
+    createdAt: value.created_at,
+    updatedAt: value.updated_at,
+  };
+}
+export function webhookDelivery(value: WireWebhookDelivery): WebhookDelivery {
+  return {
+    id: value.id,
+    endpointId: value.endpoint_id,
+    eventId: value.event_id,
+    eventType: value.event_type,
+    state: value.state,
+    attemptCount: value.attempt_count,
+    maxAttempts: value.max_attempts,
+    nextAttemptAt: value.next_attempt_at,
+    ...(value.delivered_at === undefined ? {} : { deliveredAt: value.delivered_at }),
+    ...(value.replay_of === undefined ? {} : { replayOf: value.replay_of }),
+    createdAt: value.created_at,
+    updatedAt: value.updated_at,
+  };
+}
+export function webhookAttempt(value: WireWebhookAttempt): WebhookAttempt {
+  return {
+    number: value.number,
+    secretVersion: value.secret_version,
+    statusCode: value.status_code,
+    errorClass: value.error_class,
+    retryAfterMs: value.retry_after_ms,
+    responseBody: value.response_body ?? null,
+    responseTruncated: value.response_truncated,
+    completedAt: value.completed_at,
+  };
+}
+export function webhookEndpointMutation(
+  value: WireWebhookEndpointMutation,
+): WebhookEndpointMutation {
+  return {
+    endpoint: webhookEndpoint(value.endpoint),
+    replayed: value.replayed,
+    ...(value.signing_secret === undefined ? {} : { signingSecret: value.signing_secret }),
+  };
+}
+export function webhookDeliveryMutation(
+  value: WireWebhookDeliveryMutation,
+): WebhookDeliveryMutation {
+  return { delivery: webhookDelivery(value.delivery), replayed: value.replayed };
+}
+export function webhookEndpointList(value: WireWebhookEndpointList): WebhookEndpointList {
+  return { data: value.data.map(webhookEndpoint), page: webhookPage(value.page) };
+}
+export function webhookDeliveryList(value: WireWebhookDeliveryList): WebhookDeliveryList {
+  return { data: value.data.map(webhookDelivery), page: webhookPage(value.page) };
+}
+export function webhookAttemptList(value: WireWebhookAttemptList): WebhookAttemptList {
+  return { data: value.data.map(webhookAttempt) };
+}
+function webhookPage(value: WireWebhookEndpointList["page"]): WebhookEndpointList["page"] {
+  return {
+    hasMore: value.has_more,
+    ...(value.next_cursor === undefined ? {} : { nextCursor: value.next_cursor }),
+  };
+}
+
+export function policySummary(value: WirePolicySummary): PolicySummary {
+  return {
+    id: value.id,
+    latestRevision: value.latest_revision,
+    ...(value.active_revision === undefined ? {} : { activeRevision: value.active_revision }),
+    activationVersion: value.activation_version,
+    createdAt: value.created_at,
+    ...(value.activated_at === undefined ? {} : { activatedAt: value.activated_at }),
+  };
+}
+
+export function policyRevisionInfo(value: WirePolicyRevisionInfo): PolicyRevisionInfo {
+  return {
+    policyId: value.policy_id,
+    revision: value.revision,
+    schemaMajor: value.schema_major,
+    schemaMinor: value.schema_minor,
+    digest: value.digest,
+    evaluatorMajor: value.evaluator_major,
+    evaluatorMinor: value.evaluator_minor,
+    evaluatorDigest: value.evaluator_digest,
+    createdAt: value.created_at,
+  };
+}
+
+export function policyActivationInfo(value: WirePolicyActivationInfo): PolicyActivationInfo {
+  return {
+    policyId: value.policy_id,
+    revision: value.revision,
+    previousRevision: value.previous_revision,
+    version: value.version,
+    actorId: value.actor_id,
+    activatedAt: value.activated_at,
+  };
+}
+
+export function policyValidation(value: WirePolicyValidation): PolicyValidation {
+  return {
+    valid: value.valid,
+    ruleCount: value.rule_count,
+    evaluatorMajor: value.evaluator_major,
+    evaluatorMinor: value.evaluator_minor,
+    evaluatorDigest: value.evaluator_digest,
+  };
+}
+export function policyRevisionDocument(value: WirePolicyRevisionDocument): PolicyRevisionDocument {
+  return { ...policyRevisionInfo(value), document: value.document };
+}
+export function policyMutation(value: WirePolicyMutation): PolicyMutation {
+  return {
+    policy: policySummary(value.policy),
+    replayed: value.replayed,
+    ...(value.revision === undefined ? {} : { revision: policyRevisionInfo(value.revision) }),
+    ...(value.activation === undefined
+      ? {}
+      : { activation: policyActivationInfo(value.activation) }),
+  };
+}
+export function policyList(value: WirePolicyList): PolicyList {
+  return {
+    data: value.data.map(policySummary),
+    page: {
+      hasMore: value.page.has_more,
+      ...(value.page.next_cursor === undefined ? {} : { nextCursor: value.page.next_cursor }),
+    },
+  };
+}
+export function policyRevisionList(value: WirePolicyRevisionList): PolicyRevisionList {
+  return {
+    data: value.data.map(policyRevisionInfo),
+    page: {
+      hasMore: value.page.has_more,
+      ...(value.page.next_cursor === undefined ? {} : { nextCursor: value.page.next_cursor }),
+    },
+  };
+}
+export function policyActivationList(value: WirePolicyActivationList): PolicyActivationList {
+  return {
+    data: value.data.map(policyActivationInfo),
+    page: {
+      hasMore: value.page.has_more,
+      ...(value.page.next_cursor === undefined ? {} : { nextCursor: value.page.next_cursor }),
+    },
+  };
 }

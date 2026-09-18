@@ -197,8 +197,9 @@ export interface paths {
          * Create a verification session
          * @description Creates a collecting verification from the active published revision of
          *     the selected capture profile. The response includes a session-bound
-         *     display-once capture bearer token. Exact idempotent replay reconstructs
-         *     the same token without storing the bearer value.
+         *     display-once capture bearer token and a purpose-separated, read-only
+         *     outcome bearer token. Exact idempotent replay reconstructs the same
+         *     tokens without storing either bearer value.
          */
         readonly post: operations["createVerification"];
         readonly delete?: never;
@@ -221,6 +222,54 @@ export interface paths {
         readonly get: operations["getVerification"];
         readonly put?: never;
         readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/verifications/{verificationID}/cancel": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Cancel a verification as the tenant
+         * @description Requires verification_sessions:cancel. Cancels only the exact active version before its deadline.
+         *     Requires the expected version and a reusable idempotency key. The original
+         *     receipt is replayed for the same tenant, principal, key and input. Different
+         *     input conflicts. Terminal sessions or elapsed deadlines reject fresh cancellation.
+         *     Cancellation does not withdraw processing authority or delete retained evidence.
+         */
+        readonly post: operations["cancelVerification"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/capture/cancel": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Cancel a verification as the subject
+         * @description Cancels only the verification bound to this unexpired, unrevoked capture credential, including during processing. This route alone permits authenticated receipt replay after cancellation.
+         *     Requires the expected version and a reusable idempotency key. The original
+         *     receipt is replayed for the same tenant, principal, key and input. Different
+         *     input conflicts. Terminal sessions or elapsed deadlines reject fresh cancellation.
+         *     Cancellation does not withdraw processing authority or delete retained evidence.
+         */
+        readonly post: operations["cancelCaptureVerification"];
         readonly delete?: never;
         readonly options?: never;
         readonly head?: never;
@@ -489,6 +538,31 @@ export interface paths {
         readonly patch?: never;
         readonly trace?: never;
     };
+    readonly "/v1/capture/outcome": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Read the subject-safe authoritative verification outcome
+         * @description Returns the minimum workflow or terminal-decision state that Capture Web
+         *     may present to the authenticated subject. Policy reasons, assurance,
+         *     provider or model details, evidence metadata, and decision identifiers
+         *     are intentionally absent. The distinct read-only outcome credential
+         *     must remain live and unrevoked. Capture-token expiry and verification
+         *     expiry do not invalidate this credential during its bounded lifetime.
+         */
+        readonly get: operations["getCaptureOutcome"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
     readonly "/v1/capture/progress": {
         readonly parameters: {
             readonly query?: never;
@@ -611,10 +685,3375 @@ export interface paths {
         readonly patch?: never;
         readonly trace?: never;
     };
+    readonly "/v1/webhook-endpoints": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * List webhook endpoints
+         * @description Requires webhooks:read. Ascending identifier page, with a tenant-, collection- and limit-bound cursor.
+         */
+        readonly get: operations["listWebhookEndpoints"];
+        readonly put?: never;
+        /**
+         * Create a webhook endpoint
+         * @description Requires webhooks:configure. Safe mutation receipt. signing_secret is a display-once unpadded Base64URL 32-byte secret on initial create/rotate only. Idempotent retries return the original metadata with replayed=true and omit the secret; lost secrets require a new authorised rotation after any active overlap.
+         */
+        readonly post: operations["createWebhookEndpoint"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/webhook-endpoints/{endpointID}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Get a webhook endpoint
+         * @description Requires webhooks:read. Tenant-owned endpoint metadata. Key material is never included.
+         */
+        readonly get: operations["getWebhookEndpoint"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/webhook-endpoints/{endpointID}/rotate": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Rotate a webhook secret
+         * @description Requires webhooks:configure. Safe mutation receipt. signing_secret is a display-once unpadded Base64URL 32-byte secret on initial create/rotate only. Idempotent retries return the original metadata with replayed=true and omit the secret; lost secrets require a new authorised rotation after any active overlap. Applies to rotate a webhook secret.
+         */
+        readonly post: operations["rotateWebhookEndpoint"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/webhook-endpoints/{endpointID}/disable": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Disable a webhook endpoint
+         * @description Requires webhooks:configure. Safe mutation receipt. signing_secret is a display-once unpadded Base64URL 32-byte secret on initial create/rotate only. Idempotent retries return the original metadata with replayed=true and omit the secret; lost secrets require a new authorised rotation after any active overlap. Applies to disable a webhook endpoint.
+         */
+        readonly post: operations["disableWebhookEndpoint"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/webhook-endpoints/{endpointID}/deliveries": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * List endpoint deliveries
+         * @description Requires webhooks:read. Ascending identifier page for one endpoint; event bodies are omitted.
+         */
+        readonly get: operations["listWebhookDeliveries"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/webhook-deliveries/{deliveryID}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Get delivery metadata
+         * @description Requires webhooks:read. Payload-free delivery state. Replay retains event identity and records a distinct delivery and replay_of.
+         */
+        readonly get: operations["getWebhookDelivery"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/webhook-deliveries/{deliveryID}/attempts": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Inspect delivery attempts
+         * @description Requires webhooks:read. All retained attempts for the visible delivery, ascending by number and bounded to 20.
+         */
+        readonly get: operations["listWebhookAttempts"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/webhook-deliveries/{deliveryID}/replay": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Replay an exhausted delivery
+         * @description Requires webhooks:replay. Safe replay receipt. A repeated command returns the same delivery without scheduling another task.
+         */
+        readonly post: operations["replayWebhookDelivery"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/policies": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * List policies
+         * @description Requires policies:read. Bounded newest-first metadata page with a signed tenant-, policy-, collection- and limit-bound cursor.
+         */
+        readonly get: operations["listPolicies"];
+        readonly put?: never;
+        /**
+         * Create an inactive policy
+         * @description Requires policies:write. Original safe command receipt. Repeated identical commands return it with replayed=true without another revision, activation or audit effect.
+         */
+        readonly post: operations["createPolicy"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/policies/validate": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Validate policy meaning
+         * @description Requires policies:write. Successful compilation only; no policy, activation, decision, task or audit mutation is created.
+         */
+        readonly post: operations["validatePolicy"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/policies/{policyID}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Get policy metadata
+         * @description Requires policies:read. Source-free policy metadata. Activation version is distinct from immutable revision numbering.
+         */
+        readonly get: operations["getPolicy"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/policies/{policyID}/revisions": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * List immutable revisions
+         * @description Requires policies:read. Bounded newest-first metadata page with a signed tenant-, policy-, collection- and limit-bound cursor. Applies to list immutable revisions.
+         */
+        readonly get: operations["listPolicyRevisions"];
+        readonly put?: never;
+        /**
+         * Append an immutable revision
+         * @description Requires policies:write. Original safe command receipt. Repeated identical commands return it with replayed=true without another revision, activation or audit effect. Applies to append an immutable revision.
+         */
+        readonly post: operations["createPolicyRevision"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/policies/{policyID}/revisions/{revision}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Get immutable policy source
+         * @description Requires policies:read. Explicitly requested immutable policy source plus its compiled identity.
+         */
+        readonly get: operations["getPolicyRevision"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/policies/{policyID}/activations": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * List activation history
+         * @description Requires policies:read. Bounded newest-first metadata page with a signed tenant-, policy-, collection- and limit-bound cursor. Applies to list activation history.
+         */
+        readonly get: operations["listPolicyActivations"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/policies/{policyID}/activate": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Activate a policy revision
+         * @description Requires policies:activate. Original safe command receipt. Repeated identical commands return it with replayed=true without another revision, activation or audit effect.
+         */
+        readonly post: operations["activatePolicy"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/policies/{policyID}/rollback": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Restore a previously active revision
+         * @description Requires policies:activate. Original safe command receipt. Repeated identical commands return it with replayed=true without another revision, activation or audit effect. Applies to restore a previously active revision.
+         */
+        readonly post: operations["rollbackPolicy"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/review-cases": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * List review cases
+         * @description List tenant cases in priority and due-time order. Signed cursors bind tenant, exact filters and limit. Queue metadata never grants reviewer access.
+         */
+        readonly get: operations["listReviewCases"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/review-cases/{caseID}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Get review case
+         * @description Read tenant-scoped case metadata without raw evidence or operator credential material. Use current version for subsequent transitions.
+         */
+        readonly get: operations["getReviewCase"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/review-cases/{caseID}/claim": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Claim review case
+         * @description Claim an open case for the currently authenticated, certified operator. The expected version prevents concurrent assignment.
+         */
+        readonly post: operations["claimReviewCase"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/review-cases/{caseID}/findings": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Submit review finding
+         * @description Submit a permitted finding with successfully redeemed case-bound evidence grants. Dual control requires independent reviewers and disagreements escalate.
+         */
+        readonly post: operations["submitReviewFinding"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/review-cases/{caseID}/corrections": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Attach review successor
+         * @description Attach an existing policy-authored correction receipt for the same verification and challenged decision. Arbitrary decision identifiers are rejected.
+         */
+        readonly post: operations["attachReviewSuccessor"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/review-cases/{caseID}/arbitrations": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Arbitrate review case
+         * @description Record arbitration by an independent supervisor holding the pinned escalation certificate. This records a fact; the original policy decides any identity outcome.
+         */
+        readonly post: operations["arbitrateReviewCase"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/review-cases/{caseID}/corrections/evaluate": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Evaluate review correction
+         * @description Evaluate independent findings under the challenged decision policy. Terminal results append an immutable successor and signed delivery intent; request-input results permit fresh linked capture.
+         */
+        readonly post: operations["evaluateReviewCorrection"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/review-cases/{caseID}/evidence-grants": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Issue review evidence grant
+         * @description Issue a five-minute, single-use display grant bound to the exact case version, current reviewer and explicitly configured evidence requirement. Replay preserves the original expiry.
+         */
+        readonly post: operations["issueReviewEvidenceGrant"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/review-cases/{caseID}/recaptures": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * List review recaptures
+         * @description Read linked child state and outcome references without bearer credentials. A follow-up flag indicates an outcome awaiting authorized acknowledgement.
+         */
+        readonly get: operations["listReviewRecaptures"];
+        readonly put?: never;
+        /**
+         * Create review recapture
+         * @description Create or replay a linked child after a policy request for input. Preserve exact parent policy and profile revisions; require fresh subject authorization. Deliver the capture credential only to the authenticated subject.
+         */
+        readonly post: operations["createReviewRecapture"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/review-cases/{caseID}/recaptures/renew": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Renew review recapture
+         * @description Replace the credential on the same child while retaining accepted evidence provenance. Abandon unfinished uploads and require fresh subject authorization, within the original deadline.
+         */
+        readonly post: operations["renewReviewRecapture"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/review-cases/{caseID}/recaptures/acknowledgements": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Acknowledge review recapture
+         * @description Record an audited acknowledgement of the exact linked child outcome. This action leaves the parent decision unchanged and does not schedule policy evaluation.
+         */
+        readonly post: operations["acknowledgeReviewRecapture"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/review-cases/{caseID}/recaptures/reevaluations": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Reevaluate review recapture
+         * @description Explicitly schedule parent policy evaluation using an acknowledged child outcome. Preserve original facts and policy pins; only policy may complete the parent.
+         */
+        readonly post: operations["reevaluateReviewRecapture"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/review-cases/{caseID}/evidence": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * List review evidence
+         * @description List bounded display-eligible artefact references for the currently authorized reviewer and exact case version. Extracted identity fields and object-storage references are omitted.
+         */
+        readonly get: operations["listReviewEvidence"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/review-evidence-grants/{grantID}/content": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Read review evidence
+         * @description Redeem one display grant after current reviewer and subject authority checks. Returns only a server-redacted, burned-watermark PNG. The tenant backend must prevent caching; screenshot prevention is not guaranteed.
+         */
+        readonly post: operations["readReviewEvidence"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/decisions/{decisionID}/review-cases": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Open review correction
+         * @description Open one correction case for the latest immutable decision within its configured appeal window. Retain the challenged decision and pin explicit review settings.
+         */
+        readonly post: operations["openReviewCorrection"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/review-cases/{caseID}/appeals": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Request review appeal
+         * @description Request an appeal within the pinned deadline and record the authenticated requesting key for withdrawal. One active appeal per case is permitted.
+         */
+        readonly post: operations["requestReviewAppeal"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/appeals/{appealID}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Get review appeal
+         * @description Read the current tenant-scoped appeal status, deadline, reason and successor reference. Prior transition records remain immutable.
+         */
+        readonly get: operations["getReviewAppeal"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/appeals/{appealID}/assign": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Assign review appeal
+         * @description Assign the current certified appeal reviewer before expiry. Current case contributors and challenged-decision contributors cannot perform independent appeal review.
+         */
+        readonly post: operations["assignReviewAppeal"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/appeals/{appealID}/resolve": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Resolve review appeal
+         * @description Record an independent appeal result before expiry. Overturn requires an existing policy-authored successor; more-input retains assignment while new evidence is collected.
+         */
+        readonly post: operations["resolveReviewAppeal"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/appeals/{appealID}/withdraw": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Withdraw review appeal
+         * @description Withdraw an active appeal using the original requesting API key and exact version. Immutable history preserves earlier reasons and requests for input.
+         */
+        readonly post: operations["withdrawReviewAppeal"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/review-operators/{keyID}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Get review operator
+         * @description Read the latest tenant operator assignment configuration and version for an authorized administrator. Credentials themselves are never returned. Requires reviews:admin.
+         */
+        readonly get: operations["getReviewOperator"];
+        /**
+         * Put review operator
+         * @description Version a stable operator assignment, permissions, regions and tenant-attested certifications. Revoked durable rows prevent fallback to bootstrap files. Requires reviews:admin.
+         */
+        readonly put: operations["putReviewOperator"];
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/review-policies/{policyID}/revisions/{revision}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Get review policy
+         * @description Read the latest review configuration for the specified immutable policy revision. This does not select a different policy for existing cases. Requires reviews:admin.
+         */
+        readonly get: operations["getReviewPolicy"];
+        /**
+         * Put review policy
+         * @description Version review settings for an exact published policy revision and digest. Existing cases retain their immutable settings snapshots. Requires reviews:admin.
+         */
+        readonly put: operations["putReviewPolicy"];
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/review-cases/{caseID}/queue": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        /**
+         * Put review queue
+         * @description Change priority, SLA deadline and queue labels using the independent operations version. This does not alter evidence, findings or identity decisions. Requires reviews:admin.
+         */
+        readonly put: operations["putReviewQueue"];
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/review-cases/{caseID}/settings": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        /**
+         * Put review case settings
+         * @description Pin explicit review settings once to an existing routed case. The pinned policy, certification, oversight and permitted findings must match its origin. Requires reviews:admin.
+         */
+        readonly put: operations["putReviewCaseSettings"];
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/fraud/configuration": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Read active fraud rules
+         * @description Requires `fraud:read`. Tenant scope comes exclusively from the API key. Risk facts express whether a no-risk requirement is satisfied; unavailable inputs remain inconclusive.
+         */
+        readonly get: operations["getFraudConfiguration"];
+        /**
+         * Activate a fraud rule revision
+         * @description Requires `fraud:configure`. Tenant scope comes exclusively from the API key. Risk facts express whether a no-risk requirement is satisfied; unavailable inputs remain inconclusive.
+         */
+        readonly put: operations["configureFraud"];
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/fraud/inputs": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Ingest evidence-backed tenant tokens
+         * @description Requires `fraud:write`. Tenant scope comes exclusively from the API key. Risk facts express whether a no-risk requirement is satisfied; unavailable inputs remain inconclusive.
+         */
+        readonly post: operations["ingestFraudInput"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/fraud/proposals": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Record a non-authoritative fraud hypothesis
+         * @description Requires `fraud:write`. Tenant scope comes exclusively from the API key. Risk facts express whether a no-risk requirement is satisfied; unavailable inputs remain inconclusive.
+         */
+        readonly post: operations["proposeFraudHypothesis"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/fraud/receipts/{digest}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Read a safe risk receipt summary
+         * @description Requires `fraud:read`. Tenant scope comes exclusively from the API key. Risk facts express whether a no-risk requirement is satisfied; unavailable inputs remain inconclusive.
+         */
+        readonly get: operations["getFraudReceipt"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/fraud/configuration/revisions/{version}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Read an immutable fraud rule revision
+         * @description Requires `fraud:read`. Tenant scope comes exclusively from the API key. Risk facts express whether a no-risk requirement is satisfied; unavailable inputs remain inconclusive.
+         */
+        readonly get: operations["getFraudConfigurationRevision"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/fraud/proposals/{digest}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Read a non-authoritative fraud hypothesis
+         * @description Requires `fraud:read`. Tenant scope comes exclusively from the API key. Risk facts express whether a no-risk requirement is satisfied; unavailable inputs remain inconclusive.
+         */
+        readonly get: operations["getFraudProposal"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/subjects": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * List tenant subjects
+         * @description Requires subjects:read. All resources and effects are scoped to the authenticated tenant and deployment region.
+         */
+        readonly get: operations["listIdentitySubjects"];
+        readonly put?: never;
+        /**
+         * Create a tenant subject
+         * @description Requires subjects:write. All resources and effects are scoped to the authenticated tenant and deployment region.
+         */
+        readonly post: operations["createIdentitySubject"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/subjects/{subjectID}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Get a tenant subject
+         * @description Requires subjects:read. All resources and effects are scoped to the authenticated tenant and deployment region.
+         */
+        readonly get: operations["getIdentitySubject"];
+        /**
+         * Update subject reference or lifecycle
+         * @description Requires subjects:write. All resources and effects are scoped to the authenticated tenant and deployment region.
+         */
+        readonly put: operations["updateIdentitySubject"];
+        readonly post?: never;
+        /**
+         * Request subject and linked evidence deletion
+         * @description Requires subjects:delete. Atomically freezes the subject and active linked verifications, and requests identity-value and linked-evidence deletion. Legal holds suspend execution; backup expiry is measured from actual erasure. No immediate physical deletion is claimed. The initial bounded request supports 256 linked verifications and 255 evidence objects; overflow rejects the entire request without partial effects.
+         */
+        readonly delete: operations["deleteIdentitySubject"];
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/subjects/{subjectID}/verifications/{verificationID}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        /**
+         * Link a verification to a persistent subject
+         * @description Requires subjects:write. All resources and effects are scoped to the authenticated tenant and deployment region.
+         */
+        readonly put: operations["linkIdentityVerification"];
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/subjects/{subjectID}/verifications": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * List a subject’s verification links
+         * @description Requires subjects:read. All resources and effects are scoped to the authenticated tenant and deployment region.
+         */
+        readonly get: operations["listIdentityVerifications"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/subjects/{subjectID}/records": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * List identity records or current projection
+         * @description Requires identity:read. All resources and effects are scoped to the authenticated tenant and deployment region.
+         */
+        readonly get: operations["listIdentityRecords"];
+        readonly put?: never;
+        /**
+         * Append an observation, fact, claim or identifier
+         * @description Requires identity:write. All resources and effects are scoped to the authenticated tenant and deployment region.
+         */
+        readonly post: operations["appendIdentityRecord"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/subjects/{subjectID}/records/{recordID}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Get immutable identity record metadata
+         * @description Requires identity:read. All resources and effects are scoped to the authenticated tenant and deployment region.
+         */
+        readonly get: operations["getIdentityRecord"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/subjects/{subjectID}/projection/rebuild": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Rebuild a subject’s current projection
+         * @description Requires subjects:write. All resources and effects are scoped to the authenticated tenant and deployment region.
+         */
+        readonly post: operations["rebuildIdentityProjection"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/subjects/lookup": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Look up an exact external subject reference
+         * @description Requires subjects:read. All resources and effects are scoped to the authenticated tenant and deployment region.
+         */
+        readonly post: operations["lookupIdentityExternalReference"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/identity/identifiers/lookup": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Look up an exact tenant-scoped identifier
+         * @description Requires identity:read. All resources and effects are scoped to the authenticated tenant and deployment region.
+         */
+        readonly post: operations["lookupIdentityIdentifier"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/identity/configuration": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Get active regional identity configuration
+         * @description Requires identity:read. All resources and effects are scoped to the authenticated tenant and deployment region.
+         */
+        readonly get: operations["getIdentityConfiguration"];
+        /**
+         * Activate identity interpretation configuration
+         * @description Requires identity:configure. All resources and effects are scoped to the authenticated tenant and deployment region.
+         */
+        readonly put: operations["configureIdentity"];
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/identity/configuration/revisions/{version}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Get an immutable identity configuration revision
+         * @description Requires identity:read. All resources and effects are scoped to the authenticated tenant and deployment region.
+         */
+        readonly get: operations["getIdentityConfigurationRevision"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/identity/receipts/{digest}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Get an immutable identity evaluation receipt
+         * @description Requires identity:read. All resources and effects are scoped to the authenticated tenant and deployment region.
+         */
+        readonly get: operations["getIdentityReceipt"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/assurance-capabilities": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Discover platform assurance capability meanings
+         * @description Discover platform assurance capability meanings. Requires policies:read. Only resources visible to the authenticated tenant are returned.
+         */
+        readonly get: operations["listAssuranceCapabilities"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/assurance-profiles": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * List immutable assurance profiles
+         * @description List immutable assurance profiles. Requires policies:read. Only resources visible to the authenticated tenant are returned.
+         */
+        readonly get: operations["listAssuranceProfiles"];
+        readonly put?: never;
+        /**
+         * Publish an immutable assurance profile revision
+         * @description Publish an immutable assurance profile revision. Requires policies:write. Existing session pins remain immutable.
+         */
+        readonly post: operations["publishAssuranceProfile"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/assurance-profiles/validate": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Validate and canonicalize an assurance profile
+         * @description Validate and canonicalize an assurance profile. Requires policies:write. Existing session pins remain immutable.
+         */
+        readonly post: operations["validateAssuranceProfile"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/assurance-profiles/{name}/revisions/{revision}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Get an exact assurance profile revision
+         * @description Get an exact assurance profile revision. Requires policies:read. Only resources visible to the authenticated tenant are returned.
+         */
+        readonly get: operations["getAssuranceProfileRevision"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/policies/{policyID}/assurance": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Get the future-session assurance selection
+         * @description Get the future-session assurance selection. Requires policies:read. Only resources visible to the authenticated tenant are returned.
+         */
+        readonly get: operations["getPolicyAssuranceAssignment"];
+        /**
+         * Assign assurance for future policy sessions
+         * @description Assign assurance for future policy sessions. Requires policies:activate. Existing session pins remain immutable.
+         */
+        readonly put: operations["assignPolicyAssurance"];
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/verifications/{verificationID}/assurance": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Get the immutable requested assurance for a session
+         * @description Get the immutable requested assurance for a session. Requires policies:read. Only resources visible to the authenticated tenant are returned.
+         */
+        readonly get: operations["getVerificationAssurance"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/proposals": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** List proposals for a verification (filtered) */
+        readonly get: operations["listProposals"];
+        readonly put?: never;
+        /**
+         * Create a bounded AI proposal
+         * @description Creates a pending proposal with redacted bounded context. Raw evidence never in envelope. Requires proposals:write. Default mode is disabled (fail-closed).
+         */
+        readonly post: operations["createProposal"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/proposals/{proposalID}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly proposalID: string;
+            };
+            readonly cookie?: never;
+        };
+        /** Get a proposal */
+        readonly get: operations["getProposal"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/proposals/{proposalID}/approve": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly proposalID: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /** Approve a proposal (guardrail + human approval) */
+        readonly post: operations["approveProposal"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/proposals/{proposalID}/reject": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly proposalID: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /** Reject a proposal */
+        readonly post: operations["rejectProposal"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/proposals/{proposalID}/cancel": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly proposalID: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /** Cancel a proposal */
+        readonly post: operations["cancelProposal"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/accepted-commands/{commandID}/execute": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly commandID: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /** Execute a guardrail-approved accepted command (idempotent replay) */
+        readonly post: operations["executeAcceptedCommand"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/proposal-modes/{workflow}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly workflow: string;
+            };
+            readonly cookie?: never;
+        };
+        /** Get mode config */
+        readonly get: operations["getProposalMode"];
+        /** Configure automation mode for a workflow */
+        readonly put: operations["putProposalMode"];
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/prompts": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /** Create immutable prompt version */
+        readonly post: operations["createPrompt"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/prompts/{promptID}/{version}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly promptID: string;
+                readonly version: number;
+            };
+            readonly cookie?: never;
+        };
+        /** Get prompt version */
+        readonly get: operations["getPrompt"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * @description Independent platform assurance dimension; there is no universal ranking.
+         * @example liveness
+         * @enum {string}
+         */
+        readonly AssuranceDimension: "identity_resolution" | "evidence_validation" | "applicant_binding" | "source_independence" | "fraud_resistance" | "human_oversight" | "provenance" | "freshness" | "liveness" | "integrity";
+        /**
+         * @description Platform capability meaning; declarations do not prove successful execution.
+         * @example idenqa.assurance.active_liveness
+         * @enum {string}
+         */
+        readonly AssuranceCapabilityName: "idenqa.assurance.authority_record" | "idenqa.assurance.document_authenticity" | "idenqa.assurance.capture_quality" | "idenqa.assurance.face_match_1to1" | "idenqa.assurance.passive_liveness" | "idenqa.assurance.active_liveness" | "idenqa.assurance.freshness" | "idenqa.assurance.live_capture" | "idenqa.assurance.capture_integrity" | "idenqa.assurance.human_review" | "idenqa.assurance.identity_corroboration" | "idenqa.assurance.fraud_controls";
+        /**
+         * @description The owned boundary that produced the recorded source.
+         * @example provider
+         * @enum {string}
+         */
+        readonly AssuranceRunnerKind: "provider" | "model" | "capture" | "review" | "identity" | "fraud";
+        /**
+         * @description Exact immutable tenant assurance profile reference.
+         * @example {
+         *       "name": "capture.example",
+         *       "revision": 1,
+         *       "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+         *     }
+         */
+        readonly AssuranceSelection: {
+            /** @example capture.example */
+            readonly name: string;
+            /** @example 1 */
+            readonly revision: number;
+            readonly digest: components["schemas"]["PolicyDigest"];
+        };
+        /**
+         * @description All dimensions must be met independently. Capabilities are alternatives within this requirement; shared transitive roots count once. Property is a descriptive tenant label, not a scalar rank.
+         * @example {
+         *       "dimension": "freshness",
+         *       "property": "session_capture",
+         *       "minimum_sources": 1,
+         *       "maximum_age_seconds": 120,
+         *       "capabilities": [
+         *         "idenqa.assurance.freshness"
+         *       ]
+         *     }
+         */
+        readonly AssuranceRequirement: {
+            readonly dimension: components["schemas"]["AssuranceDimension"];
+            readonly property: string;
+            readonly minimum_sources: number;
+            readonly maximum_age_seconds: number;
+            readonly capabilities: readonly components["schemas"]["AssuranceCapabilityName"][];
+        };
+        /**
+         * @description Exact capability-to-runner mapping checked against the platform catalog. Model thresholds require the pinned registry selection; evaluation-only execution never qualifies.
+         * @example {
+         *       "capability": "idenqa.assurance.freshness",
+         *       "signal": "capture.freshness",
+         *       "runner_kind": "capture",
+         *       "runner_id": "idenqa.method.live_camera",
+         *       "package_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+         *       "configuration_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+         *     }
+         */
+        readonly AssuranceMapping: {
+            readonly capability: components["schemas"]["AssuranceCapabilityName"];
+            readonly signal: string;
+            readonly runner_kind: components["schemas"]["AssuranceRunnerKind"];
+            readonly runner_id: string;
+            readonly package_digest: components["schemas"]["PolicyDigest"];
+            readonly configuration_digest: components["schemas"]["PolicyDigest"];
+            readonly threshold_digest?: components["schemas"]["PolicyDigest"];
+        };
+        /**
+         * @description Immutable tenant profile. No production threshold or jurisdiction certification is supplied by default.
+         * @example {
+         *       "name": "capture.example",
+         *       "revision": 1,
+         *       "requirements": [
+         *         {
+         *           "dimension": "freshness",
+         *           "property": "session_capture",
+         *           "minimum_sources": 1,
+         *           "maximum_age_seconds": 120,
+         *           "capabilities": [
+         *             "idenqa.assurance.freshness"
+         *           ]
+         *         }
+         *       ],
+         *       "mappings": [
+         *         {
+         *           "capability": "idenqa.assurance.freshness",
+         *           "signal": "capture.freshness",
+         *           "runner_kind": "capture",
+         *           "runner_id": "idenqa.method.live_camera",
+         *           "package_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+         *           "configuration_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+         *         }
+         *       ]
+         *     }
+         */
+        readonly AssuranceProfile: {
+            /** @example capture.example */
+            readonly name: string;
+            readonly revision: number;
+            readonly requirements: readonly components["schemas"]["AssuranceRequirement"][];
+            readonly mappings: readonly components["schemas"]["AssuranceMapping"][];
+        };
+        /**
+         * @description Version-checked selection for future sessions; null disables assignment for future sessions. Existing sessions keep their immutable pin.
+         * @example {
+         *       "expected_version": 0,
+         *       "selection": {
+         *         "name": "capture.example",
+         *         "revision": 1,
+         *         "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+         *       }
+         *     }
+         */
+        readonly AssuranceAssignmentRequest: {
+            /** @example 0 */
+            readonly expected_version: number;
+            readonly selection: components["schemas"]["AssuranceSelection"] | null;
+        };
+        /**
+         * @description Tenant-scoped profile, assignment, or discovery page. An absent selection means no typed assurance requested. Follow next_cursor while present.
+         * @example {
+         *       "profile": {
+         *         "name": "capture.example",
+         *         "revision": 1,
+         *         "requirements": [
+         *           {
+         *             "dimension": "freshness",
+         *             "property": "session_capture",
+         *             "minimum_sources": 1,
+         *             "maximum_age_seconds": 120,
+         *             "capabilities": [
+         *               "idenqa.assurance.freshness"
+         *             ]
+         *           }
+         *         ],
+         *         "mappings": [
+         *           {
+         *             "capability": "idenqa.assurance.freshness",
+         *             "signal": "capture.freshness",
+         *             "runner_kind": "capture",
+         *             "runner_id": "idenqa.method.live_camera",
+         *             "package_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+         *             "configuration_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+         *           }
+         *         ]
+         *       },
+         *       "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+         *     }
+         */
+        readonly AssuranceResource: {
+            readonly profile?: components["schemas"]["AssuranceProfile"];
+            readonly digest?: components["schemas"]["PolicyDigest"];
+            readonly profiles?: readonly components["schemas"]["AssuranceSelection"][];
+            readonly selection?: components["schemas"]["AssuranceSelection"];
+            readonly version?: number;
+            readonly next_cursor?: string;
+        };
+        /**
+         * @description Platform-owned allowed signal meanings. Capture assurances are proved by accepted acquisition provenance, never SDK advertisements.
+         * @example {
+         *       "name": "idenqa.assurance.freshness",
+         *       "dimensions": [
+         *         "freshness"
+         *       ],
+         *       "signals": [
+         *         "capture.freshness"
+         *       ],
+         *       "runner_kinds": [
+         *         "capture"
+         *       ],
+         *       "required_capture_assurances": [
+         *         "idenqa.assurance.freshness"
+         *       ]
+         *     }
+         */
+        readonly AssuranceCapability: {
+            readonly name: components["schemas"]["AssuranceCapabilityName"];
+            readonly dimensions: readonly components["schemas"]["AssuranceDimension"][];
+            readonly signals: readonly string[];
+            readonly signal_prefix?: string;
+            readonly runner_kinds: readonly components["schemas"]["AssuranceRunnerKind"][];
+            readonly required_capture_assurances?: readonly string[];
+        };
+        /**
+         * @description Version-one capability discovery, including core derivation contract identifiers.
+         * @example {
+         *       "builtin_digests": {
+         *         "review": "4cf2b4445b892f59837c2f7040597ed81e183ca99f0ad0b8707c27bc460b5216",
+         *         "identity": "f74341e21d1d895b5b58f5355617448c89af1b911d80cabb21e79ea1d6405b56",
+         *         "fraud": "b022971c514f3ddca1e48968208d1d3dbaa94af8a9eb50133c646ab3306970da"
+         *       },
+         *       "version": 1,
+         *       "capabilities": [
+         *         {
+         *           "name": "idenqa.assurance.freshness",
+         *           "dimensions": [
+         *             "freshness"
+         *           ],
+         *           "signals": [
+         *             "capture.freshness"
+         *           ],
+         *           "runner_kinds": [
+         *             "capture"
+         *           ],
+         *           "required_capture_assurances": [
+         *             "idenqa.assurance.freshness"
+         *           ]
+         *         }
+         *       ]
+         *     }
+         */
+        readonly AssuranceCapabilityCatalog: {
+            /** @constant */
+            readonly version: 1;
+            /**
+             * @example [
+             *       {
+             *         "name": "idenqa.assurance.freshness",
+             *         "dimensions": [
+             *           "freshness"
+             *         ],
+             *         "signals": [
+             *           "capture.freshness"
+             *         ],
+             *         "runner_kinds": [
+             *           "capture"
+             *         ],
+             *         "required_capture_assurances": [
+             *           "idenqa.assurance.freshness"
+             *         ]
+             *       }
+             *     ]
+             */
+            readonly capabilities: readonly components["schemas"]["AssuranceCapability"][];
+            /** @description Owned derivation contract digests for configuring core mappings; review also uses this digest for its configuration mapping. */
+            readonly builtin_digests: {
+                readonly review: components["schemas"]["PolicyDigest"];
+                readonly identity: components["schemas"]["PolicyDigest"];
+                readonly fraud: components["schemas"]["PolicyDigest"];
+            };
+        };
+        /** @description Safe achieved dimension summary without evidence or observation identifiers. */
+        readonly AssuranceDimensionSummary: {
+            readonly dimension: components["schemas"]["AssuranceDimension"];
+            readonly property: string;
+            readonly satisfied: boolean;
+            readonly independent_sources: number;
+        };
+        /** @description Typed requested and achieved assurance at the decision evaluation time. An absent requested reference means no typed profile was requested; the historical assurance string is a separate policy label. */
+        readonly AssuranceSummary: {
+            readonly requested?: components["schemas"]["AssuranceSelection"];
+            readonly achieved: boolean;
+            readonly dimensions: readonly components["schemas"]["AssuranceDimensionSummary"][];
+        };
+        /** @description Reference-only server-projected source. Original collection/validity times survive review. Evaluation-only and unbound synthetic attempts never establish typed assurance. */
+        readonly AssuranceSource: {
+            readonly reference: string;
+            readonly signal: string;
+            readonly state: components["schemas"]["PolicyRequirementState"];
+            readonly runner_kind: components["schemas"]["AssuranceRunnerKind"];
+            readonly runner_id: string;
+            readonly package_digest: components["schemas"]["PolicyDigest"];
+            readonly configuration_digest: components["schemas"]["PolicyDigest"];
+            readonly threshold_digest?: components["schemas"]["PolicyDigest"];
+            /** Format: date-time */
+            readonly collected_at: string;
+            /** Format: date-time */
+            readonly expires_at?: string;
+            readonly roots: readonly string[];
+            readonly evaluation_only?: boolean;
+            readonly capture_assurances?: readonly string[];
+        };
+        /** @description Exact applicable immutable input reference, including conservative lineage dependencies. Evidence IDs are opaque; no raw evidence or plaintext integrity digest is exported. */
+        readonly DecisionReference: {
+            /** @enum {string} */
+            readonly kind: "decision" | "snapshot" | "claim" | "identifier" | "observation" | "fact" | "evidence" | "lineage" | "check" | "attempt" | "signal" | "review_finding" | "authority" | "subject_response" | "region" | "transfer_policy" | "capture_profile" | "identity_receipt" | "fraud_receipt" | "provider" | "model" | "runtime" | "preprocessing" | "configuration" | "threshold" | "policy" | "evaluator";
+            readonly id: string;
+            readonly version?: string;
+            readonly digest?: components["schemas"]["PolicyDigest"];
+            readonly parents?: readonly string[];
+        };
+        /**
+         * @description Additive canonical provenance context. Absent in legacy snapshots, preserving their exact bytes. Present context is bounded to 128 KiB; overflow fails closed rather than dropping references.
+         * @example {
+         *       "version": 1,
+         *       "references": [],
+         *       "sources": []
+         *     }
+         */
+        readonly DecisionContext: {
+            /** @constant */
+            readonly version: 1;
+            readonly references: readonly components["schemas"]["DecisionReference"][];
+            readonly profile?: components["schemas"]["AssuranceProfile"];
+            readonly profile_digest?: components["schemas"]["PolicyDigest"];
+            readonly sources: readonly components["schemas"]["AssuranceSource"][];
+        };
+        /**
+         * @description Published review VersionRequest representation for tenant-scoped manual review operations.
+         * @example {
+         *       "expected_version": 1
+         *     }
+         */
+        readonly ReviewVersionRequest: {
+            /**
+             * Format: int64
+             * @example 1
+             */
+            readonly expected_version: number;
+        };
+        /**
+         * @description Published review FindingRequest representation for tenant-scoped manual review operations.
+         * @example {
+         *       "expected_version": 1,
+         *       "resolution": "satisfy",
+         *       "reason_code": "document_match",
+         *       "grant_ids": [
+         *         "example"
+         *       ]
+         *     }
+         */
+        readonly ReviewFindingRequest: {
+            /**
+             * Format: int64
+             * @example 1
+             */
+            readonly expected_version: number;
+            /** @enum {string} */
+            readonly resolution: "satisfy" | "not_satisfy" | "request_input";
+            readonly reason_code: string;
+            readonly grant_ids: readonly string[];
+        };
+        /**
+         * @description Published review ArbitrationRequest representation for tenant-scoped manual review operations.
+         * @example {
+         *       "expected_version": 1,
+         *       "resolution": "satisfy",
+         *       "reason_code": "document_match"
+         *     }
+         */
+        readonly ReviewArbitrationRequest: {
+            /**
+             * Format: int64
+             * @example 1
+             */
+            readonly expected_version: number;
+            /** @enum {string} */
+            readonly resolution: "satisfy" | "not_satisfy" | "request_input";
+            readonly reason_code: string;
+        };
+        /**
+         * @description Published review CorrectionRequest representation for tenant-scoped manual review operations.
+         * @example {
+         *       "expected_version": 1,
+         *       "superseding_decision_id": "example"
+         *     }
+         */
+        readonly ReviewCorrectionRequest: {
+            /**
+             * Format: int64
+             * @example 1
+             */
+            readonly expected_version: number;
+            readonly superseding_decision_id: string;
+        };
+        /**
+         * @description Published review EvidenceRequest representation for tenant-scoped manual review operations.
+         * @example {
+         *       "expected_version": 1,
+         *       "evidence_id": "evd_example"
+         *     }
+         */
+        readonly ReviewEvidenceRequest: {
+            /**
+             * Format: int64
+             * @example 1
+             */
+            readonly expected_version: number;
+            readonly evidence_id: string;
+        };
+        /**
+         * @description Published review AppealRequest representation for tenant-scoped manual review operations.
+         * @example {
+         *       "deadline": "2026-09-08T12:00:00Z"
+         *     }
+         */
+        readonly ReviewAppealRequest: {
+            /** Format: date-time */
+            readonly deadline: string;
+        };
+        /**
+         * @description Published review AppealResolutionRequest representation for tenant-scoped manual review operations.
+         * @example {
+         *       "expected_version": 1,
+         *       "outcome": "upheld",
+         *       "reason_code": "document_match"
+         *     }
+         */
+        readonly ReviewAppealResolutionRequest: {
+            /**
+             * Format: int64
+             * @example 1
+             */
+            readonly expected_version: number;
+            /** @enum {string} */
+            readonly outcome: "upheld" | "overturned" | "more_input";
+            readonly reason_code: string;
+            readonly superseding_decision_id?: string;
+        };
+        /**
+         * @description Published review RenewRequest representation for tenant-scoped manual review operations.
+         * @example {
+         *       "expected_version": 1,
+         *       "expected_capture_token_id": "example"
+         *     }
+         */
+        readonly ReviewRenewRequest: {
+            /**
+             * Format: int64
+             * @example 1
+             */
+            readonly expected_version: number;
+            readonly expected_capture_token_id: string;
+        };
+        /**
+         * @description Published review ChildOutcomeRequest representation for tenant-scoped manual review operations.
+         * @example {
+         *       "expected_version": 1,
+         *       "decision_id": "example"
+         *     }
+         */
+        readonly ReviewChildOutcomeRequest: {
+            /**
+             * Format: int64
+             * @example 1
+             */
+            readonly expected_version: number;
+            readonly decision_id: string;
+        };
+        /**
+         * @description Published review Case representation for tenant-scoped manual review operations.
+         * @example {
+         *       "id": "rev_example",
+         *       "verification_id": "ver_example",
+         *       "region": "eu",
+         *       "oversight": "single",
+         *       "state": "open",
+         *       "finding_count": 1,
+         *       "version": 1
+         *     }
+         */
+        readonly ReviewCase: {
+            readonly id: string;
+            readonly verification_id: string;
+            readonly challenged_decision_id?: string;
+            readonly routing_request_id?: string;
+            readonly superseding_decision_id?: string;
+            readonly region: string;
+            readonly oversight: string;
+            readonly state: string;
+            readonly assigned_reviewer?: string;
+            /** Format: int64 */
+            readonly finding_count: number;
+            /** Format: int64 */
+            readonly version: number;
+        };
+        /**
+         * @description Published review Appeal representation for tenant-scoped manual review operations.
+         * @example {
+         *       "id": "rev_example",
+         *       "case_id": "rev_example",
+         *       "state": "open",
+         *       "version": 1,
+         *       "deadline": "2026-09-08T12:00:00Z"
+         *     }
+         */
+        readonly ReviewAppeal: {
+            readonly id: string;
+            readonly case_id: string;
+            readonly state: string;
+            readonly outcome?: string;
+            readonly assigned_reviewer?: string;
+            readonly reason_code?: string;
+            readonly superseding_decision_id?: string;
+            /** Format: int64 */
+            readonly version: number;
+            /** Format: date-time */
+            readonly deadline: string;
+        };
+        /**
+         * @description Published review EvidenceGrant representation for tenant-scoped manual review operations.
+         * @example {
+         *       "grant_id": "grt_example",
+         *       "case_id": "rev_example",
+         *       "evidence_id": "evd_example",
+         *       "case_version": 1,
+         *       "expires_at": "2026-09-08T12:00:00Z"
+         *     }
+         */
+        readonly ReviewEvidenceGrant: {
+            readonly grant_id: string;
+            readonly case_id: string;
+            readonly evidence_id: string;
+            /** Format: int64 */
+            readonly case_version: number;
+            /** Format: date-time */
+            readonly expires_at: string;
+        };
+        /**
+         * @description Published review EvidenceMetadata representation for tenant-scoped manual review operations.
+         * @example {
+         *       "id": "rev_example",
+         *       "requirement": "document_front",
+         *       "evidence_type": "identity_document",
+         *       "artefact": "front",
+         *       "acquisition_method": "file_upload"
+         *     }
+         */
+        readonly ReviewEvidenceMetadata: {
+            readonly id: string;
+            readonly requirement: string;
+            readonly evidence_type: string;
+            readonly artefact: string;
+            readonly acquisition_method: string;
+        };
+        /**
+         * @description Published review EvidenceList representation for tenant-scoped manual review operations.
+         * @example {
+         *       "items": [
+         *         {
+         *           "id": "rev_example",
+         *           "requirement": "document_front",
+         *           "evidence_type": "identity_document",
+         *           "artefact": "front",
+         *           "acquisition_method": "file_upload"
+         *         }
+         *       ]
+         *     }
+         */
+        readonly ReviewEvidenceList: {
+            readonly items: readonly components["schemas"]["ReviewEvidenceMetadata"][];
+        };
+        /**
+         * @description Published review Followup representation for tenant-scoped manual review operations.
+         * @example {
+         *       "case_id": "rev_example",
+         *       "version": 1
+         *     }
+         */
+        readonly ReviewFollowup: {
+            readonly case_id: string;
+            /** Format: int64 */
+            readonly version: number;
+            readonly decision_id?: string;
+            readonly directive?: string;
+        };
+        /**
+         * @description Published review RecaptureCredential representation for tenant-scoped manual review operations.
+         * @example {
+         *       "case_id": "rev_example",
+         *       "verification_id": "ver_example",
+         *       "capture_token": "idq_cap_v1_example",
+         *       "capture_token_id": "cap_example",
+         *       "capture_token_expires_at": "2026-09-08T12:00:00Z",
+         *       "outcome_token": "idq_out_v1_example",
+         *       "outcome_token_expires_at": "2026-09-09T12:00:00Z",
+         *       "verification_expires_at": "2026-09-08T12:00:00Z"
+         *     }
+         */
+        readonly ReviewRecaptureCredential: {
+            readonly case_id: string;
+            readonly verification_id: string;
+            readonly capture_token: string;
+            readonly capture_token_id: string;
+            /** Format: date-time */
+            readonly capture_token_expires_at: string;
+            readonly outcome_token: components["schemas"]["OutcomeToken"];
+            /** Format: date-time */
+            readonly outcome_token_expires_at: string;
+            /** Format: date-time */
+            readonly verification_expires_at: string;
+        };
+        /**
+         * @description Published review RecaptureStatus representation for tenant-scoped manual review operations.
+         * @example {
+         *       "verification_id": "ver_example",
+         *       "state": "open",
+         *       "capture_token_id": "cap_example",
+         *       "case_version": 1,
+         *       "capture_token_expires_at": "2026-09-08T12:00:00Z",
+         *       "verification_expires_at": "2026-09-08T12:00:00Z",
+         *       "follow_up_required": false
+         *     }
+         */
+        readonly ReviewRecaptureStatus: {
+            readonly verification_id: string;
+            readonly state: string;
+            readonly capture_token_id: string;
+            readonly decision_id?: string;
+            readonly outcome?: string;
+            readonly acknowledged_by?: string;
+            /** Format: int64 */
+            readonly case_version: number;
+            /** Format: date-time */
+            readonly capture_token_expires_at: string;
+            /** Format: date-time */
+            readonly verification_expires_at: string;
+            /** Format: date-time */
+            readonly acknowledged_at?: string;
+            readonly follow_up_required: boolean;
+        };
+        /**
+         * @description Published review RecaptureList representation for tenant-scoped manual review operations.
+         * @example {
+         *       "items": [
+         *         {
+         *           "verification_id": "ver_example",
+         *           "state": "open",
+         *           "capture_token_id": "cap_example",
+         *           "case_version": 1,
+         *           "capture_token_expires_at": "2026-09-08T12:00:00Z",
+         *           "verification_expires_at": "2026-09-08T12:00:00Z",
+         *           "follow_up_required": false
+         *         }
+         *       ]
+         *     }
+         */
+        readonly ReviewRecaptureList: {
+            readonly items: readonly components["schemas"]["ReviewRecaptureStatus"][];
+        };
+        /**
+         * @description Published review Acknowledgement representation for tenant-scoped manual review operations.
+         * @example {
+         *       "case_id": "rev_example",
+         *       "verification_id": "ver_example",
+         *       "decision_id": "example",
+         *       "actor_key_id": "example",
+         *       "reviewer_id": "reviewer.alex",
+         *       "case_version": 1,
+         *       "acknowledged_at": "2026-09-08T12:00:00Z"
+         *     }
+         */
+        readonly ReviewAcknowledgement: {
+            readonly case_id: string;
+            readonly verification_id: string;
+            readonly decision_id: string;
+            readonly actor_key_id: string;
+            readonly reviewer_id: string;
+            /** Format: int64 */
+            readonly case_version: number;
+            /** Format: date-time */
+            readonly acknowledged_at: string;
+        };
+        /**
+         * @description Published review Reevaluation representation for tenant-scoped manual review operations.
+         * @example {
+         *       "case_id": "rev_example",
+         *       "decision_id": "example",
+         *       "actor_key_id": "example",
+         *       "reviewer_id": "reviewer.alex",
+         *       "case_version": 1,
+         *       "source_version": 1,
+         *       "requested_at": "2026-09-08T12:00:00Z"
+         *     }
+         */
+        readonly ReviewReevaluation: {
+            readonly case_id: string;
+            readonly decision_id: string;
+            readonly actor_key_id: string;
+            readonly reviewer_id: string;
+            /** Format: int64 */
+            readonly case_version: number;
+            /** Format: int64 */
+            readonly source_version: number;
+            /** Format: date-time */
+            readonly requested_at: string;
+        };
+        /**
+         * @description Published review QueueItem representation for tenant-scoped manual review operations.
+         * @example {
+         *       "id": "rev_example",
+         *       "verification_id": "ver_example",
+         *       "state": "open",
+         *       "region": "eu",
+         *       "required_certificate": "identity.review",
+         *       "language": "en",
+         *       "reason": "identity_check",
+         *       "assurance": "standard",
+         *       "risk": "normal",
+         *       "version": 1,
+         *       "operations_version": 1,
+         *       "priority": 1,
+         *       "sampled": false
+         *     }
+         */
+        readonly ReviewQueueItem: {
+            readonly id: string;
+            readonly verification_id: string;
+            readonly state: string;
+            readonly region: string;
+            readonly assigned_reviewer?: string;
+            readonly required_certificate: string;
+            readonly language: string;
+            readonly reason: string;
+            readonly assurance: string;
+            readonly risk: string;
+            /** Format: int64 */
+            readonly version: number;
+            /** Format: int64 */
+            readonly operations_version: number;
+            /** Format: int64 */
+            readonly priority: number;
+            /** Format: date-time */
+            readonly due_at?: string;
+            readonly sampled: boolean;
+        };
+        /**
+         * @description Published review Queue representation for tenant-scoped manual review operations.
+         * @example {
+         *       "items": [
+         *         {
+         *           "id": "rev_example",
+         *           "verification_id": "ver_example",
+         *           "state": "open",
+         *           "region": "eu",
+         *           "required_certificate": "identity.review",
+         *           "language": "en",
+         *           "reason": "identity_check",
+         *           "assurance": "standard",
+         *           "risk": "normal",
+         *           "version": 1,
+         *           "operations_version": 1,
+         *           "priority": 1,
+         *           "sampled": false
+         *         }
+         *       ],
+         *       "has_more": false
+         *     }
+         */
+        readonly ReviewQueue: {
+            readonly items: readonly components["schemas"]["ReviewQueueItem"][];
+            readonly has_more: boolean;
+            readonly next_cursor?: string;
+        };
+        /**
+         * @description Published review Assignment representation for tenant-scoped manual review operations.
+         * @example {
+         *       "tenant_id": "ten_example",
+         *       "api_key_id": "key_example",
+         *       "operator_id": "reviewer.alex",
+         *       "permissions": [
+         *         "reviews:claim",
+         *         "reviews:find"
+         *       ],
+         *       "certifications": [
+         *         "identity.review"
+         *       ],
+         *       "regions": [
+         *         "eu"
+         *       ],
+         *       "not_before": "2026-09-08T12:00:00Z",
+         *       "expires_at": "2026-09-08T12:00:00Z"
+         *     }
+         */
+        readonly ReviewAssignment: {
+            readonly tenant_id: string;
+            readonly api_key_id: string;
+            readonly operator_id: string;
+            readonly permissions: readonly string[];
+            readonly certifications: readonly string[];
+            readonly regions: readonly string[];
+            /** Format: date-time */
+            readonly not_before: string;
+            /** Format: date-time */
+            readonly expires_at: string;
+        };
+        /**
+         * @description Published review OperatorConfiguration representation for tenant-scoped manual review operations.
+         * @example {
+         *       "assignment": {
+         *         "tenant_id": "ten_example",
+         *         "api_key_id": "key_example",
+         *         "operator_id": "reviewer.alex",
+         *         "permissions": [
+         *           "reviews:claim",
+         *           "reviews:find"
+         *         ],
+         *         "certifications": [
+         *           "identity.review"
+         *         ],
+         *         "regions": [
+         *           "eu"
+         *         ],
+         *         "not_before": "2026-09-08T12:00:00Z",
+         *         "expires_at": "2026-09-08T12:00:00Z"
+         *       },
+         *       "revoked": false
+         *     }
+         */
+        readonly ReviewOperatorConfiguration: {
+            readonly assignment: components["schemas"]["ReviewAssignment"];
+            readonly revoked: boolean;
+        };
+        /**
+         * @description Published review Redaction representation for tenant-scoped manual review operations.
+         * @example {
+         *       "x": 1,
+         *       "y": 1,
+         *       "width": 1,
+         *       "height": 1
+         *     }
+         */
+        readonly ReviewRedaction: {
+            readonly x: number;
+            readonly y: number;
+            readonly width: number;
+            readonly height: number;
+        };
+        /**
+         * @description Published review DisplayRule representation for tenant-scoped manual review operations.
+         * @example {
+         *       "requirement": "document_front",
+         *       "purpose": "identity_verification",
+         *       "redactions": [
+         *         {
+         *           "x": 1,
+         *           "y": 1,
+         *           "width": 1,
+         *           "height": 1
+         *         }
+         *       ]
+         *     }
+         */
+        readonly ReviewDisplayRule: {
+            readonly requirement: string;
+            readonly purpose: string;
+            readonly redactions: readonly components["schemas"]["ReviewRedaction"][];
+        };
+        /**
+         * @description Published review PermittedFinding representation for tenant-scoped manual review operations.
+         * @example {
+         *       "resolution": "satisfy",
+         *       "reason_code": "document_match"
+         *     }
+         */
+        readonly ReviewPermittedFinding: {
+            readonly resolution: string;
+            readonly reason_code: string;
+        };
+        /**
+         * @description Published review PolicySettings representation for tenant-scoped manual review operations.
+         * @example {
+         *       "tenant_id": "ten_example",
+         *       "policy_id": "pol_example",
+         *       "policy_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+         *       "required_certificate": "identity.review",
+         *       "oversight": "single",
+         *       "language": "en",
+         *       "reason": "identity_check",
+         *       "assurance": "standard",
+         *       "risk": "normal",
+         *       "escalation_certificate": "identity.supervisor",
+         *       "revision": 1,
+         *       "permitted_findings": [
+         *         {
+         *           "resolution": "satisfy",
+         *           "reason_code": "document_match"
+         *         }
+         *       ],
+         *       "display": [
+         *         {
+         *           "requirement": "document_front",
+         *           "purpose": "identity_verification",
+         *           "redactions": [
+         *             {
+         *               "x": 1,
+         *               "y": 1,
+         *               "width": 1,
+         *               "height": 1
+         *             }
+         *           ]
+         *         }
+         *       ],
+         *       "priority": 1,
+         *       "sla_seconds": 60,
+         *       "sample_percent": 1,
+         *       "appeal_window_seconds": 60
+         *     }
+         */
+        readonly ReviewPolicySettings: {
+            readonly tenant_id: string;
+            readonly policy_id: string;
+            readonly policy_digest: string;
+            readonly required_certificate: string;
+            readonly oversight: string;
+            readonly language: string;
+            readonly reason: string;
+            readonly assurance: string;
+            readonly risk: string;
+            readonly escalation_certificate: string;
+            /** Format: int64 */
+            readonly revision: number;
+            readonly permitted_findings: readonly components["schemas"]["ReviewPermittedFinding"][];
+            readonly display: readonly components["schemas"]["ReviewDisplayRule"][];
+            /** Format: int64 */
+            readonly priority: number;
+            /** Format: int64 */
+            readonly sla_seconds: number;
+            /** Format: int64 */
+            readonly sample_percent: number;
+            /** Format: int64 */
+            readonly appeal_window_seconds: number;
+        };
+        /**
+         * @description Published review QueueConfiguration representation for tenant-scoped manual review operations.
+         * @example {
+         *       "language": "en",
+         *       "reason": "identity_check",
+         *       "assurance": "standard",
+         *       "risk": "normal",
+         *       "priority": 1,
+         *       "due_at": "2026-09-08T12:00:00Z",
+         *       "sampled": false
+         *     }
+         */
+        readonly ReviewQueueConfiguration: {
+            readonly language: string;
+            readonly reason: string;
+            readonly assurance: string;
+            readonly risk: string;
+            /** Format: int64 */
+            readonly priority: number;
+            /** Format: date-time */
+            readonly due_at: string;
+            readonly sampled: boolean;
+        };
+        /**
+         * @description Published review OperatorWrite representation for tenant-scoped manual review operations.
+         * @example {
+         *       "expected_version": 1,
+         *       "configuration": {
+         *         "assignment": {
+         *           "tenant_id": "ten_example",
+         *           "api_key_id": "key_example",
+         *           "operator_id": "reviewer.alex",
+         *           "permissions": [
+         *             "reviews:claim",
+         *             "reviews:find"
+         *           ],
+         *           "certifications": [
+         *             "identity.review"
+         *           ],
+         *           "regions": [
+         *             "eu"
+         *           ],
+         *           "not_before": "2026-09-08T12:00:00Z",
+         *           "expires_at": "2026-09-08T12:00:00Z"
+         *         },
+         *         "revoked": false
+         *       }
+         *     }
+         */
+        readonly ReviewOperatorWrite: {
+            /**
+             * Format: int64
+             * @example 1
+             */
+            readonly expected_version: number;
+            readonly configuration: components["schemas"]["ReviewOperatorConfiguration"];
+        };
+        /**
+         * @description Published review OperatorRecord representation for tenant-scoped manual review operations.
+         * @example {
+         *       "kind": "operator",
+         *       "reference": "key_example",
+         *       "version": 1,
+         *       "configuration": {
+         *         "assignment": {
+         *           "tenant_id": "ten_example",
+         *           "api_key_id": "key_example",
+         *           "operator_id": "reviewer.alex",
+         *           "permissions": [
+         *             "reviews:claim",
+         *             "reviews:find"
+         *           ],
+         *           "certifications": [
+         *             "identity.review"
+         *           ],
+         *           "regions": [
+         *             "eu"
+         *           ],
+         *           "not_before": "2026-09-08T12:00:00Z",
+         *           "expires_at": "2026-09-08T12:00:00Z"
+         *         },
+         *         "revoked": false
+         *       }
+         *     }
+         */
+        readonly ReviewOperatorRecord: {
+            readonly kind: string;
+            readonly reference: string;
+            /** Format: int64 */
+            readonly version: number;
+            readonly configuration: components["schemas"]["ReviewOperatorConfiguration"];
+        };
+        /**
+         * @description Published review PolicyWrite representation for tenant-scoped manual review operations.
+         * @example {
+         *       "expected_version": 1,
+         *       "configuration": {
+         *         "tenant_id": "ten_example",
+         *         "policy_id": "pol_example",
+         *         "policy_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+         *         "required_certificate": "identity.review",
+         *         "oversight": "single",
+         *         "language": "en",
+         *         "reason": "identity_check",
+         *         "assurance": "standard",
+         *         "risk": "normal",
+         *         "escalation_certificate": "identity.supervisor",
+         *         "revision": 1,
+         *         "permitted_findings": [
+         *           {
+         *             "resolution": "satisfy",
+         *             "reason_code": "document_match"
+         *           }
+         *         ],
+         *         "display": [
+         *           {
+         *             "requirement": "document_front",
+         *             "purpose": "identity_verification",
+         *             "redactions": [
+         *               {
+         *                 "x": 1,
+         *                 "y": 1,
+         *                 "width": 1,
+         *                 "height": 1
+         *               }
+         *             ]
+         *           }
+         *         ],
+         *         "priority": 1,
+         *         "sla_seconds": 60,
+         *         "sample_percent": 1,
+         *         "appeal_window_seconds": 60
+         *       }
+         *     }
+         */
+        readonly ReviewPolicyWrite: {
+            /**
+             * Format: int64
+             * @example 1
+             */
+            readonly expected_version: number;
+            readonly configuration: components["schemas"]["ReviewPolicySettings"];
+        };
+        /**
+         * @description Published review PolicyRecord representation for tenant-scoped manual review operations.
+         * @example {
+         *       "kind": "operator",
+         *       "reference": "key_example",
+         *       "version": 1,
+         *       "configuration": {
+         *         "tenant_id": "ten_example",
+         *         "policy_id": "pol_example",
+         *         "policy_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+         *         "required_certificate": "identity.review",
+         *         "oversight": "single",
+         *         "language": "en",
+         *         "reason": "identity_check",
+         *         "assurance": "standard",
+         *         "risk": "normal",
+         *         "escalation_certificate": "identity.supervisor",
+         *         "revision": 1,
+         *         "permitted_findings": [
+         *           {
+         *             "resolution": "satisfy",
+         *             "reason_code": "document_match"
+         *           }
+         *         ],
+         *         "display": [
+         *           {
+         *             "requirement": "document_front",
+         *             "purpose": "identity_verification",
+         *             "redactions": [
+         *               {
+         *                 "x": 1,
+         *                 "y": 1,
+         *                 "width": 1,
+         *                 "height": 1
+         *               }
+         *             ]
+         *           }
+         *         ],
+         *         "priority": 1,
+         *         "sla_seconds": 60,
+         *         "sample_percent": 1,
+         *         "appeal_window_seconds": 60
+         *       }
+         *     }
+         */
+        readonly ReviewPolicyRecord: {
+            readonly kind: string;
+            readonly reference: string;
+            /** Format: int64 */
+            readonly version: number;
+            readonly configuration: components["schemas"]["ReviewPolicySettings"];
+        };
+        /**
+         * @description Published review QueueWrite representation for tenant-scoped manual review operations.
+         * @example {
+         *       "expected_version": 1,
+         *       "configuration": {
+         *         "language": "en",
+         *         "reason": "identity_check",
+         *         "assurance": "standard",
+         *         "risk": "normal",
+         *         "priority": 1,
+         *         "due_at": "2026-09-08T12:00:00Z",
+         *         "sampled": false
+         *       }
+         *     }
+         */
+        readonly ReviewQueueWrite: {
+            /**
+             * Format: int64
+             * @example 1
+             */
+            readonly expected_version: number;
+            readonly configuration: components["schemas"]["ReviewQueueConfiguration"];
+        };
+        /**
+         * @description Published review QueueRecord representation for tenant-scoped manual review operations.
+         * @example {
+         *       "kind": "operator",
+         *       "reference": "key_example",
+         *       "version": 1,
+         *       "configuration": {
+         *         "language": "en",
+         *         "reason": "identity_check",
+         *         "assurance": "standard",
+         *         "risk": "normal",
+         *         "priority": 1,
+         *         "due_at": "2026-09-08T12:00:00Z",
+         *         "sampled": false
+         *       }
+         *     }
+         */
+        readonly ReviewQueueRecord: {
+            readonly kind: string;
+            readonly reference: string;
+            /** Format: int64 */
+            readonly version: number;
+            readonly configuration: components["schemas"]["ReviewQueueConfiguration"];
+        };
+        /**
+         * @description Engine-neutral policy meaning. The server assigns policy_id and revision; rule semantics and limits follow contracts/policy/v1.
+         * @example {
+         *       "schema_major": 1,
+         *       "schema_minor": 0,
+         *       "verified_assurance": "synthetic.fixture",
+         *       "rules": [
+         *         {
+         *           "name": "synthetic_success",
+         *           "when": "facts[\"synthetic.document\"] == \"satisfied\" && facts[\"synthetic.liveness\"] == \"satisfied\"",
+         *           "result": {
+         *             "state": "satisfied",
+         *             "directive": "complete_verified",
+         *             "priority": 1,
+         *             "contributing_facts": [
+         *               "synthetic.document",
+         *               "synthetic.liveness"
+         *             ],
+         *             "reason_codes": []
+         *           }
+         *         }
+         *       ]
+         *     }
+         */
+        readonly PolicyDefinition: {
+            /**
+             * @example 1
+             * @enum {integer}
+             */
+            readonly schema_major: 1;
+            /**
+             * @example 0
+             * @enum {integer}
+             */
+            readonly schema_minor: 0;
+            /** @example synthetic.fixture */
+            readonly verified_assurance: string;
+            /**
+             * @example [
+             *       {
+             *         "name": "synthetic_success",
+             *         "when": "facts[\"synthetic.document\"] == \"satisfied\" && facts[\"synthetic.liveness\"] == \"satisfied\"",
+             *         "result": {
+             *           "state": "satisfied",
+             *           "directive": "complete_verified",
+             *           "priority": 1,
+             *           "contributing_facts": [
+             *             "synthetic.document",
+             *             "synthetic.liveness"
+             *           ],
+             *           "reason_codes": []
+             *         }
+             *       }
+             *     ]
+             */
+            readonly rules: readonly {
+                /** @example synthetic_success */
+                readonly name: string & unknown;
+                /** @example facts["synthetic.document"] == "satisfied" */
+                readonly when: string;
+                readonly result: {
+                    /**
+                     * @example satisfied
+                     * @enum {unknown}
+                     */
+                    readonly state: "satisfied" | "not_satisfied" | "inconclusive" | "unavailable" | "prohibited";
+                    /**
+                     * @example complete_verified
+                     * @enum {unknown}
+                     */
+                    readonly directive: "complete_verified" | "complete_not_verified" | "complete_inconclusive" | "request_input" | "run_check" | "retry_check" | "use_fallback" | "route_manual_review" | "fail_workflow";
+                    /** @example 1 */
+                    readonly priority: number;
+                    /**
+                     * @example [
+                     *       "synthetic.document"
+                     *     ]
+                     */
+                    readonly contributing_facts: readonly string[];
+                    /** @example [] */
+                    readonly reason_codes: readonly (string & unknown)[];
+                } & (unknown & unknown & unknown & unknown);
+            }[];
+        };
+        /**
+         * @description Source-free policy metadata. Activation version is distinct from immutable revision numbering.
+         * @example {
+         *       "id": "pol_01M11HEQG00000000000000000",
+         *       "latest_revision": 1,
+         *       "activation_version": 0,
+         *       "created_at": "2026-09-06T00:00:00Z"
+         *     }
+         */
+        readonly PolicySummary: {
+            readonly id: string;
+            /**
+             * Format: int64
+             * @description Highest registered revision; zero is possible for a legacy empty root.
+             */
+            readonly latest_revision: number;
+            /** Format: int64 */
+            readonly active_revision?: number;
+            /** Format: int64 */
+            readonly activation_version: number;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly activated_at?: string;
+        };
+        /**
+         * @description Immutable revision and evaluator identity, excluding expressions.
+         * @example {
+         *       "policy_id": "pol_01M11HEQG00000000000000000",
+         *       "revision": 1,
+         *       "schema_major": 1,
+         *       "schema_minor": 0,
+         *       "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+         *       "evaluator_major": 1,
+         *       "evaluator_minor": 0,
+         *       "evaluator_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+         *       "created_at": "2026-09-06T00:00:00Z"
+         *     }
+         */
+        readonly PolicyRevisionInfo: {
+            readonly policy_id: string;
+            /** Format: int64 */
+            readonly revision: number;
+            /** Format: int64 */
+            readonly schema_major: number;
+            /** Format: int64 */
+            readonly schema_minor: number;
+            readonly digest: string;
+            /** Format: int64 */
+            readonly evaluator_major: number;
+            /** Format: int64 */
+            readonly evaluator_minor: number;
+            readonly evaluator_digest: string;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        /**
+         * @description An immutable switch of the active pointer, including operational rollback.
+         * @example {
+         *       "policy_id": "pol_01M11HEQG00000000000000000",
+         *       "revision": 1,
+         *       "previous_revision": 0,
+         *       "version": 1,
+         *       "actor_id": "key_01M11HEQG00000000000000000",
+         *       "activated_at": "2026-09-06T00:00:00Z"
+         *     }
+         */
+        readonly PolicyActivationInfo: {
+            readonly policy_id: string;
+            /** Format: int64 */
+            readonly revision: number;
+            /** Format: int64 */
+            readonly previous_revision: number;
+            /** Format: int64 */
+            readonly version: number;
+            readonly actor_id: string;
+            /** Format: date-time */
+            readonly activated_at: string;
+        };
+        /**
+         * @description Successful compilation only; no policy, activation, decision, task or audit mutation is created.
+         * @example {
+         *       "valid": true,
+         *       "rule_count": 1,
+         *       "evaluator_major": 1,
+         *       "evaluator_minor": 0,
+         *       "evaluator_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+         *     }
+         */
+        readonly PolicyValidation: {
+            /** @enum {boolean} */
+            readonly valid: true;
+            /** Format: int64 */
+            readonly rule_count: number;
+            /** Format: int64 */
+            readonly evaluator_major: number;
+            /** Format: int64 */
+            readonly evaluator_minor: number;
+            readonly evaluator_digest: string;
+        };
+        /**
+         * @description Definition for new policy creation or side-effect-free validation. Applies to policy Write.
+         * @example {
+         *       "definition": {
+         *         "schema_major": 1,
+         *         "schema_minor": 0,
+         *         "verified_assurance": "synthetic.fixture",
+         *         "rules": [
+         *           {
+         *             "name": "synthetic_success",
+         *             "when": "facts[\"synthetic.document\"] == \"satisfied\" && facts[\"synthetic.liveness\"] == \"satisfied\"",
+         *             "result": {
+         *               "state": "satisfied",
+         *               "directive": "complete_verified",
+         *               "priority": 1,
+         *               "contributing_facts": [
+         *                 "synthetic.document",
+         *                 "synthetic.liveness"
+         *               ],
+         *               "reason_codes": []
+         *             }
+         *           }
+         *         ]
+         *       }
+         *     }
+         */
+        readonly PolicyWrite: {
+            readonly definition: components["schemas"]["PolicyDefinition"];
+        };
+        /**
+         * @description Append the next immutable revision only if expected_revision is still the latest registered revision. Applies to policy Revision Write.
+         * @example {
+         *       "definition": {
+         *         "schema_major": 1,
+         *         "schema_minor": 0,
+         *         "verified_assurance": "synthetic.fixture",
+         *         "rules": [
+         *           {
+         *             "name": "synthetic_success",
+         *             "when": "facts[\"synthetic.document\"] == \"satisfied\" && facts[\"synthetic.liveness\"] == \"satisfied\"",
+         *             "result": {
+         *               "state": "satisfied",
+         *               "directive": "complete_verified",
+         *               "priority": 1,
+         *               "contributing_facts": [
+         *                 "synthetic.document",
+         *                 "synthetic.liveness"
+         *               ],
+         *               "reason_codes": []
+         *             }
+         *           }
+         *         ]
+         *       },
+         *       "expected_revision": 1
+         *     }
+         */
+        readonly PolicyRevisionWrite: {
+            readonly definition: components["schemas"]["PolicyDefinition"];
+            /** Format: int64 */
+            readonly expected_revision: number;
+        };
+        /**
+         * @description Select an explicit revision using the current activation version (zero for first activation). Rollback additionally requires a previously activated target. One authorised tenant API key is sufficient. Applies to policy Activation Write.
+         * @example {
+         *       "revision": 1,
+         *       "expected_version": 0,
+         *       "reason": "tenant_requested"
+         *     }
+         */
+        readonly PolicyActivationWrite: {
+            /** Format: int64 */
+            readonly revision: number;
+            /** Format: int64 */
+            readonly expected_version: number;
+            readonly reason: string;
+        };
+        /**
+         * @description Original safe command receipt. Repeated identical commands return it with replayed=true without another revision, activation or audit effect.
+         * @example {
+         *       "policy": {
+         *         "id": "pol_01M11HEQG00000000000000000",
+         *         "latest_revision": 1,
+         *         "activation_version": 0,
+         *         "created_at": "2026-09-06T00:00:00Z"
+         *       },
+         *       "revision": {
+         *         "policy_id": "pol_01M11HEQG00000000000000000",
+         *         "revision": 1,
+         *         "schema_major": 1,
+         *         "schema_minor": 0,
+         *         "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+         *         "evaluator_major": 1,
+         *         "evaluator_minor": 0,
+         *         "evaluator_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+         *         "created_at": "2026-09-06T00:00:00Z"
+         *       },
+         *       "replayed": false
+         *     }
+         */
+        readonly PolicyMutation: {
+            readonly policy: components["schemas"]["PolicySummary"];
+            readonly revision?: components["schemas"]["PolicyRevisionInfo"];
+            readonly activation?: components["schemas"]["PolicyActivationInfo"];
+            readonly replayed: boolean;
+        };
+        /**
+         * @description Exact public policy document including server-assigned identity and revision. Authorised retrieval deliberately exposes expressions.
+         * @example {
+         *       "schema_major": 1,
+         *       "schema_minor": 0,
+         *       "verified_assurance": "synthetic.fixture",
+         *       "rules": [
+         *         {
+         *           "name": "synthetic_success",
+         *           "when": "facts[\"synthetic.document\"] == \"satisfied\" && facts[\"synthetic.liveness\"] == \"satisfied\"",
+         *           "result": {
+         *             "state": "satisfied",
+         *             "directive": "complete_verified",
+         *             "priority": 1,
+         *             "contributing_facts": [
+         *               "synthetic.document",
+         *               "synthetic.liveness"
+         *             ],
+         *             "reason_codes": []
+         *           }
+         *         }
+         *       ],
+         *       "policy_id": "pol_01M11HEQG00000000000000000",
+         *       "revision": 1
+         *     }
+         */
+        readonly PolicyDocument: {
+            /** @enum {integer} */
+            readonly schema_major: 1;
+            /** @enum {integer} */
+            readonly schema_minor: 0;
+            readonly verified_assurance: string;
+            readonly rules: readonly {
+                readonly name: string & unknown;
+                readonly when: string;
+                readonly result: {
+                    /** @enum {unknown} */
+                    readonly state: "satisfied" | "not_satisfied" | "inconclusive" | "unavailable" | "prohibited";
+                    /** @enum {unknown} */
+                    readonly directive: "complete_verified" | "complete_not_verified" | "complete_inconclusive" | "request_input" | "run_check" | "retry_check" | "use_fallback" | "route_manual_review" | "fail_workflow";
+                    readonly priority: number;
+                    readonly contributing_facts: readonly string[];
+                    readonly reason_codes: readonly (string & unknown)[];
+                } & (unknown & unknown & unknown & unknown);
+            }[];
+            readonly policy_id: string;
+            /** Format: int64 */
+            readonly revision: number;
+        };
+        /**
+         * @description Explicitly requested immutable policy source plus its compiled identity.
+         * @example {
+         *       "policy_id": "pol_01M11HEQG00000000000000000",
+         *       "revision": 1,
+         *       "schema_major": 1,
+         *       "schema_minor": 0,
+         *       "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+         *       "evaluator_major": 1,
+         *       "evaluator_minor": 0,
+         *       "evaluator_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+         *       "created_at": "2026-09-06T00:00:00Z",
+         *       "document": {
+         *         "schema_major": 1,
+         *         "schema_minor": 0,
+         *         "verified_assurance": "synthetic.fixture",
+         *         "rules": [
+         *           {
+         *             "name": "synthetic_success",
+         *             "when": "facts[\"synthetic.document\"] == \"satisfied\" && facts[\"synthetic.liveness\"] == \"satisfied\"",
+         *             "result": {
+         *               "state": "satisfied",
+         *               "directive": "complete_verified",
+         *               "priority": 1,
+         *               "contributing_facts": [
+         *                 "synthetic.document",
+         *                 "synthetic.liveness"
+         *               ],
+         *               "reason_codes": []
+         *             }
+         *           }
+         *         ],
+         *         "policy_id": "pol_01M11HEQG00000000000000000",
+         *         "revision": 1
+         *       }
+         *     }
+         */
+        readonly PolicyRevisionDocument: {
+            readonly policy_id: string;
+            /** Format: int64 */
+            readonly revision: number;
+            /** Format: int64 */
+            readonly schema_major: number;
+            /** Format: int64 */
+            readonly schema_minor: number;
+            readonly digest: string;
+            /** Format: int64 */
+            readonly evaluator_major: number;
+            /** Format: int64 */
+            readonly evaluator_minor: number;
+            readonly evaluator_digest: string;
+            /** Format: date-time */
+            readonly created_at: string;
+            readonly document: components["schemas"]["PolicyDocument"];
+        };
+        /**
+         * @description Bounded newest-first metadata page with a signed tenant-, policy-, collection- and limit-bound cursor.
+         * @example {
+         *       "data": [
+         *         {
+         *           "id": "pol_01M11HEQG00000000000000000",
+         *           "latest_revision": 1,
+         *           "activation_version": 0,
+         *           "created_at": "2026-09-06T00:00:00Z"
+         *         }
+         *       ],
+         *       "page": {
+         *         "has_more": false
+         *       }
+         *     }
+         */
+        readonly PolicyList: {
+            readonly data: readonly components["schemas"]["PolicySummary"][];
+            readonly page: components["schemas"]["Page"];
+        };
+        /**
+         * @description Bounded newest-first metadata page with a signed tenant-, policy-, collection- and limit-bound cursor. Applies to policy Revision List.
+         * @example {
+         *       "data": [
+         *         {
+         *           "policy_id": "pol_01M11HEQG00000000000000000",
+         *           "revision": 1,
+         *           "schema_major": 1,
+         *           "schema_minor": 0,
+         *           "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+         *           "evaluator_major": 1,
+         *           "evaluator_minor": 0,
+         *           "evaluator_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+         *           "created_at": "2026-09-06T00:00:00Z"
+         *         }
+         *       ],
+         *       "page": {
+         *         "has_more": false
+         *       }
+         *     }
+         */
+        readonly PolicyRevisionList: {
+            readonly data: readonly components["schemas"]["PolicyRevisionInfo"][];
+            readonly page: components["schemas"]["Page"];
+        };
+        /**
+         * @description Bounded newest-first metadata page with a signed tenant-, policy-, collection- and limit-bound cursor. Applies to policy Activation List.
+         * @example {
+         *       "data": [
+         *         {
+         *           "policy_id": "pol_01M11HEQG00000000000000000",
+         *           "revision": 1,
+         *           "previous_revision": 0,
+         *           "version": 1,
+         *           "actor_id": "key_01M11HEQG00000000000000000",
+         *           "activated_at": "2026-09-06T00:00:00Z"
+         *         }
+         *       ],
+         *       "page": {
+         *         "has_more": false
+         *       }
+         *     }
+         */
+        readonly PolicyActivationList: {
+            readonly data: readonly components["schemas"]["PolicyActivationInfo"][];
+            readonly page: components["schemas"]["Page"];
+        };
+        /**
+         * @description Tenant-owned endpoint metadata. Key material is never included.
+         * @example {
+         *       "id": "whk_01M11HEQG00000000000000000",
+         *       "url": "https://example.com/webhooks",
+         *       "version": 1,
+         *       "secret_version": 1,
+         *       "created_at": "2026-09-06T00:00:00Z",
+         *       "updated_at": "2026-09-06T00:00:00Z"
+         *     }
+         */
+        readonly WebhookEndpoint: {
+            readonly id: string;
+            /** Format: uri */
+            readonly url: string;
+            /** Format: int64 */
+            readonly version: number;
+            /** Format: int64 */
+            readonly secret_version: number;
+            /** Format: date-time */
+            readonly previous_valid_until?: string;
+            /** Format: date-time */
+            readonly disabled_at?: string;
+            readonly disabled_reason?: string;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        /**
+         * @description Payload-free delivery state. Replay retains event identity and records a distinct delivery and replay_of.
+         * @example {
+         *       "id": "dlv_01M11HEQG00000000000000000",
+         *       "endpoint_id": "whk_01M11HEQG00000000000000000",
+         *       "event_id": "evt_01M11HEQG00000000000000000",
+         *       "event_type": "verification.completed",
+         *       "state": "pending",
+         *       "attempt_count": 0,
+         *       "max_attempts": 8,
+         *       "next_attempt_at": "2026-09-06T00:00:00Z",
+         *       "created_at": "2026-09-06T00:00:00Z",
+         *       "updated_at": "2026-09-06T00:00:00Z"
+         *     }
+         */
+        readonly WebhookDelivery: {
+            readonly id: string;
+            readonly endpoint_id: string;
+            readonly event_id: string;
+            readonly event_type: string;
+            /** @enum {string} */
+            readonly state: "pending" | "delivered" | "exhausted" | "cancelled";
+            /** Format: int32 */
+            readonly attempt_count: number;
+            /** Format: int32 */
+            readonly max_attempts: number;
+            /** Format: date-time */
+            readonly next_attempt_at: string;
+            /** Format: date-time */
+            readonly delivered_at?: string;
+            readonly replay_of?: string;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        /**
+         * @description Bounded callback diagnostics with an optional sanitised response excerpt; no signature or event body.
+         * @example {
+         *       "number": 1,
+         *       "secret_version": 1,
+         *       "status_code": 503,
+         *       "error_class": "http_retryable",
+         *       "retry_after_ms": 1000,
+         *       "response_body": "{\"error\":\"temporarily unavailable\"}",
+         *       "response_truncated": false,
+         *       "completed_at": "2026-09-06T00:00:00Z"
+         *     }
+         */
+        readonly WebhookAttempt: {
+            /** Format: int32 */
+            readonly number: number;
+            /** Format: int64 */
+            readonly secret_version: number;
+            readonly status_code: number;
+            readonly error_class: string;
+            /** Format: int64 */
+            readonly retry_after_ms: number;
+            /** @description At most 4096 bytes of receiver response content, sanitised to valid UTF-8 with invalid sequences replaced. Untrusted receiver content, never parsed as structured data. Null when no response body was received. */
+            readonly response_body?: string | null;
+            /** @description True when receiver response bytes were dropped because the body exceeded 4096 bytes or was shortened while sanitising invalid UTF-8. */
+            readonly response_truncated: boolean;
+            /** Format: date-time */
+            readonly completed_at: string;
+        };
+        /**
+         * @description Register an HTTPS endpoint. Callback transport validates public DNS on each attempt. Applies to webhook Create.
+         * @example {
+         *       "url": "https://example.com/webhooks"
+         *     }
+         */
+        readonly WebhookCreate: {
+            /** Format: uri */
+            readonly url: string;
+        };
+        /**
+         * @description Rotate only when no previous-key overlap remains active. Compare the endpoint version. Applies to webhook Rotate.
+         * @example {
+         *       "expected_version": 1,
+         *       "overlap_seconds": 3600
+         *     }
+         */
+        readonly WebhookRotate: {
+            /** Format: int64 */
+            readonly expected_version: number;
+            /** Format: int64 */
+            readonly overlap_seconds: number;
+        };
+        /**
+         * @description Disable an endpoint using a non-sensitive reason code. Applies to webhook Disable.
+         * @example {
+         *       "expected_version": 2,
+         *       "reason": "tenant_requested"
+         *     }
+         */
+        readonly WebhookDisable: {
+            /** Format: int64 */
+            readonly expected_version: number;
+            readonly reason: string;
+        };
+        /**
+         * @description Replay an exhausted delivery with a distinct delivery ID and unchanged event ID and exact body. Applies to webhook Replay.
+         * @example {
+         *       "reason": "receiver_recovered"
+         *     }
+         */
+        readonly WebhookReplay: {
+            readonly reason: string;
+        };
+        /**
+         * @description Safe mutation receipt. signing_secret is a display-once unpadded Base64URL 32-byte secret on initial create/rotate only. Idempotent retries return the original metadata with replayed=true and omit the secret; lost secrets require a new authorised rotation after any active overlap.
+         * @example {
+         *       "endpoint": {
+         *         "id": "whk_01M11HEQG00000000000000000",
+         *         "url": "https://example.com/webhooks",
+         *         "version": 1,
+         *         "secret_version": 1,
+         *         "created_at": "2026-09-06T00:00:00Z",
+         *         "updated_at": "2026-09-06T00:00:00Z"
+         *       },
+         *       "replayed": true
+         *     }
+         */
+        readonly WebhookEndpointMutation: {
+            readonly endpoint: components["schemas"]["WebhookEndpoint"];
+            readonly replayed: boolean;
+            readonly signing_secret?: string;
+        };
+        /**
+         * @description Safe replay receipt. A repeated command returns the same delivery without scheduling another task.
+         * @example {
+         *       "delivery": {
+         *         "id": "dlv_01M11HEQG00000000000000000",
+         *         "endpoint_id": "whk_01M11HEQG00000000000000000",
+         *         "event_id": "evt_01M11HEQG00000000000000000",
+         *         "event_type": "verification.completed",
+         *         "state": "pending",
+         *         "attempt_count": 0,
+         *         "max_attempts": 8,
+         *         "next_attempt_at": "2026-09-06T00:00:00Z",
+         *         "created_at": "2026-09-06T00:00:00Z",
+         *         "updated_at": "2026-09-06T00:00:00Z"
+         *       },
+         *       "replayed": false
+         *     }
+         */
+        readonly WebhookDeliveryMutation: {
+            readonly delivery: components["schemas"]["WebhookDelivery"];
+            readonly replayed: boolean;
+        };
+        /**
+         * @description Ascending identifier page, with a tenant-, collection- and limit-bound cursor.
+         * @example {
+         *       "data": [
+         *         {
+         *           "id": "whk_01M11HEQG00000000000000000",
+         *           "url": "https://example.com/webhooks",
+         *           "version": 1,
+         *           "secret_version": 1,
+         *           "created_at": "2026-09-06T00:00:00Z",
+         *           "updated_at": "2026-09-06T00:00:00Z"
+         *         }
+         *       ],
+         *       "page": {
+         *         "has_more": false
+         *       }
+         *     }
+         */
+        readonly WebhookEndpointList: {
+            readonly data: readonly components["schemas"]["WebhookEndpoint"][];
+            readonly page: components["schemas"]["Page"];
+        };
+        /**
+         * @description Ascending identifier page for one endpoint; event bodies are omitted.
+         * @example {
+         *       "data": [
+         *         {
+         *           "id": "dlv_01M11HEQG00000000000000000",
+         *           "endpoint_id": "whk_01M11HEQG00000000000000000",
+         *           "event_id": "evt_01M11HEQG00000000000000000",
+         *           "event_type": "verification.completed",
+         *           "state": "pending",
+         *           "attempt_count": 0,
+         *           "max_attempts": 8,
+         *           "next_attempt_at": "2026-09-06T00:00:00Z",
+         *           "created_at": "2026-09-06T00:00:00Z",
+         *           "updated_at": "2026-09-06T00:00:00Z"
+         *         }
+         *       ],
+         *       "page": {
+         *         "has_more": false
+         *       }
+         *     }
+         */
+        readonly WebhookDeliveryList: {
+            readonly data: readonly components["schemas"]["WebhookDelivery"][];
+            readonly page: components["schemas"]["Page"];
+        };
+        /**
+         * @description All retained attempts for the visible delivery, ascending by number and bounded to 20.
+         * @example {
+         *       "data": []
+         *     }
+         */
+        readonly WebhookAttemptList: {
+            readonly data: readonly components["schemas"]["WebhookAttempt"][];
+        };
         /**
          * @description Safe lifecycle metadata for the authenticated tenant.
          * @example {
@@ -711,7 +4150,7 @@ export interface components {
          * @description Closed provenance kind for one immutable policy fact.
          * @enum {string}
          */
-        readonly PolicyFactSourceKind: "check" | "processing_authority" | "subject_response" | "review_finding";
+        readonly PolicyFactSourceKind: "check" | "processing_authority" | "subject_response" | "review_finding" | "fraud" | "identity";
         /**
          * @description Bounded reproduction summary that omits facts, reason codes, canonical JSON, and evidence references.
          * @example {
@@ -743,6 +4182,7 @@ export interface components {
          *     }
          */
         readonly PolicyDecisionReport: {
+            readonly typed_assurance?: components["schemas"]["AssuranceSummary"];
             /** @example 1 */
             readonly schema_major: number;
             /** @example 0 */
@@ -795,6 +4235,7 @@ export interface components {
         };
         /** @description Exact canonical facts and pinned policy and evaluator inputs. */
         readonly PolicyCanonicalSnapshot: {
+            readonly context?: components["schemas"]["DecisionContext"];
             /** @constant */
             readonly schema_major: 1;
             /** @constant */
@@ -850,7 +4291,9 @@ export interface components {
             readonly authority_id?: components["schemas"]["ProcessingAuthorityID"];
             readonly acknowledgement_id?: components["schemas"]["SubjectResponseID"];
             readonly review_finding?: string;
-        } & (unknown & unknown & unknown & unknown);
+            readonly fraud_receipt?: components["schemas"]["PolicyDigest"];
+            readonly identity_receipt?: components["schemas"]["PolicyDigest"];
+        } & (unknown & unknown & unknown & unknown & unknown & unknown & unknown & unknown);
         /** @description Deterministic resolution result for an exact snapshot. */
         readonly PolicyCanonicalEvaluation: {
             /** @constant */
@@ -899,6 +4342,11 @@ export interface components {
          * @example idq_cap_v1.1.eyJ0b2tlbl9pZCI6ImN0a18wMU0xMUhFUUcwMDAwMDAwMDAwMDAwMDAwMCJ9.c2lnbmF0dXJl
          */
         readonly CaptureToken: string;
+        /**
+         * @description Display-once read-only bearer credential bound to one verification session.
+         * @example idq_out_v1.1.eyJ0b2tlbl9pZCI6Im90a18wMU0xMUhFUUcwMDAwMDAwMDAwMDAwMDAwMCJ9.c2lnbmF0dXJl
+         */
+        readonly OutcomeToken: string;
         /**
          * @description Stable identifier for one immutable notice version.
          * @example ntc_01M11HEQG00000000000000000
@@ -1123,6 +4571,42 @@ export interface components {
             readonly notice: components["schemas"]["NoticeVersion"];
             readonly latest_response?: components["schemas"]["SubjectResponse"];
         };
+        /** @description Explicit optimistic precondition for a cancellation command. */
+        readonly VerificationCancel: {
+            /**
+             * Format: int64
+             * @description The session version observed by the caller.
+             * @example 1
+             */
+            readonly expected_version: number;
+        };
+        /** @description Immutable receipt for committed verification cancellation. */
+        readonly VerificationCancellation: {
+            /**
+             * @description Stable lifecycle event identifier for this cancellation.
+             * @example evt_01M11HEQG00000000000000000
+             */
+            readonly event_id: string;
+            readonly verification_id: components["schemas"]["VerificationSessionID"];
+            /**
+             * @description The committed workflow state, separate from identity outcome.
+             * @example cancelled
+             * @enum {string}
+             */
+            readonly state: "cancelled";
+            /**
+             * Format: int64
+             * @description The resulting session version.
+             * @example 2
+             */
+            readonly version: number;
+            /**
+             * Format: date-time
+             * @description The original committed cancellation timestamp.
+             * @example 2026-09-06T12:00:00Z
+             */
+            readonly occurred_at: string;
+        };
         /** @description Tenant request to snapshot an active published capture profile. */
         readonly VerificationCreate: {
             readonly capture_profile_id: components["schemas"]["CaptureProfileID"];
@@ -1139,15 +4623,24 @@ export interface components {
              * @example 1800
              */
             readonly capture_token_ttl_seconds?: number;
+            /**
+             * Format: int64
+             * @description Optional outcome-token lifetime after verification expiry, subject to deployment bounds.
+             * @example 86400
+             */
+            readonly outcome_token_post_expiry_ttl_seconds?: number;
         };
         /** @description Immutable capture requirements and current lifecycle metadata for one verification. */
         readonly VerificationSession: {
             readonly id: components["schemas"]["VerificationSessionID"];
             /**
+             * @description Verification workflow state, separate from the identity decision.
+             *     The alpha lifecycle expansion was approved on 6 September 2026.
+             *     Recognising a state does not imply that its initiating operation is available.
              * @example collecting
              * @enum {string}
              */
-            readonly state: "collecting";
+            readonly state: "created" | "collecting" | "awaiting_input" | "processing" | "awaiting_external" | "manual_review" | "completed" | "cancelled" | "expired" | "failed";
             /**
              * Format: int64
              * @example 1
@@ -1181,10 +4674,41 @@ export interface components {
              */
             readonly expires_at: string;
         };
-        /** @description A new verification session and its display-once initial capture credential. */
+        /** @description A new verification session and its display-once capture and read-only outcome credentials. */
         readonly VerificationCreated: {
             readonly session: components["schemas"]["VerificationSession"];
             readonly capture_token: components["schemas"]["CaptureToken"];
+            readonly outcome_token: components["schemas"]["OutcomeToken"];
+            /**
+             * Format: date-time
+             * @description Signed expiry of the read-only outcome credential.
+             * @example 2026-08-29T12:00:00Z
+             */
+            readonly outcome_token_expires_at: string;
+        };
+        /**
+         * @description Minimal outcome-token-scoped workflow or terminal-decision projection.
+         *     The state is authoritative, but deliberately carries no diagnostic or
+         *     policy explanation that could disclose sensitive decision internals.
+         */
+        readonly CaptureOutcome: {
+            readonly verification_id: components["schemas"]["VerificationSessionID"];
+            /**
+             * @description Subject-safe workflow or terminal-decision state.
+             * @example processing
+             * @enum {string}
+             */
+            readonly state: "capture_required" | "processing" | "action_required" | "verified" | "not_verified" | "inconclusive" | "cancelled" | "expired" | "failed";
+            /**
+             * Format: int64
+             * @example 3
+             */
+            readonly session_version: number;
+            /**
+             * Format: date-time
+             * @example 2026-08-27T12:06:00Z
+             */
+            readonly updated_at: string;
         };
         /**
          * @description Stable opaque identifier for one requirement-bound upload intent.
@@ -1551,6 +5075,374 @@ export interface components {
             /** @example The requested resource was not found. */
             readonly detail: string;
             readonly request_id: components["schemas"]["RequestID"];
+        };
+        /** @enum {string} */
+        readonly FraudSignal: "device_reuse" | "identifier_reuse" | "document_reuse" | "portrait_reuse" | "capture_replay" | "verification_velocity" | "network_anomaly" | "provider_inconsistency" | "identity_inconsistency" | "session_timing" | "failed_liveness" | "high_risk_model";
+        /** @enum {string} */
+        readonly FraudTokenKind: "subject" | "device" | "identifier" | "portrait" | "address" | "provider_event" | "network";
+        readonly FraudSource: {
+            readonly key_id: string;
+            readonly namespace: string;
+            readonly kinds: readonly components["schemas"]["FraudTokenKind"][];
+            readonly portrait_permitted: boolean;
+        };
+        readonly FraudMapping: {
+            readonly signal: components["schemas"]["FraudSignal"];
+            /** @enum {string} */
+            readonly runner_kind: "provider" | "model";
+            readonly runner_id: string;
+            readonly package_digest: components["schemas"]["PolicyDigest"];
+            readonly observation: string;
+            /** @enum {string} */
+            readonly risk_outcome: "satisfied" | "not_satisfied" | "disagreement";
+            readonly group: string;
+        };
+        readonly FraudConfiguration: {
+            readonly enabled: boolean;
+            readonly region: string;
+            readonly window_seconds: number;
+            readonly retention_seconds: number;
+            readonly minimum_session_seconds: number;
+            readonly maximum_session_seconds: number;
+            readonly thresholds: {
+                readonly device_reuse?: number;
+                readonly identifier_reuse?: number;
+                readonly document_reuse?: number;
+                readonly portrait_reuse?: number;
+                readonly capture_replay?: number;
+                readonly verification_velocity?: number;
+                readonly network_anomaly?: number;
+                readonly provider_inconsistency?: number;
+                readonly identity_inconsistency?: number;
+                readonly session_timing?: number;
+                readonly failed_liveness?: number;
+                readonly high_risk_model?: number;
+            };
+            readonly sources: readonly components["schemas"]["FraudSource"][];
+            readonly mappings: readonly components["schemas"]["FraudMapping"][];
+        };
+        readonly FraudConfigurationRequest: {
+            readonly expected_version: number;
+            readonly configuration: components["schemas"]["FraudConfiguration"];
+        };
+        readonly FraudInput: {
+            readonly verification_id: components["schemas"]["VerificationSessionID"];
+            readonly evidence_id: components["schemas"]["EvidenceID"];
+            readonly namespace: string;
+            readonly source_reference: string;
+            readonly attributes: readonly {
+                readonly kind: components["schemas"]["FraudTokenKind"];
+                readonly value: string;
+            }[];
+        };
+        readonly FraudProposal: {
+            readonly receipt_digest: components["schemas"]["PolicyDigest"];
+            readonly hypothesis: string;
+            readonly signals: readonly components["schemas"]["FraudSignal"][];
+        };
+        readonly FraudFinding: {
+            readonly signal: components["schemas"]["FraudSignal"];
+            /** @enum {string} */
+            readonly state: "satisfied" | "not_satisfied" | "inconclusive";
+            readonly count: number;
+            readonly reason: string;
+        };
+        readonly FraudReceipt: {
+            readonly digest: components["schemas"]["PolicyDigest"];
+            readonly verification_id: components["schemas"]["VerificationSessionID"];
+            readonly configuration_version: number;
+            readonly configuration_digest: components["schemas"]["PolicyDigest"];
+            /** Format: date-time */
+            readonly at: string;
+            readonly findings: readonly components["schemas"]["FraudFinding"][];
+        };
+        readonly FraudResult: {
+            readonly version?: number;
+            readonly digest?: components["schemas"]["PolicyDigest"];
+            readonly configuration?: components["schemas"]["FraudConfiguration"];
+            readonly receipt?: components["schemas"]["FraudReceipt"];
+            readonly proposal?: components["schemas"]["FraudProposal"];
+        };
+        readonly IdentitySubjectID: string;
+        readonly IdentityRecordID: string;
+        /** @description A sensitive typed scalar. Numeric values are canonical decimal strings to preserve precision; dates use YYYY-MM-DD and timestamps use UTC RFC3339. Values are encrypted in storage and revealed only with identity:reveal. */
+        readonly IdentityValue: {
+            /** @enum {string} */
+            readonly type: "string" | "boolean" | "integer" | "decimal" | "date" | "timestamp";
+            readonly value: string;
+        };
+        readonly IdentitySubject: {
+            readonly id: components["schemas"]["IdentitySubjectID"];
+            readonly region: string;
+            /** @enum {string} */
+            readonly state: "active" | "suspended" | "deleting" | "deleted";
+            /** Format: int64 */
+            readonly version: number;
+            readonly external_reference?: string;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+            readonly deletion_id?: string;
+            /** Format: date-time */
+            readonly erased_at?: string;
+        };
+        /** @description The verification state is a tenant attestation, attributed to the submitting key. It is not a Core verification decision and is not consumed as a trusted policy fact. */
+        readonly IdentityIdentifierInput: {
+            readonly namespace: string;
+            readonly issuer: string;
+            /** @enum {string} */
+            readonly verification_state: "unverified" | "verified" | "not_verified" | "inconclusive";
+        };
+        /** @description The verification state is a tenant attestation, attributed to the submitting key. It is not a Core verification decision and is not consumed as a trusted policy fact. */
+        readonly IdentityIdentifier: {
+            readonly namespace: string;
+            readonly issuer: string;
+            /** @enum {string} */
+            readonly verification_state: "unverified" | "verified" | "not_verified" | "inconclusive";
+            /** @constant */
+            readonly verification_state_source: "tenant_attested";
+            readonly verification_actor_id: string;
+            readonly masked?: string;
+        };
+        /** @description Append an observation, derived fact, claim or identifier. Direct observations are tenant-attested; an origin_observation_id imports the actual completed Core check outcome. Derived records name existing source records and cannot provide a replacement value or invent lineage. Retention is explicitly bounded to 30 days and cannot extend source retention; corrections name the current record in supersedes. */
+        readonly IdentityRecordInput: {
+            /** @enum {string} */
+            readonly kind: "observation" | "fact" | "claim" | "identifier";
+            readonly name: string;
+            readonly verification_id: components["schemas"]["VerificationSessionID"];
+            readonly evidence_ids?: readonly components["schemas"]["EvidenceID"][];
+            readonly source_record_ids?: readonly components["schemas"]["IdentityRecordID"][];
+            readonly origin_observation_id?: components["schemas"]["PolicyObservationID"];
+            readonly source_name?: string;
+            readonly input_version?: string;
+            /** @enum {string} */
+            readonly normalization: "identity.exact.v1" | "identity.trim.v1" | "identity.ascii_upper.v1";
+            readonly value?: components["schemas"]["IdentityValue"];
+            readonly original?: components["schemas"]["IdentityValue"];
+            readonly supersedes?: components["schemas"]["IdentityRecordID"];
+            /** Format: date-time */
+            readonly collected_at: string;
+            /** Format: date-time */
+            readonly observed_at: string;
+            /** Format: date-time */
+            readonly valid_from: string;
+            /** Format: date-time */
+            readonly valid_until: string;
+            /** Format: date-time */
+            readonly fresh_until?: string;
+            /** Format: date-time */
+            readonly retain_until: string;
+            readonly confidence_bps?: number;
+            readonly unit?: string;
+            readonly identifier?: components["schemas"]["IdentityIdentifierInput"];
+        } & (unknown & unknown);
+        /** @description Immutable reference metadata with optional explicitly revealed values. Current means the record has no successor. New decision eligibility also checks current authority, evidence, ancestors, retention, validity and configured freshness. */
+        readonly IdentityRecord: {
+            /** @enum {string} */
+            readonly kind: "observation" | "fact" | "claim" | "identifier";
+            readonly name: string;
+            readonly verification_id: components["schemas"]["VerificationSessionID"];
+            readonly evidence_ids: readonly components["schemas"]["EvidenceID"][];
+            readonly source_record_ids: readonly components["schemas"]["IdentityRecordID"][];
+            readonly origin_observation_id?: components["schemas"]["PolicyObservationID"];
+            readonly source_name: string;
+            readonly input_version: string;
+            /** @enum {string} */
+            readonly normalization: "identity.exact.v1" | "identity.trim.v1" | "identity.ascii_upper.v1";
+            readonly supersedes?: components["schemas"]["IdentityRecordID"];
+            /** Format: date-time */
+            readonly collected_at: string;
+            /** Format: date-time */
+            readonly observed_at: string;
+            /** Format: date-time */
+            readonly valid_from: string;
+            /** Format: date-time */
+            readonly valid_until: string;
+            /** Format: date-time */
+            readonly fresh_until?: string;
+            /** Format: date-time */
+            readonly retain_until: string;
+            readonly confidence_bps?: number;
+            readonly unit?: string;
+            readonly identifier?: components["schemas"]["IdentityIdentifier"];
+            readonly id: components["schemas"]["IdentityRecordID"];
+            readonly subject_id: components["schemas"]["IdentitySubjectID"];
+            readonly actor_key_id: string;
+            /** @enum {string} */
+            readonly value_type: "string" | "boolean" | "integer" | "decimal" | "date" | "timestamp";
+            /** @constant */
+            readonly schema_version: 1;
+            /** Format: int64 */
+            readonly sequence: number;
+            readonly series_id: components["schemas"]["IdentityRecordID"];
+            /** @enum {string} */
+            readonly source_class: "tenant_attested" | "provider" | "model" | "mixed";
+            readonly source_classes: readonly ("tenant_attested" | "provider" | "model")[];
+            /** Format: int64 */
+            readonly source_configuration_version: number;
+            readonly authority_id: components["schemas"]["ProcessingAuthorityID"];
+            readonly acknowledgement_id: components["schemas"]["SubjectResponseID"];
+            readonly ancestor_ids: readonly components["schemas"]["IdentityRecordID"][];
+            /** @enum {string} */
+            readonly origin_outcome?: "satisfied" | "not_satisfied" | "inconclusive";
+            readonly check_id?: components["schemas"]["PolicyCheckID"];
+            readonly attempt_id?: components["schemas"]["PolicyAttemptID"];
+            readonly package_digest?: components["schemas"]["PolicyDigest"];
+            readonly request_digest?: components["schemas"]["PolicyDigest"];
+            readonly configuration_digest?: components["schemas"]["PolicyDigest"];
+            readonly lineage_roots: readonly string[];
+            /** Format: date-time */
+            readonly recorded_at: string;
+            readonly value?: components["schemas"]["IdentityValue"];
+            readonly original?: components["schemas"]["IdentityValue"];
+            /** @enum {string} */
+            readonly freshness?: "unknown" | "fresh" | "stale" | "expired";
+            readonly current: boolean;
+            readonly available: boolean;
+        };
+        /** @description Accepted provider upstream correlation groups. Unknown providers share a conservative group; captured evidence and inherited roots always continue to apply. */
+        readonly IdentitySourceBinding: {
+            readonly runner_id: string;
+            readonly package_digest: components["schemas"]["PolicyDigest"];
+            readonly groups: readonly string[];
+        };
+        /** @description Requires matching values across independent lineage components. Boolean requirements must specify expected_boolean. Freshness requirements must specify a positive maximum_age_seconds. Missing or incomplete inputs are inconclusive. */
+        readonly IdentityRequirement: {
+            readonly key: string;
+            readonly fact_name: string;
+            /** @enum {string} */
+            readonly value_type: "string" | "boolean" | "integer" | "decimal" | "date" | "timestamp";
+            readonly unit?: string;
+            readonly minimum_independent_sources: number;
+            readonly minimum_confidence_bps: number;
+            readonly require_freshness: boolean;
+            readonly maximum_age_seconds: number;
+            readonly expected_boolean?: boolean;
+            readonly source_classes: readonly ("tenant_attested" | "provider" | "model")[];
+        };
+        /** @description An immutable per-region configuration revision. One identity:configure principal activates it with expected-version checks, idempotency and audit. An empty requirements list disables identity fact projection. */
+        readonly IdentityConfiguration: {
+            readonly region: string;
+            readonly provider_sources?: readonly components["schemas"]["IdentitySourceBinding"][];
+            readonly requirements?: readonly components["schemas"]["IdentityRequirement"][];
+        };
+        readonly IdentityFinding: {
+            readonly key: string;
+            /** @enum {string} */
+            readonly state: "satisfied" | "not_satisfied" | "inconclusive";
+            /** @enum {string} */
+            readonly reason: "identity.input_unavailable" | "identity.value_mismatch" | "identity.conflicting_values" | "identity.corroborated";
+            readonly independent_sources: number;
+            readonly record_ids: readonly components["schemas"]["IdentityRecordID"][];
+        };
+        /** @description Immutable reference-only receipt. An empty subject_id and version zero record that the session had no persistent-subject binding. */
+        readonly IdentityReceipt: {
+            readonly subject_id: string;
+            /** Format: int64 */
+            readonly subject_version: number;
+            readonly verification_id: components["schemas"]["VerificationSessionID"];
+            /** Format: int64 */
+            readonly configuration_version: number;
+            readonly configuration_digest: components["schemas"]["PolicyDigest"];
+            /** Format: date-time */
+            readonly evaluated_at: string;
+            readonly findings: readonly components["schemas"]["IdentityFinding"][];
+        };
+        readonly IdentityResult: {
+            readonly subject?: components["schemas"]["IdentitySubject"];
+            readonly record?: components["schemas"]["IdentityRecord"];
+            readonly subjects?: readonly components["schemas"]["IdentitySubject"][];
+            readonly records?: readonly components["schemas"]["IdentityRecord"][];
+            readonly verification_ids?: readonly components["schemas"]["VerificationSessionID"][];
+            readonly next_cursor?: string;
+            /** Format: int64 */
+            readonly version?: number;
+            readonly configuration?: components["schemas"]["IdentityConfiguration"];
+            readonly receipt?: components["schemas"]["IdentityReceipt"];
+            readonly digest?: components["schemas"]["PolicyDigest"];
+            readonly deletion_id?: string;
+        };
+        /** @description Exact lookup within the tenant, region, namespace, issuer and canonicalisation version. Multiple matching subjects remain distinct; lookup never merges them. */
+        readonly IdentityIdentifierLookup: {
+            readonly namespace: string;
+            readonly issuer: string;
+            /** @enum {string} */
+            readonly normalization: "identity.exact.v1" | "identity.trim.v1" | "identity.ascii_upper.v1";
+            readonly value: string;
+        };
+        /** @enum {string} */
+        readonly ProposalActionKind: "review.copilot.summarize" | "routing.adaptive.suggest" | "policy.draft.generate" | "policy.diff.generate" | "policy.adversarial.generate" | "experience.accessibility.propose" | "experience.exception.propose" | "document.layout.propose";
+        readonly Proposal: {
+            readonly proposal_id: string;
+            readonly tenant_id: string;
+            readonly verification_id?: string;
+            readonly policy_id?: string;
+            /** @enum {string} */
+            readonly mode: "disabled" | "assist" | "recommend" | "guardrailed_auto" | "human_required";
+            /** @enum {string} */
+            readonly status: "pending" | "approved" | "rejected" | "expired" | "cancelled" | "superseded";
+            readonly actions: readonly components["schemas"]["ProposalAction"][];
+            readonly evidence_refs?: readonly string[];
+            readonly signal_refs?: readonly string[];
+            readonly model_id: string;
+            readonly model_version: string;
+            readonly prompt_version: string;
+            readonly context_digest: string;
+            /** Format: date-time */
+            readonly expires_at: string;
+            /** Format: date-time */
+            readonly created_at: string;
+            readonly version: number;
+            readonly reason?: string;
+        };
+        readonly ProposalAction: {
+            readonly kind: components["schemas"]["ProposalActionKind"];
+            /** @description Closed JSON args per kind */
+            readonly args: {
+                readonly [key: string]: unknown;
+            };
+        };
+        readonly ProposalRequest: {
+            readonly verification_id?: string;
+            readonly policy_id?: string;
+            /** @enum {string} */
+            readonly mode: "disabled" | "assist" | "recommend" | "guardrailed_auto" | "human_required";
+            readonly actions: readonly components["schemas"]["ProposalAction"][];
+            readonly evidence_refs?: readonly string[];
+            readonly signal_refs?: readonly string[];
+            readonly model_id: string;
+            readonly model_version: string;
+            readonly prompt_version: string;
+            readonly context_digest: string;
+            /** Format: date-time */
+            readonly expires_at: string;
+            readonly supersedes?: string;
+        };
+        readonly ProposalApproveRequest: {
+            readonly expected_version: number;
+            readonly human_approved: boolean;
+        };
+        readonly ProposalVersionRequest: {
+            readonly expected_version: number;
+        };
+        readonly ModeConfig: {
+            readonly workflow: string;
+            /** @enum {string} */
+            readonly mode: "disabled" | "assist" | "recommend" | "guardrailed_auto" | "human_required";
+            readonly allowed_kinds?: readonly components["schemas"]["ProposalActionKind"][];
+            readonly version: number;
+        };
+        readonly PromptCreate: {
+            readonly content: string;
+            readonly model_id: string;
+        };
+        readonly Prompt: {
+            readonly prompt_id: string;
+            readonly version: number;
+            readonly content: string;
+            readonly digest: string;
+            readonly model_id: string;
         };
         readonly evidence: string;
         readonly artefact: string;
@@ -2383,14 +6275,15 @@ export interface operations {
                  *       "capture_profile_id": "prf_01M11HEQG00000000000000000",
                  *       "policy_id": "pol_01M11HEQG00000000000000000",
                  *       "verification_ttl_seconds": 86400,
-                 *       "capture_token_ttl_seconds": 1800
+                 *       "capture_token_ttl_seconds": 1800,
+                 *       "outcome_token_post_expiry_ttl_seconds": 86400
                  *     }
                  */
                 readonly "application/json": components["schemas"]["VerificationCreate"];
             };
         };
         readonly responses: {
-            /** @description The verification session and initial capture token were created. */
+            /** @description The verification session and its initial capture and outcome tokens were created. */
             readonly 201: {
                 headers: {
                     readonly "X-Request-ID": components["headers"]["XRequestID"];
@@ -2421,7 +6314,9 @@ export interface operations {
                      *         "updated_at": "2026-08-27T12:00:00Z",
                      *         "expires_at": "2026-08-28T12:00:00Z"
                      *       },
-                     *       "capture_token": "idq_cap_v1.1.eyJ0b2tlbl9pZCI6ImN0a18wMU0xMUhFUUcwMDAwMDAwMDAwMDAwMDAwMCJ9.c2lnbmF0dXJl"
+                     *       "capture_token": "idq_cap_v1.1.eyJ0b2tlbl9pZCI6ImN0a18wMU0xMUhFUUcwMDAwMDAwMDAwMDAwMDAwMCJ9.c2lnbmF0dXJl",
+                     *       "outcome_token": "idq_out_v1.1.eyJ0b2tlbl9pZCI6Im90a18wMU0xMUhFUUcwMDAwMDAwMDAwMDAwMDAwMCJ9.c2lnbmF0dXJl",
+                     *       "outcome_token_expires_at": "2026-08-29T12:00:00Z"
                      *     }
                      */
                     readonly "application/json": components["schemas"]["VerificationCreated"];
@@ -2484,6 +6379,93 @@ export interface operations {
             readonly 401: components["responses"]["Unauthenticated"];
             readonly 403: components["responses"]["InsufficientScope"];
             readonly 404: components["responses"]["NotFound"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly cancelVerification: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                /** @description Stable verification-session identifier. */
+                readonly verificationID: components["parameters"]["VerificationID"];
+            };
+            readonly cookie?: never;
+        };
+        /** @description Expected current session version for this cancellation command. */
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["VerificationCancel"];
+            };
+        };
+        readonly responses: {
+            /** @description The original committed cancellation receipt. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["VerificationCancellation"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly cancelCaptureVerification: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** @description Expected current session version for this cancellation command. Applies to cancel a verification as the subject. */
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["VerificationCancel"];
+            };
+        };
+        readonly responses: {
+            /** @description The original committed cancellation receipt. Applies to cancel a verification as the subject. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["VerificationCancellation"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
             readonly 500: components["responses"]["InternalError"];
             readonly 503: components["responses"]["ServiceUnavailable"];
         };
@@ -3189,6 +7171,38 @@ export interface operations {
             readonly 503: components["responses"]["ServiceUnavailable"];
         };
     };
+    readonly getCaptureOutcome: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The authoritative subject-safe outcome snapshot. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "verification_id": "ver_01M11HEQG00000000000000000",
+                     *       "state": "processing",
+                     *       "session_version": 3,
+                     *       "updated_at": "2026-08-27T12:06:00Z"
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["CaptureOutcome"];
+                };
+            };
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     readonly getCaptureProgress: {
         readonly parameters: {
             readonly query?: never;
@@ -3529,6 +7543,4403 @@ export interface operations {
             readonly 412: components["responses"]["PreconditionFailed"];
             readonly 413: components["responses"]["RequestTooLarge"];
             readonly 428: components["responses"]["PreconditionRequired"];
+            readonly 500: components["responses"]["InternalError"];
+        };
+    };
+    readonly listWebhookEndpoints: {
+        readonly parameters: {
+            readonly query?: {
+                /** @description Maximum collection items to return. The default is 25. */
+                readonly limit?: components["parameters"]["Limit"];
+                /** @description Opaque continuation cursor returned by the preceding page. */
+                readonly cursor?: components["parameters"]["Cursor"];
+            };
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The webhook operation completed. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["WebhookEndpointList"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly createWebhookEndpoint: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** @description Register an HTTPS endpoint. Callback transport validates public DNS on each attempt. */
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["WebhookCreate"];
+            };
+        };
+        readonly responses: {
+            /** @description The webhook operation completed. Applies to create a webhook endpoint. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["WebhookEndpointMutation"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly getWebhookEndpoint: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant-owned opaque identifier. */
+                readonly endpointID: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The webhook operation completed. Applies to get a webhook endpoint. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["WebhookEndpoint"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly rotateWebhookEndpoint: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                /** @description Tenant-owned opaque identifier. Applies to rotate a webhook secret — endpointID. */
+                readonly endpointID: string;
+            };
+            readonly cookie?: never;
+        };
+        /** @description Rotate only when no previous-key overlap remains active. Compare the endpoint version. */
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["WebhookRotate"];
+            };
+        };
+        readonly responses: {
+            /** @description The webhook operation completed. Applies to rotate a webhook secret. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["WebhookEndpointMutation"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly disableWebhookEndpoint: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                /** @description Tenant-owned opaque identifier. Applies to disable a webhook endpoint — endpointID. */
+                readonly endpointID: string;
+            };
+            readonly cookie?: never;
+        };
+        /** @description Disable an endpoint using a non-sensitive reason code. */
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["WebhookDisable"];
+            };
+        };
+        readonly responses: {
+            /** @description The webhook operation completed. Applies to disable a webhook endpoint. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["WebhookEndpointMutation"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly listWebhookDeliveries: {
+        readonly parameters: {
+            readonly query?: {
+                /** @description Maximum collection items to return. The default is 25. */
+                readonly limit?: components["parameters"]["Limit"];
+                /** @description Opaque continuation cursor returned by the preceding page. */
+                readonly cursor?: components["parameters"]["Cursor"];
+            };
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant-owned opaque identifier. Applies to list endpoint deliveries — endpointID. */
+                readonly endpointID: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The webhook operation completed. Applies to list endpoint deliveries. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["WebhookDeliveryList"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly getWebhookDelivery: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant-owned opaque identifier. Applies to get delivery metadata — deliveryID. */
+                readonly deliveryID: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The webhook operation completed. Applies to get delivery metadata. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["WebhookDelivery"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly listWebhookAttempts: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant-owned opaque identifier. Applies to inspect delivery attempts — deliveryID. */
+                readonly deliveryID: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The webhook operation completed. Applies to inspect delivery attempts. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["WebhookAttemptList"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly replayWebhookDelivery: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                /** @description Tenant-owned opaque identifier. Applies to replay an exhausted delivery — deliveryID. */
+                readonly deliveryID: string;
+            };
+            readonly cookie?: never;
+        };
+        /** @description Replay an exhausted delivery with a distinct delivery ID and unchanged event ID and exact body. */
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["WebhookReplay"];
+            };
+        };
+        readonly responses: {
+            /** @description The webhook operation completed. Applies to replay an exhausted delivery. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["WebhookDeliveryMutation"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly listPolicies: {
+        readonly parameters: {
+            readonly query?: {
+                /** @description Maximum collection items to return. The default is 25. */
+                readonly limit?: components["parameters"]["Limit"];
+                /** @description Opaque continuation cursor returned by the preceding page. */
+                readonly cursor?: components["parameters"]["Cursor"];
+            };
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The policy operation completed. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["PolicyList"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly createPolicy: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** @description Definition for new policy creation or side-effect-free validation. */
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["PolicyWrite"];
+            };
+        };
+        readonly responses: {
+            /** @description The policy operation completed. Applies to create an inactive policy. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["PolicyMutation"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly validatePolicy: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** @description Definition for new policy creation or side-effect-free validation. Applies to validate policy meaning. */
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["PolicyWrite"];
+            };
+        };
+        readonly responses: {
+            /** @description The policy operation completed. Applies to validate policy meaning. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["PolicyValidation"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly getPolicy: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant-owned opaque policy identifier. */
+                readonly policyID: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The policy operation completed. Applies to get policy metadata. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["PolicySummary"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly listPolicyRevisions: {
+        readonly parameters: {
+            readonly query?: {
+                /** @description Maximum collection items to return. The default is 25. */
+                readonly limit?: components["parameters"]["Limit"];
+                /** @description Opaque continuation cursor returned by the preceding page. */
+                readonly cursor?: components["parameters"]["Cursor"];
+            };
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant-owned opaque policy identifier. Applies to list immutable revisions — policyID. */
+                readonly policyID: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The policy operation completed. Applies to list immutable revisions. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["PolicyRevisionList"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly createPolicyRevision: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                /** @description Tenant-owned opaque policy identifier. Applies to append an immutable revision — policyID. */
+                readonly policyID: string;
+            };
+            readonly cookie?: never;
+        };
+        /** @description Append the next immutable revision only if expected_revision is still the latest registered revision. */
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["PolicyRevisionWrite"];
+            };
+        };
+        readonly responses: {
+            /** @description The policy operation completed. Applies to append an immutable revision. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["PolicyMutation"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly getPolicyRevision: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant-owned opaque policy identifier. Applies to get immutable policy source — policyID. */
+                readonly policyID: string;
+                /** @description Positive immutable revision number. */
+                readonly revision: number;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The policy operation completed. Applies to get immutable policy source. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["PolicyRevisionDocument"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly listPolicyActivations: {
+        readonly parameters: {
+            readonly query?: {
+                /** @description Maximum collection items to return. The default is 25. */
+                readonly limit?: components["parameters"]["Limit"];
+                /** @description Opaque continuation cursor returned by the preceding page. */
+                readonly cursor?: components["parameters"]["Cursor"];
+            };
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant-owned opaque policy identifier. Applies to list activation history — policyID. */
+                readonly policyID: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The policy operation completed. Applies to list activation history. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["PolicyActivationList"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly activatePolicy: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                /** @description Tenant-owned opaque policy identifier. Applies to activate a policy revision — policyID. */
+                readonly policyID: string;
+            };
+            readonly cookie?: never;
+        };
+        /** @description Select an explicit revision using the current activation version (zero for first activation). Rollback additionally requires a previously activated target. One authorised tenant API key is sufficient. */
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["PolicyActivationWrite"];
+            };
+        };
+        readonly responses: {
+            /** @description The policy operation completed. Applies to activate a policy revision. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["PolicyMutation"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly rollbackPolicy: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                /** @description Tenant-owned opaque policy identifier. Applies to restore a previously active revision — policyID. */
+                readonly policyID: string;
+            };
+            readonly cookie?: never;
+        };
+        /** @description Select an explicit revision using the current activation version (zero for first activation). Rollback additionally requires a previously activated target. One authorised tenant API key is sufficient. Applies to restore a previously active revision. */
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["PolicyActivationWrite"];
+            };
+        };
+        readonly responses: {
+            /** @description The policy operation completed. Applies to restore a previously active revision. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["PolicyMutation"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly listReviewCases: {
+        readonly parameters: {
+            readonly query?: {
+                /**
+                 * @description state used by listReviewCases.
+                 * @example open
+                 */
+                readonly state?: string;
+                /**
+                 * @description region used by listReviewCases.
+                 * @example eu
+                 */
+                readonly region?: string;
+                /**
+                 * @description reviewer used by listReviewCases.
+                 * @example example
+                 */
+                readonly reviewer?: string;
+                /**
+                 * @description language used by listReviewCases.
+                 * @example en
+                 */
+                readonly language?: string;
+                /**
+                 * @description reason used by listReviewCases.
+                 * @example identity_check
+                 */
+                readonly reason?: string;
+                /**
+                 * @description assurance used by listReviewCases.
+                 * @example standard
+                 */
+                readonly assurance?: string;
+                /**
+                 * @description risk used by listReviewCases.
+                 * @example normal
+                 */
+                readonly risk?: string;
+                /**
+                 * @description certificate used by listReviewCases.
+                 * @example example
+                 */
+                readonly certificate?: string;
+                /**
+                 * @description cursor used by listReviewCases.
+                 * @example example
+                 */
+                readonly cursor?: string;
+                /**
+                 * @description sampled used by listReviewCases.
+                 * @example false
+                 */
+                readonly sampled?: boolean;
+                /**
+                 * @description overdue used by listReviewCases.
+                 * @example false
+                 */
+                readonly overdue?: boolean;
+                /**
+                 * @description limit used by listReviewCases.
+                 * @example 1
+                 */
+                readonly limit?: number;
+            };
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description List review cases result. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "items": [
+                     *         {
+                     *           "id": "rev_example",
+                     *           "verification_id": "ver_example",
+                     *           "state": "open",
+                     *           "region": "eu",
+                     *           "required_certificate": "identity.review",
+                     *           "language": "en",
+                     *           "reason": "identity_check",
+                     *           "assurance": "standard",
+                     *           "risk": "normal",
+                     *           "version": 1,
+                     *           "operations_version": 1,
+                     *           "priority": 1,
+                     *           "sampled": false
+                     *         }
+                     *       ],
+                     *       "has_more": false
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["ReviewQueue"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly getReviewCase: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /**
+                 * @description caseID used by getReviewCase.
+                 * @example example
+                 */
+                readonly caseID: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description Get review case result. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "rev_example",
+                     *       "verification_id": "ver_example",
+                     *       "region": "eu",
+                     *       "oversight": "single",
+                     *       "state": "open",
+                     *       "finding_count": 1,
+                     *       "version": 1
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["ReviewCase"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly claimReviewCase: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /**
+                 * @description caseID used by claimReviewCase.
+                 * @example example
+                 */
+                readonly caseID: string;
+            };
+            readonly cookie?: never;
+        };
+        /** @description Claim review case command; identity and certification come from authenticated server-side assignments. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "expected_version": 1
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["ReviewVersionRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description Claim review case result. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "rev_example",
+                     *       "verification_id": "ver_example",
+                     *       "region": "eu",
+                     *       "oversight": "single",
+                     *       "state": "open",
+                     *       "finding_count": 1,
+                     *       "version": 1
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["ReviewCase"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly submitReviewFinding: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /**
+                 * @description caseID used by submitReviewFinding.
+                 * @example example
+                 */
+                readonly caseID: string;
+            };
+            readonly cookie?: never;
+        };
+        /** @description Submit review finding command; identity and certification come from authenticated server-side assignments. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "expected_version": 1,
+                 *       "resolution": "satisfy",
+                 *       "reason_code": "document_match",
+                 *       "grant_ids": [
+                 *         "example"
+                 *       ]
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["ReviewFindingRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description Submit review finding result. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "rev_example",
+                     *       "verification_id": "ver_example",
+                     *       "region": "eu",
+                     *       "oversight": "single",
+                     *       "state": "open",
+                     *       "finding_count": 1,
+                     *       "version": 1
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["ReviewCase"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly attachReviewSuccessor: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /**
+                 * @description caseID used by attachReviewSuccessor.
+                 * @example example
+                 */
+                readonly caseID: string;
+            };
+            readonly cookie?: never;
+        };
+        /** @description Attach review successor command; identity and certification come from authenticated server-side assignments. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "expected_version": 1,
+                 *       "superseding_decision_id": "example"
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["ReviewCorrectionRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description Attach review successor result. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "rev_example",
+                     *       "verification_id": "ver_example",
+                     *       "region": "eu",
+                     *       "oversight": "single",
+                     *       "state": "open",
+                     *       "finding_count": 1,
+                     *       "version": 1
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["ReviewCase"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly arbitrateReviewCase: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                /**
+                 * @description caseID used by arbitrateReviewCase.
+                 * @example example
+                 */
+                readonly caseID: string;
+            };
+            readonly cookie?: never;
+        };
+        /** @description Arbitrate review case command; identity and certification come from authenticated server-side assignments. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "expected_version": 1,
+                 *       "resolution": "satisfy",
+                 *       "reason_code": "document_match"
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["ReviewArbitrationRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description Arbitrate review case result. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "case_id": "rev_example",
+                     *       "version": 1
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["ReviewFollowup"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly evaluateReviewCorrection: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                /**
+                 * @description caseID used by evaluateReviewCorrection.
+                 * @example example
+                 */
+                readonly caseID: string;
+            };
+            readonly cookie?: never;
+        };
+        /** @description Evaluate review correction command; identity and certification come from authenticated server-side assignments. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "expected_version": 1
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["ReviewVersionRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description Evaluate review correction result. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "case_id": "rev_example",
+                     *       "version": 1
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["ReviewFollowup"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly issueReviewEvidenceGrant: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                /**
+                 * @description caseID used by issueReviewEvidenceGrant.
+                 * @example example
+                 */
+                readonly caseID: string;
+            };
+            readonly cookie?: never;
+        };
+        /** @description Issue review evidence grant command; identity and certification come from authenticated server-side assignments. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "expected_version": 1,
+                 *       "evidence_id": "evd_example"
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["ReviewEvidenceRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description Issue review evidence grant result. */
+            readonly 201: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "grant_id": "grt_example",
+                     *       "case_id": "rev_example",
+                     *       "evidence_id": "evd_example",
+                     *       "case_version": 1,
+                     *       "expires_at": "2026-09-08T12:00:00Z"
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["ReviewEvidenceGrant"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly listReviewRecaptures: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /**
+                 * @description caseID used by listReviewRecaptures.
+                 * @example example
+                 */
+                readonly caseID: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description List review recaptures result. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "items": [
+                     *         {
+                     *           "verification_id": "ver_example",
+                     *           "state": "open",
+                     *           "capture_token_id": "cap_example",
+                     *           "case_version": 1,
+                     *           "capture_token_expires_at": "2026-09-08T12:00:00Z",
+                     *           "verification_expires_at": "2026-09-08T12:00:00Z",
+                     *           "follow_up_required": false
+                     *         }
+                     *       ]
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["ReviewRecaptureList"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly createReviewRecapture: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                /**
+                 * @description caseID used by createReviewRecapture.
+                 * @example example
+                 */
+                readonly caseID: string;
+            };
+            readonly cookie?: never;
+        };
+        /** @description Create review recapture command; identity and certification come from authenticated server-side assignments. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "expected_version": 1
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["ReviewVersionRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description Create review recapture result. */
+            readonly 201: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "case_id": "rev_example",
+                     *       "verification_id": "ver_example",
+                     *       "capture_token": "idq_cap_v1_example",
+                     *       "capture_token_id": "cap_example",
+                     *       "capture_token_expires_at": "2026-09-08T12:00:00Z",
+                     *       "outcome_token": "idq_out_v1_example",
+                     *       "outcome_token_expires_at": "2026-09-09T12:00:00Z",
+                     *       "verification_expires_at": "2026-09-08T12:00:00Z"
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["ReviewRecaptureCredential"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly renewReviewRecapture: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                /**
+                 * @description caseID used by renewReviewRecapture.
+                 * @example example
+                 */
+                readonly caseID: string;
+            };
+            readonly cookie?: never;
+        };
+        /** @description Renew review recapture command; identity and certification come from authenticated server-side assignments. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "expected_version": 1,
+                 *       "expected_capture_token_id": "example"
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["ReviewRenewRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description Renew review recapture result. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "case_id": "rev_example",
+                     *       "verification_id": "ver_example",
+                     *       "capture_token": "idq_cap_v1_example",
+                     *       "capture_token_id": "cap_example",
+                     *       "capture_token_expires_at": "2026-09-08T12:00:00Z",
+                     *       "outcome_token": "idq_out_v1_example",
+                     *       "outcome_token_expires_at": "2026-09-09T12:00:00Z",
+                     *       "verification_expires_at": "2026-09-08T12:00:00Z"
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["ReviewRecaptureCredential"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly acknowledgeReviewRecapture: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                /**
+                 * @description caseID used by acknowledgeReviewRecapture.
+                 * @example example
+                 */
+                readonly caseID: string;
+            };
+            readonly cookie?: never;
+        };
+        /** @description Acknowledge review recapture command; identity and certification come from authenticated server-side assignments. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "expected_version": 1,
+                 *       "decision_id": "example"
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["ReviewChildOutcomeRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description Acknowledge review recapture result. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "case_id": "rev_example",
+                     *       "verification_id": "ver_example",
+                     *       "decision_id": "example",
+                     *       "actor_key_id": "example",
+                     *       "reviewer_id": "reviewer.alex",
+                     *       "case_version": 1,
+                     *       "acknowledged_at": "2026-09-08T12:00:00Z"
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["ReviewAcknowledgement"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly reevaluateReviewRecapture: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                /**
+                 * @description caseID used by reevaluateReviewRecapture.
+                 * @example example
+                 */
+                readonly caseID: string;
+            };
+            readonly cookie?: never;
+        };
+        /** @description Reevaluate review recapture command; identity and certification come from authenticated server-side assignments. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "expected_version": 1,
+                 *       "decision_id": "example"
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["ReviewChildOutcomeRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description Reevaluate review recapture result. */
+            readonly 202: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "case_id": "rev_example",
+                     *       "decision_id": "example",
+                     *       "actor_key_id": "example",
+                     *       "reviewer_id": "reviewer.alex",
+                     *       "case_version": 1,
+                     *       "source_version": 1,
+                     *       "requested_at": "2026-09-08T12:00:00Z"
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["ReviewReevaluation"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly listReviewEvidence: {
+        readonly parameters: {
+            readonly query: {
+                /**
+                 * @description expected_version used by listReviewEvidence.
+                 * @example 1
+                 */
+                readonly expected_version: number;
+            };
+            readonly header?: never;
+            readonly path: {
+                /**
+                 * @description caseID used by listReviewEvidence.
+                 * @example example
+                 */
+                readonly caseID: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description List review evidence result. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "items": [
+                     *         {
+                     *           "id": "rev_example",
+                     *           "requirement": "document_front",
+                     *           "evidence_type": "identity_document",
+                     *           "artefact": "front",
+                     *           "acquisition_method": "file_upload"
+                     *         }
+                     *       ]
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["ReviewEvidenceList"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly readReviewEvidence: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /**
+                 * @description grantID used by readReviewEvidence.
+                 * @example example
+                 */
+                readonly grantID: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description Read review evidence result. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "image/png": string;
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly openReviewCorrection: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                /**
+                 * @description decisionID used by openReviewCorrection.
+                 * @example example
+                 */
+                readonly decisionID: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description Open review correction result. */
+            readonly 201: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "case_id": "rev_example",
+                     *       "version": 1
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["ReviewFollowup"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly requestReviewAppeal: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                /**
+                 * @description caseID used by requestReviewAppeal.
+                 * @example example
+                 */
+                readonly caseID: string;
+            };
+            readonly cookie?: never;
+        };
+        /** @description Request review appeal command; identity and certification come from authenticated server-side assignments. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "deadline": "2026-09-08T12:00:00Z"
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["ReviewAppealRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description Request review appeal result. */
+            readonly 201: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "rev_example",
+                     *       "case_id": "rev_example",
+                     *       "state": "open",
+                     *       "version": 1,
+                     *       "deadline": "2026-09-08T12:00:00Z"
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["ReviewAppeal"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly getReviewAppeal: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /**
+                 * @description appealID used by getReviewAppeal.
+                 * @example example
+                 */
+                readonly appealID: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description Get review appeal result. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "rev_example",
+                     *       "case_id": "rev_example",
+                     *       "state": "open",
+                     *       "version": 1,
+                     *       "deadline": "2026-09-08T12:00:00Z"
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["ReviewAppeal"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly assignReviewAppeal: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /**
+                 * @description appealID used by assignReviewAppeal.
+                 * @example example
+                 */
+                readonly appealID: string;
+            };
+            readonly cookie?: never;
+        };
+        /** @description Assign review appeal command; identity and certification come from authenticated server-side assignments. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "expected_version": 1
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["ReviewVersionRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description Assign review appeal result. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "rev_example",
+                     *       "case_id": "rev_example",
+                     *       "state": "open",
+                     *       "version": 1,
+                     *       "deadline": "2026-09-08T12:00:00Z"
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["ReviewAppeal"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly resolveReviewAppeal: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /**
+                 * @description appealID used by resolveReviewAppeal.
+                 * @example example
+                 */
+                readonly appealID: string;
+            };
+            readonly cookie?: never;
+        };
+        /** @description Resolve review appeal command; identity and certification come from authenticated server-side assignments. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "expected_version": 1,
+                 *       "outcome": "upheld",
+                 *       "reason_code": "document_match"
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["ReviewAppealResolutionRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description Resolve review appeal result. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "rev_example",
+                     *       "case_id": "rev_example",
+                     *       "state": "open",
+                     *       "version": 1,
+                     *       "deadline": "2026-09-08T12:00:00Z"
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["ReviewAppeal"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly withdrawReviewAppeal: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /**
+                 * @description appealID used by withdrawReviewAppeal.
+                 * @example example
+                 */
+                readonly appealID: string;
+            };
+            readonly cookie?: never;
+        };
+        /** @description Withdraw review appeal command; identity and certification come from authenticated server-side assignments. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "expected_version": 1
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["ReviewVersionRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description Withdraw review appeal result. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "rev_example",
+                     *       "case_id": "rev_example",
+                     *       "state": "open",
+                     *       "version": 1,
+                     *       "deadline": "2026-09-08T12:00:00Z"
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["ReviewAppeal"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly getReviewOperator: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /**
+                 * @description keyID used by getReviewOperator.
+                 * @example example
+                 */
+                readonly keyID: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description Get review operator result. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "kind": "operator",
+                     *       "reference": "key_example",
+                     *       "version": 1,
+                     *       "configuration": {
+                     *         "assignment": {
+                     *           "tenant_id": "ten_example",
+                     *           "api_key_id": "key_example",
+                     *           "operator_id": "reviewer.alex",
+                     *           "permissions": [
+                     *             "reviews:claim",
+                     *             "reviews:find"
+                     *           ],
+                     *           "certifications": [
+                     *             "identity.review"
+                     *           ],
+                     *           "regions": [
+                     *             "eu"
+                     *           ],
+                     *           "not_before": "2026-09-08T12:00:00Z",
+                     *           "expires_at": "2026-09-08T12:00:00Z"
+                     *         },
+                     *         "revoked": false
+                     *       }
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["ReviewOperatorRecord"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly putReviewOperator: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                /**
+                 * @description keyID used by putReviewOperator.
+                 * @example example
+                 */
+                readonly keyID: string;
+            };
+            readonly cookie?: never;
+        };
+        /** @description Put review operator command; identity and certification come from authenticated server-side assignments. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "expected_version": 1,
+                 *       "configuration": {
+                 *         "assignment": {
+                 *           "tenant_id": "ten_example",
+                 *           "api_key_id": "key_example",
+                 *           "operator_id": "reviewer.alex",
+                 *           "permissions": [
+                 *             "reviews:claim",
+                 *             "reviews:find"
+                 *           ],
+                 *           "certifications": [
+                 *             "identity.review"
+                 *           ],
+                 *           "regions": [
+                 *             "eu"
+                 *           ],
+                 *           "not_before": "2026-09-08T12:00:00Z",
+                 *           "expires_at": "2026-09-08T12:00:00Z"
+                 *         },
+                 *         "revoked": false
+                 *       }
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["ReviewOperatorWrite"];
+            };
+        };
+        readonly responses: {
+            /** @description Put review operator result. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "kind": "operator",
+                     *       "reference": "key_example",
+                     *       "version": 1,
+                     *       "configuration": {
+                     *         "assignment": {
+                     *           "tenant_id": "ten_example",
+                     *           "api_key_id": "key_example",
+                     *           "operator_id": "reviewer.alex",
+                     *           "permissions": [
+                     *             "reviews:claim",
+                     *             "reviews:find"
+                     *           ],
+                     *           "certifications": [
+                     *             "identity.review"
+                     *           ],
+                     *           "regions": [
+                     *             "eu"
+                     *           ],
+                     *           "not_before": "2026-09-08T12:00:00Z",
+                     *           "expires_at": "2026-09-08T12:00:00Z"
+                     *         },
+                     *         "revoked": false
+                     *       }
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["ReviewOperatorRecord"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly getReviewPolicy: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /**
+                 * @description policyID used by getReviewPolicy.
+                 * @example example
+                 */
+                readonly policyID: string;
+                /**
+                 * @description revision used by getReviewPolicy.
+                 * @example 1
+                 */
+                readonly revision: number;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description Get review policy result. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "kind": "operator",
+                     *       "reference": "key_example",
+                     *       "version": 1,
+                     *       "configuration": {
+                     *         "tenant_id": "ten_example",
+                     *         "policy_id": "pol_example",
+                     *         "policy_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                     *         "required_certificate": "identity.review",
+                     *         "oversight": "single",
+                     *         "language": "en",
+                     *         "reason": "identity_check",
+                     *         "assurance": "standard",
+                     *         "risk": "normal",
+                     *         "escalation_certificate": "identity.supervisor",
+                     *         "revision": 1,
+                     *         "permitted_findings": [
+                     *           {
+                     *             "resolution": "satisfy",
+                     *             "reason_code": "document_match"
+                     *           }
+                     *         ],
+                     *         "display": [
+                     *           {
+                     *             "requirement": "document_front",
+                     *             "purpose": "identity_verification",
+                     *             "redactions": [
+                     *               {
+                     *                 "x": 1,
+                     *                 "y": 1,
+                     *                 "width": 1,
+                     *                 "height": 1
+                     *               }
+                     *             ]
+                     *           }
+                     *         ],
+                     *         "priority": 1,
+                     *         "sla_seconds": 60,
+                     *         "sample_percent": 1,
+                     *         "appeal_window_seconds": 60
+                     *       }
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["ReviewPolicyRecord"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly putReviewPolicy: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                /**
+                 * @description policyID used by putReviewPolicy.
+                 * @example example
+                 */
+                readonly policyID: string;
+                /**
+                 * @description revision used by putReviewPolicy.
+                 * @example 1
+                 */
+                readonly revision: number;
+            };
+            readonly cookie?: never;
+        };
+        /** @description Put review policy command; identity and certification come from authenticated server-side assignments. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "expected_version": 1,
+                 *       "configuration": {
+                 *         "tenant_id": "ten_example",
+                 *         "policy_id": "pol_example",
+                 *         "policy_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                 *         "required_certificate": "identity.review",
+                 *         "oversight": "single",
+                 *         "language": "en",
+                 *         "reason": "identity_check",
+                 *         "assurance": "standard",
+                 *         "risk": "normal",
+                 *         "escalation_certificate": "identity.supervisor",
+                 *         "revision": 1,
+                 *         "permitted_findings": [
+                 *           {
+                 *             "resolution": "satisfy",
+                 *             "reason_code": "document_match"
+                 *           }
+                 *         ],
+                 *         "display": [
+                 *           {
+                 *             "requirement": "document_front",
+                 *             "purpose": "identity_verification",
+                 *             "redactions": [
+                 *               {
+                 *                 "x": 1,
+                 *                 "y": 1,
+                 *                 "width": 1,
+                 *                 "height": 1
+                 *               }
+                 *             ]
+                 *           }
+                 *         ],
+                 *         "priority": 1,
+                 *         "sla_seconds": 60,
+                 *         "sample_percent": 1,
+                 *         "appeal_window_seconds": 60
+                 *       }
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["ReviewPolicyWrite"];
+            };
+        };
+        readonly responses: {
+            /** @description Put review policy result. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "kind": "operator",
+                     *       "reference": "key_example",
+                     *       "version": 1,
+                     *       "configuration": {
+                     *         "tenant_id": "ten_example",
+                     *         "policy_id": "pol_example",
+                     *         "policy_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                     *         "required_certificate": "identity.review",
+                     *         "oversight": "single",
+                     *         "language": "en",
+                     *         "reason": "identity_check",
+                     *         "assurance": "standard",
+                     *         "risk": "normal",
+                     *         "escalation_certificate": "identity.supervisor",
+                     *         "revision": 1,
+                     *         "permitted_findings": [
+                     *           {
+                     *             "resolution": "satisfy",
+                     *             "reason_code": "document_match"
+                     *           }
+                     *         ],
+                     *         "display": [
+                     *           {
+                     *             "requirement": "document_front",
+                     *             "purpose": "identity_verification",
+                     *             "redactions": [
+                     *               {
+                     *                 "x": 1,
+                     *                 "y": 1,
+                     *                 "width": 1,
+                     *                 "height": 1
+                     *               }
+                     *             ]
+                     *           }
+                     *         ],
+                     *         "priority": 1,
+                     *         "sla_seconds": 60,
+                     *         "sample_percent": 1,
+                     *         "appeal_window_seconds": 60
+                     *       }
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["ReviewPolicyRecord"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly putReviewQueue: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                /**
+                 * @description caseID used by putReviewQueue.
+                 * @example example
+                 */
+                readonly caseID: string;
+            };
+            readonly cookie?: never;
+        };
+        /** @description Put review queue command; identity and certification come from authenticated server-side assignments. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "expected_version": 1,
+                 *       "configuration": {
+                 *         "language": "en",
+                 *         "reason": "identity_check",
+                 *         "assurance": "standard",
+                 *         "risk": "normal",
+                 *         "priority": 1,
+                 *         "due_at": "2026-09-08T12:00:00Z",
+                 *         "sampled": false
+                 *       }
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["ReviewQueueWrite"];
+            };
+        };
+        readonly responses: {
+            /** @description Put review queue result. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "kind": "operator",
+                     *       "reference": "key_example",
+                     *       "version": 1,
+                     *       "configuration": {
+                     *         "language": "en",
+                     *         "reason": "identity_check",
+                     *         "assurance": "standard",
+                     *         "risk": "normal",
+                     *         "priority": 1,
+                     *         "due_at": "2026-09-08T12:00:00Z",
+                     *         "sampled": false
+                     *       }
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["ReviewQueueRecord"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly putReviewCaseSettings: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                /**
+                 * @description caseID used by putReviewCaseSettings.
+                 * @example example
+                 */
+                readonly caseID: string;
+            };
+            readonly cookie?: never;
+        };
+        /** @description Put review case settings command; identity and certification come from authenticated server-side assignments. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "tenant_id": "ten_example",
+                 *       "policy_id": "pol_example",
+                 *       "policy_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                 *       "required_certificate": "identity.review",
+                 *       "oversight": "single",
+                 *       "language": "en",
+                 *       "reason": "identity_check",
+                 *       "assurance": "standard",
+                 *       "risk": "normal",
+                 *       "escalation_certificate": "identity.supervisor",
+                 *       "revision": 1,
+                 *       "permitted_findings": [
+                 *         {
+                 *           "resolution": "satisfy",
+                 *           "reason_code": "document_match"
+                 *         }
+                 *       ],
+                 *       "display": [
+                 *         {
+                 *           "requirement": "document_front",
+                 *           "purpose": "identity_verification",
+                 *           "redactions": [
+                 *             {
+                 *               "x": 1,
+                 *               "y": 1,
+                 *               "width": 1,
+                 *               "height": 1
+                 *             }
+                 *           ]
+                 *         }
+                 *       ],
+                 *       "priority": 1,
+                 *       "sla_seconds": 60,
+                 *       "sample_percent": 1,
+                 *       "appeal_window_seconds": 60
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["ReviewPolicySettings"];
+            };
+        };
+        readonly responses: {
+            /** @description Put review case settings result. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "kind": "operator",
+                     *       "reference": "key_example",
+                     *       "version": 1,
+                     *       "configuration": {
+                     *         "tenant_id": "ten_example",
+                     *         "policy_id": "pol_example",
+                     *         "policy_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                     *         "required_certificate": "identity.review",
+                     *         "oversight": "single",
+                     *         "language": "en",
+                     *         "reason": "identity_check",
+                     *         "assurance": "standard",
+                     *         "risk": "normal",
+                     *         "escalation_certificate": "identity.supervisor",
+                     *         "revision": 1,
+                     *         "permitted_findings": [
+                     *           {
+                     *             "resolution": "satisfy",
+                     *             "reason_code": "document_match"
+                     *           }
+                     *         ],
+                     *         "display": [
+                     *           {
+                     *             "requirement": "document_front",
+                     *             "purpose": "identity_verification",
+                     *             "redactions": [
+                     *               {
+                     *                 "x": 1,
+                     *                 "y": 1,
+                     *                 "width": 1,
+                     *                 "height": 1
+                     *               }
+                     *             ]
+                     *           }
+                     *         ],
+                     *         "priority": 1,
+                     *         "sla_seconds": 60,
+                     *         "sample_percent": 1,
+                     *         "appeal_window_seconds": 60
+                     *       }
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["ReviewPolicyRecord"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly getFraudConfiguration: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The tenant-scoped operation succeeded. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["FraudResult"];
+                };
+            };
+            /** @description A problem occurred. */
+            readonly default: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    readonly configureFraud: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["FraudConfigurationRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description The tenant-scoped operation succeeded. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["FraudResult"];
+                };
+            };
+            /** @description A problem occurred. */
+            readonly default: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    readonly ingestFraudInput: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["FraudInput"];
+            };
+        };
+        readonly responses: {
+            /** @description The tenant-scoped operation succeeded. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["FraudResult"];
+                };
+            };
+            /** @description A problem occurred. */
+            readonly default: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    readonly proposeFraudHypothesis: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["FraudProposal"];
+            };
+        };
+        readonly responses: {
+            /** @description The tenant-scoped operation succeeded. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["FraudResult"];
+                };
+            };
+            /** @description A problem occurred. */
+            readonly default: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    readonly getFraudReceipt: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Immutable risk receipt digest. */
+                readonly digest: components["schemas"]["PolicyDigest"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The tenant-scoped operation succeeded. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["FraudResult"];
+                };
+            };
+            /** @description A problem occurred. */
+            readonly default: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    readonly getFraudConfigurationRevision: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Exact immutable revision or proposal reference. */
+                readonly version: number;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The tenant-scoped operation succeeded. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["FraudResult"];
+                };
+            };
+            /** @description A problem occurred. */
+            readonly default: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    readonly getFraudProposal: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Exact immutable revision or proposal reference. */
+                readonly digest: components["schemas"]["PolicyDigest"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The tenant-scoped operation succeeded. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["FraudResult"];
+                };
+            };
+            /** @description A problem occurred. */
+            readonly default: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    readonly listIdentitySubjects: {
+        readonly parameters: {
+            readonly query?: {
+                readonly after?: string;
+                readonly limit?: number;
+            };
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description Identity resource or operation receipt. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["IdentityResult"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 413: components["responses"]["RequestTooLarge"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly createIdentitySubject: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    readonly external_reference?: string;
+                };
+            };
+        };
+        readonly responses: {
+            /** @description Identity resource or operation receipt. */
+            readonly 201: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["IdentityResult"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 413: components["responses"]["RequestTooLarge"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly getIdentitySubject: {
+        readonly parameters: {
+            readonly query?: {
+                /** @description Explicit value reveal additionally requires identity:reveal and appends an audit record. */
+                readonly reveal?: boolean;
+            };
+            readonly header?: never;
+            readonly path: {
+                readonly subjectID: components["schemas"]["IdentitySubjectID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description Identity resource or operation receipt. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["IdentityResult"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 413: components["responses"]["RequestTooLarge"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly updateIdentitySubject: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                readonly subjectID: components["schemas"]["IdentitySubjectID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    /** Format: int64 */
+                    readonly expected_version: number;
+                    readonly external_reference?: string;
+                    /** @enum {string} */
+                    readonly state?: "active" | "suspended";
+                };
+            };
+        };
+        readonly responses: {
+            /** @description Identity resource or operation receipt. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["IdentityResult"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 413: components["responses"]["RequestTooLarge"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly deleteIdentitySubject: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                readonly subjectID: components["schemas"]["IdentitySubjectID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    /** Format: int64 */
+                    readonly expected_version: number;
+                };
+            };
+        };
+        readonly responses: {
+            /** @description Identity resource or operation receipt. */
+            readonly 202: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["IdentityResult"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 413: components["responses"]["RequestTooLarge"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly linkIdentityVerification: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                readonly subjectID: components["schemas"]["IdentitySubjectID"];
+                readonly verificationID: components["schemas"]["VerificationSessionID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    /** Format: int64 */
+                    readonly expected_version: number;
+                };
+            };
+        };
+        readonly responses: {
+            /** @description Identity resource or operation receipt. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["IdentityResult"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 413: components["responses"]["RequestTooLarge"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly listIdentityVerifications: {
+        readonly parameters: {
+            readonly query?: {
+                readonly after?: string;
+                readonly limit?: number;
+            };
+            readonly header?: never;
+            readonly path: {
+                readonly subjectID: components["schemas"]["IdentitySubjectID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description Identity resource or operation receipt. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["IdentityResult"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 413: components["responses"]["RequestTooLarge"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly listIdentityRecords: {
+        readonly parameters: {
+            readonly query?: {
+                readonly after?: string;
+                readonly limit?: number;
+                /** @description Explicit value reveal additionally requires identity:reveal and appends an audit record. */
+                readonly reveal?: boolean;
+                readonly current?: boolean;
+                readonly kind?: "observation" | "fact" | "claim" | "identifier";
+            };
+            readonly header?: never;
+            readonly path: {
+                readonly subjectID: components["schemas"]["IdentitySubjectID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description Identity resource or operation receipt. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["IdentityResult"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 413: components["responses"]["RequestTooLarge"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly appendIdentityRecord: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                readonly subjectID: components["schemas"]["IdentitySubjectID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    /** Format: int64 */
+                    readonly expected_version: number;
+                    readonly record: components["schemas"]["IdentityRecordInput"];
+                };
+            };
+        };
+        readonly responses: {
+            /** @description Identity resource or operation receipt. */
+            readonly 201: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["IdentityResult"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 413: components["responses"]["RequestTooLarge"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly getIdentityRecord: {
+        readonly parameters: {
+            readonly query?: {
+                /** @description Explicit value reveal additionally requires identity:reveal and appends an audit record. */
+                readonly reveal?: boolean;
+            };
+            readonly header?: never;
+            readonly path: {
+                readonly subjectID: components["schemas"]["IdentitySubjectID"];
+                readonly recordID: components["schemas"]["IdentityRecordID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description Identity resource or operation receipt. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["IdentityResult"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 413: components["responses"]["RequestTooLarge"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly rebuildIdentityProjection: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                readonly subjectID: components["schemas"]["IdentitySubjectID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    /** Format: int64 */
+                    readonly expected_version: number;
+                };
+            };
+        };
+        readonly responses: {
+            /** @description Identity resource or operation receipt. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["IdentityResult"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 413: components["responses"]["RequestTooLarge"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly lookupIdentityExternalReference: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    readonly external_reference: string;
+                    readonly after?: string;
+                    readonly limit?: number;
+                };
+            };
+        };
+        readonly responses: {
+            /** @description Identity resource or operation receipt. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["IdentityResult"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 413: components["responses"]["RequestTooLarge"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly lookupIdentityIdentifier: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    readonly identifier: components["schemas"]["IdentityIdentifierLookup"];
+                    readonly after?: string;
+                    readonly limit?: number;
+                };
+            };
+        };
+        readonly responses: {
+            /** @description Identity resource or operation receipt. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["IdentityResult"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 413: components["responses"]["RequestTooLarge"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly getIdentityConfiguration: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description Identity resource or operation receipt. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["IdentityResult"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 413: components["responses"]["RequestTooLarge"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly configureIdentity: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": {
+                    /** Format: int64 */
+                    readonly expected_version: number;
+                    readonly configuration: components["schemas"]["IdentityConfiguration"];
+                };
+            };
+        };
+        readonly responses: {
+            /** @description Identity resource or operation receipt. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["IdentityResult"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 413: components["responses"]["RequestTooLarge"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly getIdentityConfigurationRevision: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly version: number;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description Identity resource or operation receipt. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["IdentityResult"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 413: components["responses"]["RequestTooLarge"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly getIdentityReceipt: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly digest: components["schemas"]["PolicyDigest"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description Identity resource or operation receipt. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["IdentityResult"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 413: components["responses"]["RequestTooLarge"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly listAssuranceCapabilities: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description Discover platform assurance capability meanings result. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "builtin_digests": {
+                     *         "review": "4cf2b4445b892f59837c2f7040597ed81e183ca99f0ad0b8707c27bc460b5216",
+                     *         "identity": "f74341e21d1d895b5b58f5355617448c89af1b911d80cabb21e79ea1d6405b56",
+                     *         "fraud": "b022971c514f3ddca1e48968208d1d3dbaa94af8a9eb50133c646ab3306970da"
+                     *       },
+                     *       "version": 1,
+                     *       "capabilities": [
+                     *         {
+                     *           "name": "idenqa.assurance.freshness",
+                     *           "dimensions": [
+                     *             "freshness"
+                     *           ],
+                     *           "signals": [
+                     *             "capture.freshness"
+                     *           ],
+                     *           "runner_kinds": [
+                     *             "capture"
+                     *           ],
+                     *           "required_capture_assurances": [
+                     *             "idenqa.assurance.freshness"
+                     *           ]
+                     *         }
+                     *       ]
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["AssuranceCapabilityCatalog"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 413: components["responses"]["RequestTooLarge"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly listAssuranceProfiles: {
+        readonly parameters: {
+            readonly query?: {
+                /** @description Exclusive continuation cursor from the previous assurance profile page. */
+                readonly after?: string;
+                /** @description Maximum published assurance revisions to return; defaults to 50. */
+                readonly limit?: number;
+            };
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description List immutable assurance profiles result. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "profiles": [
+                     *         {
+                     *           "name": "capture.example",
+                     *           "revision": 1,
+                     *           "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                     *         }
+                     *       ]
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["AssuranceResource"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 413: components["responses"]["RequestTooLarge"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly publishAssuranceProfile: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** @description Immutable assurance revision to publish. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "name": "capture.example",
+                 *       "revision": 1,
+                 *       "requirements": [
+                 *         {
+                 *           "dimension": "freshness",
+                 *           "property": "session_capture",
+                 *           "minimum_sources": 1,
+                 *           "maximum_age_seconds": 120,
+                 *           "capabilities": [
+                 *             "idenqa.assurance.freshness"
+                 *           ]
+                 *         }
+                 *       ],
+                 *       "mappings": [
+                 *         {
+                 *           "capability": "idenqa.assurance.freshness",
+                 *           "signal": "capture.freshness",
+                 *           "runner_kind": "capture",
+                 *           "runner_id": "idenqa.method.live_camera",
+                 *           "package_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                 *           "configuration_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                 *         }
+                 *       ]
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["AssuranceProfile"];
+            };
+        };
+        readonly responses: {
+            /** @description Publish an immutable assurance profile revision result. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "profile": {
+                     *         "name": "capture.example",
+                     *         "revision": 1,
+                     *         "requirements": [
+                     *           {
+                     *             "dimension": "freshness",
+                     *             "property": "session_capture",
+                     *             "minimum_sources": 1,
+                     *             "maximum_age_seconds": 120,
+                     *             "capabilities": [
+                     *               "idenqa.assurance.freshness"
+                     *             ]
+                     *           }
+                     *         ],
+                     *         "mappings": [
+                     *           {
+                     *             "capability": "idenqa.assurance.freshness",
+                     *             "signal": "capture.freshness",
+                     *             "runner_kind": "capture",
+                     *             "runner_id": "idenqa.method.live_camera",
+                     *             "package_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                     *             "configuration_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                     *           }
+                     *         ]
+                     *       },
+                     *       "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["AssuranceResource"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 413: components["responses"]["RequestTooLarge"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly validateAssuranceProfile: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** @description Profile contents to validate without publication. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "name": "capture.example",
+                 *       "revision": 1,
+                 *       "requirements": [
+                 *         {
+                 *           "dimension": "freshness",
+                 *           "property": "session_capture",
+                 *           "minimum_sources": 1,
+                 *           "maximum_age_seconds": 120,
+                 *           "capabilities": [
+                 *             "idenqa.assurance.freshness"
+                 *           ]
+                 *         }
+                 *       ],
+                 *       "mappings": [
+                 *         {
+                 *           "capability": "idenqa.assurance.freshness",
+                 *           "signal": "capture.freshness",
+                 *           "runner_kind": "capture",
+                 *           "runner_id": "idenqa.method.live_camera",
+                 *           "package_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                 *           "configuration_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                 *         }
+                 *       ]
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["AssuranceProfile"];
+            };
+        };
+        readonly responses: {
+            /** @description Validate and canonicalize an assurance profile result. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "profile": {
+                     *         "name": "capture.example",
+                     *         "revision": 1,
+                     *         "requirements": [
+                     *           {
+                     *             "dimension": "freshness",
+                     *             "property": "session_capture",
+                     *             "minimum_sources": 1,
+                     *             "maximum_age_seconds": 120,
+                     *             "capabilities": [
+                     *               "idenqa.assurance.freshness"
+                     *             ]
+                     *           }
+                     *         ],
+                     *         "mappings": [
+                     *           {
+                     *             "capability": "idenqa.assurance.freshness",
+                     *             "signal": "capture.freshness",
+                     *             "runner_kind": "capture",
+                     *             "runner_id": "idenqa.method.live_camera",
+                     *             "package_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                     *             "configuration_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                     *           }
+                     *         ]
+                     *       },
+                     *       "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["AssuranceResource"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 413: components["responses"]["RequestTooLarge"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly getAssuranceProfileRevision: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant-local immutable assurance profile name. */
+                readonly name: string;
+                /** @description Positive assurance profile revision to retrieve. */
+                readonly revision: number;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description Get an exact assurance profile revision result. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "profile": {
+                     *         "name": "capture.example",
+                     *         "revision": 1,
+                     *         "requirements": [
+                     *           {
+                     *             "dimension": "freshness",
+                     *             "property": "session_capture",
+                     *             "minimum_sources": 1,
+                     *             "maximum_age_seconds": 120,
+                     *             "capabilities": [
+                     *               "idenqa.assurance.freshness"
+                     *             ]
+                     *           }
+                     *         ],
+                     *         "mappings": [
+                     *           {
+                     *             "capability": "idenqa.assurance.freshness",
+                     *             "signal": "capture.freshness",
+                     *             "runner_kind": "capture",
+                     *             "runner_id": "idenqa.method.live_camera",
+                     *             "package_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                     *             "configuration_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                     *           }
+                     *         ]
+                     *       },
+                     *       "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["AssuranceResource"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 413: components["responses"]["RequestTooLarge"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly getPolicyAssuranceAssignment: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Policy whose future-session assurance selection is addressed. */
+                readonly policyID: components["schemas"]["PolicyID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description Get the future-session assurance selection result. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "selection": {
+                     *         "name": "capture.example",
+                     *         "revision": 1,
+                     *         "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                     *       },
+                     *       "version": 1
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["AssuranceResource"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 413: components["responses"]["RequestTooLarge"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly assignPolicyAssurance: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                /** @description Policy whose future-session assurance requirement will be changed. */
+                readonly policyID: components["schemas"]["PolicyID"];
+            };
+            readonly cookie?: never;
+        };
+        /** @description Expected assignment version and exact future-session profile selection. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "expected_version": 0,
+                 *       "selection": {
+                 *         "name": "capture.example",
+                 *         "revision": 1,
+                 *         "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                 *       }
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["AssuranceAssignmentRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description Assign assurance for future policy sessions result. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "selection": {
+                     *         "name": "capture.example",
+                     *         "revision": 1,
+                     *         "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                     *       },
+                     *       "version": 1
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["AssuranceResource"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 413: components["responses"]["RequestTooLarge"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly getVerificationAssurance: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Verification whose pinned assurance request is addressed. */
+                readonly verificationID: components["schemas"]["VerificationSessionID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description Get the immutable requested assurance for a session result. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "selection": {
+                     *         "name": "capture.example",
+                     *         "revision": 1,
+                     *         "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                     *       }
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["AssuranceResource"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 413: components["responses"]["RequestTooLarge"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly listProposals: {
+        readonly parameters: {
+            readonly query?: {
+                readonly verification_id?: string;
+                /** @description Opaque continuation cursor returned by the preceding page. */
+                readonly cursor?: components["parameters"]["Cursor"];
+                /** @description Maximum collection items to return. The default is 25. */
+                readonly limit?: components["parameters"]["Limit"];
+            };
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description Proposals */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": readonly components["schemas"]["Proposal"][];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 500: components["responses"]["InternalError"];
+        };
+    };
+    readonly createProposal: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "verification_id": "ver_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+                 *       "mode": "assist",
+                 *       "actions": [
+                 *         {
+                 *           "kind": "review.copilot.summarize",
+                 *           "args": {
+                 *             "summary": true
+                 *           }
+                 *         }
+                 *       ],
+                 *       "evidence_refs": [
+                 *         "evd_ref_1"
+                 *       ],
+                 *       "model_id": "model.test",
+                 *       "model_version": "v1",
+                 *       "prompt_version": "p1",
+                 *       "context_digest": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+                 *       "expires_at": "2026-09-10T12:00:00Z"
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["ProposalRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description Proposal created */
+            readonly 201: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["Proposal"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+        };
+    };
+    readonly getProposal: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly proposalID: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description Proposal */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["Proposal"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 500: components["responses"]["InternalError"];
+        };
+    };
+    readonly approveProposal: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly proposalID: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["ProposalApproveRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description Approved */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["Proposal"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 500: components["responses"]["InternalError"];
+        };
+    };
+    readonly rejectProposal: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly proposalID: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["ProposalVersionRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description Rejected */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["Proposal"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 500: components["responses"]["InternalError"];
+        };
+    };
+    readonly cancelProposal: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly proposalID: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["ProposalVersionRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description Cancelled */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["Proposal"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 500: components["responses"]["InternalError"];
+        };
+    };
+    readonly executeAcceptedCommand: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly commandID: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description Executed or replayed */
+            readonly 204: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content?: never;
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 500: components["responses"]["InternalError"];
+        };
+    };
+    readonly getProposalMode: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly workflow: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description Mode */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["ModeConfig"];
+                };
+            };
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 500: components["responses"]["InternalError"];
+        };
+    };
+    readonly putProposalMode: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly workflow: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["ModeConfig"];
+            };
+        };
+        readonly responses: {
+            /** @description Mode configured */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["ModeConfig"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 500: components["responses"]["InternalError"];
+        };
+    };
+    readonly createPrompt: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["PromptCreate"];
+            };
+        };
+        readonly responses: {
+            /** @description Prompt created */
+            readonly 201: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["Prompt"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 500: components["responses"]["InternalError"];
+        };
+    };
+    readonly getPrompt: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly promptID: string;
+                readonly version: number;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description Prompt */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["Prompt"];
+                };
+            };
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
             readonly 500: components["responses"]["InternalError"];
         };
     };

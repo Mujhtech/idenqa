@@ -49,9 +49,33 @@ export type WireSubjectResponseCreate = components["schemas"]["SubjectResponseCr
 export type WireSubjectResponse = components["schemas"]["SubjectResponse"];
 export type WireCaptureAuthoritySnapshot = components["schemas"]["CaptureAuthoritySnapshot"];
 export type WireCaptureProgress = components["schemas"]["CaptureProgress"];
+export type WireCaptureOutcome = components["schemas"]["CaptureOutcome"];
 export type WireCaptureConnection = components["schemas"]["CaptureConnection"];
 export type WireEvidenceUploadCreate = components["schemas"]["EvidenceUploadCreate"];
 export type WireEvidenceUpload = components["schemas"]["EvidenceUpload"];
 export type WirePolicyDecisionReport = components["schemas"]["PolicyDecisionReport"];
 export type WirePolicyDecisionBundle = components["schemas"]["PolicyDecisionBundle"];
 export type WireProblem = components["schemas"]["Problem"];
+
+export type WireVerificationCancellation = components["schemas"]["VerificationCancellation"];
+
+export type WireWebhookEndpoint = components["schemas"]["WebhookEndpoint"];
+export type WireWebhookDelivery = components["schemas"]["WebhookDelivery"];
+export type WireWebhookAttempt = components["schemas"]["WebhookAttempt"];
+export type WireWebhookEndpointMutation = components["schemas"]["WebhookEndpointMutation"];
+export type WireWebhookDeliveryMutation = components["schemas"]["WebhookDeliveryMutation"];
+export type WireWebhookEndpointList = components["schemas"]["WebhookEndpointList"];
+export type WireWebhookDeliveryList = components["schemas"]["WebhookDeliveryList"];
+export type WireWebhookAttemptList = components["schemas"]["WebhookAttemptList"];
+
+export type WirePolicySummary = components["schemas"]["PolicySummary"];
+export type WirePolicyRevisionInfo = components["schemas"]["PolicyRevisionInfo"];
+export type WirePolicyRevisionDocument = components["schemas"]["PolicyRevisionDocument"];
+export type WirePolicyActivationInfo = components["schemas"]["PolicyActivationInfo"];
+export type WirePolicyValidation = components["schemas"]["PolicyValidation"];
+export type WirePolicyMutation = components["schemas"]["PolicyMutation"];
+export type WirePolicyList = components["schemas"]["PolicyList"];
+export type WirePolicyRevisionList = components["schemas"]["PolicyRevisionList"];
+export type WirePolicyActivationList = components["schemas"]["PolicyActivationList"];
+export type WirePolicyDefinition = components["schemas"]["PolicyDefinition"];
+export type WirePolicyDocument = components["schemas"]["PolicyDocument"];

@@ -16,7 +16,6 @@ import (
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/realtime"
 	"github.com/Mujhtech/idenqa/internal/transport/httpapi/respond"
-	"github.com/go-chi/chi/v5"
 )
 
 type captureConnectionIssuerStub struct {
@@ -73,8 +72,7 @@ func TestCaptureConnectionRoutesIssueExactOriginBoundDisplayOnceURL(t *testing.T
 	if err != nil {
 		t.Fatal(err)
 	}
-	router := chi.NewRouter()
-	routes.Register(router)
+	router := versionedRouter(t, routes)
 	request := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/v1/capture/connections", nil)
 	request.Host = "attacker.invalid"
 	request.Header.Set("Authorization", "Bearer "+fixture.token)
@@ -217,8 +215,7 @@ func newCaptureConnectionTestRouter(
 	if err != nil {
 		t.Fatal(err)
 	}
-	router := chi.NewRouter()
-	routes.Register(router)
+	router := versionedRouter(t, routes)
 
 	return router
 }

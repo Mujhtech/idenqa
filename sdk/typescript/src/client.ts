@@ -1,3 +1,68 @@
+import { AssuranceClient } from "./assurance.js";
+import { IdentityClient } from "./identity.js";
+import { FraudClient } from "./fraud.js";
+import { ProposalsClient } from "./proposals.js";
+import { ReviewsClient } from "./reviews.js";
+import type {
+  PolicySummary,
+  PolicyRevisionDocument,
+  PolicyValidation,
+  PolicyMutation,
+  PolicyList,
+  PolicyRevisionList,
+  PolicyActivationList,
+  PolicyID,
+  PolicyDefinition,
+  PolicyListOptions,
+} from "./types.js";
+import type {
+  WirePolicySummary,
+  WirePolicyRevisionDocument,
+  WirePolicyValidation,
+  WirePolicyMutation,
+  WirePolicyList,
+  WirePolicyRevisionList,
+  WirePolicyActivationList,
+} from "./wire.js";
+import {
+  policySummary,
+  policyRevisionDocument,
+  policyValidation,
+  policyMutation,
+  policyList,
+  policyRevisionList,
+  policyActivationList,
+} from "./mappers.js";
+import type {
+  WebhookEndpoint,
+  WebhookDelivery,
+  WebhookEndpointMutation,
+  WebhookDeliveryMutation,
+  WebhookEndpointList,
+  WebhookDeliveryList,
+  WebhookAttemptList,
+  WebhookEndpointID,
+  WebhookDeliveryID,
+  WebhookListOptions,
+} from "./types.js";
+import type {
+  WireWebhookEndpoint,
+  WireWebhookDelivery,
+  WireWebhookEndpointMutation,
+  WireWebhookDeliveryMutation,
+  WireWebhookEndpointList,
+  WireWebhookDeliveryList,
+  WireWebhookAttemptList,
+} from "./wire.js";
+import {
+  webhookEndpoint,
+  webhookDelivery,
+  webhookEndpointMutation,
+  webhookDeliveryMutation,
+  webhookEndpointList,
+  webhookDeliveryList,
+  webhookAttemptList,
+} from "./mappers.js";
 import {
   captureProfile,
   captureProfileList,
@@ -6,12 +71,14 @@ import {
   captureProfileValidation,
   verificationCreated,
   verificationSession,
+  verificationCancellation,
   noticeVersion,
   processingAuthority,
   subjectResponse,
   captureAuthoritySnapshot,
   evidenceUpload,
   captureProgress,
+  captureOutcome,
   captureConnection,
   policyDecisionBundle,
   policyDecisionReport,
@@ -24,6 +91,7 @@ import {
 } from "./realtime.js";
 import type {
   CaptureClientOptions,
+  OutcomeClientOptions,
   CaptureProfile,
   CaptureProfileID,
   CaptureProfileList,
@@ -43,6 +111,7 @@ import type {
   VerificationCreated,
   VerificationID,
   VerificationSession,
+  VerificationCancellation,
   NoticeID,
   NoticeVersion,
   NoticeVersionCreate,
@@ -52,6 +121,7 @@ import type {
   SubjectResponseCreate,
   CaptureAuthoritySnapshot,
   CaptureProgress,
+  CaptureOutcome,
   CaptureConnection,
   EvidenceUpload,
   EvidenceUploadCreate,
@@ -73,6 +143,7 @@ import type {
   WireVerificationCreate,
   WireVerificationCreated,
   WireVerificationSession,
+  WireVerificationCancellation,
   WireNoticeVersion,
   WireNoticeVersionCreate,
   WireProcessingAuthority,
@@ -81,6 +152,7 @@ import type {
   WireSubjectResponseCreate,
   WireCaptureAuthoritySnapshot,
   WireCaptureProgress,
+  WireCaptureOutcome,
   WireCaptureConnection,
   WireEvidenceUpload,
   WireEvidenceUploadCreate,
@@ -89,20 +161,34 @@ import type {
 } from "./wire.js";
 
 export class IdenqaClient {
+  readonly reviews: ReviewsClient;
+  readonly fraud: FraudClient;
+  readonly identity: IdentityClient;
+  readonly assurance: AssuranceClient;
+  readonly proposals: ProposalsClient;
   readonly captureProfiles: CaptureProfilesClient;
   readonly verifications: VerificationsClient;
   readonly notices: NoticesClient;
   readonly authorities: AuthoritiesClient;
   readonly decisions: DecisionsClient;
+  readonly webhooks: WebhooksClient;
+  readonly policies: PoliciesClient;
 
   constructor(options: TenantClientOptions) {
     const token = requiredToken(options.apiKey, "apiKey");
     const transport = new JSONTransport(options);
+    this.reviews = new ReviewsClient(transport, token);
+    this.fraud = new FraudClient(transport, token);
+    this.identity = new IdentityClient(transport, token);
+    this.assurance = new AssuranceClient(transport, token);
+    this.proposals = new ProposalsClient(transport, token);
     this.captureProfiles = new CaptureProfilesClient(transport, token);
     this.verifications = new VerificationsClient(transport, token);
     this.notices = new NoticesClient(transport, token);
     this.authorities = new AuthoritiesClient(transport, token);
     this.decisions = new DecisionsClient(transport, token);
+    this.webhooks = new WebhooksClient(transport, token);
+    this.policies = new PoliciesClient(transport, token);
   }
 }
 
@@ -230,6 +316,22 @@ export class CaptureClient {
   constructor(options: CaptureClientOptions) {
     this.#token = requiredToken(options.captureToken, "captureToken");
     this.#transport = new JSONTransport(options);
+  }
+
+  /** Cancels this token's verification. Reuse the key and expected version on retry. */
+  async cancel(
+    expectedVersion: number,
+    options: IdempotentRequestOptions,
+  ): Promise<SDKResponse<VerificationCancellation>> {
+    const response = await this.#transport.request<WireVerificationCancellation>({
+      method: "POST",
+      path: "v1/capture/cancel",
+      bearerToken: this.#token,
+      body: { expected_version: positiveInteger(expectedVersion, "expectedVersion") },
+      headers: idempotencyHeaders(options.idempotencyKey),
+      ...signal(options),
+    });
+    return mapResponse(response, verificationCancellation);
   }
 
   async getSession(options: RequestOptions = {}): Promise<SDKResponse<VerificationSession>> {
@@ -384,6 +486,27 @@ export class CaptureClient {
       ...signal(options),
     });
     return mapResponse(response, evidenceUpload);
+  }
+}
+
+/** Read-only subject outcome client. Its credential cannot call capture operations. */
+export class OutcomeClient {
+  readonly #transport: JSONTransport;
+  readonly #token: string;
+
+  constructor(options: OutcomeClientOptions) {
+    this.#token = requiredToken(options.outcomeToken, "outcomeToken");
+    this.#transport = new JSONTransport(options);
+  }
+
+  async getOutcome(options: RequestOptions = {}): Promise<SDKResponse<CaptureOutcome>> {
+    const response = await this.#transport.request<WireCaptureOutcome>({
+      method: "GET",
+      path: "v1/capture/outcome",
+      bearerToken: this.#token,
+      ...signal(options),
+    });
+    return mapResponse(response, captureOutcome);
   }
 }
 
@@ -691,6 +814,14 @@ export class VerificationsClient {
               "captureTokenTtlSeconds",
             ),
           }),
+      ...(input.outcomeTokenPostExpiryTtlSeconds === undefined
+        ? {}
+        : {
+            outcome_token_post_expiry_ttl_seconds: positiveInteger(
+              input.outcomeTokenPostExpiryTtlSeconds,
+              "outcomeTokenPostExpiryTtlSeconds",
+            ),
+          }),
     };
     const response = await this.#transport.request<WireVerificationCreated>({
       method: "POST",
@@ -701,6 +832,23 @@ export class VerificationsClient {
       ...signal(options),
     });
     return mapResponse(response, verificationCreated);
+  }
+
+  /** Requires verification_sessions:cancel; returns the original receipt on retry. */
+  async cancel(
+    verificationId: VerificationID,
+    expectedVersion: number,
+    options: IdempotentRequestOptions,
+  ): Promise<SDKResponse<VerificationCancellation>> {
+    const response = await this.#transport.request<WireVerificationCancellation>({
+      method: "POST",
+      path: `v1/verifications/${pathSegment(verificationId, "verificationId")}/cancel`,
+      bearerToken: this.#token,
+      body: { expected_version: positiveInteger(expectedVersion, "expectedVersion") },
+      headers: idempotencyHeaders(options.idempotencyKey),
+      ...signal(options),
+    });
+    return mapResponse(response, verificationCancellation);
   }
 
   async get(
@@ -807,4 +955,302 @@ function mapResponse<Input, Output>(
     ...(response.etag === undefined ? {} : { etag: response.etag }),
     ...(response.location === undefined ? {} : { location: response.location }),
   };
+}
+
+/** Tenant backend webhook administration; signing secrets must never enter capture clients. */
+export class WebhooksClient {
+  readonly #transport: JSONTransport;
+  readonly #token: string;
+  constructor(transport: JSONTransport, token: string) {
+    this.#transport = transport;
+    this.#token = token;
+  }
+  async create(
+    input: { readonly url: string },
+    options: IdempotentRequestOptions,
+  ): Promise<SDKResponse<WebhookEndpointMutation>> {
+    const response = await this.#transport.request<WireWebhookEndpointMutation>({
+      method: "POST",
+      path: "v1/webhook-endpoints",
+      bearerToken: this.#token,
+      ...signal(options),
+      body: { url: input.url },
+      headers: idempotencyHeaders(options.idempotencyKey),
+    });
+    return mapResponse(response, webhookEndpointMutation);
+  }
+  async get(
+    endpointId: WebhookEndpointID,
+    options: RequestOptions = {},
+  ): Promise<SDKResponse<WebhookEndpoint>> {
+    const response = await this.#transport.request<WireWebhookEndpoint>({
+      method: "GET",
+      path: `v1/webhook-endpoints/${pathSegment(endpointId, "endpointId")}`,
+      bearerToken: this.#token,
+      ...signal(options),
+    });
+    return mapResponse(response, webhookEndpoint);
+  }
+  async rotate(
+    endpointId: WebhookEndpointID,
+    input: { readonly expectedVersion: number; readonly overlapSeconds: number },
+    options: IdempotentRequestOptions,
+  ): Promise<SDKResponse<WebhookEndpointMutation>> {
+    const response = await this.#transport.request<WireWebhookEndpointMutation>({
+      method: "POST",
+      path: `v1/webhook-endpoints/${pathSegment(endpointId, "endpointId")}/rotate`,
+      bearerToken: this.#token,
+      ...signal(options),
+      body: {
+        expected_version: positiveInteger(input.expectedVersion, "expectedVersion"),
+        overlap_seconds: positiveInteger(input.overlapSeconds, "overlapSeconds"),
+      },
+      headers: idempotencyHeaders(options.idempotencyKey),
+    });
+    return mapResponse(response, webhookEndpointMutation);
+  }
+  async disable(
+    endpointId: WebhookEndpointID,
+    input: { readonly expectedVersion: number; readonly reason: string },
+    options: IdempotentRequestOptions,
+  ): Promise<SDKResponse<WebhookEndpointMutation>> {
+    const response = await this.#transport.request<WireWebhookEndpointMutation>({
+      method: "POST",
+      path: `v1/webhook-endpoints/${pathSegment(endpointId, "endpointId")}/disable`,
+      bearerToken: this.#token,
+      ...signal(options),
+      body: {
+        expected_version: positiveInteger(input.expectedVersion, "expectedVersion"),
+        reason: input.reason,
+      },
+      headers: idempotencyHeaders(options.idempotencyKey),
+    });
+    return mapResponse(response, webhookEndpointMutation);
+  }
+  async getDelivery(
+    deliveryId: WebhookDeliveryID,
+    options: RequestOptions = {},
+  ): Promise<SDKResponse<WebhookDelivery>> {
+    const response = await this.#transport.request<WireWebhookDelivery>({
+      method: "GET",
+      path: `v1/webhook-deliveries/${pathSegment(deliveryId, "deliveryId")}`,
+      bearerToken: this.#token,
+      ...signal(options),
+    });
+    return mapResponse(response, webhookDelivery);
+  }
+  async listAttempts(
+    deliveryId: WebhookDeliveryID,
+    options: RequestOptions = {},
+  ): Promise<SDKResponse<WebhookAttemptList>> {
+    const response = await this.#transport.request<WireWebhookAttemptList>({
+      method: "GET",
+      path: `v1/webhook-deliveries/${pathSegment(deliveryId, "deliveryId")}/attempts`,
+      bearerToken: this.#token,
+      ...signal(options),
+    });
+    return mapResponse(response, webhookAttemptList);
+  }
+  async replay(
+    deliveryId: WebhookDeliveryID,
+    input: { readonly reason: string },
+    options: IdempotentRequestOptions,
+  ): Promise<SDKResponse<WebhookDeliveryMutation>> {
+    const response = await this.#transport.request<WireWebhookDeliveryMutation>({
+      method: "POST",
+      path: `v1/webhook-deliveries/${pathSegment(deliveryId, "deliveryId")}/replay`,
+      bearerToken: this.#token,
+      ...signal(options),
+      body: { reason: input.reason },
+      headers: idempotencyHeaders(options.idempotencyKey),
+    });
+    return mapResponse(response, webhookDeliveryMutation);
+  }
+  async list(options: WebhookListOptions = {}): Promise<SDKResponse<WebhookEndpointList>> {
+    const response = await this.#transport.request<WireWebhookEndpointList>({
+      method: "GET",
+      path: "v1/webhook-endpoints" + catalogQuery(options),
+      bearerToken: this.#token,
+      ...signal(options),
+    });
+    return mapResponse(response, webhookEndpointList);
+  }
+  async listDeliveries(
+    endpointId: WebhookEndpointID,
+    options: WebhookListOptions = {},
+  ): Promise<SDKResponse<WebhookDeliveryList>> {
+    const response = await this.#transport.request<WireWebhookDeliveryList>({
+      method: "GET",
+      path:
+        `v1/webhook-endpoints/${pathSegment(endpointId, "endpointId")}/deliveries` +
+        catalogQuery(options),
+      bearerToken: this.#token,
+      ...signal(options),
+    });
+    return mapResponse(response, webhookDeliveryList);
+  }
+}
+function catalogQuery(options: WebhookListOptions): string {
+  const query = new URLSearchParams();
+  if (options.limit !== undefined) {
+    if (positiveInteger(options.limit, "limit") > 100)
+      throw new TypeError("limit must not exceed 100.");
+    query.set("limit", String(options.limit));
+  }
+  if (options.cursor !== undefined) query.set("cursor", options.cursor);
+  return query.size === 0 ? "" : `?${query.toString()}`;
+}
+
+/** Tenant policy administration. Source documents retain portable snake_case names. */
+export class PoliciesClient {
+  readonly #transport: JSONTransport;
+  readonly #token: string;
+  constructor(transport: JSONTransport, token: string) {
+    this.#transport = transport;
+    this.#token = token;
+  }
+  async create(
+    definition: PolicyDefinition,
+    options: IdempotentRequestOptions,
+  ): Promise<SDKResponse<PolicyMutation>> {
+    const response = await this.#transport.request<WirePolicyMutation>({
+      method: "POST",
+      path: "v1/policies",
+      bearerToken: this.#token,
+      ...signal(options),
+      body: { definition },
+      headers: idempotencyHeaders(options.idempotencyKey),
+    });
+    return mapResponse(response, policyMutation);
+  }
+  async validate(
+    definition: PolicyDefinition,
+    options: RequestOptions = {},
+  ): Promise<SDKResponse<PolicyValidation>> {
+    const response = await this.#transport.request<WirePolicyValidation>({
+      method: "POST",
+      path: "v1/policies/validate",
+      bearerToken: this.#token,
+      ...signal(options),
+      body: { definition },
+    });
+    return mapResponse(response, policyValidation);
+  }
+  async get(policyId: PolicyID, options: RequestOptions = {}): Promise<SDKResponse<PolicySummary>> {
+    const response = await this.#transport.request<WirePolicySummary>({
+      method: "GET",
+      path: `v1/policies/${pathSegment(policyId, "policyId")}`,
+      bearerToken: this.#token,
+      ...signal(options),
+    });
+    return mapResponse(response, policySummary);
+  }
+  async createRevision(
+    policyId: PolicyID,
+    definition: PolicyDefinition,
+    expectedRevision: number,
+    options: IdempotentRequestOptions,
+  ): Promise<SDKResponse<PolicyMutation>> {
+    const response = await this.#transport.request<WirePolicyMutation>({
+      method: "POST",
+      path: `v1/policies/${pathSegment(policyId, "policyId")}/revisions`,
+      bearerToken: this.#token,
+      ...signal(options),
+      body: {
+        definition,
+        expected_revision: positiveInteger(expectedRevision, "expectedRevision"),
+      },
+      headers: idempotencyHeaders(options.idempotencyKey),
+    });
+    return mapResponse(response, policyMutation);
+  }
+  async getRevision(
+    policyId: PolicyID,
+    revision: number,
+    options: RequestOptions = {},
+  ): Promise<SDKResponse<PolicyRevisionDocument>> {
+    const response = await this.#transport.request<WirePolicyRevisionDocument>({
+      method: "GET",
+      path: `v1/policies/${pathSegment(policyId, "policyId")}/revisions/${positiveInteger(revision, "revision")}`,
+      bearerToken: this.#token,
+      ...signal(options),
+    });
+    return mapResponse(response, policyRevisionDocument);
+  }
+  async list(options: PolicyListOptions = {}): Promise<SDKResponse<PolicyList>> {
+    const response = await this.#transport.request<WirePolicyList>({
+      method: "GET",
+      path: "v1/policies" + catalogQuery(options),
+      bearerToken: this.#token,
+      ...signal(options),
+    });
+    return mapResponse(response, policyList);
+  }
+  async listRevisions(
+    policyId: PolicyID,
+    options: PolicyListOptions = {},
+  ): Promise<SDKResponse<PolicyRevisionList>> {
+    const response = await this.#transport.request<WirePolicyRevisionList>({
+      method: "GET",
+      path: `v1/policies/${pathSegment(policyId, "policyId")}/revisions` + catalogQuery(options),
+      bearerToken: this.#token,
+      ...signal(options),
+    });
+    return mapResponse(response, policyRevisionList);
+  }
+  async listActivations(
+    policyId: PolicyID,
+    options: PolicyListOptions = {},
+  ): Promise<SDKResponse<PolicyActivationList>> {
+    const response = await this.#transport.request<WirePolicyActivationList>({
+      method: "GET",
+      path: `v1/policies/${pathSegment(policyId, "policyId")}/activations` + catalogQuery(options),
+      bearerToken: this.#token,
+      ...signal(options),
+    });
+    return mapResponse(response, policyActivationList);
+  }
+  async activate(
+    policyId: PolicyID,
+    input: { readonly revision: number; readonly expectedVersion: number; readonly reason: string },
+    options: IdempotentRequestOptions,
+  ): Promise<SDKResponse<PolicyMutation>> {
+    const response = await this.#transport.request<WirePolicyMutation>({
+      method: "POST",
+      path: `v1/policies/${pathSegment(policyId, "policyId")}/activate`,
+      bearerToken: this.#token,
+      ...signal(options),
+      body: {
+        revision: positiveInteger(input.revision, "revision"),
+        expected_version: activationVersion(input.expectedVersion),
+        reason: input.reason,
+      },
+      headers: idempotencyHeaders(options.idempotencyKey),
+    });
+    return mapResponse(response, policyMutation);
+  }
+  async rollback(
+    policyId: PolicyID,
+    input: { readonly revision: number; readonly expectedVersion: number; readonly reason: string },
+    options: IdempotentRequestOptions,
+  ): Promise<SDKResponse<PolicyMutation>> {
+    const response = await this.#transport.request<WirePolicyMutation>({
+      method: "POST",
+      path: `v1/policies/${pathSegment(policyId, "policyId")}/rollback`,
+      bearerToken: this.#token,
+      ...signal(options),
+      body: {
+        revision: positiveInteger(input.revision, "revision"),
+        expected_version: activationVersion(input.expectedVersion),
+        reason: input.reason,
+      },
+      headers: idempotencyHeaders(options.idempotencyKey),
+    });
+    return mapResponse(response, policyMutation);
+  }
+}
+function activationVersion(value: number): number {
+  if (!Number.isSafeInteger(value) || value < 0)
+    throw new TypeError("expectedVersion must be a nonnegative safe integer.");
+  return value;
 }

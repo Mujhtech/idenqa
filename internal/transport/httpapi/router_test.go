@@ -32,6 +32,21 @@ func (routerClock) Now() time.Time {
 	return time.Date(2026, time.August, 27, 12, 0, 0, 0, time.UTC)
 }
 
+// versionedRouter mounts route groups below the public API version prefix,
+// matching process composition.
+func versionedRouter(t *testing.T, registrars ...interface{ Register(chi.Router) }) chi.Router {
+	t.Helper()
+
+	router := chi.NewRouter()
+	router.Route(VersionPrefix, func(versioned chi.Router) {
+		for _, registrar := range registrars {
+			registrar.Register(versioned)
+		}
+	})
+
+	return router
+}
+
 type routerHarness struct {
 	handler   http.Handler
 	logs      *bytes.Buffer

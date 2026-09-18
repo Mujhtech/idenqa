@@ -494,6 +494,7 @@ func validModelRequest(deadline time.Time) modelv1.Request {
 }
 
 type oversizedProviderClient struct {
+	runnerv1.ProviderRunnerServiceClient
 	result *runnerv1.ProviderResult
 }
 

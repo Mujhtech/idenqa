@@ -40,7 +40,7 @@ func newCommand(info buildinfo.Info) *cobra.Command {
 			return runProcess(command, envFile, info)
 		},
 	})
-	command.Flags().StringVar(&envFile, "env-file", "", "load local configuration from this dotenv file")
+	command.Flags().StringVar(&envFile, "env-file", config.DefaultEnvFile, "load local configuration from this dotenv file")
 
 	return command
 }

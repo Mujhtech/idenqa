@@ -2,10 +2,67 @@ package headgate
 
 import (
 	"context"
+	"errors"
 	"testing"
 
+	"github.com/Mujhtech/idenqa/internal/platform/task"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	libheadgate "github.com/mujhtech/headgate/go"
 )
+
+func TestRuntimeTransactionRejectsUnusableIsolation(t *testing.T) {
+	t.Parallel()
+	isolationErr := errors.New("cannot change isolation")
+	for _, test := range []struct {
+		name string
+		tx   any
+		want error
+	}{
+		{name: "foreign transaction", tx: struct{}{}, want: task.ErrInvalid},
+		{name: "isolation failure", tx: &isolationTransaction{err: isolationErr}, want: isolationErr},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			base := &transactionalStoreStub{tx: runtimeTransactionStub{value: test.tx}}
+			store := &transactionalRetryStore{transactional: base}
+			transaction, err := store.BeginTx(t.Context())
+			if transaction != nil || !errors.Is(err, test.want) {
+				t.Fatalf("BeginTx() = %v, %v; want nil, %v", transaction, err, test.want)
+			}
+			if !base.rolledBack {
+				t.Fatal("unusable transaction was not rolled back")
+			}
+		})
+	}
+}
+
+type transactionalStoreStub struct {
+	libheadgate.TransactionalStore
+	tx         libheadgate.Tx
+	rolledBack bool
+}
+
+func (store *transactionalStoreStub) BeginTx(context.Context) (libheadgate.Tx, error) {
+	return store.tx, nil
+}
+
+func (store *transactionalStoreStub) RollbackTx(ctx context.Context, transaction libheadgate.Tx) error {
+	store.rolledBack = transaction == store.tx && ctx.Err() == nil
+	return nil
+}
+
+type runtimeTransactionStub struct{ value any }
+
+func (transaction runtimeTransactionStub) Unwrap() any { return transaction.value }
+
+type isolationTransaction struct {
+	pgx.Tx
+	err error
+}
+
+func (transaction *isolationTransaction) Exec(context.Context, string, ...any) (pgconn.CommandTag, error) {
+	return pgconn.CommandTag{}, transaction.err
+}
 
 type retryStoreStub struct {
 	libheadgate.Store

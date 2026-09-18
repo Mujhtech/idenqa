@@ -52,21 +52,21 @@ func NewAuthorityRoutes(
 // Register adds tenant declaration and subject-facing capture routes.
 func (routes *AuthorityRoutes) Register(router chi.Router) {
 	router.With(routes.access.Authenticate, routes.access.Require(access.PermissionNoticesWrite)).
-		Post("/v1/notices", routes.createNotice)
+		Post("/notices", routes.createNotice)
 	router.With(routes.access.Authenticate, routes.access.Require(access.PermissionNoticesRead)).
-		Get("/v1/notices/{noticeID}", routes.findNotice)
+		Get("/notices/{noticeID}", routes.findNotice)
 	router.With(routes.access.Authenticate, routes.access.Require(access.PermissionAuthoritiesWrite)).
-		Post("/v1/verifications/{verificationID}/authority", routes.declare)
+		Post("/verifications/{verificationID}/authority", routes.declare)
 	router.With(routes.access.Authenticate, routes.access.Require(access.PermissionAuthoritiesRead)).
-		Get("/v1/verifications/{verificationID}/authority", routes.find)
+		Get("/verifications/{verificationID}/authority", routes.find)
 	router.With(routes.access.Authenticate, routes.access.Require(access.PermissionAuthoritiesWrite)).
-		Post("/v1/verifications/{verificationID}/authority/restrict", routes.transition(authority.StateRestricted))
+		Post("/verifications/{verificationID}/authority/restrict", routes.transition(authority.StateRestricted))
 	router.With(routes.access.Authenticate, routes.access.Require(access.PermissionAuthoritiesWrite)).
-		Post("/v1/verifications/{verificationID}/authority/withdraw", routes.transition(authority.StateWithdrawn))
+		Post("/verifications/{verificationID}/authority/withdraw", routes.transition(authority.StateWithdrawn))
 	router.With(routes.access.Authenticate, routes.access.Require(access.PermissionAuthoritiesWrite)).
-		Post("/v1/verifications/{verificationID}/authority/supersede", routes.transition(authority.StateSuperseded))
-	router.With(routes.capture.Authenticate).Get("/v1/capture/authority", routes.captureSnapshot)
-	router.With(routes.capture.Authenticate).Post("/v1/capture/authority/responses", routes.respond)
+		Post("/verifications/{verificationID}/authority/supersede", routes.transition(authority.StateSuperseded))
+	router.With(routes.capture.Authenticate).Get("/capture/authority", routes.captureSnapshot)
+	router.With(routes.capture.Authenticate).Post("/capture/authority/responses", routes.respond)
 }
 
 func (routes *AuthorityRoutes) createNotice(writer http.ResponseWriter, request *http.Request) {

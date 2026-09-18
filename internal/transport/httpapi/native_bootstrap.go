@@ -36,7 +36,7 @@ func NewNativeBootstrapRoutes(capture *CaptureAccessMiddleware, service NativeBo
 
 // Register mounts the single-use native bootstrap endpoint.
 func (routes *NativeBootstrapRoutes) Register(router chi.Router) {
-	router.With(routes.capture.Authenticate).Post("/v1/capture/native/bootstrap", routes.bootstrap)
+	router.With(routes.capture.Authenticate).Post("/capture/native/bootstrap", routes.bootstrap)
 }
 
 type nativeBootstrapRequest struct {

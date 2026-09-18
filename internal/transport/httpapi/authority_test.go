@@ -14,7 +14,6 @@ import (
 	openapiv1 "github.com/Mujhtech/idenqa/internal/gen/openapi/v1"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/verification"
-	"github.com/go-chi/chi/v5"
 )
 
 func TestAuthorityRoutesCreateImmutableNotice(t *testing.T) {
@@ -42,8 +41,7 @@ func TestAuthorityRoutesCreateImmutableNotice(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewAuthorityRoutes() error = %v", err)
 	}
-	router := chi.NewRouter()
-	routes.Register(router)
+	router := versionedRouter(t, routes)
 	body, err := json.Marshal(openapiv1.NoticeVersionCreate{
 		Key: notice.Key(), Locale: notice.Locale(), Controller: notice.Controller(), Recipient: notice.Recipient(),
 		Copy: openapiv1.NoticeCopy{Title: notice.Copy().Title, Summary: notice.Copy().Summary,

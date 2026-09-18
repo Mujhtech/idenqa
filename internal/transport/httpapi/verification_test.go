@@ -13,7 +13,6 @@ import (
 	openapiv1 "github.com/Mujhtech/idenqa/internal/gen/openapi/v1"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/verification"
-	"github.com/go-chi/chi/v5"
 )
 
 func TestVerificationRoutesCreateAndCaptureSnapshot(t *testing.T) {
@@ -83,6 +82,33 @@ func TestVerificationRoutesCreateAndCaptureSnapshot(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Sign() error = %v", err)
 	}
+	outcomeTokenID, err := id.ParseOutcomeToken("otk_01K3P4NQF00000000000000000")
+	if err != nil {
+		t.Fatalf("ParseOutcomeToken() error = %v", err)
+	}
+	outcomeCredential, err := access.NewOutcomeCredential(
+		outcomeTokenID, fixture.tenantID, verificationID, 1, now, now.Add(25*time.Hour),
+	)
+	if err != nil {
+		t.Fatalf("NewOutcomeCredential() error = %v", err)
+	}
+	outcomeKeyring, err := access.NewOutcomeTokenKeyring(1, map[access.OutcomeTokenKeyVersion][]byte{
+		1: bytes.Repeat([]byte{7}, 32),
+	})
+	if err != nil {
+		t.Fatalf("NewOutcomeTokenKeyring() error = %v", err)
+	}
+	outcomeSigner, err := access.NewOutcomeTokenSigner(
+		outcomeKeyring,
+		httpAccessClock{now: now.Add(time.Minute)},
+	)
+	if err != nil {
+		t.Fatalf("NewOutcomeTokenSigner() error = %v", err)
+	}
+	outcomePresented, err := outcomeSigner.Sign(outcomeCredential)
+	if err != nil {
+		t.Fatalf("Sign(outcome) error = %v", err)
+	}
 	creation := verification.SessionCreation{Session: session, Credential: credential}
 	captureAuthenticator, err := verification.NewCaptureAuthenticator(
 		httpCaptureRepository{creation: creation},
@@ -96,22 +122,50 @@ func TestVerificationRoutesCreateAndCaptureSnapshot(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewCaptureAccessMiddleware() error = %v", err)
 	}
+	outcomeAuthenticator, err := verification.NewOutcomeAuthenticator(
+		httpOutcomeRepository{credential: outcomeCredential},
+		outcomeSigner,
+		httpAccessClock{now: now.Add(time.Minute)},
+	)
+	if err != nil {
+		t.Fatalf("NewOutcomeAuthenticator() error = %v", err)
+	}
+	outcomeMiddleware, err := NewOutcomeAccessMiddleware(outcomeAuthenticator, fixture.logger)
+	if err != nil {
+		t.Fatalf("NewOutcomeAccessMiddleware() error = %v", err)
+	}
 	service := &verificationHTTPServiceStub{
-		created: verification.CreatedSession{Session: session, CaptureToken: presented},
+		created: verification.CreatedSession{
+			Session: session, CaptureToken: presented,
+			OutcomeCredential: outcomeCredential, OutcomeToken: outcomePresented,
+		},
 		session: session,
 	}
 	routes, err := NewVerificationRoutes(fixture.middleware, captureMiddleware, service, catalog, fixture.logger)
 	if err != nil {
 		t.Fatalf("NewVerificationRoutes() error = %v", err)
 	}
-	router := chi.NewRouter()
-	routes.Register(router)
+	outcomeRoutes, err := NewCaptureOutcomeRoutes(
+		outcomeMiddleware,
+		captureOutcomeHTTPServiceStub{outcome: verification.CaptureOutcome{
+			VerificationID: verificationID,
+			State:          verification.CaptureOutcomeProcessing,
+			SessionVersion: 2,
+			UpdatedAt:      now.Add(2 * time.Minute),
+		}},
+		fixture.logger,
+	)
+	if err != nil {
+		t.Fatalf("NewCaptureOutcomeRoutes() error = %v", err)
+	}
+	router := versionedRouter(t, routes, outcomeRoutes)
 
 	body, err := json.Marshal(openapiv1.VerificationCreate{
-		CaptureProfileID:       profileID.String(),
-		PolicyID:               policyID.String(),
-		VerificationTTLSeconds: int64Pointer(3600),
-		CaptureTokenTTLSeconds: int64Pointer(600),
+		CaptureProfileID:                 profileID.String(),
+		PolicyID:                         policyID.String(),
+		VerificationTTLSeconds:           int64Pointer(3600),
+		CaptureTokenTTLSeconds:           int64Pointer(600),
+		OutcomeTokenPostExpiryTTLSeconds: int64Pointer(7200),
 	})
 	if err != nil {
 		t.Fatalf("json.Marshal() error = %v", err)
@@ -132,7 +186,8 @@ func TestVerificationRoutesCreateAndCaptureSnapshot(t *testing.T) {
 	}
 	if service.idempotencyKey != "attempt-1" || service.input.ProfileID.String() != profileID.String() ||
 		service.input.VerificationTTL == nil || *service.input.VerificationTTL != time.Hour ||
-		service.input.CaptureTokenTTL == nil || *service.input.CaptureTokenTTL != 10*time.Minute {
+		service.input.CaptureTokenTTL == nil || *service.input.CaptureTokenTTL != 10*time.Minute ||
+		service.input.OutcomePostTTL == nil || *service.input.OutcomePostTTL != 2*time.Hour {
 		t.Fatalf("service input key=%q input=%+v", service.idempotencyKey, service.input)
 	}
 	var created openapiv1.VerificationCreated
@@ -140,6 +195,8 @@ func TestVerificationRoutesCreateAndCaptureSnapshot(t *testing.T) {
 		t.Fatalf("decode create response: %v", err)
 	}
 	if created.CaptureToken == nil || *created.CaptureToken != presented.Reveal() ||
+		created.OutcomeToken == nil || *created.OutcomeToken != outcomePresented.Reveal() ||
+		!created.OutcomeTokenExpiresAt.Equal(outcomeCredential.ExpiresAt()) ||
 		created.Session.ProfileDigest != digest {
 		t.Fatalf("created response = %+v", created)
 	}
@@ -163,6 +220,46 @@ func TestVerificationRoutesCreateAndCaptureSnapshot(t *testing.T) {
 	if snapshot.ID != verificationID.String() || !bytes.Equal(snapshot.Requirements, created.Session.Requirements) {
 		t.Fatalf("capture snapshot = %+v", snapshot)
 	}
+
+	outcomeRequest := httptest.NewRequestWithContext(
+		context.Background(),
+		http.MethodGet,
+		"/v1/capture/outcome",
+		nil,
+	)
+	outcomeRequest.Header.Set("Authorization", "Bearer "+outcomePresented.Reveal())
+	outcomeResponse := httptest.NewRecorder()
+	router.ServeHTTP(outcomeResponse, outcomeRequest)
+	if outcomeResponse.Code != http.StatusOK {
+		t.Fatalf("outcome status = %d, want %d; body=%s", outcomeResponse.Code, http.StatusOK, outcomeResponse.Body)
+	}
+	var outcome openapiv1.CaptureOutcome
+	if err := json.Unmarshal(outcomeResponse.Body.Bytes(), &outcome); err != nil {
+		t.Fatalf("decode outcome response: %v", err)
+	}
+	if outcome.VerificationID != verificationID.String() || outcome.State != openapiv1.CaptureOutcomeStateProcessing ||
+		outcome.SessionVersion != 2 || !outcome.UpdatedAt.Equal(now.Add(2*time.Minute)) {
+		t.Fatalf("capture outcome = %+v", outcome)
+	}
+
+	for _, misuse := range []struct {
+		name  string
+		path  string
+		token string
+	}{
+		{name: "outcome token on capture route", path: "/v1/capture/session", token: outcomePresented.Reveal()},
+		{name: "capture token on outcome route", path: "/v1/capture/outcome", token: presented.Reveal()},
+	} {
+		t.Run(misuse.name, func(t *testing.T) {
+			request := httptest.NewRequestWithContext(context.Background(), http.MethodGet, misuse.path, nil)
+			request.Header.Set("Authorization", "Bearer "+misuse.token)
+			response := httptest.NewRecorder()
+			router.ServeHTTP(response, request)
+			if response.Code != http.StatusUnauthorized {
+				t.Fatalf("credential misuse status = %d, want %d; body=%s", response.Code, http.StatusUnauthorized, response.Body)
+			}
+		})
+	}
 }
 
 type httpCaptureRepository struct{ creation verification.SessionCreation }
@@ -174,11 +271,29 @@ func (repository httpCaptureRepository) FindForCapture(
 	return repository.creation, nil
 }
 
+type httpOutcomeRepository struct{ credential access.OutcomeCredential }
+
+func (repository httpOutcomeRepository) FindForOutcome(
+	context.Context,
+	access.OutcomeTokenClaims,
+) (access.OutcomeCredential, error) {
+	return repository.credential, nil
+}
+
 type verificationHTTPServiceStub struct {
 	created        verification.CreatedSession
 	session        verification.Session
 	idempotencyKey string
 	input          verification.SessionCreateInput
+}
+
+type captureOutcomeHTTPServiceStub struct{ outcome verification.CaptureOutcome }
+
+func (service captureOutcomeHTTPServiceStub) Find(
+	context.Context,
+	verification.OutcomeContext,
+) (verification.CaptureOutcome, error) {
+	return service.outcome, nil
 }
 
 func (service *verificationHTTPServiceStub) Create(
