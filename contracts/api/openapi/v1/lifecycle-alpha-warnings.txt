@@ -1,0 +1,43 @@
+# Approved on 2026-09-06: alpha VerificationSession lifecycle expansion only.
+# Exact method, path, response status, property and value matches. No wildcard exclusions.
+# Remove when this transition no longer needs comparison against a collecting-only alpha base.
+POST /v1/capture/native/bootstrap added the new `awaiting_external` enum value to the `state` response property for the response status `200`
+POST /v1/capture/native/bootstrap added the new `awaiting_input` enum value to the `state` response property for the response status `200`
+POST /v1/capture/native/bootstrap added the new `cancelled` enum value to the `state` response property for the response status `200`
+POST /v1/capture/native/bootstrap added the new `completed` enum value to the `state` response property for the response status `200`
+POST /v1/capture/native/bootstrap added the new `created` enum value to the `state` response property for the response status `200`
+POST /v1/capture/native/bootstrap added the new `expired` enum value to the `state` response property for the response status `200`
+POST /v1/capture/native/bootstrap added the new `failed` enum value to the `state` response property for the response status `200`
+POST /v1/capture/native/bootstrap added the new `manual_review` enum value to the `state` response property for the response status `200`
+POST /v1/capture/native/bootstrap added the new `processing` enum value to the `state` response property for the response status `200`
+GET /v1/capture/session added the new `awaiting_external` enum value to the `state` response property for the response status `200`
+GET /v1/capture/session added the new `awaiting_input` enum value to the `state` response property for the response status `200`
+GET /v1/capture/session added the new `cancelled` enum value to the `state` response property for the response status `200`
+GET /v1/capture/session added the new `completed` enum value to the `state` response property for the response status `200`
+GET /v1/capture/session added the new `created` enum value to the `state` response property for the response status `200`
+GET /v1/capture/session added the new `expired` enum value to the `state` response property for the response status `200`
+GET /v1/capture/session added the new `failed` enum value to the `state` response property for the response status `200`
+GET /v1/capture/session added the new `manual_review` enum value to the `state` response property for the response status `200`
+GET /v1/capture/session added the new `processing` enum value to the `state` response property for the response status `200`
+POST /v1/verifications added the new `awaiting_external` enum value to the `session/state` response property for the response status `201`
+POST /v1/verifications added the new `awaiting_input` enum value to the `session/state` response property for the response status `201`
+POST /v1/verifications added the new `cancelled` enum value to the `session/state` response property for the response status `201`
+POST /v1/verifications added the new `completed` enum value to the `session/state` response property for the response status `201`
+POST /v1/verifications added the new `created` enum value to the `session/state` response property for the response status `201`
+POST /v1/verifications added the new `expired` enum value to the `session/state` response property for the response status `201`
+POST /v1/verifications added the new `failed` enum value to the `session/state` response property for the response status `201`
+POST /v1/verifications added the new `manual_review` enum value to the `session/state` response property for the response status `201`
+POST /v1/verifications added the new `processing` enum value to the `session/state` response property for the response status `201`
+GET /v1/verifications/{verificationID} added the new `awaiting_external` enum value to the `state` response property for the response status `200`
+GET /v1/verifications/{verificationID} added the new `awaiting_input` enum value to the `state` response property for the response status `200`
+GET /v1/verifications/{verificationID} added the new `cancelled` enum value to the `state` response property for the response status `200`
+GET /v1/verifications/{verificationID} added the new `completed` enum value to the `state` response property for the response status `200`
+GET /v1/verifications/{verificationID} added the new `created` enum value to the `state` response property for the response status `200`
+GET /v1/verifications/{verificationID} added the new `expired` enum value to the `state` response property for the response status `200`
+GET /v1/verifications/{verificationID} added the new `failed` enum value to the `state` response property for the response status `200`
+GET /v1/verifications/{verificationID} added the new `manual_review` enum value to the `state` response property for the response status `200`
+GET /v1/verifications/{verificationID} added the new `processing` enum value to the `state` response property for the response status `200`
+# Approved on 2026-09-09: alpha decision-bundle fraud provenance extension only.
+GET /v1/decisions/{decisionID}/bundle added the new `fraud` enum value to the `snapshot/facts/items/source/kind` response property for the response status `200`
+# Approved on 2026-09-09: alpha decision-bundle identity provenance extension only.
+GET /v1/decisions/{decisionID}/bundle added the new `identity` enum value to the `snapshot/facts/items/source/kind` response property for the response status `200`

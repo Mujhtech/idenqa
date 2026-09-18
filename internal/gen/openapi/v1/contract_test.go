@@ -11,7 +11,38 @@ import (
 
 	openapiv1 "github.com/Mujhtech/idenqa/internal/gen/openapi/v1"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
+	"github.com/Mujhtech/idenqa/internal/verification"
 )
+
+func TestLifecycleStateContractMatchesDomain(t *testing.T) {
+	t.Parallel()
+	for _, state := range []string{
+		"created", "collecting", "awaiting_input", "processing", "awaiting_external",
+		"manual_review", "completed", "cancelled", "expired", "failed",
+	} {
+		t.Run(state, func(t *testing.T) {
+			if !verification.SessionState(state).Valid() || !openapiv1.VerificationSessionState(state).Valid() {
+				t.Fatalf("workflow state %q is missing from a contract", state)
+			}
+			payload, err := json.Marshal(map[string]any{"state": state, "version": 2})
+			if err != nil {
+				t.Fatal(err)
+			}
+			response, err := openapiv1.ParseGetVerificationResponse(&http.Response{
+				StatusCode: http.StatusOK, Header: http.Header{"Content-Type": {"application/json"}},
+				Body: io.NopCloser(bytes.NewReader(payload)),
+			})
+			if err != nil || response.JSON200 == nil || string(response.JSON200.State) != state {
+				t.Fatalf("client changed workflow state: %+v, %v", response, err)
+			}
+		})
+	}
+	for _, outcome := range []string{"verified", "not_verified", "inconclusive", "unknown"} {
+		if openapiv1.VerificationSessionState(outcome).Valid() {
+			t.Errorf("identity outcome or unknown value %q was accepted as a workflow state", outcome)
+		}
+	}
+}
 
 func TestContractFixturesDecodeGeneratedModels(t *testing.T) {
 	t.Parallel()

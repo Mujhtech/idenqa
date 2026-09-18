@@ -16,6 +16,8 @@ service ProviderRunnerService {
   rpc ValidateConfiguration(ProviderRunnerServiceValidateConfigurationRequest) returns (ProviderRunnerServiceValidateConfigurationResponse);
   // Execute performs one retry-safe provider attempt.
   rpc Execute(ProviderRunnerServiceExecuteRequest) returns (ProviderRunnerServiceExecuteResponse);
+  // Advance submits once or queries status without reusing evidence.
+  rpc Advance(ProviderRunnerServiceAdvanceRequest) returns (ProviderRunnerServiceAdvanceResponse);
   // Health returns a bounded, non-sensitive readiness classification.
   rpc Health(ProviderRunnerServiceHealthRequest) returns (ProviderRunnerServiceHealthResponse);
 }
@@ -194,7 +196,7 @@ message Failure {
 
 // ProviderPackageProvenance pins the exact adapter package.
 message ProviderPackageProvenance {
-  string adapter_id = 1 [(buf.validate.field).string = {prefix: "pvd_", max_len: 64}];
+  string adapter_id = 1 [(buf.validate.field).string = {min_len: 1, max_len: 160}];
   string adapter_version = 2 [(buf.validate.field).string = {min_len: 1, max_len: 128}];
   string package_digest = 3 [(buf.validate.field).string = {min_len: 1, max_len: 128}];
   Version contract = 4 [(buf.validate.field).required = true];
@@ -338,4 +340,15 @@ message ModelResult {
   repeated Signal signals = 4 [(buf.validate.field).repeated.max_items = 128];
   Failure failure = 5;
   google.protobuf.Timestamp completed_at = 6 [(buf.validate.field).required = true];
+}
+
+// ProviderRunnerServiceAdvanceRequest carries the immutable operation and explicit recovery mode.
+message ProviderRunnerServiceAdvanceRequest {
+ ProviderRequest request = 1 [(buf.validate.field).required = true];
+ bool resume = 2;
+}
+// ProviderRunnerServiceAdvanceResponse carries pending progress or one terminal result.
+message ProviderRunnerServiceAdvanceResponse {
+ string provider_job_id = 1 [(buf.validate.field).string.max_len = 128];
+ ProviderResult result = 2;
 }

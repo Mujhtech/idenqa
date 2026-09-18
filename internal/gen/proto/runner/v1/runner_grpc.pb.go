@@ -22,6 +22,7 @@ const (
 	ProviderRunnerService_Manifest_FullMethodName              = "/idenqa.runner.v1.ProviderRunnerService/Manifest"
 	ProviderRunnerService_ValidateConfiguration_FullMethodName = "/idenqa.runner.v1.ProviderRunnerService/ValidateConfiguration"
 	ProviderRunnerService_Execute_FullMethodName               = "/idenqa.runner.v1.ProviderRunnerService/Execute"
+	ProviderRunnerService_Advance_FullMethodName               = "/idenqa.runner.v1.ProviderRunnerService/Advance"
 	ProviderRunnerService_Health_FullMethodName                = "/idenqa.runner.v1.ProviderRunnerService/Health"
 )
 
@@ -37,6 +38,8 @@ type ProviderRunnerServiceClient interface {
 	ValidateConfiguration(ctx context.Context, in *ProviderRunnerServiceValidateConfigurationRequest, opts ...grpc.CallOption) (*ProviderRunnerServiceValidateConfigurationResponse, error)
 	// Execute performs one retry-safe provider attempt.
 	Execute(ctx context.Context, in *ProviderRunnerServiceExecuteRequest, opts ...grpc.CallOption) (*ProviderRunnerServiceExecuteResponse, error)
+	// Advance submits once or queries status without reusing evidence.
+	Advance(ctx context.Context, in *ProviderRunnerServiceAdvanceRequest, opts ...grpc.CallOption) (*ProviderRunnerServiceAdvanceResponse, error)
 	// Health returns a bounded, non-sensitive readiness classification.
 	Health(ctx context.Context, in *ProviderRunnerServiceHealthRequest, opts ...grpc.CallOption) (*ProviderRunnerServiceHealthResponse, error)
 }
@@ -79,6 +82,16 @@ func (c *providerRunnerServiceClient) Execute(ctx context.Context, in *ProviderR
 	return out, nil
 }
 
+func (c *providerRunnerServiceClient) Advance(ctx context.Context, in *ProviderRunnerServiceAdvanceRequest, opts ...grpc.CallOption) (*ProviderRunnerServiceAdvanceResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ProviderRunnerServiceAdvanceResponse)
+	err := c.cc.Invoke(ctx, ProviderRunnerService_Advance_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *providerRunnerServiceClient) Health(ctx context.Context, in *ProviderRunnerServiceHealthRequest, opts ...grpc.CallOption) (*ProviderRunnerServiceHealthResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ProviderRunnerServiceHealthResponse)
@@ -101,6 +114,8 @@ type ProviderRunnerServiceServer interface {
 	ValidateConfiguration(context.Context, *ProviderRunnerServiceValidateConfigurationRequest) (*ProviderRunnerServiceValidateConfigurationResponse, error)
 	// Execute performs one retry-safe provider attempt.
 	Execute(context.Context, *ProviderRunnerServiceExecuteRequest) (*ProviderRunnerServiceExecuteResponse, error)
+	// Advance submits once or queries status without reusing evidence.
+	Advance(context.Context, *ProviderRunnerServiceAdvanceRequest) (*ProviderRunnerServiceAdvanceResponse, error)
 	// Health returns a bounded, non-sensitive readiness classification.
 	Health(context.Context, *ProviderRunnerServiceHealthRequest) (*ProviderRunnerServiceHealthResponse, error)
 	mustEmbedUnimplementedProviderRunnerServiceServer()
@@ -121,6 +136,9 @@ func (UnimplementedProviderRunnerServiceServer) ValidateConfiguration(context.Co
 }
 func (UnimplementedProviderRunnerServiceServer) Execute(context.Context, *ProviderRunnerServiceExecuteRequest) (*ProviderRunnerServiceExecuteResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Execute not implemented")
+}
+func (UnimplementedProviderRunnerServiceServer) Advance(context.Context, *ProviderRunnerServiceAdvanceRequest) (*ProviderRunnerServiceAdvanceResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Advance not implemented")
 }
 func (UnimplementedProviderRunnerServiceServer) Health(context.Context, *ProviderRunnerServiceHealthRequest) (*ProviderRunnerServiceHealthResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Health not implemented")
@@ -200,6 +218,24 @@ func _ProviderRunnerService_Execute_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ProviderRunnerService_Advance_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ProviderRunnerServiceAdvanceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProviderRunnerServiceServer).Advance(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProviderRunnerService_Advance_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProviderRunnerServiceServer).Advance(ctx, req.(*ProviderRunnerServiceAdvanceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ProviderRunnerService_Health_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ProviderRunnerServiceHealthRequest)
 	if err := dec(in); err != nil {
@@ -236,6 +272,10 @@ var ProviderRunnerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Execute",
 			Handler:    _ProviderRunnerService_Execute_Handler,
+		},
+		{
+			MethodName: "Advance",
+			Handler:    _ProviderRunnerService_Advance_Handler,
 		},
 		{
 			MethodName: "Health",

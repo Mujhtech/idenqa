@@ -2669,6 +2669,112 @@ func (x *ModelResult) GetCompletedAt() *timestamppb.Timestamp {
 	return nil
 }
 
+// ProviderRunnerServiceAdvanceRequest carries the immutable operation and explicit recovery mode.
+type ProviderRunnerServiceAdvanceRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Request       *ProviderRequest       `protobuf:"bytes,1,opt,name=request,proto3" json:"request,omitempty"`
+	Resume        bool                   `protobuf:"varint,2,opt,name=resume,proto3" json:"resume,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ProviderRunnerServiceAdvanceRequest) Reset() {
+	*x = ProviderRunnerServiceAdvanceRequest{}
+	mi := &file_idenqa_runner_v1_runner_proto_msgTypes[39]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ProviderRunnerServiceAdvanceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ProviderRunnerServiceAdvanceRequest) ProtoMessage() {}
+
+func (x *ProviderRunnerServiceAdvanceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_idenqa_runner_v1_runner_proto_msgTypes[39]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ProviderRunnerServiceAdvanceRequest.ProtoReflect.Descriptor instead.
+func (*ProviderRunnerServiceAdvanceRequest) Descriptor() ([]byte, []int) {
+	return file_idenqa_runner_v1_runner_proto_rawDescGZIP(), []int{39}
+}
+
+func (x *ProviderRunnerServiceAdvanceRequest) GetRequest() *ProviderRequest {
+	if x != nil {
+		return x.Request
+	}
+	return nil
+}
+
+func (x *ProviderRunnerServiceAdvanceRequest) GetResume() bool {
+	if x != nil {
+		return x.Resume
+	}
+	return false
+}
+
+// ProviderRunnerServiceAdvanceResponse carries pending progress or one terminal result.
+type ProviderRunnerServiceAdvanceResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ProviderJobId string                 `protobuf:"bytes,1,opt,name=provider_job_id,json=providerJobId,proto3" json:"provider_job_id,omitempty"`
+	Result        *ProviderResult        `protobuf:"bytes,2,opt,name=result,proto3" json:"result,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ProviderRunnerServiceAdvanceResponse) Reset() {
+	*x = ProviderRunnerServiceAdvanceResponse{}
+	mi := &file_idenqa_runner_v1_runner_proto_msgTypes[40]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ProviderRunnerServiceAdvanceResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ProviderRunnerServiceAdvanceResponse) ProtoMessage() {}
+
+func (x *ProviderRunnerServiceAdvanceResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_idenqa_runner_v1_runner_proto_msgTypes[40]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ProviderRunnerServiceAdvanceResponse.ProtoReflect.Descriptor instead.
+func (*ProviderRunnerServiceAdvanceResponse) Descriptor() ([]byte, []int) {
+	return file_idenqa_runner_v1_runner_proto_rawDescGZIP(), []int{40}
+}
+
+func (x *ProviderRunnerServiceAdvanceResponse) GetProviderJobId() string {
+	if x != nil {
+		return x.ProviderJobId
+	}
+	return ""
+}
+
+func (x *ProviderRunnerServiceAdvanceResponse) GetResult() *ProviderResult {
+	if x != nil {
+		return x.Result
+	}
+	return nil
+}
+
 var File_idenqa_runner_v1_runner_proto protoreflect.FileDescriptor
 
 const file_idenqa_runner_v1_runner_proto_rawDesc = "" +
@@ -2753,11 +2859,11 @@ const file_idenqa_runner_v1_runner_proto_rawDesc = "" +
 	"\xbaH\ar\x05\x10\x01\x18\x80\x01R\x04code\x12B\n" +
 	"\x05retry\x18\x03 \x01(\x0e2\".idenqa.runner.v1.RetryDispositionB\b\xbaH\x05\x82\x01\x02\x10\x01R\x05retry\x12:\n" +
 	"\vretry_after\x18\x04 \x01(\v2\x19.google.protobuf.DurationR\n" +
-	"retryAfter\"\xf0\x01\n" +
-	"\x19ProviderPackageProvenance\x12,\n" +
+	"retryAfter\"\xed\x01\n" +
+	"\x19ProviderPackageProvenance\x12)\n" +
 	"\n" +
-	"adapter_id\x18\x01 \x01(\tB\r\xbaH\n" +
-	"r\b\x18@:\x04pvd_R\tadapterId\x123\n" +
+	"adapter_id\x18\x01 \x01(\tB\n" +
+	"\xbaH\ar\x05\x10\x01\x18\xa0\x01R\tadapterId\x123\n" +
 	"\x0fadapter_version\x18\x02 \x01(\tB\n" +
 	"\xbaH\ar\x05\x10\x01\x18\x80\x01R\x0eadapterVersion\x121\n" +
 	"\x0epackage_digest\x18\x03 \x01(\tB\n" +
@@ -2917,7 +3023,13 @@ const file_idenqa_runner_v1_runner_proto_rawDesc = "" +
 	"\aoutcome\x18\x03 \x01(\x0e2\x1f.idenqa.runner.v1.ResultOutcomeB\b\xbaH\x05\x82\x01\x02\x10\x01R\aoutcome\x12=\n" +
 	"\asignals\x18\x04 \x03(\v2\x18.idenqa.runner.v1.SignalB\t\xbaH\x06\x92\x01\x03\x10\x80\x01R\asignals\x123\n" +
 	"\afailure\x18\x05 \x01(\v2\x19.idenqa.runner.v1.FailureR\afailure\x12E\n" +
-	"\fcompleted_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\vcompletedAt*z\n" +
+	"\fcompleted_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampB\x06\xbaH\x03\xc8\x01\x01R\vcompletedAt\"\x82\x01\n" +
+	"#ProviderRunnerServiceAdvanceRequest\x12C\n" +
+	"\arequest\x18\x01 \x01(\v2!.idenqa.runner.v1.ProviderRequestB\x06\xbaH\x03\xc8\x01\x01R\arequest\x12\x16\n" +
+	"\x06resume\x18\x02 \x01(\bR\x06resume\"\x92\x01\n" +
+	"$ProviderRunnerServiceAdvanceResponse\x120\n" +
+	"\x0fprovider_job_id\x18\x01 \x01(\tB\b\xbaH\x05r\x03\x18\x80\x01R\rproviderJobId\x128\n" +
+	"\x06result\x18\x02 \x01(\v2 .idenqa.runner.v1.ProviderResultR\x06result*z\n" +
 	"\vHealthState\x12\x1c\n" +
 	"\x18HEALTH_STATE_UNSPECIFIED\x10\x00\x12\x16\n" +
 	"\x12HEALTH_STATE_READY\x10\x01\x12\x19\n" +
@@ -2936,11 +3048,12 @@ const file_idenqa_runner_v1_runner_proto_rawDesc = "" +
 	"\x1dRETRY_DISPOSITION_UNSPECIFIED\x10\x00\x12\x1b\n" +
 	"\x17RETRY_DISPOSITION_NEVER\x10\x01\x12\x1d\n" +
 	"\x19RETRY_DISPOSITION_BACKOFF\x10\x02\x12\x1f\n" +
-	"\x1bRETRY_DISPOSITION_RECONCILE\x10\x032\xaa\x04\n" +
+	"\x1bRETRY_DISPOSITION_RECONCILE\x10\x032\xa4\x05\n" +
 	"\x15ProviderRunnerService\x12{\n" +
 	"\bManifest\x126.idenqa.runner.v1.ProviderRunnerServiceManifestRequest\x1a7.idenqa.runner.v1.ProviderRunnerServiceManifestResponse\x12\xa2\x01\n" +
 	"\x15ValidateConfiguration\x12C.idenqa.runner.v1.ProviderRunnerServiceValidateConfigurationRequest\x1aD.idenqa.runner.v1.ProviderRunnerServiceValidateConfigurationResponse\x12x\n" +
-	"\aExecute\x125.idenqa.runner.v1.ProviderRunnerServiceExecuteRequest\x1a6.idenqa.runner.v1.ProviderRunnerServiceExecuteResponse\x12u\n" +
+	"\aExecute\x125.idenqa.runner.v1.ProviderRunnerServiceExecuteRequest\x1a6.idenqa.runner.v1.ProviderRunnerServiceExecuteResponse\x12x\n" +
+	"\aAdvance\x125.idenqa.runner.v1.ProviderRunnerServiceAdvanceRequest\x1a6.idenqa.runner.v1.ProviderRunnerServiceAdvanceResponse\x12u\n" +
 	"\x06Health\x124.idenqa.runner.v1.ProviderRunnerServiceHealthRequest\x1a5.idenqa.runner.v1.ProviderRunnerServiceHealthResponse2\x8f\x04\n" +
 	"\x12ModelRunnerService\x12u\n" +
 	"\bManifest\x123.idenqa.runner.v1.ModelRunnerServiceManifestRequest\x1a4.idenqa.runner.v1.ModelRunnerServiceManifestResponse\x12\x9c\x01\n" +
@@ -2961,7 +3074,7 @@ func file_idenqa_runner_v1_runner_proto_rawDescGZIP() []byte {
 }
 
 var file_idenqa_runner_v1_runner_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_idenqa_runner_v1_runner_proto_msgTypes = make([]protoimpl.MessageInfo, 39)
+var file_idenqa_runner_v1_runner_proto_msgTypes = make([]protoimpl.MessageInfo, 41)
 var file_idenqa_runner_v1_runner_proto_goTypes = []any{
 	(HealthState)(0),                                           // 0: idenqa.runner.v1.HealthState
 	(SignalOutcome)(0),                                         // 1: idenqa.runner.v1.SignalOutcome
@@ -3006,8 +3119,10 @@ var file_idenqa_runner_v1_runner_proto_goTypes = []any{
 	(*ModelConfigurationReference)(nil),                        // 40: idenqa.runner.v1.ModelConfigurationReference
 	(*ModelRequest)(nil),                                       // 41: idenqa.runner.v1.ModelRequest
 	(*ModelResult)(nil),                                        // 42: idenqa.runner.v1.ModelResult
-	(*timestamppb.Timestamp)(nil),                              // 43: google.protobuf.Timestamp
-	(*durationpb.Duration)(nil),                                // 44: google.protobuf.Duration
+	(*ProviderRunnerServiceAdvanceRequest)(nil),                // 43: idenqa.runner.v1.ProviderRunnerServiceAdvanceRequest
+	(*ProviderRunnerServiceAdvanceResponse)(nil),               // 44: idenqa.runner.v1.ProviderRunnerServiceAdvanceResponse
+	(*timestamppb.Timestamp)(nil),                              // 45: google.protobuf.Timestamp
+	(*durationpb.Duration)(nil),                                // 46: google.protobuf.Duration
 }
 var file_idenqa_runner_v1_runner_proto_depIdxs = []int32{
 	32, // 0: idenqa.runner.v1.ProviderRunnerServiceManifestResponse.manifest:type_name -> idenqa.runner.v1.ProviderManifest
@@ -3022,14 +3137,14 @@ var file_idenqa_runner_v1_runner_proto_depIdxs = []int32{
 	41, // 9: idenqa.runner.v1.ModelRunnerServiceExecuteRequest.request:type_name -> idenqa.runner.v1.ModelRequest
 	42, // 10: idenqa.runner.v1.ModelRunnerServiceExecuteResponse.result:type_name -> idenqa.runner.v1.ModelResult
 	25, // 11: idenqa.runner.v1.ModelRunnerServiceHealthResponse.health:type_name -> idenqa.runner.v1.Health
-	43, // 12: idenqa.runner.v1.EvidenceGrantReference.expires_at:type_name -> google.protobuf.Timestamp
+	45, // 12: idenqa.runner.v1.EvidenceGrantReference.expires_at:type_name -> google.protobuf.Timestamp
 	0,  // 13: idenqa.runner.v1.Health.state:type_name -> idenqa.runner.v1.HealthState
-	43, // 14: idenqa.runner.v1.Health.checked_at:type_name -> google.protobuf.Timestamp
+	45, // 14: idenqa.runner.v1.Health.checked_at:type_name -> google.protobuf.Timestamp
 	1,  // 15: idenqa.runner.v1.Signal.outcome:type_name -> idenqa.runner.v1.SignalOutcome
 	3,  // 16: idenqa.runner.v1.Failure.retry:type_name -> idenqa.runner.v1.RetryDisposition
-	44, // 17: idenqa.runner.v1.Failure.retry_after:type_name -> google.protobuf.Duration
+	46, // 17: idenqa.runner.v1.Failure.retry_after:type_name -> google.protobuf.Duration
 	20, // 18: idenqa.runner.v1.ProviderPackageProvenance.contract:type_name -> idenqa.runner.v1.Version
-	44, // 19: idenqa.runner.v1.ProviderRestrictions.maximum_duration:type_name -> google.protobuf.Duration
+	46, // 19: idenqa.runner.v1.ProviderRestrictions.maximum_duration:type_name -> google.protobuf.Duration
 	28, // 20: idenqa.runner.v1.ProviderManifest.package:type_name -> idenqa.runner.v1.ProviderPackageProvenance
 	29, // 21: idenqa.runner.v1.ProviderManifest.configuration:type_name -> idenqa.runner.v1.ProviderConfigurationSchema
 	30, // 22: idenqa.runner.v1.ProviderManifest.capabilities:type_name -> idenqa.runner.v1.ProviderCapability
@@ -3040,16 +3155,16 @@ var file_idenqa_runner_v1_runner_proto_depIdxs = []int32{
 	31, // 27: idenqa.runner.v1.ProviderRequest.restrictions:type_name -> idenqa.runner.v1.ProviderRestrictions
 	33, // 28: idenqa.runner.v1.ProviderRequest.configuration:type_name -> idenqa.runner.v1.ProviderConfigurationReference
 	22, // 29: idenqa.runner.v1.ProviderRequest.evidence:type_name -> idenqa.runner.v1.EvidenceGrantReference
-	43, // 30: idenqa.runner.v1.ProviderRequest.deadline:type_name -> google.protobuf.Timestamp
+	45, // 30: idenqa.runner.v1.ProviderRequest.deadline:type_name -> google.protobuf.Timestamp
 	21, // 31: idenqa.runner.v1.ProviderRequest.trace:type_name -> idenqa.runner.v1.TraceContext
 	23, // 32: idenqa.runner.v1.ProviderRequest.inputs:type_name -> idenqa.runner.v1.ProviderInputReference
 	20, // 33: idenqa.runner.v1.ProviderResult.contract:type_name -> idenqa.runner.v1.Version
 	2,  // 34: idenqa.runner.v1.ProviderResult.outcome:type_name -> idenqa.runner.v1.ResultOutcome
 	26, // 35: idenqa.runner.v1.ProviderResult.signals:type_name -> idenqa.runner.v1.Signal
 	27, // 36: idenqa.runner.v1.ProviderResult.failure:type_name -> idenqa.runner.v1.Failure
-	43, // 37: idenqa.runner.v1.ProviderResult.completed_at:type_name -> google.protobuf.Timestamp
+	45, // 37: idenqa.runner.v1.ProviderResult.completed_at:type_name -> google.protobuf.Timestamp
 	20, // 38: idenqa.runner.v1.ModelProvenance.contract:type_name -> idenqa.runner.v1.Version
-	44, // 39: idenqa.runner.v1.ModelRestrictions.maximum_duration:type_name -> google.protobuf.Duration
+	46, // 39: idenqa.runner.v1.ModelRestrictions.maximum_duration:type_name -> google.protobuf.Duration
 	36, // 40: idenqa.runner.v1.ModelManifest.provenance:type_name -> idenqa.runner.v1.ModelProvenance
 	37, // 41: idenqa.runner.v1.ModelManifest.capabilities:type_name -> idenqa.runner.v1.ModelCapability
 	38, // 42: idenqa.runner.v1.ModelManifest.restrictions:type_name -> idenqa.runner.v1.ModelRestrictions
@@ -3059,34 +3174,38 @@ var file_idenqa_runner_v1_runner_proto_depIdxs = []int32{
 	38, // 46: idenqa.runner.v1.ModelRequest.restrictions:type_name -> idenqa.runner.v1.ModelRestrictions
 	40, // 47: idenqa.runner.v1.ModelRequest.configuration:type_name -> idenqa.runner.v1.ModelConfigurationReference
 	22, // 48: idenqa.runner.v1.ModelRequest.evidence:type_name -> idenqa.runner.v1.EvidenceGrantReference
-	43, // 49: idenqa.runner.v1.ModelRequest.deadline:type_name -> google.protobuf.Timestamp
+	45, // 49: idenqa.runner.v1.ModelRequest.deadline:type_name -> google.protobuf.Timestamp
 	21, // 50: idenqa.runner.v1.ModelRequest.trace:type_name -> idenqa.runner.v1.TraceContext
 	20, // 51: idenqa.runner.v1.ModelResult.contract:type_name -> idenqa.runner.v1.Version
 	2,  // 52: idenqa.runner.v1.ModelResult.outcome:type_name -> idenqa.runner.v1.ResultOutcome
 	26, // 53: idenqa.runner.v1.ModelResult.signals:type_name -> idenqa.runner.v1.Signal
 	27, // 54: idenqa.runner.v1.ModelResult.failure:type_name -> idenqa.runner.v1.Failure
-	43, // 55: idenqa.runner.v1.ModelResult.completed_at:type_name -> google.protobuf.Timestamp
-	4,  // 56: idenqa.runner.v1.ProviderRunnerService.Manifest:input_type -> idenqa.runner.v1.ProviderRunnerServiceManifestRequest
-	6,  // 57: idenqa.runner.v1.ProviderRunnerService.ValidateConfiguration:input_type -> idenqa.runner.v1.ProviderRunnerServiceValidateConfigurationRequest
-	8,  // 58: idenqa.runner.v1.ProviderRunnerService.Execute:input_type -> idenqa.runner.v1.ProviderRunnerServiceExecuteRequest
-	10, // 59: idenqa.runner.v1.ProviderRunnerService.Health:input_type -> idenqa.runner.v1.ProviderRunnerServiceHealthRequest
-	12, // 60: idenqa.runner.v1.ModelRunnerService.Manifest:input_type -> idenqa.runner.v1.ModelRunnerServiceManifestRequest
-	14, // 61: idenqa.runner.v1.ModelRunnerService.ValidateConfiguration:input_type -> idenqa.runner.v1.ModelRunnerServiceValidateConfigurationRequest
-	16, // 62: idenqa.runner.v1.ModelRunnerService.Execute:input_type -> idenqa.runner.v1.ModelRunnerServiceExecuteRequest
-	18, // 63: idenqa.runner.v1.ModelRunnerService.Health:input_type -> idenqa.runner.v1.ModelRunnerServiceHealthRequest
-	5,  // 64: idenqa.runner.v1.ProviderRunnerService.Manifest:output_type -> idenqa.runner.v1.ProviderRunnerServiceManifestResponse
-	7,  // 65: idenqa.runner.v1.ProviderRunnerService.ValidateConfiguration:output_type -> idenqa.runner.v1.ProviderRunnerServiceValidateConfigurationResponse
-	9,  // 66: idenqa.runner.v1.ProviderRunnerService.Execute:output_type -> idenqa.runner.v1.ProviderRunnerServiceExecuteResponse
-	11, // 67: idenqa.runner.v1.ProviderRunnerService.Health:output_type -> idenqa.runner.v1.ProviderRunnerServiceHealthResponse
-	13, // 68: idenqa.runner.v1.ModelRunnerService.Manifest:output_type -> idenqa.runner.v1.ModelRunnerServiceManifestResponse
-	15, // 69: idenqa.runner.v1.ModelRunnerService.ValidateConfiguration:output_type -> idenqa.runner.v1.ModelRunnerServiceValidateConfigurationResponse
-	17, // 70: idenqa.runner.v1.ModelRunnerService.Execute:output_type -> idenqa.runner.v1.ModelRunnerServiceExecuteResponse
-	19, // 71: idenqa.runner.v1.ModelRunnerService.Health:output_type -> idenqa.runner.v1.ModelRunnerServiceHealthResponse
-	64, // [64:72] is the sub-list for method output_type
-	56, // [56:64] is the sub-list for method input_type
-	56, // [56:56] is the sub-list for extension type_name
-	56, // [56:56] is the sub-list for extension extendee
-	0,  // [0:56] is the sub-list for field type_name
+	45, // 55: idenqa.runner.v1.ModelResult.completed_at:type_name -> google.protobuf.Timestamp
+	34, // 56: idenqa.runner.v1.ProviderRunnerServiceAdvanceRequest.request:type_name -> idenqa.runner.v1.ProviderRequest
+	35, // 57: idenqa.runner.v1.ProviderRunnerServiceAdvanceResponse.result:type_name -> idenqa.runner.v1.ProviderResult
+	4,  // 58: idenqa.runner.v1.ProviderRunnerService.Manifest:input_type -> idenqa.runner.v1.ProviderRunnerServiceManifestRequest
+	6,  // 59: idenqa.runner.v1.ProviderRunnerService.ValidateConfiguration:input_type -> idenqa.runner.v1.ProviderRunnerServiceValidateConfigurationRequest
+	8,  // 60: idenqa.runner.v1.ProviderRunnerService.Execute:input_type -> idenqa.runner.v1.ProviderRunnerServiceExecuteRequest
+	43, // 61: idenqa.runner.v1.ProviderRunnerService.Advance:input_type -> idenqa.runner.v1.ProviderRunnerServiceAdvanceRequest
+	10, // 62: idenqa.runner.v1.ProviderRunnerService.Health:input_type -> idenqa.runner.v1.ProviderRunnerServiceHealthRequest
+	12, // 63: idenqa.runner.v1.ModelRunnerService.Manifest:input_type -> idenqa.runner.v1.ModelRunnerServiceManifestRequest
+	14, // 64: idenqa.runner.v1.ModelRunnerService.ValidateConfiguration:input_type -> idenqa.runner.v1.ModelRunnerServiceValidateConfigurationRequest
+	16, // 65: idenqa.runner.v1.ModelRunnerService.Execute:input_type -> idenqa.runner.v1.ModelRunnerServiceExecuteRequest
+	18, // 66: idenqa.runner.v1.ModelRunnerService.Health:input_type -> idenqa.runner.v1.ModelRunnerServiceHealthRequest
+	5,  // 67: idenqa.runner.v1.ProviderRunnerService.Manifest:output_type -> idenqa.runner.v1.ProviderRunnerServiceManifestResponse
+	7,  // 68: idenqa.runner.v1.ProviderRunnerService.ValidateConfiguration:output_type -> idenqa.runner.v1.ProviderRunnerServiceValidateConfigurationResponse
+	9,  // 69: idenqa.runner.v1.ProviderRunnerService.Execute:output_type -> idenqa.runner.v1.ProviderRunnerServiceExecuteResponse
+	44, // 70: idenqa.runner.v1.ProviderRunnerService.Advance:output_type -> idenqa.runner.v1.ProviderRunnerServiceAdvanceResponse
+	11, // 71: idenqa.runner.v1.ProviderRunnerService.Health:output_type -> idenqa.runner.v1.ProviderRunnerServiceHealthResponse
+	13, // 72: idenqa.runner.v1.ModelRunnerService.Manifest:output_type -> idenqa.runner.v1.ModelRunnerServiceManifestResponse
+	15, // 73: idenqa.runner.v1.ModelRunnerService.ValidateConfiguration:output_type -> idenqa.runner.v1.ModelRunnerServiceValidateConfigurationResponse
+	17, // 74: idenqa.runner.v1.ModelRunnerService.Execute:output_type -> idenqa.runner.v1.ModelRunnerServiceExecuteResponse
+	19, // 75: idenqa.runner.v1.ModelRunnerService.Health:output_type -> idenqa.runner.v1.ModelRunnerServiceHealthResponse
+	67, // [67:76] is the sub-list for method output_type
+	58, // [58:67] is the sub-list for method input_type
+	58, // [58:58] is the sub-list for extension type_name
+	58, // [58:58] is the sub-list for extension extendee
+	0,  // [0:58] is the sub-list for field type_name
 }
 
 func init() { file_idenqa_runner_v1_runner_proto_init() }
@@ -3100,7 +3219,7 @@ func file_idenqa_runner_v1_runner_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_idenqa_runner_v1_runner_proto_rawDesc), len(file_idenqa_runner_v1_runner_proto_rawDesc)),
 			NumEnums:      4,
-			NumMessages:   39,
+			NumMessages:   41,
 			NumExtensions: 0,
 			NumServices:   2,
 		},

@@ -21,4 +21,14 @@ normalised result. MRZ and barcode extraction are provider capabilities in the
 initial pack; the SDK captures the document image but does not claim a parsed
 or authentic machine-readable zone.
 
-NFC and voice are intentionally absent from this version.
+The v1 schema is deliberately the built-in live-camera plan and therefore does
+not pretend that NFC, voice, a provider SDK, or another transport has camera or
+liveness fields. Capture surfaces may implement those profile-approved methods
+through owner-namespaced method adapters (for example,
+`com.example.method.secure_nfc`) with their own versioned acquisition contract.
+An adapter is bound to the exact session requirement and may report only safe,
+closed progress. It completes a capture step only when authoritative Core
+progress confirms that exact requirement, artefact, method, and fallback.
+Adapter return values, device capability advertisements, local prompts, NFC
+payloads, voice transcripts, and provider callbacks cannot self-assert
+assurance.
