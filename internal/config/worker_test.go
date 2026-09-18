@@ -27,7 +27,7 @@ func TestLoadWorkerConfiguration(t *testing.T) {
 		configuration.ReconciliationSweepInterval != time.Minute ||
 		configuration.ReconciliationBatchSize != 100 ||
 		configuration.ReconciliationItemLease != 2*time.Minute ||
-		configuration.ProgressPollInterval != time.Second {
+		configuration.ProgressPollInterval != time.Second || configuration.SyntheticProcessing {
 		t.Fatalf("LoadWorker() = %+v", configuration)
 	}
 }
@@ -37,5 +37,16 @@ func TestLoadWorkerRequiresDeploymentIdentity(t *testing.T) {
 	setRequiredAPIEnvironment(t)
 	if _, err := config.LoadWorker(""); err == nil {
 		t.Fatal("LoadWorker() error = nil")
+	}
+}
+
+func TestLoadWorkerSyntheticProcessingOptIn(t *testing.T) {
+	clearIDENQAEnvironment(t)
+	setRequiredAPIEnvironment(t)
+	t.Setenv("IDENQA_HEADGATE_INSTALLATION_ID", "idenqa-test")
+	t.Setenv("IDENQA_WORKER_SYNTHETIC_PROCESSING", "true")
+	configuration, err := config.LoadWorker("")
+	if err != nil || !configuration.SyntheticProcessing {
+		t.Fatalf("synthetic processing opt-in = %v, %v", configuration.SyntheticProcessing, err)
 	}
 }

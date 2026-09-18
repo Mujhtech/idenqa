@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -150,6 +151,48 @@ func (CaptureTokenKeys) GoString() string { return "[REDACTED]" }
 // MarshalJSON prevents diagnostics from serialising capture-token keys.
 func (CaptureTokenKeys) MarshalJSON() ([]byte, error) { return json.Marshal("[REDACTED]") }
 
+// OutcomeTokenKeys is redacting, versioned outcome-token HMAC configuration.
+// It is purpose-separated from capture-token keys and all other credentials.
+type OutcomeTokenKeys struct {
+	values map[uint16][]byte
+}
+
+// Decode implements envconfig.Decoder.
+func (keys *OutcomeTokenKeys) Decode(value string) error {
+	if keys == nil {
+		return errors.New("outcome-token key destination is required")
+	}
+	decoded, err := decodeVersionedSecrets(value, "outcome-token keys")
+	if err != nil {
+		return err
+	}
+	keys.values = decoded
+
+	return nil
+}
+
+// Values returns a defensive copy for constructing the outcome-token keyring.
+func (keys OutcomeTokenKeys) Values() map[uint16][]byte {
+	result := make(map[uint16][]byte, len(keys.values))
+	for version, material := range keys.values {
+		result[version] = append([]byte(nil), material...)
+	}
+
+	return result
+}
+
+// IsZero reports whether no outcome-token keys were supplied.
+func (keys OutcomeTokenKeys) IsZero() bool { return len(keys.values) == 0 }
+
+// String redacts all outcome-token key material.
+func (OutcomeTokenKeys) String() string { return "[REDACTED]" }
+
+// GoString redacts all outcome-token key material in %#v formatting.
+func (OutcomeTokenKeys) GoString() string { return "[REDACTED]" }
+
+// MarshalJSON prevents diagnostics from serialising outcome-token keys.
+func (OutcomeTokenKeys) MarshalJSON() ([]byte, error) { return json.Marshal("[REDACTED]") }
+
 func decodeVersionedSecrets(value, label string) (map[uint16][]byte, error) {
 	if value == "" || strings.TrimSpace(value) != value {
 		return nil, fmt.Errorf("%s must be non-empty and contain no surrounding whitespace", label)
@@ -273,6 +316,9 @@ func (TelemetryHeaders) MarshalJSON() ([]byte, error) { return json.Marshal("[RE
 
 // API is the configuration required by the public API process.
 type API struct {
+	ReviewAuthorityFile string `envconfig:"REVIEW_AUTHORITY_FILE"`
+	ProviderRuntimeFile string `envconfig:"PROVIDER_RUNTIME_FILE"`
+	ModelRuntimeFile    string `envconfig:"MODEL_RUNTIME_FILE"`
 	EvidenceUploadConfiguration
 	EvidenceLocalDirectory     string           `envconfig:"EVIDENCE_LOCAL_DIRECTORY"`
 	EvidenceLocalKeyringFile   string           `envconfig:"EVIDENCE_LOCAL_KEYRING_FILE"`
@@ -302,10 +348,14 @@ type API struct {
 	ProfileIdempotencyTTL      time.Duration    `envconfig:"PROFILE_IDEMPOTENCY_RETENTION" default:"24h"`
 	CaptureTokenActiveVersion  uint16           `envconfig:"CAPTURE_TOKEN_ACTIVE_KEY_VERSION"`
 	CaptureTokenKeys           CaptureTokenKeys `envconfig:"CAPTURE_TOKEN_KEYS"`
+	OutcomeTokenActiveVersion  uint16           `envconfig:"OUTCOME_TOKEN_ACTIVE_KEY_VERSION"`
+	OutcomeTokenKeys           OutcomeTokenKeys `envconfig:"OUTCOME_TOKEN_KEYS"`
 	VerificationDefaultTTL     time.Duration    `envconfig:"VERIFICATION_DEFAULT_TTL" default:"24h"`
 	VerificationMaximumTTL     time.Duration    `envconfig:"VERIFICATION_MAXIMUM_TTL" default:"168h"`
 	CaptureTokenDefaultTTL     time.Duration    `envconfig:"CAPTURE_TOKEN_DEFAULT_TTL" default:"30m"`
 	CaptureTokenMaximumTTL     time.Duration    `envconfig:"CAPTURE_TOKEN_MAXIMUM_TTL" default:"2h"`
+	OutcomeTokenDefaultPostTTL time.Duration    `envconfig:"OUTCOME_TOKEN_DEFAULT_POST_EXPIRY_TTL" default:"24h"`
+	OutcomeTokenMaximumPostTTL time.Duration    `envconfig:"OUTCOME_TOKEN_MAXIMUM_POST_EXPIRY_TTL" default:"168h"`
 	NativeApplicationIDs       []string         `envconfig:"NATIVE_APPLICATION_IDS"`
 	VerificationIdempotencyTTL time.Duration    `envconfig:"VERIFICATION_IDEMPOTENCY_RETENTION" default:"24h"`
 	Region                     string           `envconfig:"REGION"`
@@ -408,7 +458,7 @@ func loadAPIInto(envFile string, target any, configuration *API, providerEvidenc
 	}
 
 	err := withEnvFile(envFile, func() error {
-		if err := envconfig.CheckDisallowed(prefix, target); err != nil {
+		if err := checkDisallowedCoreEnvironment(target); err != nil {
 			return fmt.Errorf("check API environment: %w", err)
 		}
 		if err := envconfig.Process(prefix, target); err != nil {
@@ -427,6 +477,68 @@ func loadAPIInto(envFile string, target any, configuration *API, providerEvidenc
 	}
 
 	return nil
+}
+
+// checkDisallowedCoreEnvironment validates the complete open-source core
+// namespace. API processes and administrative commands commonly share one
+// dotenv file with the worker, so documented worker settings must not be
+// mistaken for misspelled API settings. Deployment-owned targets remain part
+// of the checked schema, preserving strict validation for their extensions.
+func checkDisallowedCoreEnvironment(target any) error {
+	targetType := reflect.TypeOf(target)
+	if targetType == nil || targetType.Kind() != reflect.Pointer ||
+		targetType.Elem().Kind() != reflect.Struct {
+		return errors.New("API configuration target must be a pointer to a struct")
+	}
+
+	allowed := make(map[string]struct{})
+	collectEnvironmentKeys(targetType.Elem(), prefix, allowed)
+	collectEnvironmentKeys(reflect.TypeFor[Worker](), prefix, allowed)
+
+	environmentPrefix := prefix + "_"
+	for _, entry := range os.Environ() {
+		name, _, _ := strings.Cut(entry, "=")
+		if !strings.HasPrefix(name, environmentPrefix) {
+			continue
+		}
+		if _, exists := allowed[name]; !exists {
+			return fmt.Errorf("unknown environment variable %s", name)
+		}
+	}
+
+	return nil
+}
+
+func collectEnvironmentKeys(configurationType reflect.Type, keyPrefix string, allowed map[string]struct{}) {
+	for configurationType.Kind() == reflect.Pointer {
+		configurationType = configurationType.Elem()
+	}
+	for index := range configurationType.NumField() {
+		field := configurationType.Field(index)
+		if field.PkgPath != "" || strings.EqualFold(field.Tag.Get("ignored"), "true") {
+			continue
+		}
+
+		name := field.Tag.Get("envconfig")
+		if name == "" {
+			name = field.Name
+		}
+		key := strings.ToUpper(keyPrefix + "_" + name)
+		fieldType := field.Type
+		for fieldType.Kind() == reflect.Pointer {
+			fieldType = fieldType.Elem()
+		}
+		if fieldType.Kind() == reflect.Struct && field.Tag.Get("envconfig") == "" {
+			nestedPrefix := key
+			if field.Anonymous {
+				nestedPrefix = keyPrefix
+			}
+			collectEnvironmentKeys(fieldType, nestedPrefix, allowed)
+			continue
+		}
+
+		allowed[key] = struct{}{}
+	}
 }
 
 func (configuration API) validate(providerEvidence bool) error {
@@ -494,6 +606,14 @@ func (configuration API) validate(providerEvidence bool) error {
 			return errors.New("capture-token active key version is not configured")
 		}
 	}
+	if (configuration.OutcomeTokenActiveVersion == 0) != configuration.OutcomeTokenKeys.IsZero() {
+		return errors.New("outcome-token active key version and keys must be configured together")
+	}
+	if configuration.OutcomeTokenActiveVersion != 0 {
+		if _, exists := configuration.OutcomeTokenKeys.values[configuration.OutcomeTokenActiveVersion]; !exists {
+			return errors.New("outcome-token active key version is not configured")
+		}
+	}
 	if configuration.VerificationDefaultTTL <= 0 ||
 		configuration.VerificationMaximumTTL < configuration.VerificationDefaultTTL {
 		return errors.New("verification default lifetime must be positive and not exceed its maximum")
@@ -502,6 +622,11 @@ func (configuration API) validate(providerEvidence bool) error {
 		configuration.CaptureTokenMaximumTTL < configuration.CaptureTokenDefaultTTL ||
 		configuration.CaptureTokenMaximumTTL > configuration.VerificationMaximumTTL {
 		return errors.New("capture-token lifetimes must be positive, ordered, and within the verification maximum")
+	}
+	if configuration.OutcomeTokenDefaultPostTTL <= 0 ||
+		configuration.OutcomeTokenMaximumPostTTL < configuration.OutcomeTokenDefaultPostTTL ||
+		configuration.OutcomeTokenMaximumPostTTL > 30*24*time.Hour {
+		return errors.New("outcome-token post-expiry lifetimes must be positive, ordered, and no more than 30 days")
 	}
 	if configuration.VerificationIdempotencyTTL <= 0 {
 		return errors.New("verification idempotency retention must be greater than zero")

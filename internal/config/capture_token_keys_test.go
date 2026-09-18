@@ -54,6 +54,31 @@ func TestLoadAPICaptureTokenConfiguration(t *testing.T) {
 	}
 }
 
+func TestOutcomeTokenKeysDecodeAndRedaction(t *testing.T) {
+	t.Parallel()
+
+	one := base64.RawURLEncoding.EncodeToString(bytes.Repeat([]byte{8}, 32))
+	var keys config.OutcomeTokenKeys
+	if err := keys.Decode("1=" + one); err != nil {
+		t.Fatalf("Decode() error = %v", err)
+	}
+	values := keys.Values()
+	values[1][0] = 99
+	if got := keys.Values(); got[1][0] != 8 {
+		t.Fatal("Values() exposed internal outcome-token key configuration")
+	}
+	if got := fmt.Sprintf("%s|%#v", keys, keys); got != "[REDACTED]|[REDACTED]" {
+		t.Fatalf("formatted outcome-token keys = %q", got)
+	}
+	encoded, err := json.Marshal(keys)
+	if err != nil {
+		t.Fatalf("json.Marshal() error = %v", err)
+	}
+	if strings.Contains(string(encoded), one) || string(encoded) != `"[REDACTED]"` {
+		t.Fatalf("JSON outcome-token keys = %s", encoded)
+	}
+}
+
 func TestLoadAPIRejectsInvalidCaptureTokenConfiguration(t *testing.T) {
 	key := base64.RawURLEncoding.EncodeToString(bytes.Repeat([]byte{4}, 32))
 	tests := []map[string]string{
@@ -65,6 +90,9 @@ func TestLoadAPIRejectsInvalidCaptureTokenConfiguration(t *testing.T) {
 		{"IDENQA_CAPTURE_TOKEN_DEFAULT_TTL": "0s"},
 		{"IDENQA_CAPTURE_TOKEN_DEFAULT_TTL": "2h", "IDENQA_CAPTURE_TOKEN_MAXIMUM_TTL": "1h"},
 		{"IDENQA_VERIFICATION_MAXIMUM_TTL": "1h", "IDENQA_CAPTURE_TOKEN_MAXIMUM_TTL": "2h"},
+		{"IDENQA_OUTCOME_TOKEN_DEFAULT_POST_EXPIRY_TTL": "0s"},
+		{"IDENQA_OUTCOME_TOKEN_DEFAULT_POST_EXPIRY_TTL": "2h", "IDENQA_OUTCOME_TOKEN_MAXIMUM_POST_EXPIRY_TTL": "1h"},
+		{"IDENQA_OUTCOME_TOKEN_MAXIMUM_POST_EXPIRY_TTL": "721h"},
 		{"IDENQA_VERIFICATION_IDEMPOTENCY_RETENTION": "0s"},
 	}
 	for index, environment := range tests {

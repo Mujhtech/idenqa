@@ -46,6 +46,8 @@ func TestLoadAPI(t *testing.T) {
 				VerificationMaximumTTL:      168 * time.Hour,
 				CaptureTokenDefaultTTL:      30 * time.Minute,
 				CaptureTokenMaximumTTL:      2 * time.Hour,
+				OutcomeTokenDefaultPostTTL:  24 * time.Hour,
+				OutcomeTokenMaximumPostTTL:  168 * time.Hour,
 				VerificationIdempotencyTTL:  24 * time.Hour,
 				Region:                      "local",
 				RealtimeWebSocketURL:        "ws://127.0.0.1:8080/v1/capture/socket",
@@ -113,6 +115,8 @@ func TestLoadAPI(t *testing.T) {
 				VerificationMaximumTTL:     168 * time.Hour,
 				CaptureTokenDefaultTTL:     30 * time.Minute,
 				CaptureTokenMaximumTTL:     2 * time.Hour,
+				OutcomeTokenDefaultPostTTL: 24 * time.Hour,
+				OutcomeTokenMaximumPostTTL: 168 * time.Hour,
 				VerificationIdempotencyTTL: 24 * time.Hour,
 				Region:                     "eu-west-1",
 				RealtimeWebSocketURL:       "wss://core.example/v1/capture/socket",
@@ -356,6 +360,8 @@ func TestLoadAPI(t *testing.T) {
 				VerificationMaximumTTL:      168 * time.Hour,
 				CaptureTokenDefaultTTL:      30 * time.Minute,
 				CaptureTokenMaximumTTL:      2 * time.Hour,
+				OutcomeTokenDefaultPostTTL:  24 * time.Hour,
+				OutcomeTokenMaximumPostTTL:  168 * time.Hour,
 				VerificationIdempotencyTTL:  24 * time.Hour,
 				Region:                      "local",
 				RealtimeWebSocketURL:        "ws://127.0.0.1:8080/v1/capture/socket",
@@ -467,6 +473,27 @@ func TestLoadAPIProcessEnvironmentWinsOverDotenv(t *testing.T) {
 	}
 	if _, exists := os.LookupEnv("IDENQA_LOG_LEVEL"); exists {
 		t.Error("dotenv-only value persisted in the process environment")
+	}
+}
+
+func TestLoadAPIAcceptsWorkerSettingsFromSharedEnvironment(t *testing.T) {
+	clearIDENQAEnvironment(t)
+	setRequiredAPIEnvironment(t)
+	t.Setenv("IDENQA_WORKER_VERIFICATION_CONCURRENCY", "12")
+
+	if _, err := config.LoadAPI(""); err != nil {
+		t.Fatalf("LoadAPI() error = %v", err)
+	}
+}
+
+func TestLoadAPIRejectsUnknownWorkerSettingFromSharedEnvironment(t *testing.T) {
+	clearIDENQAEnvironment(t)
+	setRequiredAPIEnvironment(t)
+	t.Setenv("IDENQA_WORKER_VERIFICATON_CONCURRENCY", "12")
+
+	_, err := config.LoadAPI("")
+	if err == nil || !strings.Contains(err.Error(), "unknown environment variable") {
+		t.Fatalf("LoadAPI() error = %v, want unknown environment variable", err)
 	}
 }
 

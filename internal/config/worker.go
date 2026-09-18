@@ -9,7 +9,10 @@ import (
 
 // Worker is the configuration owned by the open-source background worker.
 type Worker struct {
+	ReviewRoutingFile string `envconfig:"REVIEW_ROUTING_FILE"`
 	API
+	// SyntheticProcessing enables the v1 fixture plan only on synthetic-data installations.
+	SyntheticProcessing           bool          `envconfig:"WORKER_SYNTHETIC_PROCESSING" default:"false"`
 	WorkerID                      string        `envconfig:"WORKER_ID"`
 	VerificationWorkers           int           `envconfig:"WORKER_VERIFICATION_CONCURRENCY" default:"8"`
 	EvidenceWorkers               int           `envconfig:"WORKER_EVIDENCE_CONCURRENCY" default:"4"`
