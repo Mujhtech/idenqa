@@ -359,7 +359,7 @@ func testRecaptureReevaluation(t *testing.T, f captureAcceptanceFixture, store *
 	if err != nil {
 		t.Fatal(err)
 	}
-	completion, err := verificationpostgres.NewCompletionStore(f.runtime, f.ids, completionProbe{}, fixedIntegrationClock{now: at})
+	completion, err := verificationpostgres.NewCompletionStore(f.runtime, f.ids, fixedIntegrationClock{now: at})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -431,7 +431,7 @@ func testRecaptureReevaluation(t *testing.T, f captureAcceptanceFixture, store *
 		t.Fatalf("tampered recapture=%v", err)
 	}
 	if terminal {
-		failingCompletion, err := verificationpostgres.NewCompletionStore(f.runtime, f.ids, completionProbe{fail: true}, fixedIntegrationClock{now: at})
+		failingCompletion, err := verificationpostgres.NewCompletionStore(f.runtime, failingCompletionIdentifiers{}, fixedIntegrationClock{now: at})
 		if err != nil {
 			t.Fatal(err)
 		}

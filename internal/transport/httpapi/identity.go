@@ -72,7 +72,12 @@ func (r *IdentityRoutes) update(w http.ResponseWriter, q *http.Request) {
 	r.execute(w, q, identity.Command{Operation: "update", ExpectedVersion: body.ExpectedVersion, ExternalReference: body.ExternalReference, State: body.State})
 }
 func (r *IdentityRoutes) remove(w http.ResponseWriter, q *http.Request) {
-	r.versionCommand(w, q, "delete")
+	version, e := strconv.ParseInt(q.URL.Query().Get("expected_version"), 10, 64)
+	if e != nil {
+		r.reply(w, q, 0, nil, invalidRequest(e))
+		return
+	}
+	r.execute(w, q, identity.Command{Operation: "delete", ExpectedVersion: version})
 }
 func (r *IdentityRoutes) link(w http.ResponseWriter, q *http.Request) { r.versionCommand(w, q, "link") }
 func (r *IdentityRoutes) rebuild(w http.ResponseWriter, q *http.Request) {

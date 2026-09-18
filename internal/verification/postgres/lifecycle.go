@@ -9,7 +9,9 @@ import (
 	"fmt"
 	"time"
 
+	webhookv1 "github.com/Mujhtech/idenqa/contracts/webhook/v1"
 	auditpostgres "github.com/Mujhtech/idenqa/internal/audit/postgres"
+	deliverypostgres "github.com/Mujhtech/idenqa/internal/delivery/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	platformpostgres "github.com/Mujhtech/idenqa/internal/platform/postgres"
@@ -184,7 +186,45 @@ VALUES ($1,$2,'verification',$3,$4,$5,1,$6,$7,$7)`, command.EventID.String(), sc
 		EventID: command.EventID.String(), EventType: lifecycleEvent, AggregateID: command.VerificationID.String(),
 		ActorID: command.ActorID, EventDigest: digest, OccurredAt: command.OccurredAt,
 	})
-	return err
+	if err != nil {
+		return err
+	}
+
+	return emitLifecycleWebhook(ctx, tx, scope, command, next)
+}
+
+var lifecycleWebhookEvents = map[verification.SessionState]webhookv1.Type{
+	verification.SessionStateCreated:       webhookv1.VerificationCreated,
+	verification.SessionStateCollecting:    webhookv1.VerificationCollecting,
+	verification.SessionStateProcessing:    webhookv1.VerificationProcessing,
+	verification.SessionStateAwaitingInput: webhookv1.VerificationRequiresInput,
+	verification.SessionStateManualReview:  webhookv1.VerificationRequiresReview,
+	verification.SessionStateCancelled:     webhookv1.VerificationCancelled,
+	verification.SessionStateFailed:        webhookv1.VerificationFailed,
+	verification.SessionStateExpired:       webhookv1.VerificationExpired,
+}
+
+// emitLifecycleWebhook publishes the catalogue transition, if one is selected.
+// Completion is published by the completion effect because it carries the
+// subject and decision references.
+func emitLifecycleWebhook(ctx context.Context, tx platformpostgres.Transaction, scope tenant.Scope, command verification.LifecycleCommand, next verification.Lifecycle) error {
+	eventType, exists := lifecycleWebhookEvents[next.State]
+	if !exists {
+		return nil
+	}
+	var region string
+	if err := tx.QueryRow(ctx, `SELECT COALESCE(region,'') FROM idenqa.verification_sessions WHERE tenant_id=$1 AND id=$2`, scope.ID().String(), command.VerificationID.String()).Scan(&region); err != nil {
+		return fmt.Errorf("load verification region: %w", err)
+	}
+	if region == "" {
+		// Sessions without a persisted region predate regional pinning; they emit no catalogue event.
+		return nil
+	}
+	seed := string(eventType) + ":" + command.VerificationID.String() + ":" + fmt.Sprint(next.Version)
+	fields := map[string]any{"verification_id": command.VerificationID.String(), "version": next.Version,
+		"verification": map[string]any{"id": command.VerificationID.String(), "type": "verification.session", "status": string(next.State), "version": next.Version}}
+
+	return deliverypostgres.EmitCatalogueEvent(ctx, tx, scope.ID().String(), region, eventType, seed, command.OccurredAt, fields)
 }
 
 func lifecycleCommandDigest(command verification.LifecycleCommand) ([]byte, string, error) {

@@ -19,6 +19,12 @@ import (
 	verificationpostgres "github.com/Mujhtech/idenqa/internal/verification/postgres"
 )
 
+type failingCompletionIdentifiers struct{}
+
+func (failingCompletionIdentifiers) NewEvent() (id.Event, error) {
+	return id.Event{}, errPlannedQueueFailure
+}
+
 type reviewEvaluator struct {
 	reference   policy.EvaluatorReference
 	calls       int
@@ -123,7 +129,11 @@ func TestAcceptedReviewEvaluationAtomicCompletionAndReplay(t *testing.T) {
 					t.Fatal(err)
 				}
 				evaluator := &reviewEvaluator{reference: routing.Snapshot().Evaluator(), nonterminal: scenario == "nonterminal" || scenario == "recapture_terminal"}
-				completion, err := verificationpostgres.NewCompletionStore(f.runtime, f.ids, completionProbe{fail: true}, source)
+				identifiers := verificationpostgres.CompletionIdentifiers(f.ids)
+				if scenario == "terminal" {
+					identifiers = failingCompletionIdentifiers{}
+				}
+				completion, err := verificationpostgres.NewCompletionStore(f.runtime, identifiers, source)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -195,7 +205,7 @@ func TestAcceptedReviewEvaluationAtomicCompletionAndReplay(t *testing.T) {
 						t.Fatalf("partial evaluation=%d %v", count, err)
 					}
 				}
-				completion, err = verificationpostgres.NewCompletionStore(f.runtime, f.ids, completionProbe{}, source)
+				completion, err = verificationpostgres.NewCompletionStore(f.runtime, f.ids, source)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -212,7 +222,7 @@ func TestAcceptedReviewEvaluationAtomicCompletionAndReplay(t *testing.T) {
 					t.Fatal(err)
 				}
 				if scenario == "terminal" {
-					if state != "completed" || decisionCount != 1 || deliveryCount != 1 {
+					if state != "completed" || decisionCount != 1 || deliveryCount != 0 {
 						t.Fatalf("completion=%s %d %d", state, decisionCount, deliveryCount)
 					}
 				} else if state != "manual_review" || decisionCount != 0 || deliveryCount != 0 {

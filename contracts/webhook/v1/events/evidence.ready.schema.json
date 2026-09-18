@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "evidence.ready",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "type",
+    "schema_version",
+    "created_at",
+    "tenant_id",
+    "region",
+    "data"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^evt_[0-9A-HJKMNP-TV-Z]{26}$"
+    },
+    "type": {
+      "const": "evidence.ready"
+    },
+    "schema_version": {
+      "const": "1.0"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$"
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^ten_[0-9A-HJKMNP-TV-Z]{26}$"
+    },
+    "region": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "data": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "Idenqa webhook event data",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_id",
+        "verification_id"
+      ],
+      "properties": {
+        "evidence_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "verification_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "evidence_type": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "artefact": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "acquisition_method": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "assurances": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 32
+        },
+        "media_type": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "type": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "verification_id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "evidence_type": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "artefact": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "acquisition_method": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "assurances": {
+              "type": "array",
+              "maxItems": 32,
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

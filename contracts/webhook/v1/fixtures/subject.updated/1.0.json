@@ -1,0 +1,20 @@
+{
+  "id": "evt_01M11HEQG00000000000000000",
+  "type": "subject.updated",
+  "schema_version": "1.0",
+  "created_at": "2026-09-18T09:00:00Z",
+  "tenant_id": "ten_01M11HEQG00000000000000000",
+  "region": "eu-west",
+  "data": {
+    "subject_id": "sub_01M11HEQG00000000000000000",
+    "version": 1,
+    "state": "active",
+    "external_reference_set": true,
+    "subject": {
+      "id": "sub_01M11HEQG00000000000000000",
+      "type": "subject",
+      "state": "active",
+      "version": 2
+    }
+  }
+}

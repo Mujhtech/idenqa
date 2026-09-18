@@ -169,7 +169,7 @@ func TestVerificationStopCancellationRacesCompletion(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		completion, err := verificationpostgres.NewCompletionStore(f.runtime, f.ids, completionProbe{}, source)
+		completion, err := verificationpostgres.NewCompletionStore(f.runtime, f.ids, source)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -220,7 +220,7 @@ func TestVerificationStopCancellationRacesCompletion(t *testing.T) {
 		if state == "cancelled" && (decisionsCount != 0 || deliveries != 0) {
 			t.Fatal("completion effects escaped cancellation")
 		}
-		if state == "completed" && (decisionsCount != 1 || deliveries != 1) {
+		if state == "completed" && (decisionsCount != 1 || deliveries != 0) {
 			t.Fatal("partial completion")
 		}
 	})
@@ -319,7 +319,7 @@ func TestVerificationStopDeadlineWinsWaitingCompletionAndCancellation(t *testing
 		if err != nil {
 			t.Fatal(err)
 		}
-		completion, err := verificationpostgres.NewCompletionStore(f.runtime, f.ids, completionProbe{}, source)
+		completion, err := verificationpostgres.NewCompletionStore(f.runtime, f.ids, source)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -370,7 +370,7 @@ func TestVerificationStopDeadlineWinsWaitingCompletionAndCancellation(t *testing
 		}); err != nil {
 			t.Fatal(err)
 		}
-		assertCompletionCounts(t, f, 0, 0, 2, 2)
+		assertCompletionCounts(t, f, 0, 0, 0, 2, 2)
 		var state string
 		if err := f.admin.Native().QueryRow(t.Context(), `SELECT state FROM idenqa.verification_sessions WHERE id=$1`, f.creation.Session.ID().String()).Scan(&state); err != nil || state != "expired" {
 			t.Fatalf("deadline state=%s %v", state, err)

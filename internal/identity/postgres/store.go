@@ -6,9 +6,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
+	webhookv1 "github.com/Mujhtech/idenqa/contracts/webhook/v1"
 	auditpg "github.com/Mujhtech/idenqa/internal/audit/postgres"
+	deliverypostgres "github.com/Mujhtech/idenqa/internal/delivery/postgres"
 	"github.com/Mujhtech/idenqa/internal/identity"
 	platformcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
@@ -186,6 +189,9 @@ func (s *Store) executeWithin(ctx context.Context, tx pg.Transaction, scope tena
 	if e = s.event(ctx, tx, scope, c.Actor.String(), aggregate, version, "identity."+c.Operation, eventDigest, c.At); e != nil {
 		return result, e
 	}
+	if e = s.catalogueEvent(ctx, tx, scope, c, result); e != nil {
+		return result, e
+	}
 	b, e := json.Marshal(result)
 	if e != nil {
 		return result, e
@@ -202,6 +208,44 @@ func (s *Store) executeWithin(ctx context.Context, tx pg.Transaction, scope tena
 		return result, e
 	}
 	return result, idempg.Complete(ctx, queries, retry, receipt, c.At)
+}
+
+// catalogueEvent publishes the selected subject catalogue transitions only.
+func (s *Store) catalogueEvent(ctx context.Context, tx pg.Transaction, scope tenant.Scope, c identity.Command, result identity.Result) error {
+	if result.Subject == nil {
+		return nil
+	}
+	subject := result.Subject
+	seed := ""
+	eventType := webhookv1.Type("")
+	var fields map[string]any
+	switch c.Operation {
+	case "create":
+		eventType = webhookv1.SubjectCreated
+		seed = string(eventType) + ":" + subject.ID + ":" + strconv.FormatInt(subject.Version, 10)
+		fields = map[string]any{"subject_id": subject.ID, "version": subject.Version, "state": subject.State}
+	case "update":
+		eventType = webhookv1.SubjectUpdated
+		seed = string(eventType) + ":" + subject.ID + ":" + strconv.FormatInt(subject.Version, 10)
+		fields = map[string]any{"subject_id": subject.ID, "version": subject.Version, "state": subject.State}
+	case "delete":
+		if subject.DeletionID == "" {
+			return identity.ErrInvalid
+		}
+		eventType = webhookv1.SubjectDeletionRequested
+		seed = string(eventType) + ":" + subject.ID + ":" + subject.DeletionID
+		fields = map[string]any{"subject_id": subject.ID, "deletion_id": subject.DeletionID}
+	default:
+		return nil
+	}
+
+	nested := map[string]any{"id": subject.ID, "type": "subject", "state": subject.State, "version": subject.Version}
+	if subject.DeletionID != "" {
+		nested["deletion_id"] = subject.DeletionID
+	}
+	fields["subject"] = nested
+
+	return deliverypostgres.EmitCatalogueEvent(ctx, tx, scope.ID().String(), subject.Region, eventType, seed, c.At, fields)
 }
 
 func (s *Store) event(ctx context.Context, tx pg.Transaction, scope tenant.Scope, actor, aggregate string, version int64, kind, digest string, at time.Time) error {

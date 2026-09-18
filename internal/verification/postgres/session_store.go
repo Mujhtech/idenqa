@@ -6,9 +6,12 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"strconv"
 	"time"
 
+	webhookv1 "github.com/Mujhtech/idenqa/contracts/webhook/v1"
 	"github.com/Mujhtech/idenqa/internal/access"
+	deliverypostgres "github.com/Mujhtech/idenqa/internal/delivery/postgres"
 	"github.com/Mujhtech/idenqa/internal/evidence"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/platform/idempotency"
@@ -123,7 +126,7 @@ func (store *SessionStore) Create(
 		creation = verification.SessionCreation{
 			Session: session, Credential: credential, OutcomeCredential: outcomeCredential,
 		}
-		if err := store.insertCreation(ctx, queries, mutation, creation, registry); err != nil {
+		if err := store.insertCreation(ctx, tx, queries, mutation, creation, registry); err != nil {
 			return err
 		}
 		if err := policypg.PinAssuranceWithin(ctx, tx, scope, session.ID().String(), session.PolicyID().String()); err != nil {
@@ -411,6 +414,7 @@ func (store *SessionStore) read(
 
 func (store *SessionStore) insertCreation(
 	ctx context.Context,
+	tx platformpostgres.Transaction,
 	queries *sqlgen.Queries,
 	mutation verification.SessionCreateMutation,
 	creation verification.SessionCreation,
@@ -514,6 +518,20 @@ func (store *SessionStore) insertCreation(
 		CreatedAt:        timestamp(session.CreatedAt()),
 	}); err != nil {
 		return fmt.Errorf("insert verification outbox intent: %w", err)
+	}
+	seed := "verification.created:" + session.ID().String() + ":" + strconv.FormatInt(session.Version(), 10)
+	if err := deliverypostgres.EmitCatalogueEvent(ctx, tx, session.TenantID().String(), session.Region(), webhookv1.VerificationCreated, seed, session.CreatedAt(), map[string]any{
+		"verification_id": session.ID().String(),
+		"version":         session.Version(),
+		"verification": map[string]any{
+			"id":         session.ID().String(),
+			"type":       "verification.session",
+			"status":     string(session.State()),
+			"version":    session.Version(),
+			"created_at": session.CreatedAt().UTC().Format(time.RFC3339),
+		},
+	}); err != nil {
+		return err
 	}
 
 	return nil

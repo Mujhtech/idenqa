@@ -8,6 +8,7 @@ import (
 	"io"
 	"time"
 
+	webhookv1 "github.com/Mujhtech/idenqa/contracts/webhook/v1"
 	platformcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/platform/kms"
@@ -48,8 +49,20 @@ func NewManager(repository Repository, identifiers IdentifierGenerator, wrapper 
 	return &Manager{repository: repository, identifiers: identifiers, wrapper: wrapper, random: rand.Reader, now: now}, nil
 }
 
-// CreateEndpoint stores a fresh 256-bit secret only as KMS ciphertext and returns plaintext exactly once.
+// CreateEndpoint stores a fresh 256-bit secret and the default completion subscription.
 func (manager *Manager) CreateEndpoint(ctx context.Context, scope tenant.Scope, targetURL string) (Endpoint, []byte, error) {
+	return manager.CreateEndpointSubscribed(ctx, scope, targetURL, DefaultEventTypes)
+}
+
+// CreateEndpointSubscribed stores a fresh secret and an explicit event selection.
+func (manager *Manager) CreateEndpointSubscribed(ctx context.Context, scope tenant.Scope, targetURL string, eventTypes []string) (Endpoint, []byte, error) {
+	if len(eventTypes) == 0 {
+		eventTypes = DefaultEventTypes
+	}
+	selection, err := webhookv1.ValidateSubscriptions(eventTypes)
+	if err != nil {
+		return Endpoint{}, nil, ErrInvalid
+	}
 	identifier, err := manager.identifiers.NewWebhookEndpoint()
 	if err != nil {
 		return Endpoint{}, nil, fmt.Errorf("generate webhook endpoint id: %w", err)
@@ -60,12 +73,13 @@ func (manager *Manager) CreateEndpoint(ctx context.Context, scope tenant.Scope, 
 		return Endpoint{}, nil, err
 	}
 	endpoint := Endpoint{
-		ID:        identifier,
-		URL:       targetURL,
-		Active:    Secret{Version: 1, Wrapped: wrapped, CreatedAt: now},
-		Version:   1,
-		CreatedAt: now,
-		UpdatedAt: now,
+		ID:         identifier,
+		URL:        targetURL,
+		EventTypes: selection,
+		Active:     Secret{Version: 1, Wrapped: wrapped, CreatedAt: now},
+		Version:    1,
+		CreatedAt:  now,
+		UpdatedAt:  now,
 	}
 	if endpoint.Validate() != nil {
 		clear(secret)
@@ -103,6 +117,31 @@ func (manager *Manager) Rotate(ctx context.Context, scope tenant.Scope, endpoint
 		return Endpoint{}, nil, err
 	}
 	return next, secret, nil
+}
+
+// Subscribe replaces an endpoint's event selection under optimistic concurrency.
+func (manager *Manager) Subscribe(ctx context.Context, scope tenant.Scope, endpointID id.WebhookEndpoint, expectedVersion int64, eventTypes []string) (Endpoint, error) {
+	selection, err := webhookv1.ValidateSubscriptions(eventTypes)
+	if err != nil {
+		return Endpoint{}, ErrInvalid
+	}
+	current, err := manager.repository.FindEndpoint(ctx, scope, endpointID)
+	if err != nil {
+		return Endpoint{}, err
+	}
+	if current.Version != expectedVersion || !current.DisabledAt.IsZero() {
+		return Endpoint{}, ErrConflict
+	}
+	current.EventTypes = selection
+	current.Version, current.UpdatedAt = current.Version+1, manager.now().UTC()
+	if current.Validate() != nil {
+		return Endpoint{}, ErrInvalid
+	}
+	if err := manager.repository.UpdateEndpoint(ctx, scope, current, expectedVersion); err != nil {
+		return Endpoint{}, err
+	}
+
+	return current, nil
 }
 
 // Disable prevents new attempts while retaining immutable history.

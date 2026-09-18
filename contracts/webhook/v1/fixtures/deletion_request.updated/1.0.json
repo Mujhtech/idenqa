@@ -1,0 +1,17 @@
+{
+  "id": "evt_01M11HEQG00000000000000000",
+  "type": "deletion_request.updated",
+  "schema_version": "1.0",
+  "created_at": "2026-09-18T09:00:00Z",
+  "tenant_id": "ten_01M11HEQG00000000000000000",
+  "region": "eu-west",
+  "data": {
+    "deletion_id": "del_01M11HEQG00000000000000000",
+    "state": "active",
+    "deletion": {
+      "id": "del_01M11HEQG00000000000000000",
+      "type": "deletion_request",
+      "state": "requested"
+    }
+  }
+}

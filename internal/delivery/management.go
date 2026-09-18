@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"time"
 
+	webhookv1 "github.com/Mujhtech/idenqa/contracts/webhook/v1"
 	"github.com/Mujhtech/idenqa/internal/access"
 	platformcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
@@ -17,6 +18,7 @@ import (
 type EndpointView struct {
 	ID                 string     `json:"id"`
 	URL                string     `json:"url"`
+	EventTypes         []string   `json:"event_types"`
 	Version            int64      `json:"version"`
 	SecretVersion      int64      `json:"secret_version"`
 	PreviousValidUntil *time.Time `json:"previous_valid_until,omitempty"`
@@ -64,13 +66,14 @@ type ManagementResult struct {
 
 // ManagementCommand is a closed administrative operation, never an arbitrary update.
 type ManagementCommand struct {
-	Operation       string `json:"operation"`
-	EndpointID      string `json:"endpoint_id,omitempty"`
-	DeliveryID      string `json:"delivery_id,omitempty"`
-	URL             string `json:"url,omitempty"`
-	ExpectedVersion int64  `json:"expected_version,omitempty"`
-	OverlapSeconds  int64  `json:"overlap_seconds,omitempty"`
-	Reason          string `json:"reason,omitempty"`
+	Operation       string   `json:"operation"`
+	EndpointID      string   `json:"endpoint_id,omitempty"`
+	DeliveryID      string   `json:"delivery_id,omitempty"`
+	URL             string   `json:"url,omitempty"`
+	EventTypes      []string `json:"event_types,omitempty"`
+	ExpectedVersion int64    `json:"expected_version,omitempty"`
+	OverlapSeconds  int64    `json:"overlap_seconds,omitempty"`
+	Reason          string   `json:"reason,omitempty"`
 }
 
 // ManagementRepository runs the existing Manager against a transaction-bound
@@ -156,7 +159,10 @@ func (service *Management) execute(ctx context.Context, scope tenant.Scope, mana
 	var err error
 	switch command.Operation {
 	case "create":
-		endpoint, secret, err = manager.CreateEndpoint(ctx, scope, command.URL)
+		endpoint, secret, err = manager.CreateEndpointSubscribed(ctx, scope, command.URL, command.EventTypes)
+	case "subscribe":
+		identifier, _ := id.ParseWebhookEndpoint(command.EndpointID)
+		endpoint, err = manager.Subscribe(ctx, scope, identifier, command.ExpectedVersion, command.EventTypes)
 	case "replay":
 		identifier, _ := id.ParseDelivery(command.DeliveryID)
 		original, findErr := manager.repository.FindDelivery(ctx, scope, identifier)
@@ -205,6 +211,21 @@ func validateManagementCommand(command ManagementCommand) error {
 	switch command.Operation {
 	case "create":
 		if command.URL == "" || len(command.URL) > 2048 {
+			return ErrInvalid
+		}
+		if command.EventTypes != nil {
+			if _, err := webhookv1.ValidateSubscriptions(command.EventTypes); err != nil {
+				return ErrInvalid
+			}
+		}
+	case "subscribe":
+		if _, err := id.ParseWebhookEndpoint(command.EndpointID); err != nil {
+			return ErrNotFound
+		}
+		if command.ExpectedVersion < 1 {
+			return ErrInvalid
+		}
+		if _, err := webhookv1.ValidateSubscriptions(command.EventTypes); err != nil {
 			return ErrInvalid
 		}
 	case "rotate", "disable":
@@ -284,6 +305,7 @@ func ViewEndpoint(value Endpoint) EndpointView {
 	return EndpointView{
 		ID:                 value.ID.String(),
 		URL:                value.URL,
+		EventTypes:         append([]string(nil), value.EventTypes...),
 		Version:            value.Version,
 		SecretVersion:      value.Active.Version,
 		PreviousValidUntil: optionalTime(value.PreviousValidUntil),

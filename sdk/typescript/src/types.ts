@@ -558,6 +558,8 @@ export type WebhookDeliveryID = string;
 export interface WebhookEndpoint {
   readonly id: WebhookEndpointID;
   readonly url: string;
+  /** Exact catalogue event names, or the single `*` wildcard entry. */
+  readonly eventTypes: readonly string[];
   readonly version: number;
   readonly secretVersion: number;
   readonly previousValidUntil?: string;

@@ -8,9 +8,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
+	webhookv1 "github.com/Mujhtech/idenqa/contracts/webhook/v1"
 	auditpostgres "github.com/Mujhtech/idenqa/internal/audit/postgres"
+	deliverypostgres "github.com/Mujhtech/idenqa/internal/delivery/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	platformpostgres "github.com/Mujhtech/idenqa/internal/platform/postgres"
@@ -79,7 +82,14 @@ func (store *Store) CreateCaseWithin(ctx context.Context, scope tenant.Scope, tx
 	if err != nil {
 		return err
 	}
-	return appendReviewAudit(ctx, tx, scope, actor, value.ID.String(), "review.case.opened", value.UpdatedAt, value.Version)
+	if err := appendReviewAudit(ctx, tx, scope, actor, value.ID.String(), "review.case.opened", value.UpdatedAt, value.Version); err != nil {
+		return err
+	}
+
+	return deliverypostgres.EmitCatalogueEvent(ctx, tx, scope.ID().String(), value.Region, webhookv1.CaseCreated,
+		"case.created:"+value.ID.String()+":"+strconv.FormatInt(value.Version, 10), value.UpdatedAt,
+		map[string]any{"case_id": value.ID.String(), "verification_id": value.VerificationID.String(),
+			"case": map[string]any{"id": value.ID.String(), "type": "review_case", "verification_id": value.VerificationID.String(), "state": string(value.State), "required_certification": value.RequiredCertificate}})
 }
 
 // FindCase restores a tenant-scoped review case and its immutable findings.
@@ -253,6 +263,33 @@ func (store *Store) SaveCase(ctx context.Context, scope tenant.Scope, actor revi
 			}
 			_, err := tx.Exec(ctx, `INSERT INTO idenqa.review_evaluation_requests(tenant_id,case_id,case_version,created_at) VALUES($1,$2,$3,$4)`, scope.ID().String(), value.ID.String(), value.Version, value.UpdatedAt)
 			if err != nil {
+				return err
+			}
+		}
+		eventType := webhookv1.Type("")
+		fields := map[string]any{"case_id": value.ID.String(), "verification_id": value.VerificationID.String()}
+		if finding != nil {
+			eventType = webhookv1.CaseFindingRecorded
+			fields["finding_id"] = finding.ID.String()
+			fields["resolution"] = string(finding.Resolution)
+			fields["reason_code"] = finding.ReasonCode
+		} else if value.AssignedReviewer != "" && value.SupersedesDecision.IsZero() {
+			eventType = webhookv1.CaseAssigned
+			fields["operator_id"] = value.AssignedReviewer
+		}
+		name := "case"
+		fields[name] = map[string]any{"id": value.ID.String(), "type": "review_case", "verification_id": value.VerificationID.String(), "state": string(value.State)}
+		if value.AssignedReviewer != "" {
+			fields[name].(map[string]any)["assigned_reviewer"] = value.AssignedReviewer
+		}
+		if finding != nil {
+			fields[name].(map[string]any)["finding_id"] = finding.ID.String()
+			fields[name].(map[string]any)["resolution"] = string(finding.Resolution)
+			fields[name].(map[string]any)["reason_code"] = finding.ReasonCode
+		}
+		if eventType != "" {
+			seed := string(eventType) + ":" + value.ID.String() + ":" + strconv.FormatInt(value.Version, 10)
+			if err := deliverypostgres.EmitCatalogueEvent(ctx, tx, scope.ID().String(), value.Region, eventType, seed, value.UpdatedAt, fields); err != nil {
 				return err
 			}
 		}
@@ -433,7 +470,15 @@ func (store *Store) SaveAppeal(ctx context.Context, scope tenant.Scope, actor re
 		if err != nil || tag.RowsAffected() != 1 {
 			return errors.Join(review.ErrConflict, err)
 		}
-		return nil
+
+		fields := map[string]any{"appeal_id": value.ID.String(), "case_id": value.CaseID.String(), "state": string(value.State),
+			"appeal": map[string]any{"id": value.ID.String(), "type": "appeal", "case_id": value.CaseID.String(), "state": string(value.State)}}
+		if value.Outcome != "" {
+			fields["outcome"] = string(value.Outcome)
+			fields["appeal"].(map[string]any)["outcome"] = string(value.Outcome)
+		}
+		return deliverypostgres.EmitCatalogueEvent(ctx, tx, scope.ID().String(), related.Region, webhookv1.AppealUpdated,
+			"appeal.updated:"+value.ID.String()+":"+strconv.FormatInt(value.Version, 10), now, fields)
 	})
 }
 

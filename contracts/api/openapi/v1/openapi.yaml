@@ -42,6 +42,8 @@ tags:
     description: Tenant-isolated correlation, versioned rules and evidence-linked risk receipts.
   - name: Identity
     description: Tenant subjects, encrypted claims, immutable observations and facts, and deterministic provenance.
+  - name: Proposals
+    description: Bounded non-authoritative AI proposals, automation modes, accepted commands and the prompt registry.
 paths:
   /v1/tenant:
     get:
@@ -1838,6 +1840,62 @@ paths:
           $ref: "#/components/responses/InternalError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /v1/webhook-endpoints/{endpointID}/subscriptions:
+    post:
+      operationId: updateWebhookSubscriptions
+      summary: Replace endpoint event subscriptions
+      description:
+        Requires webhooks:configure. Replaces the endpoint's catalogue event selection under
+        an expected version. Exact names or the single `*` wildcard are accepted; `*` includes
+        future catalogue events except explicit-only ones.
+      tags:
+        - Webhooks
+      security:
+        - TenantAPIKey: []
+      parameters:
+        - name: endpointID
+          in: path
+          required: true
+          description: "Tenant-owned opaque identifier. Applies to replace endpoint event subscriptions \u2014 endpointID."
+          schema:
+            type: string
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        description: The new closed event selection and the current endpoint version.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebhookSubscriptions"
+            example:
+              expected_version: 1
+              event_types: [verification.completed, decision.created]
+      responses:
+        "200":
+          description: "The webhook operation completed. Applies to replace endpoint event subscriptions."
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookEndpointMutation"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
   /v1/webhook-endpoints/{endpointID}/deliveries:
     get:
       operationId: listWebhookDeliveries
@@ -3133,7 +3191,7 @@ paths:
                 capture_token: idq_cap_v1_example
                 capture_token_id: cap_example
                 capture_token_expires_at: "2026-09-08T12:00:00Z"
-                outcome_token: idq_out_v1_example
+                outcome_token: idq_out_v1.1.3J7Q2M9W8K0FV4NB2CX5RT6YQP.S6H8D2F0G4J7K1L3M5N7P9Q2R4T6V8W0
                 outcome_token_expires_at: "2026-09-09T12:00:00Z"
                 verification_expires_at: "2026-09-08T12:00:00Z"
         "400":
@@ -3256,7 +3314,7 @@ paths:
                 capture_token: idq_cap_v1_example
                 capture_token_id: cap_example
                 capture_token_expires_at: "2026-09-08T12:00:00Z"
-                outcome_token: idq_out_v1_example
+                outcome_token: idq_out_v1.1.3J7Q2M9W8K0FV4NB2CX5RT6YQP.S6H8D2F0G4J7K1L3M5N7P9Q2R4T6V8W0
                 outcome_token_expires_at: "2026-09-09T12:00:00Z"
                 verification_expires_at: "2026-09-08T12:00:00Z"
         "400":
@@ -4523,6 +4581,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Problem"
       requestBody:
+        description: Replacement fraud rule revision with its expected current version.
         required: true
         content:
           application/json:
@@ -4556,6 +4615,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Problem"
       requestBody:
+        description: Evidence-backed tenant tokens to ingest for the pinned verification.
         required: true
         content:
           application/json:
@@ -4589,6 +4649,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Problem"
       requestBody:
+        description: Non-authoritative hypothesis bound to an existing receipt digest.
         required: true
         content:
           application/json:
@@ -4737,6 +4798,7 @@ paths:
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
       requestBody:
+        description: Optional tenant-held external reference for the new subject.
         required: true
         content:
           application/json:
@@ -4747,6 +4809,7 @@ paths:
                 external_reference:
                   type: string
                   maxLength: 200
+                  example: crm-4815
               description: An optional exact, case-sensitive tenant reference, encrypted
                 and indexed with tenant-scoped HMAC.
     get:
@@ -4763,11 +4826,13 @@ paths:
       parameters:
         - name: after
           in: query
+          description: Opaque continuation cursor returned by the previous page.
           schema:
             type: string
             maxLength: 200
         - name: limit
           in: query
+          description: Bounded page size; keep it unchanged when continuing a cursor.
           schema:
             type: integer
             minimum: 1
@@ -4817,6 +4882,7 @@ paths:
         - name: subjectID
           in: path
           required: true
+          description: Tenant-persistent subject identifier.
           schema:
             $ref: "#/components/schemas/IdentitySubjectID"
         - name: reveal
@@ -4869,6 +4935,7 @@ paths:
         - name: subjectID
           in: path
           required: true
+          description: Tenant-persistent subject identifier.
           schema:
             $ref: "#/components/schemas/IdentitySubjectID"
         - $ref: "#/components/parameters/IdempotencyKey"
@@ -4901,6 +4968,7 @@ paths:
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
       requestBody:
+        description: Current subject version plus the reference or lifecycle change to apply.
         required: true
         content:
           application/json:
@@ -4913,14 +4981,17 @@ paths:
                   format: int64
                   minimum: 0
                   maximum: 9223372036854775806
+                  example: 1
                 external_reference:
                   type: string
                   maxLength: 200
+                  example: crm-4815
                 state:
                   type: string
                   enum:
                     - active
                     - suspended
+                  example: active
               required:
                 - expected_version
     delete:
@@ -4942,8 +5013,18 @@ paths:
         - name: subjectID
           in: path
           required: true
+          description: Tenant-persistent subject identifier.
           schema:
             $ref: "#/components/schemas/IdentitySubjectID"
+        - name: expected_version
+          in: query
+          required: true
+          description: Current subject version used as the optimistic precondition.
+          schema:
+            type: integer
+            format: int64
+            minimum: 0
+            maximum: 9223372036854775806
         - $ref: "#/components/parameters/IdempotencyKey"
       responses:
         "202":
@@ -4973,21 +5054,6 @@ paths:
           $ref: "#/components/responses/InternalError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              additionalProperties: false
-              properties:
-                expected_version:
-                  type: integer
-                  format: int64
-                  minimum: 0
-                  maximum: 9223372036854775806
-              required:
-                - expected_version
   /v1/subjects/{subjectID}/verifications/{verificationID}:
     put:
       tags:
@@ -5004,11 +5070,13 @@ paths:
         - name: subjectID
           in: path
           required: true
+          description: Tenant-persistent subject identifier.
           schema:
             $ref: "#/components/schemas/IdentitySubjectID"
         - name: verificationID
           in: path
           required: true
+          description: Verification session identifier to link to the subject.
           schema:
             $ref: "#/components/schemas/VerificationSessionID"
         - $ref: "#/components/parameters/IdempotencyKey"
@@ -5041,6 +5109,7 @@ paths:
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
       requestBody:
+        description: Current subject version used as the optimistic precondition.
         required: true
         content:
           application/json:
@@ -5053,6 +5122,7 @@ paths:
                   format: int64
                   minimum: 0
                   maximum: 9223372036854775806
+                  example: 1
               required:
                 - expected_version
   /v1/subjects/{subjectID}/verifications:
@@ -5071,15 +5141,18 @@ paths:
         - name: subjectID
           in: path
           required: true
+          description: Tenant-persistent subject identifier.
           schema:
             $ref: "#/components/schemas/IdentitySubjectID"
         - name: after
           in: query
+          description: Opaque continuation cursor returned by the previous page.
           schema:
             type: string
             maxLength: 200
         - name: limit
           in: query
+          description: Bounded page size; keep it unchanged when continuing a cursor.
           schema:
             type: integer
             minimum: 1
@@ -5129,6 +5202,7 @@ paths:
         - name: subjectID
           in: path
           required: true
+          description: Tenant-persistent subject identifier.
           schema:
             $ref: "#/components/schemas/IdentitySubjectID"
         - $ref: "#/components/parameters/IdempotencyKey"
@@ -5161,6 +5235,7 @@ paths:
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
       requestBody:
+        description: Current subject version and the immutable record to append.
         required: true
         content:
           application/json:
@@ -5173,6 +5248,7 @@ paths:
                   format: int64
                   minimum: 0
                   maximum: 9223372036854775806
+                  example: 1
                 record:
                   $ref: "#/components/schemas/IdentityRecordInput"
               required:
@@ -5193,15 +5269,18 @@ paths:
         - name: subjectID
           in: path
           required: true
+          description: Tenant-persistent subject identifier.
           schema:
             $ref: "#/components/schemas/IdentitySubjectID"
         - name: after
           in: query
+          description: Opaque continuation cursor returned by the previous page.
           schema:
             type: string
             maxLength: 200
         - name: limit
           in: query
+          description: Bounded page size; keep it unchanged when continuing a cursor.
           schema:
             type: integer
             minimum: 1
@@ -5216,11 +5295,13 @@ paths:
             appends an audit record.
         - name: current
           in: query
+          description: Return only the current head of each record series.
           schema:
             type: boolean
             default: false
         - name: kind
           in: query
+          description: Restrict records to one immutable record kind.
           schema:
             type: string
             enum:
@@ -5272,11 +5353,13 @@ paths:
         - name: subjectID
           in: path
           required: true
+          description: Tenant-persistent subject identifier.
           schema:
             $ref: "#/components/schemas/IdentitySubjectID"
         - name: recordID
           in: path
           required: true
+          description: Immutable identity record identifier.
           schema:
             $ref: "#/components/schemas/IdentityRecordID"
         - name: reveal
@@ -5330,6 +5413,7 @@ paths:
         - name: subjectID
           in: path
           required: true
+          description: Tenant-persistent subject identifier.
           schema:
             $ref: "#/components/schemas/IdentitySubjectID"
         - $ref: "#/components/parameters/IdempotencyKey"
@@ -5362,6 +5446,7 @@ paths:
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
       requestBody:
+        description: Current subject version used as the optimistic precondition.
         required: true
         content:
           application/json:
@@ -5374,6 +5459,7 @@ paths:
                   format: int64
                   minimum: 0
                   maximum: 9223372036854775806
+                  example: 1
               required:
                 - expected_version
   /v1/subjects/lookup:
@@ -5418,6 +5504,7 @@ paths:
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
       requestBody:
+        description: Exact tenant-held external reference to resolve to visible subjects.
         required: true
         content:
           application/json:
@@ -5429,13 +5516,16 @@ paths:
                   type: string
                   maxLength: 200
                   minLength: 1
+                  example: crm-4815
                 after:
                   type: string
                   maxLength: 200
+                  example: sub_01M11HEQG00000000000000000
                 limit:
                   type: integer
                   minimum: 1
                   maximum: 100
+                  example: 25
               required:
                 - external_reference
   /v1/identity/identifiers/lookup:
@@ -5480,6 +5570,7 @@ paths:
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
       requestBody:
+        description: Sensitive exact identifier lookup; never logged.
         required: true
         content:
           application/json:
@@ -5492,10 +5583,12 @@ paths:
                 after:
                   type: string
                   maxLength: 200
+                  example: sub_01M11HEQG00000000000000000
                 limit:
                   type: integer
                   minimum: 1
                   maximum: 100
+                  example: 25
               required:
                 - identifier
   /v1/identity/configuration:
@@ -5541,6 +5634,7 @@ paths:
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
       requestBody:
+        description: Immutable identity configuration revision and its expected current version.
         required: true
         content:
           application/json:
@@ -5553,6 +5647,7 @@ paths:
                   format: int64
                   minimum: 0
                   maximum: 9223372036854775806
+                  example: 1
                 configuration:
                   $ref: "#/components/schemas/IdentityConfiguration"
               required:
@@ -5614,6 +5709,7 @@ paths:
         - name: version
           in: path
           required: true
+          description: Immutable identity configuration revision.
           schema:
             type: integer
             format: int64
@@ -5663,6 +5759,7 @@ paths:
         - name: digest
           in: path
           required: true
+          description: Immutable identity evaluation receipt digest.
           schema:
             $ref: "#/components/schemas/PolicyDigest"
       responses:
@@ -6227,6 +6324,7 @@ paths:
       x-required-scopes: [proposals:write]
       parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
       requestBody:
+        description: Proposal context, pinned model and prompt provenance, and bounded actions.
         required: true
         content:
           application/json:
@@ -6259,6 +6357,7 @@ paths:
         - name: verification_id
           in: query
           required: false
+          description: Restrict the list to one verification session.
           schema: { type: string, pattern: '^ver_[0-9A-HJKMNP-TV-Z]{26}$' }
         - $ref: '#/components/parameters/Cursor'
         - $ref: '#/components/parameters/Limit'
@@ -6269,7 +6368,7 @@ paths:
         '403': { $ref: '#/components/responses/InsufficientScope' }
         '500': { $ref: '#/components/responses/InternalError' }
   /v1/proposals/{proposalID}:
-    parameters: [{ name: proposalID, in: path, required: true, schema: { type: string, pattern: '^prp_[0-9A-HJKMNP-TV-Z]{26}$' } }]
+    parameters: [{ name: proposalID, in: path, required: true, description: Proposal identifier., schema: { type: string, pattern: '^prp_[0-9A-HJKMNP-TV-Z]{26}$' } }]
     get:
       tags: [Proposals]
       operationId: getProposal
@@ -6284,14 +6383,14 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
         '500': { $ref: '#/components/responses/InternalError' }
   /v1/proposals/{proposalID}/approve:
-    parameters: [{ name: proposalID, in: path, required: true, schema: { type: string, pattern: '^prp_[0-9A-HJKMNP-TV-Z]{26}$' } }]
+    parameters: [{ name: proposalID, in: path, required: true, description: Proposal identifier., schema: { type: string, pattern: '^prp_[0-9A-HJKMNP-TV-Z]{26}$' } }]
     post:
       tags: [Proposals]
       operationId: approveProposal
       summary: Approve a proposal (guardrail + human approval)
       security: [TenantAPIKey: []]
       x-required-scopes: [proposals:approve]
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ProposalApproveRequest' } } } }
+      requestBody: { description: Human approval decision with the expected proposal version., required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ProposalApproveRequest' } } } }
       responses:
         '200': { description: Approved, headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' } }, content: { application/json: { schema: { $ref: '#/components/schemas/Proposal' } } } }
         '400': { $ref: '#/components/responses/InvalidRequest' }
@@ -6301,14 +6400,14 @@ paths:
         '409': { $ref: '#/components/responses/Conflict' }
         '500': { $ref: '#/components/responses/InternalError' }
   /v1/proposals/{proposalID}/reject:
-    parameters: [{ name: proposalID, in: path, required: true, schema: { type: string, pattern: '^prp_[0-9A-HJKMNP-TV-Z]{26}$' } }]
+    parameters: [{ name: proposalID, in: path, required: true, description: Proposal identifier., schema: { type: string, pattern: '^prp_[0-9A-HJKMNP-TV-Z]{26}$' } }]
     post:
       tags: [Proposals]
       operationId: rejectProposal
       summary: Reject a proposal
       security: [TenantAPIKey: []]
       x-required-scopes: [proposals:approve]
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ProposalVersionRequest' } } } }
+      requestBody: { description: Expected proposal version for the rejection., required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ProposalVersionRequest' } } } }
       responses:
         '200': { description: Rejected, headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' } }, content: { application/json: { schema: { $ref: '#/components/schemas/Proposal' } } } }
         '400': { $ref: '#/components/responses/InvalidRequest' }
@@ -6318,14 +6417,14 @@ paths:
         '409': { $ref: '#/components/responses/Conflict' }
         '500': { $ref: '#/components/responses/InternalError' }
   /v1/proposals/{proposalID}/cancel:
-    parameters: [{ name: proposalID, in: path, required: true, schema: { type: string, pattern: '^prp_[0-9A-HJKMNP-TV-Z]{26}$' } }]
+    parameters: [{ name: proposalID, in: path, required: true, description: Proposal identifier., schema: { type: string, pattern: '^prp_[0-9A-HJKMNP-TV-Z]{26}$' } }]
     post:
       tags: [Proposals]
       operationId: cancelProposal
       summary: Cancel a proposal
       security: [TenantAPIKey: []]
       x-required-scopes: [proposals:write]
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ProposalVersionRequest' } } } }
+      requestBody: { description: Expected proposal version for the cancellation., required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ProposalVersionRequest' } } } }
       responses:
         '200': { description: Cancelled, headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' } }, content: { application/json: { schema: { $ref: '#/components/schemas/Proposal' } } } }
         '400': { $ref: '#/components/responses/InvalidRequest' }
@@ -6335,7 +6434,7 @@ paths:
         '409': { $ref: '#/components/responses/Conflict' }
         '500': { $ref: '#/components/responses/InternalError' }
   /v1/accepted-commands/{commandID}/execute:
-    parameters: [{ name: commandID, in: path, required: true, schema: { type: string, pattern: '^acc_[0-9A-HJKMNP-TV-Z]{26}$' } }]
+    parameters: [{ name: commandID, in: path, required: true, description: Accepted-command identifier., schema: { type: string, pattern: '^acc_[0-9A-HJKMNP-TV-Z]{26}$' } }]
     post:
       tags: [Proposals]
       operationId: executeAcceptedCommand
@@ -6350,14 +6449,14 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
         '500': { $ref: '#/components/responses/InternalError' }
   /v1/proposal-modes/{workflow}:
-    parameters: [{ name: workflow, in: path, required: true, schema: { type: string, minLength: 1, maxLength: 64 } }]
+    parameters: [{ name: workflow, in: path, required: true, description: Workflow identifier whose automation mode is configured., schema: { type: string, minLength: 1, maxLength: 64 } }]
     put:
       tags: [Proposals]
       operationId: putProposalMode
       summary: Configure automation mode for a workflow
       security: [TenantAPIKey: []]
       x-required-scopes: [proposals:configure]
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ModeConfig' } } } }
+      requestBody: { description: Versioned automation mode and its permitted action kinds., required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ModeConfig' } } } }
       responses:
         '200': { description: Mode configured, headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' } }, content: { application/json: { schema: { $ref: '#/components/schemas/ModeConfig' } } } }
         '400': { $ref: '#/components/responses/InvalidRequest' }
@@ -6384,7 +6483,7 @@ paths:
       summary: Create immutable prompt version
       security: [TenantAPIKey: []]
       x-required-scopes: [prompts:write]
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/PromptCreate' } } } }
+      requestBody: { description: Immutable prompt content and its target generative model., required: true, content: { application/json: { schema: { $ref: '#/components/schemas/PromptCreate' } } } }
       responses:
         '201': { description: Prompt created, headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' } }, content: { application/json: { schema: { $ref: '#/components/schemas/Prompt' } } } }
         '400': { $ref: '#/components/responses/InvalidRequest' }
@@ -6394,8 +6493,8 @@ paths:
         '500': { $ref: '#/components/responses/InternalError' }
   /v1/prompts/{promptID}/{version}:
     parameters:
-      - { name: promptID, in: path, required: true, schema: { type: string, pattern: '^prm_[0-9A-HJKMNP-TV-Z]{26}$' } }
-      - { name: version, in: path, required: true, schema: { type: integer, minimum: 1 } }
+      - { name: promptID, in: path, required: true, description: Prompt registry identifier., schema: { type: string, pattern: '^prm_[0-9A-HJKMNP-TV-Z]{26}$' } }
+      - { name: version, in: path, required: true, description: Immutable prompt revision., schema: { type: integer, minimum: 1 } }
     get:
       tags: [Proposals]
       operationId: getPrompt
@@ -7642,7 +7741,7 @@ components:
         capture_token: idq_cap_v1_example
         capture_token_id: cap_example
         capture_token_expires_at: "2026-09-08T12:00:00Z"
-        outcome_token: idq_out_v1_example
+        outcome_token: idq_out_v1.1.3J7Q2M9W8K0FV4NB2CX5RT6YQP.S6H8D2F0G4J7K1L3M5N7P9Q2R4T6V8W0
         outcome_token_expires_at: "2026-09-09T12:00:00Z"
         verification_expires_at: "2026-09-08T12:00:00Z"
     ReviewRecaptureStatus:
@@ -9244,6 +9343,7 @@ components:
       required:
         - id
         - url
+        - event_types
         - version
         - secret_version
         - created_at
@@ -9255,6 +9355,17 @@ components:
           type: string
           format: uri
           maxLength: 2048
+        event_types:
+          type: array
+          minItems: 1
+          maxItems: 64
+          description:
+            Exact catalogue event names subscribed by this endpoint, or the single wildcard
+            entry `*` for every current and future catalogue event.
+          items:
+            type: string
+            maxLength: 128
+          example: [verification.completed, evidence.ready]
         version:
           type: integer
           format: int64
@@ -9275,6 +9386,7 @@ components:
       example: &id002_2
         id: whk_01M11HEQG00000000000000000
         url: https://example.com/webhooks
+        event_types: [verification.completed]
         version: 1
         secret_version: 1
         created_at: "2026-09-06T00:00:00Z"
@@ -9407,8 +9519,47 @@ components:
           type: string
           format: uri
           maxLength: 2048
+        event_types:
+          type: array
+          minItems: 1
+          maxItems: 64
+          description:
+            Exact catalogue event names to subscribe, or the single wildcard entry `*`.
+            Defaults to `["verification.completed"]` when omitted.
+          items:
+            type: string
+            maxLength: 128
+          example: [verification.completed, evidence.ready]
       example:
         url: https://example.com/webhooks
+        event_types: [verification.completed]
+    WebhookSubscriptions:
+      type: object
+      description: Replace an endpoint's catalogue event subscription under an expected version.
+      additionalProperties: false
+      required:
+        - expected_version
+        - event_types
+      properties:
+        expected_version:
+          type: integer
+          format: int64
+          minimum: 1
+          example: 1
+        event_types:
+          type: array
+          minItems: 1
+          maxItems: 64
+          description:
+            Exact catalogue event names, or the single wildcard entry `*` for every current
+            and future catalogue event except explicit-only ones.
+          items:
+            type: string
+            maxLength: 128
+          example: [verification.completed, decision.created]
+      example:
+        expected_version: 1
+        event_types: [verification.completed, decision.created]
     WebhookRotate:
       type: object
       description: "Rotate only when no previous-key overlap remains active. Compare the endpoint version. Applies to webhook Rotate."
@@ -10083,8 +10234,10 @@ components:
                 - required:
                     - acknowledgement_id
         - if:
+            type: object
             properties:
               kind:
+                type: string
                 const: fraud
             required:
               - kind
@@ -10093,6 +10246,7 @@ components:
             required:
               - fraud_receipt
             not:
+              type: object
               anyOf:
                 - required:
                     - check_id
@@ -10113,19 +10267,25 @@ components:
                 - required:
                     - review_finding
         - if:
+            type: object
             properties:
               kind:
+                type: string
                 not:
                   const: fraud
             required:
               - kind
           then:
+            type: object
             not:
+              type: object
               required:
                 - fraud_receipt
         - if:
+            type: object
             properties:
               kind:
+                type: string
                 const: identity
             required:
               - kind
@@ -10134,6 +10294,7 @@ components:
             required:
               - identity_receipt
             not:
+              type: object
               anyOf:
                 - required:
                     - check_id
@@ -10156,14 +10317,18 @@ components:
                 - required:
                     - fraud_receipt
         - if:
+            type: object
             properties:
               kind:
+                type: string
                 not:
                   const: identity
             required:
               - kind
           then:
+            type: object
             not:
+              type: object
               required:
                 - identity_receipt
       properties:
@@ -11527,6 +11692,7 @@ components:
           $ref: "#/components/schemas/RequestID"
     FraudSignal:
       type: string
+      description: Closed tenant-local fraud signal vocabulary evaluated by versioned rules.
       enum:
         - device_reuse
         - identifier_reuse
@@ -11542,6 +11708,7 @@ components:
         - high_risk_model
     FraudTokenKind:
       type: string
+      description: Kind of tenant-scoped token accepted as fraud evidence.
       enum:
         - subject
         - device
@@ -11552,6 +11719,7 @@ components:
         - network
     FraudSource:
       type: object
+      description: Accepted tenant token source with its permitted token kinds.
       additionalProperties: false
       required:
         - key_id
@@ -11562,11 +11730,13 @@ components:
         key_id:
           type: string
           pattern: ^key_[0-9A-HJKMNP-TV-Z]{26}$
+          example: key_01M11HEQG00000000000000000
         namespace: &id001
           type: string
           minLength: 1
           maxLength: 128
           pattern: ^[a-z][a-z0-9._:-]{0,127}$
+          example: primary
         kinds:
           type: array
           items:
@@ -11576,6 +11746,7 @@ components:
           type: boolean
     FraudMapping:
       type: object
+      description: Pinned runner observation mapped to one fraud signal and risk outcome.
       additionalProperties: false
       required:
         - signal
@@ -11606,6 +11777,17 @@ components:
         group: *id001
     FraudConfiguration:
       type: object
+      description: Immutable tenant fraud rule revision covering window, thresholds and sources.
+      example:
+        enabled: true
+        region: primary
+        window_seconds: 3600
+        retention_seconds: 86400
+        minimum_session_seconds: 0
+        maximum_session_seconds: 3600
+        thresholds: {}
+        sources: []
+        mappings: []
       additionalProperties: false
       required:
         - enabled
@@ -11702,6 +11884,19 @@ components:
           maxItems: 64
     FraudConfigurationRequest:
       type: object
+      description: Activate a fraud rule revision under an expected current version.
+      example:
+        expected_version: 1
+        configuration:
+          enabled: true
+          region: primary
+          window_seconds: 3600
+          retention_seconds: 86400
+          minimum_session_seconds: 0
+          maximum_session_seconds: 3600
+          thresholds: {}
+          sources: []
+          mappings: []
       additionalProperties: false
       required:
         - expected_version
@@ -11711,10 +11906,20 @@ components:
           type: integer
           minimum: 0
           maximum: 9223372036854775806
+          example: 1
         configuration:
           $ref: "#/components/schemas/FraudConfiguration"
     FraudInput:
       type: object
+      description: Evidence-backed tenant tokens submitted for the pinned verification.
+      example:
+        verification_id: ver_01M11HEQG00000000000000000
+        evidence_id: evd_01M11HEQG00000000000000000
+        namespace: primary
+        source_reference: source-1
+        attributes:
+          - kind: device
+            value: token-1
       additionalProperties: false
       required:
         - verification_id
@@ -11746,8 +11951,16 @@ components:
                 maxLength: 2048
           maxItems: 16
           minItems: 1
+          example:
+            - kind: device
+              value: token-1
     FraudProposal:
       type: object
+      description: Non-authoritative fraud hypothesis bound to an immutable receipt digest.
+      example:
+        receipt_digest: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        hypothesis: device.reuse.requires.review
+        signals: [device_reuse]
       additionalProperties: false
       required:
         - receipt_digest
@@ -11764,8 +11977,15 @@ components:
           maxItems: 12
           minItems: 1
           uniqueItems: true
+          example: [device_reuse]
     FraudFinding:
       type: object
+      description: Bounded per-signal outcome with its safe reason code.
+      example:
+        signal: device_reuse
+        state: satisfied
+        count: 1
+        reason: risk.satisfied
       additionalProperties: false
       required:
         - signal
@@ -11788,6 +12008,14 @@ components:
         reason: *id001
     FraudReceipt:
       type: object
+      description: Immutable reference-only evaluation receipt with its findings.
+      example:
+        digest: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        verification_id: ver_01M11HEQG00000000000000000
+        configuration_version: 1
+        configuration_digest: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        at: '2026-09-10T12:00:00Z'
+        findings: []
       additionalProperties: false
       required:
         - digest
@@ -11817,6 +12045,9 @@ components:
           maxItems: 12
     FraudResult:
       type: object
+      description: Safe fraud projection containing at most one configuration, receipt or proposal.
+      example:
+        version: 1
       additionalProperties: false
       required: []
       properties:
@@ -11824,6 +12055,7 @@ components:
           type: integer
           minimum: 1
           maximum: 9223372036854775807
+          example: 1
         digest:
           $ref: "#/components/schemas/PolicyDigest"
         configuration:
@@ -11835,12 +12067,16 @@ components:
 
     IdentitySubjectID:
       type: string
+      description: Opaque tenant-persistent subject identifier.
       maxLength: 30
       pattern: ^sub_[0-9A-HJKMNP-TV-Z]{26}$
+      example: sub_01M11HEQG00000000000000000
     IdentityRecordID:
       type: string
+      description: Opaque immutable observation, fact, claim or identifier record identifier.
       maxLength: 30
       pattern: ^(obs|fct|clm|idi)_[0-9A-HJKMNP-TV-Z]{26}$
+      example: obs_01M11HEQG00000000000000000
     IdentityValue:
       type: object
       additionalProperties: false
@@ -11866,6 +12102,7 @@ components:
         RFC3339. Values are encrypted in storage and revealed only with identity:reveal.
     IdentitySubject:
       type: object
+      description: Persistent tenant subject metadata without identity values.
       additionalProperties: false
       properties:
         id:
@@ -11981,6 +12218,17 @@ components:
         as a trusted policy fact.
     IdentityRecordInput:
       type: object
+      example:
+        kind: fact
+        name: name.full
+        verification_id: ver_01M11HEQG00000000000000000
+        normalization: identity.exact.v1
+        collected_at: '2026-09-10T12:00:00Z'
+        observed_at: '2026-09-10T12:00:00Z'
+        valid_from: '2026-09-10T12:00:00Z'
+        valid_until: '2026-09-11T12:00:00Z'
+        retain_until: '2026-09-11T12:00:00Z'
+        source_record_ids: [obs_01M11HEQG00000000000000000]
       additionalProperties: false
       properties:
         kind:
@@ -11990,6 +12238,7 @@ components:
             - fact
             - claim
             - identifier
+          example: observation
         name:
           type: string
           maxLength: 128
@@ -12086,18 +12335,23 @@ components:
         current record in supersedes.
       allOf:
         - if:
+            type: object
             properties:
               kind:
+                type: string
                 const: observation
             required:
               - kind
           then:
+            type: object
             oneOf:
-              - required:
+              - type: object
+                required:
                   - value
                   - source_name
                   - input_version
                 not:
+                  type: object
                   required:
                     - origin_observation_id
               - required:
@@ -12119,12 +12373,15 @@ components:
                     - required:
                         - evidence_ids
           else:
+            type: object
             required:
               - source_record_ids
             properties:
               source_record_ids:
+                type: array
                 minItems: 1
             not:
+              type: object
               anyOf:
                 - required:
                     - value
@@ -12139,16 +12396,21 @@ components:
                 - required:
                     - evidence_ids
         - if:
+            type: object
             properties:
               kind:
+                type: string
                 const: identifier
             required:
               - kind
           then:
+            type: object
             required:
               - identifier
           else:
+            type: object
             not:
+              type: object
               required:
                 - identifier
     IdentityRecord:
@@ -12162,6 +12424,7 @@ components:
             - fact
             - claim
             - identifier
+          example: observation
         name:
           type: string
           maxLength: 128
@@ -12469,6 +12732,10 @@ components:
         are inconclusive.
     IdentityConfiguration:
       type: object
+      example:
+        region: ke
+        provider_sources: []
+        requirements: []
       additionalProperties: false
       properties:
         region:
@@ -12491,6 +12758,7 @@ components:
         An empty requirements list disables identity fact projection.
     IdentityFinding:
       type: object
+      description: Bounded per-key corroboration outcome with its safe reason code.
       additionalProperties: false
       properties:
         key:
@@ -12566,6 +12834,15 @@ components:
         zero record that the session had no persistent-subject binding.
     IdentityResult:
       type: object
+      description: Safe identity projection containing at most one subject, record, configuration or receipt.
+      example:
+        subject:
+          id: sub_01M11HEQG00000000000000000
+          region: ke
+          state: active
+          version: 1
+          created_at: '2026-09-10T12:00:00Z'
+          updated_at: '2026-09-10T12:00:00Z'
       additionalProperties: false
       properties:
         subject:
@@ -12614,6 +12891,7 @@ components:
           maxLength: 128
           minLength: 3
           pattern: ^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$
+          example: ng.nin
         issuer:
           type: string
           maxLength: 128
@@ -12638,84 +12916,94 @@ components:
         version. Multiple matching subjects remain distinct; lookup never merges them.
     ProposalActionKind:
       type: string
+      description: Closed allow-list of non-authoritative proposal action kinds.
       enum: [review.copilot.summarize, routing.adaptive.suggest, policy.draft.generate, policy.diff.generate, policy.adversarial.generate, experience.accessibility.propose, experience.exception.propose, document.layout.propose]
+      example: review.copilot.summarize
     Proposal:
       type: object
+      description: Immutable non-authoritative proposal envelope with pinned model and prompt provenance.
       required: [proposal_id, tenant_id, mode, status, actions, model_id, model_version, prompt_version, context_digest, expires_at, created_at, version]
       properties:
-        proposal_id: { type: string, pattern: '^prp_[0-9A-HJKMNP-TV-Z]{26}$' }
-        tenant_id: { type: string, pattern: '^ten_[0-9A-HJKMNP-TV-Z]{26}$' }
-        verification_id: { type: string, pattern: '^ver_[0-9A-HJKMNP-TV-Z]{26}$' }
-        policy_id: { type: string, pattern: '^pol_[0-9A-HJKMNP-TV-Z]{26}$' }
-        mode: { type: string, enum: [disabled, assist, recommend, guardrailed_auto, human_required] }
-        status: { type: string, enum: [pending, approved, rejected, expired, cancelled, superseded] }
-        actions: { type: array, maxItems: 8, items: { $ref: '#/components/schemas/ProposalAction' } }
-        evidence_refs: { type: array, maxItems: 32, items: { type: string } }
-        signal_refs: { type: array, maxItems: 32, items: { type: string } }
-        model_id: { type: string, maxLength: 64 }
-        model_version: { type: string, maxLength: 64 }
-        prompt_version: { type: string, maxLength: 64 }
-        context_digest: { type: string, pattern: '^[0-9a-f]{64}$' }
-        expires_at: { type: string, format: date-time }
-        created_at: { type: string, format: date-time }
-        version: { type: integer, minimum: 1 }
-        reason: { type: string, maxLength: 512 }
+        proposal_id: { type: string, pattern: '^prp_[0-9A-HJKMNP-TV-Z]{26}$', example: prp_01M11HEQG00000000000000000 }
+        tenant_id: { type: string, pattern: '^ten_[0-9A-HJKMNP-TV-Z]{26}$', example: ten_01M11HEQG00000000000000000 }
+        verification_id: { type: string, pattern: '^ver_[0-9A-HJKMNP-TV-Z]{26}$', example: ver_01M11HEQG00000000000000000 }
+        policy_id: { type: string, pattern: '^pol_[0-9A-HJKMNP-TV-Z]{26}$', example: pol_01M11HEQG00000000000000000 }
+        mode: { type: string, enum: [disabled, assist, recommend, guardrailed_auto, human_required], example: assist }
+        status: { type: string, enum: [pending, approved, rejected, expired, cancelled, superseded], example: pending }
+        actions: { type: array, maxItems: 8, items: { $ref: '#/components/schemas/ProposalAction' }, example: [{ kind: review.copilot.summarize, args: {} }] }
+        evidence_refs: { type: array, maxItems: 32, items: { type: string }, example: [evd_01M11HEQG00000000000000000] }
+        signal_refs: { type: array, maxItems: 32, items: { type: string }, example: [sig_01M11HEQG00000000000000000] }
+        model_id: { type: string, maxLength: 64, example: model.test }
+        model_version: { type: string, maxLength: 64, example: v1 }
+        prompt_version: { type: string, maxLength: 64, example: p1 }
+        context_digest: { type: string, pattern: '^[0-9a-f]{64}$', example: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef }
+        expires_at: { type: string, format: date-time, example: '2026-09-10T12:00:00Z' }
+        created_at: { type: string, format: date-time, example: '2026-09-10T12:00:00Z' }
+        version: { type: integer, minimum: 1, example: 1 }
+        reason: { type: string, maxLength: 512, example: tenant_requested }
     ProposalAction:
       type: object
+      description: One bounded action whose args schema is selected by kind.
       required: [kind, args]
       properties:
         kind: { $ref: '#/components/schemas/ProposalActionKind' }
-        args: { type: object, description: Closed JSON args per kind, max 8KiB, additionalProperties: true }
+        args: { type: object, description: Closed JSON args per kind, max 8KiB, additionalProperties: true, example: { summary: true } }
     ProposalRequest:
       type: object
+      description: Create one proposal for a verification or a policy under the session mode.
       required: [mode, actions, model_id, model_version, prompt_version, context_digest, expires_at]
       properties:
-        verification_id: { type: string, pattern: '^ver_[0-9A-HJKMNP-TV-Z]{26}$' }
-        policy_id: { type: string, pattern: '^pol_[0-9A-HJKMNP-TV-Z]{26}$' }
-        mode: { type: string, enum: [disabled, assist, recommend, guardrailed_auto, human_required] }
-        actions: { type: array, maxItems: 8, items: { $ref: '#/components/schemas/ProposalAction' } }
-        evidence_refs: { type: array, maxItems: 32, items: { type: string } }
-        signal_refs: { type: array, maxItems: 32, items: { type: string } }
-        model_id: { type: string, maxLength: 64 }
-        model_version: { type: string, maxLength: 64 }
-        prompt_version: { type: string, maxLength: 64 }
-        context_digest: { type: string, pattern: '^[0-9a-f]{64}$' }
-        expires_at: { type: string, format: date-time }
-        supersedes: { type: string, pattern: '^prp_[0-9A-HJKMNP-TV-Z]{26}$' }
+        verification_id: { type: string, pattern: '^ver_[0-9A-HJKMNP-TV-Z]{26}$', example: ver_01M11HEQG00000000000000000 }
+        policy_id: { type: string, pattern: '^pol_[0-9A-HJKMNP-TV-Z]{26}$', example: pol_01M11HEQG00000000000000000 }
+        mode: { type: string, enum: [disabled, assist, recommend, guardrailed_auto, human_required], example: assist }
+        actions: { type: array, maxItems: 8, items: { $ref: '#/components/schemas/ProposalAction' }, example: [{ kind: review.copilot.summarize, args: {} }] }
+        evidence_refs: { type: array, maxItems: 32, items: { type: string }, example: [evd_01M11HEQG00000000000000000] }
+        signal_refs: { type: array, maxItems: 32, items: { type: string }, example: [sig_01M11HEQG00000000000000000] }
+        model_id: { type: string, maxLength: 64, example: model.test }
+        model_version: { type: string, maxLength: 64, example: v1 }
+        prompt_version: { type: string, maxLength: 64, example: p1 }
+        context_digest: { type: string, pattern: '^[0-9a-f]{64}$', example: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef }
+        expires_at: { type: string, format: date-time, example: '2026-09-10T12:00:00Z' }
+        supersedes: { type: string, pattern: '^prp_[0-9A-HJKMNP-TV-Z]{26}$', example: prp_01M11HEQG00000000000000000 }
     ProposalApproveRequest:
       type: object
+      description: Human approval of one pending proposal under an expected version.
       required: [expected_version, human_approved]
       properties:
-        expected_version: { type: integer, minimum: 1 }
-        human_approved: { type: boolean }
+        expected_version: { type: integer, minimum: 1, example: 1 }
+        human_approved: { type: boolean, example: true }
     ProposalVersionRequest:
       type: object
+      description: Version precondition for reject or cancel of one pending proposal.
       required: [expected_version]
       properties:
-        expected_version: { type: integer, minimum: 1 }
+        expected_version: { type: integer, minimum: 1, example: 1 }
     ModeConfig:
       type: object
+      description: Versioned per-workflow automation mode and permitted action kinds.
       required: [workflow, mode, version]
       properties:
-        workflow: { type: string, minLength: 1, maxLength: 64 }
-        mode: { type: string, enum: [disabled, assist, recommend, guardrailed_auto, human_required] }
-        allowed_kinds: { type: array, maxItems: 8, items: { $ref: '#/components/schemas/ProposalActionKind' } }
-        version: { type: integer, minimum: 1 }
+        workflow: { type: string, minLength: 1, maxLength: 64, example: verification }
+        mode: { type: string, enum: [disabled, assist, recommend, guardrailed_auto, human_required], example: assist }
+        allowed_kinds: { type: array, maxItems: 8, items: { $ref: '#/components/schemas/ProposalActionKind' }, example: [review.copilot.summarize] }
+        version: { type: integer, minimum: 1, example: 1 }
     PromptCreate:
       type: object
+      description: Register an immutable prompt revision for one generative model.
       required: [content, model_id]
       properties:
-        content: { type: string, minLength: 1, maxLength: 16384 }
-        model_id: { type: string, maxLength: 64 }
+        content: { type: string, minLength: 1, maxLength: 16384, example: Summarise the review findings. }
+        model_id: { type: string, maxLength: 64, example: model.test }
     Prompt:
       type: object
+      description: Immutable prompt revision with its digest and generating model.
       required: [prompt_id, version, content, digest, model_id]
       properties:
-        prompt_id: { type: string, pattern: '^prm_[0-9A-HJKMNP-TV-Z]{26}$' }
-        version: { type: integer, minimum: 1 }
-        content: { type: string }
-        digest: { type: string, pattern: '^[0-9a-f]{64}$' }
-        model_id: { type: string }
+        prompt_id: { type: string, pattern: '^prm_[0-9A-HJKMNP-TV-Z]{26}$', example: prm_01M11HEQG00000000000000000 }
+        version: { type: integer, minimum: 1, example: 1 }
+        content: { type: string, example: Summarise the review findings. }
+        digest: { type: string, pattern: '^[0-9a-f]{64}$', example: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef }
+        model_id: { type: string, example: model.test }
   responses:
     CaptureOriginNotAllowed:
       description: The browser Origin is missing, malformed, duplicated, or not allowed.

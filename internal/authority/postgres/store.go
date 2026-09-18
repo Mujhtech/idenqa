@@ -7,9 +7,12 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strconv"
 	"time"
 
+	webhookv1 "github.com/Mujhtech/idenqa/contracts/webhook/v1"
 	"github.com/Mujhtech/idenqa/internal/authority"
+	deliverypostgres "github.com/Mujhtech/idenqa/internal/delivery/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/platform/idempotency"
@@ -131,7 +134,7 @@ func (store *Store) Declare(ctx context.Context, scope tenant.Scope, mutation au
 		return authority.Authority{}, authority.ErrConflict
 	}
 	var result authority.Authority
-	err := store.write(ctx, scope, func(ctx context.Context, queries *sqlgen.Queries) error {
+	err := store.writeTx(ctx, scope, func(ctx context.Context, tx platformpostgres.Transaction, queries *sqlgen.Queries) error {
 		reservation, err := idempotencypostgres.Reserve(ctx, queries, mutation.Idempotency)
 		if err != nil {
 			return err
@@ -193,6 +196,19 @@ func (store *Store) Declare(ctx context.Context, scope tenant.Scope, mutation au
 		if err := insertEvent(ctx, queries, mutation.EventID, record.TenantID, "authority", record.ID.String(), record.Version,
 			"authority.declared.v1", map[string]any{"authority_id": record.ID.String(), "verification_id": record.VerificationID.String(),
 				"notice_id": record.NoticeID.String(), "subject_id": record.SubjectID.String()}, record.CreatedAt); err != nil {
+			return err
+		}
+		region, err := store.verificationRegion(ctx, tx, scope, record.VerificationID)
+		if err != nil {
+			return err
+		}
+		if region == "" {
+			return completeReference(ctx, queries, mutation.Idempotency, 201, map[string]string{"authority_id": record.ID.String()}, record.CreatedAt)
+		}
+		if err := deliverypostgres.EmitCatalogueEvent(ctx, tx, scope.ID().String(), region, webhookv1.ProcessingAuthorityCreated,
+			"processing_authority.created:"+record.ID.String(), record.CreatedAt,
+			map[string]any{"authority_id": record.ID.String(), "verification_id": record.VerificationID.String(),
+				"authority": map[string]any{"id": record.ID.String(), "type": "processing_authority", "verification_id": record.VerificationID.String(), "state": string(record.State), "notice_id": record.NoticeID.String()}}); err != nil {
 			return err
 		}
 		return completeReference(ctx, queries, mutation.Idempotency, 201, map[string]string{"authority_id": record.ID.String()}, record.CreatedAt)
@@ -266,7 +282,7 @@ func (store *Store) Transition(ctx context.Context, scope tenant.Scope, mutation
 		return authority.Authority{}, authority.ErrConflict
 	}
 	var result authority.Authority
-	err := store.write(ctx, scope, func(ctx context.Context, queries *sqlgen.Queries) error {
+	err := store.writeTx(ctx, scope, func(ctx context.Context, tx platformpostgres.Transaction, queries *sqlgen.Queries) error {
 		reservation, err := idempotencypostgres.Reserve(ctx, queries, mutation.Idempotency)
 		if err != nil {
 			return err
@@ -309,6 +325,19 @@ func (store *Store) Transition(ctx context.Context, scope tenant.Scope, mutation
 			"authority."+string(mutation.Action)+".v1", map[string]any{"authority_id": record.ID.String(), "state": record.State}, record.UpdatedAt); err != nil {
 			return err
 		}
+		region, err := store.verificationRegion(ctx, tx, scope, record.VerificationID)
+		if err != nil {
+			return err
+		}
+		if region == "" {
+			return completeReference(ctx, queries, mutation.Idempotency, 200, map[string]string{"authority_id": record.ID.String()}, record.UpdatedAt)
+		}
+		if err := deliverypostgres.EmitCatalogueEvent(ctx, tx, scope.ID().String(), region, webhookv1.ProcessingAuthorityRestricted,
+			"processing_authority.restricted:"+record.ID.String()+":"+strconv.FormatInt(record.Version, 10), record.UpdatedAt,
+			map[string]any{"authority_id": record.ID.String(), "verification_id": record.VerificationID.String(), "state": string(record.State),
+				"authority": map[string]any{"id": record.ID.String(), "type": "processing_authority", "verification_id": record.VerificationID.String(), "state": string(record.State)}}); err != nil {
+			return err
+		}
 		return completeReference(ctx, queries, mutation.Idempotency, 200, map[string]string{"authority_id": record.ID.String()}, record.UpdatedAt)
 	})
 	return result, err
@@ -336,7 +365,7 @@ func (store *Store) AppendResponse(ctx context.Context, scope tenant.Scope, muta
 		return authority.Response{}, authority.ErrConflict
 	}
 	var result authority.Response
-	err := store.write(ctx, scope, func(ctx context.Context, queries *sqlgen.Queries) error {
+	err := store.writeTx(ctx, scope, func(ctx context.Context, tx platformpostgres.Transaction, queries *sqlgen.Queries) error {
 		reservation, err := idempotencypostgres.Reserve(ctx, queries, mutation.Idempotency)
 		if err != nil {
 			return err
@@ -404,6 +433,24 @@ func (store *Store) AppendResponse(ctx context.Context, scope tenant.Scope, muta
 				"verification_id": record.VerificationID.String(), "action": record.Action}, record.RecordedAt); err != nil {
 			return err
 		}
+		if record.Action == authority.ResponseAcknowledge || record.Action == authority.ResponseConsent || record.Action == authority.ResponseRefuse {
+			eventType := webhookv1.ConsentRecorded
+			if record.Action == authority.ResponseRefuse {
+				eventType = webhookv1.ConsentRevoked
+			}
+			region, err := store.verificationRegion(ctx, tx, scope, record.VerificationID)
+			if err != nil {
+				return err
+			}
+			if region != "" {
+				if err := deliverypostgres.EmitCatalogueEvent(ctx, tx, scope.ID().String(), region, eventType,
+					string(eventType)+":"+record.ID.String(), record.RecordedAt,
+					map[string]any{"verification_id": record.VerificationID.String(), "authority_id": record.AuthorityID.String(),
+						"authority": map[string]any{"id": record.AuthorityID.String(), "type": "processing_authority", "verification_id": record.VerificationID.String(), "state": string(state.State), "action": string(record.Action), "notice_id": record.NoticeID.String()}}); err != nil {
+					return err
+				}
+			}
+		}
 		return completeReference(ctx, queries, mutation.Idempotency, 201, map[string]string{"response_id": record.ID.String()}, record.RecordedAt)
 	})
 	return result, err
@@ -463,6 +510,25 @@ func (store *Store) CaptureSnapshot(ctx context.Context, scope tenant.Scope, ver
 		return nil
 	})
 	return result, err
+}
+
+func (store *Store) writeTx(ctx context.Context, scope tenant.Scope, work func(context.Context, platformpostgres.Transaction, *sqlgen.Queries) error) error {
+	return store.pool.WithinTransaction(ctx, platformpostgres.TransactionOptions{}, func(ctx context.Context, tx platformpostgres.Transaction) error {
+		queries := sqlgen.New(tx)
+		if _, err := queries.SetTenantScope(ctx, scope.ID().String()); err != nil {
+			return fmt.Errorf("set authority tenant scope: %w", err)
+		}
+
+		return work(ctx, tx, queries)
+	})
+}
+
+func (store *Store) verificationRegion(ctx context.Context, tx platformpostgres.Transaction, scope tenant.Scope, verificationID id.Verification) (string, error) {
+	var region string
+	if err := tx.QueryRow(ctx, `SELECT COALESCE(region,'') FROM idenqa.verification_sessions WHERE tenant_id=$1 AND id=$2`, scope.ID().String(), verificationID.String()).Scan(&region); err != nil {
+		return "", fmt.Errorf("load authority verification region: %w", err)
+	}
+	return region, nil
 }
 
 func (store *Store) write(ctx context.Context, scope tenant.Scope, work func(context.Context, *sqlgen.Queries) error) error {

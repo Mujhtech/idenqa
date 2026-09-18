@@ -57,7 +57,7 @@ func (store *SessionStore) CreateRecaptureWithin(ctx context.Context, scope tena
 	result := verification.SessionCreation{
 		Session: child, Credential: credential, OutcomeCredential: outcomeCredential,
 	}
-	if err := store.insertCreation(ctx, q, mutation, result, registry); err != nil {
+	if err := store.insertCreation(ctx, tx, q, mutation, result, registry); err != nil {
 		return verification.SessionCreation{}, err
 	}
 	if err := policypg.CopyAssuranceWithin(ctx, tx, scope, parentID.String(), child.ID().String()); err != nil {

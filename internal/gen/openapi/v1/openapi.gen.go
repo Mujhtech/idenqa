@@ -2404,7 +2404,7 @@ type EvidenceUploadCreateMediaType string
 // EvidenceUploadID Stable opaque identifier for one requirement-bound upload intent.
 type EvidenceUploadID = string
 
-// FraudConfiguration defines model for FraudConfiguration.
+// FraudConfiguration Immutable tenant fraud rule revision covering window, thresholds and sources.
 type FraudConfiguration struct {
 	Enabled               bool           `json:"enabled"`
 	Mappings              []FraudMapping `json:"mappings"`
@@ -2430,16 +2430,19 @@ type FraudConfiguration struct {
 	WindowSeconds int `json:"window_seconds"`
 }
 
-// FraudConfigurationRequest defines model for FraudConfigurationRequest.
+// FraudConfigurationRequest Activate a fraud rule revision under an expected current version.
 type FraudConfigurationRequest struct {
+	// Configuration Immutable tenant fraud rule revision covering window, thresholds and sources.
 	Configuration   FraudConfiguration `json:"configuration"`
 	ExpectedVersion int                `json:"expected_version"`
 }
 
-// FraudFinding defines model for FraudFinding.
+// FraudFinding Bounded per-signal outcome with its safe reason code.
 type FraudFinding struct {
-	Count  int               `json:"count"`
-	Reason string            `json:"reason"`
+	Count  int    `json:"count"`
+	Reason string `json:"reason"`
+
+	// Signal Closed tenant-local fraud signal vocabulary evaluated by versioned rules.
 	Signal FraudSignal       `json:"signal"`
 	State  FraudFindingState `json:"state"`
 }
@@ -2447,9 +2450,10 @@ type FraudFinding struct {
 // FraudFindingState defines model for FraudFinding.State.
 type FraudFindingState string
 
-// FraudInput defines model for FraudInput.
+// FraudInput Evidence-backed tenant tokens submitted for the pinned verification.
 type FraudInput struct {
 	Attributes []struct {
+		// Kind Kind of tenant-scoped token accepted as fraud evidence.
 		Kind  FraudTokenKind `json:"kind"`
 		Value string         `json:"value"`
 	} `json:"attributes"`
@@ -2463,7 +2467,7 @@ type FraudInput struct {
 	VerificationID VerificationSessionID `json:"verification_id"`
 }
 
-// FraudMapping defines model for FraudMapping.
+// FraudMapping Pinned runner observation mapped to one fraud signal and risk outcome.
 type FraudMapping struct {
 	Group       string `json:"group"`
 	Observation string `json:"observation"`
@@ -2473,7 +2477,9 @@ type FraudMapping struct {
 	RiskOutcome   FraudMappingRiskOutcome `json:"risk_outcome"`
 	RunnerID      string                  `json:"runner_id"`
 	RunnerKind    FraudMappingRunnerKind  `json:"runner_kind"`
-	Signal        FraudSignal             `json:"signal"`
+
+	// Signal Closed tenant-local fraud signal vocabulary evaluated by versioned rules.
+	Signal FraudSignal `json:"signal"`
 }
 
 // FraudMappingRiskOutcome defines model for FraudMapping.RiskOutcome.
@@ -2482,7 +2488,7 @@ type FraudMappingRiskOutcome string
 // FraudMappingRunnerKind defines model for FraudMapping.RunnerKind.
 type FraudMappingRunnerKind string
 
-// FraudProposal defines model for FraudProposal.
+// FraudProposal Non-authoritative fraud hypothesis bound to an immutable receipt digest.
 type FraudProposal struct {
 	Hypothesis string `json:"hypothesis"`
 
@@ -2491,7 +2497,7 @@ type FraudProposal struct {
 	Signals       []FraudSignal `json:"signals"`
 }
 
-// FraudReceipt defines model for FraudReceipt.
+// FraudReceipt Immutable reference-only evaluation receipt with its findings.
 type FraudReceipt struct {
 	At time.Time `json:"at"`
 
@@ -2507,21 +2513,26 @@ type FraudReceipt struct {
 	VerificationID VerificationSessionID `json:"verification_id"`
 }
 
-// FraudResult defines model for FraudResult.
+// FraudResult Safe fraud projection containing at most one configuration, receipt or proposal.
 type FraudResult struct {
+	// Configuration Immutable tenant fraud rule revision covering window, thresholds and sources.
 	Configuration *FraudConfiguration `json:"configuration,omitempty"`
 
 	// Digest Lowercase hexadecimal SHA-256 digest of canonical policy data.
-	Digest   *PolicyDigest  `json:"digest,omitempty"`
+	Digest *PolicyDigest `json:"digest,omitempty"`
+
+	// Proposal Non-authoritative fraud hypothesis bound to an immutable receipt digest.
 	Proposal *FraudProposal `json:"proposal,omitempty"`
-	Receipt  *FraudReceipt  `json:"receipt,omitempty"`
-	Version  *int           `json:"version,omitempty"`
+
+	// Receipt Immutable reference-only evaluation receipt with its findings.
+	Receipt *FraudReceipt `json:"receipt,omitempty"`
+	Version *int          `json:"version,omitempty"`
 }
 
-// FraudSignal defines model for FraudSignal.
+// FraudSignal Closed tenant-local fraud signal vocabulary evaluated by versioned rules.
 type FraudSignal string
 
-// FraudSource defines model for FraudSource.
+// FraudSource Accepted tenant token source with its permitted token kinds.
 type FraudSource struct {
 	KeyID             string           `json:"key_id"`
 	Kinds             []FraudTokenKind `json:"kinds"`
@@ -2529,7 +2540,7 @@ type FraudSource struct {
 	PortraitPermitted bool             `json:"portrait_permitted"`
 }
 
-// FraudTokenKind defines model for FraudTokenKind.
+// FraudTokenKind Kind of tenant-scoped token accepted as fraud evidence.
 type FraudTokenKind string
 
 // IdentityConfiguration An immutable per-region configuration revision. One identity:configure principal activates it with expected-version checks, idempotency and audit. An empty requirements list disables identity fact projection.
@@ -2539,7 +2550,7 @@ type IdentityConfiguration struct {
 	Requirements    *[]IdentityRequirement   `json:"requirements,omitempty"`
 }
 
-// IdentityFinding defines model for IdentityFinding.
+// IdentityFinding Bounded per-key corroboration outcome with its safe reason code.
 type IdentityFinding struct {
 	IndependentSources int                   `json:"independent_sources"`
 	Key                string                `json:"key"`
@@ -2630,7 +2641,9 @@ type IdentityRecord struct {
 	EvidenceIds         []EvidenceID             `json:"evidence_ids"`
 	FreshUntil          *time.Time               `json:"fresh_until,omitempty"`
 	Freshness           *IdentityRecordFreshness `json:"freshness,omitempty"`
-	ID                  IdentityRecordID         `json:"id"`
+
+	// ID Opaque immutable observation, fact, claim or identifier record identifier.
+	ID IdentityRecordID `json:"id"`
 
 	// Identifier The verification state is a tenant attestation, attributed to the submitting key. It is not a Core verification decision and is not consumed as a trusted policy fact.
 	Identifier    *IdentityIdentifier         `json:"identifier,omitempty"`
@@ -2653,21 +2666,27 @@ type IdentityRecord struct {
 	RecordedAt    time.Time     `json:"recorded_at"`
 
 	// RequestDigest Lowercase hexadecimal SHA-256 digest of canonical policy data.
-	RequestDigest              *PolicyDigest                 `json:"request_digest,omitempty"`
-	RetainUntil                time.Time                     `json:"retain_until"`
-	SchemaVersion              IdentityRecordSchemaVersion   `json:"schema_version"`
-	Sequence                   int64                         `json:"sequence"`
+	RequestDigest *PolicyDigest               `json:"request_digest,omitempty"`
+	RetainUntil   time.Time                   `json:"retain_until"`
+	SchemaVersion IdentityRecordSchemaVersion `json:"schema_version"`
+	Sequence      int64                       `json:"sequence"`
+
+	// SeriesID Opaque immutable observation, fact, claim or identifier record identifier.
 	SeriesID                   IdentityRecordID              `json:"series_id"`
 	SourceClass                IdentityRecordSourceClass     `json:"source_class"`
 	SourceClasses              []IdentityRecordSourceClasses `json:"source_classes"`
 	SourceConfigurationVersion int64                         `json:"source_configuration_version"`
 	SourceName                 string                        `json:"source_name"`
 	SourceRecordIds            []IdentityRecordID            `json:"source_record_ids"`
-	SubjectID                  IdentitySubjectID             `json:"subject_id"`
-	Supersedes                 *IdentityRecordID             `json:"supersedes,omitempty"`
-	Unit                       *string                       `json:"unit,omitempty"`
-	ValidFrom                  time.Time                     `json:"valid_from"`
-	ValidUntil                 time.Time                     `json:"valid_until"`
+
+	// SubjectID Opaque tenant-persistent subject identifier.
+	SubjectID IdentitySubjectID `json:"subject_id"`
+
+	// Supersedes Opaque immutable observation, fact, claim or identifier record identifier.
+	Supersedes *IdentityRecordID `json:"supersedes,omitempty"`
+	Unit       *string           `json:"unit,omitempty"`
+	ValidFrom  time.Time         `json:"valid_from"`
+	ValidUntil time.Time         `json:"valid_until"`
 
 	// Value A sensitive typed scalar. Numeric values are canonical decimal strings to preserve precision; dates use YYYY-MM-DD and timestamps use UTC RFC3339. Values are encrypted in storage and revealed only with identity:reveal.
 	Value     *IdentityValue          `json:"value,omitempty"`
@@ -2701,7 +2720,7 @@ type IdentityRecordSourceClasses string
 // IdentityRecordValueType defines model for IdentityRecord.ValueType.
 type IdentityRecordValueType string
 
-// IdentityRecordID defines model for IdentityRecordID.
+// IdentityRecordID Opaque immutable observation, fact, claim or identifier record identifier.
 type IdentityRecordID = string
 
 // IdentityRecordInput Append an observation, derived fact, claim or identifier. Direct observations are tenant-attested; an origin_observation_id imports the actual completed Core check outcome. Derived records name existing source records and cannot provide a replacement value or invent lineage. Retention is explicitly bounded to 30 days and cannot extend source retention; corrections name the current record in supersedes.
@@ -2727,10 +2746,12 @@ type IdentityRecordInput struct {
 	RetainUntil     time.Time           `json:"retain_until"`
 	SourceName      *string             `json:"source_name,omitempty"`
 	SourceRecordIds *[]IdentityRecordID `json:"source_record_ids,omitempty"`
-	Supersedes      *IdentityRecordID   `json:"supersedes,omitempty"`
-	Unit            *string             `json:"unit,omitempty"`
-	ValidFrom       time.Time           `json:"valid_from"`
-	ValidUntil      time.Time           `json:"valid_until"`
+
+	// Supersedes Opaque immutable observation, fact, claim or identifier record identifier.
+	Supersedes *IdentityRecordID `json:"supersedes,omitempty"`
+	Unit       *string           `json:"unit,omitempty"`
+	ValidFrom  time.Time         `json:"valid_from"`
+	ValidUntil time.Time         `json:"valid_until"`
 
 	// Value A sensitive typed scalar. Numeric values are canonical decimal strings to preserve precision; dates use YYYY-MM-DD and timestamps use UTC RFC3339. Values are encrypted in storage and revealed only with identity:reveal.
 	Value *IdentityValue `json:"value,omitempty"`
@@ -2765,7 +2786,7 @@ type IdentityRequirementSourceClasses string
 // IdentityRequirementValueType defines model for IdentityRequirement.ValueType.
 type IdentityRequirementValueType string
 
-// IdentityResult defines model for IdentityResult.
+// IdentityResult Safe identity projection containing at most one subject, record, configuration or receipt.
 type IdentityResult struct {
 	// Configuration An immutable per-region configuration revision. One identity:configure principal activates it with expected-version checks, idempotency and audit. An empty requirements list disables identity fact projection.
 	Configuration *IdentityConfiguration `json:"configuration,omitempty"`
@@ -2779,8 +2800,10 @@ type IdentityResult struct {
 	Receipt *IdentityReceipt `json:"receipt,omitempty"`
 
 	// Record Immutable reference metadata with optional explicitly revealed values. Current means the record has no successor. New decision eligibility also checks current authority, evidence, ancestors, retention, validity and configured freshness.
-	Record          *IdentityRecord          `json:"record,omitempty"`
-	Records         *[]IdentityRecord        `json:"records,omitempty"`
+	Record  *IdentityRecord   `json:"record,omitempty"`
+	Records *[]IdentityRecord `json:"records,omitempty"`
+
+	// Subject Persistent tenant subject metadata without identity values.
 	Subject         *IdentitySubject         `json:"subject,omitempty"`
 	Subjects        *[]IdentitySubject       `json:"subjects,omitempty"`
 	VerificationIds *[]VerificationSessionID `json:"verification_ids,omitempty"`
@@ -2796,23 +2819,25 @@ type IdentitySourceBinding struct {
 	RunnerID      string       `json:"runner_id"`
 }
 
-// IdentitySubject defines model for IdentitySubject.
+// IdentitySubject Persistent tenant subject metadata without identity values.
 type IdentitySubject struct {
-	CreatedAt         time.Time            `json:"created_at"`
-	DeletionID        *string              `json:"deletion_id,omitempty"`
-	ErasedAt          *time.Time           `json:"erased_at,omitempty"`
-	ExternalReference *string              `json:"external_reference,omitempty"`
-	ID                IdentitySubjectID    `json:"id"`
-	Region            string               `json:"region"`
-	State             IdentitySubjectState `json:"state"`
-	UpdatedAt         time.Time            `json:"updated_at"`
-	Version           int64                `json:"version"`
+	CreatedAt         time.Time  `json:"created_at"`
+	DeletionID        *string    `json:"deletion_id,omitempty"`
+	ErasedAt          *time.Time `json:"erased_at,omitempty"`
+	ExternalReference *string    `json:"external_reference,omitempty"`
+
+	// ID Opaque tenant-persistent subject identifier.
+	ID        IdentitySubjectID    `json:"id"`
+	Region    string               `json:"region"`
+	State     IdentitySubjectState `json:"state"`
+	UpdatedAt time.Time            `json:"updated_at"`
+	Version   int64                `json:"version"`
 }
 
 // IdentitySubjectState defines model for IdentitySubject.State.
 type IdentitySubjectState string
 
-// IdentitySubjectID defines model for IdentitySubjectID.
+// IdentitySubjectID Opaque tenant-persistent subject identifier.
 type IdentitySubjectID = string
 
 // IdentityValue A sensitive typed scalar. Numeric values are canonical decimal strings to preserve precision; dates use YYYY-MM-DD and timestamps use UTC RFC3339. Values are encrypted in storage and revealed only with identity:reveal.
@@ -2824,7 +2849,7 @@ type IdentityValue struct {
 // IdentityValueType defines model for IdentityValue.Type.
 type IdentityValueType string
 
-// ModeConfig defines model for ModeConfig.
+// ModeConfig Versioned per-workflow automation mode and permitted action kinds.
 type ModeConfig struct {
 	AllowedKinds *[]ProposalActionKind `json:"allowed_kinds,omitempty"`
 	Mode         ModeConfigMode        `json:"mode"`
@@ -3474,7 +3499,7 @@ type ProcessingAuthorityDeclare struct {
 // ProcessingAuthorityID Stable identifier for one tenant-declared processing authority.
 type ProcessingAuthorityID = string
 
-// Prompt defines model for Prompt.
+// Prompt Immutable prompt revision with its digest and generating model.
 type Prompt struct {
 	Content  string `json:"content"`
 	Digest   string `json:"digest"`
@@ -3483,13 +3508,13 @@ type Prompt struct {
 	Version  int    `json:"version"`
 }
 
-// PromptCreate defines model for PromptCreate.
+// PromptCreate Register an immutable prompt revision for one generative model.
 type PromptCreate struct {
 	Content string `json:"content"`
 	ModelID string `json:"model_id"`
 }
 
-// Proposal defines model for Proposal.
+// Proposal Immutable non-authoritative proposal envelope with pinned model and prompt provenance.
 type Proposal struct {
 	Actions        []ProposalAction `json:"actions"`
 	ContextDigest  string           `json:"context_digest"`
@@ -3516,23 +3541,25 @@ type ProposalMode string
 // ProposalStatus defines model for Proposal.Status.
 type ProposalStatus string
 
-// ProposalAction defines model for ProposalAction.
+// ProposalAction One bounded action whose args schema is selected by kind.
 type ProposalAction struct {
 	// Args Closed JSON args per kind
 	Args map[string]interface{} `json:"args"`
-	Kind ProposalActionKind     `json:"kind"`
+
+	// Kind Closed allow-list of non-authoritative proposal action kinds.
+	Kind ProposalActionKind `json:"kind"`
 }
 
-// ProposalActionKind defines model for ProposalActionKind.
+// ProposalActionKind Closed allow-list of non-authoritative proposal action kinds.
 type ProposalActionKind string
 
-// ProposalApproveRequest defines model for ProposalApproveRequest.
+// ProposalApproveRequest Human approval of one pending proposal under an expected version.
 type ProposalApproveRequest struct {
 	ExpectedVersion int  `json:"expected_version"`
 	HumanApproved   bool `json:"human_approved"`
 }
 
-// ProposalRequest defines model for ProposalRequest.
+// ProposalRequest Create one proposal for a verification or a policy under the session mode.
 type ProposalRequest struct {
 	Actions        []ProposalAction    `json:"actions"`
 	ContextDigest  string              `json:"context_digest"`
@@ -3551,7 +3578,7 @@ type ProposalRequest struct {
 // ProposalRequestMode defines model for ProposalRequest.Mode.
 type ProposalRequestMode string
 
-// ProposalVersionRequest defines model for ProposalVersionRequest.
+// ProposalVersionRequest Version precondition for reject or cancel of one pending proposal.
 type ProposalVersionRequest struct {
 	ExpectedVersion int `json:"expected_version"`
 }
@@ -4065,7 +4092,9 @@ type WebhookAttemptList struct {
 
 // WebhookCreate Register an HTTPS endpoint. Callback transport validates public DNS on each attempt. Applies to webhook Create.
 type WebhookCreate struct {
-	URL string `json:"url"`
+	// EventTypes Exact catalogue event names to subscribe, or the single wildcard entry `*`. Defaults to `["verification.completed"]` when omitted.
+	EventTypes *[]string `json:"event_types,omitempty"`
+	URL        string    `json:"url"`
 }
 
 // WebhookDelivery Payload-free delivery state. Replay retains event identity and records a distinct delivery and replay_of.
@@ -4110,9 +4139,12 @@ type WebhookDisable struct {
 
 // WebhookEndpoint Tenant-owned endpoint metadata. Key material is never included.
 type WebhookEndpoint struct {
-	CreatedAt          time.Time  `json:"created_at"`
-	DisabledAt         *time.Time `json:"disabled_at,omitempty"`
-	DisabledReason     *string    `json:"disabled_reason,omitempty"`
+	CreatedAt      time.Time  `json:"created_at"`
+	DisabledAt     *time.Time `json:"disabled_at,omitempty"`
+	DisabledReason *string    `json:"disabled_reason,omitempty"`
+
+	// EventTypes Exact catalogue event names subscribed by this endpoint, or the single wildcard entry `*` for every current and future catalogue event.
+	EventTypes         []string   `json:"event_types"`
 	ID                 string     `json:"id"`
 	PreviousValidUntil *time.Time `json:"previous_valid_until,omitempty"`
 	SecretVersion      int64      `json:"secret_version"`
@@ -4146,6 +4178,13 @@ type WebhookReplay struct {
 type WebhookRotate struct {
 	ExpectedVersion int64 `json:"expected_version"`
 	OverlapSeconds  int64 `json:"overlap_seconds"`
+}
+
+// WebhookSubscriptions Replace an endpoint's catalogue event subscription under an expected version.
+type WebhookSubscriptions struct {
+	// EventTypes Exact catalogue event names, or the single wildcard entry `*` for every current and future catalogue event except explicit-only ones.
+	EventTypes      []string `json:"event_types"`
+	ExpectedVersion int64    `json:"expected_version"`
 }
 
 // ContentDigest defines model for ContentDigest.
@@ -4505,6 +4544,7 @@ type RollbackPolicyParams struct {
 
 // ListProposalsParams defines parameters for ListProposals.
 type ListProposalsParams struct {
+	// VerificationID Restrict the list to one verification session.
 	VerificationID *string `form:"verification_id,omitempty" json:"verification_id,omitempty"`
 
 	// Cursor Opaque continuation cursor returned by the preceding page.
@@ -4678,8 +4718,11 @@ type PutReviewPolicyParams struct {
 
 // ListIdentitySubjectsParams defines parameters for ListIdentitySubjects.
 type ListIdentitySubjectsParams struct {
+	// After Opaque continuation cursor returned by the previous page.
 	After *string `form:"after,omitempty" json:"after,omitempty"`
-	Limit *int    `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Limit Bounded page size; keep it unchanged when continuing a cursor.
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
 // CreateIdentitySubjectJSONBody defines parameters for CreateIdentitySubject.
@@ -4703,13 +4746,11 @@ type LookupIdentityExternalReferenceJSONBody struct {
 	Limit             *int    `json:"limit,omitempty"`
 }
 
-// DeleteIdentitySubjectJSONBody defines parameters for DeleteIdentitySubject.
-type DeleteIdentitySubjectJSONBody struct {
-	ExpectedVersion int64 `json:"expected_version"`
-}
-
 // DeleteIdentitySubjectParams defines parameters for DeleteIdentitySubject.
 type DeleteIdentitySubjectParams struct {
+	// ExpectedVersion Current subject version used as the optimistic precondition.
+	ExpectedVersion int64 `form:"expected_version" json:"expected_version"`
+
 	// IdempotencyKey An RFC 9651 String used to deduplicate a consequential request. It is
 	// scoped to the authenticated tenant and operation. Reusing a key with a
 	// different canonical request fingerprint is a conflict. Keys are not
@@ -4758,13 +4799,20 @@ type RebuildIdentityProjectionParams struct {
 
 // ListIdentityRecordsParams defines parameters for ListIdentityRecords.
 type ListIdentityRecordsParams struct {
+	// After Opaque continuation cursor returned by the previous page.
 	After *string `form:"after,omitempty" json:"after,omitempty"`
-	Limit *int    `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Limit Bounded page size; keep it unchanged when continuing a cursor.
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
 
 	// Reveal Explicit value reveal additionally requires identity:reveal and appends an audit record.
-	Reveal  *bool                          `form:"reveal,omitempty" json:"reveal,omitempty"`
-	Current *bool                          `form:"current,omitempty" json:"current,omitempty"`
-	Kind    *ListIdentityRecordsParamsKind `form:"kind,omitempty" json:"kind,omitempty"`
+	Reveal *bool `form:"reveal,omitempty" json:"reveal,omitempty"`
+
+	// Current Return only the current head of each record series.
+	Current *bool `form:"current,omitempty" json:"current,omitempty"`
+
+	// Kind Restrict records to one immutable record kind.
+	Kind *ListIdentityRecordsParamsKind `form:"kind,omitempty" json:"kind,omitempty"`
 }
 
 // ListIdentityRecordsParamsKind defines parameters for ListIdentityRecords.
@@ -4795,8 +4843,11 @@ type GetIdentityRecordParams struct {
 
 // ListIdentityVerificationsParams defines parameters for ListIdentityVerifications.
 type ListIdentityVerificationsParams struct {
+	// After Opaque continuation cursor returned by the previous page.
 	After *string `form:"after,omitempty" json:"after,omitempty"`
-	Limit *int    `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Limit Bounded page size; keep it unchanged when continuing a cursor.
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
 // LinkIdentityVerificationJSONBody defines parameters for LinkIdentityVerification.
@@ -4929,6 +4980,15 @@ type DisableWebhookEndpointParams struct {
 
 // RotateWebhookEndpointParams defines parameters for RotateWebhookEndpoint.
 type RotateWebhookEndpointParams struct {
+	// IdempotencyKey An RFC 9651 String used to deduplicate a consequential request. It is
+	// scoped to the authenticated tenant and operation. Reusing a key with a
+	// different canonical request fingerprint is a conflict. Keys are not
+	// credentials and clients must not place secrets or identity data in them.
+	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
+}
+
+// UpdateWebhookSubscriptionsParams defines parameters for UpdateWebhookSubscriptions.
+type UpdateWebhookSubscriptionsParams struct {
 	// IdempotencyKey An RFC 9651 String used to deduplicate a consequential request. It is
 	// scoped to the authenticated tenant and operation. Reusing a key with a
 	// different canonical request fingerprint is a conflict. Keys are not
@@ -5077,9 +5137,6 @@ type CreateIdentitySubjectJSONRequestBody CreateIdentitySubjectJSONBody
 // LookupIdentityExternalReferenceJSONRequestBody defines body for LookupIdentityExternalReference for application/json ContentType.
 type LookupIdentityExternalReferenceJSONRequestBody LookupIdentityExternalReferenceJSONBody
 
-// DeleteIdentitySubjectJSONRequestBody defines body for DeleteIdentitySubject for application/json ContentType.
-type DeleteIdentitySubjectJSONRequestBody DeleteIdentitySubjectJSONBody
-
 // UpdateIdentitySubjectJSONRequestBody defines body for UpdateIdentitySubject for application/json ContentType.
 type UpdateIdentitySubjectJSONRequestBody UpdateIdentitySubjectJSONBody
 
@@ -5112,6 +5169,9 @@ type DisableWebhookEndpointJSONRequestBody = WebhookDisable
 
 // RotateWebhookEndpointJSONRequestBody defines body for RotateWebhookEndpoint for application/json ContentType.
 type RotateWebhookEndpointJSONRequestBody = WebhookRotate
+
+// UpdateWebhookSubscriptionsJSONRequestBody defines body for UpdateWebhookSubscriptions for application/json ContentType.
+type UpdateWebhookSubscriptionsJSONRequestBody = WebhookSubscriptions
 
 // RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
@@ -6331,23 +6391,12 @@ type ClientInterface interface {
 	// Corresponds with POST /v1/subjects/lookup (the `LookupIdentityExternalReference` operationId).
 	LookupIdentityExternalReference(ctx context.Context, body LookupIdentityExternalReferenceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// DeleteIdentitySubjectWithBody Request subject and linked evidence deletion
-	//
-	// Requires subjects:delete. Atomically freezes the subject and active linked verifications, and requests identity-value and linked-evidence deletion. Legal holds suspend execution; backup expiry is measured from actual erasure. No immediate physical deletion is claimed. The initial bounded request supports 256 linked verifications and 255 evidence objects; overflow rejects the entire request without partial effects.
-	//
-	// Takes any type of body and a specified content type.
-	//
-	// Corresponds with DELETE /v1/subjects/{subjectID} (the `DeleteIdentitySubject` operationId).
-	DeleteIdentitySubjectWithBody(ctx context.Context, subjectID IdentitySubjectID, params *DeleteIdentitySubjectParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
-
 	// DeleteIdentitySubject Request subject and linked evidence deletion
 	//
 	// Requires subjects:delete. Atomically freezes the subject and active linked verifications, and requests identity-value and linked-evidence deletion. Legal holds suspend execution; backup expiry is measured from actual erasure. No immediate physical deletion is claimed. The initial bounded request supports 256 linked verifications and 255 evidence objects; overflow rejects the entire request without partial effects.
 	//
-	// Takes a body of the `application/json` content type.
-	//
 	// Corresponds with DELETE /v1/subjects/{subjectID} (the `DeleteIdentitySubject` operationId).
-	DeleteIdentitySubject(ctx context.Context, subjectID IdentitySubjectID, params *DeleteIdentitySubjectParams, body DeleteIdentitySubjectJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	DeleteIdentitySubject(ctx context.Context, subjectID IdentitySubjectID, params *DeleteIdentitySubjectParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetIdentitySubject Get a tenant subject
 	//
@@ -6671,6 +6720,24 @@ type ClientInterface interface {
 	//
 	// Corresponds with POST /v1/webhook-endpoints/{endpointID}/rotate (the `RotateWebhookEndpoint` operationId).
 	RotateWebhookEndpoint(ctx context.Context, endpointID string, params *RotateWebhookEndpointParams, body RotateWebhookEndpointJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateWebhookSubscriptionsWithBody Replace endpoint event subscriptions
+	//
+	// Requires webhooks:configure. Replaces the endpoint's catalogue event selection under an expected version. Exact names or the single `*` wildcard are accepted; `*` includes future catalogue events except explicit-only ones.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/webhook-endpoints/{endpointID}/subscriptions (the `UpdateWebhookSubscriptions` operationId).
+	UpdateWebhookSubscriptionsWithBody(ctx context.Context, endpointID string, params *UpdateWebhookSubscriptionsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateWebhookSubscriptions Replace endpoint event subscriptions
+	//
+	// Requires webhooks:configure. Replaces the endpoint's catalogue event selection under an expected version. Exact names or the single `*` wildcard are accepted; `*` includes future catalogue events except explicit-only ones.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/webhook-endpoints/{endpointID}/subscriptions (the `UpdateWebhookSubscriptions` operationId).
+	UpdateWebhookSubscriptions(ctx context.Context, endpointID string, params *UpdateWebhookSubscriptionsParams, body UpdateWebhookSubscriptionsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 // ExecuteAcceptedCommand Execute a guardrail-approved accepted command (idempotent replay)
@@ -9227,34 +9294,13 @@ func (c *Client) LookupIdentityExternalReference(ctx context.Context, body Looku
 	return c.Client.Do(req)
 }
 
-// DeleteIdentitySubjectWithBody Request subject and linked evidence deletion
-//
-// Requires subjects:delete. Atomically freezes the subject and active linked verifications, and requests identity-value and linked-evidence deletion. Legal holds suspend execution; backup expiry is measured from actual erasure. No immediate physical deletion is claimed. The initial bounded request supports 256 linked verifications and 255 evidence objects; overflow rejects the entire request without partial effects.
-//
-// Takes any type of body and a specified content type.
-//
-// Corresponds with DELETE /v1/subjects/{subjectID} (the `DeleteIdentitySubject` operationId).
-func (c *Client) DeleteIdentitySubjectWithBody(ctx context.Context, subjectID IdentitySubjectID, params *DeleteIdentitySubjectParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewDeleteIdentitySubjectRequestWithBody(c.Server, subjectID, params, contentType, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
 // DeleteIdentitySubject Request subject and linked evidence deletion
 //
 // Requires subjects:delete. Atomically freezes the subject and active linked verifications, and requests identity-value and linked-evidence deletion. Legal holds suspend execution; backup expiry is measured from actual erasure. No immediate physical deletion is claimed. The initial bounded request supports 256 linked verifications and 255 evidence objects; overflow rejects the entire request without partial effects.
 //
-// Takes a body of the `application/json` content type.
-//
 // Corresponds with DELETE /v1/subjects/{subjectID} (the `DeleteIdentitySubject` operationId).
-func (c *Client) DeleteIdentitySubject(ctx context.Context, subjectID IdentitySubjectID, params *DeleteIdentitySubjectParams, body DeleteIdentitySubjectJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewDeleteIdentitySubjectRequest(c.Server, subjectID, params, body)
+func (c *Client) DeleteIdentitySubject(ctx context.Context, subjectID IdentitySubjectID, params *DeleteIdentitySubjectParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteIdentitySubjectRequest(c.Server, subjectID, params)
 	if err != nil {
 		return nil, err
 	}
@@ -9968,6 +10014,44 @@ func (c *Client) RotateWebhookEndpointWithBody(ctx context.Context, endpointID s
 // Corresponds with POST /v1/webhook-endpoints/{endpointID}/rotate (the `RotateWebhookEndpoint` operationId).
 func (c *Client) RotateWebhookEndpoint(ctx context.Context, endpointID string, params *RotateWebhookEndpointParams, body RotateWebhookEndpointJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewRotateWebhookEndpointRequest(c.Server, endpointID, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// UpdateWebhookSubscriptionsWithBody Replace endpoint event subscriptions
+//
+// Requires webhooks:configure. Replaces the endpoint's catalogue event selection under an expected version. Exact names or the single `*` wildcard are accepted; `*` includes future catalogue events except explicit-only ones.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/webhook-endpoints/{endpointID}/subscriptions (the `UpdateWebhookSubscriptions` operationId).
+func (c *Client) UpdateWebhookSubscriptionsWithBody(ctx context.Context, endpointID string, params *UpdateWebhookSubscriptionsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateWebhookSubscriptionsRequestWithBody(c.Server, endpointID, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// UpdateWebhookSubscriptions Replace endpoint event subscriptions
+//
+// Requires webhooks:configure. Replaces the endpoint's catalogue event selection under an expected version. Exact names or the single `*` wildcard are accepted; `*` includes future catalogue events except explicit-only ones.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/webhook-endpoints/{endpointID}/subscriptions (the `UpdateWebhookSubscriptions` operationId).
+func (c *Client) UpdateWebhookSubscriptions(ctx context.Context, endpointID string, params *UpdateWebhookSubscriptionsParams, body UpdateWebhookSubscriptionsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateWebhookSubscriptionsRequest(c.Server, endpointID, params, body)
 	if err != nil {
 		return nil, err
 	}
@@ -14601,19 +14685,8 @@ func NewLookupIdentityExternalReferenceRequestWithBody(server string, contentTyp
 	return req, nil
 }
 
-// NewDeleteIdentitySubjectRequest calls the generic DeleteIdentitySubject builder with application/json body
-func NewDeleteIdentitySubjectRequest(server string, subjectID IdentitySubjectID, params *DeleteIdentitySubjectParams, body DeleteIdentitySubjectJSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-	return NewDeleteIdentitySubjectRequestWithBody(server, subjectID, params, "application/json", bodyReader)
-}
-
-// NewDeleteIdentitySubjectRequestWithBody constructs an http.Request for the DeleteIdentitySubject method, with any body, and a specified content type
-func NewDeleteIdentitySubjectRequestWithBody(server string, subjectID IdentitySubjectID, params *DeleteIdentitySubjectParams, contentType string, body io.Reader) (*http.Request, error) {
+// NewDeleteIdentitySubjectRequest constructs an http.Request for the DeleteIdentitySubject method
+func NewDeleteIdentitySubjectRequest(server string, subjectID IdentitySubjectID, params *DeleteIdentitySubjectParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -14638,12 +14711,33 @@ func NewDeleteIdentitySubjectRequestWithBody(server string, subjectID IdentitySu
 		return nil, err
 	}
 
-	req, err := http.NewRequest(http.MethodDelete, queryURL.String(), body)
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if queryFrag, err := runtime.StyleParamWithOptions("form", true, "expected_version", params.ExpectedVersion, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: "int64"}); err != nil {
+			return nil, err
+		} else {
+			for _, qp := range strings.Split(queryFrag, "&") {
+				rawQueryFragments = append(rawQueryFragments, qp)
+			}
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodDelete, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
-
-	req.Header.Add("Content-Type", contentType)
 
 	if params != nil {
 
@@ -16212,6 +16306,66 @@ func NewRotateWebhookEndpointRequestWithBody(server string, endpointID string, p
 	return req, nil
 }
 
+// NewUpdateWebhookSubscriptionsRequest calls the generic UpdateWebhookSubscriptions builder with application/json body
+func NewUpdateWebhookSubscriptionsRequest(server string, endpointID string, params *UpdateWebhookSubscriptionsParams, body UpdateWebhookSubscriptionsJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateWebhookSubscriptionsRequestWithBody(server, endpointID, params, "application/json", bodyReader)
+}
+
+// NewUpdateWebhookSubscriptionsRequestWithBody constructs an http.Request for the UpdateWebhookSubscriptions method, with any body, and a specified content type
+func NewUpdateWebhookSubscriptionsRequestWithBody(server string, endpointID string, params *UpdateWebhookSubscriptionsParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "endpointID", endpointID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/webhook-endpoints/%s/subscriptions", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithOptions("simple", false, "Idempotency-Key", params.IdempotencyKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam0)
+
+	}
+
+	return req, nil
+}
+
 func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
 	for _, r := range c.RequestEditors {
 		if err := r(ctx, req); err != nil {
@@ -17492,23 +17646,14 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with POST /v1/subjects/lookup (the `LookupIdentityExternalReference` operationId).
 	LookupIdentityExternalReferenceWithResponse(ctx context.Context, body LookupIdentityExternalReferenceJSONRequestBody, reqEditors ...RequestEditorFn) (*LookupIdentityExternalReferenceResponse, error)
 
-	// DeleteIdentitySubjectWithBodyWithResponse Request subject and linked evidence deletion
-	//
-	// Requires subjects:delete. Atomically freezes the subject and active linked verifications, and requests identity-value and linked-evidence deletion. Legal holds suspend execution; backup expiry is measured from actual erasure. No immediate physical deletion is claimed. The initial bounded request supports 256 linked verifications and 255 evidence objects; overflow rejects the entire request without partial effects.
-	//
-	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
-	//
-	// Corresponds with DELETE /v1/subjects/{subjectID} (the `DeleteIdentitySubject` operationId).
-	DeleteIdentitySubjectWithBodyWithResponse(ctx context.Context, subjectID IdentitySubjectID, params *DeleteIdentitySubjectParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*DeleteIdentitySubjectResponse, error)
-
 	// DeleteIdentitySubjectWithResponse Request subject and linked evidence deletion
 	//
 	// Requires subjects:delete. Atomically freezes the subject and active linked verifications, and requests identity-value and linked-evidence deletion. Legal holds suspend execution; backup expiry is measured from actual erasure. No immediate physical deletion is claimed. The initial bounded request supports 256 linked verifications and 255 evidence objects; overflow rejects the entire request without partial effects.
 	//
-	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	// Returns a wrapper object for the known response body format(s).
 	//
 	// Corresponds with DELETE /v1/subjects/{subjectID} (the `DeleteIdentitySubject` operationId).
-	DeleteIdentitySubjectWithResponse(ctx context.Context, subjectID IdentitySubjectID, params *DeleteIdentitySubjectParams, body DeleteIdentitySubjectJSONRequestBody, reqEditors ...RequestEditorFn) (*DeleteIdentitySubjectResponse, error)
+	DeleteIdentitySubjectWithResponse(ctx context.Context, subjectID IdentitySubjectID, params *DeleteIdentitySubjectParams, reqEditors ...RequestEditorFn) (*DeleteIdentitySubjectResponse, error)
 
 	// GetIdentitySubjectWithResponse Get a tenant subject
 	//
@@ -17866,6 +18011,24 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with POST /v1/webhook-endpoints/{endpointID}/rotate (the `RotateWebhookEndpoint` operationId).
 	RotateWebhookEndpointWithResponse(ctx context.Context, endpointID string, params *RotateWebhookEndpointParams, body RotateWebhookEndpointJSONRequestBody, reqEditors ...RequestEditorFn) (*RotateWebhookEndpointResponse, error)
+
+	// UpdateWebhookSubscriptionsWithBodyWithResponse Replace endpoint event subscriptions
+	//
+	// Requires webhooks:configure. Replaces the endpoint's catalogue event selection under an expected version. Exact names or the single `*` wildcard are accepted; `*` includes future catalogue events except explicit-only ones.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/webhook-endpoints/{endpointID}/subscriptions (the `UpdateWebhookSubscriptions` operationId).
+	UpdateWebhookSubscriptionsWithBodyWithResponse(ctx context.Context, endpointID string, params *UpdateWebhookSubscriptionsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateWebhookSubscriptionsResponse, error)
+
+	// UpdateWebhookSubscriptionsWithResponse Replace endpoint event subscriptions
+	//
+	// Requires webhooks:configure. Replaces the endpoint's catalogue event selection under an expected version. Exact names or the single `*` wildcard are accepted; `*` includes future catalogue events except explicit-only ones.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/webhook-endpoints/{endpointID}/subscriptions (the `UpdateWebhookSubscriptions` operationId).
+	UpdateWebhookSubscriptionsWithResponse(ctx context.Context, endpointID string, params *UpdateWebhookSubscriptionsParams, body UpdateWebhookSubscriptionsJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateWebhookSubscriptionsResponse, error)
 }
 
 // ExecuteAcceptedCommandResponse204Headers the declared response headers of an HTTP 204 response for ExecuteAcceptedCommand
@@ -36106,6 +36269,172 @@ func (r RotateWebhookEndpointResponse) ContentType() string {
 	return ""
 }
 
+// UpdateWebhookSubscriptionsResponse200Headers the declared response headers of an HTTP 200 response for UpdateWebhookSubscriptions
+type UpdateWebhookSubscriptionsResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// UpdateWebhookSubscriptionsResponse400Headers the declared response headers of an HTTP 400 response for UpdateWebhookSubscriptions
+type UpdateWebhookSubscriptionsResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// UpdateWebhookSubscriptionsResponse401Headers the declared response headers of an HTTP 401 response for UpdateWebhookSubscriptions
+type UpdateWebhookSubscriptionsResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// UpdateWebhookSubscriptionsResponse403Headers the declared response headers of an HTTP 403 response for UpdateWebhookSubscriptions
+type UpdateWebhookSubscriptionsResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// UpdateWebhookSubscriptionsResponse404Headers the declared response headers of an HTTP 404 response for UpdateWebhookSubscriptions
+type UpdateWebhookSubscriptionsResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// UpdateWebhookSubscriptionsResponse409Headers the declared response headers of an HTTP 409 response for UpdateWebhookSubscriptions
+type UpdateWebhookSubscriptionsResponse409Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+// UpdateWebhookSubscriptionsResponse429Headers the declared response headers of an HTTP 429 response for UpdateWebhookSubscriptions
+type UpdateWebhookSubscriptionsResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// UpdateWebhookSubscriptionsResponse500Headers the declared response headers of an HTTP 500 response for UpdateWebhookSubscriptions
+type UpdateWebhookSubscriptionsResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// UpdateWebhookSubscriptionsResponse503Headers the declared response headers of an HTTP 503 response for UpdateWebhookSubscriptions
+type UpdateWebhookSubscriptionsResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type UpdateWebhookSubscriptionsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *WebhookEndpointMutation
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationProblemJSON409 *Conflict
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *UpdateWebhookSubscriptionsResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *UpdateWebhookSubscriptionsResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *UpdateWebhookSubscriptionsResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *UpdateWebhookSubscriptionsResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *UpdateWebhookSubscriptionsResponse404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *UpdateWebhookSubscriptionsResponse409Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *UpdateWebhookSubscriptionsResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *UpdateWebhookSubscriptionsResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *UpdateWebhookSubscriptionsResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r UpdateWebhookSubscriptionsResponse) GetJSON200() *WebhookEndpointMutation {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r UpdateWebhookSubscriptionsResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r UpdateWebhookSubscriptionsResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r UpdateWebhookSubscriptionsResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r UpdateWebhookSubscriptionsResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r UpdateWebhookSubscriptionsResponse) GetApplicationProblemJSON409() *Conflict {
+	return r.ApplicationProblemJSON409
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r UpdateWebhookSubscriptionsResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r UpdateWebhookSubscriptionsResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r UpdateWebhookSubscriptionsResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r UpdateWebhookSubscriptionsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateWebhookSubscriptionsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateWebhookSubscriptionsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r UpdateWebhookSubscriptionsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // ExecuteAcceptedCommandWithResponse Execute a guardrail-approved accepted command (idempotent replay)
 //
 // Returns a wrapper object for the known response body format(s).
@@ -38188,30 +38517,15 @@ func (c *ClientWithResponses) LookupIdentityExternalReferenceWithResponse(ctx co
 	return ParseLookupIdentityExternalReferenceResponse(rsp)
 }
 
-// DeleteIdentitySubjectWithBodyWithResponse Request subject and linked evidence deletion
-//
-// Requires subjects:delete. Atomically freezes the subject and active linked verifications, and requests identity-value and linked-evidence deletion. Legal holds suspend execution; backup expiry is measured from actual erasure. No immediate physical deletion is claimed. The initial bounded request supports 256 linked verifications and 255 evidence objects; overflow rejects the entire request without partial effects.
-//
-// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
-//
-// Corresponds with DELETE /v1/subjects/{subjectID} (the `DeleteIdentitySubject` operationId).
-func (c *ClientWithResponses) DeleteIdentitySubjectWithBodyWithResponse(ctx context.Context, subjectID IdentitySubjectID, params *DeleteIdentitySubjectParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*DeleteIdentitySubjectResponse, error) {
-	rsp, err := c.DeleteIdentitySubjectWithBody(ctx, subjectID, params, contentType, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseDeleteIdentitySubjectResponse(rsp)
-}
-
 // DeleteIdentitySubjectWithResponse Request subject and linked evidence deletion
 //
 // Requires subjects:delete. Atomically freezes the subject and active linked verifications, and requests identity-value and linked-evidence deletion. Legal holds suspend execution; backup expiry is measured from actual erasure. No immediate physical deletion is claimed. The initial bounded request supports 256 linked verifications and 255 evidence objects; overflow rejects the entire request without partial effects.
 //
-// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+// Returns a wrapper object for the known response body format(s).
 //
 // Corresponds with DELETE /v1/subjects/{subjectID} (the `DeleteIdentitySubject` operationId).
-func (c *ClientWithResponses) DeleteIdentitySubjectWithResponse(ctx context.Context, subjectID IdentitySubjectID, params *DeleteIdentitySubjectParams, body DeleteIdentitySubjectJSONRequestBody, reqEditors ...RequestEditorFn) (*DeleteIdentitySubjectResponse, error) {
-	rsp, err := c.DeleteIdentitySubject(ctx, subjectID, params, body, reqEditors...)
+func (c *ClientWithResponses) DeleteIdentitySubjectWithResponse(ctx context.Context, subjectID IdentitySubjectID, params *DeleteIdentitySubjectParams, reqEditors ...RequestEditorFn) (*DeleteIdentitySubjectResponse, error) {
+	rsp, err := c.DeleteIdentitySubject(ctx, subjectID, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -38807,6 +39121,36 @@ func (c *ClientWithResponses) RotateWebhookEndpointWithResponse(ctx context.Cont
 		return nil, err
 	}
 	return ParseRotateWebhookEndpointResponse(rsp)
+}
+
+// UpdateWebhookSubscriptionsWithBodyWithResponse Replace endpoint event subscriptions
+//
+// Requires webhooks:configure. Replaces the endpoint's catalogue event selection under an expected version. Exact names or the single `*` wildcard are accepted; `*` includes future catalogue events except explicit-only ones.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/webhook-endpoints/{endpointID}/subscriptions (the `UpdateWebhookSubscriptions` operationId).
+func (c *ClientWithResponses) UpdateWebhookSubscriptionsWithBodyWithResponse(ctx context.Context, endpointID string, params *UpdateWebhookSubscriptionsParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateWebhookSubscriptionsResponse, error) {
+	rsp, err := c.UpdateWebhookSubscriptionsWithBody(ctx, endpointID, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateWebhookSubscriptionsResponse(rsp)
+}
+
+// UpdateWebhookSubscriptionsWithResponse Replace endpoint event subscriptions
+//
+// Requires webhooks:configure. Replaces the endpoint's catalogue event selection under an expected version. Exact names or the single `*` wildcard are accepted; `*` includes future catalogue events except explicit-only ones.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/webhook-endpoints/{endpointID}/subscriptions (the `UpdateWebhookSubscriptions` operationId).
+func (c *ClientWithResponses) UpdateWebhookSubscriptionsWithResponse(ctx context.Context, endpointID string, params *UpdateWebhookSubscriptionsParams, body UpdateWebhookSubscriptionsJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateWebhookSubscriptionsResponse, error) {
+	rsp, err := c.UpdateWebhookSubscriptions(ctx, endpointID, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateWebhookSubscriptionsResponse(rsp)
 }
 
 // ParseExecuteAcceptedCommandResponse parses an HTTP response from a ExecuteAcceptedCommandWithResponse call
@@ -61857,6 +62201,223 @@ func ParseRotateWebhookEndpointResponse(rsp *http.Response) (*RotateWebhookEndpo
 		response.Headers500 = &headers
 	case rsp.StatusCode == 503:
 		var headers RotateWebhookEndpointResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseUpdateWebhookSubscriptionsResponse parses an HTTP response from a UpdateWebhookSubscriptionsWithResponse call
+func ParseUpdateWebhookSubscriptionsResponse(rsp *http.Response) (*UpdateWebhookSubscriptionsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateWebhookSubscriptionsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest WebhookEndpointMutation
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers UpdateWebhookSubscriptionsResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers UpdateWebhookSubscriptionsResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers UpdateWebhookSubscriptionsResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers UpdateWebhookSubscriptionsResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers UpdateWebhookSubscriptionsResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers UpdateWebhookSubscriptionsResponse409Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 429:
+		var headers UpdateWebhookSubscriptionsResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers UpdateWebhookSubscriptionsResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers UpdateWebhookSubscriptionsResponse503Headers
 		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
 			var value int
 			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {

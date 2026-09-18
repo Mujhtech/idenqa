@@ -357,6 +357,7 @@ export function webhookEndpoint(value: WireWebhookEndpoint): WebhookEndpoint {
   return {
     id: value.id,
     url: value.url,
+    eventTypes: value.event_types,
     version: value.version,
     secretVersion: value.secret_version,
     ...(value.previous_valid_until === undefined

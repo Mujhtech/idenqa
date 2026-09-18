@@ -57,6 +57,7 @@ type Process struct {
 	evidence               EvidenceLifecycle
 	deliveryLifecycle      EvidenceLifecycle
 	deliveryCoordinator    *deliverytask.Coordinator
+	fanoutCoordinator      *deliverytask.FanoutCoordinator
 	expiryCoordinator      *verificationtask.ExpiryCoordinator
 	logger                 *slog.Logger
 	workerID               string
@@ -320,7 +321,7 @@ func NewProcessWithInfrastructure(ctx context.Context, configuration config.Work
 		connectionPool.Close()
 		return nil, fmt.Errorf("construct policy decision builder: %w", err)
 	}
-	completion, err := verificationpostgres.NewCompletionStore(connectionPool, identifiers, adapter, clock.System{})
+	completion, err := verificationpostgres.NewCompletionStore(connectionPool, identifiers, clock.System{})
 	if err != nil {
 		connectionPool.Close()
 		return nil, fmt.Errorf("construct verification completion: %w", err)
@@ -387,6 +388,7 @@ func NewProcessWithInfrastructure(ctx context.Context, configuration config.Work
 		return nil, err
 	}
 	var deliveryCoordinator *deliverytask.Coordinator
+	var fanoutCoordinator *deliverytask.FanoutCoordinator
 	if deliveryInfrastructure.enabled() {
 		store, err := deliverypostgres.New(connectionPool)
 		if err != nil {
@@ -402,7 +404,21 @@ func NewProcessWithInfrastructure(ctx context.Context, configuration config.Work
 			connectionPool.Close()
 			return nil, err
 		}
+		fanout, err := deliverytask.NewFanoutHandler(store, identifiers, adapter, clock.System{}.Now)
+		if err != nil {
+			connectionPool.Close()
+			return nil, fmt.Errorf("construct webhook fanout handler: %w", err)
+		}
+		if err := registry.Register(deliverytask.FanoutKey, fanout); err != nil {
+			connectionPool.Close()
+			return nil, err
+		}
 		deliveryCoordinator, err = deliverytask.NewCoordinator(store, identifiers, adapter, clock.System{}, deliverytask.CoordinationBatch)
+		if err != nil {
+			connectionPool.Close()
+			return nil, err
+		}
+		fanoutCoordinator, err = deliverytask.NewFanoutCoordinator(store, identifiers, adapter, clock.System{}, deliverytask.CoordinationBatch)
 		if err != nil {
 			connectionPool.Close()
 			return nil, err
@@ -531,6 +547,7 @@ func NewProcessWithInfrastructure(ctx context.Context, configuration config.Work
 	}
 	process := &Process{providerConnection: providerConnection,
 		deliveryCoordinator: deliveryCoordinator,
+		fanoutCoordinator:   fanoutCoordinator,
 		expiryCoordinator:   expiryCoordinator,
 		processing:          processing, processingBatch: configuration.ReconciliationBatchSize,
 		identity: identityStore, fraud: fraudStore, reviewWorker: reviewWorker, worker: backgroundWorker, coordinator: coordinator, policyCoordinator: policyCoordinator, privacyCoordinator: privacyCoordinator, duties: adapter,
@@ -627,6 +644,15 @@ func (process *Process) scheduleWebhookDeliveries(ctx context.Context) {
 		process.logger.ErrorContext(ctx, "schedule webhook deliveries", "error", err)
 	} else if scheduled > 0 {
 		process.logger.DebugContext(ctx, "scheduled webhook deliveries", "count", scheduled)
+	}
+	if process.fanoutCoordinator == nil {
+		return
+	}
+	fanned, err := process.fanoutCoordinator.ScheduleReadyFanouts(ctx)
+	if err != nil && !errors.Is(err, context.Canceled) {
+		process.logger.ErrorContext(ctx, "schedule webhook fanout", "error", err)
+	} else if fanned > 0 {
+		process.logger.DebugContext(ctx, "scheduled webhook fanout", "count", fanned)
 	}
 }
 

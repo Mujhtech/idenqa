@@ -37,8 +37,8 @@ func (store *Store) CreateEndpoint(ctx context.Context, scope tenant.Scope, endp
 	}
 	return store.write(ctx, scope, func(ctx context.Context, tx platformpostgres.Transaction) error {
 		_, err := tx.Exec(ctx, `INSERT INTO idenqa.webhook_endpoints
-			(tenant_id,id,url,secret_version,version,created_at,updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-			scope.ID().String(), endpoint.ID.String(), endpoint.URL, endpoint.Active.Version, endpoint.Version, endpoint.CreatedAt, endpoint.UpdatedAt)
+			(tenant_id,id,url,event_types,secret_version,version,created_at,updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+			scope.ID().String(), endpoint.ID.String(), endpoint.URL, endpoint.EventTypes, endpoint.Active.Version, endpoint.Version, endpoint.CreatedAt, endpoint.UpdatedAt)
 		if err != nil {
 			return fmt.Errorf("insert webhook endpoint: %w", err)
 		}
@@ -68,10 +68,10 @@ func (store *Store) UpdateEndpoint(ctx context.Context, scope tenant.Scope, endp
 		if endpoint.Previous != nil {
 			previousVersion, previousUntil = endpoint.Previous.Version, endpoint.PreviousValidUntil
 		}
-		tag, err := tx.Exec(ctx, `UPDATE idenqa.webhook_endpoints SET url=$3,secret_version=$4,
-			previous_secret_version=$5,previous_secret_valid_until=$6,disabled_at=$7,disabled_reason=$8,
-			version=$9,updated_at=$10 WHERE tenant_id=$1 AND id=$2 AND version=$11`, scope.ID().String(), endpoint.ID.String(), endpoint.URL,
-			endpoint.Active.Version, previousVersion, previousUntil, nullableTime(endpoint.DisabledAt), nullableString(endpoint.DisabledReason), endpoint.Version, endpoint.UpdatedAt, expected)
+		tag, err := tx.Exec(ctx, `UPDATE idenqa.webhook_endpoints SET url=$3,event_types=$4,secret_version=$5,
+			previous_secret_version=$6,previous_secret_valid_until=$7,disabled_at=$8,disabled_reason=$9,
+			version=$10,updated_at=$11 WHERE tenant_id=$1 AND id=$2 AND version=$12`, scope.ID().String(), endpoint.ID.String(), endpoint.URL,
+			endpoint.EventTypes, endpoint.Active.Version, previousVersion, previousUntil, nullableTime(endpoint.DisabledAt), nullableString(endpoint.DisabledReason), endpoint.Version, endpoint.UpdatedAt, expected)
 		if err != nil {
 			return err
 		}
@@ -91,8 +91,8 @@ func (store *Store) FindEndpoint(ctx context.Context, scope tenant.Scope, endpoi
 		var previousUntil, disabledAt *time.Time
 		var disabledReason *string
 		var version int64
-		err := tx.QueryRow(ctx, `SELECT url,secret_version,previous_secret_version,previous_secret_valid_until,disabled_at,disabled_reason,version,created_at,updated_at
-			FROM idenqa.webhook_endpoints WHERE tenant_id=$1 AND id=$2`, scope.ID().String(), endpointID.String()).Scan(&endpoint.URL, &activeVersion, &previousVersion, &previousUntil, &disabledAt, &disabledReason, &version, &endpoint.CreatedAt, &endpoint.UpdatedAt)
+		err := tx.QueryRow(ctx, `SELECT url,event_types,secret_version,previous_secret_version,previous_secret_valid_until,disabled_at,disabled_reason,version,created_at,updated_at
+			FROM idenqa.webhook_endpoints WHERE tenant_id=$1 AND id=$2`, scope.ID().String(), endpointID.String()).Scan(&endpoint.URL, &endpoint.EventTypes, &activeVersion, &previousVersion, &previousUntil, &disabledAt, &disabledReason, &version, &endpoint.CreatedAt, &endpoint.UpdatedAt)
 		if errors.Is(err, pgx.ErrNoRows) {
 			return delivery.ErrNotFound
 		}
@@ -137,10 +137,41 @@ func (store *Store) CreateDeliveryWithin(ctx context.Context, scope tenant.Scope
 	if err := setScope(ctx, tx, scope); err != nil {
 		return err
 	}
+	provider, reference, keyVersion, algorithm := nullableBodyWrapping(intent.BodyWrapping)
 	_, err := tx.Exec(ctx, `INSERT INTO idenqa.webhook_deliveries
-  (tenant_id,id,endpoint_id,event_id,event_type,body,body_digest,state,attempt_count,max_attempts,next_attempt_at,replay_of,created_at,updated_at)
-  VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`, scope.ID().String(), intent.ID.String(), intent.EndpointID.String(), intent.EventID.String(), intent.EventType, intent.Body, intent.BodyDigest, string(intent.State), intent.AttemptCount, intent.MaxAttempts, intent.NextAttemptAt, nullableDelivery(intent.ReplayOf), intent.CreatedAt, intent.UpdatedAt)
+  (tenant_id,id,endpoint_id,event_id,event_type,body,body_digest,state,attempt_count,max_attempts,next_attempt_at,replay_of,created_at,updated_at,body_provider,body_reference,body_key_version,body_algorithm)
+  VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)`, scope.ID().String(), intent.ID.String(), intent.EndpointID.String(), intent.EventID.String(), intent.EventType, intent.Body, intent.BodyDigest, string(intent.State), intent.AttemptCount, intent.MaxAttempts, intent.NextAttemptAt, nullableDelivery(intent.ReplayOf), intent.CreatedAt, intent.UpdatedAt, provider, reference, keyVersion, algorithm)
 	return err
+}
+
+func nullableBodyWrapping(wrapping *kms.WrappedKey) (any, any, any, any) {
+	if wrapping == nil {
+		return nil, nil, nil, nil
+	}
+	record := wrapping.Record()
+
+	return record.Provider, record.Reference, record.Version, record.Algorithm
+}
+
+func restoreBodyWrapping(body []byte, provider, reference, keyVersion, algorithm *string) (*kms.WrappedKey, error) {
+	present := 0
+	for _, value := range []*string{provider, reference, keyVersion, algorithm} {
+		if value != nil {
+			present++
+		}
+	}
+	if present == 0 {
+		return nil, nil
+	}
+	if present != 4 {
+		return nil, delivery.ErrInvalid
+	}
+	wrapped, err := kms.NewWrappedKey(kms.WrappedKeyRecord{Provider: *provider, Reference: *reference, Version: *keyVersion, Algorithm: *algorithm, Ciphertext: body})
+	if err != nil {
+		return nil, delivery.ErrInvalid
+	}
+
+	return &wrapped, nil
 }
 
 // FindDelivery restores only a delivery visible in scope.
@@ -152,13 +183,18 @@ func (store *Store) FindDelivery(ctx context.Context, scope tenant.Scope, delive
 		var state string
 		var attempts, maximum int32
 		var deliveredAt *time.Time
-		err := tx.QueryRow(ctx, `SELECT endpoint_id,event_id,event_type,body,body_digest,state,attempt_count,max_attempts,next_attempt_at,delivered_at,replay_of,created_at,updated_at
-			FROM idenqa.webhook_deliveries WHERE tenant_id=$1 AND id=$2`, scope.ID().String(), deliveryID.String()).Scan(&endpointID, &eventID, &result.EventType, &result.Body, &result.BodyDigest, &state, &attempts, &maximum, &result.NextAttemptAt, &deliveredAt, &replayOf, &result.CreatedAt, &result.UpdatedAt)
+		var provider, reference, keyVersion, algorithm *string
+		err := tx.QueryRow(ctx, `SELECT endpoint_id,event_id,event_type,body,body_digest,state,attempt_count,max_attempts,next_attempt_at,delivered_at,replay_of,created_at,updated_at,body_provider,body_reference,body_key_version,body_algorithm
+			FROM idenqa.webhook_deliveries WHERE tenant_id=$1 AND id=$2`, scope.ID().String(), deliveryID.String()).Scan(&endpointID, &eventID, &result.EventType, &result.Body, &result.BodyDigest, &state, &attempts, &maximum, &result.NextAttemptAt, &deliveredAt, &replayOf, &result.CreatedAt, &result.UpdatedAt, &provider, &reference, &keyVersion, &algorithm)
 		if errors.Is(err, pgx.ErrNoRows) {
 			return delivery.ErrNotFound
 		}
 		if err != nil || attempts < 0 || maximum <= 0 {
 			return errors.Join(delivery.ErrInvalid, err)
+		}
+		result.BodyWrapping, err = restoreBodyWrapping(result.Body, provider, reference, keyVersion, algorithm)
+		if err != nil {
+			return delivery.ErrInvalid
 		}
 		result.ID, result.State, result.AttemptCount, result.MaxAttempts = deliveryID, delivery.State(state), attempts, maximum
 		result.CreatedAt, result.UpdatedAt, result.NextAttemptAt = result.CreatedAt.UTC(), result.UpdatedAt.UTC(), result.NextAttemptAt.UTC()

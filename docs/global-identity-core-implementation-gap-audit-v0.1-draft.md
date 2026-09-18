@@ -521,19 +521,16 @@ SSO remains deferred. Historical increments below describe their state at the ti
 
 ## 17. Webhooks and general event contracts
 
-**Classification:** Partial and Current-core composition gap
+**Classification:** Implemented selected scope — catalogue, subscriptions and resumable fanout complete; clean-deployment proof remains under section 26
 
 The repository includes durable webhook persistence, KMS-wrapped rotating secrets, retry exhaustion, replay lineage, SSRF-aware callback transport, and an independent Go verifier. L-02 now composes completion projection and signed delivery into the runnable worker. Its public API journey proves atomic decision/session/delivery effects, a durable 503 retry, worker restart, successful delivery, stable event identity, and independent signature verification. H-01 now exposes public endpoint administration, payload-free delivery/attempt inspection and exhausted-delivery replay through API, TypeScript and CLI. The broader event catalogue remains incomplete.
 
-Missing capabilities include:
+Resolved on 18 September 2026: endpoint event-type subscriptions (exact names or `*`, bounded to 64, default `verification.completed`); the versioned public event catalogue with per-type JSON schemas and canonical fixtures in `contracts/webhook/v1`; outbox-first emission from every owning feature for the selected catalogue (verification lifecycle, checks, decisions, evidence, consent, processing authority, subjects, deletion, review cases and appeals); and a fenced, resumable `webhook.fanout` task that pages subscribed endpoints in bounded batches, dedupes per endpoint and event, and continues from a persisted cursor — replacing the fail-closed 1024-endpoint guard.
 
-- Event subscription configuration.
-- General domain-event projection beyond the implemented atomic verification-completion notification.
-- Scalable completion fanout beyond the current fail-closed 1024-endpoint implementation guard.
-- Complete public event catalogue.
-- Versioned domain-event and webhook JSON schemas.
-- Event compatibility fixtures and evolution tests.
-- Complete clean-deployment decision-to-delivery demonstration.
+Remaining:
+- A multi-batch crash-resume fanout exercise at scale beyond one batch.
+- The complete clean-deployment decision-to-delivery demonstration once the section 26 packaging gate exists.
+- `verification.collecting` has no distinct persisted transition and `provider.degraded` has no provider-health owner yet; neither emits.
 
 V-04 completed the application, persistence, task, transport, verifier, and deterministic proof boundary. L-02 adds the runnable completion and delivery composition. H-01 adds separately permissioned, atomically audited administration and replay, display-once secret delivery, overlap-safe rotation and signed tenant-bound inspection cursors. Receivers continue deduplicating the unchanged signed event ID across manual replay.
 
@@ -905,7 +902,7 @@ This sequence lists only unresolved work as of 15 September 2026. L-01 through L
 ### 31.2 Close the deterministic self-hosted core
 
 3. Add general session resumption, external-wait and operational-failure orchestration, plus worker-loss recovery proofs across every supported lifecycle state.
-4. Extend verification-completion webhooks into the general event catalogue with subscription configuration, versioned schemas, compatibility fixtures, and bounded scalable fanout.
+4. **Resolved 18 September 2026:** the general event catalogue, endpoint subscriptions, versioned schemas/fixtures and bounded resumable fanout are implemented; only the multi-batch crash-resume exercise and the section 26 clean-deployment proof remain.
 5. Close public contract and CLI parity for the still-internal or uncovered operations identified in sections 18 and 19, prioritising privacy/deletion status, evaluation-model registry, evidence/consent administration, and operational diagnostics.
 6. Package API, worker, object storage, runners, Capture Web, migrations, example tenant/profile/policy/webhook receiver, and failure recovery into the clean self-hosted usability gate in section 26.
 

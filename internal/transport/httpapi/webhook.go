@@ -45,6 +45,7 @@ func (routes *WebhookRoutes) Register(router chi.Router) {
 		{"GET", "/webhook-endpoints/{endpointID}", access.PermissionWebhooksRead, routes.endpoint},
 		{"POST", "/webhook-endpoints/{endpointID}/rotate", access.PermissionWebhooksConfigure, routes.mutate},
 		{"POST", "/webhook-endpoints/{endpointID}/disable", access.PermissionWebhooksConfigure, routes.mutate},
+		{"POST", "/webhook-endpoints/{endpointID}/subscriptions", access.PermissionWebhooksConfigure, routes.mutate},
 		{"GET", "/webhook-endpoints/{endpointID}/deliveries", access.PermissionWebhooksRead, routes.deliveries},
 		{"GET", "/webhook-deliveries/{deliveryID}", access.PermissionWebhooksRead, routes.delivery},
 		{"GET", "/webhook-deliveries/{deliveryID}/attempts", access.PermissionWebhooksRead, routes.attempts},
@@ -69,10 +70,18 @@ func (routes *WebhookRoutes) mutate(writer http.ResponseWriter, request *http.Re
 	switch chi.RouteContext(request.Context()).RoutePattern() {
 	case "/v1/webhook-endpoints":
 		body, decodeErr := decodeJSONBody[struct {
-			URL string `json:"url"`
+			URL        string   `json:"url"`
+			EventTypes []string `json:"event_types,omitempty"`
 		}](request)
 		err = decodeErr
-		command.Operation, command.URL = "create", body.URL
+		command.Operation, command.URL, command.EventTypes = "create", body.URL, body.EventTypes
+	case "/v1/webhook-endpoints/{endpointID}/subscriptions":
+		body, decodeErr := decodeJSONBody[struct {
+			ExpectedVersion int64    `json:"expected_version"`
+			EventTypes      []string `json:"event_types"`
+		}](request)
+		err = decodeErr
+		command.Operation, command.ExpectedVersion, command.EventTypes = "subscribe", body.ExpectedVersion, body.EventTypes
 	case "/v1/webhook-endpoints/{endpointID}/rotate":
 		body, decodeErr := decodeJSONBody[struct {
 			ExpectedVersion int64 `json:"expected_version"`

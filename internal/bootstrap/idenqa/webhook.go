@@ -20,10 +20,10 @@ import (
 )
 
 type webhookOptions struct {
-	baseURL, keyFile, identifier, targetURL, retryKey, reason, cursor, secretOut string
-	version, overlap                                                             int64
-	limit                                                                        int
-	confirm                                                                      bool
+	baseURL, keyFile, identifier, targetURL, retryKey, reason, cursor, secretOut, eventTypes string
+	version, overlap                                                                         int64
+	limit                                                                                    int
+	confirm                                                                                  bool
 }
 
 func newWebhookCommand() *cobra.Command {
@@ -32,7 +32,7 @@ func newWebhookCommand() *cobra.Command {
 		Short: "Configure and inspect webhooks through the public API",
 		Args:  cli.UsageArgs(cobra.NoArgs),
 	}
-	for _, operation := range []string{"create", "list", "get", "rotate", "disable", "deliveries", "delivery", "attempts", "replay"} {
+	for _, operation := range []string{"create", "list", "get", "rotate", "disable", "subscribe", "deliveries", "delivery", "attempts", "replay"} {
 		root.AddCommand(newWebhookOperation(operation))
 	}
 	return root
@@ -55,15 +55,19 @@ func newWebhookOperation(operation string) *cobra.Command {
 	}
 	if operation == "create" {
 		flags.StringVar(&options.targetURL, "url", "", "HTTPS receiver URL")
+		flags.StringVar(&options.eventTypes, "event-types", "", "comma-separated catalogue event names, or * (default verification.completed)")
+	}
+	if operation == "subscribe" {
+		flags.StringVar(&options.eventTypes, "event-types", "", "comma-separated catalogue event names, or *")
 	}
 	if operation == "list" || operation == "deliveries" {
 		flags.IntVar(&options.limit, "limit", 25, "page size from 1 to 100")
 		flags.StringVar(&options.cursor, "cursor", "", "opaque continuation cursor")
 	}
-	if operation == "create" || operation == "rotate" || operation == "disable" || operation == "replay" {
+	if operation == "create" || operation == "rotate" || operation == "disable" || operation == "subscribe" || operation == "replay" {
 		flags.StringVar(&options.retryKey, "idempotency-key", "", "stable retry key; reuse with identical input")
 	}
-	if operation == "rotate" || operation == "disable" {
+	if operation == "rotate" || operation == "disable" || operation == "subscribe" {
 		flags.Int64Var(&options.version, "expected-version", 0, "current endpoint version")
 	}
 	if operation == "rotate" {
@@ -75,10 +79,27 @@ func newWebhookOperation(operation string) *cobra.Command {
 	if operation == "disable" || operation == "replay" {
 		flags.StringVar(&options.reason, "reason", "", "bounded non-sensitive reason code")
 	}
-	if operation == "rotate" || operation == "disable" || operation == "replay" {
+	if operation == "rotate" || operation == "disable" || operation == "subscribe" || operation == "replay" {
 		flags.BoolVar(&options.confirm, "confirm", false, "confirm this consequential operation")
 	}
 	return command
+}
+
+func parseEventTypes(value string) ([]string, error) {
+	if strings.TrimSpace(value) == "" {
+		return nil, nil
+	}
+	entries := strings.Split(value, ",")
+	result := make([]string, 0, len(entries))
+	for _, entry := range entries {
+		entry = strings.TrimSpace(entry)
+		if entry == "" {
+			return nil, errors.New("event-types contains an empty entry")
+		}
+		result = append(result, entry)
+	}
+
+	return result, nil
 }
 
 func runWebhookOperation(command *cobra.Command, operation string, options *webhookOptions) error {
@@ -86,11 +107,14 @@ func runWebhookOperation(command *cobra.Command, operation string, options *webh
 	if err != nil || base.Host == "" || base.User != nil || base.RawQuery != "" || base.Fragment != "" || (base.Scheme != "https" && (base.Scheme != "http" || (base.Hostname() != "127.0.0.1" && base.Hostname() != "localhost" && base.Hostname() != "::1"))) {
 		return cli.UsageError(errors.New("a valid HTTPS API URL or local loopback HTTP URL is required"))
 	}
-	if (operation == "rotate" || operation == "disable" || operation == "replay") && !options.confirm {
+	if (operation == "rotate" || operation == "disable" || operation == "subscribe" || operation == "replay") && !options.confirm {
 		return cli.UsageError(errors.New("this webhook operation requires --confirm"))
 	}
-	if (operation == "rotate" || operation == "disable") && options.version < 1 {
+	if (operation == "rotate" || operation == "disable" || operation == "subscribe") && options.version < 1 {
 		return cli.UsageError(errors.New("expected-version must be positive"))
+	}
+	if operation == "subscribe" && strings.TrimSpace(options.eventTypes) == "" {
+		return cli.UsageError(errors.New("event-types is required"))
 	}
 	if (operation == "list" || operation == "deliveries") && (options.limit < 1 || options.limit > 100) {
 		return cli.UsageError(errors.New("limit must be from 1 to 100"))
@@ -111,10 +135,21 @@ func runWebhookOperation(command *cobra.Command, operation string, options *webh
 			path += "/" + options.identifier
 		}
 	}
+	selection, err := parseEventTypes(options.eventTypes)
+	if err != nil {
+		return cli.UsageError(err)
+	}
 	switch operation {
 	case "create":
 		method = http.MethodPost
 		body = map[string]any{"url": options.targetURL}
+		if len(selection) > 0 {
+			body = map[string]any{"url": options.targetURL, "event_types": selection}
+		}
+	case "subscribe":
+		method = http.MethodPost
+		path += "/subscriptions"
+		body = map[string]any{"expected_version": options.version, "event_types": selection}
 	case "rotate":
 		method = http.MethodPost
 		path += "/rotate"

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	webhookv1 "github.com/Mujhtech/idenqa/contracts/webhook/v1"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/platform/kms"
 )
@@ -37,10 +38,15 @@ type Secret struct {
 	CreatedAt time.Time
 }
 
-// Endpoint is tenant-owned configuration with a bounded rotation overlap.
+// DefaultEventTypes preserves the pre-catalogue completion subscription.
+var DefaultEventTypes = []string{string(webhookv1.VerificationCompleted)}
+
+// Endpoint is tenant-owned configuration with a bounded rotation overlap and a
+// closed event subscription selection.
 type Endpoint struct {
 	ID                 id.WebhookEndpoint
 	URL                string
+	EventTypes         []string
 	Active             Secret
 	Previous           *Secret
 	PreviousValidUntil time.Time
@@ -63,7 +69,15 @@ func (endpoint Endpoint) Validate() error {
 	if endpoint.Previous != nil && (endpoint.Previous.Version <= 0 || endpoint.Previous.Version >= endpoint.Active.Version || endpoint.Previous.Wrapped.IsZero() || !endpoint.PreviousValidUntil.After(endpoint.Active.CreatedAt)) {
 		return ErrInvalid
 	}
+	if _, err := webhookv1.ValidateSubscriptions(endpoint.EventTypes); err != nil {
+		return ErrInvalid
+	}
 	return nil
+}
+
+// Subscribes reports whether this endpoint receives one catalogue event type.
+func (endpoint Endpoint) Subscribes(eventType webhookv1.Type) bool {
+	return webhookv1.Subscribes(endpoint.EventTypes, eventType)
 }
 
 // State is the closed delivery lifecycle.
@@ -81,12 +95,15 @@ const (
 )
 
 // Intent is one immutable event payload plus mutable bounded delivery state.
+// A non-nil BodyWrapping means Body stores KMS-wrapped ciphertext that must be
+// unwrapped only at the send boundary; nil means legacy plaintext storage.
 type Intent struct {
 	ID            id.Delivery
 	EndpointID    id.WebhookEndpoint
 	EventID       id.Event
 	EventType     string
 	Body          []byte
+	BodyWrapping  *kms.WrappedKey
 	BodyDigest    string
 	State         State
 	AttemptCount  int32
@@ -126,6 +143,9 @@ func (intent Intent) Validate() error {
 	}
 	digest := sha256.Sum256(intent.Body)
 	if intent.BodyDigest != hex.EncodeToString(digest[:]) {
+		return ErrInvalid
+	}
+	if intent.BodyWrapping != nil && (intent.BodyWrapping.IsZero() || intent.BodyWrapping.Record().Ciphertext == nil) {
 		return ErrInvalid
 	}
 	switch intent.State {

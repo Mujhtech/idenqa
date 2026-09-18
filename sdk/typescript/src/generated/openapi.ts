@@ -769,6 +769,26 @@ export interface paths {
         readonly patch?: never;
         readonly trace?: never;
     };
+    readonly "/v1/webhook-endpoints/{endpointID}/subscriptions": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Replace endpoint event subscriptions
+         * @description Requires webhooks:configure. Replaces the endpoint's catalogue event selection under an expected version. Exact names or the single `*` wildcard are accepted; `*` includes future catalogue events except explicit-only ones.
+         */
+        readonly post: operations["updateWebhookSubscriptions"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
     readonly "/v1/webhook-endpoints/{endpointID}/deliveries": {
         readonly parameters: {
             readonly query?: never;
@@ -2047,6 +2067,7 @@ export interface paths {
             readonly query?: never;
             readonly header?: never;
             readonly path: {
+                /** @description Proposal identifier. */
                 readonly proposalID: string;
             };
             readonly cookie?: never;
@@ -2066,6 +2087,7 @@ export interface paths {
             readonly query?: never;
             readonly header?: never;
             readonly path: {
+                /** @description Proposal identifier. */
                 readonly proposalID: string;
             };
             readonly cookie?: never;
@@ -2085,6 +2107,7 @@ export interface paths {
             readonly query?: never;
             readonly header?: never;
             readonly path: {
+                /** @description Proposal identifier. */
                 readonly proposalID: string;
             };
             readonly cookie?: never;
@@ -2104,6 +2127,7 @@ export interface paths {
             readonly query?: never;
             readonly header?: never;
             readonly path: {
+                /** @description Proposal identifier. */
                 readonly proposalID: string;
             };
             readonly cookie?: never;
@@ -2123,6 +2147,7 @@ export interface paths {
             readonly query?: never;
             readonly header?: never;
             readonly path: {
+                /** @description Accepted-command identifier. */
                 readonly commandID: string;
             };
             readonly cookie?: never;
@@ -2142,6 +2167,7 @@ export interface paths {
             readonly query?: never;
             readonly header?: never;
             readonly path: {
+                /** @description Workflow identifier whose automation mode is configured. */
                 readonly workflow: string;
             };
             readonly cookie?: never;
@@ -2179,7 +2205,9 @@ export interface paths {
             readonly query?: never;
             readonly header?: never;
             readonly path: {
+                /** @description Prompt registry identifier. */
                 readonly promptID: string;
+                /** @description Immutable prompt revision. */
                 readonly version: number;
             };
             readonly cookie?: never;
@@ -2767,7 +2795,7 @@ export interface components {
          *       "capture_token": "idq_cap_v1_example",
          *       "capture_token_id": "cap_example",
          *       "capture_token_expires_at": "2026-09-08T12:00:00Z",
-         *       "outcome_token": "idq_out_v1_example",
+         *       "outcome_token": "idq_out_v1.1.3J7Q2M9W8K0FV4NB2CX5RT6YQP.S6H8D2F0G4J7K1L3M5N7P9Q2R4T6V8W0",
          *       "outcome_token_expires_at": "2026-09-09T12:00:00Z",
          *       "verification_expires_at": "2026-09-08T12:00:00Z"
          *     }
@@ -3823,6 +3851,9 @@ export interface components {
          * @example {
          *       "id": "whk_01M11HEQG00000000000000000",
          *       "url": "https://example.com/webhooks",
+         *       "event_types": [
+         *         "verification.completed"
+         *       ],
          *       "version": 1,
          *       "secret_version": 1,
          *       "created_at": "2026-09-06T00:00:00Z",
@@ -3833,6 +3864,14 @@ export interface components {
             readonly id: string;
             /** Format: uri */
             readonly url: string;
+            /**
+             * @description Exact catalogue event names subscribed by this endpoint, or the single wildcard entry `*` for every current and future catalogue event.
+             * @example [
+             *       "verification.completed",
+             *       "evidence.ready"
+             *     ]
+             */
+            readonly event_types: readonly string[];
             /** Format: int64 */
             readonly version: number;
             /** Format: int64 */
@@ -3915,12 +3954,48 @@ export interface components {
         /**
          * @description Register an HTTPS endpoint. Callback transport validates public DNS on each attempt. Applies to webhook Create.
          * @example {
-         *       "url": "https://example.com/webhooks"
+         *       "url": "https://example.com/webhooks",
+         *       "event_types": [
+         *         "verification.completed"
+         *       ]
          *     }
          */
         readonly WebhookCreate: {
             /** Format: uri */
             readonly url: string;
+            /**
+             * @description Exact catalogue event names to subscribe, or the single wildcard entry `*`. Defaults to `["verification.completed"]` when omitted.
+             * @example [
+             *       "verification.completed",
+             *       "evidence.ready"
+             *     ]
+             */
+            readonly event_types?: readonly string[];
+        };
+        /**
+         * @description Replace an endpoint's catalogue event subscription under an expected version.
+         * @example {
+         *       "expected_version": 1,
+         *       "event_types": [
+         *         "verification.completed",
+         *         "decision.created"
+         *       ]
+         *     }
+         */
+        readonly WebhookSubscriptions: {
+            /**
+             * Format: int64
+             * @example 1
+             */
+            readonly expected_version: number;
+            /**
+             * @description Exact catalogue event names, or the single wildcard entry `*` for every current and future catalogue event except explicit-only ones.
+             * @example [
+             *       "verification.completed",
+             *       "decision.created"
+             *     ]
+             */
+            readonly event_types: readonly string[];
         };
         /**
          * @description Rotate only when no previous-key overlap remains active. Compare the endpoint version. Applies to webhook Rotate.
@@ -3962,6 +4037,9 @@ export interface components {
          *       "endpoint": {
          *         "id": "whk_01M11HEQG00000000000000000",
          *         "url": "https://example.com/webhooks",
+         *         "event_types": [
+         *           "verification.completed"
+         *         ],
          *         "version": 1,
          *         "secret_version": 1,
          *         "created_at": "2026-09-06T00:00:00Z",
@@ -4004,6 +4082,9 @@ export interface components {
          *         {
          *           "id": "whk_01M11HEQG00000000000000000",
          *           "url": "https://example.com/webhooks",
+         *           "event_types": [
+         *             "verification.completed"
+         *           ],
          *           "version": 1,
          *           "secret_version": 1,
          *           "created_at": "2026-09-06T00:00:00Z",
@@ -5076,29 +5157,57 @@ export interface components {
             readonly detail: string;
             readonly request_id: components["schemas"]["RequestID"];
         };
-        /** @enum {string} */
+        /**
+         * @description Closed tenant-local fraud signal vocabulary evaluated by versioned rules.
+         * @enum {string}
+         */
         readonly FraudSignal: "device_reuse" | "identifier_reuse" | "document_reuse" | "portrait_reuse" | "capture_replay" | "verification_velocity" | "network_anomaly" | "provider_inconsistency" | "identity_inconsistency" | "session_timing" | "failed_liveness" | "high_risk_model";
-        /** @enum {string} */
+        /**
+         * @description Kind of tenant-scoped token accepted as fraud evidence.
+         * @enum {string}
+         */
         readonly FraudTokenKind: "subject" | "device" | "identifier" | "portrait" | "address" | "provider_event" | "network";
+        /** @description Accepted tenant token source with its permitted token kinds. */
         readonly FraudSource: {
+            /** @example key_01M11HEQG00000000000000000 */
             readonly key_id: string;
+            /** @example primary */
             readonly namespace: string;
             readonly kinds: readonly components["schemas"]["FraudTokenKind"][];
             readonly portrait_permitted: boolean;
         };
+        /** @description Pinned runner observation mapped to one fraud signal and risk outcome. */
         readonly FraudMapping: {
             readonly signal: components["schemas"]["FraudSignal"];
             /** @enum {string} */
             readonly runner_kind: "provider" | "model";
+            /** @example primary */
             readonly runner_id: string;
             readonly package_digest: components["schemas"]["PolicyDigest"];
+            /** @example primary */
             readonly observation: string;
             /** @enum {string} */
             readonly risk_outcome: "satisfied" | "not_satisfied" | "disagreement";
+            /** @example primary */
             readonly group: string;
         };
+        /**
+         * @description Immutable tenant fraud rule revision covering window, thresholds and sources.
+         * @example {
+         *       "enabled": true,
+         *       "region": "primary",
+         *       "window_seconds": 3600,
+         *       "retention_seconds": 86400,
+         *       "minimum_session_seconds": 0,
+         *       "maximum_session_seconds": 3600,
+         *       "thresholds": {},
+         *       "sources": [],
+         *       "mappings": []
+         *     }
+         */
         readonly FraudConfiguration: {
             readonly enabled: boolean;
+            /** @example primary */
             readonly region: string;
             readonly window_seconds: number;
             readonly retention_seconds: number;
@@ -5121,32 +5230,112 @@ export interface components {
             readonly sources: readonly components["schemas"]["FraudSource"][];
             readonly mappings: readonly components["schemas"]["FraudMapping"][];
         };
+        /**
+         * @description Activate a fraud rule revision under an expected current version.
+         * @example {
+         *       "expected_version": 1,
+         *       "configuration": {
+         *         "enabled": true,
+         *         "region": "primary",
+         *         "window_seconds": 3600,
+         *         "retention_seconds": 86400,
+         *         "minimum_session_seconds": 0,
+         *         "maximum_session_seconds": 3600,
+         *         "thresholds": {},
+         *         "sources": [],
+         *         "mappings": []
+         *       }
+         *     }
+         */
         readonly FraudConfigurationRequest: {
+            /** @example 1 */
             readonly expected_version: number;
             readonly configuration: components["schemas"]["FraudConfiguration"];
         };
+        /**
+         * @description Evidence-backed tenant tokens submitted for the pinned verification.
+         * @example {
+         *       "verification_id": "ver_01M11HEQG00000000000000000",
+         *       "evidence_id": "evd_01M11HEQG00000000000000000",
+         *       "namespace": "primary",
+         *       "source_reference": "source-1",
+         *       "attributes": [
+         *         {
+         *           "kind": "device",
+         *           "value": "token-1"
+         *         }
+         *       ]
+         *     }
+         */
         readonly FraudInput: {
             readonly verification_id: components["schemas"]["VerificationSessionID"];
             readonly evidence_id: components["schemas"]["EvidenceID"];
+            /** @example primary */
             readonly namespace: string;
+            /** @example primary */
             readonly source_reference: string;
+            /**
+             * @example [
+             *       {
+             *         "kind": "device",
+             *         "value": "token-1"
+             *       }
+             *     ]
+             */
             readonly attributes: readonly {
                 readonly kind: components["schemas"]["FraudTokenKind"];
                 readonly value: string;
             }[];
         };
+        /**
+         * @description Non-authoritative fraud hypothesis bound to an immutable receipt digest.
+         * @example {
+         *       "receipt_digest": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+         *       "hypothesis": "device.reuse.requires.review",
+         *       "signals": [
+         *         "device_reuse"
+         *       ]
+         *     }
+         */
         readonly FraudProposal: {
             readonly receipt_digest: components["schemas"]["PolicyDigest"];
+            /** @example primary */
             readonly hypothesis: string;
+            /**
+             * @example [
+             *       "device_reuse"
+             *     ]
+             */
             readonly signals: readonly components["schemas"]["FraudSignal"][];
         };
+        /**
+         * @description Bounded per-signal outcome with its safe reason code.
+         * @example {
+         *       "signal": "device_reuse",
+         *       "state": "satisfied",
+         *       "count": 1,
+         *       "reason": "risk.satisfied"
+         *     }
+         */
         readonly FraudFinding: {
             readonly signal: components["schemas"]["FraudSignal"];
             /** @enum {string} */
             readonly state: "satisfied" | "not_satisfied" | "inconclusive";
             readonly count: number;
+            /** @example primary */
             readonly reason: string;
         };
+        /**
+         * @description Immutable reference-only evaluation receipt with its findings.
+         * @example {
+         *       "digest": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+         *       "verification_id": "ver_01M11HEQG00000000000000000",
+         *       "configuration_version": 1,
+         *       "configuration_digest": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+         *       "at": "2026-09-10T12:00:00Z",
+         *       "findings": []
+         *     }
+         */
         readonly FraudReceipt: {
             readonly digest: components["schemas"]["PolicyDigest"];
             readonly verification_id: components["schemas"]["VerificationSessionID"];
@@ -5156,14 +5345,29 @@ export interface components {
             readonly at: string;
             readonly findings: readonly components["schemas"]["FraudFinding"][];
         };
+        /**
+         * @description Safe fraud projection containing at most one configuration, receipt or proposal.
+         * @example {
+         *       "version": 1
+         *     }
+         */
         readonly FraudResult: {
+            /** @example 1 */
             readonly version?: number;
             readonly digest?: components["schemas"]["PolicyDigest"];
             readonly configuration?: components["schemas"]["FraudConfiguration"];
             readonly receipt?: components["schemas"]["FraudReceipt"];
             readonly proposal?: components["schemas"]["FraudProposal"];
         };
+        /**
+         * @description Opaque tenant-persistent subject identifier.
+         * @example sub_01M11HEQG00000000000000000
+         */
         readonly IdentitySubjectID: string;
+        /**
+         * @description Opaque immutable observation, fact, claim or identifier record identifier.
+         * @example obs_01M11HEQG00000000000000000
+         */
         readonly IdentityRecordID: string;
         /** @description A sensitive typed scalar. Numeric values are canonical decimal strings to preserve precision; dates use YYYY-MM-DD and timestamps use UTC RFC3339. Values are encrypted in storage and revealed only with identity:reveal. */
         readonly IdentityValue: {
@@ -5171,6 +5375,7 @@ export interface components {
             readonly type: "string" | "boolean" | "integer" | "decimal" | "date" | "timestamp";
             readonly value: string;
         };
+        /** @description Persistent tenant subject metadata without identity values. */
         readonly IdentitySubject: {
             readonly id: components["schemas"]["IdentitySubjectID"];
             readonly region: string;
@@ -5205,9 +5410,28 @@ export interface components {
             readonly verification_actor_id: string;
             readonly masked?: string;
         };
-        /** @description Append an observation, derived fact, claim or identifier. Direct observations are tenant-attested; an origin_observation_id imports the actual completed Core check outcome. Derived records name existing source records and cannot provide a replacement value or invent lineage. Retention is explicitly bounded to 30 days and cannot extend source retention; corrections name the current record in supersedes. */
+        /**
+         * @description Append an observation, derived fact, claim or identifier. Direct observations are tenant-attested; an origin_observation_id imports the actual completed Core check outcome. Derived records name existing source records and cannot provide a replacement value or invent lineage. Retention is explicitly bounded to 30 days and cannot extend source retention; corrections name the current record in supersedes.
+         * @example {
+         *       "kind": "fact",
+         *       "name": "name.full",
+         *       "verification_id": "ver_01M11HEQG00000000000000000",
+         *       "normalization": "identity.exact.v1",
+         *       "collected_at": "2026-09-10T12:00:00Z",
+         *       "observed_at": "2026-09-10T12:00:00Z",
+         *       "valid_from": "2026-09-10T12:00:00Z",
+         *       "valid_until": "2026-09-11T12:00:00Z",
+         *       "retain_until": "2026-09-11T12:00:00Z",
+         *       "source_record_ids": [
+         *         "obs_01M11HEQG00000000000000000"
+         *       ]
+         *     }
+         */
         readonly IdentityRecordInput: {
-            /** @enum {string} */
+            /**
+             * @example observation
+             * @enum {string}
+             */
             readonly kind: "observation" | "fact" | "claim" | "identifier";
             readonly name: string;
             readonly verification_id: components["schemas"]["VerificationSessionID"];
@@ -5239,7 +5463,10 @@ export interface components {
         } & (unknown & unknown);
         /** @description Immutable reference metadata with optional explicitly revealed values. Current means the record has no successor. New decision eligibility also checks current authority, evidence, ancestors, retention, validity and configured freshness. */
         readonly IdentityRecord: {
-            /** @enum {string} */
+            /**
+             * @example observation
+             * @enum {string}
+             */
             readonly kind: "observation" | "fact" | "claim" | "identifier";
             readonly name: string;
             readonly verification_id: components["schemas"]["VerificationSessionID"];
@@ -5321,12 +5548,20 @@ export interface components {
             readonly expected_boolean?: boolean;
             readonly source_classes: readonly ("tenant_attested" | "provider" | "model")[];
         };
-        /** @description An immutable per-region configuration revision. One identity:configure principal activates it with expected-version checks, idempotency and audit. An empty requirements list disables identity fact projection. */
+        /**
+         * @description An immutable per-region configuration revision. One identity:configure principal activates it with expected-version checks, idempotency and audit. An empty requirements list disables identity fact projection.
+         * @example {
+         *       "region": "ke",
+         *       "provider_sources": [],
+         *       "requirements": []
+         *     }
+         */
         readonly IdentityConfiguration: {
             readonly region: string;
             readonly provider_sources?: readonly components["schemas"]["IdentitySourceBinding"][];
             readonly requirements?: readonly components["schemas"]["IdentityRequirement"][];
         };
+        /** @description Bounded per-key corroboration outcome with its safe reason code. */
         readonly IdentityFinding: {
             readonly key: string;
             /** @enum {string} */
@@ -5349,6 +5584,19 @@ export interface components {
             readonly evaluated_at: string;
             readonly findings: readonly components["schemas"]["IdentityFinding"][];
         };
+        /**
+         * @description Safe identity projection containing at most one subject, record, configuration or receipt.
+         * @example {
+         *       "subject": {
+         *         "id": "sub_01M11HEQG00000000000000000",
+         *         "region": "ke",
+         *         "state": "active",
+         *         "version": 1,
+         *         "created_at": "2026-09-10T12:00:00Z",
+         *         "updated_at": "2026-09-10T12:00:00Z"
+         *       }
+         *     }
+         */
         readonly IdentityResult: {
             readonly subject?: components["schemas"]["IdentitySubject"];
             readonly record?: components["schemas"]["IdentityRecord"];
@@ -5365,83 +5613,192 @@ export interface components {
         };
         /** @description Exact lookup within the tenant, region, namespace, issuer and canonicalisation version. Multiple matching subjects remain distinct; lookup never merges them. */
         readonly IdentityIdentifierLookup: {
+            /** @example ng.nin */
             readonly namespace: string;
             readonly issuer: string;
             /** @enum {string} */
             readonly normalization: "identity.exact.v1" | "identity.trim.v1" | "identity.ascii_upper.v1";
             readonly value: string;
         };
-        /** @enum {string} */
+        /**
+         * @description Closed allow-list of non-authoritative proposal action kinds.
+         * @example review.copilot.summarize
+         * @enum {string}
+         */
         readonly ProposalActionKind: "review.copilot.summarize" | "routing.adaptive.suggest" | "policy.draft.generate" | "policy.diff.generate" | "policy.adversarial.generate" | "experience.accessibility.propose" | "experience.exception.propose" | "document.layout.propose";
+        /** @description Immutable non-authoritative proposal envelope with pinned model and prompt provenance. */
         readonly Proposal: {
+            /** @example prp_01M11HEQG00000000000000000 */
             readonly proposal_id: string;
+            /** @example ten_01M11HEQG00000000000000000 */
             readonly tenant_id: string;
+            /** @example ver_01M11HEQG00000000000000000 */
             readonly verification_id?: string;
+            /** @example pol_01M11HEQG00000000000000000 */
             readonly policy_id?: string;
-            /** @enum {string} */
+            /**
+             * @example assist
+             * @enum {string}
+             */
             readonly mode: "disabled" | "assist" | "recommend" | "guardrailed_auto" | "human_required";
-            /** @enum {string} */
+            /**
+             * @example pending
+             * @enum {string}
+             */
             readonly status: "pending" | "approved" | "rejected" | "expired" | "cancelled" | "superseded";
+            /**
+             * @example [
+             *       {
+             *         "kind": "review.copilot.summarize",
+             *         "args": {}
+             *       }
+             *     ]
+             */
             readonly actions: readonly components["schemas"]["ProposalAction"][];
+            /**
+             * @example [
+             *       "evd_01M11HEQG00000000000000000"
+             *     ]
+             */
             readonly evidence_refs?: readonly string[];
+            /**
+             * @example [
+             *       "sig_01M11HEQG00000000000000000"
+             *     ]
+             */
             readonly signal_refs?: readonly string[];
+            /** @example model.test */
             readonly model_id: string;
+            /** @example v1 */
             readonly model_version: string;
+            /** @example p1 */
             readonly prompt_version: string;
+            /** @example 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef */
             readonly context_digest: string;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @example 2026-09-10T12:00:00Z
+             */
             readonly expires_at: string;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @example 2026-09-10T12:00:00Z
+             */
             readonly created_at: string;
+            /** @example 1 */
             readonly version: number;
+            /** @example tenant_requested */
             readonly reason?: string;
         };
+        /** @description One bounded action whose args schema is selected by kind. */
         readonly ProposalAction: {
             readonly kind: components["schemas"]["ProposalActionKind"];
-            /** @description Closed JSON args per kind */
+            /**
+             * @description Closed JSON args per kind
+             * @example {
+             *       "summary": true
+             *     }
+             */
             readonly args: {
                 readonly [key: string]: unknown;
             };
         };
+        /** @description Create one proposal for a verification or a policy under the session mode. */
         readonly ProposalRequest: {
+            /** @example ver_01M11HEQG00000000000000000 */
             readonly verification_id?: string;
+            /** @example pol_01M11HEQG00000000000000000 */
             readonly policy_id?: string;
-            /** @enum {string} */
+            /**
+             * @example assist
+             * @enum {string}
+             */
             readonly mode: "disabled" | "assist" | "recommend" | "guardrailed_auto" | "human_required";
+            /**
+             * @example [
+             *       {
+             *         "kind": "review.copilot.summarize",
+             *         "args": {}
+             *       }
+             *     ]
+             */
             readonly actions: readonly components["schemas"]["ProposalAction"][];
+            /**
+             * @example [
+             *       "evd_01M11HEQG00000000000000000"
+             *     ]
+             */
             readonly evidence_refs?: readonly string[];
+            /**
+             * @example [
+             *       "sig_01M11HEQG00000000000000000"
+             *     ]
+             */
             readonly signal_refs?: readonly string[];
+            /** @example model.test */
             readonly model_id: string;
+            /** @example v1 */
             readonly model_version: string;
+            /** @example p1 */
             readonly prompt_version: string;
+            /** @example 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef */
             readonly context_digest: string;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @example 2026-09-10T12:00:00Z
+             */
             readonly expires_at: string;
+            /** @example prp_01M11HEQG00000000000000000 */
             readonly supersedes?: string;
         };
+        /** @description Human approval of one pending proposal under an expected version. */
         readonly ProposalApproveRequest: {
+            /** @example 1 */
             readonly expected_version: number;
+            /** @example true */
             readonly human_approved: boolean;
         };
+        /** @description Version precondition for reject or cancel of one pending proposal. */
         readonly ProposalVersionRequest: {
+            /** @example 1 */
             readonly expected_version: number;
         };
+        /** @description Versioned per-workflow automation mode and permitted action kinds. */
         readonly ModeConfig: {
+            /** @example verification */
             readonly workflow: string;
-            /** @enum {string} */
+            /**
+             * @example assist
+             * @enum {string}
+             */
             readonly mode: "disabled" | "assist" | "recommend" | "guardrailed_auto" | "human_required";
+            /**
+             * @example [
+             *       "review.copilot.summarize"
+             *     ]
+             */
             readonly allowed_kinds?: readonly components["schemas"]["ProposalActionKind"][];
+            /** @example 1 */
             readonly version: number;
         };
+        /** @description Register an immutable prompt revision for one generative model. */
         readonly PromptCreate: {
+            /** @example Summarise the review findings. */
             readonly content: string;
+            /** @example model.test */
             readonly model_id: string;
         };
+        /** @description Immutable prompt revision with its digest and generating model. */
         readonly Prompt: {
+            /** @example prm_01M11HEQG00000000000000000 */
             readonly prompt_id: string;
+            /** @example 1 */
             readonly version: number;
+            /** @example Summarise the review findings. */
             readonly content: string;
+            /** @example 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef */
             readonly digest: string;
+            /** @example model.test */
             readonly model_id: string;
         };
         readonly evidence: string;
@@ -7747,6 +8104,61 @@ export interface operations {
             readonly 503: components["responses"]["ServiceUnavailable"];
         };
     };
+    readonly updateWebhookSubscriptions: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                /** @description Tenant-owned opaque identifier. Applies to replace endpoint event subscriptions — endpointID. */
+                readonly endpointID: string;
+            };
+            readonly cookie?: never;
+        };
+        /** @description The new closed event selection and the current endpoint version. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "expected_version": 1,
+                 *       "event_types": [
+                 *         "verification.completed",
+                 *         "decision.created"
+                 *       ]
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["WebhookSubscriptions"];
+            };
+        };
+        readonly responses: {
+            /** @description The webhook operation completed. Applies to replace endpoint event subscriptions. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["WebhookEndpointMutation"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     readonly listWebhookDeliveries: {
         readonly parameters: {
             readonly query?: {
@@ -8899,7 +9311,7 @@ export interface operations {
                      *       "capture_token": "idq_cap_v1_example",
                      *       "capture_token_id": "cap_example",
                      *       "capture_token_expires_at": "2026-09-08T12:00:00Z",
-                     *       "outcome_token": "idq_out_v1_example",
+                     *       "outcome_token": "idq_out_v1.1.3J7Q2M9W8K0FV4NB2CX5RT6YQP.S6H8D2F0G4J7K1L3M5N7P9Q2R4T6V8W0",
                      *       "outcome_token_expires_at": "2026-09-09T12:00:00Z",
                      *       "verification_expires_at": "2026-09-08T12:00:00Z"
                      *     }
@@ -8966,7 +9378,7 @@ export interface operations {
                      *       "capture_token": "idq_cap_v1_example",
                      *       "capture_token_id": "cap_example",
                      *       "capture_token_expires_at": "2026-09-08T12:00:00Z",
-                     *       "outcome_token": "idq_out_v1_example",
+                     *       "outcome_token": "idq_out_v1.1.3J7Q2M9W8K0FV4NB2CX5RT6YQP.S6H8D2F0G4J7K1L3M5N7P9Q2R4T6V8W0",
                      *       "outcome_token_expires_at": "2026-09-09T12:00:00Z",
                      *       "verification_expires_at": "2026-09-08T12:00:00Z"
                      *     }
@@ -10170,6 +10582,7 @@ export interface operations {
             readonly path?: never;
             readonly cookie?: never;
         };
+        /** @description Replacement fraud rule revision with its expected current version. */
         readonly requestBody: {
             readonly content: {
                 readonly "application/json": components["schemas"]["FraudConfigurationRequest"];
@@ -10213,6 +10626,7 @@ export interface operations {
             readonly path?: never;
             readonly cookie?: never;
         };
+        /** @description Evidence-backed tenant tokens to ingest for the pinned verification. */
         readonly requestBody: {
             readonly content: {
                 readonly "application/json": components["schemas"]["FraudInput"];
@@ -10256,6 +10670,7 @@ export interface operations {
             readonly path?: never;
             readonly cookie?: never;
         };
+        /** @description Non-authoritative hypothesis bound to an existing receipt digest. */
         readonly requestBody: {
             readonly content: {
                 readonly "application/json": components["schemas"]["FraudProposal"];
@@ -10385,7 +10800,9 @@ export interface operations {
     readonly listIdentitySubjects: {
         readonly parameters: {
             readonly query?: {
+                /** @description Opaque continuation cursor returned by the previous page. */
                 readonly after?: string;
+                /** @description Bounded page size; keep it unchanged when continuing a cursor. */
                 readonly limit?: number;
             };
             readonly header?: never;
@@ -10431,9 +10848,11 @@ export interface operations {
             readonly path?: never;
             readonly cookie?: never;
         };
+        /** @description Optional tenant-held external reference for the new subject. */
         readonly requestBody: {
             readonly content: {
                 readonly "application/json": {
+                    /** @example crm-4815 */
                     readonly external_reference?: string;
                 };
             };
@@ -10468,6 +10887,7 @@ export interface operations {
             };
             readonly header?: never;
             readonly path: {
+                /** @description Tenant-persistent subject identifier. */
                 readonly subjectID: components["schemas"]["IdentitySubjectID"];
             };
             readonly cookie?: never;
@@ -10509,17 +10929,26 @@ export interface operations {
                 readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
             };
             readonly path: {
+                /** @description Tenant-persistent subject identifier. */
                 readonly subjectID: components["schemas"]["IdentitySubjectID"];
             };
             readonly cookie?: never;
         };
+        /** @description Current subject version plus the reference or lifecycle change to apply. */
         readonly requestBody: {
             readonly content: {
                 readonly "application/json": {
-                    /** Format: int64 */
+                    /**
+                     * Format: int64
+                     * @example 1
+                     */
                     readonly expected_version: number;
+                    /** @example crm-4815 */
                     readonly external_reference?: string;
-                    /** @enum {string} */
+                    /**
+                     * @example active
+                     * @enum {string}
+                     */
                     readonly state?: "active" | "suspended";
                 };
             };
@@ -10548,7 +10977,10 @@ export interface operations {
     };
     readonly deleteIdentitySubject: {
         readonly parameters: {
-            readonly query?: never;
+            readonly query: {
+                /** @description Current subject version used as the optimistic precondition. */
+                readonly expected_version: number;
+            };
             readonly header: {
                 /**
                  * @description An RFC 9651 String used to deduplicate a consequential request. It is
@@ -10560,18 +10992,12 @@ export interface operations {
                 readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
             };
             readonly path: {
+                /** @description Tenant-persistent subject identifier. */
                 readonly subjectID: components["schemas"]["IdentitySubjectID"];
             };
             readonly cookie?: never;
         };
-        readonly requestBody: {
-            readonly content: {
-                readonly "application/json": {
-                    /** Format: int64 */
-                    readonly expected_version: number;
-                };
-            };
-        };
+        readonly requestBody?: never;
         readonly responses: {
             /** @description Identity resource or operation receipt. */
             readonly 202: {
@@ -10608,15 +11034,21 @@ export interface operations {
                 readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
             };
             readonly path: {
+                /** @description Tenant-persistent subject identifier. */
                 readonly subjectID: components["schemas"]["IdentitySubjectID"];
+                /** @description Verification session identifier to link to the subject. */
                 readonly verificationID: components["schemas"]["VerificationSessionID"];
             };
             readonly cookie?: never;
         };
+        /** @description Current subject version used as the optimistic precondition. */
         readonly requestBody: {
             readonly content: {
                 readonly "application/json": {
-                    /** Format: int64 */
+                    /**
+                     * Format: int64
+                     * @example 1
+                     */
                     readonly expected_version: number;
                 };
             };
@@ -10646,11 +11078,14 @@ export interface operations {
     readonly listIdentityVerifications: {
         readonly parameters: {
             readonly query?: {
+                /** @description Opaque continuation cursor returned by the previous page. */
                 readonly after?: string;
+                /** @description Bounded page size; keep it unchanged when continuing a cursor. */
                 readonly limit?: number;
             };
             readonly header?: never;
             readonly path: {
+                /** @description Tenant-persistent subject identifier. */
                 readonly subjectID: components["schemas"]["IdentitySubjectID"];
             };
             readonly cookie?: never;
@@ -10681,15 +11116,20 @@ export interface operations {
     readonly listIdentityRecords: {
         readonly parameters: {
             readonly query?: {
+                /** @description Opaque continuation cursor returned by the previous page. */
                 readonly after?: string;
+                /** @description Bounded page size; keep it unchanged when continuing a cursor. */
                 readonly limit?: number;
                 /** @description Explicit value reveal additionally requires identity:reveal and appends an audit record. */
                 readonly reveal?: boolean;
+                /** @description Return only the current head of each record series. */
                 readonly current?: boolean;
+                /** @description Restrict records to one immutable record kind. */
                 readonly kind?: "observation" | "fact" | "claim" | "identifier";
             };
             readonly header?: never;
             readonly path: {
+                /** @description Tenant-persistent subject identifier. */
                 readonly subjectID: components["schemas"]["IdentitySubjectID"];
             };
             readonly cookie?: never;
@@ -10731,14 +11171,19 @@ export interface operations {
                 readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
             };
             readonly path: {
+                /** @description Tenant-persistent subject identifier. */
                 readonly subjectID: components["schemas"]["IdentitySubjectID"];
             };
             readonly cookie?: never;
         };
+        /** @description Current subject version and the immutable record to append. */
         readonly requestBody: {
             readonly content: {
                 readonly "application/json": {
-                    /** Format: int64 */
+                    /**
+                     * Format: int64
+                     * @example 1
+                     */
                     readonly expected_version: number;
                     readonly record: components["schemas"]["IdentityRecordInput"];
                 };
@@ -10774,7 +11219,9 @@ export interface operations {
             };
             readonly header?: never;
             readonly path: {
+                /** @description Tenant-persistent subject identifier. */
                 readonly subjectID: components["schemas"]["IdentitySubjectID"];
+                /** @description Immutable identity record identifier. */
                 readonly recordID: components["schemas"]["IdentityRecordID"];
             };
             readonly cookie?: never;
@@ -10816,14 +11263,19 @@ export interface operations {
                 readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
             };
             readonly path: {
+                /** @description Tenant-persistent subject identifier. */
                 readonly subjectID: components["schemas"]["IdentitySubjectID"];
             };
             readonly cookie?: never;
         };
+        /** @description Current subject version used as the optimistic precondition. */
         readonly requestBody: {
             readonly content: {
                 readonly "application/json": {
-                    /** Format: int64 */
+                    /**
+                     * Format: int64
+                     * @example 1
+                     */
                     readonly expected_version: number;
                 };
             };
@@ -10857,11 +11309,15 @@ export interface operations {
             readonly path?: never;
             readonly cookie?: never;
         };
+        /** @description Exact tenant-held external reference to resolve to visible subjects. */
         readonly requestBody: {
             readonly content: {
                 readonly "application/json": {
+                    /** @example crm-4815 */
                     readonly external_reference: string;
+                    /** @example sub_01M11HEQG00000000000000000 */
                     readonly after?: string;
+                    /** @example 25 */
                     readonly limit?: number;
                 };
             };
@@ -10895,11 +11351,14 @@ export interface operations {
             readonly path?: never;
             readonly cookie?: never;
         };
+        /** @description Sensitive exact identifier lookup; never logged. */
         readonly requestBody: {
             readonly content: {
                 readonly "application/json": {
                     readonly identifier: components["schemas"]["IdentityIdentifierLookup"];
+                    /** @example sub_01M11HEQG00000000000000000 */
                     readonly after?: string;
+                    /** @example 25 */
                     readonly limit?: number;
                 };
             };
@@ -10972,10 +11431,14 @@ export interface operations {
             readonly path?: never;
             readonly cookie?: never;
         };
+        /** @description Immutable identity configuration revision and its expected current version. */
         readonly requestBody: {
             readonly content: {
                 readonly "application/json": {
-                    /** Format: int64 */
+                    /**
+                     * Format: int64
+                     * @example 1
+                     */
                     readonly expected_version: number;
                     readonly configuration: components["schemas"]["IdentityConfiguration"];
                 };
@@ -11008,6 +11471,7 @@ export interface operations {
             readonly query?: never;
             readonly header?: never;
             readonly path: {
+                /** @description Immutable identity configuration revision. */
                 readonly version: number;
             };
             readonly cookie?: never;
@@ -11040,6 +11504,7 @@ export interface operations {
             readonly query?: never;
             readonly header?: never;
             readonly path: {
+                /** @description Immutable identity evaluation receipt digest. */
                 readonly digest: components["schemas"]["PolicyDigest"];
             };
             readonly cookie?: never;
@@ -11583,6 +12048,7 @@ export interface operations {
     readonly listProposals: {
         readonly parameters: {
             readonly query?: {
+                /** @description Restrict the list to one verification session. */
                 readonly verification_id?: string;
                 /** @description Opaque continuation cursor returned by the preceding page. */
                 readonly cursor?: components["parameters"]["Cursor"];
@@ -11627,6 +12093,7 @@ export interface operations {
             readonly path?: never;
             readonly cookie?: never;
         };
+        /** @description Proposal context, pinned model and prompt provenance, and bounded actions. */
         readonly requestBody: {
             readonly content: {
                 /**
@@ -11678,6 +12145,7 @@ export interface operations {
             readonly query?: never;
             readonly header?: never;
             readonly path: {
+                /** @description Proposal identifier. */
                 readonly proposalID: string;
             };
             readonly cookie?: never;
@@ -11706,10 +12174,12 @@ export interface operations {
             readonly query?: never;
             readonly header?: never;
             readonly path: {
+                /** @description Proposal identifier. */
                 readonly proposalID: string;
             };
             readonly cookie?: never;
         };
+        /** @description Human approval decision with the expected proposal version. */
         readonly requestBody: {
             readonly content: {
                 readonly "application/json": components["schemas"]["ProposalApproveRequest"];
@@ -11739,10 +12209,12 @@ export interface operations {
             readonly query?: never;
             readonly header?: never;
             readonly path: {
+                /** @description Proposal identifier. */
                 readonly proposalID: string;
             };
             readonly cookie?: never;
         };
+        /** @description Expected proposal version for the rejection. */
         readonly requestBody: {
             readonly content: {
                 readonly "application/json": components["schemas"]["ProposalVersionRequest"];
@@ -11772,10 +12244,12 @@ export interface operations {
             readonly query?: never;
             readonly header?: never;
             readonly path: {
+                /** @description Proposal identifier. */
                 readonly proposalID: string;
             };
             readonly cookie?: never;
         };
+        /** @description Expected proposal version for the cancellation. */
         readonly requestBody: {
             readonly content: {
                 readonly "application/json": components["schemas"]["ProposalVersionRequest"];
@@ -11805,6 +12279,7 @@ export interface operations {
             readonly query?: never;
             readonly header?: never;
             readonly path: {
+                /** @description Accepted-command identifier. */
                 readonly commandID: string;
             };
             readonly cookie?: never;
@@ -11831,6 +12306,7 @@ export interface operations {
             readonly query?: never;
             readonly header?: never;
             readonly path: {
+                /** @description Workflow identifier whose automation mode is configured. */
                 readonly workflow: string;
             };
             readonly cookie?: never;
@@ -11858,10 +12334,12 @@ export interface operations {
             readonly query?: never;
             readonly header?: never;
             readonly path: {
+                /** @description Workflow identifier whose automation mode is configured. */
                 readonly workflow: string;
             };
             readonly cookie?: never;
         };
+        /** @description Versioned automation mode and its permitted action kinds. */
         readonly requestBody: {
             readonly content: {
                 readonly "application/json": components["schemas"]["ModeConfig"];
@@ -11892,6 +12370,7 @@ export interface operations {
             readonly path?: never;
             readonly cookie?: never;
         };
+        /** @description Immutable prompt content and its target generative model. */
         readonly requestBody: {
             readonly content: {
                 readonly "application/json": components["schemas"]["PromptCreate"];
@@ -11920,7 +12399,9 @@ export interface operations {
             readonly query?: never;
             readonly header?: never;
             readonly path: {
+                /** @description Prompt registry identifier. */
                 readonly promptID: string;
+                /** @description Immutable prompt revision. */
                 readonly version: number;
             };
             readonly cookie?: never;

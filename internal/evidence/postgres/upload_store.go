@@ -8,7 +8,9 @@ import (
 	"math"
 	"time"
 
+	webhookv1 "github.com/Mujhtech/idenqa/contracts/webhook/v1"
 	authoritypostgres "github.com/Mujhtech/idenqa/internal/authority/postgres"
+	deliverypostgres "github.com/Mujhtech/idenqa/internal/delivery/postgres"
 	"github.com/Mujhtech/idenqa/internal/evidence"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/platform/idempotency"
@@ -261,7 +263,7 @@ func (store *Store) AcceptUpload(
 	}
 
 	var accepted evidence.Upload
-	err = store.write(ctx, scope, func(ctx context.Context, queries *sqlgen.Queries) error {
+	err = store.writeTx(ctx, scope, func(ctx context.Context, tx platformpostgres.Transaction, queries *sqlgen.Queries) error {
 		// Lock the parent before any upload row or progress read. At READ COMMITTED,
 		// the subsequent statements observe the preceding acceptance's commit.
 		if _, err := queries.LockVerificationForUpload(ctx, sqlgen.LockVerificationForUploadParams{
@@ -370,6 +372,30 @@ func (store *Store) AcceptUpload(
 			OccurredAt: timestamp(event.OccurredAt), CreatedAt: timestamp(mutation.OccurredAt),
 		}); err != nil {
 			return fmt.Errorf("insert evidence-ready event: %w", err)
+		}
+		seed := "evidence.ready:" + record.ID.String()
+		assurances := make([]string, len(record.Assurances))
+		for index, assurance := range record.Assurances {
+			assurances[index] = string(assurance)
+		}
+		if err := deliverypostgres.EmitCatalogueEvent(ctx, tx, scope.ID().String(), record.Region, webhookv1.EvidenceReady, seed, mutation.OccurredAt, map[string]any{
+			"evidence_id":        record.ID.String(),
+			"verification_id":    record.VerificationID.String(),
+			"evidence_type":      string(record.EvidenceType),
+			"artefact":           string(record.Artefact),
+			"acquisition_method": string(record.AcquisitionMethod),
+			"assurances":         assurances,
+			"evidence": map[string]any{
+				"id":                 record.ID.String(),
+				"type":               "evidence",
+				"verification_id":    record.VerificationID.String(),
+				"evidence_type":      string(record.EvidenceType),
+				"artefact":           string(record.Artefact),
+				"acquisition_method": string(record.AcquisitionMethod),
+				"assurances":         assurances,
+			},
+		}); err != nil {
+			return err
 		}
 		publication, err := queries.LoadCaptureProgressPublication(
 			ctx,

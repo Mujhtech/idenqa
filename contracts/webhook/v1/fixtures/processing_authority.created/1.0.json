@@ -1,0 +1,21 @@
+{
+  "id": "evt_01M11HEQG00000000000000000",
+  "type": "processing_authority.created",
+  "schema_version": "1.0",
+  "created_at": "2026-09-18T09:00:00Z",
+  "tenant_id": "ten_01M11HEQG00000000000000000",
+  "region": "eu-west",
+  "data": {
+    "authority_id": "aut_01M11HEQG00000000000000000",
+    "verification_id": "ver_01M11HEQG00000000000000000",
+    "notice_id": "ntc_01M11HEQG00000000000000000",
+    "subject_id": "sub_01M11HEQG00000000000000000",
+    "authority": {
+      "id": "aut_01M11HEQG00000000000000000",
+      "type": "processing_authority",
+      "verification_id": "ver_01M11HEQG00000000000000000",
+      "state": "active",
+      "notice_id": "ntc_01M11HEQG00000000000000000"
+    }
+  }
+}

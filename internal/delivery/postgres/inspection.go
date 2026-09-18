@@ -13,14 +13,14 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-const endpointColumns = `id,url,version,secret_version,previous_secret_valid_until,disabled_at,COALESCE(disabled_reason,''),created_at,updated_at`
+const endpointColumns = `id,url,event_types,version,secret_version,previous_secret_valid_until,disabled_at,COALESCE(disabled_reason,''),created_at,updated_at`
 const deliveryColumns = `id,endpoint_id,event_id,event_type,state,attempt_count,max_attempts,next_attempt_at,delivered_at,COALESCE(replay_of,''),created_at,updated_at`
 
 type scanner interface{ Scan(...any) error }
 
 func scanEndpoint(row scanner) (delivery.EndpointView, error) {
 	var view delivery.EndpointView
-	err := row.Scan(&view.ID, &view.URL, &view.Version, &view.SecretVersion, &view.PreviousValidUntil, &view.DisabledAt, &view.DisabledReason, &view.CreatedAt, &view.UpdatedAt)
+	err := row.Scan(&view.ID, &view.URL, &view.EventTypes, &view.Version, &view.SecretVersion, &view.PreviousValidUntil, &view.DisabledAt, &view.DisabledReason, &view.CreatedAt, &view.UpdatedAt)
 	view.CreatedAt, view.UpdatedAt = view.CreatedAt.UTC(), view.UpdatedAt.UTC()
 	utcPointer(view.PreviousValidUntil)
 	utcPointer(view.DisabledAt)

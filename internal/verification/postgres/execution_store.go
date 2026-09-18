@@ -5,9 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"strconv"
 	"time"
 
+	webhookv1 "github.com/Mujhtech/idenqa/contracts/webhook/v1"
 	authoritypostgres "github.com/Mujhtech/idenqa/internal/authority/postgres"
+	deliverypostgres "github.com/Mujhtech/idenqa/internal/delivery/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/platform/outbox"
@@ -86,7 +89,20 @@ func (store *CheckStore) CreateCheckWithin(
 	if err := queries.InsertVerificationCheck(ctx, checkInsertParams(check)); err != nil {
 		return fmt.Errorf("insert verification check: %w", err)
 	}
-	return insertCheckProgress(ctx, queries, check, eventID)
+	if err := insertCheckProgress(ctx, queries, check, eventID); err != nil {
+		return err
+	}
+	region, err := checkRegion(ctx, transaction, scope, check.VerificationID)
+	if err != nil {
+		return err
+	}
+	if region == "" {
+		return nil
+	}
+	return deliverypostgres.EmitCatalogueEvent(ctx, transaction, scope.ID().String(), region, webhookv1.CheckStarted,
+		"check.started:"+check.ID.String()+":"+strconv.FormatInt(check.Version, 10), check.CreatedAt,
+		map[string]any{"verification_id": check.VerificationID.String(), "check_id": check.ID.String(), "version": check.Version,
+			"check": map[string]any{"id": check.ID.String(), "type": "verification.check", "verification_id": check.VerificationID.String(), "state": string(check.State), "version": check.Version}})
 }
 
 // FindCheck restores one complete aggregate inside an exact tenant scope.
@@ -172,7 +188,7 @@ func (store *CheckStore) SaveCheckWithin(
 			return false, err
 		}
 	}
-	return saveCheck(ctx, queries, scope, commit)
+	return saveCheck(ctx, transaction, queries, scope, commit)
 }
 
 func findResultReplay(ctx context.Context, transaction platformpostgres.Transaction, scope tenant.Scope, commit verification.CheckCommit) (bool, error) {
@@ -195,6 +211,7 @@ WHERE tenant_id = $1 AND verification_id = $2 AND check_id = $3 AND attempt_id =
 
 func saveCheck(
 	ctx context.Context,
+	transaction platformpostgres.Transaction,
 	queries *sqlgen.Queries,
 	scope tenant.Scope,
 	commit verification.CheckCommit,
@@ -255,9 +272,39 @@ func saveCheck(
 		if err := persistDiagnostics(ctx, queries, check); err != nil {
 			return err
 		}
-		return insertCheckProgress(ctx, queries, check, commit.EventID)
+		if err := insertCheckProgress(ctx, queries, check, commit.EventID); err != nil {
+			return err
+		}
+		eventType := webhookv1.Type("")
+		switch {
+		case check.State == verification.CheckCompleted && check.Outcome == verification.CheckInconclusive:
+			eventType = webhookv1.CheckInconclusive
+		case check.State == verification.CheckCompleted:
+			eventType = webhookv1.CheckCompleted
+		default:
+			return nil
+		}
+		region, err := checkRegion(ctx, transaction, scope, check.VerificationID)
+		if err != nil {
+			return err
+		}
+		if region == "" {
+			return nil
+		}
+		return deliverypostgres.EmitCatalogueEvent(ctx, transaction, scope.ID().String(), region, eventType,
+			string(eventType)+":"+check.ID.String()+":"+strconv.FormatInt(check.Version, 10), check.UpdatedAt,
+			map[string]any{"verification_id": check.VerificationID.String(), "check_id": check.ID.String(), "version": check.Version, "outcome": string(check.Outcome),
+				"check": map[string]any{"id": check.ID.String(), "type": "verification.check", "verification_id": check.VerificationID.String(), "state": string(check.State), "outcome": string(check.Outcome), "version": check.Version}})
 	}()
 	return duplicate, err
+}
+
+func checkRegion(ctx context.Context, transaction platformpostgres.Transaction, scope tenant.Scope, verificationID id.Verification) (string, error) {
+	var region string
+	if err := transaction.QueryRow(ctx, `SELECT COALESCE(region,'') FROM idenqa.verification_sessions WHERE tenant_id=$1 AND id=$2`, scope.ID().String(), verificationID.String()).Scan(&region); err != nil {
+		return "", fmt.Errorf("load check verification region: %w", err)
+	}
+	return region, nil
 }
 
 // ClaimReconciliation leases the oldest available tenant item with SKIP LOCKED.

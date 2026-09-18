@@ -286,13 +286,23 @@ func (store *Store) write(
 	scope tenant.Scope,
 	work func(context.Context, *sqlgen.Queries) error,
 ) error {
+	return store.writeTx(ctx, scope, func(ctx context.Context, _ platformpostgres.Transaction, queries *sqlgen.Queries) error {
+		return work(ctx, queries)
+	})
+}
+
+func (store *Store) writeTx(
+	ctx context.Context,
+	scope tenant.Scope,
+	work func(context.Context, platformpostgres.Transaction, *sqlgen.Queries) error,
+) error {
 	return store.pool.WithinTransaction(ctx, platformpostgres.TransactionOptions{}, func(ctx context.Context, tx platformpostgres.Transaction) error {
 		queries := sqlgen.New(tx)
 		if _, err := queries.SetTenantScope(ctx, scope.ID().String()); err != nil {
 			return fmt.Errorf("set tenant scope: %w", err)
 		}
 
-		return work(ctx, queries)
+		return work(ctx, tx, queries)
 	})
 }
 

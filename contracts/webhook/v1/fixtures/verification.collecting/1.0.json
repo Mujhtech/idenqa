@@ -1,0 +1,19 @@
+{
+  "id": "evt_01M11HEQG00000000000000000",
+  "type": "verification.collecting",
+  "schema_version": "1.0",
+  "created_at": "2026-09-18T09:00:00Z",
+  "tenant_id": "ten_01M11HEQG00000000000000000",
+  "region": "eu-west",
+  "data": {
+    "verification_id": "ver_01M11HEQG00000000000000000",
+    "version": 1,
+    "subject_id": "sub_01M11HEQG00000000000000000",
+    "verification": {
+      "id": "ver_01M11HEQG00000000000000000",
+      "type": "verification.session",
+      "status": "collecting",
+      "version": 1
+    }
+  }
+}

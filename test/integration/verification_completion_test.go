@@ -5,11 +5,14 @@ package integration_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
+	"time"
 
 	"github.com/Mujhtech/idenqa/internal/authority"
 	"github.com/Mujhtech/idenqa/internal/delivery"
 	deliverypostgres "github.com/Mujhtech/idenqa/internal/delivery/postgres"
+	deliverytask "github.com/Mujhtech/idenqa/internal/delivery/task"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	pg "github.com/Mujhtech/idenqa/internal/platform/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/task"
@@ -45,8 +48,8 @@ func TestVerificationCompletionAtomicReplayAndAuthority(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				complete := func(fail bool) error {
-					store, err := verificationpostgres.NewCompletionStore(f.runtime, f.ids, completionProbe{fail: fail}, source)
+				complete := func(failAfter bool) error {
+					store, err := verificationpostgres.NewCompletionStore(f.runtime, f.ids, source)
 					if err != nil {
 						return err
 					}
@@ -54,7 +57,16 @@ func TestVerificationCompletionAtomicReplayAndAuthority(t *testing.T) {
 						if err := decisions.AppendWithin(ctx, f.scope, tx, decision); err != nil {
 							return err
 						}
-						return store.CompleteWithin(ctx, f.scope, tx, decision, actor)
+						if err := store.CompleteWithin(ctx, f.scope, tx, decision, actor); err != nil {
+							return err
+						}
+						if failAfter {
+							// Simulate a downstream effect failure after the completion
+							// writes to prove the decision, transition, outbox and webhook
+							// event roll back together.
+							return errPlannedQueueFailure
+						}
+						return nil
 					})
 				}
 				switch scenario {
@@ -80,20 +92,25 @@ func TestVerificationCompletionAtomicReplayAndAuthority(t *testing.T) {
 						t.Fatalf("injected enqueue failure: %v", err)
 					}
 				}
-				assertCompletionCounts(t, f, 0, 0, 1, 2)
+				assertCompletionCounts(t, f, 0, 0, 0, 1, 2)
 				if scenario != "rollback_replay" {
 					return
 				}
 				if err := complete(false); err != nil {
 					t.Fatal(err)
 				}
-				assertCompletionCounts(t, f, 1, 1, 2, 3)
-				// New endpoints and elapsed authority do not create new subscribers
-				// or alter the identity of an already committed completion event.
+				assertCompletionCounts(t, f, 1, 1, 0, 2, 2)
 				deliveryStore, err := deliverypostgres.New(f.runtime)
 				if err != nil {
 					t.Fatal(err)
 				}
+				if err := runWebhookFanout(t, f, deliveryStore, source); err != nil {
+					t.Fatal(err)
+				}
+				assertCompletionCounts(t, f, 1, 1, 1, 2, 3)
+				// New endpoints and elapsed authority do not create new subscribers
+				// once the committed completion event has fanned out, and exact
+				// replay preserves the committed event identity.
 				manager, err := delivery.NewManager(deliveryStore, f.ids, integrationProtector{}, source.Now)
 				if err != nil {
 					t.Fatal(err)
@@ -108,28 +125,73 @@ func TestVerificationCompletionAtomicReplayAndAuthority(t *testing.T) {
 				if err := complete(false); err != nil {
 					t.Fatalf("exact replay after withdrawal: %v", err)
 				}
-				assertCompletionCounts(t, f, 1, 1, 2, 3)
-				var eventID, receiptID, state string
-				if err := f.admin.Native().QueryRow(t.Context(), `SELECT d.event_id,t.event_id,s.state FROM idenqa.webhook_deliveries d JOIN idenqa.verification_transitions t ON t.tenant_id=d.tenant_id AND t.to_state='completed' JOIN idenqa.verification_sessions s ON s.tenant_id=t.tenant_id AND s.id=t.verification_id WHERE d.tenant_id=$1`, f.scope.ID().String()).Scan(&eventID, &receiptID, &state); err != nil {
+				assertCompletionCounts(t, f, 1, 1, 1, 2, 3)
+				var eventID, committedID, state string
+				if err := f.admin.Native().QueryRow(t.Context(), `SELECT d.event_id,e.id,s.state FROM idenqa.webhook_deliveries d JOIN idenqa.webhook_events e ON e.tenant_id=d.tenant_id AND e.id=d.event_id JOIN idenqa.verification_transitions t ON t.tenant_id=e.tenant_id AND t.to_state='completed' JOIN idenqa.verification_sessions s ON s.tenant_id=t.tenant_id AND s.id=t.verification_id WHERE d.tenant_id=$1`, f.scope.ID().String()).Scan(&eventID, &committedID, &state); err != nil {
 					t.Fatal(err)
 				}
-				if eventID != receiptID || state != "completed" {
-					t.Fatalf("completion event/receipt/state=%s/%s/%s", eventID, receiptID, state)
+				if eventID != committedID || state != "completed" {
+					t.Fatalf("completion event/record/state=%s/%s/%s", eventID, committedID, state)
 				}
 			})
 		})
 	}
 }
 
-func assertCompletionCounts(t *testing.T, f captureAcceptanceFixture, decisions, deliveries, transitions, tasks int) {
+func assertCompletionCounts(t *testing.T, f captureAcceptanceFixture, decisions, events, deliveries, transitions, tasks int) {
 	t.Helper()
-	var gotDecisions, gotDeliveries, gotTransitions, gotTasks int
-	if err := f.admin.Native().QueryRow(t.Context(), `SELECT (SELECT count(*) FROM idenqa.verification_decisions),(SELECT count(*) FROM idenqa.webhook_deliveries),(SELECT count(*) FROM idenqa.verification_transitions),(SELECT count(*) FROM public.processing_task_probe)`).Scan(&gotDecisions, &gotDeliveries, &gotTransitions, &gotTasks); err != nil {
+	var gotDecisions, gotEvents, gotDeliveries, gotTransitions, gotTasks int
+	if err := f.admin.Native().QueryRow(t.Context(), `SELECT (SELECT count(*) FROM idenqa.verification_decisions),(SELECT count(*) FROM idenqa.webhook_events WHERE event_type='verification.completed'),(SELECT count(*) FROM idenqa.webhook_deliveries),(SELECT count(*) FROM idenqa.verification_transitions),(SELECT count(*) FROM public.processing_task_probe)`).Scan(&gotDecisions, &gotEvents, &gotDeliveries, &gotTransitions, &gotTasks); err != nil {
 		t.Fatal(err)
 	}
-	if gotDecisions != decisions || gotDeliveries != deliveries || gotTransitions != transitions || gotTasks != tasks {
-		t.Fatalf("partial completion decisions/deliveries/transitions/tasks=%d/%d/%d/%d expected=%d/%d/%d/%d", gotDecisions, gotDeliveries, gotTransitions, gotTasks, decisions, deliveries, transitions, tasks)
+	if gotDecisions != decisions || gotEvents != events || gotDeliveries != deliveries || gotTransitions != transitions || gotTasks != tasks {
+		t.Fatalf("partial completion decisions/events/deliveries/transitions/tasks=%d/%d/%d/%d/%d expected=%d/%d/%d/%d/%d", gotDecisions, gotEvents, gotDeliveries, gotTransitions, gotTasks, decisions, events, deliveries, transitions, tasks)
 	}
+}
+
+// runWebhookFanout executes one bounded fanout batch for the oldest pending
+// catalogue event through the real fenced handler.
+func runWebhookFanout(t *testing.T, f captureAcceptanceFixture, store *deliverypostgres.Store, source fixedIntegrationClock) error {
+	t.Helper()
+	var encoded string
+	if err := f.admin.Native().QueryRow(t.Context(), `SELECT id FROM idenqa.webhook_events WHERE tenant_id=$1 AND state='pending' AND event_type='verification.completed' ORDER BY created_at,id LIMIT 1`, f.scope.ID().String()).Scan(&encoded); err != nil {
+		return err
+	}
+	eventID, err := id.ParseEvent(encoded)
+	if err != nil {
+		return err
+	}
+	handler, err := deliverytask.NewFanoutHandler(store, f.ids, processingProbe{}, source.Now)
+	if err != nil {
+		return err
+	}
+	intent, err := deliverytask.NewFanoutIntent(f.ids, f.scope, eventID, source.Now().UTC().Truncate(time.Microsecond))
+	if err != nil {
+		return err
+	}
+	work, result := handler.Prepare(t.Context(), task.Delivery{Intent: intent, Attempt: 1, Fence: 1})
+	if result.Outcome != task.OutcomeComplete || work == nil {
+		return errors.New("fanout prepare did not produce work")
+	}
+
+	err = f.runtime.WithinTransaction(t.Context(), pg.TransactionOptions{}, func(ctx context.Context, tx pg.Transaction) error {
+		if returned := work(ctx, tx); returned.Outcome != task.OutcomeComplete {
+			return fmt.Errorf("fanout batch did not complete: %v: %w", returned.Outcome, returned.Err)
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	var endpoints, deliveries int
+	if err := f.admin.Native().QueryRow(t.Context(), `SELECT (SELECT count(*) FROM idenqa.webhook_endpoints WHERE tenant_id=$1 AND event_types && ARRAY['verification.completed','*']::text[]),(SELECT count(*) FROM idenqa.webhook_deliveries WHERE tenant_id=$1)`, f.scope.ID().String()).Scan(&endpoints, &deliveries); err != nil {
+		return err
+	}
+	if deliveries == 0 {
+		return fmt.Errorf("fanout produced no deliveries: subscribed endpoints=%d", endpoints)
+	}
+
+	return nil
 }
 
 func prepareCompletion(t *testing.T, f captureAcceptanceFixture) policy.Decision {

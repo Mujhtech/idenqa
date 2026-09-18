@@ -966,7 +966,7 @@ export class WebhooksClient {
     this.#token = token;
   }
   async create(
-    input: { readonly url: string },
+    input: { readonly url: string; readonly eventTypes?: readonly string[] },
     options: IdempotentRequestOptions,
   ): Promise<SDKResponse<WebhookEndpointMutation>> {
     const response = await this.#transport.request<WireWebhookEndpointMutation>({
@@ -974,7 +974,28 @@ export class WebhooksClient {
       path: "v1/webhook-endpoints",
       bearerToken: this.#token,
       ...signal(options),
-      body: { url: input.url },
+      body: {
+        url: input.url,
+        ...(input.eventTypes === undefined ? {} : { event_types: [...input.eventTypes] }),
+      },
+      headers: idempotencyHeaders(options.idempotencyKey),
+    });
+    return mapResponse(response, webhookEndpointMutation);
+  }
+  async subscribe(
+    endpointId: WebhookEndpointID,
+    input: { readonly expectedVersion: number; readonly eventTypes: readonly string[] },
+    options: IdempotentRequestOptions,
+  ): Promise<SDKResponse<WebhookEndpointMutation>> {
+    const response = await this.#transport.request<WireWebhookEndpointMutation>({
+      method: "POST",
+      path: `v1/webhook-endpoints/${pathSegment(endpointId, "endpointId")}/subscriptions`,
+      bearerToken: this.#token,
+      ...signal(options),
+      body: {
+        expected_version: positiveInteger(input.expectedVersion, "expectedVersion"),
+        event_types: [...input.eventTypes],
+      },
       headers: idempotencyHeaders(options.idempotencyKey),
     });
     return mapResponse(response, webhookEndpointMutation);

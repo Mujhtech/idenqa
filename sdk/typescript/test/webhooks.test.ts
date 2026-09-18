@@ -4,6 +4,7 @@ import { IdenqaClient } from "../src/index.js";
 const endpoint = {
   id: "whk_01M11HEQG00000000000000000",
   url: "https://receiver.example.com",
+  event_types: ["verification.completed"],
   version: 2,
   secret_version: 2,
   previous_valid_until: "2026-09-06T01:00:00Z",
@@ -50,6 +51,10 @@ it("maps all webhook operations, replay receipts and bounded inspection", async 
       ],
     },
     { delivery, replayed: false },
+    {
+      endpoint: { ...endpoint, event_types: ["verification.completed", "decision.created"] },
+      replayed: false,
+    },
   ];
   const client = new IdenqaClient({
     baseUrl: "https://core.example.com",
@@ -104,6 +109,15 @@ it("maps all webhook operations, replay receipts and bounded inspection", async 
       )
     ).data.delivery.id,
   ).toBe(delivery.id);
+  expect(
+    (
+      await client.webhooks.subscribe(
+        endpoint.id,
+        { expectedVersion: 2, eventTypes: ["verification.completed", "decision.created"] },
+        { idempotencyKey: "subscribe" },
+      )
+    ).data.endpoint.eventTypes,
+  ).toEqual(["verification.completed", "decision.created"]);
   expect(requests.map((r) => r.url.pathname)).toEqual([
     "/v1/webhook-endpoints",
     "/v1/webhook-endpoints",
@@ -115,6 +129,7 @@ it("maps all webhook operations, replay receipts and bounded inspection", async 
     `/v1/webhook-deliveries/${delivery.id}`,
     `/v1/webhook-deliveries/${delivery.id}/attempts`,
     `/v1/webhook-deliveries/${delivery.id}/replay`,
+    `/v1/webhook-endpoints/${endpoint.id}/subscriptions`,
   ]);
   expect(requests[5]!.url.searchParams.get("cursor")).toBe("cursor+opaque");
   expect(requests[3]!.init.body).toBe(
@@ -132,5 +147,5 @@ it("maps all webhook operations, replay receipts and bounded inspection", async 
       { idempotencyKey: "bad" },
     ),
   ).rejects.toThrow("positive");
-  expect(requests).toHaveLength(10);
+  expect(requests).toHaveLength(11);
 });

@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	webhookv1 "github.com/Mujhtech/idenqa/contracts/webhook/v1"
+	deliverypostgres "github.com/Mujhtech/idenqa/internal/delivery/postgres"
 	"github.com/Mujhtech/idenqa/internal/evidence"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/platform/objectstore"
@@ -173,7 +175,18 @@ func (eraser *EvidenceEraser) Delete(ctx context.Context, target privacy.Target)
 		_, err = tx.Exec(ctx, `INSERT INTO idenqa.evidence_asset_audit
 			(tenant_id,evidence_id,aggregate_version,action,reason,occurred_at) VALUES ($1,$2,$3,'delete','retention.deleted',$4)`,
 			reference.TenantID, reference.EvidenceID, reference.Version+1, now)
-		return err
+		if err != nil {
+			return err
+		}
+		if err := deliverypostgres.EmitCatalogueEvent(ctx, tx, reference.TenantID, reference.Region, webhookv1.EvidenceDeleted,
+			"evidence.deleted:"+reference.EvidenceID, now, map[string]any{
+				"evidence_id":     reference.EvidenceID,
+				"verification_id": verificationID,
+				"evidence":        map[string]any{"id": reference.EvidenceID, "type": "evidence", "verification_id": verificationID, "state": "deleted"},
+			}); err != nil {
+			return err
+		}
+		return nil
 	})
 }
 

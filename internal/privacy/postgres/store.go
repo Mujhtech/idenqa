@@ -7,9 +7,12 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
+	webhookv1 "github.com/Mujhtech/idenqa/contracts/webhook/v1"
 	auditpostgres "github.com/Mujhtech/idenqa/internal/audit/postgres"
+	deliverypostgres "github.com/Mujhtech/idenqa/internal/delivery/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	platformpostgres "github.com/Mujhtech/idenqa/internal/platform/postgres"
 	"github.com/Mujhtech/idenqa/internal/privacy"
@@ -401,10 +404,20 @@ var _ privacy.Repository = (*Store)(nil)
 func appendDeletionEvent(ctx context.Context, tx platformpostgres.Transaction, scope tenant.Scope, actor privacy.Actor, deletion privacy.Deletion, eventType string) error {
 
 	digest := sha256.Sum256([]byte(fmt.Sprintf("%s\n%s\n%s\n%d\n", eventType, deletion.AggregateID, deletion.ID.String(), deletion.Version)))
-	_, err := auditpostgres.AppendInTransaction(ctx, tx, scope, auditpostgres.Event{
+	if _, err := auditpostgres.AppendInTransaction(ctx, tx, scope, auditpostgres.Event{
 		EventID: referenceToken("event", fmt.Sprintf("%s:%s:%s:%d", eventType, deletion.AggregateID, deletion.ID.String(), deletion.Version)), EventType: eventType,
 		AggregateID: referenceToken("privacy", deletion.AggregateID), ActorID: referenceToken("actor", actor.ID),
 		EventDigest: hex.EncodeToString(digest[:]), OccurredAt: deletion.UpdatedAt,
-	})
-	return err
+	}); err != nil {
+		return err
+	}
+
+	if deletion.Region == "" || deletion.UpdatedAt.IsZero() || deletion.ID.IsZero() {
+		return nil
+	}
+
+	return deliverypostgres.EmitCatalogueEvent(ctx, tx, scope.ID().String(), deletion.Region, webhookv1.DeletionRequestUpdated,
+		"deletion_request.updated:"+deletion.ID.String()+":"+strconv.FormatInt(deletion.Version, 10), deletion.UpdatedAt,
+		map[string]any{"deletion_id": deletion.ID.String(), "state": string(deletion.State),
+			"deletion": map[string]any{"id": deletion.ID.String(), "type": "deletion_request", "state": string(deletion.State)}})
 }

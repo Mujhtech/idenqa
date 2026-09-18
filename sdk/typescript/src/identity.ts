@@ -59,12 +59,18 @@ export class IdentityClient {
     expectedVersion: number,
     options: IdentityMutationOptions,
   ): Promise<SDKResponse<IdentityResult>> {
-    return this.mutate(
-      "DELETE",
-      this.subjectPath(subjectId),
-      { expected_version: expectedVersion },
-      options,
-    );
+    if (
+      !/^[\x21-\x7e]{1,200}$/.test(options.idempotencyKey) ||
+      /["\\]/.test(options.idempotencyKey)
+    )
+      throw new TypeError("A bounded idempotency key is required.");
+    return this.transport.request<IdentityResult>({
+      method: "DELETE",
+      path: `${this.subjectPath(subjectId)}?expected_version=${encodeURIComponent(String(expectedVersion))}`,
+      bearerToken: this.token,
+      headers: { "Idempotency-Key": JSON.stringify(options.idempotencyKey) },
+      ...(options.signal === undefined ? {} : { signal: options.signal }),
+    });
   }
   getSubject(
     subjectId: string,

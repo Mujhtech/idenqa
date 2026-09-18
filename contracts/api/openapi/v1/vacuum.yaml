@@ -4,3 +4,6 @@ rules:
   camel-case-properties: false
   # C-01 establishes reusable headers and pagination before their first endpoint.
   oas3-unused-component: false
+  # Canonical response wording (success, problem, headers) is deliberately reused
+  # across operations. Reuse is a contract convention, not a documentation defect.
+  description-duplication: false

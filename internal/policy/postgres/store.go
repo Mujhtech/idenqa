@@ -8,7 +8,9 @@ import (
 	"fmt"
 	"time"
 
+	webhookv1 "github.com/Mujhtech/idenqa/contracts/webhook/v1"
 	authoritypostgres "github.com/Mujhtech/idenqa/internal/authority/postgres"
+	deliverypostgres "github.com/Mujhtech/idenqa/internal/delivery/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	platformpostgres "github.com/Mujhtech/idenqa/internal/platform/postgres"
@@ -120,7 +122,7 @@ func (store *Store) AppendWithin(
 			return err
 		}
 	}
-	return appendDecision(ctx, queries, scope, decision)
+	return appendDecision(ctx, transaction, queries, scope, decision)
 }
 
 func validateAppend(scope tenant.Scope, decision policy.Decision) error {
@@ -143,6 +145,7 @@ func validateAppend(scope tenant.Scope, decision policy.Decision) error {
 
 func appendDecision(
 	ctx context.Context,
+	transaction platformpostgres.Transaction,
 	queries *sqlgen.Queries,
 	scope tenant.Scope,
 	decision policy.Decision,
@@ -169,7 +172,52 @@ func appendDecision(
 	if err := persistEvaluation(ctx, queries, snapshot, decision.Evaluation()); err != nil {
 		return err
 	}
-	return persistDecision(ctx, queries, decision)
+	if err := persistDecision(ctx, queries, decision); err != nil {
+		return err
+	}
+	fields := map[string]any{
+		"decision_id":     decision.ID().String(),
+		"verification_id": snapshot.VerificationID().String(),
+		"policy_id":       snapshot.Policy().ID.String(),
+		"revision":        int64(snapshot.Policy().Revision),
+		"outcome":         string(decision.Evaluation().Outcome()),
+		"decided_at":      decision.DecidedAt().UTC().Format(time.RFC3339),
+		"decision": map[string]any{
+			"id":              decision.ID().String(),
+			"type":            "decision",
+			"verification_id": snapshot.VerificationID().String(),
+			"policy_id":       snapshot.Policy().ID.String(),
+			"revision":        int64(snapshot.Policy().Revision),
+			"outcome":         string(decision.Evaluation().Outcome()),
+			"decided_at":      decision.DecidedAt().UTC().Format(time.RFC3339),
+		},
+	}
+	if err := deliverypostgres.EmitCatalogueEvent(ctx, transaction, scope.ID().String(), snapshot.Region(), webhookv1.DecisionCreated, "decision.created:"+decision.ID().String(), decision.DecidedAt(), fields); err != nil {
+		return err
+	}
+	if !decision.Supersedes().IsZero() {
+		superseded := make(map[string]any, len(fields)+1)
+		for key, value := range fields {
+			superseded[key] = value
+		}
+		superseded["previous_decision_id"] = decision.Supersedes().String()
+		superseded["decision"] = map[string]any{
+			"id":                   decision.ID().String(),
+			"type":                 "decision",
+			"verification_id":      snapshot.VerificationID().String(),
+			"policy_id":            snapshot.Policy().ID.String(),
+			"revision":             int64(snapshot.Policy().Revision),
+			"outcome":              string(decision.Evaluation().Outcome()),
+			"decided_at":           decision.DecidedAt().UTC().Format(time.RFC3339),
+			"previous_decision_id": decision.Supersedes().String(),
+		}
+		seed := "decision.superseded:" + decision.Supersedes().String() + ":" + decision.ID().String()
+		if err := deliverypostgres.EmitCatalogueEvent(ctx, transaction, scope.ID().String(), snapshot.Region(), webhookv1.DecisionSuperseded, seed, decision.DecidedAt(), superseded); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // Find restores one exact decision visible in the explicit tenant scope.
