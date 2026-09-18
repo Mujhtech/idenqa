@@ -198,6 +198,17 @@ func (service *Service) Run(ctx context.Context, scope tenant.Scope, actor Actor
 		}
 		expected = deletion.Version
 		if err := service.eraser.Delete(ctx, target); err != nil {
+			if errors.Is(err, ErrHeld) {
+				paused, pauseErr := deletion.SuspendForHold(service.now().UTC())
+				if pauseErr != nil {
+					return deletion, pauseErr
+				}
+				if saveErr := service.repository.Save(ctx, scope, actor, paused, expected); saveErr != nil {
+					return deletion, saveErr
+				}
+				return paused, ErrHeld
+			}
+
 			deletion, _ = deletion.MarkTargetFailed(target.Kind, target.Reference, classifyFailure(err), service.now().UTC())
 			if saveErr := service.repository.Save(ctx, scope, actor, deletion, expected); saveErr != nil {
 				return Deletion{}, errors.Join(err, saveErr)
@@ -311,6 +322,7 @@ func (service *Service) ReplayTombstones(ctx context.Context, scope tenant.Scope
 	for _, deletion := range deletions {
 		for _, target := range deletion.Targets {
 			if err := service.eraser.Delete(ctx, target); err != nil {
+
 				return completed, fmt.Errorf("replay deletion target: %w", err)
 			}
 		}

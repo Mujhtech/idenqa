@@ -128,13 +128,15 @@ func Resolve(class DataClass, region string, createdAt time.Time, tenantRequeste
 
 // Hold suspends deletion of one exact aggregate without granting access.
 type Hold struct {
-	ID          id.LegalHold
-	AggregateID string
-	Authority   string
-	Reason      string
-	StartsAt    time.Time
-	ReviewAt    time.Time
-	ReleasedAt  time.Time
+	// CoveredAggregateID is an adapter-resolved effective target, never caller authority.
+	CoveredAggregateID string `json:"-"`
+	ID                 id.LegalHold
+	AggregateID        string
+	Authority          string
+	Reason             string
+	StartsAt           time.Time
+	ReviewAt           time.Time
+	ReleasedAt         time.Time
 }
 
 // ActiveAt reports whether the hold blocks deletion at a UTC instant.
@@ -182,6 +184,8 @@ type Target struct {
 
 // Deletion is one replay-safe observable deletion workflow.
 type Deletion struct {
+	// BackupRetention pins the recovery-copy interval after each actual erasure.
+	BackupRetention time.Duration `json:"-"`
 	ID              id.Deletion
 	AggregateID     string
 	Region          string
@@ -205,7 +209,7 @@ func NewDeletion(identifier id.Deletion, aggregateID, region string, targets []T
 
 // Validate checks deletion identity, region, targets, and lifecycle times.
 func (deletion Deletion) Validate() error {
-	if deletion.ID.IsZero() || !token(deletion.AggregateID, 200) || !validRegion(deletion.Region) || deletion.Version < 1 ||
+	if deletion.BackupRetention < 0 || deletion.BackupRetention > SelectedDefaults()[DataClassBackup] || deletion.ID.IsZero() || !token(deletion.AggregateID, 200) || !validRegion(deletion.Region) || deletion.Version < 1 ||
 		deletion.RequestedAt.IsZero() || deletion.RequestedAt.Location() != time.UTC || deletion.UpdatedAt.Before(deletion.RequestedAt) || deletion.UpdatedAt.Location() != time.UTC ||
 		!deletion.BackupExpiresAt.After(deletion.RequestedAt) || deletion.BackupExpiresAt.Location() != time.UTC || len(deletion.Targets) == 0 || len(deletion.Targets) > 256 {
 		return ErrInvalid
@@ -235,7 +239,7 @@ func (deletion Deletion) Begin(now time.Time, holds []Hold) (Deletion, error) {
 	next := deletion
 	next.State, next.FailureClass, next.UpdatedAt, next.Version = DeletionInProgress, "", now, deletion.Version+1
 	for _, hold := range holds {
-		if hold.AggregateID == deletion.AggregateID && hold.ActiveAt(now) {
+		if (hold.AggregateID == deletion.AggregateID || hold.CoveredAggregateID == deletion.AggregateID) && hold.ActiveAt(now) {
 			next.State = DeletionBlockedByLegalHold
 			return next, ErrHeld
 		}
@@ -257,6 +261,9 @@ func (deletion Deletion) MarkTargetDeleted(kind, reference string, now time.Time
 			if next.Targets[index].DeletedAt.IsZero() {
 				next.Targets[index].DeletedAt, next.Targets[index].Attempts = now, next.Targets[index].Attempts+1
 				next.Targets[index].LastFailureClass = ""
+				if next.BackupRetention > 0 && now.Add(next.BackupRetention).After(next.BackupExpiresAt) {
+					next.BackupExpiresAt = now.Add(next.BackupRetention)
+				}
 			}
 		}
 	}
@@ -327,4 +334,15 @@ func token(value string, maximum int) bool {
 // DescribeResolution returns safe operator-facing retention meaning.
 func DescribeResolution(value Resolution) string {
 	return fmt.Sprintf("%s retained in %s for %s", value.Class, value.Region, value.Duration)
+}
+
+// SuspendForHold pauses an in-progress erasure when a hold arrives between targets.
+func (deletion Deletion) SuspendForHold(now time.Time) (Deletion, error) {
+	if deletion.Validate() != nil || deletion.State != DeletionInProgress || now.Before(deletion.UpdatedAt) || now.Location() != time.UTC {
+		return Deletion{}, ErrConflict
+	}
+	deletion.State = DeletionBlockedByLegalHold
+	deletion.UpdatedAt = now
+	deletion.Version++
+	return deletion, nil
 }

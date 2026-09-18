@@ -35,27 +35,41 @@ func New(pool transactionRunner) (*Store, error) {
 
 // Create persists a new deletion request and exact target set.
 func (store *Store) Create(ctx context.Context, scope tenant.Scope, actor privacy.Actor, deletion privacy.Deletion) error {
-	if deletion.Validate() != nil {
+	return store.pool.WithinTransaction(ctx, platformpostgres.TransactionOptions{Isolation: platformpostgres.IsolationSerializable}, func(ctx context.Context, tx platformpostgres.Transaction) error {
+		return store.CreateWithin(ctx, scope, tx, actor, deletion)
+	})
+}
+
+// CreateWithin joins an already authorized serializable aggregate transaction.
+func (store *Store) CreateWithin(ctx context.Context, scope tenant.Scope, tx platformpostgres.Transaction, actor privacy.Actor, deletion privacy.Deletion) error {
+	if deletion.Validate() != nil || actor.ID == "" {
 		return privacy.ErrInvalid
 	}
-	return store.write(ctx, scope, actor, deletion, "privacy.deletion.requested", func(ctx context.Context, tx platformpostgres.Transaction) error {
-		_, err := tx.Exec(ctx, `INSERT INTO idenqa.deletion_requests
-			(tenant_id,id,aggregate_id,region,state,backup_expires_at,failure_class,version,requested_at,updated_at)
-			VALUES ($1,$2,$3,$4,$5,$6,NULL,$7,$8,$9)`, scope.ID().String(), deletion.ID.String(), deletion.AggregateID,
-			deletion.Region, string(deletion.State), deletion.BackupExpiresAt, deletion.Version, deletion.RequestedAt, deletion.UpdatedAt)
-		if err != nil {
-			return fmt.Errorf("insert deletion request: %w", err)
+	if err := setScope(ctx, tx, scope); err != nil {
+		return err
+	}
+	if err := insertDeletion(ctx, tx, scope, deletion); err != nil {
+		return err
+	}
+	return appendDeletionEvent(ctx, tx, scope, actor, deletion, "privacy.deletion.requested")
+}
+func insertDeletion(ctx context.Context, tx platformpostgres.Transaction, scope tenant.Scope, deletion privacy.Deletion) error {
+	_, err := tx.Exec(ctx, `INSERT INTO idenqa.deletion_requests
+		(tenant_id,id,aggregate_id,region,state,backup_expires_at,failure_class,version,requested_at,updated_at,backup_retention_seconds)
+		VALUES ($1,$2,$3,$4,$5,$6,NULL,$7,$8,$9,$10)`, scope.ID().String(), deletion.ID.String(), deletion.AggregateID,
+		deletion.Region, string(deletion.State), deletion.BackupExpiresAt, deletion.Version, deletion.RequestedAt, deletion.UpdatedAt, int64(deletion.BackupRetention/time.Second))
+	if err != nil {
+		return fmt.Errorf("insert deletion request: %w", err)
+	}
+	for _, target := range deletion.Targets {
+		if _, err := tx.Exec(ctx, `INSERT INTO idenqa.deletion_targets
+			(tenant_id,deletion_id,kind,reference,region,attempts,deleted_at,last_failure_class)
+			VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`, scope.ID().String(), deletion.ID.String(), target.Kind,
+			target.Reference, target.Region, target.Attempts, nullableTime(target.DeletedAt), nullableText(target.LastFailureClass)); err != nil {
+			return fmt.Errorf("insert deletion target: %w", err)
 		}
-		for _, target := range deletion.Targets {
-			if _, err := tx.Exec(ctx, `INSERT INTO idenqa.deletion_targets
-				(tenant_id,deletion_id,kind,reference,region,attempts,deleted_at,last_failure_class)
-				VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`, scope.ID().String(), deletion.ID.String(), target.Kind,
-				target.Reference, target.Region, target.Attempts, nullableTime(target.DeletedAt), nullableText(target.LastFailureClass)); err != nil {
-				return fmt.Errorf("insert deletion target: %w", err)
-			}
-		}
-		return nil
-	})
+	}
+	return nil
 }
 
 // Find loads one tenant-scoped deletion and its exact targets.
@@ -67,9 +81,10 @@ func (store *Store) Find(ctx context.Context, scope tenant.Scope, identifier id.
 		}
 		var state string
 		var failure *string
-		err := tx.QueryRow(ctx, `SELECT aggregate_id,region,state,backup_expires_at,failure_class,version,requested_at,updated_at
+		var backupSeconds int64
+		err := tx.QueryRow(ctx, `SELECT aggregate_id,region,state,backup_expires_at,failure_class,version,requested_at,updated_at,backup_retention_seconds
 			FROM idenqa.deletion_requests WHERE tenant_id=$1 AND id=$2`, scope.ID().String(), identifier.String()).Scan(
-			&result.AggregateID, &result.Region, &state, &result.BackupExpiresAt, &failure, &result.Version, &result.RequestedAt, &result.UpdatedAt)
+			&result.AggregateID, &result.Region, &state, &result.BackupExpiresAt, &failure, &result.Version, &result.RequestedAt, &result.UpdatedAt, &backupSeconds)
 		if errors.Is(err, pgx.ErrNoRows) {
 			return privacy.ErrInvalid
 		}
@@ -77,6 +92,7 @@ func (store *Store) Find(ctx context.Context, scope tenant.Scope, identifier id.
 			return fmt.Errorf("find deletion request: %w", err)
 		}
 		result.ID, result.State = identifier, privacy.DeletionState(state)
+		result.BackupRetention = time.Duration(backupSeconds) * time.Second
 		result.BackupExpiresAt = result.BackupExpiresAt.UTC()
 		result.RequestedAt = result.RequestedAt.UTC()
 		result.UpdatedAt = result.UpdatedAt.UTC()
@@ -118,9 +134,9 @@ func (store *Store) Save(ctx context.Context, scope tenant.Scope, actor privacy.
 		return privacy.ErrInvalid
 	}
 	return store.write(ctx, scope, actor, deletion, "privacy.deletion."+string(deletion.State), func(ctx context.Context, tx platformpostgres.Transaction) error {
-		tag, err := tx.Exec(ctx, `UPDATE idenqa.deletion_requests SET state=$3,failure_class=$4,version=$5,updated_at=$6
+		tag, err := tx.Exec(ctx, `UPDATE idenqa.deletion_requests SET state=$3,failure_class=$4,version=$5,updated_at=$6,backup_expires_at=$8
 			WHERE tenant_id=$1 AND id=$2 AND version=$7`, scope.ID().String(), deletion.ID.String(), string(deletion.State),
-			nullableText(deletion.FailureClass), deletion.Version, deletion.UpdatedAt, expectedVersion)
+			nullableText(deletion.FailureClass), deletion.Version, deletion.UpdatedAt, expectedVersion, deletion.BackupExpiresAt)
 		if err != nil {
 			return fmt.Errorf("update deletion request: %w", err)
 		}
@@ -146,8 +162,8 @@ func (store *Store) ActiveHolds(ctx context.Context, scope tenant.Scope, aggrega
 		if err := setScope(ctx, tx, scope); err != nil {
 			return err
 		}
-		rows, err := tx.Query(ctx, `SELECT id,authority,reason,starts_at,review_at,released_at FROM idenqa.legal_holds
-			WHERE tenant_id=$1 AND aggregate_id=$2 AND starts_at <= $3 AND (released_at IS NULL OR released_at > $3)
+		rows, err := tx.Query(ctx, `SELECT id,authority,reason,starts_at,review_at,released_at,aggregate_id FROM idenqa.legal_holds
+			WHERE tenant_id=$1 AND (aggregate_id=$2 OR aggregate_id IN(SELECT verification_id FROM idenqa.identity_subject_verifications WHERE tenant_id=$1 AND subject_id=$2) OR aggregate_id IN(SELECT subject_id FROM idenqa.identity_subject_verifications WHERE tenant_id=$1 AND verification_id=$2)) AND starts_at <= $3 AND (released_at IS NULL OR released_at > $3)
 			ORDER BY starts_at,id`, scope.ID().String(), aggregateID, at)
 		if err != nil {
 			return fmt.Errorf("find legal holds: %w", err)
@@ -157,14 +173,14 @@ func (store *Store) ActiveHolds(ctx context.Context, scope tenant.Scope, aggrega
 			var encoded string
 			var hold privacy.Hold
 			var released *time.Time
-			if err := rows.Scan(&encoded, &hold.Authority, &hold.Reason, &hold.StartsAt, &hold.ReviewAt, &released); err != nil {
+			if err := rows.Scan(&encoded, &hold.Authority, &hold.Reason, &hold.StartsAt, &hold.ReviewAt, &released, &hold.AggregateID); err != nil {
 				return err
 			}
 			hold.ID, err = id.ParseLegalHold(encoded)
 			if err != nil {
 				return privacy.ErrInvalid
 			}
-			hold.AggregateID = aggregateID
+			hold.CoveredAggregateID = aggregateID
 			hold.StartsAt = hold.StartsAt.UTC()
 			hold.ReviewAt = hold.ReviewAt.UTC()
 			if released != nil {
@@ -194,7 +210,7 @@ func (store *Store) Complete(ctx context.Context, scope tenant.Scope, actor priv
 			return err
 		}
 		if tag.RowsAffected() == 1 {
-			return nil
+			return CompleteIdentityDeletionWithin(ctx, tx, scope, deletion)
 		}
 		var aggregateID, region, proofDigest string
 		var targetCount int
@@ -300,6 +316,10 @@ func (store *Store) CreateHold(ctx context.Context, scope tenant.Scope, actor pr
 	}
 	deletion := privacy.Deletion{ID: deletionReference(hold.AggregateID), AggregateID: hold.AggregateID, UpdatedAt: occurredAt}
 	return store.writeEvent(ctx, scope, actor, deletion, "privacy.legal_hold.created", func(ctx context.Context, tx platformpostgres.Transaction) error {
+		if err := LockRetentionAggregateWithin(ctx, tx, scope, hold.AggregateID); err != nil {
+			return err
+		}
+
 		_, err := tx.Exec(ctx, `INSERT INTO idenqa.legal_holds
 			(tenant_id,id,aggregate_id,authority,reason,starts_at,review_at,created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
 			scope.ID().String(), hold.ID.String(), hold.AggregateID, hold.Authority, hold.Reason, hold.StartsAt, hold.ReviewAt, occurredAt)
@@ -337,13 +357,7 @@ func (store *Store) writeEvent(ctx context.Context, scope tenant.Scope, actor pr
 		if err := mutate(ctx, tx); err != nil {
 			return err
 		}
-		digest := sha256.Sum256([]byte(fmt.Sprintf("%s\n%s\n%s\n%d\n", eventType, deletion.AggregateID, deletion.ID.String(), deletion.Version)))
-		_, err := auditpostgres.AppendInTransaction(ctx, tx, scope, auditpostgres.Event{
-			EventID: referenceToken("event", fmt.Sprintf("%s:%s:%s:%d", eventType, deletion.AggregateID, deletion.ID.String(), deletion.Version)), EventType: eventType,
-			AggregateID: referenceToken("privacy", deletion.AggregateID), ActorID: referenceToken("actor", actor.ID),
-			EventDigest: hex.EncodeToString(digest[:]), OccurredAt: deletion.UpdatedAt,
-		})
-		return err
+		return appendDeletionEvent(ctx, tx, scope, actor, deletion, eventType)
 	})
 }
 
@@ -383,3 +397,14 @@ func nullableTime(value time.Time) any {
 }
 
 var _ privacy.Repository = (*Store)(nil)
+
+func appendDeletionEvent(ctx context.Context, tx platformpostgres.Transaction, scope tenant.Scope, actor privacy.Actor, deletion privacy.Deletion, eventType string) error {
+
+	digest := sha256.Sum256([]byte(fmt.Sprintf("%s\n%s\n%s\n%d\n", eventType, deletion.AggregateID, deletion.ID.String(), deletion.Version)))
+	_, err := auditpostgres.AppendInTransaction(ctx, tx, scope, auditpostgres.Event{
+		EventID: referenceToken("event", fmt.Sprintf("%s:%s:%s:%d", eventType, deletion.AggregateID, deletion.ID.String(), deletion.Version)), EventType: eventType,
+		AggregateID: referenceToken("privacy", deletion.AggregateID), ActorID: referenceToken("actor", actor.ID),
+		EventDigest: hex.EncodeToString(digest[:]), OccurredAt: deletion.UpdatedAt,
+	})
+	return err
+}

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/Mujhtech/idenqa/internal/evidence"
+	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/platform/objectstore"
 	platformpostgres "github.com/Mujhtech/idenqa/internal/platform/postgres"
 	"github.com/Mujhtech/idenqa/internal/privacy"
@@ -103,18 +104,47 @@ func (eraser *EvidenceEraser) Delete(ctx context.Context, target privacy.Target)
 	if err != nil {
 		return privacy.ErrInvalid
 	}
-	if err := eraser.objects.Delete(ctx, object); err != nil {
-		return fmt.Errorf("delete evidence ciphertext: %w", err)
-	}
 	now := eraser.now().UTC()
 	return eraser.pool.WithinTransaction(ctx, platformpostgres.TransactionOptions{Isolation: platformpostgres.IsolationSerializable}, func(ctx context.Context, tx platformpostgres.Transaction) error {
 		var scopeValue string
 		if err := tx.QueryRow(ctx, `SELECT set_config('idenqa.tenant_id',$1,true)`, reference.TenantID).Scan(&scopeValue); err != nil {
 			return err
 		}
+
+		tenantID, err := id.ParseTenant(reference.TenantID)
+		if err != nil {
+			return privacy.ErrInvalid
+		}
+		scope, err := tenant.NewScope(tenantID)
+		if err != nil {
+			return err
+		}
+		var verificationID string
+		if err = tx.QueryRow(ctx, `SELECT verification_id FROM idenqa.evidence_assets WHERE tenant_id=$1 AND id=$2`, reference.TenantID, reference.EvidenceID).Scan(&verificationID); err != nil {
+			return err
+		}
+		if err = LockRetentionAggregateWithin(ctx, tx, scope, verificationID); err != nil {
+			return err
+		}
+		aggregate := verificationID
+		var subjectID string
+		err = tx.QueryRow(ctx, `SELECT s.id FROM idenqa.identity_subjects s JOIN idenqa.identity_subject_verifications l ON l.tenant_id=s.tenant_id AND l.subject_id=s.id WHERE s.tenant_id=$1 AND l.verification_id=$2 AND s.state='deleting'`, reference.TenantID, verificationID).Scan(&subjectID)
+		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+			return err
+		}
+		if err == nil {
+			aggregate = subjectID
+		}
+		held, err := RetentionHeldWithin(ctx, tx, scope, aggregate, eraser.now().UTC())
+		if err != nil {
+			return err
+		}
+		if held {
+			return privacy.ErrHeld
+		}
 		var state, key, version, checksum string
 		var size, aggregateVersion int64
-		err := tx.QueryRow(ctx, `SELECT state,object_key,object_version,ciphertext_size,ciphertext_checksum,version FROM idenqa.evidence_assets
+		err = tx.QueryRow(ctx, `SELECT state,object_key,object_version,ciphertext_size,ciphertext_checksum,version FROM idenqa.evidence_assets
 			WHERE tenant_id=$1 AND id=$2 FOR UPDATE`, reference.TenantID, reference.EvidenceID).Scan(&state, &key, &version, &size, &checksum, &aggregateVersion)
 		if errors.Is(err, pgx.ErrNoRows) {
 			return evidence.ErrNotFound
@@ -125,11 +155,15 @@ func (eraser *EvidenceEraser) Delete(ctx context.Context, target privacy.Target)
 		if key != reference.Object.Key || version != reference.Object.Version || size != reference.Object.Size || checksum != reference.Object.Checksum {
 			return privacy.ErrConflict
 		}
+
+		if state != string(evidence.StateDeleted) && aggregateVersion != reference.Version {
+			return privacy.ErrConflict
+		}
+		if err = eraser.objects.Delete(ctx, object); err != nil {
+			return fmt.Errorf("delete evidence ciphertext: %w", err)
+		}
 		if state == string(evidence.StateDeleted) {
 			return nil
-		}
-		if aggregateVersion != reference.Version {
-			return privacy.ErrConflict
 		}
 		tag, err := tx.Exec(ctx, `UPDATE idenqa.evidence_assets SET state='deleted',version=version+1,updated_at=$3
 			WHERE tenant_id=$1 AND id=$2 AND version=$4 AND state IN ('available','quarantined')`, reference.TenantID, reference.EvidenceID, now, reference.Version)
