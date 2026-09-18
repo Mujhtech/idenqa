@@ -41,6 +41,36 @@ func (q *Queries) CreateCaptureToken(ctx context.Context, arg CreateCaptureToken
 	return err
 }
 
+const createOutcomeToken = `-- name: CreateOutcomeToken :exec
+INSERT INTO idenqa.outcome_tokens (
+    id, tenant_id, verification_id, key_version,
+    issued_at, expires_at, revoked_at
+) VALUES ($1, $2, $3, $4, $5, $6, $7)
+`
+
+type CreateOutcomeTokenParams struct {
+	ID             string
+	TenantID       string
+	VerificationID string
+	KeyVersion     int32
+	IssuedAt       pgtype.Timestamptz
+	ExpiresAt      pgtype.Timestamptz
+	RevokedAt      pgtype.Timestamptz
+}
+
+func (q *Queries) CreateOutcomeToken(ctx context.Context, arg CreateOutcomeTokenParams) error {
+	_, err := q.db.Exec(ctx, createOutcomeToken,
+		arg.ID,
+		arg.TenantID,
+		arg.VerificationID,
+		arg.KeyVersion,
+		arg.IssuedAt,
+		arg.ExpiresAt,
+		arg.RevokedAt,
+	)
+	return err
+}
+
 const createVerificationSession = `-- name: CreateVerificationSession :exec
 INSERT INTO idenqa.verification_sessions (
     id, tenant_id, state, version, source_profile_id,
@@ -171,8 +201,49 @@ func (q *Queries) FindCaptureContext(ctx context.Context, arg FindCaptureContext
 	return i, err
 }
 
+const findCaptureOutcome = `-- name: FindCaptureOutcome :one
+SELECT
+    sessions.id AS verification_id,
+    sessions.state AS session_state,
+    sessions.version AS session_version,
+    sessions.updated_at,
+    decisions.outcome AS decision_outcome
+FROM idenqa.verification_sessions AS sessions
+LEFT JOIN idenqa.verification_decisions AS decisions
+  ON decisions.tenant_id = sessions.tenant_id
+ AND decisions.verification_id = sessions.id
+ AND decisions.id = sessions.completed_decision_id
+WHERE sessions.tenant_id = $1 AND sessions.id = $2
+`
+
+type FindCaptureOutcomeParams struct {
+	TenantID string
+	ID       string
+}
+
+type FindCaptureOutcomeRow struct {
+	VerificationID  string
+	SessionState    string
+	SessionVersion  int64
+	UpdatedAt       pgtype.Timestamptz
+	DecisionOutcome *string
+}
+
+func (q *Queries) FindCaptureOutcome(ctx context.Context, arg FindCaptureOutcomeParams) (FindCaptureOutcomeRow, error) {
+	row := q.db.QueryRow(ctx, findCaptureOutcome, arg.TenantID, arg.ID)
+	var i FindCaptureOutcomeRow
+	err := row.Scan(
+		&i.VerificationID,
+		&i.SessionState,
+		&i.SessionVersion,
+		&i.UpdatedAt,
+		&i.DecisionOutcome,
+	)
+	return i, err
+}
+
 const findCaptureToken = `-- name: FindCaptureToken :one
-SELECT id, tenant_id, verification_id, key_version, issued_at, expires_at, revoked_at
+SELECT id, tenant_id, verification_id, key_version, issued_at, expires_at, revoked_at, native_application_id, native_proof_key_digest, native_bound_at
 FROM idenqa.capture_tokens
 WHERE tenant_id = $1 AND id = $2 AND verification_id = $3
 `
@@ -194,12 +265,112 @@ func (q *Queries) FindCaptureToken(ctx context.Context, arg FindCaptureTokenPara
 		&i.IssuedAt,
 		&i.ExpiresAt,
 		&i.RevokedAt,
+		&i.NativeApplicationID,
+		&i.NativeProofKeyDigest,
+		&i.NativeBoundAt,
+	)
+	return i, err
+}
+
+const findOutcomeContext = `-- name: FindOutcomeContext :one
+SELECT
+    tokens.id AS token_id,
+    tokens.tenant_id,
+    tokens.verification_id,
+    tokens.key_version,
+    tokens.issued_at,
+    tokens.expires_at AS token_expires_at,
+    tokens.revoked_at
+FROM idenqa.outcome_tokens AS tokens
+WHERE tokens.tenant_id = $1 AND tokens.id = $2 AND tokens.verification_id = $3
+`
+
+type FindOutcomeContextParams struct {
+	TenantID       string
+	ID             string
+	VerificationID string
+}
+
+type FindOutcomeContextRow struct {
+	TokenID        string
+	TenantID       string
+	VerificationID string
+	KeyVersion     int32
+	IssuedAt       pgtype.Timestamptz
+	TokenExpiresAt pgtype.Timestamptz
+	RevokedAt      pgtype.Timestamptz
+}
+
+func (q *Queries) FindOutcomeContext(ctx context.Context, arg FindOutcomeContextParams) (FindOutcomeContextRow, error) {
+	row := q.db.QueryRow(ctx, findOutcomeContext, arg.TenantID, arg.ID, arg.VerificationID)
+	var i FindOutcomeContextRow
+	err := row.Scan(
+		&i.TokenID,
+		&i.TenantID,
+		&i.VerificationID,
+		&i.KeyVersion,
+		&i.IssuedAt,
+		&i.TokenExpiresAt,
+		&i.RevokedAt,
+	)
+	return i, err
+}
+
+const findOutcomeToken = `-- name: FindOutcomeToken :one
+SELECT id, tenant_id, verification_id, key_version, issued_at, expires_at, revoked_at
+FROM idenqa.outcome_tokens
+WHERE tenant_id = $1 AND id = $2 AND verification_id = $3
+`
+
+type FindOutcomeTokenParams struct {
+	TenantID       string
+	ID             string
+	VerificationID string
+}
+
+func (q *Queries) FindOutcomeToken(ctx context.Context, arg FindOutcomeTokenParams) (IdenqaOutcomeToken, error) {
+	row := q.db.QueryRow(ctx, findOutcomeToken, arg.TenantID, arg.ID, arg.VerificationID)
+	var i IdenqaOutcomeToken
+	err := row.Scan(
+		&i.ID,
+		&i.TenantID,
+		&i.VerificationID,
+		&i.KeyVersion,
+		&i.IssuedAt,
+		&i.ExpiresAt,
+		&i.RevokedAt,
+	)
+	return i, err
+}
+
+const findOutcomeTokenByVerification = `-- name: FindOutcomeTokenByVerification :one
+SELECT id, tenant_id, verification_id, key_version, issued_at, expires_at, revoked_at
+FROM idenqa.outcome_tokens
+WHERE tenant_id = $1 AND verification_id = $2
+`
+
+type FindOutcomeTokenByVerificationParams struct {
+	TenantID       string
+	VerificationID string
+}
+
+func (q *Queries) FindOutcomeTokenByVerification(ctx context.Context, arg FindOutcomeTokenByVerificationParams) (IdenqaOutcomeToken, error) {
+	row := q.db.QueryRow(ctx, findOutcomeTokenByVerification, arg.TenantID, arg.VerificationID)
+	var i IdenqaOutcomeToken
+	err := row.Scan(
+		&i.ID,
+		&i.TenantID,
+		&i.VerificationID,
+		&i.KeyVersion,
+		&i.IssuedAt,
+		&i.ExpiresAt,
+		&i.RevokedAt,
 	)
 	return i, err
 }
 
 const findVerificationSession = `-- name: FindVerificationSession :one
-SELECT id, tenant_id, state, version, source_profile_id, source_profile_revision, source_profile_digest, requirements, created_at, updated_at, expires_at, subject_id, authority_id, notice_id, region, policy_id, decision_id, capture_completed_at
+SELECT id, tenant_id, state, version, source_profile_id, source_profile_revision, source_profile_digest, requirements, created_at, updated_at, expires_at, subject_id, authority_id, notice_id, region, policy_id, decision_id, capture_completed_at, completed_decision_id, expiry_discovered_at
 FROM idenqa.verification_sessions
 WHERE tenant_id = $1 AND id = $2
 `
@@ -231,6 +402,8 @@ func (q *Queries) FindVerificationSession(ctx context.Context, arg FindVerificat
 		&i.PolicyID,
 		&i.DecisionID,
 		&i.CaptureCompletedAt,
+		&i.CompletedDecisionID,
+		&i.ExpiryDiscoveredAt,
 	)
 	return i, err
 }

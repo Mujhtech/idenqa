@@ -286,6 +286,44 @@ func (q *Queries) CreateVerificationSubject(ctx context.Context, arg CreateVerif
 	return err
 }
 
+const fenceVerificationAuthoritySession = `-- name: FenceVerificationAuthoritySession :execrows
+UPDATE idenqa.verification_sessions
+SET state = state
+WHERE tenant_id = $1 AND id = $2 AND authority_id = $3
+`
+
+type FenceVerificationAuthoritySessionParams struct {
+	TenantID    string
+	ID          string
+	AuthorityID *string
+}
+
+func (q *Queries) FenceVerificationAuthoritySession(ctx context.Context, arg FenceVerificationAuthoritySessionParams) (int64, error) {
+	result, err := q.db.Exec(ctx, fenceVerificationAuthoritySession, arg.TenantID, arg.ID, arg.AuthorityID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const findLatestCaptureRecoveryToken = `-- name: FindLatestCaptureRecoveryToken :one
+SELECT new_token_id FROM idenqa.capture_recoveries
+WHERE tenant_id=$1 AND verification_id=$2
+ORDER BY recorded_at DESC,new_token_id DESC LIMIT 1
+`
+
+type FindLatestCaptureRecoveryTokenParams struct {
+	TenantID       string
+	VerificationID string
+}
+
+func (q *Queries) FindLatestCaptureRecoveryToken(ctx context.Context, arg FindLatestCaptureRecoveryTokenParams) (string, error) {
+	row := q.db.QueryRow(ctx, findLatestCaptureRecoveryToken, arg.TenantID, arg.VerificationID)
+	var new_token_id string
+	err := row.Scan(&new_token_id)
+	return new_token_id, err
+}
+
 const findLatestSubjectResponse = `-- name: FindLatestSubjectResponse :one
 SELECT id, tenant_id, authority_id, notice_id, subject_id, verification_id, capture_token_id, action, locale, rendered_experience_version, recorded_at
 FROM idenqa.subject_responses
@@ -527,7 +565,7 @@ func (q *Queries) InsertNoticeVersionAudit(ctx context.Context, arg InsertNotice
 }
 
 const lockVerificationForAuthority = `-- name: LockVerificationForAuthority :one
-SELECT id, tenant_id, requirements, expires_at, authority_id
+SELECT id, tenant_id, state, requirements, expires_at, authority_id
 FROM idenqa.verification_sessions
 WHERE tenant_id = $1 AND id = $2
 FOR UPDATE
@@ -541,6 +579,7 @@ type LockVerificationForAuthorityParams struct {
 type LockVerificationForAuthorityRow struct {
 	ID           string
 	TenantID     string
+	State        string
 	Requirements []byte
 	ExpiresAt    pgtype.Timestamptz
 	AuthorityID  *string
@@ -552,6 +591,7 @@ func (q *Queries) LockVerificationForAuthority(ctx context.Context, arg LockVeri
 	err := row.Scan(
 		&i.ID,
 		&i.TenantID,
+		&i.State,
 		&i.Requirements,
 		&i.ExpiresAt,
 		&i.AuthorityID,

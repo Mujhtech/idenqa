@@ -31,6 +31,7 @@ type Querier interface {
 	CreateEvidenceUploadIntent(ctx context.Context, arg CreateEvidenceUploadIntentParams) error
 	CreateIdempotencyRecord(ctx context.Context, arg CreateIdempotencyRecordParams) (int64, error)
 	CreateNoticeVersion(ctx context.Context, arg CreateNoticeVersionParams) (IdenqaNoticeVersion, error)
+	CreateOutcomeToken(ctx context.Context, arg CreateOutcomeTokenParams) error
 	CreatePendingEvidenceGrantRedemption(ctx context.Context, arg CreatePendingEvidenceGrantRedemptionParams) error
 	CreateProcessingAuthority(ctx context.Context, arg CreateProcessingAuthorityParams) (IdenqaProcessingAuthority, error)
 	CreateSubjectResponse(ctx context.Context, arg CreateSubjectResponseParams) (IdenqaSubjectResponse, error)
@@ -43,10 +44,12 @@ type Querier interface {
 	DeleteExpiredUnredeemedWebSocketTickets(ctx context.Context, arg DeleteExpiredUnredeemedWebSocketTicketsParams) ([]string, error)
 	DisableTenant(ctx context.Context, arg DisableTenantParams) (IdenqaTenant, error)
 	EnsureRealtimeStream(ctx context.Context, arg EnsureRealtimeStreamParams) (int64, error)
+	FenceVerificationAuthoritySession(ctx context.Context, arg FenceVerificationAuthoritySessionParams) (int64, error)
 	FindAPIKey(ctx context.Context, arg FindAPIKeyParams) (IdenqaApiKey, error)
 	FindAPIKeyForVerification(ctx context.Context, arg FindAPIKeyForVerificationParams) (FindAPIKeyForVerificationRow, error)
 	FindActivePolicy(ctx context.Context, arg FindActivePolicyParams) (FindActivePolicyRow, error)
 	FindCaptureContext(ctx context.Context, arg FindCaptureContextParams) (FindCaptureContextRow, error)
+	FindCaptureOutcome(ctx context.Context, arg FindCaptureOutcomeParams) (FindCaptureOutcomeRow, error)
 	FindCaptureProfile(ctx context.Context, arg FindCaptureProfileParams) (IdenqaCaptureProfile, error)
 	FindCaptureProfileRevision(ctx context.Context, arg FindCaptureProfileRevisionParams) (IdenqaCaptureProfileRevision, error)
 	FindCaptureToken(ctx context.Context, arg FindCaptureTokenParams) (IdenqaCaptureToken, error)
@@ -57,9 +60,13 @@ type Querier interface {
 	FindEvidenceProcessingGrant(ctx context.Context, arg FindEvidenceProcessingGrantParams) (IdenqaEvidenceProcessingGrant, error)
 	FindEvidenceUploadIntent(ctx context.Context, arg FindEvidenceUploadIntentParams) (IdenqaEvidenceUploadIntent, error)
 	FindIdempotencyRecord(ctx context.Context, arg FindIdempotencyRecordParams) (IdenqaIdempotencyRecord, error)
+	FindLatestCaptureRecoveryToken(ctx context.Context, arg FindLatestCaptureRecoveryTokenParams) (string, error)
 	FindLatestPolicyDecisionBundle(ctx context.Context, arg FindLatestPolicyDecisionBundleParams) (FindLatestPolicyDecisionBundleRow, error)
 	FindLatestSubjectResponse(ctx context.Context, arg FindLatestSubjectResponseParams) (IdenqaSubjectResponse, error)
 	FindNoticeVersion(ctx context.Context, arg FindNoticeVersionParams) (IdenqaNoticeVersion, error)
+	FindOutcomeContext(ctx context.Context, arg FindOutcomeContextParams) (FindOutcomeContextRow, error)
+	FindOutcomeToken(ctx context.Context, arg FindOutcomeTokenParams) (IdenqaOutcomeToken, error)
+	FindOutcomeTokenByVerification(ctx context.Context, arg FindOutcomeTokenByVerificationParams) (IdenqaOutcomeToken, error)
 	FindPolicyAuthoritativeHeader(ctx context.Context, arg FindPolicyAuthoritativeHeaderParams) (FindPolicyAuthoritativeHeaderRow, error)
 	FindPolicyDecisionBundle(ctx context.Context, arg FindPolicyDecisionBundleParams) (FindPolicyDecisionBundleRow, error)
 	FindPolicyEvaluation(ctx context.Context, arg FindPolicyEvaluationParams) (IdenqaPolicyEvaluation, error)
@@ -121,6 +128,7 @@ type Querier interface {
 	LoadRealtimeReplayAuthority(ctx context.Context, arg LoadRealtimeReplayAuthorityParams) (LoadRealtimeReplayAuthorityRow, error)
 	LoadRealtimeSessionAuthority(ctx context.Context, arg LoadRealtimeSessionAuthorityParams) (LoadRealtimeSessionAuthorityRow, error)
 	LockActiveCaptureProfileRevision(ctx context.Context, arg LockActiveCaptureProfileRevisionParams) (LockActiveCaptureProfileRevisionRow, error)
+	LockCaptureTokenForUpload(ctx context.Context, arg LockCaptureTokenForUploadParams) (IdenqaCaptureToken, error)
 	LockEvidenceAssetForKeyRewrap(ctx context.Context, arg LockEvidenceAssetForKeyRewrapParams) (IdenqaEvidenceAsset, error)
 	LockEvidenceGrantRedemptionID(ctx context.Context, arg LockEvidenceGrantRedemptionIDParams) (bool, error)
 	LockEvidenceObjectReconciliation(ctx context.Context, arg LockEvidenceObjectReconciliationParams) (IdenqaEvidenceObjectReconciliation, error)
@@ -132,6 +140,7 @@ type Querier interface {
 	LockRealtimeStream(ctx context.Context, arg LockRealtimeStreamParams) (LockRealtimeStreamRow, error)
 	LockVerificationCheck(ctx context.Context, arg LockVerificationCheckParams) (IdenqaVerificationCheck, error)
 	LockVerificationForAuthority(ctx context.Context, arg LockVerificationForAuthorityParams) (LockVerificationForAuthorityRow, error)
+	LockVerificationForUpload(ctx context.Context, arg LockVerificationForUploadParams) (IdenqaVerificationSession, error)
 	MarkCheckProgressPublished(ctx context.Context, arg MarkCheckProgressPublishedParams) (int64, error)
 	NotifyCheckProgress(ctx context.Context, tenantID string) error
 	NotifyRealtimeEvent(ctx context.Context, arg NotifyRealtimeEventParams) error

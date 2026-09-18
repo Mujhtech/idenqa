@@ -22,13 +22,18 @@ FROM idenqa.evidence_upload_intents
 WHERE tenant_id = $1 AND id = $2;
 
 -- name: ListAcceptedEvidenceUploadIntents :many
-SELECT *
+SELECT evidence_upload_intents.*
 FROM idenqa.evidence_upload_intents
-WHERE tenant_id = $1
-  AND capture_token_id = $2
-  AND verification_id = $3
-  AND state = 'accepted'
-ORDER BY accepted_at, id
+WHERE evidence_upload_intents.tenant_id = $1
+  AND (evidence_upload_intents.capture_token_id = $2 OR EXISTS (
+    SELECT 1 FROM idenqa.capture_recovery_uploads recovery
+    WHERE recovery.tenant_id=evidence_upload_intents.tenant_id AND recovery.new_token_id=$2
+      AND recovery.upload_id=evidence_upload_intents.id AND recovery.disposition='retained'
+  ))
+  AND EXISTS(SELECT 1 FROM idenqa.capture_tokens token WHERE token.tenant_id=evidence_upload_intents.tenant_id AND token.id=$2 AND token.verification_id=$3 AND token.revoked_at IS NULL)
+  AND evidence_upload_intents.verification_id = $3
+  AND evidence_upload_intents.state = 'accepted'
+ORDER BY evidence_upload_intents.accepted_at, evidence_upload_intents.id
 LIMIT $4;
 
 -- name: LoadCaptureProgressPublication :one
@@ -53,7 +58,10 @@ JOIN idenqa.capture_tokens AS tokens
 LEFT JOIN idenqa.evidence_upload_intents AS uploads
   ON uploads.tenant_id = sessions.tenant_id
  AND uploads.verification_id = sessions.id
- AND uploads.capture_token_id = tokens.id
+ AND (uploads.capture_token_id = tokens.id OR EXISTS (
+ SELECT 1 FROM idenqa.capture_recovery_uploads recovery
+ WHERE recovery.tenant_id=uploads.tenant_id AND recovery.new_token_id=tokens.id
+ AND recovery.upload_id=uploads.id AND recovery.disposition='retained'))
 WHERE sessions.tenant_id = sqlc.arg(tenant_id)
   AND sessions.id = sqlc.arg(verification_id)
   AND tokens.id = sqlc.arg(capture_token_id)
@@ -65,6 +73,16 @@ SELECT *
 FROM idenqa.evidence_upload_intents
 WHERE tenant_id = $1 AND id = $2
 FOR UPDATE;
+
+-- name: LockVerificationForUpload :one
+SELECT * FROM idenqa.verification_sessions
+WHERE tenant_id = $1 AND id = $2
+FOR UPDATE;
+
+-- name: LockCaptureTokenForUpload :one
+SELECT * FROM idenqa.capture_tokens
+WHERE tenant_id = $1 AND id = $2 AND verification_id = $3
+FOR SHARE;
 
 -- name: TransitionEvidenceUploadIntent :one
 UPDATE idenqa.evidence_upload_intents

@@ -48,6 +48,20 @@ SELECT *
 FROM idenqa.verification_sessions
 WHERE tenant_id = $1 AND id = $2;
 
+-- name: FindCaptureOutcome :one
+SELECT
+    sessions.id AS verification_id,
+    sessions.state AS session_state,
+    sessions.version AS session_version,
+    sessions.updated_at,
+    decisions.outcome AS decision_outcome
+FROM idenqa.verification_sessions AS sessions
+LEFT JOIN idenqa.verification_decisions AS decisions
+  ON decisions.tenant_id = sessions.tenant_id
+ AND decisions.verification_id = sessions.id
+ AND decisions.id = sessions.completed_decision_id
+WHERE sessions.tenant_id = $1 AND sessions.id = $2;
+
 -- name: CreateCaptureToken :exec
 INSERT INTO idenqa.capture_tokens (
     id, tenant_id, verification_id, key_version,
@@ -84,6 +98,34 @@ FROM idenqa.capture_tokens AS tokens
 JOIN idenqa.verification_sessions AS sessions
   ON sessions.tenant_id = tokens.tenant_id
  AND sessions.id = tokens.verification_id
+WHERE tokens.tenant_id = $1 AND tokens.id = $2 AND tokens.verification_id = $3;
+
+-- name: CreateOutcomeToken :exec
+INSERT INTO idenqa.outcome_tokens (
+    id, tenant_id, verification_id, key_version,
+    issued_at, expires_at, revoked_at
+) VALUES ($1, $2, $3, $4, $5, $6, $7);
+
+-- name: FindOutcomeToken :one
+SELECT *
+FROM idenqa.outcome_tokens
+WHERE tenant_id = $1 AND id = $2 AND verification_id = $3;
+
+-- name: FindOutcomeTokenByVerification :one
+SELECT *
+FROM idenqa.outcome_tokens
+WHERE tenant_id = $1 AND verification_id = $2;
+
+-- name: FindOutcomeContext :one
+SELECT
+    tokens.id AS token_id,
+    tokens.tenant_id,
+    tokens.verification_id,
+    tokens.key_version,
+    tokens.issued_at,
+    tokens.expires_at AS token_expires_at,
+    tokens.revoked_at
+FROM idenqa.outcome_tokens AS tokens
 WHERE tokens.tenant_id = $1 AND tokens.id = $2 AND tokens.verification_id = $3;
 
 -- name: InsertVerificationSessionAudit :exec

@@ -231,13 +231,18 @@ func (q *Queries) InsertEvidenceUploadIntentAudit(ctx context.Context, arg Inser
 }
 
 const listAcceptedEvidenceUploadIntents = `-- name: ListAcceptedEvidenceUploadIntents :many
-SELECT id, tenant_id, capture_token_id, subject_id, verification_id, evidence_id, authority_id, response_id, profile_id, profile_revision, profile_digest, registry_schema_version, registry_revision, registry_digest, requirement_key, purpose, evidence_type, artefact, acquisition_method, assurances, encryption_purpose, allowed_media_types, maximum_bytes, expected_bytes, expected_digest, media_type, region, retention_class, state, version, attempt, attempt_timeout_milliseconds, lease_expires_at, created_at, updated_at, expires_at, accepted_at, rejection_reason, fallback_condition
+SELECT evidence_upload_intents.id, evidence_upload_intents.tenant_id, evidence_upload_intents.capture_token_id, evidence_upload_intents.subject_id, evidence_upload_intents.verification_id, evidence_upload_intents.evidence_id, evidence_upload_intents.authority_id, evidence_upload_intents.response_id, evidence_upload_intents.profile_id, evidence_upload_intents.profile_revision, evidence_upload_intents.profile_digest, evidence_upload_intents.registry_schema_version, evidence_upload_intents.registry_revision, evidence_upload_intents.registry_digest, evidence_upload_intents.requirement_key, evidence_upload_intents.purpose, evidence_upload_intents.evidence_type, evidence_upload_intents.artefact, evidence_upload_intents.acquisition_method, evidence_upload_intents.assurances, evidence_upload_intents.encryption_purpose, evidence_upload_intents.allowed_media_types, evidence_upload_intents.maximum_bytes, evidence_upload_intents.expected_bytes, evidence_upload_intents.expected_digest, evidence_upload_intents.media_type, evidence_upload_intents.region, evidence_upload_intents.retention_class, evidence_upload_intents.state, evidence_upload_intents.version, evidence_upload_intents.attempt, evidence_upload_intents.attempt_timeout_milliseconds, evidence_upload_intents.lease_expires_at, evidence_upload_intents.created_at, evidence_upload_intents.updated_at, evidence_upload_intents.expires_at, evidence_upload_intents.accepted_at, evidence_upload_intents.rejection_reason, evidence_upload_intents.fallback_condition
 FROM idenqa.evidence_upload_intents
-WHERE tenant_id = $1
-  AND capture_token_id = $2
-  AND verification_id = $3
-  AND state = 'accepted'
-ORDER BY accepted_at, id
+WHERE evidence_upload_intents.tenant_id = $1
+  AND (evidence_upload_intents.capture_token_id = $2 OR EXISTS (
+    SELECT 1 FROM idenqa.capture_recovery_uploads recovery
+    WHERE recovery.tenant_id=evidence_upload_intents.tenant_id AND recovery.new_token_id=$2
+      AND recovery.upload_id=evidence_upload_intents.id AND recovery.disposition='retained'
+  ))
+  AND EXISTS(SELECT 1 FROM idenqa.capture_tokens token WHERE token.tenant_id=evidence_upload_intents.tenant_id AND token.id=$2 AND token.verification_id=$3 AND token.revoked_at IS NULL)
+  AND evidence_upload_intents.verification_id = $3
+  AND evidence_upload_intents.state = 'accepted'
+ORDER BY evidence_upload_intents.accepted_at, evidence_upload_intents.id
 LIMIT $4
 `
 
@@ -335,7 +340,10 @@ JOIN idenqa.capture_tokens AS tokens
 LEFT JOIN idenqa.evidence_upload_intents AS uploads
   ON uploads.tenant_id = sessions.tenant_id
  AND uploads.verification_id = sessions.id
- AND uploads.capture_token_id = tokens.id
+ AND (uploads.capture_token_id = tokens.id OR EXISTS (
+ SELECT 1 FROM idenqa.capture_recovery_uploads recovery
+ WHERE recovery.tenant_id=uploads.tenant_id AND recovery.new_token_id=tokens.id
+ AND recovery.upload_id=uploads.id AND recovery.disposition='retained'))
 WHERE sessions.tenant_id = $1
   AND sessions.id = $2
   AND tokens.id = $3
@@ -359,6 +367,36 @@ func (q *Queries) LoadCaptureProgressPublication(ctx context.Context, arg LoadCa
 	row := q.db.QueryRow(ctx, loadCaptureProgressPublication, arg.TenantID, arg.VerificationID, arg.CaptureTokenID)
 	var i LoadCaptureProgressPublicationRow
 	err := row.Scan(&i.Requirements, &i.CaptureTokenExpiresAt, &i.AcceptedBindings)
+	return i, err
+}
+
+const lockCaptureTokenForUpload = `-- name: LockCaptureTokenForUpload :one
+SELECT id, tenant_id, verification_id, key_version, issued_at, expires_at, revoked_at, native_application_id, native_proof_key_digest, native_bound_at FROM idenqa.capture_tokens
+WHERE tenant_id = $1 AND id = $2 AND verification_id = $3
+FOR SHARE
+`
+
+type LockCaptureTokenForUploadParams struct {
+	TenantID       string
+	ID             string
+	VerificationID string
+}
+
+func (q *Queries) LockCaptureTokenForUpload(ctx context.Context, arg LockCaptureTokenForUploadParams) (IdenqaCaptureToken, error) {
+	row := q.db.QueryRow(ctx, lockCaptureTokenForUpload, arg.TenantID, arg.ID, arg.VerificationID)
+	var i IdenqaCaptureToken
+	err := row.Scan(
+		&i.ID,
+		&i.TenantID,
+		&i.VerificationID,
+		&i.KeyVersion,
+		&i.IssuedAt,
+		&i.ExpiresAt,
+		&i.RevokedAt,
+		&i.NativeApplicationID,
+		&i.NativeProofKeyDigest,
+		&i.NativeBoundAt,
+	)
 	return i, err
 }
 
@@ -417,6 +455,45 @@ func (q *Queries) LockEvidenceUploadIntent(ctx context.Context, arg LockEvidence
 		&i.AcceptedAt,
 		&i.RejectionReason,
 		&i.FallbackCondition,
+	)
+	return i, err
+}
+
+const lockVerificationForUpload = `-- name: LockVerificationForUpload :one
+SELECT id, tenant_id, state, version, source_profile_id, source_profile_revision, source_profile_digest, requirements, created_at, updated_at, expires_at, subject_id, authority_id, notice_id, region, policy_id, decision_id, capture_completed_at, completed_decision_id, expiry_discovered_at FROM idenqa.verification_sessions
+WHERE tenant_id = $1 AND id = $2
+FOR UPDATE
+`
+
+type LockVerificationForUploadParams struct {
+	TenantID string
+	ID       string
+}
+
+func (q *Queries) LockVerificationForUpload(ctx context.Context, arg LockVerificationForUploadParams) (IdenqaVerificationSession, error) {
+	row := q.db.QueryRow(ctx, lockVerificationForUpload, arg.TenantID, arg.ID)
+	var i IdenqaVerificationSession
+	err := row.Scan(
+		&i.ID,
+		&i.TenantID,
+		&i.State,
+		&i.Version,
+		&i.SourceProfileID,
+		&i.SourceProfileRevision,
+		&i.SourceProfileDigest,
+		&i.Requirements,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.ExpiresAt,
+		&i.SubjectID,
+		&i.AuthorityID,
+		&i.NoticeID,
+		&i.Region,
+		&i.PolicyID,
+		&i.DecisionID,
+		&i.CaptureCompletedAt,
+		&i.CompletedDecisionID,
+		&i.ExpiryDiscoveredAt,
 	)
 	return i, err
 }

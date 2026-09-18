@@ -8,6 +8,21 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type IdenqaAcceptedCommand struct {
+	ID             string
+	ProposalID     string
+	TenantID       string
+	VerificationID *string
+	Kind           string
+	Args           []byte
+	ModelID        string
+	ModelVersion   string
+	PromptVersion  string
+	CreatedAt      pgtype.Timestamptz
+	ExecutedAt     pgtype.Timestamptz
+	PolicyID       *string
+}
+
 type IdenqaApiKey struct {
 	ID              string
 	TenantID        string
@@ -33,6 +48,34 @@ type IdenqaApiKeyAdminAudit struct {
 	Actor      string
 	Reason     string
 	OccurredAt pgtype.Timestamptz
+}
+
+type IdenqaAppeal struct {
+	TenantID              string
+	ID                    string
+	CaseID                string
+	ChallengedDecisionID  string
+	OriginalReviewers     []byte
+	AssignedReviewer      *string
+	State                 string
+	Outcome               *string
+	ReasonCode            *string
+	SupersedingDecisionID *string
+	Deadline              pgtype.Timestamptz
+	Version               int64
+	CreatedAt             pgtype.Timestamptz
+	UpdatedAt             pgtype.Timestamptz
+	RequestedBy           *string
+}
+
+type IdenqaAssuranceProfile struct {
+	TenantID   string
+	Name       string
+	Revision   int64
+	Digest     string
+	Canonical  string
+	ActorKeyID string
+	CreatedAt  pgtype.Timestamptz
 }
 
 type IdenqaAuditCheckpoint struct {
@@ -121,14 +164,69 @@ type IdenqaCaptureProfileRevision struct {
 	EndedAt               pgtype.Timestamptz
 }
 
-type IdenqaCaptureToken struct {
-	ID             string
+type IdenqaCaptureRecovery struct {
 	TenantID       string
 	VerificationID string
-	KeyVersion     int32
-	IssuedAt       pgtype.Timestamptz
-	ExpiresAt      pgtype.Timestamptz
-	RevokedAt      pgtype.Timestamptz
+	OldTokenID     string
+	NewTokenID     string
+	RecordedAt     pgtype.Timestamptz
+}
+
+type IdenqaCaptureRecoveryUpload struct {
+	TenantID    string
+	NewTokenID  string
+	UploadID    string
+	Disposition string
+}
+
+type IdenqaCaptureToken struct {
+	ID                   string
+	TenantID             string
+	VerificationID       string
+	KeyVersion           int32
+	IssuedAt             pgtype.Timestamptz
+	ExpiresAt            pgtype.Timestamptz
+	RevokedAt            pgtype.Timestamptz
+	NativeApplicationID  *string
+	NativeProofKeyDigest *string
+	NativeBoundAt        pgtype.Timestamptz
+}
+
+type IdenqaDeletionRequest struct {
+	TenantID               string
+	ID                     string
+	AggregateID            string
+	Region                 string
+	State                  string
+	BackupExpiresAt        pgtype.Timestamptz
+	FailureClass           *string
+	Version                int64
+	RequestedAt            pgtype.Timestamptz
+	UpdatedAt              pgtype.Timestamptz
+	CompletedAt            pgtype.Timestamptz
+	BackupRetentionSeconds int64
+}
+
+type IdenqaDeletionTarget struct {
+	TenantID         string
+	DeletionID       string
+	Kind             string
+	Reference        string
+	Region           string
+	Attempts         int32
+	DeletedAt        pgtype.Timestamptz
+	LastFailureClass *string
+}
+
+type IdenqaDeletionTombstone struct {
+	TenantID    string
+	DeletionID  string
+	AggregateID string
+	Region      string
+	TargetCount int32
+	ProofDigest string
+	CompletedAt pgtype.Timestamptz
+	RetainUntil pgtype.Timestamptz
 }
 
 type IdenqaEvidenceAsset struct {
@@ -354,6 +452,65 @@ type IdenqaEvidenceUploadIntentAudit struct {
 	OccurredAt       pgtype.Timestamptz
 }
 
+type IdenqaFraudConfiguration struct {
+	TenantID      string
+	Version       int64
+	Configuration []byte
+	Digest        string
+	ActorKeyID    string
+	RecordedAt    pgtype.Timestamptz
+}
+
+type IdenqaFraudKey struct {
+	TenantID   string
+	Region     string
+	KeyVersion int64
+	WrappedKey []byte
+}
+
+type IdenqaFraudLink struct {
+	TenantID             string
+	VerificationID       string
+	EvidenceID           string
+	Kind                 string
+	Namespace            string
+	Token                string
+	Region               string
+	SourceReference      string
+	SourceClass          string
+	ActorKeyID           *string
+	ConfigurationVersion int64
+	ObservedAt           pgtype.Timestamptz
+	ExpiresAt            pgtype.Timestamptz
+}
+
+type IdenqaFraudProposal struct {
+	TenantID      string
+	ReceiptDigest string
+	Digest        string
+	Proposal      []byte
+	ActorKeyID    string
+	RecordedAt    pgtype.Timestamptz
+}
+
+type IdenqaFraudReceipt struct {
+	TenantID             string
+	VerificationID       string
+	Digest               string
+	ConfigurationVersion int64
+	Receipt              []byte
+	RecordedAt           pgtype.Timestamptz
+}
+
+type IdenqaGenerativeModelRegistry struct {
+	TenantID  string
+	ModelID   string
+	Version   int64
+	Digest    string
+	CreatedAt pgtype.Timestamptz
+	ActorID   string
+}
+
 type IdenqaIdempotencyRecord struct {
 	TenantID           string
 	PrincipalID        string
@@ -367,6 +524,178 @@ type IdenqaIdempotencyRecord struct {
 	CompletedAt        pgtype.Timestamptz
 	ExpiresAt          pgtype.Timestamptz
 	PrincipalType      *string
+}
+
+type IdenqaIdentityConfiguration struct {
+	TenantID      string
+	Region        string
+	Version       int64
+	Configuration []byte
+	Digest        string
+	ActorKeyID    string
+	RecordedAt    pgtype.Timestamptz
+}
+
+type IdenqaIdentityCurrent struct {
+	TenantID  string
+	SubjectID string
+	Kind      string
+	Name      string
+	SeriesID  string
+	RecordID  string
+}
+
+type IdenqaIdentityIdentifierToken struct {
+	TenantID   string
+	SubjectID  string
+	RecordID   string
+	Region     string
+	Namespace  string
+	Issuer     string
+	KeyVersion int64
+	Token      string
+}
+
+type IdenqaIdentityKey struct {
+	TenantID   string
+	Region     string
+	Version    int64
+	WrappedKey []byte
+}
+
+type IdenqaIdentityReceipt struct {
+	TenantID       string
+	VerificationID string
+	SubjectID      *string
+	Digest         string
+	Receipt        []byte
+	RecordedAt     pgtype.Timestamptz
+}
+
+type IdenqaIdentityRecord struct {
+	TenantID       string
+	ID             string
+	SubjectID      string
+	VerificationID string
+	Kind           string
+	Name           string
+	Sequence       int64
+	SeriesID       string
+	Supersedes     *string
+	Metadata       []byte
+	RecordedAt     pgtype.Timestamptz
+	RetainUntil    pgtype.Timestamptz
+}
+
+type IdenqaIdentityRecordEdge struct {
+	TenantID  string
+	SubjectID string
+	RecordID  string
+	SourceID  string
+}
+
+type IdenqaIdentityRecordEvidence struct {
+	TenantID       string
+	SubjectID      string
+	VerificationID string
+	RecordID       string
+	EvidenceID     string
+}
+
+type IdenqaIdentityRecordValue struct {
+	TenantID   string
+	RecordID   string
+	SubjectID  string
+	Ciphertext []byte
+}
+
+type IdenqaIdentitySubject struct {
+	TenantID       string
+	ID             string
+	Region         string
+	State          string
+	Version        int64
+	ExternalCipher []byte
+	ExternalToken  *string
+	WrappedKey     []byte
+	CreatedAt      pgtype.Timestamptz
+	UpdatedAt      pgtype.Timestamptz
+	DeletionID     *string
+	ErasedAt       pgtype.Timestamptz
+}
+
+type IdenqaIdentitySubjectVerification struct {
+	TenantID       string
+	SubjectID      string
+	VerificationID string
+	ActorKeyID     string
+	LinkedAt       pgtype.Timestamptz
+}
+
+type IdenqaImpactAssessment struct {
+	ID         string
+	TenantID   string
+	Kind       string
+	Assessment string
+	RiskLevel  string
+	CreatedAt  pgtype.Timestamptz
+	ActorID    string
+}
+
+type IdenqaLegalHold struct {
+	TenantID    string
+	ID          string
+	AggregateID string
+	Authority   string
+	Reason      string
+	StartsAt    pgtype.Timestamptz
+	ReviewAt    pgtype.Timestamptz
+	ReleasedAt  pgtype.Timestamptz
+	CreatedAt   pgtype.Timestamptz
+}
+
+type IdenqaModelDispatch struct {
+	TenantID      string
+	AttemptID     string
+	RequestDigest string
+	ClaimedAt     pgtype.Timestamptz
+	ResultBody    []byte
+}
+
+type IdenqaModelRegistry struct {
+	TenantID string
+	Name     string
+	Version  int64
+	State    []byte
+}
+
+type IdenqaModelRegistryHistory struct {
+	TenantID   string
+	Name       string
+	Version    int64
+	ActorKeyID string
+	Receipt    []byte
+}
+
+type IdenqaModelRegistryRevision struct {
+	TenantID string
+	Name     string
+	Kind     string
+	Revision int64
+	Digest   string
+	Document []byte
+}
+
+type IdenqaModelRequest struct {
+	TenantID          string
+	AttemptID         string
+	VerificationID    string
+	CheckID           string
+	RequestDigest     string
+	RequestBody       []byte
+	RegistryName      *string
+	RegistryVersion   *int64
+	RegistrySelection []byte
 }
 
 type IdenqaNoticeVersion struct {
@@ -408,6 +737,16 @@ type IdenqaOutboxEvent struct {
 	PublishedAt      pgtype.Timestamptz
 }
 
+type IdenqaOutcomeToken struct {
+	ID             string
+	TenantID       string
+	VerificationID string
+	KeyVersion     int32
+	IssuedAt       pgtype.Timestamptz
+	ExpiresAt      pgtype.Timestamptz
+	RevokedAt      pgtype.Timestamptz
+}
+
 type IdenqaPolicy struct {
 	TenantID          string
 	ID                string
@@ -425,6 +764,15 @@ type IdenqaPolicyActivation struct {
 	PreviousRevision  *int64
 	ActorKeyID        string
 	ActivatedAt       pgtype.Timestamptz
+}
+
+type IdenqaPolicyAssuranceAssignment struct {
+	TenantID        string
+	PolicyID        string
+	Version         int64
+	ProfileName     *string
+	ProfileRevision *int64
+	ProfileDigest   *string
 }
 
 type IdenqaPolicyEvaluation struct {
@@ -450,6 +798,16 @@ type IdenqaPolicyRevision struct {
 	EvaluatorDigest string
 	Canonical       string
 	CreatedAt       pgtype.Timestamptz
+}
+
+type IdenqaPolicyRoutingReceipt struct {
+	TenantID         string
+	RequestID        string
+	VerificationID   string
+	SnapshotDigest   string
+	EvaluationDigest string
+	RequestedAt      pgtype.Timestamptz
+	LifecycleEventID string
 }
 
 type IdenqaPolicySnapshot struct {
@@ -498,6 +856,81 @@ type IdenqaProcessingAuthority struct {
 	RestrictedAt         pgtype.Timestamptz
 	WithdrawnAt          pgtype.Timestamptz
 	SupersededAt         pgtype.Timestamptz
+}
+
+type IdenqaPromptRegistry struct {
+	TenantID  string
+	PromptID  string
+	Version   int64
+	Content   string
+	Digest    string
+	ModelID   string
+	CreatedAt pgtype.Timestamptz
+	ActorID   string
+	Sensitive bool
+}
+
+type IdenqaProposal struct {
+	ID             string
+	TenantID       string
+	VerificationID *string
+	Mode           string
+	Status         string
+	Actions        []byte
+	EvidenceRefs   []byte
+	SignalRefs     []byte
+	ModelID        string
+	ModelVersion   string
+	PromptVersion  string
+	ContextDigest  string
+	ExpiresAt      pgtype.Timestamptz
+	Supersedes     *string
+	CreatedAt      pgtype.Timestamptz
+	UpdatedAt      pgtype.Timestamptz
+	Version        int64
+	ActorID        string
+	Reason         *string
+	PolicyID       *string
+}
+
+type IdenqaProposalModeConfig struct {
+	TenantID         string
+	Workflow         string
+	Mode             string
+	AllowListVersion string
+	AllowedKinds     []byte
+	CostDailyLimit   int32
+	PromptID         *string
+	Version          int64
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+}
+
+type IdenqaProviderAsyncOperation struct {
+	TenantID       string
+	AttemptID      string
+	RequestDigest  string
+	ProviderJobID  *string
+	Fence          int64
+	LeaseExpiresAt pgtype.Timestamptz
+	NextPollAt     pgtype.Timestamptz
+}
+
+type IdenqaProviderDispatch struct {
+	TenantID      string
+	AttemptID     string
+	RequestDigest string
+	ClaimedAt     pgtype.Timestamptz
+	ResultBody    []byte
+}
+
+type IdenqaProviderRequest struct {
+	TenantID       string
+	AttemptID      string
+	VerificationID string
+	CheckID        string
+	RequestDigest  string
+	RequestBody    []byte
 }
 
 type IdenqaRealtimeAcknowledgement struct {
@@ -549,6 +982,197 @@ type IdenqaRealtimeStream struct {
 	UpdatedAt          pgtype.Timestamptz
 }
 
+type IdenqaRetentionBinding struct {
+	TenantID         string
+	AggregateID      string
+	DataClass        string
+	Region           string
+	RetentionSeconds int64
+	ExpiresAt        pgtype.Timestamptz
+	PolicyDigest     string
+	CreatedAt        pgtype.Timestamptz
+}
+
+type IdenqaReviewAdministrationHistory struct {
+	TenantID      string
+	Kind          string
+	Reference     string
+	Version       int64
+	ActorKeyID    string
+	Configuration []byte
+	RecordedAt    pgtype.Timestamptz
+}
+
+type IdenqaReviewAppealHistory struct {
+	TenantID   string
+	AppealID   string
+	Version    int64
+	Record     []byte
+	RecordedAt pgtype.Timestamptz
+}
+
+type IdenqaReviewArbitration struct {
+	TenantID    string
+	CaseID      string
+	CaseVersion int64
+	ReviewerID  string
+	ActorKeyID  string
+	Resolution  string
+	ReasonCode  string
+	RecordedAt  pgtype.Timestamptz
+}
+
+type IdenqaReviewCase struct {
+	TenantID              string
+	ID                    string
+	VerificationID        string
+	ChallengedDecisionID  *string
+	SupersedingDecisionID *string
+	Region                string
+	RequiredCertification string
+	Oversight             string
+	State                 string
+	AssignedReviewer      *string
+	Version               int64
+	CreatedAt             pgtype.Timestamptz
+	UpdatedAt             pgtype.Timestamptz
+	RoutingRequestID      *string
+	PermittedFindings     []byte
+}
+
+type IdenqaReviewCaseOperation struct {
+	TenantID  string
+	CaseID    string
+	Version   int64
+	Priority  int32
+	DueAt     pgtype.Timestamptz
+	Language  string
+	Reason    string
+	Assurance string
+	Risk      string
+	Sampled   bool
+	UpdatedAt pgtype.Timestamptz
+}
+
+type IdenqaReviewCaseSetting struct {
+	TenantID      string
+	CaseID        string
+	Configuration []byte
+	RecordedAt    pgtype.Timestamptz
+}
+
+type IdenqaReviewCorrectionEvaluation struct {
+	TenantID         string
+	CaseID           string
+	CaseVersion      int64
+	SnapshotDigest   string
+	EvaluationDigest string
+	DecisionID       *string
+	ActorKeyID       string
+	ReviewerID       string
+	RecordedAt       pgtype.Timestamptz
+}
+
+type IdenqaReviewCorrectionIntake struct {
+	TenantID   string
+	DecisionID string
+	CaseID     string
+	RecordedAt pgtype.Timestamptz
+}
+
+type IdenqaReviewEvaluation struct {
+	TenantID         string
+	CaseID           string
+	CaseVersion      int64
+	VerificationID   string
+	SnapshotDigest   string
+	EvaluationDigest string
+	CaseDigest       string
+}
+
+type IdenqaReviewEvaluationRequest struct {
+	TenantID    string
+	CaseID      string
+	CaseVersion int64
+	CreatedAt   pgtype.Timestamptz
+}
+
+type IdenqaReviewEvidenceAccess struct {
+	TenantID     string
+	GrantID      string
+	RedemptionID string
+	CaseID       string
+	CaseVersion  int64
+	EvidenceID   string
+	ReviewerID   string
+	Redactions   []byte
+	RecordedAt   pgtype.Timestamptz
+}
+
+type IdenqaReviewFinding struct {
+	TenantID         string
+	CaseID           string
+	ID               string
+	ReviewerID       string
+	Resolution       string
+	ReasonCode       string
+	EvidenceGrantIds []byte
+	RecordedAt       pgtype.Timestamptz
+}
+
+type IdenqaReviewOperatorAssignment struct {
+	TenantID   string
+	ApiKeyID   string
+	OperatorID string
+	Version    int64
+	Assignment []byte
+	Revoked    bool
+	UpdatedAt  pgtype.Timestamptz
+}
+
+type IdenqaReviewPolicySetting struct {
+	TenantID       string
+	PolicyID       string
+	PolicyRevision int64
+	PolicyDigest   string
+	Version        int64
+	Configuration  []byte
+	UpdatedAt      pgtype.Timestamptz
+}
+
+type IdenqaReviewRecapture struct {
+	TenantID             string
+	CaseID               string
+	CaseVersion          int64
+	ParentVerificationID string
+	ChildVerificationID  string
+	CaptureTokenID       string
+	PolicySnapshotDigest string
+	CreatedAt            pgtype.Timestamptz
+}
+
+type IdenqaReviewRecaptureAcknowledgement struct {
+	TenantID            string
+	CaseID              string
+	CaseVersion         int64
+	ChildVerificationID string
+	DecisionID          string
+	ActorKeyID          string
+	ReviewerID          string
+	RecordedAt          pgtype.Timestamptz
+}
+
+type IdenqaReviewRecaptureEvaluationRequest struct {
+	TenantID      string
+	CaseID        string
+	SourceVersion int64
+	TargetVersion int64
+	DecisionID    string
+	ActorKeyID    string
+	ReviewerID    string
+	RecordedAt    pgtype.Timestamptz
+}
+
 type IdenqaSubject struct {
 	ID             string
 	TenantID       string
@@ -586,6 +1210,14 @@ type IdenqaTenantAdminAudit struct {
 	Actor      string
 	Reason     string
 	OccurredAt pgtype.Timestamptz
+}
+
+type IdenqaVerificationAssurance struct {
+	TenantID        string
+	VerificationID  string
+	ProfileName     *string
+	ProfileRevision *int64
+	ProfileDigest   *string
 }
 
 type IdenqaVerificationAttempt struct {
@@ -715,6 +1347,8 @@ type IdenqaVerificationSession struct {
 	PolicyID              *string
 	DecisionID            *string
 	CaptureCompletedAt    pgtype.Timestamptz
+	CompletedDecisionID   *string
+	ExpiryDiscoveredAt    pgtype.Timestamptz
 }
 
 type IdenqaVerificationSessionAudit struct {
@@ -726,22 +1360,37 @@ type IdenqaVerificationSessionAudit struct {
 	OccurredAt       pgtype.Timestamptz
 }
 
+type IdenqaVerificationTransition struct {
+	TenantID         string
+	EventID          string
+	VerificationID   string
+	FromState        string
+	ToState          string
+	ExpectedVersion  int64
+	ResultingVersion int64
+	DecisionID       *string
+	ActorID          string
+	CommandDigest    string
+	OccurredAt       pgtype.Timestamptz
+}
+
 type IdenqaWebhookDelivery struct {
-	TenantID      string
-	ID            string
-	EndpointID    string
-	EventID       string
-	EventType     string
-	Body          []byte
-	BodyDigest    string
-	State         string
-	AttemptCount  int32
-	MaxAttempts   int32
-	NextAttemptAt pgtype.Timestamptz
-	DeliveredAt   pgtype.Timestamptz
-	ReplayOf      *string
-	CreatedAt     pgtype.Timestamptz
-	UpdatedAt     pgtype.Timestamptz
+	TenantID         string
+	ID               string
+	EndpointID       string
+	EventID          string
+	EventType        string
+	Body             []byte
+	BodyDigest       string
+	State            string
+	AttemptCount     int32
+	MaxAttempts      int32
+	NextAttemptAt    pgtype.Timestamptz
+	DeliveredAt      pgtype.Timestamptz
+	ReplayOf         *string
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+	LastDiscoveredAt pgtype.Timestamptz
 }
 
 type IdenqaWebhookDeliveryAttempt struct {
@@ -754,6 +1403,8 @@ type IdenqaWebhookDeliveryAttempt struct {
 	ErrorClass         string
 	RetryAfterMs       int64
 	CompletedAt        pgtype.Timestamptz
+	ResponseBody       *string
+	ResponseTruncated  bool
 }
 
 type IdenqaWebhookEndpoint struct {

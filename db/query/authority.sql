@@ -18,8 +18,13 @@ SELECT *
 FROM idenqa.notice_versions
 WHERE tenant_id = $1 AND id = $2;
 
+-- name: FenceVerificationAuthoritySession :execrows
+UPDATE idenqa.verification_sessions
+SET state = state
+WHERE tenant_id = $1 AND id = $2 AND authority_id = $3;
+
 -- name: LockVerificationForAuthority :one
-SELECT id, tenant_id, requirements, expires_at, authority_id
+SELECT id, tenant_id, state, requirements, expires_at, authority_id
 FROM idenqa.verification_sessions
 WHERE tenant_id = $1 AND id = $2
 FOR UPDATE;
@@ -94,3 +99,8 @@ INSERT INTO idenqa.authority_audit (
     tenant_id, authority_id, aggregate_version, action,
     actor_type, actor_id, occurred_at
 ) VALUES ($1, $2, $3, $4, $5, $6, $7);
+
+-- name: FindLatestCaptureRecoveryToken :one
+SELECT new_token_id FROM idenqa.capture_recoveries
+WHERE tenant_id=$1 AND verification_id=$2
+ORDER BY recorded_at DESC,new_token_id DESC LIMIT 1;
