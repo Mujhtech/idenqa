@@ -284,3 +284,22 @@ func activeInputFixture(t testing.TB) activeInputTestFixture {
 		source: &authoritativeSource{state: state}, reader: &activePolicyReader{activation: activation},
 	}
 }
+
+func TestRecapturePinnedInputBypassesActiveRevision(t *testing.T) {
+	fixture := activeInputFixture(t)
+	pin := fixture.reader.activation.Revision().Reference()
+	fixture.source.state.PinnedPolicy = &pin
+	fixture.reader.err = errors.New("active revision unavailable")
+	loader, err := policy.NewActiveInputLoader(fixture.source, fixture.reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := loader.LoadPolicyInput(t.Context(), fixture.scope, fixture.verificationID, fixture.at)
+	if err != nil || result.Policy != pin || fixture.reader.calls.Load() != 0 {
+		t.Fatalf("pinned input=%v %v", result.Policy, err)
+	}
+	pin.Digest = "invalid"
+	if _, err := loader.LoadPolicyInput(t.Context(), fixture.scope, fixture.verificationID, fixture.at); !errors.Is(err, policy.ErrRevisionConflict) {
+		t.Fatalf("invalid pin=%v", err)
+	}
+}

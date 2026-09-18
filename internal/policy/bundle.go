@@ -57,31 +57,32 @@ type canonicalDecisionBundlePayload struct {
 // ReproductionReport is a bounded diagnostic summary. It deliberately omits
 // facts, reason codes, canonical JSON, evidence references, and raw evidence.
 type ReproductionReport struct {
-	SchemaMajor      uint16     `json:"schema_major"`
-	SchemaMinor      uint16     `json:"schema_minor"`
-	DecisionID       string     `json:"decision_id"`
-	TenantID         string     `json:"tenant_id"`
-	VerificationID   string     `json:"verification_id"`
-	PolicyID         string     `json:"policy_id"`
-	PolicyRevision   uint32     `json:"policy_revision"`
-	PolicyDigest     string     `json:"policy_digest"`
-	EvaluatorMajor   uint16     `json:"evaluator_major"`
-	EvaluatorMinor   uint16     `json:"evaluator_minor"`
-	EvaluatorDigest  string     `json:"evaluator_digest"`
-	SnapshotDigest   string     `json:"snapshot_digest"`
-	EvaluationDigest string     `json:"evaluation_digest"`
-	DecisionDigest   string     `json:"decision_digest"`
-	BundleDigest     string     `json:"bundle_digest"`
-	Directive        Directive  `json:"directive"`
-	Outcome          Outcome    `json:"outcome"`
-	Assurance        string     `json:"assurance"`
-	Actor            ActorClass `json:"actor"`
-	Supersedes       string     `json:"supersedes,omitempty"`
-	FactCount        int        `json:"fact_count"`
-	RequirementCount int        `json:"requirement_count"`
-	EvaluatedAt      time.Time  `json:"evaluated_at"`
-	DecidedAt        time.Time  `json:"decided_at"`
-	Reproduced       bool       `json:"reproduced"`
+	TypedAssurance   *AssuranceSummary `json:"typed_assurance,omitempty"`
+	SchemaMajor      uint16            `json:"schema_major"`
+	SchemaMinor      uint16            `json:"schema_minor"`
+	DecisionID       string            `json:"decision_id"`
+	TenantID         string            `json:"tenant_id"`
+	VerificationID   string            `json:"verification_id"`
+	PolicyID         string            `json:"policy_id"`
+	PolicyRevision   uint32            `json:"policy_revision"`
+	PolicyDigest     string            `json:"policy_digest"`
+	EvaluatorMajor   uint16            `json:"evaluator_major"`
+	EvaluatorMinor   uint16            `json:"evaluator_minor"`
+	EvaluatorDigest  string            `json:"evaluator_digest"`
+	SnapshotDigest   string            `json:"snapshot_digest"`
+	EvaluationDigest string            `json:"evaluation_digest"`
+	DecisionDigest   string            `json:"decision_digest"`
+	BundleDigest     string            `json:"bundle_digest"`
+	Directive        Directive         `json:"directive"`
+	Outcome          Outcome           `json:"outcome"`
+	Assurance        string            `json:"assurance"`
+	Actor            ActorClass        `json:"actor"`
+	Supersedes       string            `json:"supersedes,omitempty"`
+	FactCount        int               `json:"fact_count"`
+	RequirementCount int               `json:"requirement_count"`
+	EvaluatedAt      time.Time         `json:"evaluated_at"`
+	DecidedAt        time.Time         `json:"decided_at"`
+	Reproduced       bool              `json:"reproduced"`
 }
 
 // NewDecisionBundle strictly reproduces a decision before exporting it.
@@ -200,7 +201,8 @@ func reportOf(bundle DecisionBundle) ReproductionReport {
 		supersedes = decision.Supersedes().String()
 	}
 	return ReproductionReport{
-		SchemaMajor: DecisionBundleSchemaMajor, SchemaMinor: DecisionBundleSchemaMinor,
+		TypedAssurance: snapshot.AssuranceSummary(),
+		SchemaMajor:    DecisionBundleSchemaMajor, SchemaMinor: DecisionBundleSchemaMinor,
 		DecisionID: decision.ID().String(), TenantID: snapshot.TenantID().String(),
 		VerificationID: snapshot.VerificationID().String(), PolicyID: reference.ID.String(),
 		PolicyRevision: reference.Revision, PolicyDigest: reference.Digest,

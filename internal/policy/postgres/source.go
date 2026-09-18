@@ -106,13 +106,20 @@ type authoritativeQueries interface {
 
 type authoritativeQueryFactory func(platformpostgres.Transaction) authoritativeQueries
 
+// TransactionProjector enriches policy input within the same database snapshot.
+type TransactionProjector interface {
+	ProjectWithin(context.Context, platformpostgres.Transaction, tenant.Scope, Projection) ([]policy.Fact, error)
+}
+
 // Source atomically loads the authoritative PostgreSQL state used to author a
 // policy snapshot.
 type Source struct {
-	pool      transactionRunner
-	selector  PolicySelector
-	projector FactProjector
-	queries   authoritativeQueryFactory
+	completeContext bool
+	pool            transactionRunner
+	selector        PolicySelector
+	projector       FactProjector
+	queries         authoritativeQueryFactory
+	enrichers       []TransactionProjector
 }
 
 var _ policy.AuthoritativeStateSource = (*Source)(nil)
@@ -122,12 +129,13 @@ func NewSource(
 	pool transactionRunner,
 	selector PolicySelector,
 	projector FactProjector,
+	enrichers ...TransactionProjector,
 ) (*Source, error) {
 	if pool == nil || selector == nil || projector == nil {
 		return nil, errors.New("policy postgres source: dependencies are required")
 	}
 	return &Source{
-		pool: pool, selector: selector, projector: projector,
+		pool: pool, selector: selector, projector: projector, enrichers: append([]TransactionProjector(nil), enrichers...),
 		queries: func(transaction platformpostgres.Transaction) authoritativeQueries {
 			return sqlgen.New(transaction)
 		},
@@ -151,7 +159,7 @@ func (source *Source) LoadAuthoritativeState(
 		ctx,
 		platformpostgres.TransactionOptions{
 			Isolation: platformpostgres.IsolationRepeatableRead,
-			ReadOnly:  true,
+			ReadOnly:  len(source.enrichers) == 0,
 		},
 		func(ctx context.Context, transaction platformpostgres.Transaction) error {
 			queries := source.queries(transaction)
@@ -175,10 +183,36 @@ func (source *Source) LoadAuthoritativeState(
 			if err != nil {
 				return fmt.Errorf("project authoritative policy facts: %w", err)
 			}
+			for _, enricher := range source.enrichers {
+				if enricher == nil {
+					return policy.ErrInvalid
+				}
+				additional, err := enricher.ProjectWithin(ctx, transaction, scope, projection)
+				if err != nil {
+					return fmt.Errorf("project additional policy facts: %w", err)
+				}
+				facts = append(facts, additional...)
+			}
+			var complete *policy.DecisionContext
+			if source.completeContext {
+				complete, err = loadDecisionContext(ctx, transaction, scope, projection, facts)
+				if err != nil {
+					return err
+				}
+			}
 			result = policy.AuthoritativeState{
+				Context:  complete,
 				PolicyID: policyID, AuthorityID: projection.Authority.AuthorityID,
 				AcknowledgementID: projection.Authority.AcknowledgementID,
 				Region:            projection.Region, Facts: slices.Clone(facts),
+			}
+			if selector, ok := source.selector.(interface {
+				SelectPinnedPolicy(context.Context, platformpostgres.Transaction, tenant.Scope, id.Verification) (*policy.Reference, error)
+			}); ok {
+				result.PinnedPolicy, err = selector.SelectPinnedPolicy(ctx, transaction, scope, verificationID)
+				if err != nil {
+					return err
+				}
 			}
 			return nil
 		},

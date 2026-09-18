@@ -88,6 +88,21 @@ func Resolve(snapshot Snapshot, results []RequirementResult, assurance string) (
 			return Evaluation{}, ErrConflict
 		}
 	}
+	assuranceGated := false
+	achievement, err := snapshot.Achievement()
+	if err != nil {
+		return Evaluation{}, err
+	}
+	if selected == DirectiveCompleteVerified && achievement.RequestedDigest != "" && !achievement.Achieved {
+		selected = DirectiveRouteManualReview
+		assuranceGated = true
+	}
+	if snapshot.context != nil && snapshot.context.Profile != nil {
+		assurance = ""
+		if selected == DirectiveCompleteVerified {
+			assurance = fmt.Sprintf("%s.v%d", snapshot.context.Profile.Name, snapshot.context.Profile.Revision)
+		}
+	}
 	outcome, err := terminalOutcome(selected, ordered)
 	if err != nil {
 		return Evaluation{}, err
@@ -95,11 +110,15 @@ func Resolve(snapshot Snapshot, results []RequirementResult, assurance string) (
 	if selected == DirectiveCompleteVerified && assurance == "" {
 		return Evaluation{}, ErrInvalid
 	}
-	considered := make([]Directive, len(ordered))
+	considered := make([]Directive, 0, len(ordered)+1)
 	allReasons := make([]string, 0)
-	for index, result := range ordered {
-		considered[index] = result.Candidate
+	for _, result := range ordered {
+		considered = append(considered, result.Candidate)
 		allReasons = append(allReasons, result.ReasonCodes...)
+	}
+	if assuranceGated {
+		considered = append(considered, DirectiveRouteManualReview)
+		allReasons = append(allReasons, "assurance.not_achieved")
 	}
 	reasons, err := uniqueTokens(allReasons, MaximumSnapshotReasons)
 	if err != nil {
@@ -195,7 +214,7 @@ func validateResult(value RequirementResult, facts map[FactKey]struct{}) (Requir
 			return RequirementResult{}, ErrInvalid
 		}
 	}
-	reasons, err := canonicalTokens(validated.ReasonCodes, 100)
+	reasons, err := canonicalTokens(validated.ReasonCodes)
 	if err != nil {
 		return RequirementResult{}, err
 	}

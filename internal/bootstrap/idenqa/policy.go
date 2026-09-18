@@ -64,6 +64,7 @@ func newPolicyCommandWith(openRepository policyRepositoryOpener) *cobra.Command 
 		newPolicyDecisionVerifyCommand(),
 	)
 	command.AddCommand(decision)
+	addPolicyAdminCommands(command)
 	return command
 }
 
@@ -80,7 +81,7 @@ func newPolicyDecisionReproduceCommand(openRepository policyRepositoryOpener) *c
 			return executePolicyDecisionReproduce(command, options, openRepository)
 		},
 	}
-	command.Flags().StringVar(&options.envFile, "env-file", "", "load local configuration from this dotenv file")
+	command.Flags().StringVar(&options.envFile, "env-file", config.DefaultEnvFile, "load local configuration from this dotenv file")
 	command.Flags().StringVar(&options.tenantID, "tenant", "", "owning tenant identifier")
 	command.Flags().StringVar(&options.decisionID, "id", "", "immutable decision identifier")
 	command.Flags().StringVar(&options.output, "output", "summary", "output format: summary, json, or bundle")

@@ -22,7 +22,7 @@ const (
 	maximumExpressionNodes = 64
 	maximumExpressionDepth = 32
 	maximumEvaluationCost  = 1000
-	evaluatorIdentity      = "idenqa.policy.cel.v1;cel-go=v0.31.0;vars=facts,region;ops=and,or,not,eq,neq,index;macros=none;nodes=64;depth=32;cost=1000"
+	evaluatorIdentity      = "idenqa.policy.cel.v1;cel-go=v0.31.0;vars=facts,region;ops=and,or,not,eq,neq,index,static-in-guard;macros=none;nodes=64;depth=32;cost=1000"
 )
 
 var (
@@ -278,6 +278,9 @@ func inspectExpression(expression *exprpb.Expr, referenced map[string]struct{}) 
 	if call.Function == operators.Index {
 		return inspectFactIndex(call, referenced)
 	}
+	if call.Function == operators.In || call.Function == operators.OldIn {
+		return inspectFactPresence(call, referenced)
+	}
 	switch call.Function {
 	case operators.LogicalAnd, operators.LogicalOr, operators.Equals, operators.NotEquals:
 		if len(call.Args) != 2 {
@@ -294,6 +297,29 @@ func inspectExpression(expression *exprpb.Expr, referenced map[string]struct{}) 
 		if err := inspectExpression(argument, referenced); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+func inspectFactPresence(call *exprpb.Expr_Call, _ map[string]struct{}) error {
+	if len(call.Args) != 2 {
+		return errors.New("only \"static.key\" in facts membership is allowed")
+	}
+	constant := call.Args[0].GetConstExpr()
+	if constant == nil {
+		return errors.New("fact membership key must be a string literal")
+	}
+	value, ok := constant.ConstantKind.(*exprpb.Constant_StringValue)
+	if !ok {
+		return errors.New("fact membership key must be a string literal")
+	}
+	identifier := call.Args[1].GetIdentExpr()
+	if identifier == nil || identifier.GetName() != "facts" {
+		return errors.New("only \"static.key\" in facts membership is allowed")
+	}
+	_, err := policy.NewFactKey(value.StringValue)
+	if err != nil {
+		return errors.New("fact membership key is invalid")
 	}
 	return nil
 }

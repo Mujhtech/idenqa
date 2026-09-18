@@ -112,6 +112,8 @@ const (
 	FactSourceProcessingAuthority FactSourceKind = "processing_authority"
 	FactSourceSubjectResponse     FactSourceKind = "subject_response"
 	FactSourceReviewFinding       FactSourceKind = "review_finding"
+	FactSourceFraud               FactSourceKind = "fraud"
+	FactSourceIdentity            FactSourceKind = "identity"
 )
 
 // Reference pins exact policy meaning independently of source syntax.
@@ -157,17 +159,25 @@ type AuthoritySource struct{ AuthorityID id.Authority }
 // SubjectResponseSource pins the exact subject response evaluated as a fact.
 type SubjectResponseSource struct{ AcknowledgementID id.Acknowledgement }
 
-// ReviewFindingSource reserves an opaque owned reference until O-03 defines
-// the full review-finding aggregate.
+// ReviewFindingSource identifies a pinned accepted-case input digest. The review
+// evaluation receipt binds that digest to the immutable case version and findings.
 type ReviewFindingSource struct{ Reference string }
+
+// FraudSource pins an immutable tenant risk evaluation receipt.
+type FraudSource struct{ ReceiptDigest string }
+
+// IdentitySource pins an immutable typed identity interpretation receipt.
+type IdentitySource struct{ ReceiptDigest string }
 
 // FactSource is a closed tagged union. Exactly one matching pointer is set.
 type FactSource struct {
+	Identity        *IdentitySource
 	Kind            FactSourceKind
 	Check           *CheckSource
 	Authority       *AuthoritySource
 	SubjectResponse *SubjectResponseSource
 	ReviewFinding   *ReviewFindingSource
+	Fraud           *FraudSource
 }
 
 // Fact contains only typed state and immutable lineage. It cannot carry a raw
@@ -252,6 +262,14 @@ func cloneFact(value Fact) Fact {
 
 func cloneSource(value FactSource) FactSource {
 	cloned := value
+	if value.Identity != nil {
+		source := *value.Identity
+		cloned.Identity = &source
+	}
+	if value.Fraud != nil {
+		source := *value.Fraud
+		cloned.Fraud = &source
+	}
 	if value.Check != nil {
 		check := *value.Check
 		check.ObservationIDs = slices.Clone(value.Check.ObservationIDs)

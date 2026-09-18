@@ -16,6 +16,7 @@ import (
 // SnapshotInput contains explicit immutable evaluation inputs. No dependency
 // is permitted to supply a clock implicitly.
 type SnapshotInput struct {
+	Context           *DecisionContext
 	TenantID          id.Tenant
 	VerificationID    id.Verification
 	AuthorityID       id.Authority
@@ -29,6 +30,7 @@ type SnapshotInput struct {
 
 // Snapshot is the canonical fact set used for exactly one evaluation.
 type Snapshot struct {
+	context           *DecisionContext
 	tenantID          id.Tenant
 	verificationID    id.Verification
 	authorityID       id.Authority
@@ -43,6 +45,7 @@ type Snapshot struct {
 }
 
 type canonicalSnapshot struct {
+	Context           *DecisionContext   `json:"context,omitempty"`
 	SchemaMajor       uint16             `json:"schema_major"`
 	SchemaMinor       uint16             `json:"schema_minor"`
 	TenantID          string             `json:"tenant_id"`
@@ -80,6 +83,7 @@ type canonicalFact struct {
 }
 
 type canonicalSource struct {
+	IdentityReceipt      string         `json:"identity_receipt,omitempty"`
 	Kind                 FactSourceKind `json:"kind"`
 	CheckID              string         `json:"check_id,omitempty"`
 	CheckVersion         int64          `json:"check_version,omitempty"`
@@ -90,6 +94,7 @@ type canonicalSource struct {
 	AuthorityID          string         `json:"authority_id,omitempty"`
 	AcknowledgementID    string         `json:"acknowledgement_id,omitempty"`
 	ReviewFinding        string         `json:"review_finding,omitempty"`
+	FraudReceipt         string         `json:"fraud_receipt,omitempty"`
 }
 
 // NewSnapshot validates, copies, orders, serialises, and digests exact inputs.
@@ -106,6 +111,11 @@ func NewSnapshot(input SnapshotInput) (Snapshot, error) {
 		return Snapshot{}, err
 	}
 
+	context, err := bindSnapshotContext(input)
+	if err != nil {
+		return Snapshot{}, err
+	}
+	input.Context = context
 	facts := make([]Fact, len(input.Facts))
 	reasonCount := 0
 	for index, fact := range input.Facts {
@@ -144,7 +154,7 @@ func NewSnapshot(input SnapshotInput) (Snapshot, error) {
 		tenantID: input.TenantID, verificationID: input.VerificationID,
 		authorityID: input.AuthorityID, acknowledgementID: input.AcknowledgementID,
 		region: input.Region, policy: input.Policy, evaluator: input.Evaluator,
-		evaluatedAt: input.EvaluatedAt, facts: facts,
+		evaluatedAt: input.EvaluatedAt, facts: facts, context: context,
 		canonical: slices.Clone(encoded), digest: hex.EncodeToString(sum[:]),
 	}, nil
 }
@@ -217,7 +227,7 @@ func validateFact(value Fact, evaluatedAt time.Time) (Fact, error) {
 			return Fact{}, ErrStaleFact
 		}
 	}
-	reasons, err := canonicalTokens(value.ReasonCodes, 100)
+	reasons, err := canonicalTokens(value.ReasonCodes)
 	if err != nil {
 		return Fact{}, err
 	}
@@ -233,7 +243,7 @@ func validateFact(value Fact, evaluatedAt time.Time) (Fact, error) {
 func validateSource(value FactSource) (FactSource, error) {
 	set := 0
 	for _, present := range []bool{value.Check != nil, value.Authority != nil,
-		value.SubjectResponse != nil, value.ReviewFinding != nil} {
+		value.SubjectResponse != nil, value.ReviewFinding != nil, value.Fraud != nil, value.Identity != nil} {
 		if present {
 			set++
 		}
@@ -243,6 +253,14 @@ func validateSource(value FactSource) (FactSource, error) {
 	}
 	cloned := cloneSource(value)
 	switch value.Kind {
+	case FactSourceIdentity:
+		if value.Identity == nil || !validDigest(value.Identity.ReceiptDigest) {
+			return FactSource{}, ErrInvalid
+		}
+	case FactSourceFraud:
+		if value.Fraud == nil || !validDigest(value.Fraud.ReceiptDigest) {
+			return FactSource{}, ErrInvalid
+		}
 	case FactSourceCheck:
 		if value.Check == nil || value.Authority != nil || value.SubjectResponse != nil || value.ReviewFinding != nil ||
 			value.Check.CheckID.IsZero() || value.Check.CheckVersion < 1 || value.Check.AttemptID.IsZero() ||
@@ -279,10 +297,10 @@ func validateSource(value FactSource) (FactSource, error) {
 	return cloned, nil
 }
 
-func canonicalTokens(values []string, maximumLength int) ([]string, error) {
+func canonicalTokens(values []string) ([]string, error) {
 	result := slices.Clone(values)
 	for _, value := range result {
-		if !validToken(value, maximumLength) {
+		if !validToken(value, 100) {
 			return nil, ErrInvalid
 		}
 	}
@@ -301,6 +319,7 @@ func canonicalSnapshotOf(input SnapshotInput, facts []Fact) canonicalSnapshot {
 		canonicalFacts[index] = canonicalFactOf(fact)
 	}
 	return canonicalSnapshot{
+		Context:     input.Context,
 		SchemaMajor: SnapshotSchemaMajor, SchemaMinor: SnapshotSchemaMinor,
 		TenantID: input.TenantID.String(), VerificationID: input.VerificationID.String(),
 		AuthorityID: input.AuthorityID.String(), AcknowledgementID: input.AcknowledgementID.String(),
@@ -340,6 +359,12 @@ func canonicalSourceOf(value FactSource) canonicalSource {
 	if value.ReviewFinding != nil {
 		result.ReviewFinding = value.ReviewFinding.Reference
 	}
+	if value.Identity != nil {
+		result.IdentityReceipt = value.Identity.ReceiptDigest
+	}
+	if value.Fraud != nil {
+		result.FraudReceipt = value.Fraud.ReceiptDigest
+	}
 	return result
 }
 
@@ -348,7 +373,7 @@ func snapshotInput(snapshot Snapshot) SnapshotInput {
 		TenantID: snapshot.tenantID, VerificationID: snapshot.verificationID,
 		AuthorityID: snapshot.authorityID, AcknowledgementID: snapshot.acknowledgementID,
 		Region: snapshot.region, Policy: snapshot.policy, Evaluator: snapshot.evaluator,
-		EvaluatedAt: snapshot.evaluatedAt, Facts: snapshot.Facts(),
+		EvaluatedAt: snapshot.evaluatedAt, Facts: snapshot.Facts(), Context: snapshot.Context(),
 	}
 }
 

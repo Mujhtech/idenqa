@@ -8,11 +8,14 @@ import (
 	"fmt"
 	"time"
 
+	authoritypostgres "github.com/Mujhtech/idenqa/internal/authority/postgres"
+	"github.com/Mujhtech/idenqa/internal/platform/clock"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	platformpostgres "github.com/Mujhtech/idenqa/internal/platform/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/postgres/sqlgen"
 	"github.com/Mujhtech/idenqa/internal/policy"
 	"github.com/Mujhtech/idenqa/internal/tenant"
+	"github.com/Mujhtech/idenqa/internal/verification"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -27,12 +30,16 @@ type transactionRunner interface {
 }
 
 // Store is the PostgreSQL adapter for immutable decision lineage.
-type Store struct{ pool transactionRunner }
+type Store struct {
+	pool  transactionRunner
+	clock clock.Clock
+}
 
 var _ policy.Repository = (*Store)(nil)
 var _ policy.CatalogRepository = (*Store)(nil)
 
-// New constructs a policy decision PostgreSQL adapter.
+// New constructs the persistence primitive. Callers own lifecycle and
+// authority validation; runnable policy authors use NewGuarded.
 func New(pool transactionRunner) (*Store, error) {
 	if pool == nil {
 		return nil, errors.New("policy postgres: pool is required")
@@ -40,13 +47,27 @@ func New(pool transactionRunner) (*Store, error) {
 	return &Store{pool: pool}, nil
 }
 
+// NewGuarded rechecks lifecycle and current processing authority in the same
+// transaction as each newly authored decision.
+func NewGuarded(pool transactionRunner, source clock.Clock) (*Store, error) {
+	store, err := New(pool)
+	if err != nil {
+		return nil, err
+	}
+	if source == nil {
+		return nil, errors.New("policy postgres: processing clock is required")
+	}
+	store.clock = source
+	return store, nil
+}
+
 // Append atomically persists a snapshot, evaluation, and one decision.
 func (store *Store) Append(ctx context.Context, scope tenant.Scope, decision policy.Decision) error {
 	if err := validateAppend(scope, decision); err != nil {
 		return err
 	}
-	return store.write(ctx, scope, func(ctx context.Context, queries *sqlgen.Queries) error {
-		return appendDecision(ctx, queries, scope, decision)
+	return store.pool.WithinTransaction(ctx, platformpostgres.TransactionOptions{}, func(ctx context.Context, tx platformpostgres.Transaction) error {
+		return store.AppendWithin(ctx, scope, tx, decision)
 	})
 }
 
@@ -66,6 +87,38 @@ func (store *Store) AppendWithin(
 	queries := sqlgen.New(transaction)
 	if _, err := queries.SetTenantScope(ctx, scope.ID().String()); err != nil {
 		return fmt.Errorf("set policy tenant scope: %w", err)
+	}
+	if store.clock != nil {
+		// Exact committed decisions remain replayable when the lifecycle has
+		// advanced. This read does not author a new snapshot or decision.
+		previous, err := findDecision(ctx, queries, scope, decision.ID())
+		if err == nil {
+			if previous.Digest() != decision.Digest() || !bytes.Equal(previous.Canonical(), decision.Canonical()) {
+				return policy.ErrDecisionConflict
+			}
+			return nil
+		}
+		if !errors.Is(err, policy.ErrDecisionNotFound) {
+			return err
+		}
+		if err := ValidateDecisionAssuranceWithin(ctx, transaction, scope, decision.Snapshot(), decision.Evaluation().Outcome() == policy.OutcomeVerified, store.clock.Now().UTC()); err != nil {
+			return err
+		}
+		expected := verification.SessionStateProcessing
+		state, err := reviewSessionState(ctx, scope, transaction, decision.Snapshot().VerificationID())
+		if err != nil {
+			return err
+		}
+		if state == string(verification.SessionStateManualReview) {
+			if err := ValidateReviewDecisionWithin(ctx, scope, transaction, decision); err != nil {
+				return err
+			}
+			expected = verification.SessionStateManualReview
+		}
+		if err := authoritypostgres.ValidateProcessingWithin(ctx, transaction, scope, decision.Snapshot().VerificationID(),
+			decision.DecidedAt(), store.clock, expected); err != nil {
+			return err
+		}
 	}
 	return appendDecision(ctx, queries, scope, decision)
 }

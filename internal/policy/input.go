@@ -14,7 +14,9 @@ import (
 // durable state that may influence a machine decision. PolicyID is selected by
 // the source; ActiveInputLoader deliberately does not invent assignment rules.
 type AuthoritativeState struct {
+	Context           *DecisionContext
 	PolicyID          id.Policy
+	PinnedPolicy      *Reference
 	AuthorityID       id.Authority
 	AcknowledgementID id.Acknowledgement
 	Region            string
@@ -85,13 +87,21 @@ func (loader *ActiveInputLoader) LoadPolicyInput(
 	if err := ctx.Err(); err != nil {
 		return AuthorInput{}, err
 	}
-	activation, err := loader.policies.FindActive(ctx, scope, state.PolicyID)
-	if err != nil {
-		return AuthorInput{}, fmt.Errorf("find active policy revision: %w", err)
-	}
-	revision := activation.Revision()
-	if revision.Reference().ID.String() != state.PolicyID.String() {
-		return AuthorInput{}, ErrRevisionConflict
+	var reference Reference
+	if state.PinnedPolicy != nil {
+		reference = *state.PinnedPolicy
+		if reference.ID != state.PolicyID || reference.validate() != nil {
+			return AuthorInput{}, ErrRevisionConflict
+		}
+	} else {
+		activation, err := loader.policies.FindActive(ctx, scope, state.PolicyID)
+		if err != nil {
+			return AuthorInput{}, fmt.Errorf("find active policy revision: %w", err)
+		}
+		reference = activation.Revision().Reference()
+		if reference.ID != state.PolicyID {
+			return AuthorInput{}, ErrRevisionConflict
+		}
 	}
 	if err := ctx.Err(); err != nil {
 		return AuthorInput{}, err
@@ -100,8 +110,8 @@ func (loader *ActiveInputLoader) LoadPolicyInput(
 		AuthorityID:       state.AuthorityID,
 		AcknowledgementID: state.AcknowledgementID,
 		Region:            state.Region,
-		Policy:            revision.Reference(),
-		Facts:             cloneFacts(state.Facts),
+		Policy:            reference,
+		Facts:             cloneFacts(state.Facts), Context: state.Context,
 	}, nil
 }
 

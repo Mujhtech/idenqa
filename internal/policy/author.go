@@ -47,6 +47,7 @@ type AuthorRequest struct {
 // AuthorInput is the authoritative CEL-neutral input returned by InputLoader.
 // Facts remain reference-only and cannot carry raw evidence bytes.
 type AuthorInput struct {
+	Context           *DecisionContext
 	AuthorityID       id.Authority
 	AcknowledgementID id.Acknowledgement
 	Region            string
@@ -84,49 +85,9 @@ func (builder *Builder) Build(
 	scope tenant.Scope,
 	request AuthorRequest,
 ) (Decision, error) {
-	if builder == nil || builder.inputs == nil || builder.evaluator == nil {
-		return Decision{}, fmt.Errorf("%w: policy builder", ErrInvalid)
-	}
-	if err := validateAuthorRequest(scope, request); err != nil {
-		return Decision{}, err
-	}
-	if err := ctx.Err(); err != nil {
-		return Decision{}, err
-	}
-
-	input, err := builder.inputs.LoadPolicyInput(ctx, scope, request.VerificationID, request.EvaluatedAt)
+	snapshot, evaluation, err := builder.Evaluate(ctx, scope, request)
 	if err != nil {
-		return Decision{}, fmt.Errorf("load policy author input: %w", err)
-	}
-	if err := ctx.Err(); err != nil {
 		return Decision{}, err
-	}
-
-	snapshot, err := NewSnapshot(SnapshotInput{
-		TenantID:          scope.ID(),
-		VerificationID:    request.VerificationID,
-		AuthorityID:       input.AuthorityID,
-		AcknowledgementID: input.AcknowledgementID,
-		Region:            input.Region,
-		Policy:            input.Policy,
-		Evaluator:         builder.evaluator.Reference(),
-		EvaluatedAt:       request.EvaluatedAt,
-		Facts:             input.Facts,
-	})
-	if err != nil {
-		return Decision{}, fmt.Errorf("construct policy author snapshot: %w", err)
-	}
-
-	output, err := builder.evaluator.Evaluate(ctx, snapshot)
-	if err != nil {
-		return Decision{}, fmt.Errorf("evaluate policy author snapshot: %w", err)
-	}
-	if err := ctx.Err(); err != nil {
-		return Decision{}, err
-	}
-	evaluation, err := Resolve(snapshot, output.Results, output.Assurance)
-	if err != nil {
-		return Decision{}, fmt.Errorf("resolve policy author output: %w", err)
 	}
 	if !evaluation.AuthorisesCompletion() {
 		return Decision{}, fmt.Errorf("%w: non-terminal evaluator output", ErrInvalid)
@@ -144,6 +105,56 @@ func (builder *Builder) Build(
 		return Decision{}, fmt.Errorf("construct policy decision: %w", err)
 	}
 	return decision, nil
+}
+
+// Evaluate constructs canonical authoritative inputs and deterministic results,
+// including nonterminal directives, without authoring a decision.
+func (builder *Builder) Evaluate(ctx context.Context, scope tenant.Scope, request AuthorRequest) (Snapshot, Evaluation, error) {
+	if builder == nil || builder.inputs == nil || builder.evaluator == nil {
+		return Snapshot{}, Evaluation{}, fmt.Errorf("%w: policy builder", ErrInvalid)
+	}
+	if err := validateAuthorRequest(scope, request); err != nil {
+		return Snapshot{}, Evaluation{}, err
+	}
+	if err := ctx.Err(); err != nil {
+		return Snapshot{}, Evaluation{}, err
+	}
+
+	input, err := builder.inputs.LoadPolicyInput(ctx, scope, request.VerificationID, request.EvaluatedAt)
+	if err != nil {
+		return Snapshot{}, Evaluation{}, fmt.Errorf("load policy author input: %w", err)
+	}
+	if err := ctx.Err(); err != nil {
+		return Snapshot{}, Evaluation{}, err
+	}
+
+	snapshot, err := NewSnapshot(SnapshotInput{
+		TenantID:          scope.ID(),
+		VerificationID:    request.VerificationID,
+		AuthorityID:       input.AuthorityID,
+		AcknowledgementID: input.AcknowledgementID,
+		Region:            input.Region,
+		Policy:            input.Policy,
+		Evaluator:         builder.evaluator.Reference(),
+		EvaluatedAt:       request.EvaluatedAt,
+		Facts:             input.Facts, Context: input.Context,
+	})
+	if err != nil {
+		return Snapshot{}, Evaluation{}, fmt.Errorf("construct policy author snapshot: %w", err)
+	}
+
+	output, err := builder.evaluator.Evaluate(ctx, snapshot)
+	if err != nil {
+		return Snapshot{}, Evaluation{}, fmt.Errorf("evaluate policy author snapshot: %w", err)
+	}
+	if err := ctx.Err(); err != nil {
+		return Snapshot{}, Evaluation{}, err
+	}
+	evaluation, err := Resolve(snapshot, output.Results, output.Assurance)
+	if err != nil {
+		return Snapshot{}, Evaluation{}, fmt.Errorf("resolve policy author output: %w", err)
+	}
+	return snapshot, evaluation, nil
 }
 
 // Author validates, evaluates, terminally authorises, and durably appends one

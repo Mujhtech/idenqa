@@ -48,3 +48,21 @@ WHERE tenant_id = $1 AND id = $2 AND policy_id IS NOT NULL
 }
 
 var _ PolicySelector = SessionPolicySelector{}
+
+// SelectPinnedPolicy preserves the parent revision for linked recapture children.
+func (SessionPolicySelector) SelectPinnedPolicy(ctx context.Context, tx platformpostgres.Transaction, scope tenant.Scope, verificationID id.Verification) (*policy.Reference, error) {
+	var canonical, digest string
+	err := tx.QueryRow(ctx, `SELECT s.canonical,s.snapshot_digest FROM idenqa.review_recaptures r JOIN idenqa.policy_snapshots s ON s.tenant_id=r.tenant_id AND s.snapshot_digest=r.policy_snapshot_digest WHERE r.tenant_id=$1 AND r.child_verification_id=$2`, scope.ID().String(), verificationID.String()).Scan(&canonical, &digest)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	snapshot, err := policy.RestoreSnapshotCanonical([]byte(canonical), digest)
+	if err != nil {
+		return nil, err
+	}
+	reference := snapshot.Policy()
+	return &reference, nil
+}

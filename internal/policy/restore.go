@@ -149,7 +149,7 @@ func snapshotInputOf(stored canonicalSnapshot) (SnapshotInput, error) {
 			SchemaMajor: stored.Policy.SchemaMajor, SchemaMinor: stored.Policy.SchemaMinor, Digest: stored.Policy.Digest},
 		Evaluator: EvaluatorReference{Major: stored.Evaluator.Major, Minor: stored.Evaluator.Minor,
 			Digest: stored.Evaluator.Digest},
-		EvaluatedAt: stored.EvaluatedAt, Facts: facts,
+		EvaluatedAt: stored.EvaluatedAt, Facts: facts, Context: stored.Context,
 	}, nil
 }
 
@@ -202,6 +202,10 @@ func sourceOf(stored canonicalSource) (FactSource, error) {
 		}
 		return FactSource{Kind: stored.Kind,
 			SubjectResponse: &SubjectResponseSource{AcknowledgementID: acknowledgementID}}, nil
+	case FactSourceIdentity:
+		return FactSource{Kind: stored.Kind, Identity: &IdentitySource{ReceiptDigest: stored.IdentityReceipt}}, nil
+	case FactSourceFraud:
+		return FactSource{Kind: stored.Kind, Fraud: &FraudSource{ReceiptDigest: stored.FraudReceipt}}, nil
 	case FactSourceReviewFinding:
 		return FactSource{Kind: stored.Kind,
 			ReviewFinding: &ReviewFindingSource{Reference: stored.ReviewFinding}}, nil

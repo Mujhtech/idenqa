@@ -64,6 +64,72 @@ func TestEvaluatorUsesRegionAndExactStaticFactProvenance(t *testing.T) {
 	}
 }
 
+func TestEvaluatorSupportsStaticOptionalFactPresence(t *testing.T) {
+	t.Parallel()
+	document := baseDocument()
+	document.Rules = append([]policyv1.Rule{{
+		Name: "review_requests_input",
+		When: `"review.resolution" in facts && facts["review.resolution"] == "inconclusive"`,
+		Result: policyv1.Result{
+			State:             policyv1.RequirementInconclusive,
+			Directive:         policyv1.DirectiveRequestInput,
+			Priority:          1,
+			ContributingFacts: []string{"review.resolution"},
+			ReasonCodes:       []string{"review_requested_input"},
+		},
+	}}, document.Rules...)
+	evaluator, err := policycel.New(document)
+	if err != nil {
+		t.Fatal(err)
+	}
+	withoutOptional := snapshotFor(t, evaluator, document, policy.RequirementSatisfied)
+	output, err := evaluator.Evaluate(t.Context(), withoutOptional)
+	if err != nil || len(output.Results) != 1 || output.Results[0].Name != "verified" {
+		t.Fatalf("Evaluate(without optional fact) = %+v, %v", output, err)
+	}
+	input := snapshotInput(t, withoutOptional.Policy(), evaluator.Reference(), policy.RequirementSatisfied)
+	key := mustFactKey(t, "review.resolution")
+	input.Facts = append(input.Facts, policy.Fact{
+		Key: key, State: policy.RequirementInconclusive,
+		Source:     policy.FactSource{Kind: policy.FactSourceProcessingAuthority, Authority: &policy.AuthoritySource{AuthorityID: input.AuthorityID}},
+		ObservedAt: input.EvaluatedAt,
+	})
+	withOptional, err := policy.NewSnapshot(input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	output, err = evaluator.Evaluate(t.Context(), withOptional)
+	if err != nil || len(output.Results) != 2 || output.Results[0].Name != "review_requests_input" {
+		t.Fatalf("Evaluate(with optional fact) = %+v, %v", output, err)
+	}
+}
+
+func TestEvaluatorTreatsStaticPresenceAsGuardRatherThanContribution(t *testing.T) {
+	t.Parallel()
+
+	document := baseDocument()
+	document.Rules = append([]policyv1.Rule{{
+		Name: "initial_review",
+		When: `!("review.recapture" in facts) && facts["document.authenticity"] == "satisfied"`,
+		Result: policyv1.Result{
+			State:             policyv1.RequirementSatisfied,
+			Directive:         policyv1.DirectiveRouteManualReview,
+			Priority:          1,
+			ContributingFacts: []string{"document.authenticity"},
+			ReasonCodes:       []string{"manual_review_required"},
+		},
+	}}, document.Rules...)
+	evaluator, err := policycel.New(document)
+	if err != nil {
+		t.Fatal(err)
+	}
+	snapshot := snapshotFor(t, evaluator, document, policy.RequirementSatisfied)
+	output, err := evaluator.Evaluate(t.Context(), snapshot)
+	if err != nil || len(output.Results) != 2 || output.Results[0].Name != "initial_review" {
+		t.Fatalf("Evaluate(absent guard fact) = %+v, %v", output, err)
+	}
+}
+
 func TestNewRejectsExpressionsOutsideClosedSubset(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
@@ -80,6 +146,7 @@ func TestNewRejectsExpressionsOutsideClosedSubset(t *testing.T) {
 		{name: "undeclared fact", when: `facts["selfie.liveness"] == "satisfied"`, facts: []string{"document.authenticity"}},
 		{name: "extra provenance", when: `facts["document.authenticity"] == "satisfied"`, facts: []string{"document.authenticity", "selfie.liveness"}},
 		{name: "conditional", when: `facts["document.authenticity"] == "satisfied" ? true : false`, facts: []string{"document.authenticity"}},
+		{name: "dynamic membership", when: `region in facts`, facts: []string{"document.authenticity"}},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {

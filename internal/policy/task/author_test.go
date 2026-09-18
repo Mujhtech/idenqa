@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Mujhtech/idenqa/internal/authority"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/platform/postgres"
 	platformtask "github.com/Mujhtech/idenqa/internal/platform/task"
@@ -100,6 +101,10 @@ func TestHandlerClassifiesFailures(t *testing.T) {
 			wantOutcome: platformtask.OutcomeQuarantine},
 		{name: "append conflict", appendErr: policy.ErrDecisionConflict,
 			wantOutcome: platformtask.OutcomeRetry, wantClass: platformtask.RetryClassConflict},
+		{name: "authority withdrawn before append", appendErr: authority.ErrProcessingNotPermitted,
+			wantOutcome: platformtask.OutcomeQuarantine},
+		{name: "subject response no longer permits authoring", buildErr: authority.ErrSubjectResponseRequired,
+			wantOutcome: platformtask.OutcomeQuarantine},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -316,4 +321,62 @@ func rebuildIntentPayload(t *testing.T, source platformtask.Intent, payload []by
 		t.Fatal(err)
 	}
 	return intent
+}
+
+type completionStoreStub struct {
+	calls    int
+	decision policy.Decision
+	actor    id.Task
+	err      error
+}
+
+func (store *completionStoreStub) CompleteWithin(_ context.Context, _ tenant.Scope, _ postgres.Transaction, decision policy.Decision, actor id.Task) error {
+	store.calls++
+	store.decision, store.actor = decision, actor
+	return store.err
+}
+
+func TestHandlerCompletesNewAndReplayedDecisionInEffect(t *testing.T) {
+	t.Parallel()
+	for _, scenario := range []string{"new", "existing", "concurrent", "completion_failure", "authority_revoked"} {
+		t.Run(scenario, func(t *testing.T) {
+			t.Parallel()
+			fixture := newTaskFixture(t)
+			store := newDecisionStoreStub()
+			builder := &decisionBuilderStub{decision: fixture.decision}
+			completion := &completionStoreStub{}
+			if scenario == "existing" {
+				store.decisions[fixture.decision.ID().String()] = fixture.decision
+			}
+			if scenario == "completion_failure" {
+				completion.err = errors.New("queue insertion failed")
+			}
+			if scenario == "authority_revoked" {
+				completion.err = authority.ErrProcessingNotPermitted
+			}
+			handler, err := NewHandlerWithCompletion(store, builder, completion)
+			if err != nil {
+				t.Fatal(err)
+			}
+			delivery := fixture.delivery(t)
+			work, result := handler.Prepare(t.Context(), delivery)
+			if result.Outcome != platformtask.OutcomeComplete || work == nil || completion.calls != 0 {
+				t.Fatalf("prepare=%+v calls=%d", result, completion.calls)
+			}
+			if scenario == "concurrent" {
+				store.decisions[fixture.decision.ID().String()] = fixture.decision
+			}
+			result = work(t.Context(), transactionStub{})
+			want := platformtask.OutcomeComplete
+			if scenario == "completion_failure" {
+				want = platformtask.OutcomeRetry
+			}
+			if scenario == "authority_revoked" {
+				want = platformtask.OutcomeQuarantine
+			}
+			if result.Outcome != want || completion.calls != 1 || completion.decision.Digest() != fixture.decision.Digest() || completion.actor != delivery.Intent.ID() {
+				t.Fatalf("completion effect=%+v calls=%d actor=%s", result, completion.calls, completion.actor)
+			}
+		})
+	}
 }
