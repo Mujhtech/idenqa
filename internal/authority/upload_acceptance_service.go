@@ -127,13 +127,13 @@ func (service *UploadAcceptanceService) Accept(
 		return evidence.Upload{}, service.recordFailure(ctx, scope, captureContext.TokenID(), claimed, err)
 	}
 	record := claimed.Record()
-	prepared, err := service.stager.Prepare(ctx, scope, evidence.ProtectionInput{
+	prepared, err := service.stager.Prepare(ctx, scope, evidence.ProtectionInput{Registry: record.Registry,
 		ID: record.EvidenceID, SubjectID: record.SubjectID, VerificationID: record.VerificationID,
 		RequirementKey: record.RequirementKey, EvidenceType: record.EvidenceType,
 		Artefact: record.Artefact, AcquisitionMethod: record.AcquisitionMethod,
 		Assurances: record.Assurances, Region: record.Region, RetentionClass: record.RetentionClass,
 		ContentRevision: 1, MediaType: record.MediaType, Plaintext: reader,
-		CreatedAt: service.clock.Now().UTC().Truncate(time.Second),
+		CreatedAt: service.clock.Now().UTC().Truncate(time.Microsecond),
 	})
 	if err != nil {
 		cause := fmt.Errorf("stage protected upload: %w", err)
@@ -142,7 +142,7 @@ func (service *UploadAcceptanceService) Accept(
 		}
 		if cleanup, ok := errors.AsType[*evidence.CleanupError](err); ok {
 			if recordErr := service.recordOrphan(
-				ctx, scope, claimed, cleanup.Object(), service.clock.Now().UTC().Truncate(time.Second),
+				ctx, scope, claimed, cleanup.Object(), service.clock.Now().UTC().Truncate(time.Microsecond),
 			); recordErr != nil {
 				return evidence.Upload{}, errors.Join(cause, recordErr)
 			}
@@ -151,7 +151,7 @@ func (service *UploadAcceptanceService) Accept(
 		return evidence.Upload{}, service.recordFailure(ctx, scope, captureContext.TokenID(), claimed, cause)
 	}
 
-	now := service.clock.Now().UTC().Truncate(time.Second)
+	now := service.clock.Now().UTC().Truncate(time.Microsecond)
 	if err := service.reconciler.CreateObjectReconciliation(ctx, scope, claimed, prepared, now); err != nil {
 		cause := fmt.Errorf("record staged upload reconciliation: %w", err)
 		return evidence.Upload{}, service.discardUnrecorded(
@@ -290,7 +290,7 @@ func (service *UploadAcceptanceService) recordFailure(
 ) error {
 	recordContext, cancel := context.WithTimeout(context.WithoutCancel(ctx), uploadFailureTimeout)
 	defer cancel()
-	now := service.clock.Now().UTC().Truncate(time.Second)
+	now := service.clock.Now().UTC().Truncate(time.Microsecond)
 	record := upload.Record()
 	var err error
 	if reason := uploadRejectionReason(cause); reason != "" && now.Before(record.ExpiresAt) &&

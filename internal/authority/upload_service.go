@@ -89,7 +89,7 @@ func (service *UploadService) Issue(
 	if service == nil {
 		return evidence.Upload{}, errors.New("authority: upload service is not initialised")
 	}
-	now := service.clock.Now().UTC().Truncate(time.Second)
+	now := service.clock.Now().UTC().Truncate(time.Microsecond)
 	scope := captureContext.TenantScope()
 	session := captureContext.Session()
 	if scope.ID().IsZero() || captureContext.TokenID().IsZero() ||
@@ -128,6 +128,9 @@ func (service *UploadService) Issue(
 		return evidence.Upload{}, err
 	}
 	responseRecord := snapshot.Response.Record()
+	if responseRecord.CaptureTokenID != captureContext.TokenID() {
+		return evidence.Upload{}, ErrSubjectResponseRequired
+	}
 
 	canonical, err := json.Marshal(struct {
 		RequirementKey    string                         `json:"requirement_key"`

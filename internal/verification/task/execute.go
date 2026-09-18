@@ -8,6 +8,7 @@ import (
 
 	modelv1 "github.com/Mujhtech/idenqa/contracts/model/v1"
 	providerv1 "github.com/Mujhtech/idenqa/contracts/provider/v1"
+	"github.com/Mujhtech/idenqa/internal/authority"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/platform/postgres"
 	platformtask "github.com/Mujhtech/idenqa/internal/platform/task"
@@ -28,13 +29,30 @@ type ResultIdentifiers interface {
 	NewObservation() (id.Observation, error)
 }
 
+// ProviderRequests reconstructs the exact persisted request and checks current authority.
+type ProviderRequests interface {
+	Load(context.Context, tenant.Scope, verification.Check, verification.Attempt) (providerv1.Request, error)
+}
+
+// ModelRequests reconstructs the exact persisted model envelope.
+type ModelRequests interface {
+	Load(context.Context, tenant.Scope, verification.Check, verification.Attempt) (modelv1.Request, error)
+}
+
+// ExpiredProviderRequests recovers a saved receipt or records an operational timeout.
+type ExpiredProviderRequests interface {
+	Expire(context.Context, tenant.Scope, verification.Check, verification.Attempt) (providerv1.Result, error)
+}
+
 // ExecuteHandler runs a provider or model outside a transaction and commits its
 // bounded normalized result through Headgate's fenced transactional completion.
 type ExecuteHandler struct {
-	store       CheckStore
-	identifiers ResultIdentifiers
-	provider    providerv1.Executor
-	model       modelv1.Executor
+	store         CheckStore
+	identifiers   ResultIdentifiers
+	provider      providerv1.Executor
+	model         modelv1.Executor
+	requests      ProviderRequests
+	modelRequests ModelRequests
 }
 
 // NewExecuteHandler constructs the exact version-1 verification task handler.
@@ -48,6 +66,19 @@ func NewExecuteHandler(
 		return nil, errors.New("verification task: execute dependencies are required")
 	}
 	return &ExecuteHandler{store: store, identifiers: identifiers, provider: provider, model: model}, nil
+}
+
+// NewExecuteHandlerWithRequests requires authoritative request loading for real providers.
+func NewExecuteHandlerWithRequests(store CheckStore, identifiers ResultIdentifiers, provider providerv1.Executor, model modelv1.Executor, requests ProviderRequests) (*ExecuteHandler, error) {
+	if requests == nil {
+		return nil, errors.New("verification task: provider request loader is required")
+	}
+	handler, err := NewExecuteHandler(store, identifiers, provider, model)
+	if err != nil {
+		return nil, err
+	}
+	handler.requests = requests
+	return handler, nil
 }
 
 // Handle fails closed when a driver cannot provide transactional task effects.
@@ -77,12 +108,30 @@ func (handler *ExecuteHandler) Prepare(
 		return nil, platformtask.Quarantine(err)
 	}
 
+	if delivery.Intent.Key() == AsyncExecuteKey && !time.Now().Before(attempt.Deadline) {
+		result := providerv1.Result{Contract: providerv1.CurrentVersion, AttemptID: attempt.ID.String(), Outcome: providerv1.ResultOutcomeFailed, Failure: &providerv1.Failure{Class: providerv1.FailureDeadline, Code: "provider_job_unresolved", Retry: providerv1.RetryReconcile}, CompletedAt: attempt.Deadline}
+		if expired, ok := handler.requests.(ExpiredProviderRequests); ok {
+			result, err = expired.Expire(ctx, scope, check, attempt)
+			if err != nil {
+				return nil, prepareStoreResult(err)
+			}
+		}
+		fingerprint, err := verification.ProviderResultFingerprint(result)
+		if err != nil {
+			return nil, platformtask.Quarantine(err)
+		}
+		return handler.providerWork(scope, payload, result, fingerprint), platformtask.Complete()
+	}
 	switch attempt.RunnerKind {
 	case verification.RunnerProvider:
-		result, executeErr := handler.provider.Execute(ctx, providerv1.Request{
-			Contract:  providerv1.CurrentVersion,
-			AttemptID: attempt.ID.String(),
-		})
+		request := providerv1.Request{Contract: providerv1.CurrentVersion, AttemptID: attempt.ID.String()}
+		if handler.requests != nil {
+			request, err = handler.requests.Load(ctx, scope, check, attempt)
+			if err != nil {
+				return nil, prepareStoreResult(err)
+			}
+		}
+		result, executeErr := handler.provider.Execute(ctx, request)
 		if executeErr != nil {
 			return nil, executionError(executeErr)
 		}
@@ -92,10 +141,14 @@ func (handler *ExecuteHandler) Prepare(
 		}
 		return handler.providerWork(scope, payload, result, fingerprint), platformtask.Complete()
 	case verification.RunnerModel:
-		result, executeErr := handler.model.Execute(ctx, modelv1.Request{
-			Contract:  modelv1.CurrentVersion,
-			AttemptID: attempt.ID.String(),
-		})
+		request := modelv1.Request{Contract: modelv1.CurrentVersion, AttemptID: attempt.ID.String()}
+		if handler.modelRequests != nil {
+			request, err = handler.modelRequests.Load(ctx, scope, check, attempt)
+			if err != nil {
+				return nil, prepareStoreResult(err)
+			}
+		}
+		result, executeErr := handler.model.Execute(ctx, request)
 		if executeErr != nil {
 			return nil, executionError(executeErr)
 		}
@@ -198,7 +251,7 @@ func executionError(err error) platformtask.Result {
 }
 
 func prepareStoreResult(err error) platformtask.Result {
-	if errors.Is(err, verification.ErrCheckNotFound) {
+	if errors.Is(err, authority.ErrProcessingNotPermitted) || errors.Is(err, authority.ErrSubjectResponseRequired) || errors.Is(err, verification.ErrCheckNotFound) {
 		return platformtask.Quarantine(err)
 	}
 	return platformtask.Retry(platformtask.RetryClassUnavailable, err)
@@ -208,7 +261,7 @@ func commitStoreResult(err error) platformtask.Result {
 	if errors.Is(err, verification.ErrCheckVersion) || errors.Is(err, verification.ErrStaleAttempt) {
 		return platformtask.Retry(platformtask.RetryClassConflict, err)
 	}
-	if errors.Is(err, verification.ErrCheckNotFound) {
+	if errors.Is(err, authority.ErrProcessingNotPermitted) || errors.Is(err, authority.ErrSubjectResponseRequired) || errors.Is(err, verification.ErrCheckNotFound) {
 		return platformtask.Quarantine(err)
 	}
 	if errors.Is(err, verification.ErrInvalidCheck) {
@@ -218,3 +271,12 @@ func commitStoreResult(err error) platformtask.Result {
 }
 
 var _ platformtask.TransactionalHandler = (*ExecuteHandler)(nil)
+
+// WithModelRequests enables authoritative request loading for model execution.
+func (handler *ExecuteHandler) WithModelRequests(requests ModelRequests) error {
+	if requests == nil {
+		return errors.New("model request loader required")
+	}
+	handler.modelRequests = requests
+	return nil
+}

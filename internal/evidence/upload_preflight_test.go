@@ -55,6 +55,33 @@ func TestUploadPreflightBeginClaimsExactBinding(t *testing.T) {
 	}
 }
 
+func TestUploadPreflightBeginClaimsIntentCreatedEarlierInCurrentSecond(t *testing.T) {
+	t.Parallel()
+
+	fixture := newUploadFixture(t)
+	fixture.input.CreatedAt = fixture.now.Add(100 * time.Microsecond)
+	upload := fixture.upload(t)
+	scope, err := tenant.NewScope(fixture.input.TenantID)
+	if err != nil {
+		t.Fatalf("NewScope() error = %v", err)
+	}
+	repository := &uploadPreflightRepository{upload: upload}
+	preflight, err := evidence.NewUploadPreflight(
+		repository,
+		assetClock{now: fixture.now.Add(900 * time.Microsecond)},
+	)
+	if err != nil {
+		t.Fatalf("NewUploadPreflight() error = %v", err)
+	}
+
+	if _, err := preflight.Begin(t.Context(), evidence.UploadPrincipal{
+		Scope: scope, CaptureTokenID: fixture.input.CaptureTokenID,
+		VerificationID: fixture.input.VerificationID,
+	}, upload.ID(), uploadMetadata(upload)); err != nil {
+		t.Fatalf("Begin() error = %v", err)
+	}
+}
+
 func TestUploadPreflightFindRequiresExactCaptureBinding(t *testing.T) {
 	t.Parallel()
 

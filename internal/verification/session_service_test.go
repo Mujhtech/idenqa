@@ -44,7 +44,8 @@ func TestSessionServiceCreateBuildsBoundedMutationAndSignsReplay(t *testing.T) {
 	if repository.createCalls != 1 ||
 		repository.mutation.Idempotency.Operation() != OperationCreateVerification ||
 		repository.mutation.Idempotency.Key() != "attempt-1" ||
-		repository.mutation.CaptureKeyVersion != 1 || repository.mutation.Region != "local" {
+		repository.mutation.CaptureKeyVersion != 1 || repository.mutation.OutcomeKeyVersion != 1 ||
+		repository.mutation.Region != "local" {
 		t.Fatalf("mutation = %+v, calls = %d", repository.mutation, repository.createCalls)
 	}
 	if got := repository.mutation.SessionExpiresAt.Sub(repository.mutation.CreatedAt); got != 24*time.Hour {
@@ -53,8 +54,12 @@ func TestSessionServiceCreateBuildsBoundedMutationAndSignsReplay(t *testing.T) {
 	if got := repository.mutation.CaptureTokenExpiry.Sub(repository.mutation.CreatedAt); got != 30*time.Minute {
 		t.Fatalf("capture-token lifetime = %v", got)
 	}
-	if created.CaptureToken.IsZero() || created.CaptureToken.String() != "[REDACTED]" {
-		t.Fatal("service did not return a redacting display-once token")
+	if got := repository.mutation.OutcomeTokenExpiry.Sub(repository.mutation.SessionExpiresAt); got != 24*time.Hour {
+		t.Fatalf("outcome-token post-expiry lifetime = %v", got)
+	}
+	if created.CaptureToken.IsZero() || created.CaptureToken.String() != "[REDACTED]" ||
+		created.OutcomeToken.IsZero() || created.OutcomeToken.String() != "[REDACTED]" {
+		t.Fatal("service did not return redacting display-once tokens")
 	}
 }
 
@@ -96,8 +101,19 @@ func (repository *sessionServiceRepositoryStub) Create(
 		mutation.CreatedAt,
 		mutation.CaptureTokenExpiry,
 	)
+	if err != nil {
+		return SessionCreation{}, err
+	}
+	outcomeCredential, err := access.NewOutcomeCredential(
+		mutation.OutcomeTokenID,
+		mutation.Idempotency.TenantID(),
+		mutation.SessionID,
+		mutation.OutcomeKeyVersion,
+		mutation.CreatedAt,
+		mutation.OutcomeTokenExpiry,
+	)
 
-	return SessionCreation{Credential: credential}, err
+	return SessionCreation{Credential: credential, OutcomeCredential: outcomeCredential}, err
 }
 
 func (*sessionServiceRepositoryStub) FindSession(context.Context, tenant.Scope, id.Verification) (Session, error) {
@@ -107,6 +123,7 @@ func (*sessionServiceRepositoryStub) FindSession(context.Context, tenant.Scope, 
 type sessionServiceIDGenerator struct {
 	verification id.Verification
 	token        id.CaptureToken
+	outcomeToken id.OutcomeToken
 	event        id.Event
 	decision     id.Decision
 }
@@ -117,6 +134,10 @@ func (generator sessionServiceIDGenerator) NewVerification() (id.Verification, e
 
 func (generator sessionServiceIDGenerator) NewCaptureToken() (id.CaptureToken, error) {
 	return generator.token, nil
+}
+
+func (generator sessionServiceIDGenerator) NewOutcomeToken() (id.OutcomeToken, error) {
+	return generator.outcomeToken, nil
 }
 
 func (generator sessionServiceIDGenerator) NewEvent() (id.Event, error) { return generator.event, nil }
@@ -141,6 +162,10 @@ func newSessionServiceFixture(t *testing.T) (*SessionService, *sessionServiceRep
 	if err != nil {
 		t.Fatalf("NewCaptureToken() error = %v", err)
 	}
+	outcomeTokenID, err := identifiers.NewOutcomeToken()
+	if err != nil {
+		t.Fatalf("NewOutcomeToken() error = %v", err)
+	}
 	eventID, err := identifiers.NewEvent()
 	if err != nil {
 		t.Fatalf("NewEvent() error = %v", err)
@@ -159,17 +184,33 @@ func newSessionServiceFixture(t *testing.T) (*SessionService, *sessionServiceRep
 	if err != nil {
 		t.Fatalf("NewCaptureTokenSigner() error = %v", err)
 	}
+	outcomeKeyring, err := access.NewOutcomeTokenKeyring(1, map[access.OutcomeTokenKeyVersion][]byte{
+		1: bytes.Repeat([]byte{6}, 32),
+	})
+	if err != nil {
+		t.Fatalf("NewOutcomeTokenKeyring() error = %v", err)
+	}
+	outcomeSigner, err := access.NewOutcomeTokenSigner(outcomeKeyring, profileServiceClock{now: now})
+	if err != nil {
+		t.Fatalf("NewOutcomeTokenSigner() error = %v", err)
+	}
 	repository := &sessionServiceRepositoryStub{}
 	service, err := NewSessionService(
 		repository,
-		sessionServiceIDGenerator{verification: verificationID, token: tokenID, event: eventID, decision: decisionID},
+		sessionServiceIDGenerator{
+			verification: verificationID, token: tokenID, outcomeToken: outcomeTokenID,
+			event: eventID, decision: decisionID,
+		},
 		signer,
+		outcomeSigner,
 		profileServiceClock{now: now},
 		SessionLifetimes{
 			VerificationDefault:  24 * time.Hour,
 			VerificationMaximum:  7 * 24 * time.Hour,
 			CaptureTokenDefault:  30 * time.Minute,
 			CaptureTokenMaximum:  2 * time.Hour,
+			OutcomePostDefault:   24 * time.Hour,
+			OutcomePostMaximum:   7 * 24 * time.Hour,
 			IdempotencyRetention: 24 * time.Hour,
 		},
 		"local",

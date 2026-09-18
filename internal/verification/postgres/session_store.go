@@ -16,6 +16,8 @@ import (
 	"github.com/Mujhtech/idenqa/internal/platform/outbox"
 	platformpostgres "github.com/Mujhtech/idenqa/internal/platform/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/postgres/sqlgen"
+	"github.com/Mujhtech/idenqa/internal/policy"
+	policypg "github.com/Mujhtech/idenqa/internal/policy/postgres"
 	"github.com/Mujhtech/idenqa/internal/tenant"
 	"github.com/Mujhtech/idenqa/internal/verification"
 	"github.com/jackc/pgx/v5"
@@ -54,7 +56,7 @@ func (store *SessionStore) Create(
 	}
 
 	var creation verification.SessionCreation
-	err := store.write(ctx, scope, func(ctx context.Context, queries *sqlgen.Queries) error {
+	err := store.write(ctx, scope, func(ctx context.Context, queries *sqlgen.Queries, tx platformpostgres.Transaction) error {
 		reservation, err := idempotencypostgres.Reserve(ctx, queries, mutation.Idempotency)
 		if err != nil {
 			return err
@@ -107,13 +109,30 @@ func (store *SessionStore) Create(
 		if err != nil || credential.ExpiresAt().After(session.ExpiresAt()) {
 			return verification.ErrSessionConflict
 		}
-		creation = verification.SessionCreation{Session: session, Credential: credential}
+		outcomeCredential, err := access.NewOutcomeCredential(
+			mutation.OutcomeTokenID,
+			scope.ID(),
+			session.ID(),
+			mutation.OutcomeKeyVersion,
+			mutation.CreatedAt,
+			mutation.OutcomeTokenExpiry,
+		)
+		if err != nil || !outcomeCredential.ExpiresAt().After(session.ExpiresAt()) {
+			return verification.ErrSessionConflict
+		}
+		creation = verification.SessionCreation{
+			Session: session, Credential: credential, OutcomeCredential: outcomeCredential,
+		}
 		if err := store.insertCreation(ctx, queries, mutation, creation, registry); err != nil {
+			return err
+		}
+		if err := policypg.PinAssuranceWithin(ctx, tx, scope, session.ID().String(), session.PolicyID().String()); err != nil {
 			return err
 		}
 		encodedReplay, err := json.Marshal(sessionReplay{
 			VerificationID: session.ID().String(),
 			CaptureTokenID: credential.ID().String(),
+			OutcomeTokenID: outcomeCredential.ID().String(),
 		})
 		if err != nil {
 			return fmt.Errorf("encode verification idempotency result: %w", err)
@@ -162,6 +181,46 @@ func (store *SessionStore) FindSession(
 	})
 
 	return session, err
+}
+
+// FindCaptureOutcome retrieves the minimum lifecycle and terminal-decision state
+// needed for the subject-facing outcome projection.
+func (store *SessionStore) FindCaptureOutcome(
+	ctx context.Context,
+	scope tenant.Scope,
+	identifier id.Verification,
+) (verification.CaptureOutcomeRecord, error) {
+	if scope.ID().IsZero() || identifier.IsZero() {
+		return verification.CaptureOutcomeRecord{}, verification.ErrSessionNotFound
+	}
+	var outcome verification.CaptureOutcomeRecord
+	err := store.read(ctx, scope, func(ctx context.Context, queries *sqlgen.Queries) error {
+		row, err := queries.FindCaptureOutcome(ctx, sqlgen.FindCaptureOutcomeParams{
+			TenantID: scope.ID().String(),
+			ID:       identifier.String(),
+		})
+		if errors.Is(err, pgx.ErrNoRows) {
+			return verification.ErrSessionNotFound
+		}
+		if err != nil {
+			return fmt.Errorf("find capture outcome: %w", err)
+		}
+		verificationID, err := id.ParseVerification(row.VerificationID)
+		if err != nil {
+			return verification.ErrSessionConflict
+		}
+		outcome = verification.CaptureOutcomeRecord{
+			VerificationID: verificationID,
+			SessionState:   verification.SessionState(row.SessionState),
+			SessionVersion: row.SessionVersion,
+			UpdatedAt:      row.UpdatedAt.Time.UTC(),
+		}
+		if row.DecisionOutcome != nil {
+			outcome.DecisionOutcome = policy.Outcome(*row.DecisionOutcome)
+		}
+		return nil
+	})
+	return outcome, err
 }
 
 // FindCaptureCredential loads the non-secret credential record bound to all
@@ -270,10 +329,52 @@ func (store *SessionStore) FindForCapture(
 	return creation, err
 }
 
+// FindForOutcome performs the narrow pre-authentication lookup using only the
+// signed tenant, token, and verification hints. It does not load capture state.
+func (store *SessionStore) FindForOutcome(
+	ctx context.Context,
+	claims access.OutcomeTokenClaims,
+) (access.OutcomeCredential, error) {
+	if claims.TenantID.IsZero() || claims.TokenID.IsZero() || claims.VerificationID.IsZero() {
+		return access.OutcomeCredential{}, access.ErrInvalidOutcomeToken
+	}
+	var credential access.OutcomeCredential
+	err := store.pool.WithinTransaction(
+		ctx,
+		platformpostgres.TransactionOptions{ReadOnly: true},
+		func(ctx context.Context, tx platformpostgres.Transaction) error {
+			queries := sqlgen.New(tx)
+			if _, err := queries.SetTenantScope(ctx, claims.TenantID.String()); err != nil {
+				return fmt.Errorf("set outcome authentication tenant hint: %w", err)
+			}
+			row, err := queries.FindOutcomeContext(ctx, sqlgen.FindOutcomeContextParams{
+				TenantID:       claims.TenantID.String(),
+				ID:             claims.TokenID.String(),
+				VerificationID: claims.VerificationID.String(),
+			})
+			if errors.Is(err, pgx.ErrNoRows) {
+				return access.ErrInvalidOutcomeToken
+			}
+			if err != nil {
+				return fmt.Errorf("find outcome authentication context: %w", err)
+			}
+			credential, err = restoreOutcomeCredential(sqlgen.IdenqaOutcomeToken{
+				ID: row.TokenID, TenantID: row.TenantID, VerificationID: row.VerificationID,
+				KeyVersion: row.KeyVersion, IssuedAt: row.IssuedAt,
+				ExpiresAt: row.TokenExpiresAt, RevokedAt: row.RevokedAt,
+			})
+
+			return err
+		},
+	)
+
+	return credential, err
+}
+
 func (store *SessionStore) write(
 	ctx context.Context,
 	scope tenant.Scope,
-	work func(context.Context, *sqlgen.Queries) error,
+	work func(context.Context, *sqlgen.Queries, platformpostgres.Transaction) error,
 ) error {
 	return store.pool.WithinTransaction(
 		ctx,
@@ -284,7 +385,7 @@ func (store *SessionStore) write(
 				return fmt.Errorf("set verification session tenant scope: %w", err)
 			}
 
-			return work(ctx, queries)
+			return work(ctx, queries, tx)
 		},
 	)
 }
@@ -353,6 +454,18 @@ func (store *SessionStore) insertCreation(
 		RevokedAt:      optionalTimestamp(credential.RevokedAt()),
 	}); err != nil {
 		return fmt.Errorf("create capture credential: %w", err)
+	}
+	outcomeCredential := creation.OutcomeCredential
+	if err := queries.CreateOutcomeToken(ctx, sqlgen.CreateOutcomeTokenParams{
+		ID:             outcomeCredential.ID().String(),
+		TenantID:       outcomeCredential.TenantID().String(),
+		VerificationID: outcomeCredential.VerificationID().String(),
+		KeyVersion:     int32(outcomeCredential.KeyVersion()),
+		IssuedAt:       timestamp(outcomeCredential.IssuedAt()),
+		ExpiresAt:      timestamp(outcomeCredential.ExpiresAt()),
+		RevokedAt:      optionalTimestamp(outcomeCredential.RevokedAt()),
+	}); err != nil {
+		return fmt.Errorf("create outcome credential: %w", err)
 	}
 	if err := queries.InsertVerificationSessionAudit(ctx, sqlgen.InsertVerificationSessionAuditParams{
 		TenantID:         session.TenantID().String(),
@@ -424,6 +537,16 @@ func (store *SessionStore) restoreReplay(
 	if err != nil {
 		return verification.SessionCreation{}, fmt.Errorf("parse replay capture-token id: %w", err)
 	}
+	// Idempotency rows written before the outcome-credential migration cannot
+	// satisfy the expanded create response without minting authority on replay.
+	// Fail as a conflict instead of silently changing the original result.
+	if references.OutcomeTokenID == "" {
+		return verification.SessionCreation{}, verification.ErrSessionConflict
+	}
+	outcomeTokenID, err := id.ParseOutcomeToken(references.OutcomeTokenID)
+	if err != nil {
+		return verification.SessionCreation{}, fmt.Errorf("parse replay outcome-token id: %w", err)
+	}
 	sessionRow, err := queries.FindVerificationSession(ctx, sqlgen.FindVerificationSessionParams{
 		TenantID: tenantID.String(),
 		ID:       verificationID.String(),
@@ -433,6 +556,11 @@ func (store *SessionStore) restoreReplay(
 	}
 	// The idempotency result deliberately contains no tenant duplication. The
 	// row's tenant is recovered through the transaction's forced RLS scope.
+	// Creation returns its original snapshot; GET returns the current lifecycle.
+	// These three fields are the only mutable fields in the public session view.
+	sessionRow.State = string(verification.SessionStateCollecting)
+	sessionRow.Version = 1
+	sessionRow.UpdatedAt = sessionRow.CreatedAt
 	session, err := store.restoreSession(sessionRow)
 	if err != nil {
 		return verification.SessionCreation{}, err
@@ -449,8 +577,22 @@ func (store *SessionStore) restoreReplay(
 	if err != nil {
 		return verification.SessionCreation{}, err
 	}
+	outcomeCredentialRow, err := queries.FindOutcomeToken(ctx, sqlgen.FindOutcomeTokenParams{
+		TenantID:       session.TenantID().String(),
+		ID:             outcomeTokenID.String(),
+		VerificationID: session.ID().String(),
+	})
+	if err != nil {
+		return verification.SessionCreation{}, fmt.Errorf("find replayed outcome credential: %w", err)
+	}
+	outcomeCredential, err := restoreOutcomeCredential(outcomeCredentialRow)
+	if err != nil {
+		return verification.SessionCreation{}, err
+	}
 
-	return verification.SessionCreation{Session: session, Credential: credential}, nil
+	return verification.SessionCreation{
+		Session: session, Credential: credential, OutcomeCredential: outcomeCredential,
+	}, nil
 }
 
 func (store *SessionStore) restoreLockedProfile(
@@ -587,23 +729,57 @@ func restoreCredential(row sqlgen.IdenqaCaptureToken) (access.CaptureCredential,
 	)
 }
 
+func restoreOutcomeCredential(row sqlgen.IdenqaOutcomeToken) (access.OutcomeCredential, error) {
+	identifier, err := id.ParseOutcomeToken(row.ID)
+	if err != nil {
+		return access.OutcomeCredential{}, fmt.Errorf("parse stored outcome-token id: %w", err)
+	}
+	tenantID, err := id.ParseTenant(row.TenantID)
+	if err != nil {
+		return access.OutcomeCredential{}, fmt.Errorf("parse stored outcome-token tenant id: %w", err)
+	}
+	verificationID, err := id.ParseVerification(row.VerificationID)
+	if err != nil {
+		return access.OutcomeCredential{}, fmt.Errorf("parse stored outcome-token verification id: %w", err)
+	}
+	if row.KeyVersion < 1 || row.KeyVersion > math.MaxUint16 {
+		return access.OutcomeCredential{}, errors.New("verification postgres: outcome-token key version is invalid")
+	}
+
+	return access.RestoreOutcomeCredential(
+		identifier,
+		tenantID,
+		verificationID,
+		access.OutcomeTokenKeyVersion(row.KeyVersion),
+		row.IssuedAt.Time,
+		row.ExpiresAt.Time,
+		timePointer(row.RevokedAt),
+	)
+}
+
 func validSessionMutation(scope tenant.Scope, mutation verification.SessionCreateMutation) bool {
+	return validSessionMutationForOperation(scope, mutation, verification.OperationCreateVerification)
+}
+
+func validSessionMutationForOperation(scope tenant.Scope, mutation verification.SessionCreateMutation, operation string) bool {
 	return !scope.ID().IsZero() && !mutation.SessionID.IsZero() &&
-		!mutation.CaptureTokenID.IsZero() && !mutation.EventID.IsZero() &&
+		!mutation.CaptureTokenID.IsZero() && !mutation.OutcomeTokenID.IsZero() && !mutation.EventID.IsZero() &&
 		!mutation.ProfileID.IsZero() && !mutation.PolicyID.IsZero() && !mutation.DecisionID.IsZero() && !mutation.Actor.IsZero() &&
 		mutation.Region != "" &&
-		mutation.CaptureKeyVersion > 0 && !mutation.CreatedAt.IsZero() &&
+		mutation.CaptureKeyVersion > 0 && mutation.OutcomeKeyVersion > 0 && !mutation.CreatedAt.IsZero() &&
 		mutation.SessionExpiresAt.After(mutation.CreatedAt) &&
 		mutation.CaptureTokenExpiry.After(mutation.CreatedAt) &&
 		!mutation.CaptureTokenExpiry.After(mutation.SessionExpiresAt) &&
+		mutation.OutcomeTokenExpiry.After(mutation.SessionExpiresAt) &&
 		mutation.Idempotency.TenantID().String() == scope.ID().String() &&
 		mutation.Idempotency.Principal().String() == mutation.Actor.String() &&
-		mutation.Idempotency.Operation() == verification.OperationCreateVerification
+		mutation.Idempotency.Operation() == operation
 }
 
 type sessionReplay struct {
 	VerificationID string `json:"verification_id"`
 	CaptureTokenID string `json:"capture_token_id"`
+	OutcomeTokenID string `json:"outcome_token_id"`
 }
 
 type verificationCreatedPayload struct {

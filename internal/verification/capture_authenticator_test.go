@@ -50,6 +50,66 @@ func TestCaptureAuthenticatorCollapsesDurableMismatch(t *testing.T) {
 	}
 }
 
+func TestOutcomeAuthenticatorReadsAfterSessionAndCaptureExpiry(t *testing.T) {
+	t.Parallel()
+
+	_, captureToken, record := newCaptureAuthenticatorFixture(t)
+	outcomeTokenID, err := id.ParseOutcomeToken("otk_01K3P4NQF00000000000000000")
+	if err != nil {
+		t.Fatalf("ParseOutcomeToken() error = %v", err)
+	}
+	credential, err := access.NewOutcomeCredential(
+		outcomeTokenID, record.Session.TenantID(), record.Session.ID(), 1,
+		record.Session.CreatedAt(), record.Session.ExpiresAt().Add(time.Hour),
+	)
+	if err != nil {
+		t.Fatalf("NewOutcomeCredential() error = %v", err)
+	}
+	keyring, err := access.NewOutcomeTokenKeyring(1, map[access.OutcomeTokenKeyVersion][]byte{
+		1: bytes.Repeat([]byte{4}, 32),
+	})
+	if err != nil {
+		t.Fatalf("NewOutcomeTokenKeyring() error = %v", err)
+	}
+	authenticationTime := record.Session.ExpiresAt().Add(10 * time.Minute)
+	signer, err := access.NewOutcomeTokenSigner(keyring, sessionClock{now: authenticationTime})
+	if err != nil {
+		t.Fatalf("NewOutcomeTokenSigner() error = %v", err)
+	}
+	outcomeToken, err := signer.Sign(credential)
+	if err != nil {
+		t.Fatalf("Sign() error = %v", err)
+	}
+	authenticator, err := NewOutcomeAuthenticator(
+		outcomeRepositoryStub{credential: credential}, signer, sessionClock{now: authenticationTime},
+	)
+	if err != nil {
+		t.Fatalf("NewOutcomeAuthenticator() error = %v", err)
+	}
+	context, err := authenticator.Authenticate(t.Context(), outcomeToken.Reveal())
+	if err != nil {
+		t.Fatalf("Authenticate() error = %v", err)
+	}
+	if context.VerificationID().String() != record.Session.ID().String() {
+		t.Fatalf("outcome verification = %q, want %q", context.VerificationID(), record.Session.ID())
+	}
+	if _, err := authenticator.Authenticate(t.Context(), captureToken.Reveal()); !errors.Is(err, access.ErrInvalidOutcomeToken) {
+		t.Fatalf("capture token accepted as outcome token: %v", err)
+	}
+}
+
+type outcomeRepositoryStub struct {
+	credential access.OutcomeCredential
+	err        error
+}
+
+func (repository outcomeRepositoryStub) FindForOutcome(
+	context.Context,
+	access.OutcomeTokenClaims,
+) (access.OutcomeCredential, error) {
+	return repository.credential, repository.err
+}
+
 type captureRepositoryStub struct {
 	record SessionCreation
 	err    error

@@ -417,9 +417,14 @@ func (service *Service) CaptureSnapshot(
 	ctx context.Context,
 	captureContext verification.CaptureContext,
 ) (Snapshot, error) {
-	return service.responses.CaptureSnapshot(
-		ctx, captureContext.TenantScope(), captureContext.Session().ID(),
-	)
+	snapshot, err := service.responses.CaptureSnapshot(ctx, captureContext.TenantScope(), captureContext.Session().ID())
+	if err != nil {
+		return Snapshot{}, err
+	}
+	if snapshot.Response != nil && snapshot.Response.Record().CaptureTokenID != captureContext.TokenID() {
+		snapshot.Response = nil
+	}
+	return snapshot, nil
 }
 
 // Respond appends one capture-principal subject interaction.

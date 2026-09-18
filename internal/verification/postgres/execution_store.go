@@ -7,6 +7,8 @@ import (
 	"math"
 	"time"
 
+	authoritypostgres "github.com/Mujhtech/idenqa/internal/authority/postgres"
+	"github.com/Mujhtech/idenqa/internal/platform/clock"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/platform/outbox"
 	platformpostgres "github.com/Mujhtech/idenqa/internal/platform/postgres"
@@ -25,9 +27,13 @@ const (
 )
 
 // CheckStore persists verification execution state under forced tenant RLS.
-type CheckStore struct{ pool transactionRunner }
+type CheckStore struct {
+	pool  transactionRunner
+	clock clock.Clock
+}
 
-// NewCheckStore constructs the verification execution PostgreSQL adapter.
+// NewCheckStore constructs the persistence primitive. Callers must provide
+// lifecycle and authority validation; runnable workers use NewGuardedCheckStore.
 func NewCheckStore(pool transactionRunner) (*CheckStore, error) {
 	if pool == nil {
 		return nil, errors.New("verification postgres: check pool is required")
@@ -35,18 +41,52 @@ func NewCheckStore(pool transactionRunner) (*CheckStore, error) {
 	return &CheckStore{pool: pool}, nil
 }
 
+// NewGuardedCheckStore rechecks lifecycle and authority before dispatch and
+// inside every consequential check commit.
+func NewGuardedCheckStore(pool transactionRunner, source clock.Clock) (*CheckStore, error) {
+	store, err := NewCheckStore(pool)
+	if err != nil {
+		return nil, err
+	}
+	if source == nil {
+		return nil, errors.New("verification postgres: processing clock is required")
+	}
+	store.clock = source
+	return store, nil
+}
+
 // CreateCheck atomically creates a queued check and its safe progress intent.
 func (store *CheckStore) CreateCheck(ctx context.Context, scope tenant.Scope, check verification.Check, eventID id.Event) error {
+	return store.pool.WithinTransaction(ctx, platformpostgres.TransactionOptions{}, func(ctx context.Context, tx platformpostgres.Transaction) error {
+		return store.CreateCheckWithin(ctx, scope, tx, check, eventID)
+	})
+}
+
+// CreateCheckWithin creates the queued aggregate and its progress intent in
+// the planner's transaction. The planner owns the parent lock and authority
+// validation before creating checks, attempts, tasks, and the processing state.
+func (store *CheckStore) CreateCheckWithin(
+	ctx context.Context,
+	scope tenant.Scope,
+	transaction platformpostgres.Transaction,
+	check verification.Check,
+	eventID id.Event,
+) error {
+	if transaction == nil {
+		return verification.ErrInvalidCheck
+	}
 	if scope.ID().IsZero() || check.Validate() != nil || check.TenantID.String() != scope.ID().String() || eventID.IsZero() ||
 		check.State != verification.CheckQueued || check.Version != 1 || len(check.Attempts()) != 0 {
 		return verification.ErrInvalidCheck
 	}
-	return store.write(ctx, scope, func(ctx context.Context, queries *sqlgen.Queries) error {
-		if err := queries.InsertVerificationCheck(ctx, checkInsertParams(check)); err != nil {
-			return fmt.Errorf("insert verification check: %w", err)
-		}
-		return insertCheckProgress(ctx, queries, check, eventID)
-	})
+	queries := sqlgen.New(transaction)
+	if _, err := queries.SetTenantScope(ctx, scope.ID().String()); err != nil {
+		return fmt.Errorf("set verification check tenant scope: %w", err)
+	}
+	if err := queries.InsertVerificationCheck(ctx, checkInsertParams(check)); err != nil {
+		return fmt.Errorf("insert verification check: %w", err)
+	}
+	return insertCheckProgress(ctx, queries, check, eventID)
 }
 
 // FindCheck restores one complete aggregate inside an exact tenant scope.
@@ -55,6 +95,18 @@ func (store *CheckStore) FindCheck(ctx context.Context, scope tenant.Scope, chec
 		return verification.Check{}, verification.ErrCheckNotFound
 	}
 	var check verification.Check
+	if store.clock != nil {
+		err := store.pool.WithinTransaction(ctx, platformpostgres.TransactionOptions{}, func(ctx context.Context, tx platformpostgres.Transaction) error {
+			var err error
+			check, err = store.FindCheckWithin(ctx, scope, tx, checkID)
+			if err != nil {
+				return err
+			}
+			return authoritypostgres.ValidateProcessingWithin(ctx, tx, scope, check.VerificationID,
+				store.clock.Now().UTC(), store.clock, verification.SessionStateProcessing)
+		})
+		return check, err
+	}
 	err := store.read(ctx, scope, func(ctx context.Context, queries *sqlgen.Queries) error {
 		var err error
 		check, err = loadCheck(ctx, queries, scope.ID(), checkID)
@@ -85,9 +137,9 @@ func (store *CheckStore) FindCheckWithin(
 // reconciliation intent, and safe outbox intent in one transaction.
 func (store *CheckStore) SaveCheck(ctx context.Context, scope tenant.Scope, commit verification.CheckCommit) (bool, error) {
 	var duplicate bool
-	err := store.write(ctx, scope, func(ctx context.Context, queries *sqlgen.Queries) error {
+	err := store.pool.WithinTransaction(ctx, platformpostgres.TransactionOptions{}, func(ctx context.Context, tx platformpostgres.Transaction) error {
 		var err error
-		duplicate, err = saveCheck(ctx, queries, scope, commit)
+		duplicate, err = store.SaveCheckWithin(ctx, scope, tx, commit)
 		return err
 	})
 	return duplicate, err
@@ -108,7 +160,37 @@ func (store *CheckStore) SaveCheckWithin(
 	if _, err := queries.SetTenantScope(ctx, scope.ID().String()); err != nil {
 		return false, fmt.Errorf("set verification check tenant scope: %w", err)
 	}
+	if store.clock != nil {
+		// An already committed immutable receipt remains replayable after the
+		// parent has completed or authority has changed. No effects are added.
+		duplicate, err := findResultReplay(ctx, transaction, scope, commit)
+		if err != nil || duplicate {
+			return duplicate, err
+		}
+		if err := authoritypostgres.ValidateProcessingWithin(ctx, transaction, scope, commit.Check.VerificationID,
+			commit.Check.UpdatedAt, store.clock, verification.SessionStateProcessing); err != nil {
+			return false, err
+		}
+	}
 	return saveCheck(ctx, queries, scope, commit)
+}
+
+func findResultReplay(ctx context.Context, transaction platformpostgres.Transaction, scope tenant.Scope, commit verification.CheckCommit) (bool, error) {
+	if commit.Receipt == nil {
+		return false, nil
+	}
+	if commit.Check.Validate() != nil || commit.Check.TenantID != scope.ID() || commit.Receipt.Validate() != nil {
+		return false, verification.ErrInvalidCheck
+	}
+	var exists bool
+	if err := transaction.QueryRow(ctx, `SELECT EXISTS (
+SELECT 1 FROM idenqa.verification_result_inbox
+WHERE tenant_id = $1 AND verification_id = $2 AND check_id = $3 AND attempt_id = $4 AND result_digest = $5
+)`, scope.ID().String(), commit.Check.VerificationID.String(), commit.Check.ID.String(),
+		commit.Receipt.AttemptID.String(), commit.Receipt.Fingerprint).Scan(&exists); err != nil {
+		return false, fmt.Errorf("find committed verification result receipt: %w", err)
+	}
+	return exists, nil
 }
 
 func saveCheck(

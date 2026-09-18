@@ -208,3 +208,29 @@ func modelAt(executor modelv1.Executor, now time.Time) modelv1.Executor {
 	}
 	return executor
 }
+
+func TestAsyncDeadlineCommitsOperationalTimeoutWithoutCallingProvider(t *testing.T) {
+	t.Parallel()
+	check, attempt, now := taskRunningCheck(t, verification.RunnerProvider, 41)
+	store := &checkStore{check: check}
+	// The fixed attempt is already expired. An empty synthetic executor would
+	// fail if called; timeout completion must require no external execution.
+	handler := executeHandler(t, store, synthetic.Provider{}, synthetic.Model{})
+	taskID, _ := id.ParseTask("tsk_" + taskTestULID)
+	scope, _ := tenant.NewScope(check.TenantID)
+	intent, err := NewAsyncExecuteIntent(fixedTaskIDs{taskID}, scope, ExecutePayload{CheckID: check.ID, AttemptID: attempt.ID}, IntentMetadata{ScheduledAt: now, Deadline: attempt.Deadline})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !intent.Deadline().After(attempt.Deadline) {
+		t.Fatal("no time budget for timeout commit")
+	}
+	work, prepared := handler.Prepare(t.Context(), platformtask.Delivery{Intent: intent, Attempt: 2, Fence: 99})
+	if prepared.Outcome != platformtask.OutcomeComplete || work == nil {
+		t.Fatalf("timeout preparation: %+v", prepared)
+	}
+	result := work(t.Context(), nil)
+	if result.Outcome != platformtask.OutcomeComplete || store.check.State != verification.CheckTimedOut || len(store.check.Attempts()[0].Observations) != 0 {
+		t.Fatalf("timeout result: %+v state=%v", result, store.check.State)
+	}
+}

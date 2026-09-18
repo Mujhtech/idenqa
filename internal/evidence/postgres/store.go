@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/Mujhtech/idenqa/internal/evidence"
+	"github.com/Mujhtech/idenqa/internal/platform/clock"
 	platformcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/platform/kms"
@@ -33,6 +34,7 @@ type transactionRunner interface {
 type Store struct {
 	pool    transactionRunner
 	catalog evidence.Catalog
+	clock   clock.Clock
 }
 
 var _ evidence.IntegrityQuarantiner = (*Store)(nil)
@@ -56,11 +58,16 @@ func (store *Store) QuarantineIntegrity(
 
 // New constructs an evidence PostgreSQL adapter.
 func New(pool transactionRunner, catalog evidence.Catalog) (*Store, error) {
-	if pool == nil || catalog.IsZero() {
+	return NewWithClock(pool, catalog, clock.System{})
+}
+
+// NewWithClock constructs an adapter with an explicit commit-time observation clock.
+func NewWithClock(pool transactionRunner, catalog evidence.Catalog, source clock.Clock) (*Store, error) {
+	if pool == nil || catalog.IsZero() || source == nil {
 		return nil, errors.New("evidence postgres: pool and registry catalog are required")
 	}
 
-	return &Store{pool: pool, catalog: catalog}, nil
+	return &Store{pool: pool, catalog: catalog, clock: source}, nil
 }
 
 // Create inserts protected evidence metadata and its first audit record atomically.

@@ -8,6 +8,7 @@ import (
 	"math"
 	"time"
 
+	authoritypostgres "github.com/Mujhtech/idenqa/internal/authority/postgres"
 	"github.com/Mujhtech/idenqa/internal/evidence"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/platform/idempotency"
@@ -68,6 +69,9 @@ func (store *Store) CreateUpload(
 			return err
 		}
 
+		if err := store.lockUploadSession(ctx, queries, scope, record.VerificationID, record.CaptureTokenID); err != nil {
+			return err
+		}
 		parameters, err := createUploadParameters(record)
 		if err != nil {
 			return err
@@ -187,7 +191,7 @@ func (store *Store) ClaimUploadAttempt(
 	expectedVersion int64,
 	now time.Time,
 ) (evidence.Upload, error) {
-	return store.transitionUpload(ctx, scope, principal, identifier, func(upload evidence.Upload) (evidence.Upload, string, string, error) {
+	return store.transitionUpload(ctx, scope, principal, identifier, true, func(upload evidence.Upload) (evidence.Upload, string, string, error) {
 		transitioned, err := upload.ClaimAttempt(expectedVersion, now)
 		return transitioned, "claim", "", err
 	})
@@ -203,7 +207,7 @@ func (store *Store) FailUploadAttempt(
 	attempt uint32,
 	now time.Time,
 ) (evidence.Upload, error) {
-	return store.transitionUpload(ctx, scope, principal, identifier, func(upload evidence.Upload) (evidence.Upload, string, string, error) {
+	return store.transitionUpload(ctx, scope, principal, identifier, false, func(upload evidence.Upload) (evidence.Upload, string, string, error) {
 		transitioned, err := upload.FailAttempt(expectedVersion, attempt, now)
 		if err != nil {
 			return evidence.Upload{}, "", "", err
@@ -227,7 +231,7 @@ func (store *Store) RejectUploadAttempt(
 	reason string,
 	now time.Time,
 ) (evidence.Upload, error) {
-	return store.transitionUpload(ctx, scope, principal, identifier, func(upload evidence.Upload) (evidence.Upload, string, string, error) {
+	return store.transitionUpload(ctx, scope, principal, identifier, false, func(upload evidence.Upload) (evidence.Upload, string, string, error) {
 		transitioned, err := upload.Reject(expectedVersion, attempt, reason, now)
 		return transitioned, "reject", reason, err
 	})
@@ -258,6 +262,15 @@ func (store *Store) AcceptUpload(
 
 	var accepted evidence.Upload
 	err = store.write(ctx, scope, func(ctx context.Context, queries *sqlgen.Queries) error {
+		// Lock the parent before any upload row or progress read. At READ COMMITTED,
+		// the subsequent statements observe the preceding acceptance's commit.
+		if _, err := queries.LockVerificationForUpload(ctx, sqlgen.LockVerificationForUploadParams{
+			TenantID: scope.ID().String(), ID: record.VerificationID.String(),
+		}); errors.Is(err, pgx.ErrNoRows) {
+			return evidence.ErrUploadNotFound
+		} else if err != nil {
+			return fmt.Errorf("lock accepting verification session: %w", err)
+		}
 		row, err := queries.LockEvidenceUploadIntent(ctx, sqlgen.LockEvidenceUploadIntentParams{
 			TenantID: scope.ID().String(), ID: mutation.UploadID.String(),
 		})
@@ -271,8 +284,14 @@ func (store *Store) AcceptUpload(
 		if err != nil {
 			return err
 		}
-		if current.Record().CaptureTokenID != mutation.CaptureTokenID {
+		if current.Record().CaptureTokenID != mutation.CaptureTokenID ||
+			current.Record().VerificationID != record.VerificationID {
 			return evidence.ErrUploadNotFound
+		}
+		if err := authoritypostgres.ValidateUploadAcceptanceWithin(
+			ctx, queries, scope, current.Record(), mutation.OccurredAt, store.clock,
+		); err != nil {
+			return err
 		}
 		accepted, err = current.Accept(
 			mutation.ExpectedVersion,
@@ -503,6 +522,7 @@ func (store *Store) transitionUpload(
 	scope tenant.Scope,
 	principal id.CaptureToken,
 	identifier id.Upload,
+	starting bool,
 	transition uploadTransition,
 ) (evidence.Upload, error) {
 	if scope.ID().IsZero() || principal.IsZero() || identifier.IsZero() || transition == nil {
@@ -511,6 +531,25 @@ func (store *Store) transitionUpload(
 
 	var result evidence.Upload
 	err := store.write(ctx, scope, func(ctx context.Context, queries *sqlgen.Queries) error {
+		if starting {
+			reference, err := queries.FindEvidenceUploadIntent(ctx, sqlgen.FindEvidenceUploadIntentParams{TenantID: scope.ID().String(), ID: identifier.String()})
+			if errors.Is(err, pgx.ErrNoRows) {
+				return evidence.ErrUploadNotFound
+			}
+			if err != nil {
+				return err
+			}
+			if reference.CaptureTokenID != principal.String() {
+				return evidence.ErrUploadNotFound
+			}
+			verificationID, err := id.ParseVerification(reference.VerificationID)
+			if err != nil {
+				return err
+			}
+			if err := store.lockUploadSession(ctx, queries, scope, verificationID, principal); err != nil {
+				return err
+			}
+		}
 		row, err := queries.LockEvidenceUploadIntent(ctx, sqlgen.LockEvidenceUploadIntentParams{
 			TenantID: scope.ID().String(), ID: identifier.String(),
 		})
@@ -731,4 +770,40 @@ func (store *Store) restoreUpload(row sqlgen.IdenqaEvidenceUploadIntent) (eviden
 
 type uploadReplay struct {
 	UploadID string `json:"upload_id"`
+}
+
+// lockUploadSession orders parent, token, then upload locks and observes live
+// deadlines after waiting. Cleanup transitions intentionally do not use this gate.
+func (store *Store) lockUploadSession(ctx context.Context, queries *sqlgen.Queries, scope tenant.Scope, verificationID id.Verification, principal id.CaptureToken) error {
+	session, err := queries.LockVerificationForUpload(ctx, sqlgen.LockVerificationForUploadParams{TenantID: scope.ID().String(), ID: verificationID.String()})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return evidence.ErrUploadNotFound
+	}
+	if err != nil {
+		return fmt.Errorf("lock upload session: %w", err)
+	}
+	token, err := queries.LockCaptureTokenForUpload(ctx, sqlgen.LockCaptureTokenForUploadParams{TenantID: scope.ID().String(), ID: principal.String(), VerificationID: verificationID.String()})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return evidence.ErrUploadNotFound
+	}
+	if err != nil {
+		return fmt.Errorf("lock upload credential: %w", err)
+	}
+	now := store.clock.Now().UTC()
+	if session.State != string(verification.SessionStateCollecting) || !session.ExpiresAt.Valid || !now.Before(session.ExpiresAt.Time) || token.RevokedAt.Valid || !token.ExpiresAt.Valid || !now.Before(token.ExpiresAt.Time) {
+		return evidence.ErrUploadConflict
+	}
+	return nil
+}
+
+// AllowsRecoveredUpload requires an immutable retained binding and an unrevoked replacement credential.
+func (store *Store) AllowsRecoveredUpload(ctx context.Context, scope tenant.Scope, token id.CaptureToken, upload id.Upload) (bool, error) {
+	var allowed bool
+	err := store.pool.WithinTransaction(ctx, platformpostgres.TransactionOptions{ReadOnly: true}, func(ctx context.Context, tx platformpostgres.Transaction) error {
+		if _, err := sqlgen.New(tx).SetTenantScope(ctx, scope.ID().String()); err != nil {
+			return err
+		}
+		return tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM idenqa.capture_recovery_uploads r JOIN idenqa.capture_tokens t ON t.tenant_id=r.tenant_id AND t.id=r.new_token_id JOIN idenqa.evidence_upload_intents u ON u.tenant_id=r.tenant_id AND u.id=r.upload_id AND u.verification_id=t.verification_id WHERE r.tenant_id=$1 AND r.new_token_id=$2 AND r.upload_id=$3 AND r.disposition='retained' AND t.revoked_at IS NULL AND u.state='accepted')`, scope.ID().String(), token.String(), upload.String()).Scan(&allowed)
+	})
+	return allowed, err
 }

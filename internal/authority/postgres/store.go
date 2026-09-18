@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/Mujhtech/idenqa/internal/authority"
+	"github.com/Mujhtech/idenqa/internal/platform/clock"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/platform/idempotency"
 	idempotencypostgres "github.com/Mujhtech/idenqa/internal/platform/idempotency/postgres"
@@ -28,14 +29,20 @@ type transactionRunner interface {
 }
 
 // Store implements forced-RLS notice, authority, and response persistence.
-type Store struct{ pool transactionRunner }
+type Store struct {
+	pool  transactionRunner
+	clock clock.Clock
+}
 
 // New constructs the authority PostgreSQL adapter.
-func New(pool transactionRunner) (*Store, error) {
-	if pool == nil {
+func New(pool transactionRunner) (*Store, error) { return NewWithClock(pool, clock.System{}) }
+
+// NewWithClock supplies a deterministic clock for live response-credential checks.
+func NewWithClock(pool transactionRunner, source clock.Clock) (*Store, error) {
+	if pool == nil || source == nil {
 		return nil, errors.New("authority postgres: transaction runner is required")
 	}
-	return &Store{pool: pool}, nil
+	return &Store{pool: pool, clock: source}, nil
 }
 
 // CreateNotice atomically reserves idempotency and appends the notice, audit, and outbox intent.
@@ -148,7 +155,7 @@ func (store *Store) Declare(ctx context.Context, scope tenant.Scope, mutation au
 		if err != nil {
 			return fmt.Errorf("lock verification for authority: %w", err)
 		}
-		if !locked.ExpiresAt.Valid || record.ExpiresAt.After(locked.ExpiresAt.Time) ||
+		if locked.State != "collecting" || !locked.ExpiresAt.Valid || record.ExpiresAt.After(locked.ExpiresAt.Time) ||
 			!requirementsMatch(locked.Requirements, record.RequirementPurposes, record.EvidenceTypes) {
 			return authority.ErrConflict
 		}
@@ -276,6 +283,9 @@ func (store *Store) Transition(ctx context.Context, scope tenant.Scope, mutation
 			result, err = restoreAuthority(row)
 			return err
 		}
+		if err := lockAuthoritySession(ctx, queries, scope, record.VerificationID, record.ID); err != nil {
+			return err
+		}
 		row, err := queries.TransitionProcessingAuthority(ctx, sqlgen.TransitionProcessingAuthorityParams{
 			TenantID: record.TenantID.String(), ID: record.ID.String(), Version: mutation.ExpectedVersion,
 			State: string(record.State), Version_2: record.Version, UpdatedAt: timestamp(record.UpdatedAt),
@@ -344,6 +354,20 @@ func (store *Store) AppendResponse(ctx context.Context, scope tenant.Scope, muta
 			}
 			result, err = restoreResponse(row)
 			return err
+		}
+		if err := lockAuthoritySession(ctx, queries, scope, record.VerificationID, record.AuthorityID); err != nil {
+			return err
+		}
+		credential, err := queries.FindCaptureToken(ctx, sqlgen.FindCaptureTokenParams{TenantID: scope.ID().String(), ID: record.CaptureTokenID.String(), VerificationID: record.VerificationID.String()})
+		if errors.Is(err, pgx.ErrNoRows) {
+			return authority.ErrProcessingNotPermitted
+		}
+		if err != nil {
+			return err
+		}
+		now := store.clock.Now().UTC()
+		if credential.RevokedAt.Valid || credential.IssuedAt.Time.After(now) || !credential.ExpiresAt.Time.After(now) || record.RecordedAt.Before(credential.IssuedAt.Time) || !record.RecordedAt.Before(credential.ExpiresAt.Time) {
+			return authority.ErrProcessingNotPermitted
 		}
 		current, err := queries.FindProcessingAuthority(ctx, sqlgen.FindProcessingAuthorityParams{TenantID: scope.ID().String(), ID: record.AuthorityID.String()})
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -427,6 +451,14 @@ func (store *Store) CaptureSnapshot(ctx context.Context, scope tenant.Scope, ver
 		if err != nil {
 			return err
 		}
+		latestToken, err := queries.FindLatestCaptureRecoveryToken(ctx, sqlgen.FindLatestCaptureRecoveryTokenParams{TenantID: scope.ID().String(), VerificationID: verificationID.String()})
+		if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+			return err
+		}
+		if err == nil && latestToken != response.Record().CaptureTokenID.String() {
+			return nil
+		}
+
 		result.Response = &response
 		return nil
 	})

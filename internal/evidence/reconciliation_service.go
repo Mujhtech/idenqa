@@ -40,8 +40,14 @@ func NewReconciliationService(
 	}
 
 	return &ReconciliationService{
-		queue: queue, uploads: uploads, assets: assets, objects: objects, clock: source,
-		claimTimeout: claimTimeout, retryDelay: retryDelay, deleteTimeout: deleteTimeout,
+		queue:         queue,
+		uploads:       uploads,
+		assets:        assets,
+		objects:       objects,
+		clock:         source,
+		claimTimeout:  claimTimeout,
+		retryDelay:    retryDelay,
+		deleteTimeout: deleteTimeout,
 	}, nil
 }
 
@@ -53,7 +59,7 @@ func (service *ReconciliationService) ReconcileNext(
 	if service == nil || ctx == nil || scope.ID().IsZero() {
 		return "", errors.New("evidence: reconciliation request is invalid")
 	}
-	now := service.clock.Now().UTC().Truncate(time.Second)
+	now := service.clock.Now().UTC().Truncate(time.Microsecond)
 	claimed, err := service.queue.ClaimObjectReconciliation(ctx, scope, now, service.claimTimeout)
 	if err != nil {
 		return "", err
@@ -62,7 +68,7 @@ func (service *ReconciliationService) ReconcileNext(
 	if err != nil {
 		return "", service.retry(ctx, scope, claimed, err)
 	}
-	completedAt := service.clock.Now().UTC().Truncate(time.Second)
+	completedAt := service.clock.Now().UTC().Truncate(time.Microsecond)
 	if err := service.queue.CompleteObjectReconciliation(ctx, scope, claimed, state, completedAt); err != nil {
 		return "", fmt.Errorf("complete evidence object reconciliation: %w", err)
 	}
@@ -117,7 +123,7 @@ func (service *ReconciliationService) retry(
 ) error {
 	retryContext, cancel := context.WithTimeout(context.WithoutCancel(ctx), service.deleteTimeout)
 	defer cancel()
-	now := service.clock.Now().UTC().Truncate(time.Second)
+	now := service.clock.Now().UTC().Truncate(time.Microsecond)
 	if err := service.queue.RetryObjectReconciliation(
 		retryContext, scope, claimed, now, service.retryDelay,
 	); err != nil {

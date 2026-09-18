@@ -74,6 +74,7 @@ func (prepared PreparedEvidence) ReconciliationError(cause error) error {
 // ProtectionInput is transient application input for one already-authorised
 // evidence artefact. Plaintext is streamed and is never retained in the asset.
 type ProtectionInput struct {
+	Registry          Reference
 	ID                id.Evidence
 	SubjectID         id.Subject
 	VerificationID    id.Verification
@@ -111,6 +112,7 @@ type Protector struct {
 	}
 	repository     AssetCreator
 	registry       Registry
+	catalog        Catalog
 	cleanupTimeout time.Duration
 }
 
@@ -165,14 +167,29 @@ func (protector *Protector) Prepare(
 	if err := validateProtectionInput(ctx, scope, input); err != nil {
 		return PreparedEvidence{}, err
 	}
+	registry := protector.registry
+	if input.Registry.SchemaVersion != 0 && input.Registry != registry.Reference() {
+		var err error
+		registry, err = protector.catalog.Resolve(input.Registry)
+		if err != nil {
+			return PreparedEvidence{}, err
+		}
+	}
 	record := Record{
-		ID: input.ID, TenantID: scope.ID(), SubjectID: input.SubjectID,
-		VerificationID: input.VerificationID, RequirementKey: input.RequirementKey,
-		EvidenceType: input.EvidenceType, Artefact: input.Artefact,
-		AcquisitionMethod: input.AcquisitionMethod, Assurances: slices.Clone(input.Assurances),
-		Registry: protector.registry.Reference(), Region: input.Region,
-		RetentionClass: input.RetentionClass, ContentRevision: input.ContentRevision,
-		CreatedAt: input.CreatedAt.UTC(),
+		ID:                input.ID,
+		TenantID:          scope.ID(),
+		SubjectID:         input.SubjectID,
+		VerificationID:    input.VerificationID,
+		RequirementKey:    input.RequirementKey,
+		EvidenceType:      input.EvidenceType,
+		Artefact:          input.Artefact,
+		AcquisitionMethod: input.AcquisitionMethod,
+		Assurances:        slices.Clone(input.Assurances),
+		Registry:          registry.Reference(),
+		Region:            input.Region,
+		RetentionClass:    input.RetentionClass,
+		ContentRevision:   input.ContentRevision,
+		CreatedAt:         input.CreatedAt.UTC(),
 	}
 	authenticatedContext, err := AuthenticatedContext(record)
 	if err != nil {
@@ -208,7 +225,7 @@ func (protector *Protector) Prepare(
 		PlaintextDigest: "sha256:" + hex.EncodeToString(plaintextDigest.Sum(nil)),
 		MediaType:       input.MediaType,
 	}
-	asset, err := NewAvailable(record, protector.registry)
+	asset, err := NewAvailable(record, registry)
 	if err != nil {
 		return PreparedEvidence{}, protector.compensate(ctx, object, fmt.Errorf("validate protected evidence: %w", err))
 	}
@@ -274,4 +291,11 @@ func protectionObjectKey(record Record) (objectstore.Key, error) {
 		"content",
 		strconv.FormatUint(uint64(record.ContentRevision), 10),
 	))
+}
+
+// WithCatalog permits exact pinned revisions beyond the default registry.
+func (protector *Protector) WithCatalog(c Catalog) *Protector {
+	result := *protector
+	result.catalog = c
+	return &result
 }

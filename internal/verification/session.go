@@ -35,6 +35,7 @@ const (
 type SessionCreateMutation struct {
 	SessionID          id.Verification
 	CaptureTokenID     id.CaptureToken
+	OutcomeTokenID     id.OutcomeToken
 	EventID            id.Event
 	ProfileID          id.Profile
 	PolicyID           id.Policy
@@ -42,17 +43,20 @@ type SessionCreateMutation struct {
 	Region             string
 	Actor              id.APIKey
 	CaptureKeyVersion  access.CaptureTokenKeyVersion
+	OutcomeKeyVersion  access.OutcomeTokenKeyVersion
 	CreatedAt          time.Time
 	SessionExpiresAt   time.Time
 	CaptureTokenExpiry time.Time
+	OutcomeTokenExpiry time.Time
 	Idempotency        idempotency.Request
 }
 
 // SessionCreation is the safe reconstructable result of session creation. It
 // contains the non-secret credential record, never the signed bearer token.
 type SessionCreation struct {
-	Session    Session
-	Credential access.CaptureCredential
+	Session           Session
+	Credential        access.CaptureCredential
+	OutcomeCredential access.OutcomeCredential
 }
 
 // Session is a tenant-owned verification aggregate with an immutable copy of
@@ -148,7 +152,7 @@ func RestoreSession(
 	expiresAt = expiresAt.UTC()
 	isIdentityInvalid := identifier.IsZero() || tenantID.IsZero() || profileID.IsZero() || policyID.IsZero() ||
 		profileRevision == 0 || profileDigest == ""
-	isLifecycleInvalid := state != SessionStateCollecting || version < 1 || !validRegion(region)
+	isLifecycleInvalid := !state.Valid() || version < 1 || !validRegion(region)
 	isTimeInvalid := createdAt.IsZero() || updatedAt.Before(createdAt) || !expiresAt.After(createdAt)
 	if isIdentityInvalid || isLifecycleInvalid || isTimeInvalid {
 		return Session{}, errors.New("verification: stored session is invalid")

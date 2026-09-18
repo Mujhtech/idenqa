@@ -59,6 +59,18 @@ func (authenticator *CaptureAuthenticator) Authenticate(
 	ctx context.Context,
 	encoded string,
 ) (CaptureContext, error) {
+	return authenticator.authenticate(ctx, encoded, false)
+}
+
+// CancellationAuthenticator restricts its broader session authentication to the cancellation route.
+type CancellationAuthenticator struct{ Authenticator *CaptureAuthenticator }
+
+// Authenticate validates the live credential without granting capture on a stopped session.
+func (authenticator CancellationAuthenticator) Authenticate(ctx context.Context, encoded string) (CaptureContext, error) {
+	return authenticator.Authenticator.authenticate(ctx, encoded, true)
+}
+
+func (authenticator *CaptureAuthenticator) authenticate(ctx context.Context, encoded string, allowStopped bool) (CaptureContext, error) {
 	if authenticator == nil {
 		return CaptureContext{}, errors.New("verification: capture authenticator is not initialised")
 	}
@@ -85,7 +97,7 @@ func (authenticator *CaptureAuthenticator) Authenticate(
 		!credential.IsUsableAt(now) ||
 		session.ID().String() != claims.VerificationID.String() ||
 		session.TenantID().String() != claims.TenantID.String() ||
-		!session.AcceptsCaptureAt(now) {
+		(!allowStopped && !session.AcceptsCaptureAt(now)) {
 		return CaptureContext{}, access.ErrInvalidCaptureToken
 	}
 	scope, err := tenant.NewScope(claims.TenantID)

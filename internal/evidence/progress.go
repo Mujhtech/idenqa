@@ -39,6 +39,11 @@ type AcceptedUploadLister interface {
 	) ([]Upload, error)
 }
 
+// RecoveredUploadAuthorizer verifies explicit retained-evidence lineage without rewriting provenance.
+type RecoveredUploadAuthorizer interface {
+	AllowsRecoveredUpload(context.Context, tenant.Scope, id.CaptureToken, id.Upload) (bool, error)
+}
+
 // ProgressReader returns only accepted uploads for an exact authenticated
 // capture principal.
 type ProgressReader struct{ uploads AcceptedUploadLister }
@@ -80,9 +85,21 @@ func (reader *ProgressReader) Find(
 	for index, upload := range uploads {
 		record := upload.Record()
 		if record.State != UploadStateAccepted || record.TenantID != principal.Scope.ID() ||
-			record.CaptureTokenID != principal.CaptureTokenID ||
 			record.VerificationID != principal.VerificationID {
 			return CaptureProgress{}, errors.New("evidence: capture progress binding is invalid")
+		}
+		if record.CaptureTokenID != principal.CaptureTokenID {
+			recovery, ok := reader.uploads.(RecoveredUploadAuthorizer)
+			if !ok {
+				return CaptureProgress{}, ErrUploadNotFound
+			}
+			allowed, err := recovery.AllowsRecoveredUpload(ctx, principal.Scope, principal.CaptureTokenID, record.ID)
+			if err != nil {
+				return CaptureProgress{}, err
+			}
+			if !allowed {
+				return CaptureProgress{}, ErrUploadNotFound
+			}
 		}
 		if _, exists := seenUploads[record.ID]; exists {
 			return CaptureProgress{}, errors.New("evidence: capture progress repeats an upload")

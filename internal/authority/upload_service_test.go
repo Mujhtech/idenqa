@@ -51,6 +51,22 @@ func TestUploadServiceIssueResolvesRequirementPolicyAndAuthority(t *testing.T) {
 	}
 }
 
+func TestUploadServiceIssueAcceptsSessionCreatedEarlierInCurrentSecond(t *testing.T) {
+	t.Parallel()
+
+	workflow := newUploadWorkflowWithTiming(
+		t,
+		uploadProfileRequirement(),
+		900*time.Microsecond,
+		100*time.Microsecond,
+	)
+	if _, err := workflow.service.Issue(
+		context.Background(), workflow.captureContext, "same-second-session", workflow.request,
+	); err != nil {
+		t.Fatalf("Issue() error = %v", err)
+	}
+}
+
 func TestUploadServiceIssueFailsClosed(t *testing.T) {
 	t.Parallel()
 
@@ -86,6 +102,19 @@ func TestUploadServiceIssueFailsClosed(t *testing.T) {
 				workflow.request.Region = "idenqa.region.other"
 			},
 			want: authority.ErrProcessingNotPermitted,
+		},
+		{
+			name: "response belongs to another capture credential",
+			change: func(t *testing.T, workflow *uploadWorkflow) {
+				record := workflow.repository.snapshot.Response.Record()
+				record.CaptureTokenID, _ = id.ParseCaptureToken("ctk_01ARZ3NDEKTSV4RRFFQ69G5FC1")
+				response, err := authority.NewResponse(record)
+				if err != nil {
+					t.Fatal(err)
+				}
+				workflow.repository.snapshot.Response = &response
+			},
+			want: authority.ErrSubjectResponseRequired,
 		},
 		{
 			name: "missing subject response",
@@ -232,8 +261,18 @@ func (repository captureUploadRepository) FindForCapture(
 }
 
 func newUploadWorkflow(t *testing.T, requirement verification.Requirement) uploadWorkflow {
+	return newUploadWorkflowWithTiming(t, requirement, 0, -time.Minute)
+}
+
+func newUploadWorkflowWithTiming(
+	t *testing.T,
+	requirement verification.Requirement,
+	clockOffset time.Duration,
+	sessionCreatedOffset time.Duration,
+) uploadWorkflow {
 	t.Helper()
 	fixture := newFixture(t, false)
+	serviceNow := fixture.now.Add(clockOffset)
 	registry, err := evidence.BuiltInRegistry()
 	if err != nil {
 		t.Fatalf("BuiltInRegistry() error = %v", err)
@@ -253,7 +292,7 @@ func newUploadWorkflow(t *testing.T, requirement verification.Requirement) uploa
 		verification.SessionStateCollecting, 1, profileID, 1, digest, profile,
 		"local",
 		policyID,
-		fixture.now.Add(-time.Minute), fixture.now.Add(-time.Minute), fixture.now.Add(time.Hour), registry,
+		fixture.now.Add(sessionCreatedOffset), fixture.now.Add(sessionCreatedOffset), fixture.now.Add(time.Hour), registry,
 	)
 	if err != nil {
 		t.Fatalf("RestoreSession() error = %v", err)
@@ -282,7 +321,7 @@ func newUploadWorkflow(t *testing.T, requirement verification.Requirement) uploa
 	authenticator, err := verification.NewCaptureAuthenticator(
 		captureUploadRepository{creation: verification.SessionCreation{
 			Session: session, Credential: credential,
-		}}, signer, authorityClock{now: fixture.now},
+		}}, signer, authorityClock{now: serviceNow},
 	)
 	if err != nil {
 		t.Fatalf("NewCaptureAuthenticator() error = %v", err)
@@ -305,7 +344,7 @@ func newUploadWorkflow(t *testing.T, requirement verification.Requirement) uploa
 		Authority: fixture.authority, Notice: fixture.notice, Response: fixture.response,
 	}}
 	service, err := authority.NewUploadService(
-		repository, repository, identifiers, authorityClock{now: fixture.now},
+		repository, repository, identifiers, authorityClock{now: serviceNow},
 		catalog, evidence.DefaultUploadPolicy(), 24*time.Hour,
 	)
 	if err != nil {
@@ -359,4 +398,28 @@ func mustProfile(t *testing.T, value string) id.Profile {
 	}
 
 	return identifier
+}
+
+func TestCaptureSnapshotRequiresResponseFromCurrentCredential(t *testing.T) {
+	t.Parallel()
+	workflow := newUploadWorkflow(t, uploadProfileRequirement())
+	record := workflow.repository.snapshot.Response.Record()
+	record.CaptureTokenID, _ = id.ParseCaptureToken("ctk_01ARZ3NDEKTSV4RRFFQ69G5FC1")
+	response, err := authority.NewResponse(record)
+	if err != nil {
+		t.Fatal(err)
+	}
+	repository := &authorityServiceStub{snapshot: workflow.repository.snapshot, session: workflow.captureContext.Session()}
+	repository.snapshot.Response = &response
+	service, err := authority.NewService(repository, repository, repository, repository, repository, authorityClock{now: workflow.fixture.now}, time.Hour)
+	if err != nil {
+		t.Fatal(err)
+	}
+	snapshot, err := service.CaptureSnapshot(t.Context(), workflow.captureContext)
+	if err != nil || snapshot.Response != nil {
+		t.Fatal("old consent surfaced as current", err)
+	}
+	if repository.snapshot.Response == nil {
+		t.Fatal("historical response mutated")
+	}
 }

@@ -51,6 +51,38 @@ func TestUploadAcceptanceServiceAcceptsOnlyAfterLiveAuthorityEvaluation(t *testi
 	}
 }
 
+func TestUploadAcceptanceServicePreservesCurrentSecondOrdering(t *testing.T) {
+	t.Parallel()
+
+	workflow := newUploadAcceptanceWorkflow(t)
+	now := workflow.now.Add(900 * time.Microsecond)
+	service, err := authority.NewUploadAcceptanceService(
+		workflow.authorities,
+		workflow.preflight,
+		workflow.stager,
+		workflow.reconciler,
+		workflow.failures,
+		workflow.committer,
+		workflow.identifiers,
+		authorityClock{now: now},
+	)
+	if err != nil {
+		t.Fatalf("NewUploadAcceptanceService() error = %v", err)
+	}
+	if _, err := service.Accept(
+		context.Background(), workflow.captureContext, workflow.claimed.ID(),
+		workflow.metadata, bytes.NewReader(workflow.body),
+	); err != nil {
+		t.Fatalf("Accept() error = %v", err)
+	}
+	if got := workflow.committer.mutation.OccurredAt; !got.Equal(now) {
+		t.Fatalf("OccurredAt = %v, want %v", got, now)
+	}
+	if got := workflow.stager.input.CreatedAt; !got.Equal(now) {
+		t.Fatalf("protection CreatedAt = %v, want %v", got, now)
+	}
+}
+
 func TestUploadAcceptanceServiceReplaysAcceptedResultWithoutReadingBody(t *testing.T) {
 	t.Parallel()
 

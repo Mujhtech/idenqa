@@ -18,6 +18,7 @@ import (
 type SessionIDGenerator interface {
 	NewVerification() (id.Verification, error)
 	NewCaptureToken() (id.CaptureToken, error)
+	NewOutcomeToken() (id.OutcomeToken, error)
 	NewEvent() (id.Event, error)
 	NewDecision() (id.Decision, error)
 }
@@ -36,13 +37,17 @@ type SessionCreateInput struct {
 	PolicyID        id.Policy
 	VerificationTTL *time.Duration
 	CaptureTokenTTL *time.Duration
+	OutcomePostTTL  *time.Duration
 }
 
-// CreatedSession carries a display-once bearer token alongside the durable
-// non-secret session. The token must be explicitly revealed by its transport.
+// CreatedSession carries display-once capture and outcome bearer tokens alongside
+// the durable non-secret session. A transport must reveal each token explicitly.
 type CreatedSession struct {
-	Session      Session
-	CaptureToken access.PresentedCaptureToken
+	Session           Session
+	Credential        access.CaptureCredential
+	CaptureToken      access.PresentedCaptureToken
+	OutcomeCredential access.OutcomeCredential
+	OutcomeToken      access.PresentedOutcomeToken
 }
 
 // SessionLifetimes holds deployment defaults, maxima, and replay retention.
@@ -51,40 +56,45 @@ type SessionLifetimes struct {
 	VerificationMaximum  time.Duration
 	CaptureTokenDefault  time.Duration
 	CaptureTokenMaximum  time.Duration
+	OutcomePostDefault   time.Duration
+	OutcomePostMaximum   time.Duration
 	IdempotencyRetention time.Duration
 }
 
 // SessionService authorises and coordinates verification-session use cases.
 type SessionService struct {
-	repository  SessionRepository
-	identifiers SessionIDGenerator
-	signer      *access.CaptureTokenSigner
-	clock       clock.Clock
-	lifetimes   SessionLifetimes
-	region      string
+	repository    SessionRepository
+	identifiers   SessionIDGenerator
+	captureSigner *access.CaptureTokenSigner
+	outcomeSigner *access.OutcomeTokenSigner
+	clock         clock.Clock
+	lifetimes     SessionLifetimes
+	region        string
 }
 
 // NewSessionService constructs the verification-session application service.
 func NewSessionService(
 	repository SessionRepository,
 	identifiers SessionIDGenerator,
-	signer *access.CaptureTokenSigner,
+	captureSigner *access.CaptureTokenSigner,
+	outcomeSigner *access.OutcomeTokenSigner,
 	source clock.Clock,
 	lifetimes SessionLifetimes,
 	region string,
 ) (*SessionService, error) {
-	if repository == nil || identifiers == nil || signer == nil || source == nil ||
+	if repository == nil || identifiers == nil || captureSigner == nil || outcomeSigner == nil || source == nil ||
 		!validSessionLifetimes(lifetimes) || !validRegion(region) {
 		return nil, errors.New("verification: session service dependencies and lifetimes are required")
 	}
 
 	return &SessionService{
-		repository:  repository,
-		identifiers: identifiers,
-		signer:      signer,
-		clock:       source,
-		lifetimes:   lifetimes,
-		region:      region,
+		repository:    repository,
+		identifiers:   identifiers,
+		captureSigner: captureSigner,
+		outcomeSigner: outcomeSigner,
+		clock:         source,
+		lifetimes:     lifetimes,
+		region:        region,
 	}, nil
 }
 
@@ -98,7 +108,7 @@ func (service *SessionService) Create(
 	if err := authority.Require(access.PermissionVerificationSessionsCreate); err != nil {
 		return CreatedSession{}, err
 	}
-	verificationTTL, captureTTL, err := service.resolveLifetimes(input)
+	verificationTTL, captureTTL, outcomePostTTL, err := service.resolveLifetimes(input)
 	if err != nil {
 		return CreatedSession{}, err
 	}
@@ -107,12 +117,14 @@ func (service *SessionService) Create(
 		PolicyID               string `json:"policy_id"`
 		VerificationTTLSeconds int64  `json:"verification_ttl_seconds"`
 		CaptureTokenTTLSeconds int64  `json:"capture_token_ttl_seconds"`
+		OutcomePostTTLSeconds  int64  `json:"outcome_token_post_expiry_ttl_seconds"`
 		Region                 string `json:"region"`
 	}{
 		ProfileID:              input.ProfileID.String(),
 		PolicyID:               input.PolicyID.String(),
 		VerificationTTLSeconds: int64(verificationTTL / time.Second),
 		CaptureTokenTTLSeconds: int64(captureTTL / time.Second),
+		OutcomePostTTLSeconds:  int64(outcomePostTTL / time.Second),
 		Region:                 service.region,
 	})
 	if err != nil {
@@ -139,6 +151,10 @@ func (service *SessionService) Create(
 	if err != nil {
 		return CreatedSession{}, fmt.Errorf("generate capture-token id: %w", err)
 	}
+	outcomeTokenID, err := service.identifiers.NewOutcomeToken()
+	if err != nil {
+		return CreatedSession{}, fmt.Errorf("generate outcome-token id: %w", err)
+	}
 	eventID, err := service.identifiers.NewEvent()
 	if err != nil {
 		return CreatedSession{}, fmt.Errorf("generate verification event id: %w", err)
@@ -147,30 +163,42 @@ func (service *SessionService) Create(
 	if err != nil {
 		return CreatedSession{}, fmt.Errorf("generate policy decision id: %w", err)
 	}
+	sessionExpiresAt := now.Add(verificationTTL)
 	creation, err := service.repository.Create(ctx, authority.TenantScope(), SessionCreateMutation{
 		SessionID:          sessionID,
 		CaptureTokenID:     tokenID,
+		OutcomeTokenID:     outcomeTokenID,
 		EventID:            eventID,
 		ProfileID:          input.ProfileID,
 		PolicyID:           input.PolicyID,
 		DecisionID:         decisionID,
 		Region:             service.region,
 		Actor:              authority.Principal().KeyID(),
-		CaptureKeyVersion:  service.signer.ActiveVersion(),
+		CaptureKeyVersion:  service.captureSigner.ActiveVersion(),
+		OutcomeKeyVersion:  service.outcomeSigner.ActiveVersion(),
 		CreatedAt:          now,
-		SessionExpiresAt:   now.Add(verificationTTL),
+		SessionExpiresAt:   sessionExpiresAt,
 		CaptureTokenExpiry: now.Add(captureTTL),
+		OutcomeTokenExpiry: sessionExpiresAt.Add(outcomePostTTL),
 		Idempotency:        retry,
 	})
 	if err != nil {
 		return CreatedSession{}, err
 	}
-	presented, err := service.signer.Sign(creation.Credential)
+	presented, err := service.captureSigner.Sign(creation.Credential)
 	if err != nil {
 		return CreatedSession{}, fmt.Errorf("sign capture token: %w", err)
 	}
+	outcomeToken, err := service.outcomeSigner.Sign(creation.OutcomeCredential)
+	if err != nil {
+		return CreatedSession{}, fmt.Errorf("sign outcome token: %w", err)
+	}
 
-	return CreatedSession{Session: creation.Session, CaptureToken: presented}, nil
+	return CreatedSession{
+		Session: creation.Session, Credential: creation.Credential,
+		CaptureToken: presented, OutcomeCredential: creation.OutcomeCredential,
+		OutcomeToken: outcomeToken,
+	}, nil
 }
 
 // Find returns a tenant-owned verification session after application-level authorisation.
@@ -186,9 +214,9 @@ func (service *SessionService) Find(
 	return service.repository.FindSession(ctx, authority.TenantScope(), identifier)
 }
 
-func (service *SessionService) resolveLifetimes(input SessionCreateInput) (time.Duration, time.Duration, error) {
+func (service *SessionService) resolveLifetimes(input SessionCreateInput) (time.Duration, time.Duration, time.Duration, error) {
 	if input.ProfileID.IsZero() || input.PolicyID.IsZero() {
-		return 0, 0, errors.New("verification: capture profile is required")
+		return 0, 0, 0, errors.New("verification: capture profile is required")
 	}
 	verificationTTL := service.lifetimes.VerificationDefault
 	if input.VerificationTTL != nil {
@@ -198,14 +226,19 @@ func (service *SessionService) resolveLifetimes(input SessionCreateInput) (time.
 	if input.CaptureTokenTTL != nil {
 		captureTTL = *input.CaptureTokenTTL
 	}
+	outcomePostTTL := service.lifetimes.OutcomePostDefault
+	if input.OutcomePostTTL != nil {
+		outcomePostTTL = *input.OutcomePostTTL
+	}
 	if verificationTTL <= 0 || verificationTTL > service.lifetimes.VerificationMaximum ||
 		captureTTL <= 0 || captureTTL > service.lifetimes.CaptureTokenMaximum ||
+		outcomePostTTL <= 0 || outcomePostTTL > service.lifetimes.OutcomePostMaximum ||
 		captureTTL > verificationTTL ||
-		verificationTTL%time.Second != 0 || captureTTL%time.Second != 0 {
-		return 0, 0, errors.New("verification: requested lifetimes are outside configured bounds")
+		verificationTTL%time.Second != 0 || captureTTL%time.Second != 0 || outcomePostTTL%time.Second != 0 {
+		return 0, 0, 0, errors.New("verification: requested lifetimes are outside configured bounds")
 	}
 
-	return verificationTTL, captureTTL, nil
+	return verificationTTL, captureTTL, outcomePostTTL, nil
 }
 
 func validSessionLifetimes(lifetimes SessionLifetimes) bool {
@@ -214,9 +247,13 @@ func validSessionLifetimes(lifetimes SessionLifetimes) bool {
 		lifetimes.CaptureTokenDefault > 0 &&
 		lifetimes.CaptureTokenMaximum >= lifetimes.CaptureTokenDefault &&
 		lifetimes.CaptureTokenMaximum <= lifetimes.VerificationMaximum &&
+		lifetimes.OutcomePostDefault > 0 &&
+		lifetimes.OutcomePostMaximum >= lifetimes.OutcomePostDefault &&
 		lifetimes.IdempotencyRetention > 0 &&
 		lifetimes.VerificationDefault%time.Second == 0 &&
 		lifetimes.VerificationMaximum%time.Second == 0 &&
 		lifetimes.CaptureTokenDefault%time.Second == 0 &&
-		lifetimes.CaptureTokenMaximum%time.Second == 0
+		lifetimes.CaptureTokenMaximum%time.Second == 0 &&
+		lifetimes.OutcomePostDefault%time.Second == 0 &&
+		lifetimes.OutcomePostMaximum%time.Second == 0
 }

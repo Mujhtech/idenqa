@@ -109,3 +109,31 @@ func builtInDefinitions() Definitions {
 		},
 	}
 }
+
+// PurposeFraudPrevention permits explicitly disclosed fraud correlation.
+const PurposeFraudPrevention Name = "idenqa.purpose.fraud_prevention"
+
+// FraudRegistry adds the purpose in revision 3 without altering older snapshots.
+func FraudRegistry() (Registry, error) {
+	d := builtInDefinitions()
+	d.Assurances = append(d.Assurances, AssuranceFaceMatchOneToOne, AssuranceDocumentAuthenticity, AssuranceCaptureQuality, AssuranceMRZParsed, AssuranceBarcodeParsed)
+	d.Purposes = append(d.Purposes, PurposeFraudPrevention)
+	return NewRegistry(3, d)
+}
+
+// BuiltInCatalog deploys all immutable public registry revisions.
+func BuiltInCatalog() (Catalog, error) {
+	a, e := BuiltInRegistry()
+	if e != nil {
+		return Catalog{}, e
+	}
+	b, e := PanAfricanRegistry()
+	if e != nil {
+		return Catalog{}, e
+	}
+	c, e := FraudRegistry()
+	if e != nil {
+		return Catalog{}, e
+	}
+	return NewCatalog(a, b, c)
+}

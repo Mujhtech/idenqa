@@ -102,7 +102,7 @@ func (preflight *UploadPreflight) Begin(
 		principal.CaptureTokenID,
 		uploadID,
 		metadata.ExpectedVersion,
-		preflight.clock.Now().UTC().Truncate(time.Second),
+		preflight.clock.Now().UTC().Truncate(time.Microsecond),
 	)
 }
 

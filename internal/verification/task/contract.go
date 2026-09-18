@@ -211,10 +211,26 @@ func decodeStrict(encoded []byte, destination any) error {
 	return nil
 }
 
+//nolint:unparam // Version remains explicit at every task contract declaration.
 func mustKey(name string, version uint32) platformtask.Key {
 	parsed, err := platformtask.NewName(name)
 	if err != nil {
 		panic(err)
 	}
 	return platformtask.Key{Name: parsed, Version: version}
+}
+
+// AsyncExecuteKey separates async polling budgets from ordinary execution retries.
+var AsyncExecuteKey = mustKey("verification.provider_async", 1)
+
+// NewAsyncExecuteIntent keeps one job identity through bounded status continuations.
+func NewAsyncExecuteIntent(generator IdentifierGenerator, scope tenant.Scope, payload ExecutePayload, metadata IntentMetadata) (platformtask.Intent, error) {
+	if generator == nil || scope.ID().IsZero() || payload.CheckID.IsZero() || payload.AttemptID.IsZero() {
+		return platformtask.Intent{}, platformtask.ErrInvalid
+	}
+	deadline, err := boundedDeadline(metadata.ScheduledAt, metadata.Deadline, MaximumExecuteDuration)
+	if err != nil {
+		return platformtask.Intent{}, err
+	}
+	return newIntent(generator, scope, AsyncExecuteKey, taskheadgate.QueueVerification, "verification.provider_async:"+payload.AttemptID.String(), encodeExecute(payload), metadata, deadline.Add(5*time.Minute), platformtask.RetryPolicy{MaxAttempts: 100, InitialBackoff: 10 * time.Second, MaximumBackoff: 10 * time.Second, JitterPercent: 20})
 }
