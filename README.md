@@ -4,7 +4,7 @@ Idenqa is an open-source identity-verification core. The repository is currently
 
 ## Development commands
 
-Go 1.26.6 is the selected Go toolchain. TypeScript work uses Node.js 22.18+ and the repository-pinned pnpm release through Corepack. From the repository root:
+Go 1.27.1 is the selected Go toolchain. TypeScript work uses Node.js 22.18+ and the repository-pinned pnpm release through Corepack. From the repository root:
 
 ```sh
 corepack pnpm install --frozen-lockfile
@@ -30,43 +30,43 @@ Each returns `ok` while its condition is healthy. During graceful drain, readine
 
 The API accepts typed `IDENQA_*` process variables:
 
-| Variable                                  | Default      | Purpose                                                                                                                              |
-| ----------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `IDENQA_ENVIRONMENT`                      | `production` | Runtime safety mode: `production`, `development`, or `test`                                                                          |
-| `IDENQA_DATABASE_URL`                     | Required     | PostgreSQL URL; treated as secret configuration and never logged                                                                     |
-| `IDENQA_DATABASE_ROLE`                    | Empty        | Optional validated runtime role entered by each pooled connection; it must not own tenant tables or bypass RLS                       |
-| `IDENQA_DATABASE_ADMIN_URL`               | Empty        | Separate privileged URL for migrations and audited CLI administration; do not provide it to API or worker deployments                |
-| `IDENQA_DATABASE_MAX_CONNECTIONS`         | `20`         | Maximum API PostgreSQL pool size                                                                                                     |
-| `IDENQA_DATABASE_MIN_CONNECTIONS`         | `2`          | Minimum API PostgreSQL pool size                                                                                                     |
-| `IDENQA_DATABASE_MAX_LIFETIME`            | `1h`         | Maximum lifetime of a pooled connection                                                                                              |
-| `IDENQA_DATABASE_MAX_IDLE_TIME`           | `15m`        | Maximum idle duration of a pooled connection                                                                                         |
-| `IDENQA_DATABASE_CONNECT_TIMEOUT`         | `5s`         | Startup and migration connection deadline                                                                                            |
-| `IDENQA_DATABASE_MIGRATION_TIMEOUT`       | `5m`         | Per-statement migration timeout                                                                                                      |
-| `IDENQA_DATABASE_HEALTH_INTERVAL`         | `10s`        | Runtime database readiness-check interval                                                                                            |
-| `IDENQA_DATABASE_HEALTH_TIMEOUT`          | `2s`         | Runtime database readiness-check deadline                                                                                            |
-| `IDENQA_API_KEY_ACTIVE_PEPPER_VERSION`    | Empty        | Version used to authenticate newly issued API keys; configure together with the pepper set                                           |
-| `IDENQA_API_KEY_PEPPERS`                  | Empty        | Comma-separated `version=unpadded-base64url` 32-byte HMAC peppers; values are redacted and retained while matching keys remain valid |
-| `IDENQA_API_KEY_ALLOW_NO_EXPIRY`          | `false`      | Whether an explicit no-expiry issuance choice is permitted                                                                           |
-| `IDENQA_API_KEY_MAXIMUM_LIFETIME`         | Empty        | Optional maximum fixed API-key lifetime; empty leaves fixed expiries unbounded but still explicit                                    |
-| `IDENQA_API_KEY_MAXIMUM_ROTATION_OVERLAP` | Empty        | Maximum predecessor/successor overlap; required when API-key issuance is composed                                                    |
-| `IDENQA_HTTP_HOST`                        | `127.0.0.1`  | HTTP bind host or interface                                                                                                          |
-| `IDENQA_HTTP_PORT`                        | `8080`       | HTTP listen port                                                                                                                     |
-| `IDENQA_HTTP_TLS_MODE`                    | `disabled`   | `disabled` for plain HTTP or `file` for direct TLS                                                                                   |
-| `IDENQA_HTTP_TLS_CERT_FILE`               | Empty        | PEM certificate chain used when TLS mode is `file`                                                                                   |
-| `IDENQA_HTTP_TLS_KEY_FILE`                | Empty        | PEM private key used when TLS mode is `file`                                                                                         |
-| `IDENQA_HTTP_MAX_BODY_BYTES`              | `1048576`    | Maximum request-body size before route-specific limits                                                                               |
-| `IDENQA_HTTP_REQUEST_TIMEOUT`             | `10s`        | Default HTTP request deadline                                                                                                        |
-| `IDENQA_HTTP_CORS_ALLOWED_ORIGINS`        | Empty        | Comma-separated exact browser origins; empty denies cross-origin requests                                                            |
-| `IDENQA_EVIDENCE_UPLOAD_MAXIMUM_BYTES`    | `16777216`   | Deployment evidence-upload ceiling; validated from 1 MiB through 64 MiB and tenant profiles may only narrow it                      |
-| `IDENQA_EVIDENCE_UPLOAD_INTENT_LIFETIME`  | `15m`        | Upload-intent lifetime; validated from 5 through 60 minutes                                                                          |
-| `IDENQA_EVIDENCE_UPLOAD_ATTEMPT_TIMEOUT`  | `10m`        | Whole-body attempt deadline; validated from 1 through 15 minutes                                                                     |
-| `IDENQA_EVIDENCE_UPLOAD_ALLOWED_MEDIA_TYPES` | `image/jpeg,image/png` | Deployment media allow-list; v1 permits canonical JPEG and PNG values and tenant profiles may only narrow it              |
-| `IDENQA_EVIDENCE_LOCAL_DIRECTORY`            | Empty        | Existing root directory for the root API's local immutable ciphertext store; configure together with the local keyring file            |
-| `IDENQA_EVIDENCE_LOCAL_KEYRING_FILE`          | Empty        | Existing mounted local KEK keyring; configure together with the local evidence directory                                               |
-| `IDENQA_EVIDENCE_PROTECTION_CLEANUP_TIMEOUT`  | `5s`         | Bounded cancellation-independent deadline for exact staged-ciphertext compensation                                                      |
-| `IDENQA_SHUTDOWN_TIMEOUT`                 | `10s`        | Graceful-shutdown deadline                                                                                                           |
-| `IDENQA_LOG_LEVEL`                        | `info`       | `debug`, `info`, `warn`, or `error` logging threshold                                                                                |
-| `IDENQA_LOG_FORMAT`                       | `json`       | Structured `json` or `text` output                                                                                                   |
+| Variable                                     | Default                | Purpose                                                                                                                              |
+| -------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `IDENQA_ENVIRONMENT`                         | `production`           | Runtime safety mode: `production`, `development`, or `test`                                                                          |
+| `IDENQA_DATABASE_URL`                        | Required               | PostgreSQL URL; treated as secret configuration and never logged                                                                     |
+| `IDENQA_DATABASE_ROLE`                       | Empty                  | Optional validated runtime role entered by each pooled connection; it must not own tenant tables or bypass RLS                       |
+| `IDENQA_DATABASE_ADMIN_URL`                  | Empty                  | Separate privileged URL for migrations and audited CLI administration; do not provide it to API or worker deployments                |
+| `IDENQA_DATABASE_MAX_CONNECTIONS`            | `20`                   | Maximum API PostgreSQL pool size                                                                                                     |
+| `IDENQA_DATABASE_MIN_CONNECTIONS`            | `2`                    | Minimum API PostgreSQL pool size                                                                                                     |
+| `IDENQA_DATABASE_MAX_LIFETIME`               | `1h`                   | Maximum lifetime of a pooled connection                                                                                              |
+| `IDENQA_DATABASE_MAX_IDLE_TIME`              | `15m`                  | Maximum idle duration of a pooled connection                                                                                         |
+| `IDENQA_DATABASE_CONNECT_TIMEOUT`            | `5s`                   | Startup and migration connection deadline                                                                                            |
+| `IDENQA_DATABASE_MIGRATION_TIMEOUT`          | `5m`                   | Per-statement migration timeout                                                                                                      |
+| `IDENQA_DATABASE_HEALTH_INTERVAL`            | `10s`                  | Runtime database readiness-check interval                                                                                            |
+| `IDENQA_DATABASE_HEALTH_TIMEOUT`             | `2s`                   | Runtime database readiness-check deadline                                                                                            |
+| `IDENQA_API_KEY_ACTIVE_PEPPER_VERSION`       | Empty                  | Version used to authenticate newly issued API keys; configure together with the pepper set                                           |
+| `IDENQA_API_KEY_PEPPERS`                     | Empty                  | Comma-separated `version=unpadded-base64url` 32-byte HMAC peppers; values are redacted and retained while matching keys remain valid |
+| `IDENQA_API_KEY_ALLOW_NO_EXPIRY`             | `false`                | Whether an explicit no-expiry issuance choice is permitted                                                                           |
+| `IDENQA_API_KEY_MAXIMUM_LIFETIME`            | Empty                  | Optional maximum fixed API-key lifetime; empty leaves fixed expiries unbounded but still explicit                                    |
+| `IDENQA_API_KEY_MAXIMUM_ROTATION_OVERLAP`    | Empty                  | Maximum predecessor/successor overlap; required when API-key issuance is composed                                                    |
+| `IDENQA_HTTP_HOST`                           | `127.0.0.1`            | HTTP bind host or interface                                                                                                          |
+| `IDENQA_HTTP_PORT`                           | `8080`                 | HTTP listen port                                                                                                                     |
+| `IDENQA_HTTP_TLS_MODE`                       | `disabled`             | `disabled` for plain HTTP or `file` for direct TLS                                                                                   |
+| `IDENQA_HTTP_TLS_CERT_FILE`                  | Empty                  | PEM certificate chain used when TLS mode is `file`                                                                                   |
+| `IDENQA_HTTP_TLS_KEY_FILE`                   | Empty                  | PEM private key used when TLS mode is `file`                                                                                         |
+| `IDENQA_HTTP_MAX_BODY_BYTES`                 | `1048576`              | Maximum request-body size before route-specific limits                                                                               |
+| `IDENQA_HTTP_REQUEST_TIMEOUT`                | `10s`                  | Default HTTP request deadline                                                                                                        |
+| `IDENQA_HTTP_CORS_ALLOWED_ORIGINS`           | Empty                  | Comma-separated exact browser origins; empty denies cross-origin requests                                                            |
+| `IDENQA_EVIDENCE_UPLOAD_MAXIMUM_BYTES`       | `16777216`             | Deployment evidence-upload ceiling; validated from 1 MiB through 64 MiB and tenant profiles may only narrow it                       |
+| `IDENQA_EVIDENCE_UPLOAD_INTENT_LIFETIME`     | `15m`                  | Upload-intent lifetime; validated from 5 through 60 minutes                                                                          |
+| `IDENQA_EVIDENCE_UPLOAD_ATTEMPT_TIMEOUT`     | `10m`                  | Whole-body attempt deadline; validated from 1 through 15 minutes                                                                     |
+| `IDENQA_EVIDENCE_UPLOAD_ALLOWED_MEDIA_TYPES` | `image/jpeg,image/png` | Deployment media allow-list; v1 permits canonical JPEG and PNG values and tenant profiles may only narrow it                         |
+| `IDENQA_EVIDENCE_LOCAL_DIRECTORY`            | Empty                  | Existing root directory for the root API's local immutable ciphertext store; configure together with the local keyring file          |
+| `IDENQA_EVIDENCE_LOCAL_KEYRING_FILE`         | Empty                  | Existing mounted local KEK keyring; configure together with the local evidence directory                                             |
+| `IDENQA_EVIDENCE_PROTECTION_CLEANUP_TIMEOUT` | `5s`                   | Bounded cancellation-independent deadline for exact staged-ciphertext compensation                                                   |
+| `IDENQA_SHUTDOWN_TIMEOUT`                    | `10s`                  | Graceful-shutdown deadline                                                                                                           |
+| `IDENQA_LOG_LEVEL`                           | `info`                 | `debug`, `info`, `warn`, or `error` logging threshold                                                                                |
+| `IDENQA_LOG_FORMAT`                          | `json`                 | Structured `json` or `text` output                                                                                                   |
 
 Production startup reads only the process environment. For explicit local or test loading, copy [`.env.example`](.env.example), edit it, and run:
 
@@ -110,9 +110,9 @@ Vacuum and Buf linting plus reproducible OpenAPI and Protobuf generation run as 
 
 ### TypeScript SDK
 
-The open-source TypeScript SDK lives in [`sdk/typescript`](sdk/typescript/) and is published as `@idenqa/sdk`. It provides a zero-runtime-dependency tenant client for capture-profile, verification, notice, and processing-authority operations plus a capture-token client for retrieving immutable session requirements, displaying the exact authority notice, recording acknowledgement, consent, or refusal, issuing requirement-bound upload intents, and sending raw JPEG/PNG `Blob` evidence directly to ingress. Its public API uses `Promise`, `AbortSignal`, Fetch, stable errors, request IDs, and explicit idempotency keys; it does not require Effect.
+The open-source TypeScript SDK lives in [`sdk/typescript`](sdk/typescript/) and is published as `@idenqa/sdk`. It provides a zero-runtime-dependency tenant client for capture-profile, verification, notice, and processing-authority operations; a capture-token client for retrieving immutable session requirements, displaying the exact authority notice, recording acknowledgement, consent, or refusal, issuing requirement-bound upload intents, and sending raw JPEG/PNG `Blob` evidence directly to ingress; and a separate outcome-token client restricted to the subject-safe outcome projection. Its public API uses `Promise`, `AbortSignal`, Fetch, stable errors, request IDs, and explicit idempotency keys; it does not require Effect.
 
-The open-source Web capture package lives under [`capture/web`](capture/web/) and is published as `@idenqa/capture`. Its renderer-independent planner applies immutable session requirements to explicit host capabilities while preserving tenant `any_of`, `all_of`, artefact, and reason-specific fallback policy. The explicitly registered Lit Web Component renders that plan with semantic, keyboard-operable controls; its programmatic capture flow retrieves and correlates the immutable session and exact notice, records acknowledgement, consent, or refusal through the public SDK, and withholds capture methods until the response permits collection. Capture tokens never enter attributes, rendered state, events, or logs. Vite and Playwright are development-only fixture and browser-test tools, tsdown remains the library builder, and Effect is not a dependency.
+The open-source Web capture package lives under [`capture/web`](capture/web/) and is published as `@idenqa/capture`. Its renderer-independent planner applies immutable session requirements to explicit host capabilities while preserving tenant `any_of`, `all_of`, artefact, and reason-specific fallback policy. The explicitly registered Lit Web Component renders that plan with semantic, keyboard-operable controls; its programmatic capture flow retrieves and correlates the immutable session and exact notice, records acknowledgement, consent, or refusal through the public SDK, and withholds capture methods until the response permits collection. Capture and outcome tokens enter only through the programmatic trusted-bootstrap boundary and never enter attributes, rendered state, events, URLs, storage, or logs; the outcome token is used only for the read-only subject projection. Vite and Playwright are development-only fixture and browser-test tools, tsdown remains the library builder, and Effect is not a dependency.
 
 ```sh
 corepack pnpm generate:check

@@ -1,6 +1,8 @@
 module github.com/Mujhtech/idenqa
 
-go 1.26.6
+go 1.27.1
+
+replace github.com/Mujhtech/idenqa/sdk/go => ./sdk/go
 
 tool (
 	github.com/bufbuild/buf/cmd/buf
@@ -17,6 +19,7 @@ tool (
 require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.11-20260709200747-435963d16310.1
 	buf.build/go/protovalidate v1.3.0
+	github.com/Mujhtech/idenqa/sdk/go v0.0.0
 	github.com/coder/websocket v1.8.15
 	github.com/go-chi/chi/v5 v5.3.2
 	github.com/go-chi/cors v1.2.2
@@ -26,9 +29,9 @@ require (
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/joho/godotenv v1.5.1
 	github.com/kelseyhightower/envconfig v1.4.0
-	github.com/mujhtech/headgate/go v0.1.2
-	github.com/mujhtech/headgate/go/driver/headgatepgx v0.1.2
-	github.com/mujhtech/headgate/go/headgatemigrate v0.1.2
+	github.com/mujhtech/headgate/go v0.1.10
+	github.com/mujhtech/headgate/go/driver/headgatepgx v0.1.10
+	github.com/mujhtech/headgate/go/headgatemigrate v0.1.10
 	github.com/oapi-codegen/runtime v1.7.0
 	github.com/oklog/ulid/v2 v2.1.2
 	github.com/riandyrn/otelchi v0.12.3
@@ -177,7 +180,7 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/jsonpointer v1.0.0 // indirect
 	github.com/go-sourcemap/sourcemap v2.1.4+incompatible // indirect
-	github.com/go-sql-driver/mysql v1.9.3 // indirect
+	github.com/go-sql-driver/mysql v1.10.1 // indirect
 	github.com/go-toolsmith/astcast v1.1.0 // indirect
 	github.com/go-toolsmith/astcopy v1.1.0 // indirect
 	github.com/go-toolsmith/astequal v1.2.0 // indirect

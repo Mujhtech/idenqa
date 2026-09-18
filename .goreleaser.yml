@@ -25,6 +25,24 @@ builds:
     flags: [-trimpath]
     ldflags:
       - -s -w -X github.com/Mujhtech/idenqa/internal/buildinfo.version={{.Version}} -X github.com/Mujhtech/idenqa/internal/buildinfo.commit={{.Commit}} -X github.com/Mujhtech/idenqa/internal/buildinfo.date={{.Date}}
+  - id: adapter-runner
+    main: ./cmd/adapter-runner
+    binary: adapter-runner
+    env: [CGO_ENABLED=0]
+    goos: [linux, darwin]
+    goarch: [amd64, arm64]
+    flags: [-trimpath]
+    ldflags:
+      - -s -w -X github.com/Mujhtech/idenqa/internal/buildinfo.version={{.Version}} -X github.com/Mujhtech/idenqa/internal/buildinfo.commit={{.Commit}} -X github.com/Mujhtech/idenqa/internal/buildinfo.date={{.Date}}
+  - id: model-runner
+    main: ./cmd/model-runner
+    binary: model-runner
+    env: [CGO_ENABLED=0]
+    goos: [linux, darwin]
+    goarch: [amd64, arm64]
+    flags: [-trimpath]
+    ldflags:
+      - -s -w -X github.com/Mujhtech/idenqa/internal/buildinfo.version={{.Version}} -X github.com/Mujhtech/idenqa/internal/buildinfo.commit={{.Commit}} -X github.com/Mujhtech/idenqa/internal/buildinfo.date={{.Date}}
   - id: idenqa
     main: ./cmd/idenqa
     binary: idenqa
@@ -42,6 +60,12 @@ archives:
       - LICENSE
       - README.md
       - docs/runbooks/*
+      - docs/provider-runtime-v0.1.md
+      - docs/onnx-runtime-v0.1.md
+      - docs/pad-evaluation-v0.1.md
+      - docs/face-matching-runtime-v0.1.md
+      - docs/composed-verification-runtime-v0.1.md
+      - adapters/models/onnx/requirements.lock
 
 checksum:
   name_template: checksums.txt

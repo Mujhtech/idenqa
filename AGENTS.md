@@ -32,7 +32,7 @@ Never promote a Proposed, Conditional, or TBD item to Selected without an explic
 
 ## Decisions that must be preserved
 
-- Use Go 1.26.6 unless the user explicitly changes the toolchain decision.
+- Use Go 1.27.1 unless the user explicitly changes the toolchain decision.
 - Use modular hexagonal architecture with manual constructor injection.
 - Public binaries use simple names such as `api`, `worker`, and `idenqa`; commercial control-plane workloads may use qualified names separately.
 - PostgreSQL is authoritative for durable state, orchestration, idempotency, inbox/outbox, replay, and coordination.
@@ -43,10 +43,12 @@ Never promote a Proposed, Conditional, or TBD item to Selected without an explic
 - An uploaded selfie or document cannot satisfy freshness, live-capture, active-liveness, NFC-provenance, or similar assurance that its acquisition method cannot establish.
 - SDK capability advertisements guide method selection but are not proof of assurance.
 - SDKs and capture pages remain open source and usable without Console or Cloud.
+- Capture Web is a subject-facing product surface. Its selected default is a mobile-first guided journey with one primary task per screen, subject-friendly copy, explicit capture/review/recovery/processing/completion states, and an accessible safe-default visual system.
+- Files under `capture/web/demo` are development fixtures until they complete a real self-hosted Core-backed synthetic journey and receive explicit user-facing visual and interaction acceptance. Mocked browser tests, hard-coded plans, semantic markup, responsive overflow checks, or framework-host conformance must not be presented as product-demo or milestone-completion evidence by themselves.
 - The public TypeScript SDK must not require Effect. Effect may be evaluated internally or exposed through a separate optional adapter.
 - Tenant-owned PostgreSQL tables use mandatory application tenant scoping plus row-level security as defence in depth.
 - The open-source distribution uses Apache License 2.0.
-- Headgate v0.1.2 is the selected background-work system. Its Go modules are `github.com/mujhtech/headgate/go` and `github.com/mujhtech/headgate/go/driver/headgatepgx`; use its PostgreSQL backend behind the owned `platform/task` boundary. Do not leak Headgate types into domain or public contracts, and do not substitute River, Asynq, Redis, or another queue as the baseline.
+- Headgate v0.1.10 is the selected background-work system. Its Go modules are `github.com/mujhtech/headgate/go` and `github.com/mujhtech/headgate/go/driver/headgatepgx`; use its PostgreSQL backend behind the owned `platform/task` boundary. Do not leak Headgate types into domain or public contracts, and do not substitute River, Asynq, Redis, or another queue as the baseline.
 
 ## Architecture and package boundaries
 

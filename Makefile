@@ -4,11 +4,12 @@ BIN_DIR ?= bin
 VERSION ?= dev
 COMMIT ?= unknown
 BUILD_DATE ?= unknown
-IDENQA_DATABASE_URL ?= postgres://idenqa:idenqa_dev@127.0.0.1:5432/idenqa?sslmode=disable
+IDENQA_DATABASE_URL ?= postgres://postgres:postgres@127.0.0.1:5432/idenqa?sslmode=disable
 DATABASE_TEST_URL ?= $(IDENQA_DATABASE_URL)
 OPENAPI_SPEC := contracts/api/openapi/v1/openapi.yaml
 OPENAPI_CONFIG := contracts/api/openapi/v1/oapi-codegen.yaml
 OPENAPI_RULESET := contracts/api/openapi/v1/vacuum.yaml
+OPENAPI_WARN_IGNORE := contracts/api/openapi/v1/lifecycle-alpha-warnings.txt
 S3_ADAPTER := ./adapters/objectstore/s3
 S3_DISTRIBUTION := ./distributions/s3
 
@@ -22,6 +23,8 @@ build:
 	mkdir -p $(BIN_DIR)/distributions/s3
 	$(GO) build -trimpath -ldflags "$(LDFLAGS)" -o $(BIN_DIR)/api ./cmd/api
 	$(GO) build -trimpath -ldflags "$(LDFLAGS)" -o $(BIN_DIR)/worker ./cmd/worker
+	$(GO) build -trimpath -ldflags "$(LDFLAGS)" -o $(BIN_DIR)/adapter-runner ./cmd/adapter-runner
+	$(GO) build -trimpath -ldflags "$(LDFLAGS)" -o $(BIN_DIR)/model-runner ./cmd/model-runner
 	$(GO) build -trimpath -ldflags "$(LDFLAGS)" -o $(BIN_DIR)/idenqa ./cmd/idenqa
 	$(GO) build -trimpath -ldflags "$(LDFLAGS)" -o $(BIN_DIR)/distributions/s3/api $(S3_DISTRIBUTION)/cmd/api
 	$(PNPM) build
@@ -58,7 +61,7 @@ contract-lint:
 
 contract-breaking:
 	@test -n "$(OPENAPI_BASE)" || (echo "OPENAPI_BASE must name the base OpenAPI document" >&2; exit 2)
-	$(GO) tool oasdiff breaking --fail-on WARN -- $(OPENAPI_BASE) $(OPENAPI_SPEC)
+	$(GO) tool oasdiff breaking --lang en --warn-ignore $(OPENAPI_WARN_IGNORE) --fail-on WARN -- $(OPENAPI_BASE) $(OPENAPI_SPEC)
 
 proto-breaking:
 	@test -n "$(PROTO_BASE)" || (echo "PROTO_BASE must name a Buf input containing the base contract" >&2; exit 2)
@@ -78,6 +81,7 @@ mod-check:
 	$(GO) -C $(S3_DISTRIBUTION) mod verify
 
 test:
+	GO=$(GO) node --test test/conformance/openapi-compatibility.test.mjs
 	$(GO) test -race -shuffle=on ./...
 	$(GO) test -race -shuffle=on $(S3_ADAPTER)/...
 	$(GO) test -race -shuffle=on $(S3_DISTRIBUTION)/...

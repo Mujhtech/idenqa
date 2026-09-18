@@ -12,6 +12,7 @@ import (
 	bootstrapapi "github.com/Mujhtech/idenqa/internal/bootstrap/api"
 	"github.com/Mujhtech/idenqa/internal/buildinfo"
 	"github.com/Mujhtech/idenqa/internal/cli"
+	"github.com/Mujhtech/idenqa/internal/config"
 	"github.com/Mujhtech/idenqa/internal/platform/health"
 	localkms "github.com/Mujhtech/idenqa/internal/platform/kms/local"
 	"github.com/Mujhtech/idenqa/internal/platform/logging"
@@ -39,7 +40,7 @@ func newCommand(info buildinfo.Info) *cobra.Command {
 			return runProcess(command, envFile, info)
 		},
 	})
-	command.Flags().StringVar(&envFile, "env-file", "", "load local configuration from this dotenv file")
+	command.Flags().StringVar(&envFile, "env-file", config.DefaultEnvFile, "load local configuration from this dotenv file")
 
 	return command
 }
