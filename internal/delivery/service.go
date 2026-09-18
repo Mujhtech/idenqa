@@ -59,7 +59,14 @@ func (manager *Manager) CreateEndpoint(ctx context.Context, scope tenant.Scope, 
 	if err != nil {
 		return Endpoint{}, nil, err
 	}
-	endpoint := Endpoint{ID: identifier, URL: targetURL, Active: Secret{Version: 1, Wrapped: wrapped, CreatedAt: now}, Version: 1, CreatedAt: now, UpdatedAt: now}
+	endpoint := Endpoint{
+		ID:        identifier,
+		URL:       targetURL,
+		Active:    Secret{Version: 1, Wrapped: wrapped, CreatedAt: now},
+		Version:   1,
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
 	if endpoint.Validate() != nil {
 		clear(secret)
 		return Endpoint{}, nil, ErrInvalid
@@ -137,11 +144,14 @@ func (manager *Manager) CreateDelivery(ctx context.Context, scope tenant.Scope, 
 	return intent, nil
 }
 
-// Replay creates a distinct delivery and event identifier while retaining lineage.
+// Replay creates a distinct delivery while preserving the signed event identity and exact body.
 func (manager *Manager) Replay(ctx context.Context, scope tenant.Scope, originalID id.Delivery, eventID id.Event) (Intent, error) {
 	original, err := manager.repository.FindDelivery(ctx, scope, originalID)
 	if err != nil {
 		return Intent{}, err
+	}
+	if eventID != original.EventID {
+		return Intent{}, ErrConflict
 	}
 	endpoint, err := manager.repository.FindEndpoint(ctx, scope, original.EndpointID)
 	if err != nil || !endpoint.DisabledAt.IsZero() {

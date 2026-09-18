@@ -14,6 +14,10 @@ import (
 )
 
 var (
+	// ErrQueueUnavailable means replay cannot reach the configured owned queue.
+	ErrQueueUnavailable = errors.New("delivery: replay infrastructure unavailable")
+	// ErrSigningUnavailable means this API composition cannot protect signing keys.
+	ErrSigningUnavailable = errors.New("delivery: signing infrastructure unavailable")
 	// ErrInvalid means delivery state violates the closed contract.
 	ErrInvalid = errors.New("delivery: invalid")
 	// ErrNotFound means a tenant-scoped endpoint or delivery is absent.
@@ -56,7 +60,7 @@ func (endpoint Endpoint) Validate() error {
 	if (endpoint.Previous == nil) != endpoint.PreviousValidUntil.IsZero() || (endpoint.DisabledAt.IsZero() != (endpoint.DisabledReason == "")) {
 		return ErrInvalid
 	}
-	if endpoint.Previous != nil && (endpoint.Previous.Version <= 0 || endpoint.Previous.Version >= endpoint.Active.Version || endpoint.Previous.Wrapped.IsZero() || !endpoint.PreviousValidUntil.After(endpoint.UpdatedAt)) {
+	if endpoint.Previous != nil && (endpoint.Previous.Version <= 0 || endpoint.Previous.Version >= endpoint.Active.Version || endpoint.Previous.Wrapped.IsZero() || !endpoint.PreviousValidUntil.After(endpoint.Active.CreatedAt)) {
 		return ErrInvalid
 	}
 	return nil
@@ -100,7 +104,19 @@ func NewIntent(identifier id.Delivery, endpoint id.WebhookEndpoint, event id.Eve
 		return Intent{}, ErrInvalid
 	}
 	digest := sha256.Sum256(body)
-	return Intent{ID: identifier, EndpointID: endpoint, EventID: event, EventType: eventType, Body: slices.Clone(body), BodyDigest: hex.EncodeToString(digest[:]), State: StatePending, MaxAttempts: maxAttempts, NextAttemptAt: at, CreatedAt: at, UpdatedAt: at}, nil
+	return Intent{
+		ID:            identifier,
+		EndpointID:    endpoint,
+		EventID:       event,
+		EventType:     eventType,
+		Body:          slices.Clone(body),
+		BodyDigest:    hex.EncodeToString(digest[:]),
+		State:         StatePending,
+		MaxAttempts:   maxAttempts,
+		NextAttemptAt: at,
+		CreatedAt:     at,
+		UpdatedAt:     at,
+	}, nil
 }
 
 // Validate checks exact persisted delivery state and body integrity.
@@ -131,7 +147,8 @@ func (intent Intent) Validate() error {
 	return nil
 }
 
-// Attempt is append-only safe response metadata. Response bodies are absent by construction.
+// Attempt is append-only bounded response metadata. The diagnostic may carry a
+// sanitised, length-capped excerpt of the receiver's response body.
 type Attempt struct {
 	Number             int32
 	SecretVersion      int64

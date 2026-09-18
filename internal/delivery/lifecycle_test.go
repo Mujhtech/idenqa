@@ -11,6 +11,7 @@ import (
 	deliverytask "github.com/Mujhtech/idenqa/internal/delivery/task"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/platform/kms"
+	platformpostgres "github.com/Mujhtech/idenqa/internal/platform/postgres"
 	platformtask "github.com/Mujhtech/idenqa/internal/platform/task"
 	"github.com/Mujhtech/idenqa/internal/tenant"
 )
@@ -31,7 +32,9 @@ func (value *identifiers) NewDelivery() (id.Delivery, error) {
 }
 func (value *identifiers) NewTask() (id.Task, error) {
 	result := value.tasks[0]
-	value.tasks = value.tasks[1:]
+	if len(value.tasks) > 1 {
+		value.tasks = value.tasks[1:]
+	}
 	return result, nil
 }
 
@@ -93,7 +96,7 @@ func (repo *memoryRepository) CreateDelivery(_ context.Context, scope tenant.Sco
 	repo.mutex.Lock()
 	defer repo.mutex.Unlock()
 	for key, current := range repo.deliveries {
-		if key[:len(scope.ID().String())] == scope.ID().String() && current.EndpointID.String() == intent.EndpointID.String() && current.EventID.String() == intent.EventID.String() {
+		if key[:len(scope.ID().String())] == scope.ID().String() && current.EndpointID.String() == intent.EndpointID.String() && current.EventID.String() == intent.EventID.String() && current.ReplayOf.IsZero() && intent.ReplayOf.IsZero() {
 			return delivery.ErrConflict
 		}
 	}
@@ -110,7 +113,7 @@ func (repo *memoryRepository) FindDelivery(_ context.Context, scope tenant.Scope
 	value.Body = append([]byte(nil), value.Body...)
 	return value, nil
 }
-func (repo *memoryRepository) RecordAttempt(_ context.Context, scope tenant.Scope, deliveryID id.Delivery, attempt delivery.Attempt, succeeded, retry bool, next time.Time) error {
+func (repo *memoryRepository) RecordAttemptWithin(_ context.Context, scope tenant.Scope, _ platformpostgres.Transaction, deliveryID id.Delivery, attempt delivery.Attempt, succeeded, retry bool, next time.Time) error {
 	repo.mutex.Lock()
 	defer repo.mutex.Unlock()
 	key := scoped(scope, deliveryID.String())
@@ -180,7 +183,8 @@ func TestWebhookLifecycleRotationReplayRetryAndTenantIsolation(t *testing.T) {
 		t.Fatal(err)
 	}
 	transport := &sender{failUntil: 1}
-	handler, err := deliverytask.NewHandler(repository, protector{}, transport, func() time.Time { return now })
+	queue := &memoryTaskQueue{}
+	handler, err := deliverytask.NewHandler(repository, protector{}, transport, ids, queue, func() time.Time { return now })
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -188,22 +192,24 @@ func TestWebhookLifecycleRotationReplayRetryAndTenantIsolation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	first := handler.Handle(context.Background(), platformtask.Delivery{Intent: workIntent, Attempt: 1, Fence: 1})
-	if first.Outcome != platformtask.OutcomeRetry {
+	first := runDeliveryEffect(t, handler, workIntent)
+	if first.Outcome != platformtask.OutcomeComplete || len(queue.intents) != 1 {
 		t.Fatalf("first outcome=%v", first.Outcome)
 	}
-	second := handler.Handle(context.Background(), platformtask.Delivery{Intent: workIntent, Attempt: 2, Fence: 2})
+	now = queue.intents[0].ScheduledAt()
+	second := runDeliveryEffect(t, handler, queue.intents[0])
 	if second.Outcome != platformtask.OutcomeComplete {
 		t.Fatalf("second outcome=%v", second.Outcome)
 	}
-	if replay := handler.Handle(context.Background(), platformtask.Delivery{Intent: workIntent, Attempt: 3, Fence: 3}); replay.Outcome != platformtask.OutcomeComplete || transport.calls != 2 {
+	if replay := runDeliveryEffect(t, handler, workIntent); replay.Outcome != platformtask.OutcomeComplete || transport.calls != 2 {
 		t.Fatalf("duplicate invoked sender: %#v calls=%d", replay, transport.calls)
 	}
 	now = now.Add(time.Minute)
-	replayed, err := manager.Replay(context.Background(), scope, intent.ID, mustEvent(t, "evt_01ARZ3NDEKTSV4RRFFQ69G5FAW"))
-	if err != nil || replayed.ReplayOf.String() != intent.ID.String() {
+	replayed, err := manager.Replay(context.Background(), scope, intent.ID, intent.EventID)
+	if err != nil || replayed.ReplayOf.String() != intent.ID.String() || replayed.EventID != intent.EventID || string(replayed.Body) != string(intent.Body) {
 		t.Fatalf("replay=%#v err=%v", replayed, err)
 	}
+	now = now.Add(time.Hour) // Disabling after the overlap must still validate.
 	if err := manager.Disable(context.Background(), scope, endpoint.ID, "operator_requested"); err != nil {
 		t.Fatal(err)
 	}
@@ -223,17 +229,18 @@ func TestWebhookRetryExhaustion(t *testing.T) {
 	deliveryID := mustDelivery(t, "dlv_01ARZ3NDEKTSV4RRFFQ69G5FAV")
 	intent, _ := delivery.NewIntent(deliveryID, endpointID, mustEvent(t, "evt_01ARZ3NDEKTSV4RRFFQ69G5FAV"), "verification.decision.v1", []byte(`{}`), 2, now)
 	repository.deliveries[scoped(scope, deliveryID.String())] = intent
-	handler, _ := deliverytask.NewHandler(repository, protector{}, &sender{failUntil: 3}, func() time.Time { return now })
-	taskID := mustTask(t, "tsk_01ARZ3NDEKTSV4RRFFQ69G5FAV")
-	work, _ := platformtask.NewIntent(platformtask.IntentSpec{ID: taskID, TenantID: scope.ID(), Key: deliverytask.DeliverKey, Queue: "delivery", PartitionKey: scope.ID().String(), IdempotencyKey: "delivery", Payload: struct {
-		DeliveryID string `json:"delivery_id"`
-	}{deliveryID.String()}, ScheduledAt: now, Deadline: now.Add(time.Hour), Retry: deliverytask.DeliverRetry, Retention: time.Hour})
-	if got := handler.Handle(context.Background(), platformtask.Delivery{Intent: work, Attempt: 1}); got.Outcome != platformtask.OutcomeRetry {
+	queue := &memoryTaskQueue{}
+	ids := &identifiers{tasks: []id.Task{mustTask(t, "tsk_01ARZ3NDEKTSV4RRFFQ69G5FAV")}}
+	handler, _ := deliverytask.NewHandler(repository, protector{}, &sender{failUntil: 3}, ids, queue, func() time.Time { return now })
+	work, _ := deliverytask.NewIntent(ids, scope, deliveryID, now)
+	if got := runDeliveryEffect(t, handler, work); got.Outcome != platformtask.OutcomeComplete || len(queue.intents) != 1 {
 		t.Fatalf("attempt1=%v", got.Outcome)
 	}
-	if got := handler.Handle(context.Background(), platformtask.Delivery{Intent: work, Attempt: 2}); got.Outcome != platformtask.OutcomeComplete {
+	now = queue.intents[0].ScheduledAt()
+	if got := runDeliveryEffect(t, handler, queue.intents[0]); got.Outcome != platformtask.OutcomeComplete || len(queue.intents) != 1 {
 		t.Fatalf("attempt2=%v", got.Outcome)
 	}
+
 	stored, _ := repository.FindDelivery(context.Background(), scope, deliveryID)
 	if stored.State != delivery.StateExhausted {
 		t.Fatalf("state=%s", stored.State)
@@ -291,4 +298,95 @@ func mustPurpose(t *testing.T) kms.Purpose {
 		t.Fatal(err)
 	}
 	return purpose
+}
+
+// These in-memory lifecycle tests exercise the prepared transaction body.
+// PostgreSQL integration tests verify real rollback and fencing behavior.
+func runDeliveryEffect(t *testing.T, handler *deliverytask.Handler, intent platformtask.Intent) platformtask.Result {
+	t.Helper()
+	effect, result := handler.Prepare(context.Background(), platformtask.Delivery{Intent: intent, Attempt: 1, Fence: 1})
+	if result.Outcome != platformtask.OutcomeComplete {
+		return result
+	}
+	if effect == nil {
+		t.Fatal("missing transactional effect")
+	}
+	return effect(context.Background(), nil)
+}
+
+type memoryTaskQueue struct{ intents []platformtask.Intent }
+
+func (queue *memoryTaskQueue) EnqueueTx(_ context.Context, _ platformpostgres.Transaction, intents ...platformtask.Intent) error {
+	queue.intents = append(queue.intents, intents...)
+	return nil
+}
+func (repo *memoryRepository) FinishWithin(_ context.Context, scope tenant.Scope, _ platformpostgres.Transaction, deliveryID id.Delivery, expected int32, state delivery.State, at time.Time) error {
+	repo.mutex.Lock()
+	defer repo.mutex.Unlock()
+	key := scoped(scope, deliveryID.String())
+	value, ok := repo.deliveries[key]
+	if !ok {
+		return delivery.ErrNotFound
+	}
+	if value.State != delivery.StatePending || value.AttemptCount != expected {
+		return delivery.ErrConflict
+	}
+	value.State, value.UpdatedAt = state, at
+	repo.deliveries[key] = value
+	return nil
+}
+
+func TestWebhookStopsBeforeSendingForDisabledOrExpiredDelivery(t *testing.T) {
+	for _, test := range []struct {
+		name     string
+		disabled bool
+		age      time.Duration
+		expected delivery.State
+	}{
+		{name: "disabled endpoint", disabled: true, expected: delivery.StateCancelled},
+		{name: "expired delivery window", age: 25 * time.Hour, expected: delivery.StateExhausted},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			created := time.Date(2026, 9, 6, 12, 0, 0, 0, time.UTC)
+			now := created.Add(test.age)
+			scope := mustScope(t, "ten_01ARZ3NDEKTSV4RRFFQ69G5FAV")
+			repository := newMemoryRepository()
+			endpointID := mustEndpoint(t, "whk_01ARZ3NDEKTSV4RRFFQ69G5FAV")
+			wrapped, err := protector{}.Wrap(t.Context(), mustPurpose(t), make([]byte, 32), nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			endpoint := delivery.Endpoint{ID: endpointID, URL: "https://hooks.example.com", Active: delivery.Secret{Version: 1, Wrapped: wrapped, CreatedAt: created}, Version: 1, CreatedAt: created, UpdatedAt: created}
+			if test.disabled {
+				endpoint.DisabledAt, endpoint.DisabledReason = now, "operator_requested"
+			}
+			repository.endpoints[scoped(scope, endpointID.String())] = endpoint
+			deliveryID := mustDelivery(t, "dlv_01ARZ3NDEKTSV4RRFFQ69G5FAV")
+			intent, err := delivery.NewIntent(deliveryID, endpointID, mustEvent(t, "evt_01ARZ3NDEKTSV4RRFFQ69G5FAV"), "verification.completed.v1", []byte(`{}`), 8, created)
+			if err != nil {
+				t.Fatal(err)
+			}
+			repository.deliveries[scoped(scope, deliveryID.String())] = intent
+			ids := &identifiers{tasks: []id.Task{mustTask(t, "tsk_01ARZ3NDEKTSV4RRFFQ69G5FAV")}}
+			transport, queue := &sender{}, &memoryTaskQueue{}
+			handler, err := deliverytask.NewHandler(repository, protector{}, transport, ids, queue, func() time.Time { return now })
+			if err != nil {
+				t.Fatal(err)
+			}
+			work, err := deliverytask.NewIntent(ids, scope, deliveryID, now)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if result := handler.Handle(t.Context(), platformtask.Delivery{Intent: work, Attempt: 1}); result.Outcome != platformtask.OutcomeQuarantine {
+				t.Fatal("unfenced delivery ran")
+			}
+			if result := runDeliveryEffect(t, handler, work); result.Outcome != platformtask.OutcomeComplete {
+				t.Fatalf("effect: %#v", result)
+			}
+			stored, err := repository.FindDelivery(t.Context(), scope, deliveryID)
+			if err != nil || stored.State != test.expected || stored.AttemptCount != 0 || transport.calls != 0 || len(queue.intents) != 0 {
+				t.Fatalf("stopped delivery: %#v calls=%d err=%v", stored, transport.calls, err)
+			}
+		})
+	}
 }

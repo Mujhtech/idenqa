@@ -124,15 +124,23 @@ func (store *Store) FindEndpoint(ctx context.Context, scope tenant.Scope, endpoi
 
 // CreateDelivery stores one immutable event payload and pending lifecycle.
 func (store *Store) CreateDelivery(ctx context.Context, scope tenant.Scope, intent delivery.Intent) error {
-	if intent.Validate() != nil {
+	return store.write(ctx, scope, func(ctx context.Context, tx platformpostgres.Transaction) error {
+		return store.CreateDeliveryWithin(ctx, scope, tx, intent)
+	})
+}
+
+// CreateDeliveryWithin joins delivery intent creation to its caller's transaction.
+func (store *Store) CreateDeliveryWithin(ctx context.Context, scope tenant.Scope, tx platformpostgres.Transaction, intent delivery.Intent) error {
+	if tx == nil || intent.Validate() != nil {
 		return delivery.ErrInvalid
 	}
-	return store.write(ctx, scope, func(ctx context.Context, tx platformpostgres.Transaction) error {
-		_, err := tx.Exec(ctx, `INSERT INTO idenqa.webhook_deliveries
-			(tenant_id,id,endpoint_id,event_id,event_type,body,body_digest,state,attempt_count,max_attempts,next_attempt_at,replay_of,created_at,updated_at)
-			VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`, scope.ID().String(), intent.ID.String(), intent.EndpointID.String(), intent.EventID.String(), intent.EventType, intent.Body, intent.BodyDigest, string(intent.State), intent.AttemptCount, intent.MaxAttempts, intent.NextAttemptAt, nullableDelivery(intent.ReplayOf), intent.CreatedAt, intent.UpdatedAt)
+	if err := setScope(ctx, tx, scope); err != nil {
 		return err
-	})
+	}
+	_, err := tx.Exec(ctx, `INSERT INTO idenqa.webhook_deliveries
+  (tenant_id,id,endpoint_id,event_id,event_type,body,body_digest,state,attempt_count,max_attempts,next_attempt_at,replay_of,created_at,updated_at)
+  VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`, scope.ID().String(), intent.ID.String(), intent.EndpointID.String(), intent.EventID.String(), intent.EventType, intent.Body, intent.BodyDigest, string(intent.State), intent.AttemptCount, intent.MaxAttempts, intent.NextAttemptAt, nullableDelivery(intent.ReplayOf), intent.CreatedAt, intent.UpdatedAt)
+	return err
 }
 
 // FindDelivery restores only a delivery visible in scope.
@@ -153,6 +161,7 @@ func (store *Store) FindDelivery(ctx context.Context, scope tenant.Scope, delive
 			return errors.Join(delivery.ErrInvalid, err)
 		}
 		result.ID, result.State, result.AttemptCount, result.MaxAttempts = deliveryID, delivery.State(state), attempts, maximum
+		result.CreatedAt, result.UpdatedAt, result.NextAttemptAt = result.CreatedAt.UTC(), result.UpdatedAt.UTC(), result.NextAttemptAt.UTC()
 		result.EndpointID, err = id.ParseWebhookEndpoint(endpointID)
 		if err != nil {
 			return delivery.ErrInvalid
@@ -175,9 +184,9 @@ func (store *Store) FindDelivery(ctx context.Context, scope tenant.Scope, delive
 	return result, err
 }
 
-// RecordAttemptWithin atomically appends safe attempt metadata and advances state.
+// RecordAttemptWithin atomically appends bounded attempt metadata and advances state.
 func (store *Store) RecordAttemptWithin(ctx context.Context, scope tenant.Scope, tx platformpostgres.Transaction, deliveryID id.Delivery, attempt delivery.Attempt, succeeded, retry bool, next time.Time) error {
-	if tx == nil || deliveryID.IsZero() || attempt.Number == 0 || attempt.SecretVersion == 0 || attempt.CompletedAt.IsZero() {
+	if tx == nil || deliveryID.IsZero() || attempt.Number < 1 || attempt.SecretVersion < 1 || attempt.CompletedAt.IsZero() || attempt.CompletedAt.Location() != time.UTC || next.IsZero() || next.Before(attempt.CompletedAt) || (succeeded && retry) {
 		return delivery.ErrInvalid
 	}
 	if err := setScope(ctx, tx, scope); err != nil {
@@ -194,9 +203,12 @@ func (store *Store) RecordAttemptWithin(ctx context.Context, scope tenant.Scope,
 		return delivery.ErrConflict
 	}
 	diagnostic := attempt.Diagnostic
+	if err := diagnostic.Validate(); err != nil {
+		return delivery.ErrInvalid
+	}
 	_, err := tx.Exec(ctx, `INSERT INTO idenqa.webhook_delivery_attempts
-		(tenant_id,delivery_id,attempt_number,secret_version,signature_timestamp,status_code,error_class,retry_after_ms,completed_at)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`, scope.ID().String(), deliveryID.String(), attempt.Number, attempt.SecretVersion, attempt.SignatureTimestamp, diagnostic.StatusCode, diagnostic.ErrorClass, diagnostic.RetryAfter.Milliseconds(), attempt.CompletedAt)
+		(tenant_id,delivery_id,attempt_number,secret_version,signature_timestamp,status_code,error_class,retry_after_ms,response_body,response_truncated,completed_at)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`, scope.ID().String(), deliveryID.String(), attempt.Number, attempt.SecretVersion, attempt.SignatureTimestamp, diagnostic.StatusCode, diagnostic.ErrorClass, diagnostic.RetryAfter.Milliseconds(), nullableString(diagnostic.Excerpt), diagnostic.Truncated, attempt.CompletedAt)
 	if err != nil {
 		return err
 	}
@@ -211,7 +223,7 @@ func (store *Store) RecordAttemptWithin(ctx context.Context, scope tenant.Scope,
 	return err
 }
 
-// RecordAttempt atomically appends one response-free attempt and advances delivery state.
+// RecordAttempt atomically appends one bounded attempt record and advances delivery state.
 func (store *Store) RecordAttempt(ctx context.Context, scope tenant.Scope, deliveryID id.Delivery, attempt delivery.Attempt, succeeded, retry bool, next time.Time) error {
 	return store.write(ctx, scope, func(ctx context.Context, tx platformpostgres.Transaction) error {
 		return store.RecordAttemptWithin(ctx, scope, tx, deliveryID, attempt, succeeded, retry, next)
@@ -283,3 +295,23 @@ func nullableString(value string) any {
 }
 
 var _ delivery.Repository = (*Store)(nil)
+
+// FinishWithin cancels disabled deliveries or exhausts elapsed delivery windows.
+// The caller must commit this mutation with the current task effect fence.
+func (store *Store) FinishWithin(ctx context.Context, scope tenant.Scope, tx platformpostgres.Transaction, deliveryID id.Delivery, expected int32, state delivery.State, at time.Time) error {
+	if tx == nil || deliveryID.IsZero() || expected < 0 || (state != delivery.StateCancelled && state != delivery.StateExhausted) || at.IsZero() {
+		return delivery.ErrInvalid
+	}
+	if err := setScope(ctx, tx, scope); err != nil {
+		return err
+	}
+	tag, err := tx.Exec(ctx, `UPDATE idenqa.webhook_deliveries SET state=$3,updated_at=$4
+ WHERE tenant_id=$1 AND id=$2 AND state='pending' AND attempt_count=$5`, scope.ID().String(), deliveryID.String(), string(state), at, expected)
+	if err != nil {
+		return fmt.Errorf("finish webhook delivery: %w", err)
+	}
+	if tag.RowsAffected() != 1 {
+		return delivery.ErrConflict
+	}
+	return nil
+}
