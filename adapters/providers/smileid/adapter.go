@@ -23,7 +23,7 @@ import (
 
 const (
 	configurationDigest = "sha256:6c970ac324797952f7d25b4dd847db9b9b65a86a7fdc9c42e85e36bd72a480a1"
-	packageDigest       = "sha256:1cf0a62a1a739943e1ade0ed763ebbf9c20dce9969b4e3b6809bce820e15b46c"
+	packageDigest       = "sha256:c150c7d1ddd7bd6df31e928d61b7fbbbeb1ba4bcc7e6b928c7787d30c75ef915"
 	maximumBodyBytes    = 1 << 20
 	maximumEvidence     = 10 << 20
 	maximumArchive      = 48 << 20
@@ -175,7 +175,7 @@ func (adapter *Adapter) Execute(ctx context.Context, request providerv1.Request)
 		SmileClientID: configuration.PartnerID, CallbackURL: configuration.CallbackURL,
 		PartnerParams: partnerParams{JobType: jobType, JobID: jobID, UserID: userID},
 	}
-	prepResult, status, retryAfter, prepErr := adapter.jsonRequest(ctx, configuration, http.MethodPost, "/v1/upload", prep)
+	prepResult, status, retryAfter, prepErr := adapter.jsonRequest(ctx, configuration, "/v1/upload", prep)
 	duplicate := status == http.StatusBadRequest && stringValue(prepResult["code"]) == "2215"
 	if prepErr != nil && !duplicate {
 		return transportFailure(request, adapter.now, status, retryAfter), nil
@@ -204,7 +204,7 @@ func (adapter *Adapter) poll(ctx context.Context, request providerv1.Request, co
 		}
 		timestamp := adapter.now().UTC().Format(timestampLayout)
 		payload := map[string]any{"history": false, "image_links": false, "job_id": jobID, "user_id": userID, "partner_id": configuration.PartnerID, "signature": sign(configuration.APIKey, timestamp, configuration.PartnerID), "timestamp": timestamp}
-		statusResult, status, retryAfter, err := adapter.jsonRequest(ctx, configuration, http.MethodPost, "/v1/job_status", payload)
+		statusResult, status, retryAfter, err := adapter.jsonRequest(ctx, configuration, "/v1/job_status", payload)
 		if err != nil {
 			return transportFailure(request, adapter.now, status, retryAfter)
 		}
@@ -269,8 +269,11 @@ func packageArchive(values map[string]string, images []image) ([]byte, error) {
 	}
 	info := map[string]any{
 		"package_information": map[string]any{"apiVersion": map[string]int{"buildNumber": 0, "majorVersion": 2, "minorVersion": 0}},
-		"id_info":             map[string]any{"country": values["idenqa.input.country"], "id_type": values["idenqa.input.id_type"], "id_number": values["idenqa.input.id_number"], "entered": true},
+		"id_info":             map[string]any{"country": values["idenqa.input.country"], "id_type": values["idenqa.input.id_type"], "entered": true},
 		"images":              entries,
+	}
+	if number := values["idenqa.input.id_number"]; number != "" {
+		info["id_info"].(map[string]any)["id_number"] = number
 	}
 	encoded, err := json.Marshal(info)
 	if err != nil {
@@ -311,13 +314,13 @@ func (adapter *Adapter) resolveInputs(ctx context.Context, references []provider
 	return values, nil
 }
 
-func (adapter *Adapter) jsonRequest(ctx context.Context, configuration Config, method, path string, payload any) (map[string]any, int, time.Duration, error) {
+func (adapter *Adapter) jsonRequest(ctx context.Context, configuration Config, path string, payload any) (map[string]any, int, time.Duration, error) {
 	encoded, err := json.Marshal(payload)
 	if err != nil {
 		return nil, 0, 0, err
 	}
 	defer wipe(encoded)
-	return adapter.rawRequest(ctx, configuration, method, strings.TrimSuffix(configuration.BaseURL, "/")+path, "application/json", encoded)
+	return adapter.rawRequest(ctx, configuration, http.MethodPost, strings.TrimSuffix(configuration.BaseURL, "/")+path, "application/json", encoded)
 }
 
 func (adapter *Adapter) rawRequest(ctx context.Context, _ Config, method, endpoint, contentType string, payload []byte) (map[string]any, int, time.Duration, error) {
@@ -358,9 +361,9 @@ func normalise(request providerv1.Request, response map[string]any, now func() t
 	}
 	signals := []providerv1.Signal{
 		{Name: "idenqa.signal.provider_job", Outcome: outcome},
-		{Name: "idenqa.signal.liveness", Outcome: actionOutcome(actions, "Liveness_Check", "Selfie_Check")},
+		{Name: "idenqa.signal.liveness", Outcome: actionOutcome(actions, "Liveness_Check")},
 		{Name: "idenqa.signal.face_match_1to1", Outcome: actionOutcome(actions, "Selfie_To_ID_Card_Compare", "Selfie_To_ID_Authority_Compare")},
-		{Name: "idenqa.signal.document_authenticity", Outcome: actionOutcome(actions, "Document_Check", "Verify_ID_Number")},
+		{Name: "idenqa.signal.document_authenticity", Outcome: actionOutcome(actions, "Verify_Document", "Document_Check")},
 	}
 	return providerv1.Result{Contract: request.Contract, AttemptID: request.AttemptID, Outcome: providerv1.ResultOutcomeCompleted, Signals: signals, CompletedAt: now().UTC()}
 }
@@ -400,10 +403,10 @@ func verifyResponseSignature(response map[string]any, configuration Config) bool
 
 func manifest() providerv1.Manifest {
 	return providerv1.Manifest{
-		Package:       providerv1.PackageProvenance{AdapterID: "smileid", AdapterVersion: "0.1.0", PackageDigest: packageDigest, Contract: providerv1.CurrentVersion},
+		Package:       providerv1.PackageProvenance{AdapterID: "smileid", AdapterVersion: "0.1.1", PackageDigest: packageDigest, Contract: providerv1.CurrentVersion},
 		Configuration: providerv1.ConfigurationSchema{ID: "smileid.tenant.v1", Digest: configurationDigest},
 		Capabilities: []providerv1.Capability{
-			{Check: "idenqa.check.document_biometric", AcceptedEvidence: []string{"idenqa.evidence.document_image", "idenqa.evidence.selfie_image"}, AcceptedInputs: authorityInputs(), AcceptedAssurances: []string{"idenqa.assurance.capture_quality", "idenqa.assurance.active_liveness", "idenqa.assurance.face_match_1to1", "idenqa.assurance.document_authenticity"}, ProcessingRegions: []string{"africa"}, SupportsIdempotency: true},
+			{Check: "idenqa.check.document_biometric", AcceptedEvidence: []string{"idenqa.evidence.document_image", "idenqa.evidence.selfie_image"}, AcceptedInputs: []string{"idenqa.input.country", "idenqa.input.id_type"}, AcceptedAssurances: []string{"idenqa.assurance.capture_quality", "idenqa.assurance.active_liveness", "idenqa.assurance.face_match_1to1", "idenqa.assurance.document_authenticity"}, ProcessingRegions: []string{"africa"}, SupportsIdempotency: true},
 			{Check: "idenqa.check.authority_biometric", AcceptedEvidence: []string{"idenqa.evidence.selfie_image"}, AcceptedInputs: authorityInputs(), AcceptedAssurances: []string{"idenqa.assurance.active_liveness", "idenqa.assurance.face_match_1to1"}, ProcessingRegions: []string{"africa"}, SupportsIdempotency: true},
 		},
 		Restrictions: providerv1.Restrictions{NetworkRequired: true, MaximumGrants: 16, MaximumResultSize: 32 * 1024, MaximumDuration: 10 * time.Minute},

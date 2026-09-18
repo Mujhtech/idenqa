@@ -192,7 +192,6 @@ func fixture(t *testing.T, adapter *smileid.Adapter) (providerv1.Request, provid
 		Inputs: []providerv1.InputReference{
 			{Name: "idenqa.input.country", Reference: "secret://input/country"},
 			{Name: "idenqa.input.id_type", Reference: "secret://input/id-type"},
-			{Name: "idenqa.input.id_number", Reference: "secret://input/id-number"},
 		}, Evidence: grants, Deadline: fixedNow.Add(5 * time.Minute),
 	}, configuration
 }

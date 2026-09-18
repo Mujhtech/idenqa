@@ -19,7 +19,7 @@ import (
 
 const (
 	configurationDigest = "sha256:1a43389f9f297b42dc8507a353ba5d98f7c7d150527d67c13af117f1e478bae5"
-	packageDigest       = "sha256:8e6eb4d7a4780565ce971b0eb3f4298869b54b4fe4ae1c64d5c180214f0dc90b"
+	packageDigest       = "sha256:7fb58659eab38742110fb3193890a8ca90ee5930bf47207bfb39bcb8acac10d6"
 	maximumBodyBytes    = 1 << 20
 	maximumEvidence     = 10 << 20
 )
@@ -132,7 +132,7 @@ func (adapter *Adapter) Execute(ctx context.Context, request providerv1.Request)
 	case "idenqa.check.face_match_1to1":
 		return adapter.faceMatch(ctx, request, configuration)
 	case "idenqa.check.document_analysis":
-		return adapter.imageCheck(ctx, request, configuration, "/api/v1/document/analysis", "document", "document.front", "idenqa.signal.document_quality")
+		return adapter.imageCheck(ctx, request, configuration, "/api/v1/document/analysis", "imagefrontside", "document.front", "idenqa.signal.document_quality")
 	case "idenqa.check.authority_lookup":
 		return adapter.authorityLookup(ctx, request, configuration)
 	default:
@@ -146,11 +146,19 @@ func (adapter *Adapter) imageCheck(ctx context.Context, request providerv1.Reque
 		return failed(request, adapter.now, providerv1.FailureInvalidRequest, "evidence_unavailable", providerv1.RetryNever, 0), nil
 	}
 	defer wipe(image)
-	response, status, retryAfter, err := adapter.post(ctx, configuration, path, map[string]string{field: base64.StdEncoding.EncodeToString(image)})
+	body := map[string]string{field: base64.StdEncoding.EncodeToString(image)}
+	if signal == "idenqa.signal.document_quality" {
+		body["input_type"] = "base64"
+	}
+	response, status, retryAfter, err := adapter.post(ctx, configuration, path, body)
 	if err != nil {
 		return transportFailure(request, adapter.now, status, retryAfter), nil
 	}
-	return completed(request, adapter.now, signal, responseOutcome(response)), nil
+	outcome := responseOutcome(response)
+	if signal == "idenqa.signal.document_quality" {
+		outcome = documentOutcome(response)
+	}
+	return completed(request, adapter.now, signal, outcome), nil
 }
 
 func (adapter *Adapter) faceMatch(ctx context.Context, request providerv1.Request, configuration Config) (providerv1.Result, error) {
@@ -263,11 +271,14 @@ func (adapter *Adapter) resolveInputs(ctx context.Context, references []provider
 	return values, nil
 }
 
+// Description returns a fresh snapshot of the reviewed adapter manifest.
+func Description() providerv1.Manifest { return manifest() }
+
 func manifest() providerv1.Manifest {
 	return providerv1.Manifest{
 		Package: providerv1.PackageProvenance{
 			AdapterID:      "dojah",
-			AdapterVersion: "0.1.0",
+			AdapterVersion: "0.1.1",
 			PackageDigest:  packageDigest,
 			Contract:       providerv1.CurrentVersion,
 		},
@@ -437,3 +448,23 @@ func wipe(value []byte) {
 }
 
 var _ providerv1.Adapter = (*Adapter)(nil)
+
+// Document status is explicit; entity presence and extracted fields are not success.
+func documentOutcome(response map[string]any) providerv1.SignalOutcome {
+	entity, ok := response["entity"].(map[string]any)
+	if !ok {
+		return providerv1.SignalOutcomeInconclusive
+	}
+	status, ok := entity["status"].(map[string]any)
+	if !ok {
+		return providerv1.SignalOutcomeInconclusive
+	}
+	switch status["overall_status"] {
+	case float64(1):
+		return providerv1.SignalOutcomeSatisfied
+	case float64(0):
+		return providerv1.SignalOutcomeNotSatisfied
+	default:
+		return providerv1.SignalOutcomeInconclusive
+	}
+}

@@ -2,9 +2,12 @@
   "schema_version": "1.1",
   "package": {
     "adapter_id": "smileid",
-    "adapter_version": "0.1.0",
-    "package_digest": "sha256:1cf0a62a1a739943e1ade0ed763ebbf9c20dce9969b4e3b6809bce820e15b46c",
-    "contract": { "major": 1, "minor": 1 }
+    "adapter_version": "0.1.1",
+    "package_digest": "sha256:c150c7d1ddd7bd6df31e928d61b7fbbbeb1ba4bcc7e6b928c7787d30c75ef915",
+    "contract": {
+      "major": 1,
+      "minor": 1
+    }
   },
   "configuration": {
     "id": "smileid.tenant.v1",
@@ -13,26 +16,42 @@
   "capabilities": [
     {
       "check": "idenqa.check.document_biometric",
-      "accepted_evidence": ["idenqa.evidence.document_image", "idenqa.evidence.selfie_image"],
-      "accepted_inputs": ["idenqa.input.country", "idenqa.input.id_type", "idenqa.input.id_number"],
+      "accepted_evidence": [
+        "idenqa.evidence.document_image",
+        "idenqa.evidence.selfie_image"
+      ],
+      "accepted_inputs": [
+        "idenqa.input.country",
+        "idenqa.input.id_type"
+      ],
       "accepted_assurances": [
         "idenqa.assurance.capture_quality",
         "idenqa.assurance.active_liveness",
         "idenqa.assurance.face_match_1to1",
         "idenqa.assurance.document_authenticity"
       ],
-      "processing_regions": ["africa"],
+      "processing_regions": [
+        "africa"
+      ],
       "supports_idempotency": true
     },
     {
       "check": "idenqa.check.authority_biometric",
-      "accepted_evidence": ["idenqa.evidence.selfie_image"],
-      "accepted_inputs": ["idenqa.input.country", "idenqa.input.id_type", "idenqa.input.id_number"],
+      "accepted_evidence": [
+        "idenqa.evidence.selfie_image"
+      ],
+      "accepted_inputs": [
+        "idenqa.input.country",
+        "idenqa.input.id_type",
+        "idenqa.input.id_number"
+      ],
       "accepted_assurances": [
         "idenqa.assurance.active_liveness",
         "idenqa.assurance.face_match_1to1"
       ],
-      "processing_regions": ["africa"],
+      "processing_regions": [
+        "africa"
+      ],
       "supports_idempotency": true
     }
   ],
@@ -45,13 +64,38 @@
   "catalogue_review": {
     "reviewed_at": "2026-09-04",
     "upstream_contract": "Smile ID REST API v1 / info package API v2.0",
-    "modes": ["sandbox", "production"],
+    "modes": [
+      "sandbox",
+      "production"
+    ],
     "credential_ownership": "tenant",
     "countries": {
-      "NG": ["NIN", "NIN_V2", "BVN", "PASSPORT", "DRIVERS_LICENSE", "DOCUMENT_IMAGE"],
-      "GH": ["GHANA_CARD", "PASSPORT", "DRIVERS_LICENSE", "DOCUMENT_IMAGE"],
-      "KE": ["NATIONAL_ID", "PASSPORT", "DRIVERS_LICENSE", "DOCUMENT_IMAGE"],
-      "ZA": ["NATIONAL_ID", "PASSPORT", "DRIVERS_LICENSE", "DOCUMENT_IMAGE"]
+      "NG": [
+        "NIN",
+        "NIN_V2",
+        "BVN",
+        "PASSPORT",
+        "DRIVERS_LICENSE",
+        "DOCUMENT_IMAGE"
+      ],
+      "GH": [
+        "GHANA_CARD",
+        "PASSPORT",
+        "DRIVERS_LICENSE",
+        "DOCUMENT_IMAGE"
+      ],
+      "KE": [
+        "NATIONAL_ID",
+        "PASSPORT",
+        "DRIVERS_LICENSE",
+        "DOCUMENT_IMAGE"
+      ],
+      "ZA": [
+        "NATIONAL_ID",
+        "PASSPORT",
+        "DRIVERS_LICENSE",
+        "DOCUMENT_IMAGE"
+      ]
     },
     "callbacks": true,
     "polling": true,

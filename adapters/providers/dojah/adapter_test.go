@@ -65,14 +65,22 @@ func (evidence) ReadProviderEvidence(context.Context, providerv1.EvidenceGrantRe
 }
 
 type client struct {
-	status  int
-	body    string
-	retry   string
-	request *http.Request
+	status      int
+	body        string
+	retry       string
+	request     *http.Request
+	requestBody []byte
 }
 
 func (value *client) Do(request *http.Request) (*http.Response, error) {
 	value.request = request
+	if request.Body != nil {
+		var err error
+		value.requestBody, err = io.ReadAll(request.Body)
+		if err != nil {
+			return nil, err
+		}
+	}
 	header := make(http.Header)
 	header.Set("Retry-After", value.retry)
 	return &http.Response{StatusCode: value.status, Header: header, Body: io.NopCloser(strings.NewReader(value.body))}, nil
@@ -205,4 +213,40 @@ func fixture(t *testing.T, adapter *dojah.Adapter, check string) (providerv1.Req
 func id(prefix string, seed byte) string {
 	alphabet := "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
 	return prefix + "_" + strings.Repeat(string(alphabet[int(seed)%len(alphabet)]), 26)
+}
+
+func TestDocumentAnalysisUsesExplicitStatusAndDocumentedBody(t *testing.T) {
+	t.Parallel()
+	for _, test := range []struct {
+		name, body string
+		want       providerv1.SignalOutcome
+	}{
+		{"valid", `{"entity":{"status":{"overall_status":1}}}`, providerv1.SignalOutcomeSatisfied},
+		{"invalid with extracted entity", `{"entity":{"status":{"overall_status":0},"valid":true}}`, providerv1.SignalOutcomeNotSatisfied},
+		{"missing status", `{"entity":{"text_data":[{"value":"private"}]}}`, providerv1.SignalOutcomeInconclusive},
+		{"unknown status", `{"entity":{"status":{"overall_status":2}}}`, providerv1.SignalOutcomeInconclusive},
+		{"wrong type", `{"entity":{"status":{"overall_status":"1"}}}`, providerv1.SignalOutcomeInconclusive},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			transport := &client{status: 200, body: test.body}
+			adapter, err := dojah.New(secrets{}, inputs{}, evidence{}, transport, func() time.Time { return fixedNow })
+			if err != nil {
+				t.Fatal(err)
+			}
+			request, _ := fixture(t, adapter, "idenqa.check.document_analysis")
+			request.Evidence[0].Variant = "document.front"
+			result, err := adapter.Execute(t.Context(), request)
+			if err != nil || len(result.Signals) != 1 || result.Signals[0].Outcome != test.want {
+				t.Fatalf("document outcome: %#v %v", result, err)
+			}
+			var body map[string]string
+			if err := json.Unmarshal(transport.requestBody, &body); err != nil {
+				t.Fatal(err)
+			}
+			if len(body) != 2 || body["input_type"] != "base64" || body["imagefrontside"] == "" {
+				t.Fatalf("document body keys differ from reviewed contract")
+			}
+		})
+	}
 }
