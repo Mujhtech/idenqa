@@ -1,18 +1,25 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const externalBaseURL = process.env.IDENQA_CAPTURE_LIVE_DEMO_URL;
+
 export default defineConfig({
   testDir: "./test/browser",
   fullyParallel: true,
   reporter: "line",
   use: {
-    baseURL: "http://127.0.0.1:4173",
+    baseURL: externalBaseURL ?? "http://127.0.0.1:4173",
     trace: "retain-on-failure",
   },
-  webServer: {
-    command: "pnpm exec vite ./demo --host 127.0.0.1 --port 4173 --strictPort",
-    reuseExistingServer: false,
-    url: "http://127.0.0.1:4173",
-  },
+  ...(externalBaseURL === undefined
+    ? {
+        webServer: {
+          command:
+            "pnpm exec vite ./demo --config ./vite.config.mjs --host 127.0.0.1 --port 4173 --strictPort",
+          reuseExistingServer: false,
+          url: "http://127.0.0.1:4173",
+        },
+      }
+    : {}),
   projects: [
     {
       name: "chromium",

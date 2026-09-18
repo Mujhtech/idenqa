@@ -5,6 +5,9 @@ import type { EvidenceUpload } from "@idenqa/sdk";
 
 import {
   createCaptureFlowController,
+  isActiveCaptureFlowSnapshot,
+  type CaptureActiveFlowSnapshot,
+  type CaptureOutcomeFlowSnapshot,
   type CaptureFlowController,
   type CaptureFlowSnapshot,
   type CaptureFlowStartOptions,
@@ -27,6 +30,17 @@ import {
   type CaptureMessageKey,
   type CaptureMessageValues,
 } from "./localisation.js";
+import {
+  CaptureMethodAdapterError,
+  captureMethodAdapterCopy,
+  findCaptureMethodAdapter,
+  normalizeCaptureMethodProgress,
+  requireCaptureMethodAdapter,
+  validateCaptureMethodAdapters,
+  type CaptureMethodAdapter,
+  type CaptureMethodAdapterContext,
+  type CaptureMethodAdapterProgress,
+} from "./method-adapter.js";
 
 export const IDENQA_CAPTURE_TAG_NAME = "idenqa-capture";
 
@@ -68,8 +82,11 @@ export interface CaptureProgressDetail {
 }
 
 export interface CaptureElementStartOptions extends CaptureFlowStartOptions {
+  readonly expectedVerificationId?: string;
   /** Optional translations for package-owned UI copy. The server notice is never overridden. */
   readonly messageCatalogue?: CaptureMessageCatalogue;
+  /** Programmatic integrations for approved acquisition methods not owned by the built-in UI. */
+  readonly methodAdapters?: readonly CaptureMethodAdapter[];
 }
 
 export interface CaptureCompleteDetail extends CaptureProgressDetail {
@@ -77,8 +94,9 @@ export interface CaptureCompleteDetail extends CaptureProgressDetail {
 }
 
 interface StepUploadState {
-  readonly status: "uploading" | "error" | "accepted";
+  readonly status: "reviewing" | "uploading" | "error" | "accepted";
   readonly body?: Blob;
+  readonly previewUrl?: string;
   readonly message?: string;
 }
 
@@ -99,7 +117,18 @@ interface StepCompletion {
   readonly evidenceId: string;
 }
 
+interface StepAdapterState {
+  readonly status: "running" | "error";
+  readonly controller: AbortController;
+  readonly progress?: CaptureMethodAdapterProgress;
+  readonly previewStream?: MediaStream;
+  readonly message?: string;
+}
+
 type ComponentFlowState = "idle" | "loading" | "ready" | "responding" | "error" | "cancelled";
+type JourneyPhase =
+  "intro" | "notice" | "recovery" | "capture" | "confirmation" | "processing" | "complete";
+type StepStage = "method" | "preparation" | "capture";
 
 export class IdenqaCaptureElement extends LitElement {
   static override properties = {
@@ -108,23 +137,48 @@ export class IdenqaCaptureElement extends LitElement {
 
   static override styles = css`
     :host {
-      --idq-capture-accent: #175cd3;
-      --idq-capture-accent-strong: #004eaf;
+      --idq-capture-accent: #0b6b57;
+      --idq-capture-accent-strong: #075345;
+      --idq-capture-accent-foreground: #ffffff;
       --idq-capture-background: #ffffff;
-      --idq-capture-border: #d0d5dd;
-      --idq-capture-muted: #475467;
-      --idq-capture-surface: #f8fafc;
-      --idq-capture-text: #101828;
+      --idq-capture-border: #d6dedb;
+      --idq-capture-card-radius: 0.75rem;
+      --idq-capture-control-radius: 0.625rem;
+      --idq-capture-error: #b42318;
+      --idq-capture-face-guide: rgb(255 255 255 / 78%);
+      --idq-capture-face-guide-muted: rgb(255 255 255 / 42%);
+      --idq-capture-font-family:
+        Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --idq-capture-focus-offset: 0.1875rem;
+      --idq-capture-focus-width: 0.1875rem;
+      --idq-capture-liveness-color: var(--idq-capture-accent-strong);
+      --idq-capture-liveness-cue-active-opacity: 0.9;
+      --idq-capture-liveness-cue-opacity: 0.14;
+      --idq-capture-liveness-duration: 9.6s;
+      --idq-capture-liveness-size: clamp(9rem, 34vw, 12rem);
+      --idq-capture-media-background: #0c111d;
+      --idq-capture-motion-ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+      --idq-capture-motion-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+      --idq-capture-motion-fast: 160ms;
+      --idq-capture-motion-press: 140ms;
+      --idq-capture-muted: #52605c;
+      --idq-capture-overlay-background: rgb(10 18 16 / 82%);
+      --idq-capture-overlay-border: rgb(255 255 255 / 18%);
+      --idq-capture-overlay-foreground: #ffffff;
+      --idq-capture-panel-radius: 1rem;
+      --idq-capture-shell-max-width: 42rem;
+      --idq-capture-shell-min-height: min(42rem, calc(100dvh - 2rem));
+      --idq-capture-shell-padding: 1.25rem;
+      --idq-capture-shell-radius: 1.5rem;
+      --idq-capture-shell-shadow: 0 1.25rem 4rem rgb(20 32 29 / 10%);
+      --idq-capture-surface: #f3f7f5;
+      --idq-capture-surface-strong: #e4f2ed;
+      --idq-capture-tap-highlight: rgb(23 92 211 / 18%);
+      --idq-capture-text: #14201d;
+      color-scheme: light dark;
       color: var(--idq-capture-text);
       display: block;
-      font-family:
-        Inter,
-        ui-sans-serif,
-        system-ui,
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        sans-serif;
+      font-family: var(--idq-capture-font-family);
       line-height: 1.5;
     }
 
@@ -135,11 +189,16 @@ export class IdenqaCaptureElement extends LitElement {
     .shell {
       background: var(--idq-capture-background);
       border: 1px solid var(--idq-capture-border);
-      border-radius: 1rem;
+      border-radius: var(--idq-capture-shell-radius);
+      box-shadow: var(--idq-capture-shell-shadow);
       margin-inline: auto;
-      max-width: 44rem;
+      max-width: var(--idq-capture-shell-max-width);
+      min-height: var(--idq-capture-shell-min-height);
       overflow-wrap: anywhere;
-      padding: clamp(1rem, 4vw, 2rem);
+      padding: max(var(--idq-capture-shell-padding), env(safe-area-inset-top))
+        max(var(--idq-capture-shell-padding), env(safe-area-inset-right))
+        max(var(--idq-capture-shell-padding), env(safe-area-inset-bottom))
+        max(var(--idq-capture-shell-padding), env(safe-area-inset-left));
     }
 
     .eyebrow {
@@ -159,8 +218,9 @@ export class IdenqaCaptureElement extends LitElement {
     }
 
     h2 {
-      font-size: clamp(1.5rem, 5vw, 2rem);
-      line-height: 1.2;
+      font-size: clamp(1.75rem, 6vw, 2.5rem);
+      letter-spacing: -0.025em;
+      line-height: 1.12;
       margin-block-end: 0.75rem;
       text-wrap: balance;
     }
@@ -175,6 +235,7 @@ export class IdenqaCaptureElement extends LitElement {
     h4 {
       font-size: 1rem;
       margin-block-end: 0.75rem;
+      text-wrap: balance;
     }
 
     .intro,
@@ -187,7 +248,7 @@ export class IdenqaCaptureElement extends LitElement {
     .notice {
       background: var(--idq-capture-surface);
       border: 1px solid var(--idq-capture-border);
-      border-radius: 0.75rem;
+      border-radius: var(--idq-capture-card-radius);
       margin-block-start: 1.5rem;
       padding: 1rem;
     }
@@ -234,7 +295,7 @@ export class IdenqaCaptureElement extends LitElement {
     }
 
     .error {
-      color: #b42318;
+      color: var(--idq-capture-error);
       font-weight: 650;
     }
 
@@ -247,7 +308,7 @@ export class IdenqaCaptureElement extends LitElement {
     .progress-summary {
       background: var(--idq-capture-surface);
       border: 1px solid var(--idq-capture-border);
-      border-radius: 0.75rem;
+      border-radius: var(--idq-capture-card-radius);
       margin-block-start: 1.25rem;
       padding: 1rem;
     }
@@ -283,7 +344,7 @@ export class IdenqaCaptureElement extends LitElement {
     .step {
       background: var(--idq-capture-surface);
       border: 1px solid var(--idq-capture-border);
-      border-radius: 0.75rem;
+      border-radius: var(--idq-capture-card-radius);
       padding: 1rem;
     }
 
@@ -323,7 +384,7 @@ export class IdenqaCaptureElement extends LitElement {
       align-items: center;
       background: var(--idq-capture-background);
       border: 1px solid var(--idq-capture-border);
-      border-radius: 0.625rem;
+      border-radius: var(--idq-capture-control-radius);
       cursor: pointer;
       display: inline-flex;
       font-weight: 650;
@@ -331,12 +392,16 @@ export class IdenqaCaptureElement extends LitElement {
       min-height: 2.75rem;
       padding: 0.625rem 0.875rem;
       touch-action: manipulation;
-      -webkit-tap-highlight-color: rgb(23 92 211 / 18%);
+      -webkit-tap-highlight-color: var(--idq-capture-tap-highlight);
     }
 
     .file-input:focus-visible + .file-label {
-      outline: 0.1875rem solid var(--idq-capture-accent);
-      outline-offset: 0.1875rem;
+      outline: var(--idq-capture-focus-width) solid var(--idq-capture-accent);
+      outline-offset: var(--idq-capture-focus-offset);
+    }
+
+    .file-label:hover {
+      border-color: var(--idq-capture-accent);
     }
 
     .file-input:disabled + .file-label {
@@ -359,8 +424,8 @@ export class IdenqaCaptureElement extends LitElement {
 
     .camera-preview {
       aspect-ratio: 4 / 3;
-      background: #0c111d;
-      border-radius: 0.625rem;
+      background: var(--idq-capture-media-background);
+      border-radius: var(--idq-capture-control-radius);
       display: block;
       height: auto;
       max-height: 32rem;
@@ -380,26 +445,121 @@ export class IdenqaCaptureElement extends LitElement {
       margin: 0;
     }
 
+    .adapter-option {
+      display: grid;
+      gap: 1rem;
+      min-width: 0;
+    }
+
+    .adapter-preview-frame {
+      background: var(--idq-capture-media-background);
+      border-radius: var(--idq-capture-panel-radius);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .adapter-option[data-presentation="active_liveness"] .adapter-preview-frame {
+      aspect-ratio: 4 / 3;
+    }
+
+    .adapter-option[data-presentation="active_liveness"] .camera-preview {
+      border-radius: 0;
+      height: 100%;
+      max-height: none;
+      object-fit: cover;
+      transform: scaleX(-1);
+    }
+
+    .liveness-face-guide {
+      border: 0.2rem solid var(--idq-capture-face-guide);
+      border-block-color: var(--idq-capture-face-guide-muted);
+      border-radius: 48% 48% 44% 44% / 42% 42% 56% 56%;
+      inset: 10% 27% 8%;
+      pointer-events: none;
+      position: absolute;
+    }
+
+    .liveness-overlay-prompt {
+      background: var(--idq-capture-overlay-background);
+      border: 1px solid var(--idq-capture-overlay-border);
+      border-radius: 999px;
+      color: var(--idq-capture-overlay-foreground);
+      font-size: clamp(0.875rem, 3vw, 1rem);
+      font-weight: 750;
+      inset-block-start: 1rem;
+      inset-inline: 50% auto;
+      max-width: calc(100% - 2rem);
+      padding: 0.625rem 1rem;
+      pointer-events: none;
+      position: absolute;
+      text-align: center;
+      transform: translateX(-50%);
+      white-space: nowrap;
+    }
+
+    [dir="rtl"] .liveness-overlay-prompt {
+      transform: translateX(50%);
+    }
+
+    .liveness-auto-capture {
+      align-items: center;
+      background: var(--idq-capture-surface-strong);
+      border-radius: 999px;
+      color: var(--idq-capture-accent-strong);
+      display: inline-flex;
+      font-size: 0.8125rem;
+      font-weight: 700;
+      gap: 0.4rem;
+      justify-self: start;
+      margin: 0;
+      padding: 0.4rem 0.75rem;
+    }
+
+    .liveness-auto-capture::before {
+      content: "●";
+      font-size: 0.55rem;
+    }
+
+    .adapter-progress {
+      background: var(--idq-capture-surface);
+      border: 1px solid var(--idq-capture-border);
+      border-radius: var(--idq-capture-card-radius);
+      display: grid;
+      gap: 0.625rem;
+      padding: 1rem;
+    }
+
+    .adapter-progress p {
+      margin: 0;
+    }
+
+    .adapter-prompt {
+      font-size: clamp(1.125rem, 4vw, 1.4rem);
+      font-weight: 750;
+      text-wrap: balance;
+    }
+
     button {
       align-items: center;
       appearance: none;
       background: var(--idq-capture-background);
       border: 1px solid var(--idq-capture-border);
-      border-radius: 0.625rem;
+      border-radius: var(--idq-capture-control-radius);
       color: var(--idq-capture-text);
       cursor: pointer;
       display: inline-flex;
       font: inherit;
       font-weight: 650;
       justify-content: center;
-      min-height: 2.75rem;
-      padding: 0.625rem 0.875rem;
+      min-height: 3rem;
+      padding: 0.75rem 1rem;
       touch-action: manipulation;
-      -webkit-tap-highlight-color: rgb(23 92 211 / 18%);
-    }
-
-    button:hover {
-      border-color: var(--idq-capture-accent);
+      transition:
+        background-color var(--idq-capture-motion-fast) ease,
+        border-color var(--idq-capture-motion-fast) ease,
+        color var(--idq-capture-motion-fast) ease,
+        transform var(--idq-capture-motion-press) var(--idq-capture-motion-ease-out);
+      -webkit-tap-highlight-color: var(--idq-capture-tap-highlight);
     }
 
     button:disabled {
@@ -411,12 +571,16 @@ export class IdenqaCaptureElement extends LitElement {
     button[aria-pressed="true"] {
       background: var(--idq-capture-accent);
       border-color: var(--idq-capture-accent);
-      color: #ffffff;
+      color: var(--idq-capture-accent-foreground);
+    }
+
+    button:active {
+      transform: scale(0.98);
     }
 
     button:focus-visible {
-      outline: 0.1875rem solid var(--idq-capture-accent);
-      outline-offset: 0.1875rem;
+      outline: var(--idq-capture-focus-width) solid var(--idq-capture-accent);
+      outline-offset: var(--idq-capture-focus-offset);
     }
 
     .status {
@@ -425,10 +589,531 @@ export class IdenqaCaptureElement extends LitElement {
       min-height: 1.3125rem;
     }
 
+    .product-header {
+      align-items: center;
+      display: flex;
+      gap: 0.625rem;
+      margin-block-end: clamp(2rem, 7vw, 3.5rem);
+    }
+
+    .mark {
+      align-items: center;
+      background: var(--idq-capture-accent);
+      border-radius: 0.65rem;
+      color: var(--idq-capture-accent-foreground);
+      display: inline-flex;
+      font-size: 0.875rem;
+      font-weight: 800;
+      block-size: 2rem;
+      inline-size: 2rem;
+      justify-content: center;
+    }
+
+    .product-name {
+      font-size: 0.9375rem;
+      font-weight: 750;
+      letter-spacing: -0.01em;
+      margin: 0;
+    }
+
+    .screen {
+      display: grid;
+      gap: 1.25rem;
+      margin-inline: auto;
+      max-width: 34rem;
+    }
+
+    .screen-copy {
+      color: var(--idq-capture-muted);
+      font-size: 1rem;
+      margin-block-end: 0;
+      max-width: 34rem;
+    }
+
+    .hero-icon,
+    .state-icon {
+      align-items: center;
+      background: var(--idq-capture-surface-strong);
+      border-radius: 50%;
+      color: var(--idq-capture-accent-strong);
+      display: inline-flex;
+      font-size: 1.5rem;
+      font-weight: 800;
+      block-size: 4rem;
+      inline-size: 4rem;
+      justify-content: center;
+    }
+
+    .liveness-illustration {
+      align-items: center;
+      align-self: center;
+      background:
+        radial-gradient(circle at 50% 42%, var(--idq-capture-background) 0 28%, transparent 29%),
+        linear-gradient(145deg, var(--idq-capture-surface-strong), var(--idq-capture-surface));
+      border: 1px solid var(--idq-capture-border);
+      border-radius: 50%;
+      color: var(--idq-capture-liveness-color);
+      display: flex;
+      height: var(--idq-capture-liveness-size);
+      justify-content: center;
+      justify-self: center;
+      overflow: hidden;
+      width: var(--idq-capture-liveness-size);
+    }
+
+    .liveness-illustration svg {
+      height: 78%;
+      overflow: visible;
+      width: 78%;
+    }
+
+    .liveness-illustration path,
+    .liveness-illustration circle {
+      fill: none;
+      stroke: currentColor;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 4;
+    }
+
+    .liveness-head,
+    .liveness-features,
+    .liveness-direction {
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+
+    .liveness-head {
+      animation: idq-liveness-head-demo var(--idq-capture-liveness-duration)
+        var(--idq-capture-motion-ease-in-out) infinite;
+    }
+
+    .liveness-features {
+      animation: idq-liveness-gaze-demo var(--idq-capture-liveness-duration)
+        var(--idq-capture-motion-ease-in-out) infinite;
+    }
+
+    .liveness-direction {
+      animation-duration: var(--idq-capture-liveness-duration);
+      animation-iteration-count: infinite;
+      animation-timing-function: linear;
+      opacity: var(--idq-capture-liveness-cue-opacity);
+      stroke-width: 3;
+    }
+
+    .liveness-direction-left {
+      --idq-liveness-cue-x: -0.25rem;
+      --idq-liveness-cue-y: 0;
+      animation-name: idq-liveness-direction-left-demo;
+    }
+
+    .liveness-direction-right {
+      --idq-liveness-cue-x: 0.25rem;
+      --idq-liveness-cue-y: 0;
+      animation-name: idq-liveness-direction-right-demo;
+    }
+
+    .liveness-direction-up {
+      --idq-liveness-cue-x: 0;
+      --idq-liveness-cue-y: -0.25rem;
+      animation-name: idq-liveness-direction-up-demo;
+    }
+
+    .liveness-direction-down {
+      --idq-liveness-cue-x: 0;
+      --idq-liveness-cue-y: 0.25rem;
+      animation-name: idq-liveness-direction-down-demo;
+    }
+
+    .state-icon {
+      block-size: 3.25rem;
+      inline-size: 3.25rem;
+    }
+
+    .benefits,
+    .tips {
+      display: grid;
+      gap: 0.875rem;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .benefits li,
+    .tips li {
+      align-items: flex-start;
+      display: grid;
+      gap: 0.75rem;
+      grid-template-columns: 1.5rem 1fr;
+    }
+
+    .benefits li::before,
+    .tips li::before {
+      align-items: center;
+      background: var(--idq-capture-surface-strong);
+      border-radius: 50%;
+      color: var(--idq-capture-accent-strong);
+      content: "✓";
+      display: inline-flex;
+      font-size: 0.75rem;
+      font-weight: 900;
+      block-size: 1.5rem;
+      inline-size: 1.5rem;
+      justify-content: center;
+      margin-block-start: 0.1rem;
+    }
+
+    .primary {
+      background: var(--idq-capture-accent);
+      border-color: var(--idq-capture-accent);
+      color: var(--idq-capture-accent-foreground);
+    }
+
+    .primary:hover {
+      background: var(--idq-capture-accent-strong);
+      border-color: var(--idq-capture-accent-strong);
+    }
+
+    .quiet {
+      background: transparent;
+      border-color: transparent;
+      color: var(--idq-capture-muted);
+    }
+
+    .journey-actions {
+      display: grid;
+      gap: 0.75rem;
+      margin-block-start: 0.5rem;
+    }
+
+    .journey-actions.split {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    }
+
+    .journey-progress {
+      align-items: center;
+      display: grid;
+      gap: 0.75rem;
+      grid-template-columns: 1fr auto;
+      margin-block-end: 1.75rem;
+    }
+
+    .journey-progress p {
+      color: var(--idq-capture-muted);
+      font-size: 0.8125rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .journey-progress progress {
+      grid-column: 1 / -1;
+      block-size: 0.4rem;
+    }
+
+    .method-list {
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    .method-card {
+      align-items: center;
+      display: grid;
+      gap: 0.75rem;
+      grid-template-columns: auto 1fr auto;
+      justify-content: initial;
+      min-height: 4.5rem;
+      padding: 1rem;
+      text-align: start;
+    }
+
+    .method-card .method-icon {
+      align-items: center;
+      background: var(--idq-capture-surface-strong);
+      border-radius: 0.65rem;
+      color: var(--idq-capture-accent-strong);
+      display: inline-flex;
+      block-size: 2.5rem;
+      inline-size: 2.5rem;
+      justify-content: center;
+    }
+
+    .method-card .method-copy {
+      display: grid;
+      gap: 0.125rem;
+    }
+
+    .method-card small {
+      color: var(--idq-capture-muted);
+      font-weight: 500;
+    }
+
+    .method-card .chevron {
+      color: var(--idq-capture-muted);
+      font-size: 1.25rem;
+    }
+
+    .capture-panel {
+      background: var(--idq-capture-surface);
+      border: 1px solid var(--idq-capture-border);
+      border-radius: var(--idq-capture-panel-radius);
+      display: grid;
+      gap: 1rem;
+      padding: 1rem;
+    }
+
+    .capture-panel .file-label,
+    .capture-panel > button,
+    .capture-panel .camera-actions button {
+      min-height: 3.25rem;
+    }
+
+    .review-image {
+      aspect-ratio: 4 / 3;
+      background: var(--idq-capture-media-background);
+      border-radius: var(--idq-capture-card-radius);
+      display: block;
+      inline-size: 100%;
+      object-fit: contain;
+    }
+
+    .notice-screen .notice {
+      margin-block-start: 0;
+    }
+
+    .notice-screen .notice-actions {
+      grid-template-columns: 1fr;
+    }
+
+    .confirmation-card {
+      align-items: center;
+      background: var(--idq-capture-surface);
+      border: 1px solid var(--idq-capture-border);
+      border-radius: var(--idq-capture-panel-radius);
+      display: flex;
+      gap: 0.875rem;
+      padding: 1rem;
+    }
+
+    .confirmation-card p {
+      margin: 0;
+    }
+
+    .confirmation-card strong {
+      display: block;
+      margin-block-end: 0.125rem;
+    }
+
+    .privacy-note {
+      color: var(--idq-capture-muted);
+      font-size: 0.8125rem;
+      margin: 0;
+      text-align: center;
+    }
+
+    .processing-indicator {
+      align-items: center;
+      display: flex;
+      gap: 0.4rem;
+      min-height: 2rem;
+    }
+
+    .processing-indicator span {
+      animation: idq-pulse 1.2s ease-in-out infinite;
+      background: var(--idq-capture-accent);
+      border-radius: 50%;
+      block-size: 0.55rem;
+      inline-size: 0.55rem;
+    }
+
+    .processing-indicator span:nth-child(2) {
+      animation-delay: 150ms;
+    }
+
+    .processing-indicator span:nth-child(3) {
+      animation-delay: 300ms;
+    }
+
+    @keyframes idq-pulse {
+      0%,
+      100% {
+        opacity: 0.25;
+        transform: translateY(0);
+      }
+      50% {
+        opacity: 1;
+        transform: translateY(-0.2rem);
+      }
+    }
+
+    @keyframes idq-liveness-head-demo {
+      0%,
+      23%,
+      48%,
+      73%,
+      100% {
+        transform: translate3d(0, 0, 0) rotate(0) scaleX(1);
+      }
+      5%,
+      17% {
+        transform: translate3d(-0.35rem, 0, 0) rotate(-3deg) scaleX(0.96);
+      }
+      30%,
+      42% {
+        transform: translate3d(0.35rem, 0, 0) rotate(3deg) scaleX(0.96);
+      }
+      55%,
+      67% {
+        transform: translate3d(0, -0.35rem, 0) rotate(0) scaleX(1);
+      }
+      80%,
+      92% {
+        transform: translate3d(0, 0.35rem, 0) rotate(0) scaleX(1);
+      }
+    }
+
+    @keyframes idq-liveness-gaze-demo {
+      0%,
+      23%,
+      48%,
+      73%,
+      100% {
+        transform: translate3d(0, 0, 0);
+      }
+      5%,
+      17% {
+        transform: translate3d(-0.22rem, 0, 0);
+      }
+      30%,
+      42% {
+        transform: translate3d(0.22rem, 0, 0);
+      }
+      55%,
+      67% {
+        transform: translate3d(0, -0.18rem, 0);
+      }
+      80%,
+      92% {
+        transform: translate3d(0, 0.18rem, 0);
+      }
+    }
+
+    @keyframes idq-liveness-direction-left-demo {
+      0%,
+      23%,
+      100% {
+        opacity: var(--idq-capture-liveness-cue-opacity);
+        transform: translate3d(0, 0, 0);
+      }
+      5%,
+      17% {
+        opacity: var(--idq-capture-liveness-cue-active-opacity);
+        transform: translate3d(var(--idq-liveness-cue-x), var(--idq-liveness-cue-y), 0);
+      }
+    }
+
+    @keyframes idq-liveness-direction-right-demo {
+      0%,
+      23%,
+      48%,
+      100% {
+        opacity: var(--idq-capture-liveness-cue-opacity);
+        transform: translate3d(0, 0, 0);
+      }
+      30%,
+      42% {
+        opacity: var(--idq-capture-liveness-cue-active-opacity);
+        transform: translate3d(var(--idq-liveness-cue-x), var(--idq-liveness-cue-y), 0);
+      }
+    }
+
+    @keyframes idq-liveness-direction-up-demo {
+      0%,
+      48%,
+      73%,
+      100% {
+        opacity: var(--idq-capture-liveness-cue-opacity);
+        transform: translate3d(0, 0, 0);
+      }
+      55%,
+      67% {
+        opacity: var(--idq-capture-liveness-cue-active-opacity);
+        transform: translate3d(var(--idq-liveness-cue-x), var(--idq-liveness-cue-y), 0);
+      }
+    }
+
+    @keyframes idq-liveness-direction-down-demo {
+      0%,
+      73%,
+      100% {
+        opacity: var(--idq-capture-liveness-cue-opacity);
+        transform: translate3d(0, 0, 0);
+      }
+      80%,
+      92% {
+        opacity: var(--idq-capture-liveness-cue-active-opacity);
+        transform: translate3d(var(--idq-liveness-cue-x), var(--idq-liveness-cue-y), 0);
+      }
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :host {
+        --idq-capture-accent: #54cbb2;
+        --idq-capture-accent-strong: #8ee8d4;
+        --idq-capture-accent-foreground: #071411;
+        --idq-capture-background: #121b19;
+        --idq-capture-border: #36433f;
+        --idq-capture-muted: #aab9b4;
+        --idq-capture-surface: #1b2824;
+        --idq-capture-surface-strong: #233d36;
+        --idq-capture-text: #f3f7f5;
+        --idq-capture-error: #ffb4ab;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      button {
+        transition-duration: 0ms;
+      }
+
+      .processing-indicator span {
+        animation: none;
+        opacity: 1;
+        transform: none;
+      }
+
+      .liveness-head,
+      .liveness-features,
+      .liveness-direction {
+        animation: none;
+        transform: none;
+      }
+
+      .liveness-direction {
+        opacity: var(--idq-capture-liveness-cue-opacity);
+      }
+    }
+
     @media (max-width: 30rem) {
       .shell {
         border-inline: 0;
         border-radius: 0;
+        box-shadow: none;
+        min-height: 100dvh;
+      }
+
+      .journey-actions.split {
+        grid-template-columns: 1fr;
+      }
+
+      .adapter-option[data-presentation="active_liveness"] .adapter-preview-frame {
+        aspect-ratio: 3 / 4;
+        margin-inline: -1rem;
+      }
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      button:hover {
+        border-color: var(--idq-capture-accent);
       }
     }
 
@@ -443,52 +1128,94 @@ export class IdenqaCaptureElement extends LitElement {
   readonly #selectedMethods = new Map<string, string>();
   readonly #uploadStates = new Map<string, StepUploadState>();
   readonly #cameraStates = new Map<string, StepCameraState>();
+  readonly #adapterStates = new Map<string, StepAdapterState>();
   readonly #completedSteps = new Map<string, StepCompletion>();
+  #methodAdapters: readonly CaptureMethodAdapter[] = [];
   #flowController: CaptureFlowController | undefined;
   #flowSnapshot: CaptureFlowSnapshot | undefined;
   #flowState: ComponentFlowState = "idle";
   #flowAbortController: AbortController | undefined;
   #responseError = false;
   #captureCompleteDispatched = false;
+  #outcomePolling = false;
   #localizer: CaptureLocalizer = createCaptureLocalizer(browserLocale());
+  #journeyPhase: JourneyPhase = "intro";
+  #stepStage: StepStage = "method";
+  #activeStepIndex = 0;
 
   async start(options: CaptureElementStartOptions): Promise<CaptureFlowSnapshot> {
-    const { messageCatalogue = {}, ...flowOptions } = options;
+    const {
+      messageCatalogue = {},
+      expectedVerificationId,
+      methodAdapters = [],
+      ...flowOptions
+    } = options;
     this.#localizer = createCaptureLocalizer(browserLocale(), messageCatalogue);
     this.#clearCameraStates();
+    this.#clearAdapterStates();
     this.#flowAbortController?.abort();
     const abortController = new AbortController();
     this.#flowAbortController = abortController;
     this.#flowController = createCaptureFlowController(flowOptions);
+    this.#methodAdapters = [];
     this.#flowSnapshot = undefined;
     this.#flowState = "loading";
+    this.#journeyPhase = "intro";
+    this.#stepStage = "method";
+    this.#activeStepIndex = 0;
     this.#responseError = false;
-    this.#uploadStates.clear();
+    this.#clearUploadStates();
     this.#cameraStates.clear();
     this.#completedSteps.clear();
     this.#captureCompleteDispatched = false;
+    this.#outcomePolling = false;
     this.plan = undefined;
     this.requestUpdate();
     try {
+      this.#methodAdapters = validateCaptureMethodAdapters(methodAdapters);
       const snapshot = await this.#flowController.load(abortController.signal);
+      if (
+        expectedVerificationId !== undefined &&
+        snapshot.outcome.verificationId !== expectedVerificationId
+      )
+        throw new Error("Capture credential does not match the expected linked session.");
       if (this.#flowAbortController !== abortController) return snapshot;
-      this.#localizer = createCaptureLocalizer(
-        snapshot.authoritySnapshot.notice.locale,
-        messageCatalogue,
-      );
       this.#flowSnapshot = snapshot;
       this.#flowState = "ready";
-      this.#restoreRecoveredProgress(snapshot);
-      if (snapshot.status === "authority_blocked" || snapshot.status === "refused") {
-        this.#dropFlowController();
+      if (!isActiveCaptureFlowSnapshot(snapshot)) {
+        if (snapshot.status === "processing" || snapshot.status === "action_required") {
+          this.#pollAuthoritativeOutcome();
+        } else {
+          this.#dropFlowController();
+        }
       } else {
+        this.#localizer = createCaptureLocalizer(
+          snapshot.authoritySnapshot.notice.locale,
+          messageCatalogue,
+        );
+        this.#assertMethodAdapters(snapshot.plan);
+        this.#restoreRecoveredProgress(snapshot);
+        if (snapshot.status === "authority_blocked" || snapshot.status === "refused") {
+          this.#dropFlowController();
+          this.requestUpdate();
+          return snapshot;
+        }
         void this.#flowController
           .observe(
             (event) => this.#dispatchRealtimeEvent(event),
             (recovered) => {
               if (abortController.signal.aborted) return;
               this.#flowSnapshot = recovered;
-              this.#restoreRecoveredProgress(recovered);
+              if (isActiveCaptureFlowSnapshot(recovered)) {
+                this.#restoreRecoveredProgress(recovered);
+              } else if (
+                recovered.status === "processing" ||
+                recovered.status === "action_required"
+              ) {
+                this.#pollAuthoritativeOutcome();
+              } else {
+                this.#dropFlowController();
+              }
               this.requestUpdate();
             },
             abortController.signal,
@@ -514,9 +1241,12 @@ export class IdenqaCaptureElement extends LitElement {
     this.#dropFlowController();
     this.#flowSnapshot = undefined;
     this.#flowState = "cancelled";
+    this.#journeyPhase = "intro";
     this.#responseError = false;
-    this.#uploadStates.clear();
+    this.#clearUploadStates();
     this.#clearCameraStates();
+    this.#clearAdapterStates();
+    this.#methodAdapters = [];
     this.#completedSteps.clear();
     this.#captureCompleteDispatched = false;
     this.requestUpdate();
@@ -530,8 +1260,9 @@ export class IdenqaCaptureElement extends LitElement {
   protected override willUpdate(changedProperties: PropertyValues<this>): void {
     if (changedProperties.has("plan")) {
       this.#selectedMethods.clear();
-      this.#uploadStates.clear();
+      this.#clearUploadStates();
       this.#clearCameraStates();
+      this.#clearAdapterStates();
       this.#completedSteps.clear();
       this.#captureCompleteDispatched = false;
     }
@@ -545,25 +1276,21 @@ export class IdenqaCaptureElement extends LitElement {
         lang=${this.#localizer.locale}
         dir=${this.#localizer.direction}
       >
-        <p class="eyebrow">${this.#text("secureCapture")}</p>
-        <h2 id="capture-title">${this.#text("identityVerification")}</h2>
+        <header class="product-header">
+          <span class="mark" aria-hidden="true">I</span>
+          <h2 class="product-name" id="capture-title">${this.#text("identityVerification")}</h2>
+        </header>
         ${
           this.#flowState === "loading"
-            ? html`<p class="status" role="status" aria-live="polite">
-                ${this.#text("preparingSecureCapture")}
-              </p>`
+            ? this.#renderLoading()
             : this.#flowState === "error"
-              ? html`<p class="error" role="alert">${this.#text("capturePreparationFailed")}</p>`
+              ? this.#renderError()
               : this.#flowState === "cancelled"
-                ? html`<p class="status" role="status" aria-live="polite">
-                    ${this.#text("captureCancelled")}
-                  </p>`
+                ? this.#renderCancelled()
                 : this.#flowSnapshot !== undefined
                   ? this.#renderFlow(this.#flowSnapshot)
                   : this.plan === undefined
-                    ? html`<p class="status" role="status" aria-live="polite">
-                        ${this.#text("preparingCapture")}
-                      </p>`
+                    ? this.#renderLoading(false)
                     : this.#renderPlan(this.plan)
         }
       </section>
@@ -571,44 +1298,132 @@ export class IdenqaCaptureElement extends LitElement {
   }
 
   #renderFlow(flow: CaptureFlowSnapshot) {
+    if (!isActiveCaptureFlowSnapshot(flow)) return this.#renderAuthoritativeOutcome(flow);
+    if (this.#journeyPhase === "intro") return this.#renderIntroduction(flow);
+    if (flow.status === "refused") return this.#renderRefused();
+    if (flow.status === "authority_blocked") return this.#renderAuthorityBlocked();
+    if (this.#journeyPhase === "notice" || flow.status === "notice_required") {
+      return this.#renderNotice(flow);
+    }
+    if (this.#journeyPhase === "recovery") return this.#renderRecovery(flow.plan);
+    if (this.#journeyPhase === "confirmation") return this.#renderConfirmation(flow.plan);
+    if (this.#journeyPhase === "processing") return this.#renderProcessing();
+    if (this.#journeyPhase === "complete") return this.#renderComplete();
+    return this.#renderGuidedPlan(flow.plan, flow.authoritySnapshot.notice.locale);
+  }
+
+  #renderLoading(secure = true) {
+    return html`
+      <div class="screen" role="status" aria-live="polite" aria-busy="true">
+        <span class="state-icon" aria-hidden="true">…</span>
+        <div>
+          <h2>${secure ? this.#text("preparingSecureCapture") : this.#text("preparingCapture")}</h2>
+          <p class="screen-copy">${this.#text("preparingCaptureBody")}</p>
+        </div>
+        <div class="processing-indicator" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+    `;
+  }
+
+  #renderError() {
+    return html`
+      <div class="screen">
+        <span class="state-icon" aria-hidden="true">!</span>
+        <div>
+          <h2>${this.#text("capturePreparationFailedTitle")}</h2>
+          <p class="screen-copy" role="alert">${this.#text("capturePreparationFailed")}</p>
+        </div>
+      </div>
+    `;
+  }
+
+  #renderCancelled() {
+    return html`
+      <div class="screen">
+        <span class="state-icon" aria-hidden="true">×</span>
+        <div>
+          <h2>${this.#text("captureCancelledTitle")}</h2>
+          <p class="screen-copy" role="status" aria-live="polite">
+            ${this.#text("captureCancelled")}
+          </p>
+        </div>
+      </div>
+    `;
+  }
+
+  #renderIntroduction(flow: CaptureActiveFlowSnapshot) {
+    const totalSteps = planSteps(flow.plan).length;
+    return html`
+      <div class="screen">
+        <span class="hero-icon" aria-hidden="true">✓</span>
+        <div>
+          <p class="eyebrow">${this.#text("secureCapture")}</p>
+          <h2>${this.#text("introTitle")}</h2>
+          <p class="screen-copy">${this.#text("introBody")}</p>
+        </div>
+        <ul class="benefits">
+          <li>
+            ${this.#text("introStepCount", { count: formatNumber(totalSteps, this.#localizer.locale) })}
+          </li>
+          <li>${this.#text("introPrivate")}</li>
+          <li>${this.#text("introDevice")}</li>
+        </ul>
+        <div class="journey-actions">
+          <button class="primary" type="button" @click=${() => this.#beginJourney(flow)}>
+            ${this.#text("getStarted")}
+          </button>
+          <button class="quiet" type="button" @click=${() => this.cancel()}>
+            ${this.#text("cancel")}
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  #renderNotice(flow: CaptureActiveFlowSnapshot) {
     const { authority, notice, latestResponse } = flow.authoritySnapshot;
     return html`
-      <article class="notice" aria-labelledby="idq-notice-title" lang=${notice.locale}>
-        <h3 id="idq-notice-title">${notice.copy.title}</h3>
-        <p class="notice-copy">${notice.copy.summary}</p>
-        <h4>${this.#text("whyInformationNeeded")}</h4>
-        <p class="notice-copy">${notice.copy.purpose}</p>
-        <h4>${this.#text("ifYouRefuse")}</h4>
-        <p class="notice-copy">${notice.copy.consequences}</p>
-        <dl class="notice-meta">
-          <div>
-            <dt>${this.#text("controller")}</dt>
-            <dd>${notice.controller}</dd>
-          </div>
-          <div>
-            <dt>${this.#text("recipient")}</dt>
-            <dd>${notice.recipient}</dd>
-          </div>
-        </dl>
-        ${
-          flow.status === "notice_required"
-            ? this.#renderNoticeActions(authority.consentRequired)
-            : flow.status === "capture_ready"
-              ? html`<p class="notice-guidance" role="status">
+      <div class="screen notice-screen">
+        <div>
+          <p class="eyebrow">${this.#text("noticeStep")}</p>
+          <h2>${this.#text("noticeTitle")}</h2>
+          <p class="screen-copy">${this.#text("noticeBody")}</p>
+        </div>
+        <article class="notice" aria-labelledby="idq-notice-title" lang=${notice.locale}>
+          <h3 id="idq-notice-title">${notice.copy.title}</h3>
+          <p class="notice-copy">${notice.copy.summary}</p>
+          <h4>${this.#text("whyInformationNeeded")}</h4>
+          <p class="notice-copy">${notice.copy.purpose}</p>
+          <h4>${this.#text("ifYouRefuse")}</h4>
+          <p class="notice-copy">${notice.copy.consequences}</p>
+          <dl class="notice-meta">
+            <div>
+              <dt>${this.#text("controller")}</dt>
+              <dd>${notice.controller}</dd>
+            </div>
+            <div>
+              <dt>${this.#text("recipient")}</dt>
+              <dd>${notice.recipient}</dd>
+            </div>
+          </dl>
+          ${
+            flow.status === "notice_required"
+              ? this.#renderNoticeActions(authority.consentRequired)
+              : html`<p class="notice-guidance" role="status">
                   ${
                     latestResponse?.action === "consent"
                       ? this.#text("consentRecorded")
                       : this.#text("acknowledgementRecorded")
                   }
                 </p>`
-              : flow.status === "refused"
-                ? html`<p class="notice-guidance" role="status">
-                    ${this.#text("refusalRecorded")}
-                  </p>`
-                : html`<p class="error" role="alert">${this.#text("authorityBlocked")}</p>`
-        }
-      </article>
-      ${flow.status === "capture_ready" ? this.#renderPlan(flow.plan, notice.locale) : nothing}
+          }
+        </article>
+        <button class="quiet" type="button" @click=${() => this.cancel()}>
+          ${this.#text("cancel")}
+        </button>
+      </div>
     `;
   }
 
@@ -620,7 +1435,12 @@ export class IdenqaCaptureElement extends LitElement {
         ${consentRequired ? this.#text("reviewConsent") : this.#text("reviewAcknowledgement")}
       </p>
       <div class="notice-actions" role="group" aria-label=${this.#text("noticeActionsLabel")}>
-        <button type="button" ?disabled=${busy} @click=${() => void this.#respond(acceptedAction)}>
+        <button
+          class="primary"
+          type="button"
+          ?disabled=${busy}
+          @click=${() => void this.#respond(acceptedAction)}
+        >
           ${
             busy
               ? this.#text("recordingResponse")
@@ -639,6 +1459,541 @@ export class IdenqaCaptureElement extends LitElement {
           : nothing
       }
     `;
+  }
+
+  #renderGuidedPlan(plan: CapturePlan, locale = this.#localizer.locale) {
+    const steps = planSteps(plan);
+    const step = steps[this.#activeStepIndex];
+    if (step === undefined) return this.#renderProcessing();
+    const completedSteps = steps.filter((candidate) =>
+      this.#completedSteps.has(stepKey(candidate)),
+    ).length;
+    const item = friendlyArtefact(step.artefact, this.#localizer);
+    return html`
+      <div class="screen">
+        <div class="journey-progress">
+          <p>
+            ${this.#text("stepOf", {
+              current: formatNumber(this.#activeStepIndex + 1, locale),
+              total: formatNumber(steps.length, locale),
+            })}
+          </p>
+          <p>
+            ${this.#text("progressPercent", { percent: formatNumber(Math.round((completedSteps / steps.length) * 100), locale) })}
+          </p>
+          <progress
+            aria-label=${this.#text("progressLabel")}
+            value=${completedSteps}
+            max=${steps.length}
+          ></progress>
+        </div>
+        ${
+          step.fallbackCondition === undefined
+            ? nothing
+            : html`<p class="fallback" role="status">
+                ${fallbackMessage(step.fallbackCondition, this.#localizer)}
+              </p>`
+        }
+        ${
+          this.#stepStage === "method"
+            ? this.#renderMethodChoice(step, item)
+            : this.#stepStage === "preparation"
+              ? this.#renderPreparation(step, item)
+              : this.#renderCaptureTask(step, item)
+        }
+      </div>
+    `;
+  }
+
+  #renderMethodChoice(step: CapturePlanStep, item: string) {
+    return html`
+      <div>
+        <p class="eyebrow">${this.#text("chooseMethod")}</p>
+        <h2>${this.#text("chooseMethodTitle", { item })}</h2>
+        <p class="screen-copy">${this.#text("chooseMethodBody")}</p>
+      </div>
+      <div
+        class="method-list"
+        role="group"
+        aria-label=${this.#text("captureMethodsLabel", { artefact: item })}
+      >
+        ${step.methodOptions.map((method) => {
+          const adapter = this.#adapterFor(step, method);
+          const copy =
+            adapter === undefined
+              ? undefined
+              : captureMethodAdapterCopy(adapter, this.#localizer.locale);
+          return html`
+            <button
+              class="method-card"
+              type="button"
+              @click=${() => this.#chooseGuidedMethod(step, method)}
+            >
+              <span class="method-icon" aria-hidden="true">
+                ${adapter !== undefined ? "◎" : method === LIVE_CAMERA_METHOD ? "◉" : method === FILE_UPLOAD_METHOD ? "↑" : "→"}
+              </span>
+              <span class="method-copy">
+                <strong>${copy?.action ?? methodAction(method, this.#localizer)}</strong>
+                <small>${copy?.description ?? methodDescription(method, this.#localizer)}</small>
+              </span>
+              <span class="chevron" aria-hidden="true">›</span>
+            </button>
+          `;
+        })}
+      </div>
+      ${this.#renderJourneyExit()}
+    `;
+  }
+
+  #renderPreparation(step: CapturePlanStep, item: string) {
+    const method = this.#selectedMethods.get(stepKey(step)) ?? step.methodOptions[0]!;
+    const adapter = this.#adapterFor(step, method);
+    const copy =
+      adapter === undefined ? undefined : captureMethodAdapterCopy(adapter, this.#localizer.locale);
+    const activeLiveness = adapter?.presentation === "active_liveness";
+    return html`
+      ${
+        activeLiveness
+          ? this.#renderLivenessIllustration()
+          : html`<span class="hero-icon" aria-hidden="true"
+              >${adapter !== undefined ? "◎" : method === LIVE_CAMERA_METHOD ? "◉" : "↑"}</span
+            >`
+      }
+      <div>
+        <p class="eyebrow">${this.#text("prepare")}</p>
+        <h2>${copy?.title ?? this.#text("prepareTitle", { item })}</h2>
+        <p class="screen-copy">
+          ${copy?.preparation ?? (method === LIVE_CAMERA_METHOD ? this.#text("cameraPreparation") : this.#text("filePreparation"))}
+        </p>
+      </div>
+      ${
+        copy?.tips === undefined
+          ? html`<ul class="tips">
+              <li>${this.#text("tipLighting")}</li>
+              <li>${this.#text("tipReadable")}</li>
+              <li>${this.#text("tipPrivacy")}</li>
+            </ul>`
+          : copy.tips.length === 0
+            ? nothing
+            : html`<ul class="tips">
+                ${copy.tips.map((tip) => html`<li>${tip}</li>`)}
+              </ul>`
+      }
+      <div class="journey-actions">
+        <button
+          class="primary"
+          type="button"
+          @click=${() =>
+            adapter === undefined
+              ? this.#showCaptureTask()
+              : void this.#startGuidedAdapter(step, adapter)}
+        >
+          ${copy?.action ?? this.#text("continue")}
+        </button>
+        <button type="button" @click=${() => this.#backFromPreparation(step)}>
+          ${step.methodOptions.length > 1 ? this.#text("chooseAnotherMethod") : this.#text("back")}
+        </button>
+      </div>
+      <button class="quiet" type="button" @click=${() => this.cancel()}>
+        ${this.#text("cancel")}
+      </button>
+    `;
+  }
+
+  #renderLivenessIllustration() {
+    return html`
+      <div class="liveness-illustration" aria-hidden="true">
+        <svg viewBox="0 0 160 160" focusable="false">
+          <g class="liveness-head">
+            <path d="M45 73c0-29 14-46 35-46s35 17 35 46v15c0 29-15 47-35 47S45 117 45 88Z" />
+            <path d="M46 67c12 0 15-12 28-12 9 0 13 7 22 7 8 0 14-5 18-11" />
+            <path d="M39 84c-7-1-9 5-7 12 1 6 6 9 12 8M121 84c7-1 9 5 7 12-1 6-6 9-12 8" />
+            <g class="liveness-features">
+              <path d="M61 91h.01M99 91h.01M80 94v9M70 111c6 4 14 4 20 0" />
+            </g>
+          </g>
+          <path d="M52 127c-19 5-29 15-33 25M108 127c19 5 29 15 33 25" />
+          <circle cx="80" cy="81" r="58" stroke-dasharray="5 9" opacity=".35" />
+          <path class="liveness-direction liveness-direction-left" d="M30 73l-7 7 7 7M23 80h12" />
+          <path
+            class="liveness-direction liveness-direction-right"
+            d="m130 73 7 7-7 7M137 80h-12"
+          />
+          <path class="liveness-direction liveness-direction-up" d="m73 30 7-7 7 7M80 23v12" />
+          <path class="liveness-direction liveness-direction-down" d="m73 130 7 7 7-7M80 137v-12" />
+        </svg>
+      </div>
+    `;
+  }
+
+  #renderCaptureTask(step: CapturePlanStep, item: string) {
+    const key = stepKey(step);
+    const method = this.#selectedMethods.get(key) ?? step.methodOptions[0]!;
+    const uploadState = this.#uploadStates.get(key);
+    const cameraState = this.#cameraStates.get(key);
+    const adapter = this.#adapterFor(step, method);
+    const adapterState = this.#adapterStates.get(key);
+    const copy =
+      adapter === undefined ? undefined : captureMethodAdapterCopy(adapter, this.#localizer.locale);
+    const busy =
+      uploadState?.status === "uploading" ||
+      isCameraBusy(cameraState) ||
+      adapterState?.status === "running";
+    return html`
+      <div>
+        <p class="eyebrow">${this.#text("capture")}</p>
+        <h2>${this.#text("captureTitle", { item })}</h2>
+        <p class="screen-copy">
+          ${copy?.instruction ?? captureInstruction(method, this.#localizer)}
+        </p>
+      </div>
+      <div class="capture-panel">
+        ${
+          adapter !== undefined
+            ? this.#renderMethodAdapter(
+                step,
+                `guided-${this.#activeStepIndex}`,
+                adapter,
+                adapterState,
+              )
+            : method === FILE_UPLOAD_METHOD
+              ? this.#renderFileUpload(step, `guided-${this.#activeStepIndex}`, uploadState, false)
+              : method === LIVE_CAMERA_METHOD
+                ? this.#renderCamera(step, `guided-${this.#activeStepIndex}`, cameraState, false)
+                : html`<button
+                    class="primary"
+                    type="button"
+                    @click=${() => this.#selectMethod(step, method)}
+                  >
+                    ${methodAction(method, this.#localizer)}
+                  </button>`
+        }
+      </div>
+      <div class="journey-actions">
+        <button type="button" ?disabled=${busy} @click=${() => this.#backToPreparation(step)}>
+          ${this.#text("back")}
+        </button>
+        <button class="quiet" type="button" ?disabled=${busy} @click=${() => this.cancel()}>
+          ${this.#text("cancel")}
+        </button>
+      </div>
+    `;
+  }
+
+  #renderRecovery(plan: CapturePlan) {
+    const progress = captureProgress(plan, this.#completedSteps);
+    return html`
+      <div class="screen">
+        <span class="hero-icon" aria-hidden="true">↻</span>
+        <div>
+          <p class="eyebrow">${this.#text("recovery")}</p>
+          <h2>${this.#text("recoveryTitle")}</h2>
+          <p class="screen-copy">
+            ${this.#text("recoveryBody", {
+              completed: formatNumber(progress.completedSteps, this.#localizer.locale),
+              total: formatNumber(progress.totalSteps, this.#localizer.locale),
+            })}
+          </p>
+        </div>
+        <div class="confirmation-card">
+          <span class="state-icon" aria-hidden="true">✓</span>
+          <p><strong>${this.#text("savedProgress")}</strong>${this.#text("savedProgressBody")}</p>
+        </div>
+        <div class="journey-actions">
+          <button class="primary" type="button" @click=${() => this.#resumeJourney(plan)}>
+            ${progress.completedSteps === progress.totalSteps ? this.#text("reviewAndFinish") : this.#text("resumeCapture")}
+          </button>
+          <button class="quiet" type="button" @click=${() => this.cancel()}>
+            ${this.#text("cancel")}
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  #renderConfirmation(plan: CapturePlan) {
+    const steps = planSteps(plan);
+    const step = steps[this.#activeStepIndex];
+    const item =
+      step === undefined
+        ? this.#text("requiredItem")
+        : friendlyArtefact(step.artefact, this.#localizer);
+    const isLast = steps.every((candidate) => this.#completedSteps.has(stepKey(candidate)));
+    const completedSteps = steps.filter((candidate) =>
+      this.#completedSteps.has(stepKey(candidate)),
+    ).length;
+    return html`
+      <div class="screen" aria-live="polite">
+        <div class="journey-progress">
+          <p>
+            ${this.#text("stepOf", {
+              current: formatNumber(
+                Math.min(this.#activeStepIndex + 1, steps.length),
+                this.#localizer.locale,
+              ),
+              total: formatNumber(steps.length, this.#localizer.locale),
+            })}
+          </p>
+          <p>
+            ${this.#text("progressPercent", {
+              percent: formatNumber(
+                Math.round((completedSteps / steps.length) * 100),
+                this.#localizer.locale,
+              ),
+            })}
+          </p>
+          <progress
+            aria-label=${this.#text("progressLabel")}
+            value=${completedSteps}
+            max=${steps.length}
+          ></progress>
+        </div>
+        <span class="hero-icon" aria-hidden="true">✓</span>
+        <div>
+          <p class="eyebrow">${this.#text("saved")}</p>
+          <h2>${this.#text("confirmationTitle", { item })}</h2>
+          <p class="screen-copy">${this.#text("confirmationBody")}</p>
+        </div>
+        <div class="confirmation-card">
+          <span class="state-icon" aria-hidden="true">✓</span>
+          <p><strong>${item}</strong>${this.#text("securelyUploaded")}</p>
+        </div>
+        <div class="journey-actions">
+          <button
+            class="primary"
+            type="button"
+            @click=${() => this.#continueAfterConfirmation(plan)}
+          >
+            ${isLast ? this.#text("reviewAndFinish") : this.#text("nextItem")}
+          </button>
+          <button class="quiet" type="button" @click=${() => this.cancel()}>
+            ${this.#text("cancel")}
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  #renderProcessing() {
+    return html`
+      <div class="screen" aria-busy="true">
+        <span class="state-icon" aria-hidden="true">…</span>
+        <div role="status" aria-live="polite" aria-atomic="true">
+          <p class="eyebrow">${this.#text("processing")}</p>
+          <h2>${this.#text("processingTitle")}</h2>
+          <p class="screen-copy">${this.#text("processingBody")}</p>
+        </div>
+        <div class="processing-indicator" aria-hidden="true">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+    `;
+  }
+
+  #renderAuthoritativeOutcome(flow: CaptureOutcomeFlowSnapshot) {
+    switch (flow.status) {
+      case "processing":
+        return this.#renderProcessing();
+      case "verified":
+        return this.#renderOutcomeScreen(
+          "✓",
+          this.#text("verificationSuccess"),
+          this.#text("verificationSuccessTitle"),
+          this.#text("verificationSuccessBody"),
+        );
+      case "action_required":
+        return this.#renderOutcomeScreen(
+          "!",
+          this.#text("actionRequired"),
+          this.#text("actionRequiredTitle"),
+          this.#text("actionRequiredBody"),
+        );
+      case "not_verified":
+        return this.#renderOutcomeScreen(
+          "×",
+          this.#text("verificationUnsuccessful"),
+          this.#text("verificationUnsuccessfulTitle"),
+          this.#text("verificationUnsuccessfulBody"),
+        );
+      case "inconclusive":
+        return this.#renderOutcomeScreen(
+          "!",
+          this.#text("verificationUnsuccessful"),
+          this.#text("verificationInconclusiveTitle"),
+          this.#text("verificationInconclusiveBody"),
+        );
+      case "expired":
+        return this.#renderOutcomeScreen(
+          "!",
+          this.#text("complete"),
+          this.#text("verificationExpiredTitle"),
+          this.#text("verificationExpiredBody"),
+        );
+      case "failed":
+        return this.#renderOutcomeScreen(
+          "!",
+          this.#text("complete"),
+          this.#text("verificationFailedTitle"),
+          this.#text("verificationFailedBody"),
+        );
+      case "cancelled":
+        return this.#renderOutcomeScreen(
+          "×",
+          this.#text("complete"),
+          this.#text("captureCancelledTitle"),
+          this.#text("verificationCancelledBody"),
+        );
+    }
+  }
+
+  #renderOutcomeScreen(icon: string, eyebrow: string, title: string, body: string) {
+    return html`
+      <div class="screen">
+        <span class="hero-icon" aria-hidden="true">${icon}</span>
+        <div role="status" aria-live="polite" aria-atomic="true">
+          <p class="eyebrow">${eyebrow}</p>
+          <h2>${title}</h2>
+          <p class="screen-copy">${body}</p>
+        </div>
+        <p class="privacy-note">${this.#text("closePage")}</p>
+      </div>
+    `;
+  }
+
+  #renderComplete() {
+    return html`
+      <div class="screen">
+        <span class="hero-icon" aria-hidden="true">✓</span>
+        <div role="status" aria-live="polite">
+          <p class="eyebrow">${this.#text("complete")}</p>
+          <h2>${this.#text("completeTitle")}</h2>
+          <p class="screen-copy">${this.#text("completeBody")}</p>
+        </div>
+        <p class="privacy-note">${this.#text("closePage")}</p>
+      </div>
+    `;
+  }
+
+  #renderRefused() {
+    return html`
+      <div class="screen">
+        <span class="state-icon" aria-hidden="true">×</span>
+        <div>
+          <h2>${this.#text("refusalTitle")}</h2>
+          <p class="screen-copy" role="status">${this.#text("refusalRecorded")}</p>
+        </div>
+      </div>
+    `;
+  }
+
+  #renderAuthorityBlocked() {
+    return html`
+      <div class="screen">
+        <span class="state-icon" aria-hidden="true">!</span>
+        <div>
+          <h2>${this.#text("authorityBlockedTitle")}</h2>
+          <p class="screen-copy error" role="alert">${this.#text("authorityBlocked")}</p>
+        </div>
+      </div>
+    `;
+  }
+
+  #renderJourneyExit() {
+    return html`<button class="quiet" type="button" @click=${() => this.cancel()}>
+      ${this.#text("cancel")}
+    </button>`;
+  }
+
+  #beginJourney(flow: CaptureActiveFlowSnapshot): void {
+    if (flow.status === "notice_required") {
+      this.#journeyPhase = "notice";
+    } else if (flow.status === "capture_ready") {
+      this.#resumeJourney(flow.plan, true);
+    } else if (flow.status === "refused") {
+      this.#journeyPhase = "complete";
+    }
+    this.requestUpdate();
+  }
+
+  #resumeJourney(plan: CapturePlan, showRecovery = false): void {
+    const progress = captureProgress(plan, this.#completedSteps);
+    if (showRecovery && progress.completedSteps > 0) {
+      this.#journeyPhase = "recovery";
+      this.requestUpdate();
+      return;
+    }
+    if (progress.completedSteps === progress.totalSteps) {
+      this.#journeyPhase = "processing";
+      this.#pollAuthoritativeOutcome();
+      this.requestUpdate();
+      return;
+    }
+    this.#enterNextIncompleteStep(plan, 0);
+  }
+
+  #enterNextIncompleteStep(plan: CapturePlan, startIndex: number): void {
+    const steps = planSteps(plan);
+    const relativeIndex = steps
+      .slice(startIndex)
+      .findIndex((step) => !this.#completedSteps.has(stepKey(step)));
+    if (relativeIndex < 0) {
+      this.#journeyPhase = "processing";
+      this.#pollAuthoritativeOutcome();
+      this.requestUpdate();
+      return;
+    }
+    this.#activeStepIndex = startIndex + relativeIndex;
+    const step = steps[this.#activeStepIndex]!;
+    const key = stepKey(step);
+    this.#selectedMethods.set(key, step.methodOptions[0]!);
+    this.#stepStage = "preparation";
+    this.#journeyPhase = "capture";
+    this.requestUpdate();
+  }
+
+  #chooseGuidedMethod(step: CapturePlanStep, method: string): void {
+    this.#selectMethod(step, method);
+    this.#stepStage = "preparation";
+    this.requestUpdate();
+  }
+
+  #backFromPreparation(step: CapturePlanStep): void {
+    if (step.methodOptions.length > 1) {
+      this.#selectedMethods.delete(stepKey(step));
+      this.#stepStage = "method";
+    } else {
+      this.#journeyPhase = "intro";
+    }
+    this.requestUpdate();
+  }
+
+  #showCaptureTask(): void {
+    this.#stepStage = "capture";
+    this.requestUpdate();
+  }
+
+  async #startGuidedAdapter(step: CapturePlanStep, adapter: CaptureMethodAdapter): Promise<void> {
+    this.#stepStage = "capture";
+    this.requestUpdate();
+    await this.updateComplete;
+    await this.#runMethodAdapter(
+      step,
+      adapter,
+      `idq-adapter-preview-guided-${this.#activeStepIndex}`,
+    );
+  }
+
+  #backToPreparation(step: CapturePlanStep): void {
+    const key = stepKey(step);
+    this.#clearUploadState(key);
+    this.#clearCameraState(key);
+    this.#clearAdapterState(key);
+    this.#stepStage = "preparation";
+    this.requestUpdate();
+  }
+
+  #continueAfterConfirmation(plan: CapturePlan): void {
+    this.#enterNextIncompleteStep(plan, this.#activeStepIndex + 1);
   }
 
   #renderPlan(plan: CapturePlan, locale = this.#localizer.locale) {
@@ -700,9 +2055,13 @@ export class IdenqaCaptureElement extends LitElement {
     const selectedMethod = this.#selectedMethods.get(key);
     const uploadState = this.#uploadStates.get(key);
     const cameraState = this.#cameraStates.get(key);
+    const adapterState = this.#adapterStates.get(key);
     const completion = this.#completedSteps.get(key);
+    const completionAdapter =
+      completion === undefined ? undefined : this.#adapterFor(step, completion.acquisitionMethod);
     const cameraActive = isCameraActive(cameraState);
     const fileActive = uploadState?.status === "uploading";
+    const adapterActive = adapterState?.status === "running";
     return html`
       <section
         class=${completion === undefined ? "step" : "step step-complete"}
@@ -725,21 +2084,37 @@ export class IdenqaCaptureElement extends LitElement {
                   artefact: labelForIdentifier(step.artefact),
                 })}
               >
-                ${step.methodOptions.map((method) =>
-                  method === FILE_UPLOAD_METHOD && this.#flowController !== undefined
-                    ? this.#renderFileUpload(step, idSuffix, uploadState, cameraActive)
-                    : method === LIVE_CAMERA_METHOD && this.#flowController !== undefined
-                      ? this.#renderCamera(step, idSuffix, cameraState, fileActive)
-                      : html`
-                          <button
-                            type="button"
-                            aria-pressed=${String(selectedMethod === method)}
-                            @click=${() => this.#selectMethod(step, method)}
-                          >
-                            ${methodAction(method, this.#localizer)}
-                          </button>
-                        `,
-                )}
+                ${step.methodOptions.map((method) => {
+                  const adapter = this.#adapterFor(step, method);
+                  if (adapter !== undefined && this.#flowController !== undefined) {
+                    return this.#renderMethodAdapter(step, idSuffix, adapter, adapterState);
+                  }
+                  if (method === FILE_UPLOAD_METHOD && this.#flowController !== undefined) {
+                    return this.#renderFileUpload(
+                      step,
+                      idSuffix,
+                      uploadState,
+                      cameraActive || adapterActive,
+                    );
+                  }
+                  if (method === LIVE_CAMERA_METHOD && this.#flowController !== undefined) {
+                    return this.#renderCamera(
+                      step,
+                      idSuffix,
+                      cameraState,
+                      fileActive || adapterActive,
+                    );
+                  }
+                  return html`
+                    <button
+                      type="button"
+                      aria-pressed=${String(selectedMethod === method)}
+                      @click=${() => this.#selectMethod(step, method)}
+                    >
+                      ${methodAction(method, this.#localizer)}
+                    </button>
+                  `;
+                })}
               </div>`
             : html`<p class="completion-copy">
                 ${this.#text("capturedWith", {
@@ -750,7 +2125,13 @@ export class IdenqaCaptureElement extends LitElement {
         <p class="status" role="status" aria-live="polite">
           ${
             completion !== undefined
-              ? completionStatus(completion.acquisitionMethod, this.#localizer)
+              ? completionStatus(
+                  completion.acquisitionMethod,
+                  this.#localizer,
+                  completionAdapter === undefined
+                    ? undefined
+                    : captureMethodAdapterCopy(completionAdapter, this.#localizer.locale).label,
+                )
               : uploadState?.status === "uploading"
                 ? this.#text("preparingFileUpload")
                 : uploadState?.status === "accepted"
@@ -764,21 +2145,6 @@ export class IdenqaCaptureElement extends LitElement {
                         })
           }
         </p>
-        ${
-          uploadState?.status === "error"
-            ? html`<p class="error" role="alert">${uploadState.message}</p>
-                ${
-                  uploadState.body === undefined
-                    ? nothing
-                    : html`<button
-                        type="button"
-                        @click=${() => void this.#uploadFile(step, uploadState.body!)}
-                      >
-                        ${this.#text("retryUpload")}
-                      </button>`
-                }`
-            : nothing
-        }
       </section>
     `;
   }
@@ -789,10 +2155,12 @@ export class IdenqaCaptureElement extends LitElement {
     uploadState: StepUploadState | undefined,
     lockedByCamera: boolean,
   ) {
-    const flow = this.#flowSnapshot!;
+    const flow = this.#flowSnapshot;
+    if (flow === undefined || !isActiveCaptureFlowSnapshot(flow)) return nothing;
     const policy = fileUploadPolicy(flow.session, step);
     const inputId = `idq-file-${idSuffix}`;
     const busy = uploadState?.status === "uploading";
+    const reviewing = uploadState?.body !== undefined && uploadState.previewUrl !== undefined;
     return html`
       <div class="file-option">
         <input
@@ -805,25 +2173,60 @@ export class IdenqaCaptureElement extends LitElement {
           ?disabled=${busy || lockedByCamera}
           @change=${(event: Event) => void this.#fileSelected(step, event)}
         />
-        <label class="file-label" for=${inputId}>
-          ${
-            busy
-              ? this.#text("uploadingFile")
-              : lockedByCamera
-                ? this.#text("finishCameraFirst")
-                : this.#text("chooseFile")
-          }
-        </label>
-        <p class="file-guidance">
-          ${this.#text("fileGuidance", {
-            mediaTypes: policy.allowedMediaTypes.map(mediaTypeLabel).join(" or "),
-          })}
-          ${
-            policy.hasExplicitMaximum
-              ? this.#text("maximumBytes", { maximum: formatBytes(policy.maximumBytes) })
-              : this.#text("serverSizeLimit")
-          }
-        </p>
+        ${
+          reviewing
+            ? html`
+                <img
+                  class="review-image"
+                  src=${uploadState.previewUrl!}
+                  alt=${this.#text("selectedFilePreview", {
+                    artefact: friendlyArtefact(step.artefact, this.#localizer),
+                  })}
+                  width="640"
+                  height="480"
+                />
+                <p class="camera-guidance">${this.#text("reviewSelectedFile")}</p>
+                ${
+                  uploadState.status === "error"
+                    ? html`<p class="error" role="alert">${uploadState.message}</p>`
+                    : nothing
+                }
+                <div class="camera-actions">
+                  <button
+                    class="primary"
+                    type="button"
+                    ?disabled=${busy}
+                    @click=${() => void this.#uploadFile(step, uploadState.body!)}
+                  >
+                    ${uploadState.status === "error" ? this.#text("retryUpload") : this.#text("useFile")}
+                  </button>
+                  <label class="file-label" for=${inputId}
+                    >${this.#text("chooseDifferentFile")}</label
+                  >
+                </div>
+              `
+            : html`
+                <label class="file-label" for=${inputId}>
+                  ${
+                    busy
+                      ? this.#text("uploadingFile")
+                      : lockedByCamera
+                        ? this.#text("finishCameraFirst")
+                        : this.#text("chooseFile")
+                  }
+                </label>
+                <p class="file-guidance">
+                  ${this.#text("fileGuidance", {
+                    mediaTypes: policy.allowedMediaTypes.map(mediaTypeLabel).join(" or "),
+                  })}
+                  ${
+                    policy.hasExplicitMaximum
+                      ? this.#text("maximumBytes", { maximum: formatBytes(policy.maximumBytes) })
+                      : this.#text("serverSizeLimit")
+                  }
+                </p>
+              `
+        }
       </div>
     `;
   }
@@ -871,7 +2274,7 @@ export class IdenqaCaptureElement extends LitElement {
                   muted
                   playsinline
                   aria-label=${this.#text("liveCameraPreviewLabel", {
-                    artefact: labelForIdentifier(step.artefact),
+                    artefact: friendlyArtefact(step.artefact, this.#localizer),
                   })}
                 ></video>
                 <p class="camera-guidance">${this.#text("cameraGuidance")}</p>
@@ -902,7 +2305,7 @@ export class IdenqaCaptureElement extends LitElement {
                   class="camera-preview"
                   src=${state.previewUrl}
                   alt=${this.#text("capturedPreviewLabel", {
-                    artefact: labelForIdentifier(step.artefact),
+                    artefact: friendlyArtefact(step.artefact, this.#localizer),
                   })}
                   width=${state.width}
                   height=${state.height}
@@ -912,6 +2315,7 @@ export class IdenqaCaptureElement extends LitElement {
                     state.body === undefined
                       ? nothing
                       : html`<button
+                          class="primary"
                           type="button"
                           ?disabled=${state.status === "uploading"}
                           @click=${() => void this.#uploadCamera(step, state.body!)}
@@ -958,6 +2362,328 @@ export class IdenqaCaptureElement extends LitElement {
     `;
   }
 
+  #renderMethodAdapter(
+    step: CapturePlanStep,
+    idSuffix: string,
+    adapter: CaptureMethodAdapter,
+    state: StepAdapterState | undefined,
+  ) {
+    const copy = captureMethodAdapterCopy(adapter, this.#localizer.locale);
+    const previewId = `idq-adapter-preview-${idSuffix}`;
+    const running = state?.status === "running";
+    const activeLiveness = adapter.presentation === "active_liveness";
+    const prompt =
+      state?.progress?.phase === "challenge" && state.progress.prompt !== undefined
+        ? livenessPrompt(state.progress.prompt, this.#localizer)
+        : undefined;
+    return html`
+      <div
+        class="adapter-option"
+        data-presentation=${adapter.presentation ?? "default"}
+        aria-busy=${String(running)}
+      >
+        ${
+          state?.previewStream === undefined
+            ? nothing
+            : html`<div class="adapter-preview-frame">
+                <video
+                  class="camera-preview"
+                  id=${previewId}
+                  width="640"
+                  height="480"
+                  autoplay
+                  muted
+                  playsinline
+                  aria-label=${this.#text("adapterPreviewLabel", { method: copy.label })}
+                ></video>
+                ${
+                  activeLiveness
+                    ? html`
+                        <span class="liveness-face-guide" aria-hidden="true"></span>
+                        ${
+                          prompt === undefined
+                            ? nothing
+                            : html`<span class="liveness-overlay-prompt" aria-hidden="true"
+                                >${prompt}</span
+                              >`
+                        }
+                      `
+                    : nothing
+                }
+              </div>`
+        }
+        ${
+          running
+            ? html`
+                <div class="adapter-progress" role="status" aria-live="polite">
+                  ${
+                    state.progress?.phase === "challenge" && prompt !== undefined
+                      ? html`
+                          <p class="eyebrow">
+                            ${this.#text("challengeProgress", {
+                              current: formatNumber(
+                                state.progress.current!,
+                                this.#localizer.locale,
+                              ),
+                              total: formatNumber(state.progress.total!, this.#localizer.locale),
+                            })}
+                          </p>
+                          <p class="adapter-prompt">${prompt}</p>
+                          <progress
+                            aria-label=${this.#text("livenessProgressLabel")}
+                            value=${state.progress.current!}
+                            max=${state.progress.total!}
+                          ></progress>
+                        `
+                      : nothing
+                  }
+                  ${
+                    activeLiveness
+                      ? html`<p class="liveness-auto-capture">
+                          ${this.#text("livenessAutoCapture")}
+                        </p>`
+                      : nothing
+                  }
+                  <p>${adapterProgressMessage(state.progress, copy.label, this.#localizer)}</p>
+                </div>
+                <button type="button" @click=${() => this.#cancelMethodAdapter(step)}>
+                  ${this.#text("cancelMethod", { method: copy.label })}
+                </button>
+              `
+            : html`
+                <button
+                  class="primary"
+                  type="button"
+                  @click=${() => void this.#runMethodAdapter(step, adapter, previewId)}
+                >
+                  ${copy.action}
+                </button>
+              `
+        }
+        ${
+          state?.status === "error"
+            ? html`<p class="error" role="alert">${state.message}</p>`
+            : nothing
+        }
+      </div>
+    `;
+  }
+
+  #adapterFor(step: CapturePlanStep, method: string): CaptureMethodAdapter | undefined {
+    const plan =
+      this.#flowSnapshot !== undefined && isActiveCaptureFlowSnapshot(this.#flowSnapshot)
+        ? this.#flowSnapshot.plan
+        : this.plan;
+    if (plan === undefined) return undefined;
+    return findCaptureMethodAdapter(this.#methodAdapters, {
+      verificationId: plan.verificationId,
+      requirementKey: step.requirementKey,
+      evidenceType: step.evidenceType,
+      artefact: step.artefact,
+      acquisitionMethod: method,
+      ...(step.fallbackCondition === undefined
+        ? {}
+        : { fallbackCondition: step.fallbackCondition }),
+    });
+  }
+
+  #assertMethodAdapters(plan: CapturePlan): void {
+    for (const step of planSteps(plan)) {
+      for (const method of step.methodOptions) {
+        const context = {
+          verificationId: plan.verificationId,
+          requirementKey: step.requirementKey,
+          evidenceType: step.evidenceType,
+          artefact: step.artefact,
+          acquisitionMethod: method,
+          ...(step.fallbackCondition === undefined
+            ? {}
+            : { fallbackCondition: step.fallbackCondition }),
+        };
+        const adapter = findCaptureMethodAdapter(this.#methodAdapters, context);
+        if (adapter !== undefined) captureMethodAdapterCopy(adapter, this.#localizer.locale);
+        if (
+          method !== FILE_UPLOAD_METHOD &&
+          method !== LIVE_CAMERA_METHOD &&
+          adapter === undefined
+        ) {
+          requireCaptureMethodAdapter(this.#methodAdapters, context);
+        }
+      }
+    }
+  }
+
+  async #runMethodAdapter(
+    step: CapturePlanStep,
+    adapter: CaptureMethodAdapter,
+    previewId: string,
+  ): Promise<void> {
+    const flowController = this.#flowController;
+    const parentSignal = this.#flowAbortController?.signal;
+    const plan =
+      this.#flowSnapshot !== undefined && isActiveCaptureFlowSnapshot(this.#flowSnapshot)
+        ? this.#flowSnapshot.plan
+        : undefined;
+    const key = stepKey(step);
+    if (
+      flowController === undefined ||
+      parentSignal === undefined ||
+      plan === undefined ||
+      parentSignal.aborted ||
+      this.#completedSteps.has(key) ||
+      this.#adapterStates.get(key)?.status === "running"
+    ) {
+      return;
+    }
+    this.#clearUploadState(key);
+    this.#clearCameraState(key);
+    const controller = new AbortController();
+    const parentAborted = () => controller.abort(parentSignal.reason);
+    parentSignal.addEventListener("abort", parentAborted, { once: true });
+    this.#adapterStates.set(key, { status: "running", controller });
+    this.#selectMethod(step, adapter.method);
+    this.#reportStep(step, adapter.method, "started");
+    this.requestUpdate();
+    const context: CaptureMethodAdapterContext = {
+      verificationId: plan.verificationId,
+      requirementKey: step.requirementKey,
+      evidenceType: step.evidenceType,
+      artefact: step.artefact,
+      acquisitionMethod: adapter.method,
+      ...(step.fallbackCondition === undefined
+        ? {}
+        : { fallbackCondition: step.fallbackCondition }),
+      locale: this.#localizer.locale,
+      signal: controller.signal,
+    };
+    try {
+      await adapter.acquire(context, {
+        update: (progress) => {
+          const current = this.#adapterStates.get(key);
+          if (current?.controller !== controller || controller.signal.aborted) return;
+          this.#adapterStates.set(key, {
+            ...current,
+            progress: normalizeCaptureMethodProgress(progress),
+          });
+          this.requestUpdate();
+        },
+        setPreview: (stream) => this.#setAdapterPreview(key, controller, previewId, stream),
+      });
+      if (controller.signal.aborted) return;
+      const snapshot = await flowController.refresh(controller.signal);
+      if (controller.signal.aborted) return;
+      this.#flowSnapshot = snapshot;
+      this.#restoreRecoveredProgress(snapshot);
+      if (!this.#completedSteps.has(key)) {
+        throw new CaptureMethodAdapterError(
+          "CAPTURE_METHOD_ADAPTER_UNCONFIRMED",
+          "Core did not confirm this acquisition. Check the integration and retry.",
+        );
+      }
+      this.#releaseAdapterPreview(key, controller, previewId);
+      this.#adapterStates.delete(key);
+    } catch (error) {
+      if (parentSignal.aborted) return;
+      if (controller.signal.aborted) {
+        this.#adapterStates.delete(key);
+        this.requestUpdate();
+        return;
+      }
+      const unconfirmed =
+        error instanceof CaptureMethodAdapterError &&
+        error.code === "CAPTURE_METHOD_ADAPTER_UNCONFIRMED";
+      this.#releaseAdapterPreview(key, controller, previewId);
+      this.#adapterStates.set(key, {
+        status: "error",
+        controller,
+        message: unconfirmed ? this.#text("adapterUnconfirmed") : this.#text("adapterFailed"),
+      });
+      this.#reportStep(
+        step,
+        adapter.method,
+        "failed",
+        unconfirmed ? "adapter_completion_unconfirmed" : "adapter_failed",
+      );
+      this.#dispatchFlowError();
+    } finally {
+      parentSignal.removeEventListener("abort", parentAborted);
+      this.requestUpdate();
+    }
+  }
+
+  async #setAdapterPreview(
+    key: string,
+    controller: AbortController,
+    previewId: string,
+    stream: MediaStream | undefined,
+  ): Promise<void> {
+    const current = this.#adapterStates.get(key);
+    if (current?.controller !== controller || controller.signal.aborted) return;
+    if (stream !== undefined && !(stream instanceof MediaStream)) {
+      throw new CaptureMethodAdapterError(
+        "CAPTURE_METHOD_ADAPTER_INVALID",
+        "The acquisition adapter preview must be a MediaStream.",
+      );
+    }
+    if (stream === undefined && current.previewStream !== undefined) {
+      const currentVideo = this.renderRoot.querySelector<HTMLVideoElement>(`#${previewId}`);
+      if (currentVideo !== null) currentVideo.srcObject = null;
+    }
+    this.#adapterStates.set(
+      key,
+      stream === undefined
+        ? {
+            status: current.status,
+            controller,
+            ...(current.progress === undefined ? {} : { progress: current.progress }),
+            ...(current.message === undefined ? {} : { message: current.message }),
+          }
+        : { ...current, previewStream: stream },
+    );
+    this.requestUpdate();
+    await this.updateComplete;
+    const video = this.renderRoot.querySelector<HTMLVideoElement>(`#${previewId}`);
+    if (stream === undefined) {
+      if (video !== null) video.srcObject = null;
+      return;
+    }
+    if (video === null || controller.signal.aborted) return;
+    video.srcObject = stream;
+    await video.play();
+  }
+
+  #releaseAdapterPreview(key: string, controller: AbortController, previewId: string): void {
+    const current = this.#adapterStates.get(key);
+    if (current?.controller !== controller || current.previewStream === undefined) return;
+    const video = this.renderRoot.querySelector<HTMLVideoElement>(`#${previewId}`);
+    if (video !== null) video.srcObject = null;
+    stopCamera(current.previewStream);
+  }
+
+  #cancelMethodAdapter(step: CapturePlanStep): void {
+    const key = stepKey(step);
+    const state = this.#adapterStates.get(key);
+    if (state === undefined) return;
+    state.controller.abort(new DOMException("The acquisition method was cancelled.", "AbortError"));
+    if (state.previewStream !== undefined) stopCamera(state.previewStream);
+    this.#adapterStates.delete(key);
+    const method = this.#selectedMethods.get(key) ?? step.methodOptions[0]!;
+    this.#reportStep(step, method, "cancelled", "subject_cancelled");
+    this.requestUpdate();
+  }
+
+  #clearAdapterState(key: string): void {
+    const state = this.#adapterStates.get(key);
+    if (state === undefined) return;
+    state.controller.abort(new DOMException("The acquisition method was stopped.", "AbortError"));
+    if (state.previewStream !== undefined) stopCamera(state.previewStream);
+    this.#adapterStates.delete(key);
+  }
+
+  #clearAdapterStates(): void {
+    for (const key of [...this.#adapterStates.keys()]) this.#clearAdapterState(key);
+  }
+
   #selectMethod(step: CapturePlanStep, method: string): void {
     const key = stepKey(step);
     if (this.#completedSteps.has(key)) return;
@@ -987,10 +2713,21 @@ export class IdenqaCaptureElement extends LitElement {
     input.value = "";
     const key = stepKey(step);
     if (body === null || body === undefined || this.#completedSteps.has(key)) return;
-    if (isCameraActive(this.#cameraStates.get(key))) return;
+    if (
+      isCameraActive(this.#cameraStates.get(key)) ||
+      this.#adapterStates.get(key)?.status === "running"
+    ) {
+      return;
+    }
     this.#clearCameraState(key);
+    this.#clearUploadState(key);
     this.#selectMethod(step, FILE_UPLOAD_METHOD);
-    await this.#uploadFile(step, body);
+    this.#uploadStates.set(key, {
+      status: "reviewing",
+      body,
+      previewUrl: URL.createObjectURL(body),
+    });
+    this.requestUpdate();
   }
 
   async #uploadFile(step: CapturePlanStep, body: Blob): Promise<void> {
@@ -1005,19 +2742,30 @@ export class IdenqaCaptureElement extends LitElement {
       return;
     }
     const key = stepKey(step);
-    this.#uploadStates.set(key, { status: "uploading", body });
+    const current = this.#uploadStates.get(key);
+    this.#uploadStates.set(key, {
+      status: "uploading",
+      body,
+      ...(current?.previewUrl === undefined ? {} : { previewUrl: current.previewUrl }),
+    });
     this.#reportStep(step, FILE_UPLOAD_METHOD, "started");
     this.requestUpdate();
     try {
       const upload = await controller.uploadFile(step, body, signal);
       if (signal.aborted) return;
       this.#clearCameraState(key);
+      if (current?.previewUrl !== undefined) URL.revokeObjectURL(current.previewUrl);
       this.#uploadStates.set(key, { status: "accepted" });
       this.#completeStep(step, FILE_UPLOAD_METHOD, upload);
     } catch (error) {
       if (signal.aborted) return;
       const message = this.#text("fileRejected");
-      this.#uploadStates.set(key, { status: "error", body, message });
+      this.#uploadStates.set(key, {
+        status: "error",
+        body,
+        message,
+        ...(current?.previewUrl === undefined ? {} : { previewUrl: current.previewUrl }),
+      });
       this.#reportStep(step, FILE_UPLOAD_METHOD, "failed", "file_upload_failed");
       this.#dispatchFlowError();
     }
@@ -1028,7 +2776,11 @@ export class IdenqaCaptureElement extends LitElement {
     const signal = this.#flowAbortController?.signal;
     if (this.#flowController === undefined || signal === undefined || signal.aborted) return;
     const key = stepKey(step);
-    if (this.#completedSteps.has(key) || this.#uploadStates.get(key)?.status === "uploading")
+    if (
+      this.#completedSteps.has(key) ||
+      this.#uploadStates.get(key)?.status === "uploading" ||
+      this.#adapterStates.get(key)?.status === "running"
+    )
       return;
     this.#clearCameraState(key);
     this.#uploadStates.delete(key);
@@ -1068,8 +2820,10 @@ export class IdenqaCaptureElement extends LitElement {
     const state = this.#cameraStates.get(key);
     const video = this.renderRoot.querySelector<HTMLVideoElement>(`#${videoId}`);
     if (state?.status !== "streaming" || state.ready !== true || video === null) return;
+    const flow = this.#flowSnapshot;
+    if (flow === undefined || !isActiveCaptureFlowSnapshot(flow)) return;
     try {
-      const policy = fileUploadPolicy(this.#flowSnapshot!.session, step);
+      const policy = fileUploadPolicy(flow.session, step);
       const mediaType = policy.allowedMediaTypes.includes("image/jpeg")
         ? "image/jpeg"
         : policy.allowedMediaTypes[0]!;
@@ -1145,6 +2899,15 @@ export class IdenqaCaptureElement extends LitElement {
       try {
         this.#flowSnapshot = controller.captureFailed(step);
         this.#selectedMethods.delete(key);
+        if (this.#journeyPhase === "capture") {
+          const fallbackStep = planSteps(this.#flowSnapshot.plan)[this.#activeStepIndex];
+          if (fallbackStep !== undefined && fallbackStep.methodOptions.length === 1) {
+            this.#selectedMethods.set(stepKey(fallbackStep), fallbackStep.methodOptions[0]!);
+            this.#stepStage = "preparation";
+          } else {
+            this.#stepStage = "method";
+          }
+        }
         this.requestUpdate();
         return;
       } catch {
@@ -1164,6 +2927,16 @@ export class IdenqaCaptureElement extends LitElement {
     stopCamera(state?.stream);
     if (state?.previewUrl !== undefined) URL.revokeObjectURL(state.previewUrl);
     this.#cameraStates.delete(key);
+  }
+
+  #clearUploadState(key: string): void {
+    const state = this.#uploadStates.get(key);
+    if (state?.previewUrl !== undefined) URL.revokeObjectURL(state.previewUrl);
+    this.#uploadStates.delete(key);
+  }
+
+  #clearUploadStates(): void {
+    for (const key of [...this.#uploadStates.keys()]) this.#clearUploadState(key);
   }
 
   #markCameraReady(key: string, stream: MediaStream, video: HTMLVideoElement): void {
@@ -1206,9 +2979,17 @@ export class IdenqaCaptureElement extends LitElement {
         detail,
       }),
     );
-    const plan = this.#flowSnapshot?.plan ?? this.plan;
+    const plan =
+      this.#flowSnapshot !== undefined && isActiveCaptureFlowSnapshot(this.#flowSnapshot)
+        ? this.#flowSnapshot.plan
+        : this.plan;
     if (plan === undefined) return;
     const progress = captureProgress(plan, this.#completedSteps);
+    if (this.#flowSnapshot !== undefined && this.#journeyPhase === "capture") {
+      this.#journeyPhase =
+        progress.completedSteps === progress.totalSteps ? "processing" : "confirmation";
+      this.requestUpdate();
+    }
     const progressDetail: CaptureProgressDetail = {
       verificationId: plan.verificationId,
       ...progress,
@@ -1222,6 +3003,7 @@ export class IdenqaCaptureElement extends LitElement {
     );
     if (progress.completedSteps !== progress.totalSteps || this.#captureCompleteDispatched) return;
     this.#captureCompleteDispatched = true;
+    this.#pollAuthoritativeOutcome();
     const completeDetail: CaptureCompleteDetail = { ...progressDetail, captureComplete: true };
     this.dispatchEvent(
       new CustomEvent<CaptureCompleteDetail>("idenqa-capture-complete", {
@@ -1233,6 +3015,7 @@ export class IdenqaCaptureElement extends LitElement {
   }
 
   #restoreRecoveredProgress(snapshot: CaptureFlowSnapshot): void {
+    if (!isActiveCaptureFlowSnapshot(snapshot)) return;
     const steps = snapshot.plan.requirements.flatMap((requirement) => requirement.steps);
     for (const completion of snapshot.progress.completions) {
       const matches = steps.filter(
@@ -1250,8 +3033,17 @@ export class IdenqaCaptureElement extends LitElement {
         evidenceId: completion.evidenceId,
       });
     }
-    if (this.#completedSteps.size === 0) return;
     const progress = captureProgress(snapshot.plan, this.#completedSteps);
+    const activeStep = planSteps(snapshot.plan)[this.#activeStepIndex];
+    if (
+      this.#journeyPhase === "capture" &&
+      activeStep !== undefined &&
+      this.#completedSteps.has(stepKey(activeStep))
+    ) {
+      this.#journeyPhase =
+        progress.completedSteps === progress.totalSteps ? "processing" : "confirmation";
+    }
+    if (this.#completedSteps.size === 0) return;
     const detail: CaptureProgressDetail = {
       verificationId: snapshot.plan.verificationId,
       ...progress,
@@ -1304,6 +3096,8 @@ export class IdenqaCaptureElement extends LitElement {
       }
       if (snapshot.status === "refused" || snapshot.status === "authority_blocked") {
         this.#dropFlowController();
+      } else if (snapshot.status === "capture_ready") {
+        this.#resumeJourney(snapshot.plan, true);
       }
     } catch {
       if (signal?.aborted === true) return;
@@ -1354,9 +3148,37 @@ export class IdenqaCaptureElement extends LitElement {
 
   #dropFlowController(): void {
     this.#clearCameraStates();
+    this.#clearAdapterStates();
     this.#flowAbortController?.abort();
     this.#flowAbortController = undefined;
     this.#flowController = undefined;
+    this.#outcomePolling = false;
+  }
+
+  #pollAuthoritativeOutcome(): void {
+    const controller = this.#flowController;
+    const abortController = this.#flowAbortController;
+    if (controller === undefined || abortController === undefined || this.#outcomePolling) return;
+    this.#outcomePolling = true;
+    void controller
+      .pollOutcome((recovered) => {
+        if (abortController.signal.aborted || this.#flowController !== controller) return;
+        this.#flowSnapshot = recovered;
+        if (isActiveCaptureFlowSnapshot(recovered)) {
+          this.#restoreRecoveredProgress(recovered);
+        } else if (recovered.status !== "processing" && recovered.status !== "action_required") {
+          this.#dropFlowController();
+        }
+        this.requestUpdate();
+      }, abortController.signal)
+      .catch(() => {
+        if (!abortController.signal.aborted && this.#flowController === controller) {
+          this.#dispatchFlowError();
+        }
+      })
+      .finally(() => {
+        if (this.#flowController === controller) this.#outcomePolling = false;
+      });
   }
 
   #text(key: CaptureMessageKey, values?: CaptureMessageValues): string {
@@ -1408,14 +3230,65 @@ function isCameraActive(state: StepCameraState | undefined): boolean {
   );
 }
 
+function isCameraBusy(state: StepCameraState | undefined): boolean {
+  return (
+    state?.status === "requesting" || state?.status === "streaming" || state?.status === "uploading"
+  );
+}
+
 function formatNumber(value: number, locale: string): string {
   return new Intl.NumberFormat(locale).format(value);
 }
 
-function completionStatus(method: string, localizer: CaptureLocalizer): string {
+function completionStatus(
+  method: string,
+  localizer: CaptureLocalizer,
+  adapterLabel?: string,
+): string {
+  if (adapterLabel !== undefined) {
+    return localizer.text("adapterStepComplete", { method: adapterLabel });
+  }
   return method === LIVE_CAMERA_METHOD
     ? localizer.text("cameraStepComplete")
     : localizer.text("fileStepComplete");
+}
+
+function adapterProgressMessage(
+  progress: CaptureMethodAdapterProgress | undefined,
+  method: string,
+  localizer: CaptureLocalizer,
+): string {
+  if (progress === undefined || progress.phase === "preparing") {
+    return localizer.text("adapterPreparing", { method });
+  }
+  if (progress.phase === "requesting_permission") {
+    return localizer.text("adapterRequestingPermission", { method });
+  }
+  if (progress.phase === "ready") return localizer.text("adapterReady", { method });
+  if (progress.phase === "submitting") {
+    return localizer.text("adapterSubmitting", { method });
+  }
+  return localizer.text("adapterRunning", { method });
+}
+
+function livenessPrompt(
+  prompt: NonNullable<CaptureMethodAdapterProgress["prompt"]>,
+  localizer: CaptureLocalizer,
+): string {
+  switch (prompt) {
+    case "neutral":
+      return localizer.text("livenessNeutral");
+    case "turn_left":
+      return localizer.text("livenessTurnLeft");
+    case "turn_right":
+      return localizer.text("livenessTurnRight");
+    case "look_up":
+      return localizer.text("livenessLookUp");
+    case "look_down":
+      return localizer.text("livenessLookDown");
+    case "blink":
+      return localizer.text("livenessBlink");
+  }
 }
 
 function fallbackMessage(
@@ -1439,6 +3312,25 @@ function cameraErrorMessage(error: unknown, localizer: CaptureLocalizer): string
     return localizer.text("cameraFrameFailed", { message: error.message });
   }
   return localizer.text("cameraUnavailable");
+}
+
+function methodDescription(method: string, localizer: CaptureLocalizer): string {
+  if (method === FILE_UPLOAD_METHOD) return localizer.text("fileMethodDescription");
+  if (method === LIVE_CAMERA_METHOD) return localizer.text("cameraMethodDescription");
+  return localizer.text("otherMethodDescription");
+}
+
+function captureInstruction(method: string, localizer: CaptureLocalizer): string {
+  if (method === FILE_UPLOAD_METHOD) return localizer.text("fileInstruction");
+  if (method === LIVE_CAMERA_METHOD) return localizer.text("cameraInstruction");
+  return localizer.text("otherInstruction");
+}
+
+function friendlyArtefact(artefact: string, localizer: CaptureLocalizer): string {
+  if (artefact === "idenqa.artefact.selfie_image") return localizer.text("selfie");
+  if (artefact === "idenqa.artefact.document_front") return localizer.text("documentFront");
+  if (artefact === "idenqa.artefact.document_back") return localizer.text("documentBack");
+  return labelForIdentifier(artefact);
 }
 
 function methodAction(method: string, localizer: CaptureLocalizer): string {
@@ -1468,6 +3360,10 @@ function labelForIdentifier(identifier: string): string {
 
 function browserLocale(): string {
   return globalThis.navigator?.languages?.[0] ?? globalThis.navigator?.language ?? "en";
+}
+
+function planSteps(plan: CapturePlan): readonly CapturePlanStep[] {
+  return plan.requirements.flatMap((requirement) => requirement.steps);
 }
 
 declare global {

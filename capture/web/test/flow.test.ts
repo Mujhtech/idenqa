@@ -4,6 +4,7 @@ import {
   IdenqaTransportError,
   type SDKConditionalResponse,
   type CaptureObservation,
+  type CaptureOutcome,
   type CaptureAuthoritySnapshot,
   type CaptureProgress,
   type CaptureRealtimeEvent,
@@ -30,6 +31,123 @@ const capabilities = {
 };
 
 describe("CaptureFlowController", () => {
+  it("loads a terminal authoritative outcome without calling active-capture endpoints", async () => {
+    const getSession = vi.fn<CaptureFlowClient["getSession"]>();
+    const controller = new CaptureFlowController(
+      client({
+        getSession,
+        getOutcome: () =>
+          Promise.resolve(
+            response({
+              verificationId: session.id,
+              state: "verified",
+              sessionVersion: 4,
+              updatedAt: "2026-08-30T00:00:04Z",
+            } satisfies CaptureOutcome),
+          ),
+      }),
+      capabilities,
+    );
+
+    await expect(controller.load()).resolves.toEqual({
+      status: "verified",
+      outcome: {
+        verificationId: session.id,
+        state: "verified",
+        sessionVersion: 4,
+        updatedAt: "2026-08-30T00:00:04Z",
+      },
+    });
+    expect(getSession).not.toHaveBeenCalled();
+  });
+
+  it("recovers when capture stops between outcome and capture-only reads", async () => {
+    const getOutcome = vi
+      .fn<CaptureFlowClient["getOutcome"]>()
+      .mockResolvedValueOnce(
+        response({
+          verificationId: session.id,
+          state: "capture_required",
+          sessionVersion: 1,
+          updatedAt: session.updatedAt,
+        }),
+      )
+      .mockResolvedValueOnce(
+        response({
+          verificationId: session.id,
+          state: "not_verified",
+          sessionVersion: 4,
+          updatedAt: "2026-08-30T00:00:04Z",
+        }),
+      );
+    const getSession = vi
+      .fn<CaptureFlowClient["getSession"]>()
+      .mockRejectedValue(new Error("capture no longer accepted"));
+    const controller = new CaptureFlowController(client({ getOutcome, getSession }), capabilities);
+
+    await expect(controller.load()).resolves.toEqual({
+      status: "not_verified",
+      outcome: {
+        verificationId: session.id,
+        state: "not_verified",
+        sessionVersion: 4,
+        updatedAt: "2026-08-30T00:00:04Z",
+      },
+    });
+    expect(getOutcome).toHaveBeenCalledTimes(2);
+  });
+
+  it("polls from accepted capture through processing to a terminal outcome", async () => {
+    const getOutcome = vi
+      .fn<CaptureFlowClient["getOutcome"]>()
+      .mockResolvedValueOnce(
+        response({
+          verificationId: session.id,
+          state: "capture_required",
+          sessionVersion: 1,
+          updatedAt: session.updatedAt,
+        }),
+      )
+      .mockResolvedValueOnce(
+        response({
+          verificationId: session.id,
+          state: "processing",
+          sessionVersion: 2,
+          updatedAt: "2026-08-30T00:00:02Z",
+        }),
+      )
+      .mockResolvedValueOnce(
+        response({
+          verificationId: session.id,
+          state: "verified",
+          sessionVersion: 3,
+          updatedAt: "2026-08-30T00:00:03Z",
+        }),
+      );
+    const controller = new CaptureFlowController(client({ getOutcome }), capabilities, {
+      recoveryPollingIntervalMs: 250,
+    });
+    await controller.load();
+    const snapshots: CaptureFlowSnapshot[] = [];
+
+    await controller.pollOutcome((next) => snapshots.push(next));
+
+    expect(snapshots.map((next) => next.status)).toEqual(["processing", "verified"]);
+  });
+
+  it("requires an initial load before an authoritative refresh", async () => {
+    const controller = new CaptureFlowController(client(), capabilities);
+
+    await expect(controller.refresh()).rejects.toMatchObject({
+      code: "CAPTURE_FLOW_INVALID_STATE",
+    } satisfies Partial<CaptureFlowError>);
+    await controller.load();
+    await expect(controller.refresh()).resolves.toMatchObject({
+      status: "notice_required",
+      session,
+    });
+  });
+
   it("loads the correlated exact notice before making capture available", async () => {
     const controller = new CaptureFlowController(client(), capabilities);
 
@@ -81,6 +199,68 @@ describe("CaptureFlowController", () => {
     expect(snapshots).toHaveLength(1);
     expect(getProgress).toHaveBeenCalledTimes(2);
     expect(close).toHaveBeenCalledOnce();
+  });
+
+  it("switches from active capture to a Core-authored outcome after lifecycle progress", async () => {
+    const getOutcome = vi
+      .fn<CaptureFlowClient["getOutcome"]>()
+      .mockResolvedValueOnce(
+        response({
+          verificationId: session.id,
+          state: "capture_required",
+          sessionVersion: 1,
+          updatedAt: session.updatedAt,
+        }),
+      )
+      .mockResolvedValueOnce(
+        response({
+          verificationId: session.id,
+          state: "verified",
+          sessionVersion: 4,
+          updatedAt: "2026-08-30T00:00:04Z",
+        }),
+      );
+    const stateChanged = {
+      type: "session.state_changed",
+      messageId: "msg_01M11HEQG00000000000000000",
+      verificationId: session.id,
+      connectionId: "con_01M11HEQG00000000000000000",
+      sequence: 2,
+      occurredAt: "2026-08-30T00:00:04Z",
+      payload: { state: "completed", sessionVersion: 4 },
+    } satisfies CaptureRealtimeEvent;
+    const controller = new CaptureFlowController(
+      client({
+        getOutcome,
+        observe: () => ({
+          async *[Symbol.asyncIterator]() {
+            yield stateChanged;
+          },
+          reportStep: vi.fn(),
+          close: vi.fn(),
+        }),
+      }),
+      capabilities,
+    );
+    await controller.load();
+    const snapshots: CaptureFlowSnapshot[] = [];
+
+    await controller.observe(
+      () => undefined,
+      (next) => snapshots.push(next),
+    );
+
+    expect(snapshots).toEqual([
+      {
+        status: "verified",
+        outcome: {
+          verificationId: session.id,
+          state: "verified",
+          sessionVersion: 4,
+          updatedAt: "2026-08-30T00:00:04Z",
+        },
+      },
+    ]);
   });
 
   it("recovers the authoritative snapshot after verification check progress", async () => {
@@ -428,6 +608,9 @@ function client(
     readonly snapshot?: CaptureAuthoritySnapshot;
     readonly session?: VerificationSession;
     readonly progress?: CaptureProgress;
+    readonly getOutcome?: CaptureFlowClient["getOutcome"];
+    readonly getSession?: CaptureFlowClient["getSession"];
+    readonly getAuthority?: CaptureFlowClient["getAuthority"];
     readonly getProgress?: CaptureFlowClient["getProgress"];
     readonly pollProgress?: CaptureFlowClient["pollProgress"];
     readonly observe?: CaptureFlowClient["observe"];
@@ -439,8 +622,20 @@ function client(
 ): CaptureFlowClient {
   const authority = overrides.snapshot ?? snapshot;
   return {
-    getSession: () => Promise.resolve(response(overrides.session ?? session)),
-    getAuthority: () => Promise.resolve(response(authority)),
+    getOutcome:
+      overrides.getOutcome ??
+      (() =>
+        Promise.resolve(
+          response({
+            verificationId: (overrides.session ?? session).id,
+            state: "capture_required",
+            sessionVersion: (overrides.session ?? session).version,
+            updatedAt: (overrides.session ?? session).updatedAt,
+          }),
+        )),
+    getSession:
+      overrides.getSession ?? (() => Promise.resolve(response(overrides.session ?? session))),
+    getAuthority: overrides.getAuthority ?? (() => Promise.resolve(response(authority))),
     getProgress:
       overrides.getProgress ??
       (() =>

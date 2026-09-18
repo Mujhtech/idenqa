@@ -1,5 +1,6 @@
 import {
   CaptureClient,
+  OutcomeClient,
   IdenqaTransportError,
   createIdempotencyKey,
   type CaptureAuthoritySnapshot,
@@ -7,6 +8,8 @@ import {
   type CaptureCompletion,
   type CaptureProgress,
   type CaptureObservation,
+  type CaptureOutcome,
+  type CaptureOutcomeState,
   type CaptureRealtimeEvent,
   type CaptureStepUpdateInput,
   type EvidenceUpload,
@@ -38,17 +41,27 @@ import {
 
 export const CAPTURE_EXPERIENCE_VERSION = "idenqa.capture.web.v1";
 
-export type CaptureFlowStatus =
+export type CaptureActiveFlowStatus =
   "notice_required" | "capture_ready" | "refused" | "authority_blocked";
+export type CaptureTerminalFlowStatus = Exclude<CaptureOutcomeState, "capture_required">;
+export type CaptureFlowStatus = CaptureActiveFlowStatus | CaptureTerminalFlowStatus;
 
-export interface CaptureFlowSnapshot {
-  readonly status: CaptureFlowStatus;
+export interface CaptureActiveFlowSnapshot {
+  readonly status: CaptureActiveFlowStatus;
+  readonly outcome: CaptureOutcome;
   readonly session: VerificationSession;
   readonly authoritySnapshot: CaptureAuthoritySnapshot;
   readonly plan: CapturePlan;
   readonly progress: CaptureProgress;
   readonly region: string;
 }
+
+export interface CaptureOutcomeFlowSnapshot {
+  readonly status: CaptureTerminalFlowStatus;
+  readonly outcome: CaptureOutcome;
+}
+
+export type CaptureFlowSnapshot = CaptureActiveFlowSnapshot | CaptureOutcomeFlowSnapshot;
 
 export interface CaptureFlowClient {
   observe?(
@@ -62,6 +75,7 @@ export interface CaptureFlowClient {
     readonly signal?: AbortSignal;
   }): Promise<SDKResponse<CaptureAuthoritySnapshot>>;
   getProgress(options?: { readonly signal?: AbortSignal }): Promise<SDKResponse<CaptureProgress>>;
+  getOutcome(options?: { readonly signal?: AbortSignal }): Promise<SDKResponse<CaptureOutcome>>;
   pollProgress?(
     etag: string,
     options?: { readonly signal?: AbortSignal },
@@ -93,6 +107,7 @@ export interface CaptureFlowControllerOptions {
 }
 
 export interface CaptureFlowStartOptions extends CaptureClientOptions {
+  readonly outcomeToken: string;
   readonly capabilities: CapturePlannerCapabilities;
   readonly region?: string;
   readonly recoveryPollingIntervalMs?: number;
@@ -145,16 +160,52 @@ export class CaptureFlowController {
     return this.#readSnapshot(signal, true);
   }
 
+  /** Re-reads authoritative session, authority, and completion state without discarding retries. */
+  async refresh(signal?: AbortSignal): Promise<CaptureFlowSnapshot> {
+    if (this.#snapshot === undefined) {
+      throw new CaptureFlowError(
+        "CAPTURE_FLOW_INVALID_STATE",
+        "Capture progress cannot be refreshed before the flow is loaded.",
+      );
+    }
+    return this.#readSnapshot(signal, false);
+  }
+
   async #readSnapshot(
     signal: AbortSignal | undefined,
     resetTransactions: boolean,
   ): Promise<CaptureFlowSnapshot> {
-    const [sessionResponse, authorityResponse, progressResponse] = await Promise.all([
-      this.#client.getSession(signal === undefined ? {} : { signal }),
-      this.#client.getAuthority(signal === undefined ? {} : { signal }),
-      this.#client.getProgress(signal === undefined ? {} : { signal }),
-    ]);
+    const outcomeResponse = await this.#client.getOutcome(signal === undefined ? {} : { signal });
+    if (outcomeResponse.data.state !== "capture_required") {
+      const snapshot = createOutcomeSnapshot(outcomeResponse.data);
+      this.#snapshot = snapshot;
+      this.#progressETag = undefined;
+      return snapshot;
+    }
+    let sessionResponse: SDKResponse<VerificationSession>;
+    let authorityResponse: SDKResponse<CaptureAuthoritySnapshot>;
+    let progressResponse: SDKResponse<CaptureProgress>;
+    try {
+      [sessionResponse, authorityResponse, progressResponse] = await Promise.all([
+        this.#client.getSession(signal === undefined ? {} : { signal }),
+        this.#client.getAuthority(signal === undefined ? {} : { signal }),
+        this.#client.getProgress(signal === undefined ? {} : { signal }),
+      ]);
+    } catch (error) {
+      // The session can leave capture between the outcome read above and the
+      // capture-only reads. Re-read the safe projection before surfacing that
+      // expected transition as a page-load failure.
+      const latestOutcome = await this.#client.getOutcome(signal === undefined ? {} : { signal });
+      if (latestOutcome.data.state !== "capture_required") {
+        const snapshot = createOutcomeSnapshot(latestOutcome.data);
+        this.#snapshot = snapshot;
+        this.#progressETag = undefined;
+        return snapshot;
+      }
+      throw error;
+    }
     const snapshot = createSnapshot(
+      outcomeResponse.data,
       sessionResponse.data,
       authorityResponse.data,
       this.#capabilities,
@@ -177,7 +228,8 @@ export class CaptureFlowController {
     signal?: AbortSignal,
   ): Promise<void> {
     const current = this.#snapshot;
-    if (current === undefined || this.#client.observe === undefined) return;
+    if (current === undefined || !isActiveSnapshot(current) || this.#client.observe === undefined)
+      return;
     const observation = this.#client.observe(current.session, {
       capabilities: this.#capabilities.availableMethods,
       ...(signal === undefined ? {} : { signal }),
@@ -208,6 +260,31 @@ export class CaptureFlowController {
     }
   }
 
+  /** Polls the safe outcome projection when a page is opened after capture stopped. */
+  async pollOutcome(
+    onSnapshot: (snapshot: CaptureFlowSnapshot) => void,
+    signal?: AbortSignal,
+  ): Promise<void> {
+    for (;;) {
+      await abortablePollingDelay(this.#recoveryPollingIntervalMs, signal);
+      if (isAborted(signal)) return;
+      try {
+        const snapshot = await this.#readSnapshot(signal, false);
+        onSnapshot(snapshot);
+        if (
+          !isActiveSnapshot(snapshot) &&
+          snapshot.status !== "processing" &&
+          snapshot.status !== "action_required"
+        ) {
+          return;
+        }
+      } catch (error) {
+        if (isAborted(signal)) return;
+        if (!(error instanceof IdenqaTransportError)) throw error;
+      }
+    }
+  }
+
   async #pollRecovery(
     onSnapshot: (snapshot: CaptureFlowSnapshot) => void,
     signal?: AbortSignal,
@@ -221,6 +298,11 @@ export class CaptureFlowController {
         continue;
       }
       try {
+        const outcome = await this.#client.getOutcome(signal === undefined ? {} : { signal });
+        if (outcome.data.state !== "capture_required") {
+          onSnapshot(createOutcomeSnapshot(outcome.data));
+          return;
+        }
         const progress = await this.#client.pollProgress(
           etag,
           signal === undefined ? {} : { signal },
@@ -247,9 +329,16 @@ export class CaptureFlowController {
     });
   }
 
-  async respond(action: SubjectResponseAction, signal?: AbortSignal): Promise<CaptureFlowSnapshot> {
+  async respond(
+    action: SubjectResponseAction,
+    signal?: AbortSignal,
+  ): Promise<CaptureActiveFlowSnapshot> {
     const current = this.#snapshot;
-    if (current === undefined || current.status !== "notice_required") {
+    if (
+      current === undefined ||
+      !isActiveSnapshot(current) ||
+      current.status !== "notice_required"
+    ) {
       throw new CaptureFlowError(
         "CAPTURE_FLOW_INVALID_STATE",
         "A subject response is not accepted in the current capture flow state.",
@@ -278,6 +367,7 @@ export class CaptureFlowController {
       latestResponse: response.data,
     };
     const next = createSnapshot(
+      current.outcome,
       current.session,
       authoritySnapshot,
       this.#capabilities,
@@ -304,10 +394,11 @@ export class CaptureFlowController {
     return this.#uploadEvidence(step, body, LIVE_CAMERA_METHOD, signal);
   }
 
-  captureFailed(step: CapturePlanStep): CaptureFlowSnapshot {
+  captureFailed(step: CapturePlanStep): CaptureActiveFlowSnapshot {
     const current = this.#snapshot;
     if (
       current === undefined ||
+      !isActiveSnapshot(current) ||
       current.status !== "capture_ready" ||
       !step.methodOptions.includes(LIVE_CAMERA_METHOD)
     ) {
@@ -316,7 +407,7 @@ export class CaptureFlowController {
         "Capture failure cannot be recorded for this step.",
       );
     }
-    const next: CaptureFlowSnapshot = {
+    const next: CaptureActiveFlowSnapshot = {
       ...current,
       plan: applyCaptureFailureFallback(current.plan, current.session, step, this.#capabilities),
     };
@@ -333,6 +424,7 @@ export class CaptureFlowController {
     const current = this.#snapshot;
     if (
       current === undefined ||
+      !isActiveSnapshot(current) ||
       current.status !== "capture_ready" ||
       !step.methodOptions.includes(method)
     ) {
@@ -437,7 +529,24 @@ export class CaptureFlowController {
 export function createCaptureFlowController(
   options: CaptureFlowStartOptions,
 ): CaptureFlowController {
-  return new CaptureFlowController(new CaptureClient(options), options.capabilities, {
+  const capture = new CaptureClient(options);
+  const outcome = new OutcomeClient(options);
+  const client: CaptureFlowClient = {
+    observe: (session, observeOptions) => capture.observe(session, observeOptions),
+    getSession: (requestOptions) => capture.getSession(requestOptions),
+    getAuthority: (requestOptions) => capture.getAuthority(requestOptions),
+    getProgress: (requestOptions) => capture.getProgress(requestOptions),
+    getOutcome: (requestOptions) => outcome.getOutcome(requestOptions),
+    pollProgress: (etag, requestOptions) => capture.pollProgress(etag, requestOptions),
+    respond: (input, requestOptions) => capture.respond(input, requestOptions),
+    createEvidenceUpload: (input, requestOptions) =>
+      capture.createEvidenceUpload(input, requestOptions),
+    getEvidenceUpload: (uploadID, requestOptions) =>
+      capture.getEvidenceUpload(uploadID, requestOptions),
+    uploadEvidence: (uploadID, body, requestOptions) =>
+      capture.uploadEvidence(uploadID, body, requestOptions),
+  };
+  return new CaptureFlowController(client, options.capabilities, {
     ...(options.region === undefined ? {} : { region: options.region }),
     ...(options.recoveryPollingIntervalMs === undefined
       ? {}
@@ -471,13 +580,20 @@ function abortablePollingDelay(delay: number, signal?: AbortSignal): Promise<voi
 }
 
 function createSnapshot(
+  outcome: CaptureOutcome,
   session: VerificationSession,
   authoritySnapshot: CaptureAuthoritySnapshot,
   capabilities: CapturePlannerCapabilities,
   requestedRegion?: string,
   progress?: CaptureProgress,
-): CaptureFlowSnapshot {
+): CaptureActiveFlowSnapshot {
   assertSnapshotCorrelation(session, authoritySnapshot);
+  if (outcome.verificationId !== session.id || outcome.state !== "capture_required") {
+    throw new CaptureFlowError(
+      "CAPTURE_FLOW_INVALID_SNAPSHOT",
+      "Capture outcome does not belong to the active verification session.",
+    );
+  }
   const recovered = recoverCapturePlan(
     session,
     capabilities,
@@ -485,12 +601,33 @@ function createSnapshot(
   );
   return {
     status: flowStatus(authoritySnapshot),
+    outcome,
     session,
     authoritySnapshot,
     plan: recovered.plan,
     progress: recovered.progress,
     region: resolveRegion(authoritySnapshot.authority, requestedRegion),
   };
+}
+
+function createOutcomeSnapshot(outcome: CaptureOutcome): CaptureOutcomeFlowSnapshot {
+  if (outcome.state === "capture_required") {
+    throw new CaptureFlowError(
+      "CAPTURE_FLOW_INVALID_SNAPSHOT",
+      "An active capture outcome requires the full capture snapshot.",
+    );
+  }
+  return { status: outcome.state, outcome };
+}
+
+export function isActiveCaptureFlowSnapshot(
+  snapshot: CaptureFlowSnapshot,
+): snapshot is CaptureActiveFlowSnapshot {
+  return isActiveSnapshot(snapshot);
+}
+
+function isActiveSnapshot(snapshot: CaptureFlowSnapshot): snapshot is CaptureActiveFlowSnapshot {
+  return "session" in snapshot;
 }
 
 function recoverCapturePlan(
@@ -734,7 +871,7 @@ function invalidSnapshot(): never {
   );
 }
 
-function flowStatus(snapshot: CaptureAuthoritySnapshot): CaptureFlowStatus {
+function flowStatus(snapshot: CaptureAuthoritySnapshot): CaptureActiveFlowStatus {
   const { authority, latestResponse } = snapshot;
   if (authority.state !== "active") return "authority_blocked";
   if (latestResponse?.action === "refuse") return "refused";

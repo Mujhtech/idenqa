@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="referrer" content="no-referrer" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f7f8fa" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0c1311" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; connect-src 'self' ws: wss:; img-src 'self' blob:; script-src 'self'; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'self'"
+    />
+    <title>Example Account — Identity Check</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+        background: #f7f8fa;
+        color: #18201e;
+      }
+
+      body {
+        margin: 0;
+        min-width: 20rem;
+      }
+
+      .tenant-header {
+        align-items: center;
+        background: #17231f;
+        color: #ffffff;
+        display: flex;
+        font-weight: 750;
+        justify-content: space-between;
+        min-height: 3.75rem;
+        padding-inline: clamp(1rem, 5vw, 3rem);
+      }
+
+      .tenant-header span:last-child {
+        color: #b8c5c1;
+        font-size: 0.8125rem;
+        font-weight: 500;
+      }
+
+      main {
+        padding: clamp(1rem, 5vw, 3rem);
+      }
+
+      .host-copy {
+        margin: 0 auto 1.5rem;
+        max-width: 42rem;
+      }
+
+      .host-copy h1 {
+        font-size: clamp(1.25rem, 4vw, 1.75rem);
+        margin-block: 0 0.25rem;
+      }
+
+      .host-copy p {
+        color: #52605c;
+        margin: 0;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          background: #0c1311;
+          color: #f3f7f5;
+        }
+
+        .host-copy p {
+          color: #aab9b4;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="tenant-header">
+      <span>Example Account</span>
+      <span>Secure onboarding</span>
+    </header>
+    <main>
+      <div class="host-copy">
+        <h1>Complete Your Account Setup</h1>
+        <p>The identity-capture journey below is embedded directly in this tenant-owned page.</p>
+      </div>
+      <idenqa-capture></idenqa-capture>
+      <p id="hosted-error" class="host-copy" role="alert" hidden>
+        This local demo is not configured. Check the Capture Web README and try again.
+      </p>
+    </main>
+    <script type="module" src="/hosted.ts"></script>
+  </body>
+</html>

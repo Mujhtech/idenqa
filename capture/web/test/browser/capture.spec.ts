@@ -36,6 +36,109 @@ test("keeps the component within a narrow mobile viewport", async ({ page }) => 
   await expect(page.getByRole("button", { name: "Upload File" }).first()).toBeVisible();
 });
 
+test("presents one keyboard-operable primary task at a time", async ({ page }) => {
+  await mockCaptureFlow(page, { consentRequired: true });
+  await page.goto("/");
+  await loadCaptureFlow(page, "synthetic-guided-token");
+
+  await expect(page.getByRole("heading", { name: "Let’s Verify Your Identity" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Identity Verification Notice" })).toHaveCount(0);
+  await expect(page.getByLabel("Choose File")).toHaveCount(0);
+
+  await page.keyboard.press("Tab");
+  const start = page.getByRole("button", { name: "Get Started" });
+  await expect(start).toBeFocused();
+  await page.keyboard.press("Enter");
+
+  await expect(page.getByRole("heading", { name: "Review Before You Continue" })).toBeVisible();
+  await expect(page.getByLabel("Choose File")).toHaveCount(0);
+});
+
+test("applies public styling variables across the component boundary", async ({ page }) => {
+  await page.emulateMedia({ colorScheme: "light" });
+  await mockCaptureFlow(page, { consentRequired: false });
+  await page.goto("/");
+  const capture = page.locator("idenqa-capture");
+  await capture.evaluate((element) => {
+    element.style.setProperty("--idq-capture-accent", "#7c3aed");
+    element.style.setProperty("--idq-capture-accent-foreground", "#fff7ed");
+    element.style.setProperty("--idq-capture-background", "#fefce8");
+    element.style.setProperty("--idq-capture-control-radius", "1.25rem");
+    element.style.setProperty("--idq-capture-shell-max-width", "48rem");
+    element.style.setProperty("--idq-capture-shell-radius", "0.5rem");
+    element.style.setProperty("--idq-capture-shell-shadow", "none");
+  });
+  await loadCaptureFlow(page, "synthetic-theme-token");
+
+  const shell = capture.locator("section.shell");
+  const primary = page.getByRole("button", { name: "Get Started" });
+  await expect(shell).toHaveCSS("background-color", "rgb(254, 252, 232)");
+  await expect(shell).toHaveCSS("border-radius", "8px");
+  await expect(shell).toHaveCSS("max-width", "768px");
+  await expect(shell).toHaveCSS("box-shadow", "none");
+  await expect(primary).toHaveCSS("background-color", "rgb(124, 58, 237)");
+  await expect(primary).toHaveCSS("color", "rgb(255, 247, 237)");
+  await expect(primary).toHaveCSS("border-radius", "20px");
+
+  await page.emulateMedia({ colorScheme: "dark" });
+  await expect(shell).toHaveCSS("background-color", "rgb(254, 252, 232)");
+  await expect(primary).toHaveCSS("background-color", "rgb(124, 58, 237)");
+});
+
+test("supports RTL direction, text enlargement, reduced motion, and forced colours", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce", forcedColors: "active" });
+  await page.setViewportSize({ width: 320, height: 720 });
+  await mockCaptureFlow(page, { consentRequired: false, noticeLocale: "ar" });
+  await page.goto("/");
+  await loadCaptureFlow(page, "synthetic-accessibility-token");
+  await page.evaluate(() => {
+    document.documentElement.style.fontSize = "200%";
+  });
+
+  await expect(page.locator("idenqa-capture").locator("section.shell")).toHaveAttribute(
+    "dir",
+    "rtl",
+  );
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
+  expect(overflow).toBeLessThanOrEqual(0);
+
+  const start = page.getByRole("button", { name: "Get Started" });
+  await start.focus();
+  expect(await start.evaluate((button) => getComputedStyle(button).outlineStyle)).not.toBe("none");
+});
+
+test("matches the safe-default responsive visual captures", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ colorScheme: "light", reducedMotion: "reduce" });
+  const methods = ["idenqa.method.live_camera", "idenqa.method.file_upload"];
+  await mockCaptureFlow(page, { consentRequired: true, primaryMethods: methods });
+  await page.goto("/");
+  await loadCaptureFlow(page, "synthetic-visual-token", methods);
+
+  const shell = page.locator("idenqa-capture").locator("section.shell");
+  await expect(shell).toHaveScreenshot("guided-intro-mobile-light.png", {
+    animations: "disabled",
+  });
+
+  await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
+  await page.setViewportSize({ width: 768, height: 1024 });
+  await page.getByRole("button", { name: "Get Started" }).click();
+  await expect(shell).toHaveScreenshot("guided-notice-tablet-dark.png", {
+    animations: "disabled",
+  });
+
+  await page.emulateMedia({ colorScheme: "light", reducedMotion: "reduce" });
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.getByRole("button", { name: "Agree & Continue" }).click();
+  await expect(page.getByRole("heading", { name: "Get Your Selfie Ready" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Use Another Method" })).toBeVisible();
+  await expect(shell).toHaveScreenshot("guided-method-desktop-light.png", {
+    animations: "disabled",
+  });
+});
+
 test("shows the exact notice and records explicit consent before revealing capture", async ({
   page,
 }) => {
@@ -45,6 +148,7 @@ test("shows the exact notice and records explicit consent before revealing captu
 
   await startCaptureFlow(page, captureToken);
   expect(requests.authorization).toEqual([
+    `Bearer ${captureToken}-outcome`,
     `Bearer ${captureToken}`,
     `Bearer ${captureToken}`,
     `Bearer ${captureToken}`,
@@ -66,7 +170,8 @@ test("shows the exact notice and records explicit consent before revealing captu
 
   await page.getByRole("button", { name: "Agree & Continue" }).click();
 
-  await expect(page.getByText("Consent recorded. You can continue with capture.")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Get Your Selfie Ready" })).toBeVisible();
+  await page.getByRole("button", { name: "Continue to Capture" }).click();
   await expect(page.getByLabel("Choose File")).toBeAttached();
   expect(requests.responses).toEqual([
     {
@@ -108,6 +213,7 @@ test("validates and uploads a requirement-bound file without sending its filenam
   await page.goto("/");
   await startCaptureFlow(page, "synthetic-upload-token");
   await page.getByRole("button", { name: "Acknowledge & Continue" }).click();
+  await page.getByRole("button", { name: "Continue to Capture" }).click();
 
   const input = page.getByLabel("Choose File");
   await expect(input).toHaveAttribute("accept", "image/jpeg,image/png");
@@ -116,8 +222,10 @@ test("validates and uploads a requirement-bound file without sending its filenam
     mimeType: "image/png",
     buffer: Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
   });
+  await expect(page.getByAltText("Preview of Your Selfie")).toBeVisible();
+  await page.getByRole("button", { name: "Use This File" }).click();
 
-  await expect(page.getByRole("status").filter({ hasText: "File accepted." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Verifying Your Identity" })).toBeVisible();
   expect(requests.uploadIntents).toHaveLength(1);
   expect(requests.uploadIntents[0]).toMatchObject({
     requirement_key: "selfie",
@@ -158,19 +266,14 @@ test("locks an any_of step after one method succeeds and reports capture complet
     });
   });
 
+  await page.getByRole("button", { name: "Continue to Capture" }).click();
   await expect(page.getByLabel("Choose File")).toBeAttached();
-  await expect(page.getByRole("button", { name: "Start Camera" })).toBeVisible();
   await page.getByLabel("Choose File").setInputFiles(pngFile("choice.png"));
+  await page.getByRole("button", { name: "Use This File" }).click();
 
-  await expect(
-    page.getByRole("progressbar", { name: "Evidence capture progress" }),
-  ).toHaveJSProperty("value", 1);
-  await expect(page.getByText("Captured with File upload.")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Verifying Your Identity" })).toBeVisible();
   await expect(page.getByLabel("Choose File")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Start Camera" })).toHaveCount(0);
-  await expect(
-    page.getByText("Required evidence capture is complete. Verification may continue."),
-  ).toBeVisible();
   await expect
     .poll(() =>
       page.evaluate(
@@ -195,20 +298,17 @@ test("recovers accepted progress after a fresh page load without uploading again
   await page.reload();
   await startCaptureFlow(page, "synthetic-recovery-token");
   await page.getByRole("button", { name: "Acknowledge & Continue" }).click();
+  await page.getByRole("button", { name: "Continue to Capture" }).click();
   await page.getByLabel("Choose File").setInputFiles(pngFile("first-load.png"));
-  await expect(
-    page.getByRole("progressbar", { name: "Evidence capture progress" }),
-  ).toHaveJSProperty("value", 1);
+  await page.getByRole("button", { name: "Use This File" }).click();
+  await expect(page.getByRole("heading", { name: "Verifying Your Identity" })).toBeVisible();
 
   await startCaptureFlow(page, "synthetic-recovery-token");
 
-  await expect(
-    page.getByRole("progressbar", { name: "Evidence capture progress" }),
-  ).toHaveJSProperty("value", 1);
+  await expect(page.getByRole("heading", { name: "Welcome Back" })).toBeVisible();
   await expect(page.getByLabel("Choose File")).toHaveCount(0);
-  await expect(
-    page.getByText("Required evidence capture is complete. Verification may continue."),
-  ).toBeVisible();
+  await page.getByRole("button", { name: "Review and Finish" }).click();
+  await expect(page.getByRole("heading", { name: "Verifying Your Identity" })).toBeVisible();
   expect(requests.uploadIntents).toHaveLength(1);
   expect(requests.uploadBodies).toHaveLength(1);
 });
@@ -225,24 +325,25 @@ test("tracks document front and back independently before capture completion", a
   await page.goto("/");
   await startCaptureFlow(page, "synthetic-document-token");
   await page.getByRole("button", { name: "Acknowledge & Continue" }).click();
+  await page.getByRole("button", { name: "Continue to Capture" }).click();
 
   const progress = page.getByRole("progressbar", { name: "Evidence capture progress" });
   await expect(progress).toHaveJSProperty("max", 2);
   await expect(progress).toHaveJSProperty("value", 0);
   const inputs = page.getByLabel("Choose File");
-  await expect(inputs).toHaveCount(2);
+  await expect(inputs).toHaveCount(1);
 
-  await inputs.nth(0).setInputFiles(pngFile("front.png"));
+  await inputs.setInputFiles(pngFile("front.png"));
+  await page.getByRole("button", { name: "Use This File" }).click();
   await expect(progress).toHaveJSProperty("value", 1);
   await expect(
     page.getByText("Required evidence capture is complete. Verification may continue."),
   ).toHaveCount(0);
-
-  await inputs.nth(0).setInputFiles(pngFile("back.png"));
-  await expect(progress).toHaveJSProperty("value", 2);
-  await expect(
-    page.getByText("Required evidence capture is complete. Verification may continue."),
-  ).toBeVisible();
+  await page.getByRole("button", { name: "Continue to Next Step" }).click();
+  await page.getByRole("button", { name: "Continue to Capture" }).click();
+  await page.getByLabel("Choose File").setInputFiles(pngFile("back.png"));
+  await page.getByRole("button", { name: "Use This File" }).click();
+  await expect(page.getByRole("heading", { name: "Verifying Your Identity" })).toBeVisible();
   expect(requests.uploadIntents.map((input) => input.artefact)).toEqual([
     "idenqa.artefact.document_front",
     "idenqa.artefact.document_back",
@@ -260,17 +361,16 @@ test("captures, reviews, and uploads a live-camera photo", async ({ page }) => {
     "idenqa.method.file_upload",
   ]);
   await page.getByRole("button", { name: "Acknowledge & Continue" }).click();
+  await page.getByRole("button", { name: "Continue to Capture" }).click();
 
   await page.getByRole("button", { name: "Start Camera" }).click();
-  await expect(page.getByLabel("Live camera preview for Selfie Image")).toBeVisible();
+  await expect(page.getByLabel("Live camera preview for Your Selfie")).toBeVisible();
   await expect(page.getByRole("status").filter({ hasText: "Camera ready." })).toBeVisible();
   await page.getByRole("button", { name: "Capture Photo" }).click();
-  await expect(page.getByAltText("Captured Selfie Image preview")).toBeVisible();
+  await expect(page.getByAltText("Captured Preview of Your Selfie")).toBeVisible();
   await page.getByRole("button", { name: "Use Photo" }).click();
 
-  await expect(
-    page.getByRole("status").filter({ hasText: "Captured photo accepted." }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Verifying Your Identity" })).toBeVisible();
   expect(requests.uploadIntents[0]).toMatchObject({
     acquisition_method: "idenqa.method.live_camera",
     requirement_key: "selfie",
@@ -302,12 +402,13 @@ test("uses capture_failed fallback only after a real camera failure", async ({ p
     "idenqa.method.file_upload",
   ]);
   await page.getByRole("button", { name: "Acknowledge & Continue" }).click();
+  await page.getByRole("button", { name: "Continue to Capture" }).click();
   await page.getByRole("button", { name: "Start Camera" }).click();
 
   await expect(
     page.getByText("The camera attempt failed. This policy-approved alternative is available."),
   ).toBeVisible();
-  await expect(page.getByLabel("Choose File")).toBeAttached();
+  await expect(page.getByRole("heading", { name: "Get Your Selfie Ready" })).toBeVisible();
 });
 
 test("camera cancellation stops the preview without activating fallback", async ({ page }) => {
@@ -327,13 +428,168 @@ test("camera cancellation stops the preview without activating fallback", async 
     "idenqa.method.file_upload",
   ]);
   await page.getByRole("button", { name: "Acknowledge & Continue" }).click();
+  await page.getByRole("button", { name: "Continue to Capture" }).click();
   await page.getByRole("button", { name: "Start Camera" }).click();
-  await expect(page.getByLabel("Live camera preview for Selfie Image")).toBeVisible();
+  await expect(page.getByLabel("Live camera preview for Your Selfie")).toBeVisible();
   await page.getByRole("button", { name: "Cancel Camera" }).click();
 
   await expect(page.getByRole("button", { name: "Start Camera" })).toBeVisible();
   await expect(page.getByText(/camera attempt failed/i)).toHaveCount(0);
   await expect(page.getByLabel("Choose File")).toHaveCount(0);
+});
+
+test("runs ordered active-liveness prompts and completes only after Core confirmation", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const method = "idenqa.method.live_camera";
+  const requests = await mockCaptureFlow(page, {
+    consentRequired: false,
+    primaryMethods: [method],
+  });
+  await page.goto("/");
+  await loadCaptureFlowWithSyntheticAdapter(page, "synthetic-liveness-token", method, "liveness");
+  await page.getByRole("button", { name: "Get Started" }).click();
+  await page.getByRole("button", { name: "Acknowledge & Continue" }).click();
+
+  await expect(
+    page.getByText("Center your face in the camera, then follow 3 quick prompts."),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Continue to Capture" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Start Liveness Check" })).toHaveCount(1);
+  const animatedHead = page.locator("idenqa-capture").locator(".liveness-head");
+  await expect(animatedHead).toHaveCSS("animation-name", "idq-liveness-head-demo");
+  await page.locator("idenqa-capture").evaluate((element) => {
+    element.style.setProperty("--idq-capture-liveness-duration", "4s");
+  });
+  await expect(animatedHead).toHaveCSS("animation-duration", "4s");
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(animatedHead).toHaveCSS("animation-name", "none");
+  await expect(page.locator("idenqa-capture")).toHaveScreenshot(
+    "guided-liveness-preparation-mobile-light.png",
+    { animations: "disabled" },
+  );
+  await page.getByRole("button", { name: "Start Liveness Check" }).click();
+
+  const progress = page.getByRole("progressbar", { name: "Liveness challenge progress" });
+  await expect(page.getByText("Look Straight at the Camera")).toBeVisible();
+  await expect(progress).toHaveJSProperty("value", 1);
+  await advanceSyntheticAdapter(page);
+  await expect(page.getByText("Slowly Turn Your Head Left")).toBeVisible();
+  await expect(progress).toHaveJSProperty("value", 2);
+  await advanceSyntheticAdapter(page);
+  await expect(page.getByText("Slowly Turn Your Head Right")).toBeVisible();
+  await expect(progress).toHaveJSProperty("value", 3);
+
+  expect(requests.adapterCompletions).toHaveLength(0);
+  await advanceSyntheticAdapter(page);
+  await expect(page.getByRole("heading", { name: "Verifying Your Identity" })).toBeVisible();
+  expect(requests.adapterCompletions).toEqual([
+    expect.objectContaining({
+      requirementKey: "selfie",
+      evidenceType: "idenqa.evidence.selfie_image",
+      artefact: "idenqa.artefact.selfie_image",
+      acquisitionMethod: method,
+    }),
+  ]);
+});
+
+test("cancels an active-liveness adapter without completing or activating fallback", async ({
+  page,
+}) => {
+  const method = "idenqa.method.live_camera";
+  const requests = await mockCaptureFlow(page, {
+    consentRequired: false,
+    primaryMethods: [method],
+    fallbacks: [
+      {
+        on: ["capture_failed"],
+        acquisition: { strategy: "any_of", methods: ["idenqa.method.file_upload"] },
+      },
+    ],
+  });
+  await page.goto("/");
+  await loadCaptureFlowWithSyntheticAdapter(
+    page,
+    "synthetic-liveness-cancel-token",
+    method,
+    "liveness",
+  );
+  await page.getByRole("button", { name: "Get Started" }).click();
+  await page.getByRole("button", { name: "Acknowledge & Continue" }).click();
+  await page.getByRole("button", { name: "Start Liveness Check" }).click();
+  await expect(page.getByText("Look Straight at the Camera")).toBeVisible();
+
+  await page.getByRole("button", { name: "Cancel Liveness Check" }).click();
+
+  await expect(page.getByRole("button", { name: "Start Liveness Check" })).toBeVisible();
+  await expect(page.getByText("Look Straight at the Camera")).toHaveCount(0);
+  await expect(page.getByText(/attempt failed/i)).toHaveCount(0);
+  await expect(page.getByLabel("Choose File")).toHaveCount(0);
+  expect(requests.adapterCompletions).toHaveLength(0);
+});
+
+test("supports an arbitrary namespaced acquisition adapter with safe host-provided copy", async ({
+  page,
+}) => {
+  const method = "com.example.method.secure_nfc";
+  const requests = await mockCaptureFlow(page, {
+    consentRequired: false,
+    primaryMethods: [method],
+  });
+  await page.goto("/");
+  await loadCaptureFlowWithSyntheticAdapter(page, "synthetic-nfc-token", method, "extension");
+  await page.getByRole("button", { name: "Get Started" }).click();
+  await page.getByRole("button", { name: "Acknowledge & Continue" }).click();
+
+  await expect(page.getByText("Hold your passport near this device.")).toBeVisible();
+  await page.getByRole("button", { name: "Read Passport Chip" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "Secure NFC is ready." })).toBeVisible();
+  expect(requests.adapterCompletions).toHaveLength(0);
+
+  await advanceSyntheticAdapter(page);
+  await expect(page.getByRole("heading", { name: "Verifying Your Identity" })).toBeVisible();
+  expect(requests.adapterCompletions[0]).toMatchObject({ acquisitionMethod: method });
+});
+
+test("does not complete when an adapter returns before Core confirms, then permits retry", async ({
+  page,
+}) => {
+  const method = "com.example.method.secure_nfc";
+  const requests = await mockCaptureFlow(page, {
+    consentRequired: false,
+    primaryMethods: [method],
+  });
+  await page.goto("/");
+  await loadCaptureFlowWithSyntheticAdapter(page, "synthetic-unconfirmed-token", method, "retry");
+  await page.getByRole("button", { name: "Get Started" }).click();
+  await page.getByRole("button", { name: "Acknowledge & Continue" }).click();
+
+  const start = page.getByRole("button", { name: "Read Passport Chip" });
+  await start.click();
+  await advanceSyntheticAdapter(page);
+  await expect(
+    page.getByRole("alert").filter({ hasText: "not confirmed by the verification service" }),
+  ).toBeVisible();
+  expect(requests.adapterCompletions).toHaveLength(0);
+
+  await start.click();
+  await advanceSyntheticAdapter(page);
+  await expect(page.getByRole("heading", { name: "Verifying Your Identity" })).toBeVisible();
+  expect(requests.adapterCompletions).toHaveLength(1);
+});
+
+test("fails closed when a planned extension method has no registered adapter", async ({ page }) => {
+  const method = "com.example.method.secure_nfc";
+  await mockCaptureFlow(page, { consentRequired: false, primaryMethods: [method] });
+  await page.goto("/");
+
+  await expect(loadCaptureFlow(page, "synthetic-missing-adapter-token", [method])).rejects.toThrow(
+    `No acquisition adapter is registered for ${method}.`,
+  );
+  await expect(
+    page.getByRole("heading", { name: "We Couldn’t Open This Verification" }),
+  ).toBeVisible();
 });
 
 test("runs in a React host with locale fallback and composed completion events", async ({
@@ -345,12 +601,14 @@ test("runs in a React host with locale fallback and composed completion events",
   await page.evaluate(() =>
     window.startIdenqaReactDemo({
       captureToken: "synthetic-react-host-token",
+      outcomeToken: "synthetic-react-host-outcome-token",
       messageCatalogue: {
         fr: {
           secureCapture: "Capture sécurisée",
           acknowledgeAndContinue: "Reconnaître et continuer",
           chooseFile: "Choisir un fichier",
           captureComplete: "Collecte des preuves terminée.",
+          processingTitle: "Vérification de votre identité",
         },
         "fr-CA": { secureCapture: "Capture sécurisée canadienne" },
       },
@@ -364,14 +622,51 @@ test("runs in a React host with locale fallback and composed completion events",
   await expect(
     page.getByRole("heading", { level: 2, name: "Identity Verification" }),
   ).toBeVisible();
+  await page.getByRole("button", { name: "Get Started" }).click();
   await page.getByRole("button", { name: "Reconnaître et continuer" }).click();
+  await page.getByRole("button", { name: "Continue to Capture" }).click();
   await page.getByLabel("Choisir un fichier").setInputFiles(pngFile("react.png"));
+  await page.getByRole("button", { name: "Use This File" }).click();
 
-  await expect(page.getByText("Collecte des preuves terminée.", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Vérification de votre identité" })).toBeVisible();
   await expect(page.locator("#react-status")).toHaveText("React host observed completion: 1/1.");
 });
 
+for (const outcome of [
+  { state: "processing", title: "Verifying Your Identity" },
+  { state: "action_required", title: "Check the Next Step" },
+  { state: "verified", title: "Identity Verified" },
+  { state: "not_verified", title: "We Couldn’t Verify Your Identity" },
+  { state: "inconclusive", title: "We Couldn’t Complete the Verification" },
+  { state: "cancelled", title: "Capture Cancelled" },
+  { state: "expired", title: "This Verification Has Expired" },
+  { state: "failed", title: "We Couldn’t Complete the Verification" },
+] as const) {
+  test(`renders authoritative ${outcome.state} without exposing capture controls`, async ({
+    page,
+  }) => {
+    await mockCaptureFlow(page, { consentRequired: false, outcomeState: outcome.state });
+    await page.goto("/");
+    await loadCaptureFlow(page, `synthetic-${outcome.state}-token`);
+
+    await expect(page.getByRole("heading", { name: outcome.title })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Get Started" })).toHaveCount(0);
+    await expect(page.getByLabel("Choose File")).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Finish Capture" })).toHaveCount(0);
+  });
+}
+
 async function startCaptureFlow(
+  page: Parameters<typeof mockCaptureFlow>[0],
+  captureToken: string,
+  methods: readonly string[] = ["idenqa.method.file_upload"],
+) {
+  await loadCaptureFlow(page, captureToken, methods);
+  await expect(page.getByRole("heading", { name: "Let’s Verify Your Identity" })).toBeVisible();
+  await page.getByRole("button", { name: "Get Started" }).click();
+}
+
+async function loadCaptureFlow(
   page: Parameters<typeof mockCaptureFlow>[0],
   captureToken: string,
   methods: readonly string[] = ["idenqa.method.file_upload"],
@@ -381,6 +676,7 @@ async function startCaptureFlow(
       (element as IdenqaCaptureElement).start({
         baseUrl: new URL("/core/", location.href),
         captureToken: input.token,
+        outcomeToken: `${input.token}-outcome`,
         capabilities: {
           supportedMethods: [...input.selectedMethods],
           availableMethods: [...input.selectedMethods],
@@ -388,6 +684,114 @@ async function startCaptureFlow(
       }),
     { token: captureToken, selectedMethods: methods },
   );
+}
+
+async function loadCaptureFlowWithSyntheticAdapter(
+  page: Parameters<typeof mockCaptureFlow>[0],
+  captureToken: string,
+  method: string,
+  variant: "liveness" | "extension" | "retry",
+) {
+  await page.locator("idenqa-capture").evaluate(
+    (element, input) => {
+      const testState = globalThis as typeof globalThis & {
+        advanceCaptureAdapter?: () => void;
+      };
+      const waitForAdvance = (signal: AbortSignal) =>
+        new Promise<void>((resolve, reject) => {
+          const abort = () => {
+            delete testState.advanceCaptureAdapter;
+            reject(signal.reason);
+          };
+          testState.advanceCaptureAdapter = () => {
+            signal.removeEventListener("abort", abort);
+            resolve();
+          };
+          signal.addEventListener("abort", abort, { once: true });
+        });
+      let attempts = 0;
+      return (element as IdenqaCaptureElement).start({
+        baseUrl: new URL("/core/", location.href),
+        captureToken: input.token,
+        outcomeToken: `${input.token}-outcome`,
+        capabilities: {
+          supportedMethods: [input.method],
+          availableMethods: [input.method],
+        },
+        methodAdapters: [
+          {
+            method: input.method,
+            ...(input.variant === "liveness" ? { presentation: "active_liveness" as const } : {}),
+            copy:
+              input.variant === "liveness"
+                ? {
+                    label: "Liveness Check",
+                    action: "Start Liveness Check",
+                    description: "Follow a short series of camera prompts",
+                    title: "Let’s Make Sure You’re You",
+                    preparation: "Center your face in the camera, then follow 3 quick prompts.",
+                    instruction: "Keep your face in view while you follow each prompt.",
+                    tips: [
+                      "Usually takes only a few seconds.",
+                      "Photos are captured automatically.",
+                      "Use bright, even lighting and remove anything covering your face.",
+                    ],
+                  }
+                : {
+                    label: "Secure NFC",
+                    action: "Read Passport Chip",
+                    description: "Read the secure chip in your passport",
+                    preparation: "Hold your passport near this device.",
+                    instruction: "Keep the passport still while its chip is read.",
+                  },
+            async acquire(context, controls) {
+              attempts += 1;
+              if (input.variant === "liveness") {
+                for (const [index, prompt] of ["neutral", "turn_left", "turn_right"].entries()) {
+                  controls.update({
+                    phase: "challenge",
+                    current: index + 1,
+                    total: 3,
+                    prompt: prompt as "neutral" | "turn_left" | "turn_right",
+                  });
+                  await waitForAdvance(context.signal);
+                }
+              } else {
+                controls.update({ phase: "ready" });
+                await waitForAdvance(context.signal);
+                if (input.variant === "retry" && attempts === 1) return;
+              }
+              controls.update({ phase: "submitting" });
+              const response = await fetch("/__capture_adapter_complete", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  requirement_key: context.requirementKey,
+                  evidence_type: context.evidenceType,
+                  artefact: context.artefact,
+                  acquisition_method: context.acquisitionMethod,
+                  fallback_condition: context.fallbackCondition,
+                }),
+                signal: context.signal,
+              });
+              if (!response.ok) throw new Error("Synthetic adapter submission failed.");
+            },
+          },
+        ],
+      });
+    },
+    { token: captureToken, method, variant },
+  );
+}
+
+async function advanceSyntheticAdapter(page: Parameters<typeof mockCaptureFlow>[0]) {
+  await page.evaluate(() => {
+    const state = globalThis as typeof globalThis & { advanceCaptureAdapter?: () => void };
+    const advance = state.advanceCaptureAdapter;
+    delete state.advanceCaptureAdapter;
+    if (advance === undefined) throw new Error("Synthetic acquisition adapter is not waiting.");
+    advance();
+  });
 }
 
 async function mockCaptureFlow(
@@ -402,6 +806,16 @@ async function mockCaptureFlow(
       readonly evidenceType: string;
       readonly artefacts: readonly string[];
     };
+    readonly outcomeState?:
+      | "capture_required"
+      | "processing"
+      | "action_required"
+      | "verified"
+      | "not_verified"
+      | "inconclusive"
+      | "cancelled"
+      | "expired"
+      | "failed";
   },
 ) {
   const observed: {
@@ -418,9 +832,29 @@ async function mockCaptureFlow(
       readonly contentDigest: string;
       readonly ifMatch: string;
     }>;
-  } = { authorization: [], responses: [], uploadIntents: [], uploadBodies: [], uploadHeaders: [] };
+    readonly adapterCompletions: BrowserUploadBinding[];
+  } = {
+    authorization: [],
+    responses: [],
+    uploadIntents: [],
+    uploadBodies: [],
+    uploadHeaders: [],
+    adapterCompletions: [],
+  };
   const uploadBindings = new Map<string, BrowserUploadBinding>();
   const acceptedUploads = new Set<string>();
+  await page.route("**/core/v1/capture/outcome", async (route) => {
+    observed.authorization.push(route.request().headers().authorization ?? "");
+    await route.fulfill({
+      json: {
+        verification_id: sessionResponse.id,
+        state: options.outcomeState ?? "capture_required",
+        session_version: options.outcomeState === undefined ? 1 : 4,
+        updated_at: "2026-08-30T00:00:04Z",
+      },
+      headers: { "X-Request-ID": "req_outcome" },
+    });
+  });
   await page.route("**/core/v1/capture/session", async (route) => {
     observed.authorization.push(route.request().headers().authorization ?? "");
     await route.fulfill({
@@ -450,20 +884,20 @@ async function mockCaptureFlow(
     await route.fulfill({
       json: {
         verification_id: sessionResponse.id,
-        completions: [...acceptedUploads].map((uploadId) => {
-          const binding = uploadBindings.get(uploadId)!;
-          return {
-            upload_id: binding.uploadId,
-            evidence_id: binding.evidenceId,
-            requirement_key: binding.requirementKey,
-            evidence_type: binding.evidenceType,
-            artefact: binding.artefact,
-            acquisition_method: binding.acquisitionMethod,
-            ...(binding.fallbackCondition === undefined
-              ? {}
-              : { fallback_condition: binding.fallbackCondition }),
-          };
-        }),
+        completions: [
+          ...[...acceptedUploads].map((uploadId) => uploadBindings.get(uploadId)!),
+          ...observed.adapterCompletions,
+        ].map((binding) => ({
+          upload_id: binding.uploadId,
+          evidence_id: binding.evidenceId,
+          requirement_key: binding.requirementKey,
+          evidence_type: binding.evidenceType,
+          artefact: binding.artefact,
+          acquisition_method: binding.acquisitionMethod,
+          ...(binding.fallbackCondition === undefined
+            ? {}
+            : { fallback_condition: binding.fallbackCondition }),
+        })),
       },
       headers: { "X-Request-ID": "req_progress" },
     });
@@ -482,6 +916,25 @@ async function mockCaptureFlow(
       json: subjectResponse(input.action, input.locale),
       headers: { "X-Request-ID": "req_response" },
     });
+  });
+  await page.route("**/__capture_adapter_complete", async (route) => {
+    const input = route.request().postDataJSON() as Record<string, unknown>;
+    const ordinal = observed.adapterCompletions.length + 1;
+    observed.adapterCompletions.push({
+      uploadId: `upl_01M11HEQG0000000000000009${ordinal}`,
+      evidenceId: `evd_01M11HEQG0000000000000009${ordinal}`,
+      requirementKey: String(input.requirement_key),
+      evidenceType: String(input.evidence_type),
+      artefact: String(input.artefact),
+      acquisitionMethod: String(input.acquisition_method),
+      ...(input.fallback_condition === undefined
+        ? {}
+        : { fallbackCondition: String(input.fallback_condition) }),
+      expectedBytes: 0,
+      mediaType: "application/octet-stream",
+      region: "idenqa.region.synthetic",
+    });
+    await route.fulfill({ status: 204, body: "" });
   });
   await page.route("**/core/v1/evidence-uploads", async (route) => {
     const input = route.request().postDataJSON() as Record<string, unknown>;

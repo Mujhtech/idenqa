@@ -32,9 +32,11 @@
   },
   "scripts": {
     "build": "tsdown",
+    "demo:hosted": "vite ./demo --config ./vite.config.mjs --host 127.0.0.1 --port 4173 --strictPort --open /hosted.html",
     "package:check": "publint && attw --pack .",
     "test": "vitest run && playwright test",
     "test:browser": "playwright test",
+    "test:real-core": "../../test/conformance/capture-web.sh",
     "test:unit": "vitest run",
     "typecheck": "tsc --project tsconfig.json"
   },

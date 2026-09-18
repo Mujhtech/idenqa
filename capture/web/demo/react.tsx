@@ -12,6 +12,7 @@ defineIdenqaCapture();
 
 interface ReactDemoStartInput {
   readonly captureToken: string;
+  readonly outcomeToken: string;
   readonly methods?: readonly string[];
   readonly messageCatalogue?: CaptureMessageCatalogue;
 }
@@ -39,6 +40,7 @@ function CaptureHost() {
       await capture.start({
         baseUrl: new URL("/core/", location.href),
         captureToken: input.captureToken,
+        outcomeToken: input.outcomeToken,
         capabilities: {
           supportedMethods: [...methods],
           availableMethods: [...methods],

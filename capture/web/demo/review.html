@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="referrer" content="no-referrer" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#eef2f1" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0c1311" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; connect-src 'self'; img-src 'self' blob:; script-src 'self'; style-src 'self'; base-uri 'none'; form-action 'self'"
+    />
+    <title>Idenqa Review Journey</title>
+    <link rel="stylesheet" href="/review.css" />
+  </head>
+  <body>
+    <header class="review-header">
+      <span class="review-brand">Idenqa</span>
+      <span>Local reviewer workspace</span>
+    </header>
+    <main class="review-shell">
+      <aside class="review-progress" aria-label="Review journey progress">
+        <h2>Journey</h2>
+        <ol>
+          <li data-progress="capture" data-step="1" data-state="active">
+            <span>Original capture</span>
+          </li>
+          <li data-progress="review" data-step="2"><span>Review evidence</span></li>
+          <li data-progress="recapture" data-step="3"><span>New capture</span></li>
+          <li data-progress="decision" data-step="4"><span>Decision</span></li>
+        </ol>
+      </aside>
+
+      <article class="review-card">
+        <p class="review-eyebrow">Composed review demonstration</p>
+        <div id="review-live-status" class="review-status" role="status" aria-live="polite">
+          Ready to begin
+        </div>
+
+        <section id="review-start">
+          <h1>Review and recapture, in one journey</h1>
+          <p>
+            This live self-hosted demonstration connects the subject capture experience to a
+            certified reviewer workflow. Tenant credentials remain on the server throughout.
+          </p>
+          <p class="review-note">
+            Synthetic evidence only. This fixture demonstrates product boundaries, not a real
+            identity conclusion.
+          </p>
+          <div class="review-actions">
+            <button id="review-begin" class="review-button" type="button">
+              Begin Demonstration
+            </button>
+          </div>
+        </section>
+
+        <section id="review-original" hidden>
+          <h1>Waiting for the original capture</h1>
+          <p>Open the subject journey in a new tab and complete the requested selfie.</p>
+          <div class="review-actions">
+            <a
+              id="review-original-link"
+              class="review-link review-link--primary"
+              target="_blank"
+              rel="noopener"
+              >Open Subject Capture</a
+            >
+            <button id="review-find-case" class="review-button" type="button">
+              Check Review Queue
+            </button>
+          </div>
+        </section>
+
+        <section id="review-case" hidden>
+          <h1>A capture needs review</h1>
+          <p>Review the protected evidence before deciding whether another capture is needed.</p>
+          <dl class="review-details">
+            <div>
+              <dt>State</dt>
+              <dd id="review-case-state"></dd>
+            </div>
+            <div>
+              <dt>Reason</dt>
+              <dd id="review-case-reason"></dd>
+            </div>
+            <div>
+              <dt>Region</dt>
+              <dd id="review-case-region"></dd>
+            </div>
+            <div>
+              <dt>Required certification</dt>
+              <dd id="review-case-certificate"></dd>
+            </div>
+          </dl>
+          <div class="review-actions">
+            <button id="review-evidence-button" class="review-button" type="button">
+              Review Evidence
+            </button>
+          </div>
+        </section>
+
+        <section id="review-evidence-section" hidden>
+          <h1>Is the selfie clear enough?</h1>
+          <p>The image below is a short-lived, watermarked reviewer rendition from Core.</p>
+          <img
+            id="review-evidence-image"
+            class="review-evidence"
+            alt="Protected selfie evidence for review"
+          />
+          <div class="review-actions">
+            <button id="review-request-recapture" class="review-button" type="button">
+              Request a New Capture
+            </button>
+          </div>
+        </section>
+
+        <section id="review-recapture" hidden>
+          <h1>A new capture was requested</h1>
+          <p>
+            The original result remains unchanged while the subject completes a fresh linked
+            session.
+          </p>
+          <div class="review-actions">
+            <a
+              id="review-recapture-link"
+              class="review-link review-link--primary"
+              target="_blank"
+              rel="noopener"
+              >Open Recapture Journey</a
+            >
+            <button id="review-check-result" class="review-button" type="button">
+              Check New Capture
+            </button>
+          </div>
+        </section>
+
+        <section id="review-outcome" hidden>
+          <h1>New capture received</h1>
+          <p>
+            The child verification completed independently and now requires an explicit reviewer
+            follow-up.
+          </p>
+          <dl class="review-details">
+            <div>
+              <dt>Child outcome</dt>
+              <dd id="review-child-outcome"></dd>
+            </div>
+            <div>
+              <dt>Follow-up</dt>
+              <dd>Required</dd>
+            </div>
+          </dl>
+          <div class="review-actions">
+            <button id="review-complete" class="review-button" type="button">
+              Acknowledge and Complete Review
+            </button>
+          </div>
+        </section>
+
+        <section id="review-completed" hidden>
+          <h1>Review completed</h1>
+          <p>
+            The reviewer acknowledged the exact child outcome and Core re-evaluated the parent’s
+            pinned policy. The final outcome is <strong id="review-final-outcome"></strong>.
+          </p>
+          <p class="review-note">Every decision and prior evidence record remains immutable.</p>
+        </section>
+
+        <p id="review-error" class="review-error" role="alert" hidden></p>
+      </article>
+    </main>
+    <script type="module" src="/review.ts"></script>
+  </body>
+</html>
