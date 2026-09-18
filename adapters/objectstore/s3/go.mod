@@ -3,6 +3,7 @@ module github.com/Mujhtech/idenqa/adapters/objectstore/s3
 go 1.26.6
 
 require (
+	github.com/Mujhtech/idenqa v0.0.0-20260918084225-a1d64dd9d3b6
 	github.com/aws/aws-sdk-go-v2 v1.45.1
 	github.com/aws/aws-sdk-go-v2/config v1.33.1
 	github.com/aws/aws-sdk-go-v2/credentials v1.20.1

@@ -1,3 +1,5 @@
+github.com/Mujhtech/idenqa v0.0.0-20260918084225-a1d64dd9d3b6 h1:nl8LEvDqBZF4JgEXl4HE9Icx7pRgQQyR80stVkPwb0A=
+github.com/Mujhtech/idenqa v0.0.0-20260918084225-a1d64dd9d3b6/go.mod h1:kO954THuIeU+3VLMjq8gXUm6K0jv7bPz8AhGj4zU530=
 github.com/aws/aws-sdk-go-v2 v1.45.1 h1:iIoG3NaLhV6UZpPXyPXlDj2I9oS8tV/nMcMnITCC6Ks=
 github.com/aws/aws-sdk-go-v2 v1.45.1/go.mod h1:bttEH6JqnUL8LepvDVfdrds/fZ5bCIxzpe3abyUrhDU=
 github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.20 h1:GPRlPwz40I2B2VrBEASOA3Bi77NyeqejNLkifosX0rs=
