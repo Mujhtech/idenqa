@@ -23,7 +23,7 @@ type Client struct {
 	Timeout  time.Duration
 }
 
-// Send posts exact bytes and returns response-free operational metadata.
+// Send posts exact bytes and returns bounded response metadata with a sanitised excerpt.
 func (client Client) Send(ctx context.Context, targetURL string, signature delivery.Signature, body []byte) (delivery.SafeDiagnostic, bool, bool, error) {
 	if client.Resolver == nil || client.Dialer == nil || client.Timeout <= 0 || client.Timeout > time.Minute {
 		return delivery.SafeDiagnostic{}, false, false, errors.New("callback: invalid client")
@@ -34,12 +34,17 @@ func (client Client) Send(ctx context.Context, targetURL string, signature deliv
 		return diagnostic, false, false, err
 	}
 	transport := &http.Transport{
-		Proxy: nil, DialContext: target.DialContext(client.Dialer),
+		Proxy:             nil,
+		DialContext:       target.DialContext(client.Dialer),
 		TLSClientConfig:   &tls.Config{MinVersion: tls.VersionTLS12, ServerName: target.URL.Hostname()},
 		ForceAttemptHTTP2: true,
 	}
 	defer transport.CloseIdleConnections()
-	httpClient := &http.Client{Transport: transport, Timeout: client.Timeout, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
+	httpClient := &http.Client{
+		Transport:     transport,
+		Timeout:       client.Timeout,
+		CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse },
+	}
 	request, err := http.NewRequestWithContext(ctx, http.MethodPost, target.URL.String(), bytes.NewReader(body))
 	if err != nil {
 		return delivery.SafeDiagnostic{}, false, false, fmt.Errorf("build callback request: %w", err)
@@ -54,7 +59,7 @@ func (client Client) Send(ctx context.Context, targetURL string, signature deliv
 		return diagnostic, false, true, err
 	}
 	defer func() { _ = response.Body.Close() }()
-	_, _ = io.Copy(io.Discard, io.LimitReader(response.Body, 4096))
+	raw, _ := io.ReadAll(io.LimitReader(response.Body, int64(delivery.MaximumResponseExcerptBytes)+1))
 	retryAfter := parseRetryAfter(response.Header.Get("Retry-After"))
 	succeeded := response.StatusCode >= 200 && response.StatusCode < 300
 	retry := response.StatusCode == http.StatusRequestTimeout || response.StatusCode == http.StatusTooEarly || response.StatusCode == http.StatusTooManyRequests || response.StatusCode >= 500
@@ -65,7 +70,10 @@ func (client Client) Send(ctx context.Context, targetURL string, signature deliv
 		class = "retryable_status"
 	}
 	diagnostic, err := delivery.NewSafeDiagnostic(response.StatusCode, class, retryAfter)
-	return diagnostic, succeeded, retry, err
+	if err != nil {
+		return diagnostic, succeeded, retry, err
+	}
+	return diagnostic.WithResponse(raw), succeeded, retry, nil
 }
 
 func parseRetryAfter(value string) time.Duration {
