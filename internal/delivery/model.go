@@ -25,6 +25,9 @@ var (
 	ErrNotFound = errors.New("delivery: not found")
 	// ErrConflict means replay or optimistic state changed meaning.
 	ErrConflict = errors.New("delivery: conflict")
+	// ErrExpired means the seven-day payload window has closed. Metadata may
+	// remain as a bounded tombstone, but delivery replay is no longer possible.
+	ErrExpired = errors.New("delivery: payload expired")
 	// ErrDisabled means the selected endpoint cannot accept new delivery.
 	ErrDisabled = errors.New("delivery: endpoint disabled")
 	// ErrUnauthorized means application authorization denied an administrative action.
@@ -41,12 +44,16 @@ type Secret struct {
 // DefaultEventTypes preserves the pre-catalogue completion subscription.
 var DefaultEventTypes = []string{string(webhookv1.VerificationCompleted)}
 
+// DefaultSchemaVersion pins endpoints to the only supported webhook envelope.
+const DefaultSchemaVersion = webhookv1.SchemaVersion
+
 // Endpoint is tenant-owned configuration with a bounded rotation overlap and a
 // closed event subscription selection.
 type Endpoint struct {
 	ID                 id.WebhookEndpoint
 	URL                string
 	EventTypes         []string
+	SchemaVersion      string
 	Active             Secret
 	Previous           *Secret
 	PreviousValidUntil time.Time
@@ -70,6 +77,9 @@ func (endpoint Endpoint) Validate() error {
 		return ErrInvalid
 	}
 	if _, err := webhookv1.ValidateSubscriptions(endpoint.EventTypes); err != nil {
+		return ErrInvalid
+	}
+	if endpoint.SchemaVersion != DefaultSchemaVersion {
 		return ErrInvalid
 	}
 	return nil

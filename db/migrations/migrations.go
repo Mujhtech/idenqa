@@ -5,7 +5,7 @@ package migrations
 import "embed"
 
 // LatestVersion is the schema version required by this binary.
-const LatestVersion uint = 57
+const LatestVersion uint = 64
 
 // Files contains all paired up and down migration files.
 //

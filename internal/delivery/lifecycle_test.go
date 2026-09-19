@@ -169,6 +169,12 @@ func TestWebhookLifecycleRotationReplayRetryAndTenantIsolation(t *testing.T) {
 	if err != nil || len(firstSecret) != 32 {
 		t.Fatalf("create endpoint = %v, secret=%d", err, len(firstSecret))
 	}
+	if endpoint.SchemaVersion != delivery.DefaultSchemaVersion {
+		t.Fatalf("schema version = %q", endpoint.SchemaVersion)
+	}
+	if _, _, err := manager.CreateEndpointSubscribedVersioned(context.Background(), scope, "https://hooks.example.com/unsupported", delivery.DefaultEventTypes, "2.0"); !errors.Is(err, delivery.ErrInvalid) {
+		t.Fatalf("unsupported schema version = %v", err)
+	}
 	now = now.Add(time.Minute)
 	rotated, secondSecret, err := manager.Rotate(context.Background(), scope, endpoint.ID, 10*time.Minute)
 	if err != nil || rotated.Active.Version != 2 || rotated.Previous == nil || string(firstSecret) == string(secondSecret) {

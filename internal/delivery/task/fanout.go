@@ -105,7 +105,7 @@ func decodeFanout(encoded []byte) (id.Event, error) {
 // FanoutRepository supplies fenced fanout batches.
 type FanoutRepository interface {
 	FanoutEventWithin(context.Context, tenant.Scope, platformpostgres.Transaction, id.Event) (delivery.FanoutEvent, error)
-	SubscribedEndpointsWithin(context.Context, tenant.Scope, platformpostgres.Transaction, webhookv1.Type, string, int) ([]id.WebhookEndpoint, error)
+	SubscribedEndpointsWithin(context.Context, tenant.Scope, platformpostgres.Transaction, webhookv1.Type, string, string, int) ([]id.WebhookEndpoint, error)
 	CreateDeliveryIfAbsentWithin(context.Context, tenant.Scope, platformpostgres.Transaction, delivery.Intent) (bool, error)
 	AdvanceFanoutWithin(context.Context, tenant.Scope, platformpostgres.Transaction, id.Event, string, int, bool, time.Time) error
 }
@@ -157,7 +157,7 @@ func (handler *FanoutHandler) Prepare(_ context.Context, work platformtask.Deliv
 		if event.BodyWrapping == nil {
 			return platformtask.Quarantine(delivery.ErrInvalid)
 		}
-		endpoints, err := handler.repository.SubscribedEndpointsWithin(ctx, scope, tx, event.Type, event.Cursor, FanoutBatch+1)
+		endpoints, err := handler.repository.SubscribedEndpointsWithin(ctx, scope, tx, event.Type, event.SchemaVersion, event.Cursor, FanoutBatch+1)
 		if err != nil {
 			return taskError(err)
 		}

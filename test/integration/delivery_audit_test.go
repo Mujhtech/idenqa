@@ -127,6 +127,26 @@ func TestDeliveryAndAuditDurabilityIsolationAndTamperEvidence(t *testing.T) {
 	if err != nil || len(otherExport.Records) != 0 {
 		t.Fatalf("cross tenant export records=%d err=%v", len(otherExport.Records), err)
 	}
+	retention, err := deliveryStore.ExpireWebhookData(ctx, now.Add(8*24*time.Hour), 500)
+	if err != nil || retention.PayloadsExpired == 0 || retention.AttemptsExpired == 0 {
+		t.Fatalf("expire webhook payloads = %+v, %v", retention, err)
+	}
+	if _, err := deliveryStore.FindDelivery(ctx, firstScope, intent.ID); !errors.Is(err, delivery.ErrExpired) {
+		t.Fatalf("expired delivery replay lookup = %v", err)
+	}
+	if view, err := deliveryStore.Delivery(ctx, firstScope, intent.ID); err != nil || view.ID != intent.ID.String() {
+		t.Fatalf("retained delivery tombstone = %+v, %v", view, err)
+	}
+	if attempts, err := deliveryStore.Attempts(ctx, firstScope, intent.ID); err != nil || len(attempts) != 0 {
+		t.Fatalf("expired delivery attempts = %+v, %v", attempts, err)
+	}
+	retention, err = deliveryStore.ExpireWebhookData(ctx, now.Add(366*24*time.Hour), 500)
+	if err != nil || retention.TombstonesPurged == 0 {
+		t.Fatalf("purge webhook tombstones = %+v, %v", retention, err)
+	}
+	if _, err := deliveryStore.Delivery(ctx, firstScope, intent.ID); !errors.Is(err, delivery.ErrNotFound) {
+		t.Fatalf("purged delivery tombstone lookup = %v", err)
+	}
 	err = runtime.WithinTransaction(ctx, idenqapostgres.TransactionOptions{}, func(ctx context.Context, tx idenqapostgres.Transaction) error {
 		var ignored string
 		if err := tx.QueryRow(ctx, `SELECT set_config('idenqa.tenant_id',$1,true)`, firstTenant.String()).Scan(&ignored); err != nil {

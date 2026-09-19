@@ -19,6 +19,7 @@ type EndpointView struct {
 	ID                 string     `json:"id"`
 	URL                string     `json:"url"`
 	EventTypes         []string   `json:"event_types"`
+	SchemaVersion      string     `json:"schema_version"`
 	Version            int64      `json:"version"`
 	SecretVersion      int64      `json:"secret_version"`
 	PreviousValidUntil *time.Time `json:"previous_valid_until,omitempty"`
@@ -71,6 +72,7 @@ type ManagementCommand struct {
 	DeliveryID      string   `json:"delivery_id,omitempty"`
 	URL             string   `json:"url,omitempty"`
 	EventTypes      []string `json:"event_types,omitempty"`
+	SchemaVersion   string   `json:"schema_version,omitempty"`
 	ExpectedVersion int64    `json:"expected_version,omitempty"`
 	OverlapSeconds  int64    `json:"overlap_seconds,omitempty"`
 	Reason          string   `json:"reason,omitempty"`
@@ -159,10 +161,10 @@ func (service *Management) execute(ctx context.Context, scope tenant.Scope, mana
 	var err error
 	switch command.Operation {
 	case "create":
-		endpoint, secret, err = manager.CreateEndpointSubscribed(ctx, scope, command.URL, command.EventTypes)
+		endpoint, secret, err = manager.CreateEndpointSubscribedVersioned(ctx, scope, command.URL, command.EventTypes, command.SchemaVersion)
 	case "subscribe":
 		identifier, _ := id.ParseWebhookEndpoint(command.EndpointID)
-		endpoint, err = manager.Subscribe(ctx, scope, identifier, command.ExpectedVersion, command.EventTypes)
+		endpoint, err = manager.SubscribeVersioned(ctx, scope, identifier, command.ExpectedVersion, command.EventTypes, command.SchemaVersion)
 	case "replay":
 		identifier, _ := id.ParseDelivery(command.DeliveryID)
 		original, findErr := manager.repository.FindDelivery(ctx, scope, identifier)
@@ -218,6 +220,9 @@ func validateManagementCommand(command ManagementCommand) error {
 				return ErrInvalid
 			}
 		}
+		if command.SchemaVersion != "" && command.SchemaVersion != DefaultSchemaVersion {
+			return ErrInvalid
+		}
 	case "subscribe":
 		if _, err := id.ParseWebhookEndpoint(command.EndpointID); err != nil {
 			return ErrNotFound
@@ -226,6 +231,9 @@ func validateManagementCommand(command ManagementCommand) error {
 			return ErrInvalid
 		}
 		if _, err := webhookv1.ValidateSubscriptions(command.EventTypes); err != nil {
+			return ErrInvalid
+		}
+		if command.SchemaVersion != "" && command.SchemaVersion != DefaultSchemaVersion {
 			return ErrInvalid
 		}
 	case "rotate", "disable":
@@ -306,6 +314,7 @@ func ViewEndpoint(value Endpoint) EndpointView {
 		ID:                 value.ID.String(),
 		URL:                value.URL,
 		EventTypes:         append([]string(nil), value.EventTypes...),
+		SchemaVersion:      value.SchemaVersion,
 		Version:            value.Version,
 		SecretVersion:      value.Active.Version,
 		PreviousValidUntil: optionalTime(value.PreviousValidUntil),

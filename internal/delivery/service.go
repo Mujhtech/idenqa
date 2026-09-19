@@ -51,13 +51,25 @@ func NewManager(repository Repository, identifiers IdentifierGenerator, wrapper 
 
 // CreateEndpoint stores a fresh 256-bit secret and the default completion subscription.
 func (manager *Manager) CreateEndpoint(ctx context.Context, scope tenant.Scope, targetURL string) (Endpoint, []byte, error) {
-	return manager.CreateEndpointSubscribed(ctx, scope, targetURL, DefaultEventTypes)
+	return manager.CreateEndpointSubscribedVersioned(ctx, scope, targetURL, DefaultEventTypes, DefaultSchemaVersion)
 }
 
 // CreateEndpointSubscribed stores a fresh secret and an explicit event selection.
 func (manager *Manager) CreateEndpointSubscribed(ctx context.Context, scope tenant.Scope, targetURL string, eventTypes []string) (Endpoint, []byte, error) {
+	return manager.CreateEndpointSubscribedVersioned(ctx, scope, targetURL, eventTypes, DefaultSchemaVersion)
+}
+
+// CreateEndpointSubscribedVersioned stores a fresh secret and an exact
+// supported event-envelope version pin.
+func (manager *Manager) CreateEndpointSubscribedVersioned(ctx context.Context, scope tenant.Scope, targetURL string, eventTypes []string, schemaVersion string) (Endpoint, []byte, error) {
 	if len(eventTypes) == 0 {
 		eventTypes = DefaultEventTypes
+	}
+	if schemaVersion == "" {
+		schemaVersion = DefaultSchemaVersion
+	}
+	if schemaVersion != DefaultSchemaVersion {
+		return Endpoint{}, nil, ErrInvalid
 	}
 	selection, err := webhookv1.ValidateSubscriptions(eventTypes)
 	if err != nil {
@@ -73,13 +85,14 @@ func (manager *Manager) CreateEndpointSubscribed(ctx context.Context, scope tena
 		return Endpoint{}, nil, err
 	}
 	endpoint := Endpoint{
-		ID:         identifier,
-		URL:        targetURL,
-		EventTypes: selection,
-		Active:     Secret{Version: 1, Wrapped: wrapped, CreatedAt: now},
-		Version:    1,
-		CreatedAt:  now,
-		UpdatedAt:  now,
+		ID:            identifier,
+		URL:           targetURL,
+		EventTypes:    selection,
+		SchemaVersion: schemaVersion,
+		Active:        Secret{Version: 1, Wrapped: wrapped, CreatedAt: now},
+		Version:       1,
+		CreatedAt:     now,
+		UpdatedAt:     now,
 	}
 	if endpoint.Validate() != nil {
 		clear(secret)
@@ -121,6 +134,12 @@ func (manager *Manager) Rotate(ctx context.Context, scope tenant.Scope, endpoint
 
 // Subscribe replaces an endpoint's event selection under optimistic concurrency.
 func (manager *Manager) Subscribe(ctx context.Context, scope tenant.Scope, endpointID id.WebhookEndpoint, expectedVersion int64, eventTypes []string) (Endpoint, error) {
+	return manager.SubscribeVersioned(ctx, scope, endpointID, expectedVersion, eventTypes, "")
+}
+
+// SubscribeVersioned replaces an endpoint's event selection and, when
+// supplied, its exact supported envelope-version pin.
+func (manager *Manager) SubscribeVersioned(ctx context.Context, scope tenant.Scope, endpointID id.WebhookEndpoint, expectedVersion int64, eventTypes []string, schemaVersion string) (Endpoint, error) {
 	selection, err := webhookv1.ValidateSubscriptions(eventTypes)
 	if err != nil {
 		return Endpoint{}, ErrInvalid
@@ -132,7 +151,14 @@ func (manager *Manager) Subscribe(ctx context.Context, scope tenant.Scope, endpo
 	if current.Version != expectedVersion || !current.DisabledAt.IsZero() {
 		return Endpoint{}, ErrConflict
 	}
+	if schemaVersion == "" {
+		schemaVersion = current.SchemaVersion
+	}
+	if schemaVersion != DefaultSchemaVersion {
+		return Endpoint{}, ErrInvalid
+	}
 	current.EventTypes = selection
+	current.SchemaVersion = schemaVersion
 	current.Version, current.UpdatedAt = current.Version+1, manager.now().UTC()
 	if current.Validate() != nil {
 		return Endpoint{}, ErrInvalid

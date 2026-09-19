@@ -26,6 +26,7 @@ type FanoutEvent struct {
 	ID             id.Event
 	TenantID       id.Tenant
 	Type           webhookv1.Type
+	SchemaVersion  string
 	Body           []byte
 	BodyWrapping   *kms.WrappedKey
 	State          EventState

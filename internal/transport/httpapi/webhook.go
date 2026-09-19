@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -17,23 +18,33 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+// WebhookEventWakeups blocks until a routing-only wake-up for one tenant
+// arrives. Implementations are lossy by design; callers retain polling.
+type WebhookEventWakeups interface {
+	Wait(context.Context, id.Tenant) error
+}
+
 // WebhookRoutes exposes safe webhook administration using tenant API credentials.
 type WebhookRoutes struct {
 	access  *AccessMiddleware
 	service *delivery.Management
+	stream  *delivery.Stream
+	wakeups WebhookEventWakeups
 	cursors ProfileCursor
 	logger  *slog.Logger
 }
 
-// NewWebhookRoutes constructs public webhook routes.
-func NewWebhookRoutes(middleware *AccessMiddleware, service *delivery.Management, cursors ProfileCursor, logger *slog.Logger) (*WebhookRoutes, error) {
-	if middleware == nil || service == nil || cursors == nil || logger == nil {
+// NewWebhookRoutes constructs public webhook routes. A nil wake-ups port keeps
+// the live stream correct through bounded polling.
+func NewWebhookRoutes(middleware *AccessMiddleware, service *delivery.Management, stream *delivery.Stream, wakeups WebhookEventWakeups, cursors ProfileCursor, logger *slog.Logger) (*WebhookRoutes, error) {
+	if middleware == nil || service == nil || stream == nil || cursors == nil || logger == nil {
 		return nil, delivery.ErrInvalid
 	}
-	return &WebhookRoutes{access: middleware, service: service, cursors: cursors, logger: logger}, nil
+	return &WebhookRoutes{access: middleware, service: service, stream: stream, wakeups: wakeups, cursors: cursors, logger: logger}, nil
 }
 
-// Register adds administration and payload-free inspection operations.
+// Register adds administration, payload-free inspection and the read-only
+// tenant event feed.
 func (routes *WebhookRoutes) Register(router chi.Router) {
 	for _, route := range []struct {
 		method, path string
@@ -50,6 +61,8 @@ func (routes *WebhookRoutes) Register(router chi.Router) {
 		{"GET", "/webhook-deliveries/{deliveryID}", access.PermissionWebhooksRead, routes.delivery},
 		{"GET", "/webhook-deliveries/{deliveryID}/attempts", access.PermissionWebhooksRead, routes.attempts},
 		{"POST", "/webhook-deliveries/{deliveryID}/replay", access.PermissionWebhooksReplay, routes.mutate},
+		{"GET", "/webhook-events", access.PermissionWebhooksRead, routes.events},
+		{"GET", "/webhook-events/stream", access.PermissionWebhooksRead, routes.eventStream},
 	} {
 		router.With(routes.access.Authenticate, routes.access.Require(route.permission)).MethodFunc(route.method, route.path, route.handler)
 	}
@@ -70,18 +83,20 @@ func (routes *WebhookRoutes) mutate(writer http.ResponseWriter, request *http.Re
 	switch chi.RouteContext(request.Context()).RoutePattern() {
 	case "/v1/webhook-endpoints":
 		body, decodeErr := decodeJSONBody[struct {
-			URL        string   `json:"url"`
-			EventTypes []string `json:"event_types,omitempty"`
+			URL           string   `json:"url"`
+			EventTypes    []string `json:"event_types,omitempty"`
+			SchemaVersion string   `json:"schema_version,omitempty"`
 		}](request)
 		err = decodeErr
-		command.Operation, command.URL, command.EventTypes = "create", body.URL, body.EventTypes
+		command.Operation, command.URL, command.EventTypes, command.SchemaVersion = "create", body.URL, body.EventTypes, body.SchemaVersion
 	case "/v1/webhook-endpoints/{endpointID}/subscriptions":
 		body, decodeErr := decodeJSONBody[struct {
 			ExpectedVersion int64    `json:"expected_version"`
 			EventTypes      []string `json:"event_types"`
+			SchemaVersion   string   `json:"schema_version,omitempty"`
 		}](request)
 		err = decodeErr
-		command.Operation, command.ExpectedVersion, command.EventTypes = "subscribe", body.ExpectedVersion, body.EventTypes
+		command.Operation, command.ExpectedVersion, command.EventTypes, command.SchemaVersion = "subscribe", body.ExpectedVersion, body.EventTypes, body.SchemaVersion
 	case "/v1/webhook-endpoints/{endpointID}/rotate":
 		body, decodeErr := decodeJSONBody[struct {
 			ExpectedVersion int64 `json:"expected_version"`
@@ -267,6 +282,8 @@ func (routes *WebhookRoutes) problem(writer http.ResponseWriter, request *http.R
 		err = apierror.New(404, apierror.CodeNotFound, "Not found", "The webhook resource was not found.", err)
 	case errors.Is(err, delivery.ErrDisabled), errors.Is(err, delivery.ErrConflict):
 		err = apierror.New(409, apierror.CodeConflict, "Conflict", "The webhook operation conflicts with current state.", err)
+	case errors.Is(err, delivery.ErrExpired):
+		err = apierror.New(410, apierror.CodeGone, "Gone", "The webhook payload retention window has closed.", err)
 	case errors.Is(err, delivery.ErrInvalid):
 		err = invalidRequest(err)
 	case errors.Is(err, delivery.ErrQueueUnavailable):

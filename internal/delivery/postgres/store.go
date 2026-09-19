@@ -37,8 +37,8 @@ func (store *Store) CreateEndpoint(ctx context.Context, scope tenant.Scope, endp
 	}
 	return store.write(ctx, scope, func(ctx context.Context, tx platformpostgres.Transaction) error {
 		_, err := tx.Exec(ctx, `INSERT INTO idenqa.webhook_endpoints
-			(tenant_id,id,url,event_types,secret_version,version,created_at,updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-			scope.ID().String(), endpoint.ID.String(), endpoint.URL, endpoint.EventTypes, endpoint.Active.Version, endpoint.Version, endpoint.CreatedAt, endpoint.UpdatedAt)
+			(tenant_id,id,url,event_types,schema_version,secret_version,version,created_at,updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+			scope.ID().String(), endpoint.ID.String(), endpoint.URL, endpoint.EventTypes, endpoint.SchemaVersion, endpoint.Active.Version, endpoint.Version, endpoint.CreatedAt, endpoint.UpdatedAt)
 		if err != nil {
 			return fmt.Errorf("insert webhook endpoint: %w", err)
 		}
@@ -68,10 +68,10 @@ func (store *Store) UpdateEndpoint(ctx context.Context, scope tenant.Scope, endp
 		if endpoint.Previous != nil {
 			previousVersion, previousUntil = endpoint.Previous.Version, endpoint.PreviousValidUntil
 		}
-		tag, err := tx.Exec(ctx, `UPDATE idenqa.webhook_endpoints SET url=$3,event_types=$4,secret_version=$5,
-			previous_secret_version=$6,previous_secret_valid_until=$7,disabled_at=$8,disabled_reason=$9,
-			version=$10,updated_at=$11 WHERE tenant_id=$1 AND id=$2 AND version=$12`, scope.ID().String(), endpoint.ID.String(), endpoint.URL,
-			endpoint.EventTypes, endpoint.Active.Version, previousVersion, previousUntil, nullableTime(endpoint.DisabledAt), nullableString(endpoint.DisabledReason), endpoint.Version, endpoint.UpdatedAt, expected)
+		tag, err := tx.Exec(ctx, `UPDATE idenqa.webhook_endpoints SET url=$3,event_types=$4,schema_version=$5,secret_version=$6,
+			previous_secret_version=$7,previous_secret_valid_until=$8,disabled_at=$9,disabled_reason=$10,
+			version=$11,updated_at=$12 WHERE tenant_id=$1 AND id=$2 AND version=$13`, scope.ID().String(), endpoint.ID.String(), endpoint.URL,
+			endpoint.EventTypes, endpoint.SchemaVersion, endpoint.Active.Version, previousVersion, previousUntil, nullableTime(endpoint.DisabledAt), nullableString(endpoint.DisabledReason), endpoint.Version, endpoint.UpdatedAt, expected)
 		if err != nil {
 			return err
 		}
@@ -91,8 +91,8 @@ func (store *Store) FindEndpoint(ctx context.Context, scope tenant.Scope, endpoi
 		var previousUntil, disabledAt *time.Time
 		var disabledReason *string
 		var version int64
-		err := tx.QueryRow(ctx, `SELECT url,event_types,secret_version,previous_secret_version,previous_secret_valid_until,disabled_at,disabled_reason,version,created_at,updated_at
-			FROM idenqa.webhook_endpoints WHERE tenant_id=$1 AND id=$2`, scope.ID().String(), endpointID.String()).Scan(&endpoint.URL, &endpoint.EventTypes, &activeVersion, &previousVersion, &previousUntil, &disabledAt, &disabledReason, &version, &endpoint.CreatedAt, &endpoint.UpdatedAt)
+		err := tx.QueryRow(ctx, `SELECT url,event_types,schema_version,secret_version,previous_secret_version,previous_secret_valid_until,disabled_at,disabled_reason,version,created_at,updated_at
+			FROM idenqa.webhook_endpoints WHERE tenant_id=$1 AND id=$2`, scope.ID().String(), endpointID.String()).Scan(&endpoint.URL, &endpoint.EventTypes, &endpoint.SchemaVersion, &activeVersion, &previousVersion, &previousUntil, &disabledAt, &disabledReason, &version, &endpoint.CreatedAt, &endpoint.UpdatedAt)
 		if errors.Is(err, pgx.ErrNoRows) {
 			return delivery.ErrNotFound
 		}
@@ -139,8 +139,8 @@ func (store *Store) CreateDeliveryWithin(ctx context.Context, scope tenant.Scope
 	}
 	provider, reference, keyVersion, algorithm := nullableBodyWrapping(intent.BodyWrapping)
 	_, err := tx.Exec(ctx, `INSERT INTO idenqa.webhook_deliveries
-  (tenant_id,id,endpoint_id,event_id,event_type,body,body_digest,state,attempt_count,max_attempts,next_attempt_at,replay_of,created_at,updated_at,body_provider,body_reference,body_key_version,body_algorithm)
-  VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)`, scope.ID().String(), intent.ID.String(), intent.EndpointID.String(), intent.EventID.String(), intent.EventType, intent.Body, intent.BodyDigest, string(intent.State), intent.AttemptCount, intent.MaxAttempts, intent.NextAttemptAt, nullableDelivery(intent.ReplayOf), intent.CreatedAt, intent.UpdatedAt, provider, reference, keyVersion, algorithm)
+	  (tenant_id,id,endpoint_id,event_id,event_type,body,body_digest,state,attempt_count,max_attempts,next_attempt_at,replay_of,created_at,updated_at,body_provider,body_reference,body_key_version,body_algorithm,payload_expires_at,retain_until)
+	  VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)`, scope.ID().String(), intent.ID.String(), intent.EndpointID.String(), intent.EventID.String(), intent.EventType, intent.Body, intent.BodyDigest, string(intent.State), intent.AttemptCount, intent.MaxAttempts, intent.NextAttemptAt, nullableDelivery(intent.ReplayOf), intent.CreatedAt, intent.UpdatedAt, provider, reference, keyVersion, algorithm, intent.CreatedAt.Add(7*24*time.Hour), intent.CreatedAt.Add(365*24*time.Hour))
 	return err
 }
 
@@ -191,6 +191,9 @@ func (store *Store) FindDelivery(ctx context.Context, scope tenant.Scope, delive
 		}
 		if err != nil || attempts < 0 || maximum <= 0 {
 			return errors.Join(delivery.ErrInvalid, err)
+		}
+		if len(result.Body) == 0 {
+			return delivery.ErrExpired
 		}
 		result.BodyWrapping, err = restoreBodyWrapping(result.Body, provider, reference, keyVersion, algorithm)
 		if err != nil {

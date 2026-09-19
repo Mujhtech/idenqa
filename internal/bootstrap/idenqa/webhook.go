@@ -20,10 +20,10 @@ import (
 )
 
 type webhookOptions struct {
-	baseURL, keyFile, identifier, targetURL, retryKey, reason, cursor, secretOut, eventTypes string
-	version, overlap                                                                         int64
-	limit                                                                                    int
-	confirm                                                                                  bool
+	baseURL, keyFile, identifier, targetURL, retryKey, reason, cursor, secretOut, eventTypes, schemaVersion string
+	version, overlap                                                                                        int64
+	limit                                                                                                   int
+	confirm                                                                                                 bool
 }
 
 func newWebhookCommand() *cobra.Command {
@@ -35,6 +35,7 @@ func newWebhookCommand() *cobra.Command {
 	for _, operation := range []string{"create", "list", "get", "rotate", "disable", "subscribe", "deliveries", "delivery", "attempts", "replay"} {
 		root.AddCommand(newWebhookOperation(operation))
 	}
+	root.AddCommand(newWebhookListenCommand())
 	return root
 }
 func newWebhookOperation(operation string) *cobra.Command {
@@ -56,9 +57,11 @@ func newWebhookOperation(operation string) *cobra.Command {
 	if operation == "create" {
 		flags.StringVar(&options.targetURL, "url", "", "HTTPS receiver URL")
 		flags.StringVar(&options.eventTypes, "event-types", "", "comma-separated catalogue event names, or * (default verification.completed)")
+		flags.StringVar(&options.schemaVersion, "schema-version", "1.0", "exact supported webhook envelope version")
 	}
 	if operation == "subscribe" {
 		flags.StringVar(&options.eventTypes, "event-types", "", "comma-separated catalogue event names, or *")
+		flags.StringVar(&options.schemaVersion, "schema-version", "1.0", "exact supported webhook envelope version")
 	}
 	if operation == "list" || operation == "deliveries" {
 		flags.IntVar(&options.limit, "limit", 25, "page size from 1 to 100")
@@ -142,14 +145,14 @@ func runWebhookOperation(command *cobra.Command, operation string, options *webh
 	switch operation {
 	case "create":
 		method = http.MethodPost
-		body = map[string]any{"url": options.targetURL}
+		body = map[string]any{"url": options.targetURL, "schema_version": options.schemaVersion}
 		if len(selection) > 0 {
-			body = map[string]any{"url": options.targetURL, "event_types": selection}
+			body = map[string]any{"url": options.targetURL, "event_types": selection, "schema_version": options.schemaVersion}
 		}
 	case "subscribe":
 		method = http.MethodPost
 		path += "/subscriptions"
-		body = map[string]any{"expected_version": options.version, "event_types": selection}
+		body = map[string]any{"expected_version": options.version, "event_types": selection, "schema_version": options.schemaVersion}
 	case "rotate":
 		method = http.MethodPost
 		path += "/rotate"

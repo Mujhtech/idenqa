@@ -4,8 +4,11 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
+	"strings"
 	"time"
 
 	webhookv1 "github.com/Mujhtech/idenqa/contracts/webhook/v1"
@@ -36,16 +39,68 @@ func EmitEventWithin(ctx context.Context, tx platformpostgres.Transaction, wrapp
 	}
 	record := wrapped.Record()
 	digest := sha256.Sum256(record.Ciphertext)
+	aggregateIDs, err := eventAggregateIDs(event.Data)
+	if err != nil {
+		return false, err
+	}
 	tag, err := tx.Exec(ctx, `INSERT INTO idenqa.webhook_events
-		(tenant_id,id,event_type,schema_version,dedupe_key,body,body_digest,state,cursor,delivered_count,created_at,body_provider,body_reference,body_key_version,body_algorithm)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,'pending','',0,$8,$9,$10,$11,$12)
+		(tenant_id,id,event_type,schema_version,dedupe_key,body,body_digest,state,cursor,delivered_count,created_at,body_provider,body_reference,body_key_version,body_algorithm,aggregate_ids,payload_expires_at,retain_until)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,'pending','',0,$8,$9,$10,$11,$12,$13,$14,$15)
 		ON CONFLICT (tenant_id,dedupe_key) DO NOTHING`,
-		event.TenantID, event.ID, string(event.Type), event.SchemaVersion, dedupeKey, record.Ciphertext, hex.EncodeToString(digest[:]), event.CreatedAt, record.Provider, record.Reference, record.Version, record.Algorithm)
+		event.TenantID, event.ID, string(event.Type), event.SchemaVersion, dedupeKey, record.Ciphertext, hex.EncodeToString(digest[:]), event.CreatedAt, record.Provider, record.Reference, record.Version, record.Algorithm, aggregateIDs, event.CreatedAt.Add(7*24*time.Hour), event.CreatedAt.Add(365*24*time.Hour))
 	if err != nil {
 		return false, fmt.Errorf("emit webhook event: %w", err)
 	}
+	if tag.RowsAffected() == 1 {
+		if _, err := tx.Exec(ctx, `SELECT pg_notify($1,$2)`, WebhookEventChannel, event.TenantID); err != nil {
+			return false, fmt.Errorf("notify webhook event stream: %w", err)
+		}
+	}
 
 	return tag.RowsAffected() == 1, nil
+}
+
+func eventAggregateIDs(data json.RawMessage) ([]string, error) {
+	var value any
+	if err := json.Unmarshal(data, &value); err != nil {
+		return nil, delivery.ErrInvalid
+	}
+	set := make(map[string]struct{})
+	var visit func(any) error
+	visit = func(current any) error {
+		switch typed := current.(type) {
+		case map[string]any:
+			for key, child := range typed {
+				if strings.HasSuffix(key, "_id") {
+					if identifier, ok := child.(string); ok && identifier != "" && len(identifier) <= 128 {
+						set[identifier] = struct{}{}
+						if len(set) > 64 {
+							return delivery.ErrInvalid
+						}
+					}
+				}
+				if err := visit(child); err != nil {
+					return err
+				}
+			}
+		case []any:
+			for _, child := range typed {
+				if err := visit(child); err != nil {
+					return err
+				}
+			}
+		}
+		return nil
+	}
+	if err := visit(value); err != nil {
+		return nil, err
+	}
+	result := make([]string, 0, len(set))
+	for value := range set {
+		result = append(result, value)
+	}
+	sort.Strings(result)
+	return result, nil
 }
 
 // EmitCatalogueEvent builds, wraps and stores one canonical catalogue event
@@ -92,15 +147,13 @@ func (store *Store) FanoutEventWithin(ctx context.Context, scope tenant.Scope, t
 	if err != nil || wrapping == nil {
 		return delivery.FanoutEvent{}, delivery.ErrInvalid
 	}
-	_ = schemaVersion
-
-	return delivery.FanoutEvent{ID: eventID, TenantID: scope.ID(), Type: webhookv1.Type(eventType), Body: append([]byte(nil), body...), BodyWrapping: wrapping, State: delivery.EventState(state), Cursor: cursor, DeliveredCount: delivered, CreatedAt: createdAt.UTC()}, nil
+	return delivery.FanoutEvent{ID: eventID, TenantID: scope.ID(), Type: webhookv1.Type(eventType), SchemaVersion: schemaVersion, Body: append([]byte(nil), body...), BodyWrapping: wrapping, State: delivery.EventState(state), Cursor: cursor, DeliveredCount: delivered, CreatedAt: createdAt.UTC()}, nil
 }
 
 // SubscribedEndpointsWithin pages enabled endpoints subscribed to one event
 // type by opaque identifier order.
-func (store *Store) SubscribedEndpointsWithin(ctx context.Context, scope tenant.Scope, tx platformpostgres.Transaction, eventType webhookv1.Type, after string, limit int) ([]id.WebhookEndpoint, error) {
-	if tx == nil || scope.ID().IsZero() || limit < 1 || limit > 1024 {
+func (store *Store) SubscribedEndpointsWithin(ctx context.Context, scope tenant.Scope, tx platformpostgres.Transaction, eventType webhookv1.Type, schemaVersion, after string, limit int) ([]id.WebhookEndpoint, error) {
+	if tx == nil || scope.ID().IsZero() || schemaVersion != delivery.DefaultSchemaVersion || limit < 1 || limit > 1024 {
 		return nil, delivery.ErrInvalid
 	}
 	if _, exists := webhookv1.Lookup(eventType); !exists {
@@ -110,8 +163,8 @@ func (store *Store) SubscribedEndpointsWithin(ctx context.Context, scope tenant.
 		return nil, err
 	}
 	rows, err := tx.Query(ctx, `SELECT id FROM idenqa.webhook_endpoints
-		WHERE tenant_id=$1 AND disabled_at IS NULL AND id>$2 AND event_types && ARRAY[$3, '*']::text[]
-		ORDER BY id LIMIT $4`, scope.ID().String(), after, string(eventType), limit)
+		WHERE tenant_id=$1 AND disabled_at IS NULL AND schema_version=$2 AND id>$3 AND event_types && ARRAY[$4, '*']::text[]
+		ORDER BY id LIMIT $5`, scope.ID().String(), schemaVersion, after, string(eventType), limit)
 	if err != nil {
 		return nil, fmt.Errorf("load subscribed endpoints: %w", err)
 	}
@@ -143,10 +196,10 @@ func (store *Store) CreateDeliveryIfAbsentWithin(ctx context.Context, scope tena
 	}
 	provider, reference, keyVersion, algorithm := nullableBodyWrapping(intent.BodyWrapping)
 	tag, err := tx.Exec(ctx, `INSERT INTO idenqa.webhook_deliveries
-		(tenant_id,id,endpoint_id,event_id,event_type,body,body_digest,state,attempt_count,max_attempts,next_attempt_at,replay_of,created_at,updated_at,body_provider,body_reference,body_key_version,body_algorithm)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
+		(tenant_id,id,endpoint_id,event_id,event_type,body,body_digest,state,attempt_count,max_attempts,next_attempt_at,replay_of,created_at,updated_at,body_provider,body_reference,body_key_version,body_algorithm,payload_expires_at,retain_until)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)
 		ON CONFLICT (tenant_id,endpoint_id,event_id) WHERE replay_of IS NULL DO NOTHING`,
-		scope.ID().String(), intent.ID.String(), intent.EndpointID.String(), intent.EventID.String(), intent.EventType, intent.Body, intent.BodyDigest, string(intent.State), intent.AttemptCount, intent.MaxAttempts, intent.NextAttemptAt, nullableDelivery(intent.ReplayOf), intent.CreatedAt, intent.UpdatedAt, provider, reference, keyVersion, algorithm)
+		scope.ID().String(), intent.ID.String(), intent.EndpointID.String(), intent.EventID.String(), intent.EventType, intent.Body, intent.BodyDigest, string(intent.State), intent.AttemptCount, intent.MaxAttempts, intent.NextAttemptAt, nullableDelivery(intent.ReplayOf), intent.CreatedAt, intent.UpdatedAt, provider, reference, keyVersion, algorithm, intent.CreatedAt.Add(7*24*time.Hour), intent.CreatedAt.Add(365*24*time.Hour))
 	if err != nil {
 		return false, fmt.Errorf("create fanout delivery: %w", err)
 	}

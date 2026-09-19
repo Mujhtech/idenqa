@@ -56,6 +56,12 @@ func assertPublicWebhookManagement(t *testing.T, client *http.Client, base, cred
 	if created.Endpoint == nil || len(created.SigningSecret) != 43 || created.Replayed {
 		t.Fatal("missing display-once result")
 	}
+	if created.Endpoint.SchemaVersion != delivery.DefaultSchemaVersion {
+		t.Fatalf("schema version = %q", created.Endpoint.SchemaVersion)
+	}
+	call("POST", "/v1/webhook-endpoints", "webhook-create-unsupported-version", map[string]any{
+		"url": "https://hooks.example.com/unsupported", "schema_version": "2.0",
+	}, nil, 400)
 	secret, err := base64.RawURLEncoding.DecodeString(created.SigningSecret)
 	if err != nil || len(secret) != 32 {
 		t.Fatal("invalid secret")
