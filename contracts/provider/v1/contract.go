@@ -107,21 +107,22 @@ type TraceContext struct {
 
 // Request is the complete immutable provider attempt envelope.
 type Request struct {
-	Contract       Version                  `json:"contract"`
-	AttemptID      string                   `json:"attempt_id"`
-	ProviderID     string                   `json:"provider_id"`
-	TenantID       string                   `json:"tenant_id"`
-	VerificationID string                   `json:"verification_id"`
-	Check          string                   `json:"check"`
-	IdempotencyKey string                   `json:"idempotency_key"`
-	Adapter        PackageProvenance        `json:"adapter"`
-	Capability     Capability               `json:"capability"`
-	Restrictions   Restrictions             `json:"restrictions"`
-	Configuration  ConfigurationReference   `json:"configuration"`
-	Inputs         []InputReference         `json:"inputs,omitempty"`
-	Evidence       []EvidenceGrantReference `json:"evidence"`
-	Deadline       time.Time                `json:"deadline"`
-	Trace          TraceContext             `json:"trace"`
+	Contract          Version                  `json:"contract"`
+	AttemptID         string                   `json:"attempt_id"`
+	ProviderID        string                   `json:"provider_id"`
+	TenantID          string                   `json:"tenant_id"`
+	VerificationID    string                   `json:"verification_id"`
+	Check             string                   `json:"check"`
+	IdempotencyKey    string                   `json:"idempotency_key"`
+	CallbackReference string                   `json:"callback_reference,omitempty"`
+	Adapter           PackageProvenance        `json:"adapter"`
+	Capability        Capability               `json:"capability"`
+	Restrictions      Restrictions             `json:"restrictions"`
+	Configuration     ConfigurationReference   `json:"configuration"`
+	Inputs            []InputReference         `json:"inputs,omitempty"`
+	Evidence          []EvidenceGrantReference `json:"evidence"`
+	Deadline          time.Time                `json:"deadline"`
+	Trace             TraceContext             `json:"trace"`
 }
 
 // SignalOutcome is a stable provider observation classification.

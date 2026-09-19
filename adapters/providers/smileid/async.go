@@ -65,7 +65,7 @@ func (adapter *Adapter) Advance(ctx context.Context, request providerv1.Request,
 		Signature:        sign(configuration.APIKey, timestamp, configuration.PartnerID),
 		Timestamp:        timestamp,
 		SmileClientID:    configuration.PartnerID,
-		CallbackURL:      configuration.CallbackURL,
+		CallbackURL:      callbackTarget(configuration, request),
 		PartnerParams: partnerParams{
 			JobType: 6,
 			JobID:   request.AttemptID,

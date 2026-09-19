@@ -120,6 +120,16 @@ func (adapter *smileAdapter) Advance(ctx context.Context, request providerv1.Req
 	}
 	return implementation.Advance(ctx, request, resume)
 }
+func (adapter *smileAdapter) VerifyCallback(ctx context.Context, request providerv1.Request, callback providerv1.CallbackEnvelope) (providerv1.Progress, error) {
+	if request.Validate() != nil || request.TenantID != adapter.settings.TenantID || request.Configuration != adapter.settings.Configuration {
+		return providerv1.Progress{}, smileid.ErrConfiguration
+	}
+	implementation, err := smileid.New(adapter, adapter, &gatewayReader{adapter: adapter.scopedAdapter, request: request}, adapter.client, nil, time.Now)
+	if err != nil {
+		return providerv1.Progress{}, err
+	}
+	return implementation.VerifyCallback(ctx, request, callback)
+}
 
 type smileHTTP struct {
 	api, upload             *http.Client

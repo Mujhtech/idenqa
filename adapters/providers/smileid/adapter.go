@@ -172,7 +172,7 @@ func (adapter *Adapter) Execute(ctx context.Context, request providerv1.Request)
 	signature := sign(configuration.APIKey, timestamp, configuration.PartnerID)
 	prep := prepRequest{
 		SourceSDK: "rest_api", SourceSDKVersion: "idenqa-0.1.0", Signature: signature, Timestamp: timestamp,
-		SmileClientID: configuration.PartnerID, CallbackURL: configuration.CallbackURL,
+		SmileClientID: configuration.PartnerID, CallbackURL: callbackTarget(configuration, request),
 		PartnerParams: partnerParams{JobType: jobType, JobID: jobID, UserID: userID},
 	}
 	prepResult, status, retryAfter, prepErr := adapter.jsonRequest(ctx, configuration, "/v1/upload", prep)

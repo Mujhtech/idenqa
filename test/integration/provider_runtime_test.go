@@ -358,7 +358,7 @@ func (journey *providerPublicJourney) run(t *testing.T, admin, runtime *pg.Pool,
 	}
 	stop := startWorker()
 	if journey.smile {
-		smileFixture.waitPending(t, admin)
+		smileFixture.waitPending(t, admin, verificationValue)
 		stop()
 		assertSmilePollingFences(t, admin, runtime)
 		smileFixture.complete.Store(true)
@@ -380,6 +380,7 @@ func (journey *providerPublicJourney) run(t *testing.T, admin, runtime *pg.Pool,
 	}
 	if journey.smile {
 		smileFixture.assertCompleted(t, admin)
+		assertExternalWaitRoundTrip(t, admin, verificationValue)
 	}
 	// Database guards preserve immutable request and completed receipt meaning.
 	if _, err := admin.Native().Exec(t.Context(), `UPDATE idenqa.provider_requests SET request_body='{}'::jsonb`); err == nil {
@@ -462,7 +463,7 @@ type providerDiscoveryRoute struct{ tenant, policy, profile string }
 func (route providerDiscoveryRoute) CaptureRoute() (string, string, string) {
 	return route.tenant, route.policy, route.profile
 }
-func (providerDiscoveryRoute) Plan(verification.PlanInput) ([]verification.PlannedCheck, error) {
+func (providerDiscoveryRoute) Plan(context.Context, verification.PlanInput) ([]verification.PlannedCheck, error) {
 	return nil, verification.ErrPlanUnavailable
 }
 

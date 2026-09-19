@@ -63,11 +63,11 @@ func configuredModel(ctx context.Context, configuration config.Worker, pool *pg.
 			return nil, err
 		}
 		items = append(items, item)
-		routes = append(routes, executionRoute{item.plan, item.preparation, item.signals})
+		routes = append(routes, executionRoute{planner: item.plan, preparation: item.preparation, signals: item.signals})
 		executors[setting.Binding.Configuration] = item.executor
 		connections = append(connections, item.connection)
 	}
-	combined, err := composeRoutes(routes)
+	combined, err := composeRoutes(ctx, routes)
 	if err != nil {
 		return nil, err
 	}

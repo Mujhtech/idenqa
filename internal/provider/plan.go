@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -81,8 +82,20 @@ func NewPlan(binding Binding, manifest providerv1.Manifest) (*Plan, error) {
 	return nil, ErrRequestUnavailable
 }
 
+// ConfigurationDigest returns the pinned configuration digest for the exact
+// binding. It is stable for the same deployment template and registration.
+func (plan *Plan) ConfigurationDigest() string {
+	if plan == nil {
+		return ""
+	}
+	return plan.configurationDigest
+}
+
 // Plan returns no route for unrelated tenants, policies or immutable profiles.
-func (plan *Plan) Plan(input verification.PlanInput) ([]verification.PlannedCheck, error) {
+func (plan *Plan) Plan(ctx context.Context, input verification.PlanInput) ([]verification.PlannedCheck, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	if input.TenantID.String() != plan.Binding.TenantID || input.PolicyID.String() != plan.Binding.PolicyID || input.ProfileDigest != plan.Binding.ProfileDigest {
 		return nil, verification.ErrPlanUnavailable
 	}

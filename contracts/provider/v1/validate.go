@@ -134,6 +134,9 @@ func (request Request) Validate() error {
 		!validOpaque(request.IdempotencyKey, 16, 200) || !validUTC(request.Deadline) {
 		return invalid("request", "identity, contract, or deadline is invalid")
 	}
+	if request.CallbackReference != "" && !validID(request.CallbackReference, "pcb") {
+		return invalid("callback_reference", "is invalid")
+	}
 	if request.Configuration.ProviderID != request.ProviderID {
 		return invalid("configuration.provider_id", "does not match request")
 	}

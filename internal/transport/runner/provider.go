@@ -298,7 +298,7 @@ func providerRequestToProto(request providerv1.Request) *runnerv1.ProviderReques
 	return &runnerv1.ProviderRequest{
 		Contract: versionToProto(request.Contract.Major, request.Contract.Minor), AttemptId: request.AttemptID,
 		ProviderId: request.ProviderID, TenantId: request.TenantID, VerificationId: request.VerificationID,
-		Check: request.Check, IdempotencyKey: request.IdempotencyKey,
+		Check: request.Check, IdempotencyKey: request.IdempotencyKey, CallbackReference: request.CallbackReference,
 		Adapter:    providerManifestToProto(providerv1.Manifest{Package: request.Adapter}).GetPackage(),
 		Capability: providerCapabilityToProto(request.Capability), Restrictions: providerRestrictionsToProto(request.Restrictions),
 		Configuration: providerConfigurationToProto(request.Configuration), Inputs: inputs, Evidence: evidence,
@@ -323,6 +323,7 @@ func providerRequestFromProto(message *runnerv1.ProviderRequest) (providerv1.Req
 	request := providerv1.Request{
 		Contract: providerVersionFromProto(message.GetContract()), AttemptID: message.GetAttemptId(), ProviderID: message.GetProviderId(),
 		TenantID: message.GetTenantId(), VerificationID: message.GetVerificationId(), Check: message.GetCheck(), IdempotencyKey: message.GetIdempotencyKey(),
+		CallbackReference: message.GetCallbackReference(),
 		Adapter: providerv1.PackageProvenance{
 			AdapterID: message.GetAdapter().GetAdapterId(), AdapterVersion: message.GetAdapter().GetAdapterVersion(),
 			PackageDigest: message.GetAdapter().GetPackageDigest(), Contract: providerVersionFromProto(message.GetAdapter().GetContract()),

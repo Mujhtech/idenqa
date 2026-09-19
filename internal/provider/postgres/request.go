@@ -50,7 +50,11 @@ func (store *RequestStore) SaveWithin(ctx context.Context, tx pg.Transaction, ch
 	if err != nil {
 		return err
 	}
-	_, err = tx.Exec(ctx, `INSERT INTO idenqa.provider_requests(tenant_id,attempt_id,verification_id,check_id,request_digest,request_body) VALUES($1,$2,$3,$4,$5,$6)`, request.TenantID, request.AttemptID, request.VerificationID, check.ID.String(), digest, body)
+	tokenDigest, err := provider.CallbackTokenDigest(request.CallbackReference)
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(ctx, `INSERT INTO idenqa.provider_requests(tenant_id,attempt_id,verification_id,check_id,request_digest,request_body,callback_token_digest) VALUES($1,$2,$3,$4,$5,$6,NULLIF($7,''))`, request.TenantID, request.AttemptID, request.VerificationID, check.ID.String(), digest, body, tokenDigest)
 	return err
 }
 
@@ -64,7 +68,7 @@ func (store *RequestStore) Load(ctx context.Context, scope tenant.Scope, check v
 		if _, err := sqlgen.New(tx).SetTenantScope(ctx, scope.ID().String()); err != nil {
 			return err
 		}
-		if err := authoritypostgres.ValidateProcessingWithin(ctx, tx, scope, check.VerificationID, store.source.Now().UTC(), store.source, verification.SessionStateProcessing); err != nil {
+		if err := authoritypostgres.ValidateExecutionWithin(ctx, tx, scope, check.VerificationID, store.source.Now().UTC(), store.source, verification.SessionStateProcessing); err != nil {
 			return err
 		}
 		var body []byte
@@ -123,10 +127,57 @@ func (store *RequestStore) Claim(ctx context.Context, request providerv1.Request
 				return provider.ErrRequestUnavailable
 			}
 			result = &value
+		} else {
+			// A durable callback receipt is authoritative before any provider
+			// polling. Recording it through the dispatch first-result-wins guard
+			// keeps callback and status delivery on one result path.
+			value, err := adoptCallbackReceipt(ctx, tx, request, digest)
+			if err != nil {
+				return err
+			}
+			result = value
 		}
 		return nil
 	})
 	return claimed, result, err
+}
+
+// adoptCallbackReceipt promotes one terminal callback receipt into the
+// provider dispatch under the same first-result-wins guard as every other
+// completion. It is a no-op when no terminal receipt exists.
+func adoptCallbackReceipt(ctx context.Context, tx pg.Transaction, request providerv1.Request, digest string) (*providerv1.Result, error) {
+	var body []byte
+	err := tx.QueryRow(ctx, `SELECT progress_body FROM idenqa.provider_callback_receipts WHERE tenant_id=$1 AND attempt_id=$2 AND result_digest IS NOT NULL ORDER BY received_at DESC, provider_replay_id LIMIT 1`, request.TenantID, request.AttemptID).Scan(&body)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	var progress providerv1.Progress
+	if json.Unmarshal(body, &progress) != nil || progress.ValidateForRequest(request) != nil || progress.Result == nil {
+		return nil, provider.ErrRequestUnavailable
+	}
+	encoded, err := json.Marshal(progress.Result)
+	if err != nil {
+		return nil, err
+	}
+	tag, err := tx.Exec(ctx, `UPDATE idenqa.provider_dispatches SET result_body=$4 WHERE tenant_id=$1 AND attempt_id=$2 AND request_digest=$3 AND result_body IS NULL`, request.TenantID, request.AttemptID, digest, encoded)
+	if err != nil {
+		return nil, err
+	}
+	if tag.RowsAffected() == 1 {
+		return progress.Result, nil
+	}
+	var stored []byte
+	if err := tx.QueryRow(ctx, `SELECT result_body FROM idenqa.provider_dispatches WHERE tenant_id=$1 AND attempt_id=$2`, request.TenantID, request.AttemptID).Scan(&stored); err != nil {
+		return nil, provider.ErrRequestUnavailable
+	}
+	var value providerv1.Result
+	if json.Unmarshal(stored, &value) != nil || value.ValidateForRequest(request) != nil {
+		return nil, provider.ErrRequestUnavailable
+	}
+	return &value, nil
 }
 
 // Complete retains the first validated result; a retry cannot replace its meaning.

@@ -37,7 +37,7 @@ func (store *RequestStore) ClaimAsync(ctx context.Context, request providerv1.Re
 		if _, err := sqlgen.New(tx).SetTenantScope(ctx, scope.ID().String()); err != nil {
 			return err
 		}
-		if err := authoritypostgres.ValidateProcessingWithin(ctx, tx, scope, verificationID, now, store.source, verification.SessionStateProcessing); err != nil {
+		if err := authoritypostgres.ValidateExecutionWithin(ctx, tx, scope, verificationID, now, store.source, verification.SessionStateProcessing); err != nil {
 			return err
 		}
 		var active bool
@@ -128,7 +128,7 @@ func (store *RequestStore) Expire(ctx context.Context, scope tenant.Scope, check
 		if _, err := sqlgen.New(tx).SetTenantScope(ctx, scope.ID().String()); err != nil {
 			return err
 		}
-		if err := authoritypostgres.ValidateProcessingWithin(ctx, tx, scope, check.VerificationID, store.source.Now().UTC(), store.source, verification.SessionStateProcessing); err != nil {
+		if err := authoritypostgres.ValidateExecutionWithin(ctx, tx, scope, check.VerificationID, store.source.Now().UTC(), store.source, verification.SessionStateProcessing); err != nil {
 			return err
 		}
 		bound := &RequestStore{pool: boundTransaction{tx}, source: store.source}

@@ -36,6 +36,25 @@ import (
 
 const providerEvidenceLimit = 10 << 20
 
+// configuredProviderManifests returns the configured deployment adapter
+// manifest catalogue for tenant provider registration validation. An
+// unconfigured provider runtime yields an empty catalogue: writes fail closed
+// and no registration can name an unconfigured adapter.
+func configuredProviderManifests(configuration config.API) map[string]providerv1.Manifest {
+	if configuration.ProviderRuntimeFile == "" {
+		return nil
+	}
+	settings, err := config.LoadProviderRuntime(configuration.ProviderRuntimeFile)
+	if err != nil {
+		return nil
+	}
+	manifest := dojah.Description()
+	if settings.Adapter == "smileid" {
+		manifest = smileid.Description()
+	}
+	return map[string]providerv1.Manifest{manifest.Package.AdapterID: manifest}
+}
+
 type providerEvidenceRoutes struct {
 	pool       database
 	plan       *provider.Plan

@@ -154,7 +154,7 @@ func newSmileJourneyFixture(t *testing.T, plaintext []byte) *smileJourneyFixture
 	}))
 	return fixture
 }
-func (fixture *smileJourneyFixture) waitPending(t *testing.T, admin *pg.Pool) {
+func (fixture *smileJourneyFixture) waitPending(t *testing.T, admin *pg.Pool, verificationID string) {
 	t.Helper()
 	deadline := time.NewTimer(20 * time.Second)
 	defer deadline.Stop()
@@ -162,15 +162,16 @@ func (fixture *smileJourneyFixture) waitPending(t *testing.T, admin *pg.Pool) {
 	defer tick.Stop()
 	for {
 		var count int
-		if err := admin.Native().QueryRow(t.Context(), `SELECT count(*) FROM idenqa.provider_async_operations o JOIN idenqa.provider_dispatches d USING(tenant_id,attempt_id) WHERE o.provider_job_id='job-123' AND o.lease_expires_at IS NULL AND d.result_body IS NULL`).Scan(&count); err != nil {
+		var state string
+		if err := admin.Native().QueryRow(t.Context(), `SELECT (SELECT count(*) FROM idenqa.provider_async_operations o JOIN idenqa.provider_dispatches d USING(tenant_id,attempt_id) WHERE o.provider_job_id='job-123' AND o.lease_expires_at IS NULL AND d.result_body IS NULL),(SELECT state FROM idenqa.verification_sessions WHERE id=$1)`, verificationID).Scan(&count, &state); err != nil {
 			t.Fatal(err)
 		}
-		if count == 1 && fixture.polled.Load() > 0 {
+		if count == 1 && fixture.polled.Load() > 0 && state == "awaiting_external" {
 			return
 		}
 		select {
 		case <-deadline.C:
-			t.Fatal("Smile job never reached durable pending state")
+			t.Fatalf("Smile job never reached durable awaiting_external state: state=%s", state)
 		case <-tick.C:
 		}
 	}
@@ -204,6 +205,39 @@ func (fixture *smileJourneyFixture) assertCompleted(t *testing.T, admin *pg.Pool
 	}
 	if _, err := admin.Native().Exec(t.Context(), `UPDATE idenqa.provider_async_operations SET provider_job_id='different'`); err == nil {
 		t.Fatal("provider job reference mutable")
+	}
+}
+
+// assertExternalWaitRoundTrip proves the parent entered awaiting_external while
+// the Smile job was pending and returned to processing when the terminal result
+// was accepted under the same transition history.
+func assertExternalWaitRoundTrip(t *testing.T, admin *pg.Pool, verificationID string) {
+	t.Helper()
+	rows, err := admin.Native().Query(t.Context(), `SELECT to_state FROM idenqa.verification_transitions WHERE verification_id=$1 ORDER BY resulting_version`, verificationID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rows.Close()
+	awaiting := false
+	returned := false
+	for rows.Next() {
+		var state string
+		if err := rows.Scan(&state); err != nil {
+			t.Fatal(err)
+		}
+		if state == "awaiting_external" {
+			awaiting = true
+			continue
+		}
+		if state == "processing" && awaiting {
+			returned = true
+		}
+	}
+	if err := rows.Err(); err != nil {
+		t.Fatal(err)
+	}
+	if !awaiting || !returned {
+		t.Fatalf("verification %s did not round-trip awaiting_external: awaiting=%t returned=%t", verificationID, awaiting, returned)
 	}
 }
 

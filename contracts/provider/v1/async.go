@@ -7,12 +7,19 @@ import (
 
 // Progress is the optional asynchronous v1 extension. A nil Result means the
 // same job is still pending; it is never a terminal verification failure.
+// ReplayID is the provider-owned stable identity for the delivered operation;
+// a callback and a status-only result carrying the same ReplayID are exact
+// duplicates.
 type Progress struct {
 	ProviderJobID string  `json:"provider_job_id,omitempty"`
+	ReplayID      string  `json:"replay_id,omitempty"`
 	Result        *Result `json:"result,omitempty"`
 }
 
-var jobReferencePattern = regexp.MustCompile(`^[A-Za-z0-9_-]{1,128}$`)
+var (
+	jobReferencePattern = regexp.MustCompile(`^[A-Za-z0-9_-]{1,128}$`)
+	replayPattern       = regexp.MustCompile(`^[A-Za-z0-9_.:-]{1,200}$`)
+)
 
 // ValidateForRequest rejects unbounded references and mismatched final results.
 func (progress Progress) ValidateForRequest(request Request) error {
@@ -21,6 +28,9 @@ func (progress Progress) ValidateForRequest(request Request) error {
 	}
 	if progress.ProviderJobID != "" && !jobReferencePattern.MatchString(progress.ProviderJobID) {
 		return invalid("progress.provider_job_id", "is invalid")
+	}
+	if progress.ReplayID != "" && !replayPattern.MatchString(progress.ReplayID) {
+		return invalid("progress.replay_id", "is invalid")
 	}
 	if progress.Result != nil {
 		return progress.Result.ValidateForRequest(request)

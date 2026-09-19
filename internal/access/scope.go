@@ -55,12 +55,16 @@ const (
 	PermissionWebhooksReplay Permission = "webhooks:replay"
 	// PermissionTenantRead permits reading the authenticated tenant's safe metadata.
 	PermissionTenantRead Permission = "tenant:read"
+	// PermissionTenantExport permits streaming the portable tenant-owned export.
+	PermissionTenantExport Permission = "tenant:export"
 	// PermissionCaptureProfilesRead permits reading capture profiles.
 	PermissionCaptureProfilesRead Permission = "capture_profiles:read"
 	// PermissionCaptureProfilesWrite permits changing capture profiles.
 	PermissionCaptureProfilesWrite Permission = "capture_profiles:write"
 	// PermissionVerificationSessionsCreate permits creating verification sessions.
 	PermissionVerificationSessionsCreate Permission = "verification_sessions:create"
+	// PermissionVerificationSessionsResume permits resuming an awaiting-input session.
+	PermissionVerificationSessionsResume Permission = "verification_sessions:resume"
 	// PermissionVerificationSessionsCancel permits stopping an active verification.
 	PermissionVerificationSessionsCancel Permission = "verification_sessions:cancel"
 	// PermissionVerificationSessionsRead permits reading verification sessions.
@@ -85,6 +89,8 @@ const (
 	PermissionReviewsAdmin Permission = "reviews:admin"
 	// PermissionAppealsWrite permits attributed appeal actions.
 	PermissionAppealsWrite Permission = "appeals:write"
+	// PermissionDeletionsRead permits reading tenant deletion workflows and retention resolutions.
+	PermissionDeletionsRead Permission = "deletions:read"
 	// PermissionDeletionsWrite permits observable tenant deletion workflows.
 	PermissionDeletionsWrite Permission = "deletions:write"
 	// PermissionLegalHoldsWrite permits legal-hold creation and release.
@@ -101,6 +107,10 @@ const (
 	PermissionPromptsRead Permission = "prompts:read"
 	// PermissionPromptsWrite permits immutable prompt registration.
 	PermissionPromptsWrite Permission = "prompts:write"
+	// PermissionProvidersRead permits reading tenant provider registrations and bounded health.
+	PermissionProvidersRead Permission = "providers:read"
+	// PermissionProvidersWrite permits registering, updating and toggling tenant provider routes.
+	PermissionProvidersWrite Permission = "providers:write"
 )
 
 // ParsePermission validates an exact resource-action permission.
@@ -179,6 +189,7 @@ func TenantRegistry() Registry {
 		PermissionCaptureProfilesWrite,
 		PermissionDecisionsExport,
 		PermissionDecisionsRead,
+		PermissionDeletionsRead,
 		PermissionDeletionsWrite,
 		PermissionLegalHoldsWrite,
 		PermissionAppealsWrite,
@@ -187,8 +198,10 @@ func TenantRegistry() Registry {
 		PermissionReviewsRead,
 		PermissionReviewsWrite,
 		PermissionReviewsAdmin,
+		PermissionTenantExport,
 		PermissionTenantRead,
 		PermissionVerificationSessionsCreate,
+		PermissionVerificationSessionsResume,
 		PermissionVerificationSessionsCancel,
 		PermissionVerificationSessionsRead,
 		PermissionPoliciesRead,
@@ -203,6 +216,8 @@ func TenantRegistry() Registry {
 		PermissionProposalsConfigure,
 		PermissionPromptsRead,
 		PermissionPromptsWrite,
+		PermissionProvidersRead,
+		PermissionProvidersWrite,
 	}}
 }
 

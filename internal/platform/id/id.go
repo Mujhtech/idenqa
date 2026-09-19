@@ -779,6 +779,30 @@ func (provider Provider) String() string { return provider.value.String() }
 // IsZero reports whether the provider-registration identifier is uninitialised.
 func (provider Provider) IsZero() bool { return provider.value.IsZero() }
 
+// ProviderRegistrationPrefix is the public prefix for tenant provider registrations.
+const ProviderRegistrationPrefix Prefix = "pvr"
+
+// ProviderRegistration identifies one tenant-owned secret-free provider route registration.
+type ProviderRegistration struct{ value Value }
+
+// NewProviderRegistration generates a tenant provider-registration identifier.
+func (generator *Generator) NewProviderRegistration() (ProviderRegistration, error) {
+	value, err := generator.New(ProviderRegistrationPrefix)
+	return ProviderRegistration{value: value}, err
+}
+
+// ParseProviderRegistration parses a tenant provider-registration identifier.
+func ParseProviderRegistration(encoded string) (ProviderRegistration, error) {
+	value, err := Parse(ProviderRegistrationPrefix, encoded)
+	return ProviderRegistration{value: value}, err
+}
+
+// String returns the stable public tenant provider-registration identifier.
+func (registration ProviderRegistration) String() string { return registration.value.String() }
+
+// IsZero reports whether the tenant provider-registration identifier is uninitialised.
+func (registration ProviderRegistration) IsZero() bool { return registration.value.IsZero() }
+
 // ModelPrefix is the public prefix for configured model registrations.
 const ModelPrefix Prefix = "mdl"
 
@@ -1066,6 +1090,56 @@ func (finding Finding) String() string { return finding.value.String() }
 
 // IsZero reports whether the finding identifier is uninitialised.
 func (finding Finding) IsZero() bool { return finding.value.IsZero() }
+
+// ProviderCallbackPrefix is the public prefix for opaque per-attempt provider
+// callback references. The reference is a capability presented by the provider
+// adapter and never a credential itself.
+const ProviderCallbackPrefix Prefix = "pcb"
+
+// ProviderCallback is a typed provider callback reference.
+type ProviderCallback struct{ value Value }
+
+// NewProviderCallback generates a provider callback reference.
+func (generator *Generator) NewProviderCallback() (ProviderCallback, error) {
+	value, err := generator.New(ProviderCallbackPrefix)
+	return ProviderCallback{value: value}, err
+}
+
+// ParseProviderCallback parses a provider callback reference.
+func ParseProviderCallback(encoded string) (ProviderCallback, error) {
+	value, err := Parse(ProviderCallbackPrefix, encoded)
+	return ProviderCallback{value: value}, err
+}
+
+// String returns the stable public provider callback reference.
+func (callback ProviderCallback) String() string { return callback.value.String() }
+
+// IsZero reports whether the callback reference has not been initialised.
+func (callback ProviderCallback) IsZero() bool { return callback.value.IsZero() }
+
+// InputRequestPrefix is the public prefix for policy-authored subject-input requests.
+const InputRequestPrefix Prefix = "inp"
+
+// InputRequest identifies one immutable policy-authored request for further subject input.
+type InputRequest struct{ value Value }
+
+// NewInputRequest generates a subject-input request identifier.
+func (generator *Generator) NewInputRequest() (InputRequest, error) {
+	value, err := generator.New(InputRequestPrefix)
+	return InputRequest{value: value}, err
+}
+
+// ParseInputRequest parses a subject-input request identifier.
+func ParseInputRequest(encoded string) (InputRequest, error) {
+	value, err := Parse(InputRequestPrefix, encoded)
+	return InputRequest{value: value}, err
+}
+
+// String returns the stable subject-input request identifier.
+func (request InputRequest) String() string { return request.value.String() }
+
+// IsZero reports whether the subject-input request identifier is uninitialised.
+func (request InputRequest) IsZero() bool { return request.value.IsZero() }
 
 // ProposalPrefix is the public prefix for AI proposal records.
 const ProposalPrefix Prefix = "prp"

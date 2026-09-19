@@ -108,7 +108,11 @@ func (preparation *Preparation) Prepare(ctx context.Context, tx pg.Transaction, 
 
 		references = append(references, providerv1.EvidenceGrantReference{GrantID: grant.ID().String(), RedemptionID: redemptionID.String(), EvidenceID: evidenceID.String(), Purpose: plan.Binding.Purpose, Variant: target.variant, ExpiresAt: grant.Record().ExpiresAt})
 	}
-	request := providerv1.Request{Contract: plan.Manifest.Package.Contract, AttemptID: attemptID.String(), ProviderID: plan.Binding.Configuration.ProviderID, TenantID: scope.ID().String(), VerificationID: verificationID.String(), Check: definition.Name, IdempotencyKey: attemptID.String(), Adapter: plan.Manifest.Package, Capability: plan.Capability, Restrictions: plan.Manifest.Restrictions, Configuration: plan.Binding.Configuration, Deadline: deadline, Inputs: plan.Binding.Inputs, Evidence: references}
+	callbackReference, err := preparation.IDs.NewProviderCallback()
+	if err != nil {
+		return fail(err)
+	}
+	request := providerv1.Request{Contract: plan.Manifest.Package.Contract, AttemptID: attemptID.String(), ProviderID: plan.Binding.Configuration.ProviderID, TenantID: scope.ID().String(), VerificationID: verificationID.String(), Check: definition.Name, IdempotencyKey: attemptID.String(), CallbackReference: callbackReference.String(), Adapter: plan.Manifest.Package, Capability: plan.Capability, Restrictions: plan.Manifest.Restrictions, Configuration: plan.Binding.Configuration, Deadline: deadline, Inputs: plan.Binding.Inputs, Evidence: references}
 	digest, err := provider.RequestDigest(request)
 	if err != nil {
 		return fail(err)

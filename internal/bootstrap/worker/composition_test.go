@@ -2,12 +2,17 @@ package worker
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
+	"github.com/Mujhtech/idenqa/adapters/providers/dojah"
 	modelv1 "github.com/Mujhtech/idenqa/contracts/model/v1"
+	providerv1 "github.com/Mujhtech/idenqa/contracts/provider/v1"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	pg "github.com/Mujhtech/idenqa/internal/platform/postgres"
+	"github.com/Mujhtech/idenqa/internal/provider"
+	providerpostgres "github.com/Mujhtech/idenqa/internal/provider/postgres"
 	"github.com/Mujhtech/idenqa/internal/tenant"
 	"github.com/Mujhtech/idenqa/internal/verification"
 )
@@ -20,7 +25,7 @@ type routeFixture struct {
 func (r *routeFixture) CaptureRoute() (string, string, string) {
 	return "ten_01K4AR9V8FQ2G7ZXCPNM5T6JWH", r.policy, "profile"
 }
-func (r *routeFixture) Plan(verification.PlanInput) ([]verification.PlannedCheck, error) {
+func (r *routeFixture) Plan(context.Context, verification.PlanInput) ([]verification.PlannedCheck, error) {
 	return []verification.PlannedCheck{{Name: r.name, RunnerKind: verification.RunnerModel}}, nil
 }
 func (r *routeFixture) Prepare(context.Context, pg.Transaction, tenant.Scope, id.Verification, id.Check, id.Attempt, verification.PlannedCheck, time.Time, time.Time) (verification.Provenance, func(context.Context, verification.Check) error, error) {
@@ -41,7 +46,7 @@ func TestCompositionRejectsAmbiguousRoutes(t *testing.T) {
 			a := &routeFixture{name: "pad", policy: "pol_01K4AR9V8FQ2G7ZXCPNM5T6JWH", signal: "pad"}
 			b := &routeFixture{name: "match", policy: a.policy, signal: "match"}
 			tc.change(b)
-			if _, err := composeRoutes([]executionRoute{{a, a, []string{a.signal}}, {b, b, []string{b.signal}}}); err == nil {
+			if _, err := composeRoutes(t.Context(), []executionRoute{{planner: a, preparation: a, signals: []string{a.signal}}, {planner: b, preparation: b, signals: []string{b.signal}}}); err == nil {
 				t.Fatal("ambiguous composition accepted")
 			}
 		})
@@ -51,11 +56,11 @@ func TestCompositionDispatchesPreparationExactly(t *testing.T) {
 	t.Parallel()
 	a := &routeFixture{name: "pad", policy: "pol_01K4AR9V8FQ2G7ZXCPNM5T6JWH", signal: "pad"}
 	b := &routeFixture{name: "match", policy: a.policy, signal: "match"}
-	routes, err := composeRoutes([]executionRoute{{a, a, []string{a.signal}}, {b, b, []string{b.signal}}})
+	routes, err := composeRoutes(t.Context(), []executionRoute{{planner: a, preparation: a, signals: []string{a.signal}}, {planner: b, preparation: b, signals: []string{b.signal}}})
 	if err != nil {
 		t.Fatal(err)
 	}
-	plan, err := routes.Plan(verification.PlanInput{})
+	plan, err := routes.Plan(t.Context(), verification.PlanInput{})
 	if err != nil || len(plan) != 2 {
 		t.Fatal("checks dropped", err)
 	}
@@ -87,4 +92,112 @@ func TestModelDispatchRequiresExactConfiguration(t *testing.T) {
 	if _, err := executors.Execute(t.Context(), modelv1.Request{Configuration: second}); err == nil || b.calls != 1 {
 		t.Fatal("unknown configuration fell back")
 	}
+}
+
+type registrationSourceFixture struct {
+	registrations []provider.Registration
+	err           error
+}
+
+func (source registrationSourceFixture) Enabled(context.Context, id.Tenant, string, string) ([]provider.Registration, error) {
+	return source.registrations, source.err
+}
+
+func registrationFixture(providerID string) provider.Binding {
+	manifest := dojah.Description()
+	return provider.Binding{TenantID: "ten_01K4AR9V8FQ2G7ZXCPNM5T6JWH", PolicyID: "pol_01K4AR9V8FQ2G7ZXCPNM5T6JWH",
+		ProfileDigest: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", Requirement: "document",
+		Region: "africa", Purpose: "idenqa.purpose.identity_verification", Recipient: "tenant.recipient.primary",
+		Configuration: providerv1.ConfigurationReference{ProviderID: providerID, SchemaDigest: manifest.Configuration.Digest, SecretReference: "secret://provider/tenant", CredentialVersion: "v1"}}
+}
+
+func TestCompositionSelectsEnabledRegistrationThenFallsBack(t *testing.T) {
+	t.Parallel()
+	binding := registrationFixture("pvd_01K4AR9V8FQ2G7ZXCPNM5T6JWH")
+	manifest := dojah.Description()
+	deployment, err := provider.NewPlan(binding, manifest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	registration := provider.Registration{ID: "pvr_01K4AR9V8FQ2G7ZXCPNM5T6JWH", AdapterID: "dojah", Region: "africa", Enabled: true,
+		Configuration: providerv1.ConfigurationReference{ProviderID: "pvd_01K4AR9V8FQ2G7ZXCPNM5T6JWK", SchemaDigest: manifest.Configuration.Digest, SecretReference: "secret://provider/tenant/other", CredentialVersion: "v1"}}
+	source := registrationSourceFixture{registrations: []provider.Registration{registration}}
+	route := &registrationRoute{source: source, manifest: manifest, template: binding, deployment: deployment, preparation: &providerpostgres.Preparation{Plan: deployment}}
+	composed, err := composeRoutes(t.Context(), []executionRoute{{planner: deployment, preparation: preparationFixture{}, signals: deployment.OutputSignals(), registration: route}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	input := verification.PlanInput{TenantID: mustTenant(t, binding.TenantID), PolicyID: mustPolicy(t, binding.PolicyID), ProfileDigest: binding.ProfileDigest}
+	checks, err := composed.Plan(t.Context(), input)
+	if err != nil || len(checks) != 1 {
+		t.Fatalf("registered plan = %v, %v", checks, err)
+	}
+	registered, err := provider.NewRegisteredPlan(registration, binding, manifest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if checks[0].Provenance.RequestDigest != registered.ConfigurationDigest() || checks[0].Provenance.RequestDigest == deployment.ConfigurationDigest() {
+		t.Fatal("plan did not pin the registered configuration")
+	}
+	fallback, err := composeRoutes(t.Context(), []executionRoute{{planner: deployment, preparation: preparationFixture{}, signals: deployment.OutputSignals(),
+		registration: &registrationRoute{source: registrationSourceFixture{}, manifest: manifest, template: binding, deployment: deployment, preparation: &providerpostgres.Preparation{Plan: deployment}}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	checks, err = fallback.Plan(t.Context(), input)
+	if err != nil || len(checks) != 1 || checks[0].Provenance.RequestDigest != deployment.ConfigurationDigest() {
+		t.Fatalf("deployment fallback = %v, %v", checks, err)
+	}
+}
+
+func TestCompositionRegistrationPinnedDigestFailsClosed(t *testing.T) {
+	t.Parallel()
+	binding := registrationFixture("pvd_01K4AR9V8FQ2G7ZXCPNM5T6JWH")
+	manifest := dojah.Description()
+	deployment, err := provider.NewPlan(binding, manifest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	route := &registrationRoute{source: registrationSourceFixture{}, manifest: manifest, template: binding, deployment: deployment}
+	if _, _, err := route.selectPlan(t.Context(), mustScope(t, binding.TenantID), "deadbeef"); !errors.Is(err, verification.ErrPlanUnavailable) {
+		t.Fatalf("pinned digest fallback = %v", err)
+	}
+	sourceErr := errors.New("registration read failed")
+	failing := &registrationRoute{source: registrationSourceFixture{err: sourceErr}, manifest: manifest, template: binding, deployment: deployment}
+	if _, _, err := failing.selectPlan(t.Context(), mustScope(t, binding.TenantID), "deadbeef"); !errors.Is(err, sourceErr) {
+		t.Fatalf("source error = %v", err)
+	}
+}
+
+type preparationFixture struct{}
+
+func (preparationFixture) Prepare(context.Context, pg.Transaction, tenant.Scope, id.Verification, id.Check, id.Attempt, verification.PlannedCheck, time.Time, time.Time) (verification.Provenance, func(context.Context, verification.Check) error, error) {
+	return verification.Provenance{}, func(context.Context, verification.Check) error { return nil }, nil
+}
+
+func mustTenant(t *testing.T, value string) id.Tenant {
+	t.Helper()
+	parsed, err := id.ParseTenant(value)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return parsed
+}
+
+func mustPolicy(t *testing.T, value string) id.Policy {
+	t.Helper()
+	parsed, err := id.ParsePolicy(value)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return parsed
+}
+
+func mustScope(t *testing.T, value string) tenant.Scope {
+	t.Helper()
+	scope, err := tenant.NewScope(mustTenant(t, value))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return scope
 }

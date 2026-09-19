@@ -27,11 +27,12 @@ import (
 )
 
 type providerRuntime struct {
-	plan        *provider.Plan
-	requests    *providerpostgres.RequestStore
-	preparation *providerpostgres.Preparation
-	executor    providerv1.Executor
-	connection  *grpc.ClientConn
+	plan          *provider.Plan
+	requests      *providerpostgres.RequestStore
+	preparation   *providerpostgres.Preparation
+	executor      providerv1.Executor
+	registrations *providerpostgres.RegistrationStore
+	connection    *grpc.ClientConn
 }
 
 func configuredProvider(ctx context.Context, configuration config.Worker, pool *pg.Pool, ids *id.Generator, wrapper platformcrypto.KeyWrapper) (*providerRuntime, error) {
@@ -99,6 +100,10 @@ func configuredProvider(ctx context.Context, configuration config.Worker, pool *
 	if err != nil {
 		return nil, err
 	}
+	registrations, err := providerpostgres.NewRegistrationStore(pool, clock.System{})
+	if err != nil {
+		return nil, err
+	}
 	var executor providerv1.Executor
 	if settings.Adapter == "smileid" {
 		executor, err = provider.NewAsyncExecutor(requests, client, time.Now)
@@ -114,7 +119,7 @@ func configuredProvider(ctx context.Context, configuration config.Worker, pool *
 	}
 	preparation := &providerpostgres.Preparation{Plan: plan, Requests: requests, IDs: ids, Catalog: catalog, Clock: clock.System{}, Wrapper: wrapper}
 	accepted = true
-	return &providerRuntime{plan, requests, preparation, executor, connection}, nil
+	return &providerRuntime{plan, requests, preparation, executor, registrations, connection}, nil
 }
 
 // Protobuf repeated fields do not distinguish nil and empty slices.

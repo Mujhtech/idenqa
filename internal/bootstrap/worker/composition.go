@@ -6,29 +6,96 @@ import (
 	"time"
 
 	modelv1 "github.com/Mujhtech/idenqa/contracts/model/v1"
+	providerv1 "github.com/Mujhtech/idenqa/contracts/provider/v1"
 	"github.com/Mujhtech/idenqa/internal/model"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	pg "github.com/Mujhtech/idenqa/internal/platform/postgres"
+	"github.com/Mujhtech/idenqa/internal/provider"
+	providerpostgres "github.com/Mujhtech/idenqa/internal/provider/postgres"
 	"github.com/Mujhtech/idenqa/internal/tenant"
 	"github.com/Mujhtech/idenqa/internal/verification"
 	verificationpostgres "github.com/Mujhtech/idenqa/internal/verification/postgres"
 )
 
-type executionRoute struct {
-	planner     verification.CheckPlanner
-	preparation verificationpostgres.PlannedCheckPreparation
-	signals     []string
-}
-type composedRoutes struct {
-	routes                  []executionRoute
-	tenant, policy, profile string
-	preparations            map[string]verificationpostgres.PlannedCheckPreparation
-	kinds                   map[string]verification.RunnerKind
-	signals                 []string
+// RegistrationSource reads the enabled tenant provider registrations for one
+// adapter and region. It is owned by the consuming composition boundary and
+// implemented by the tenant-scoped registration store.
+type RegistrationSource interface {
+	Enabled(context.Context, id.Tenant, string, string) ([]provider.Registration, error)
 }
 
-func composeRoutes(routes []executionRoute) (*composedRoutes, error) {
-	result := &composedRoutes{routes: routes, preparations: map[string]verificationpostgres.PlannedCheckPreparation{}, kinds: map[string]verification.RunnerKind{}}
+// registrationRoute carries everything needed to re-derive the exact
+// tenant-selected provider plan without mutating shared composition state.
+// The registration list yields zero or one enabled row per (tenant, adapter,
+// region); no evidence or credential value ever enters this decision.
+type registrationRoute struct {
+	source      RegistrationSource
+	manifest    providerv1.Manifest
+	template    provider.Binding
+	deployment  *provider.Plan
+	preparation *providerpostgres.Preparation
+}
+
+// plan selects the tenant registration for the exact adapter and deployment
+// region. PlanInput carries tenant, policy and immutable profile only; the
+// adapter and region come from the candidate deployment route, which is the
+// strongest context the input proves. When no enabled registration matches,
+// the deployment route remains the fallback.
+func (route *registrationRoute) plan(ctx context.Context, input verification.PlanInput) (*provider.Plan, error) {
+	registrations, err := route.source.Enabled(ctx, input.TenantID, route.manifest.Package.AdapterID, route.template.Region)
+	if err != nil {
+		return nil, err
+	}
+	registration, ok := provider.Selected(registrations, route.manifest.Package.AdapterID, route.template.Region)
+	if !ok {
+		return nil, nil
+	}
+	plan, err := provider.NewRegisteredPlan(registration, route.template, route.manifest)
+	if err != nil {
+		// An enabled registration that cannot compose an exact plan must not be
+		// silently bypassed by a deployment fallback.
+		return nil, verification.ErrPlanUnavailable
+	}
+	return plan, nil
+}
+
+// selectPlan re-derives the plan that produced one already-pinned check
+// definition. The pinned configuration digest decides between the deployment
+// plan and the current enabled registration. A digest that matches neither
+// fails closed instead of switching provider meaning after planning.
+func (route *registrationRoute) selectPlan(ctx context.Context, scope tenant.Scope, pinned string) (*provider.Plan, bool, error) {
+	if pinned == route.deployment.ConfigurationDigest() {
+		return route.deployment, false, nil
+	}
+	plan, err := route.plan(ctx, verification.PlanInput{TenantID: scope.ID()})
+	if err != nil {
+		return nil, false, err
+	}
+	if plan == nil || plan.ConfigurationDigest() != pinned {
+		return nil, false, verification.ErrPlanUnavailable
+	}
+	return plan, true, nil
+}
+
+type executionRoute struct {
+	planner      verification.CheckPlanner
+	preparation  verificationpostgres.PlannedCheckPreparation
+	signals      []string
+	registration *registrationRoute
+}
+type composedRoutes struct {
+	routes        []executionRoute
+	tenant        string
+	policy        string
+	profile       string
+	preparations  map[string]verificationpostgres.PlannedCheckPreparation
+	registrations map[string]*registrationRoute
+	kinds         map[string]verification.RunnerKind
+	signals       []string
+}
+
+func composeRoutes(ctx context.Context, routes []executionRoute) (*composedRoutes, error) {
+	result := &composedRoutes{routes: routes, preparations: map[string]verificationpostgres.PlannedCheckPreparation{}, registrations: map[string]*registrationRoute{}, kinds: map[string]verification.RunnerKind{}}
 	if len(routes) == 0 || len(routes) > 9 {
 		return nil, verification.ErrPlanUnavailable
 	}
@@ -53,7 +120,7 @@ func composeRoutes(routes []executionRoute) (*composedRoutes, error) {
 		if err != nil {
 			return nil, err
 		}
-		checks, err := route.planner.Plan(verification.PlanInput{TenantID: tenantID, PolicyID: policyID, ProfileDigest: profile})
+		checks, err := route.planner.Plan(ctx, verification.PlanInput{TenantID: tenantID, PolicyID: policyID, ProfileDigest: profile})
 		if err != nil || len(checks) == 0 {
 			return nil, verification.ErrPlanUnavailable
 		}
@@ -62,6 +129,9 @@ func composeRoutes(routes []executionRoute) (*composedRoutes, error) {
 				return nil, verification.ErrPlanUnavailable
 			}
 			result.preparations[check.Name], result.kinds[check.Name] = route.preparation, check.RunnerKind
+			if route.registration != nil {
+				result.registrations[check.Name] = route.registration
+			}
 		}
 		for _, signal := range route.signals {
 			if seen[signal] {
@@ -76,10 +146,27 @@ func composeRoutes(routes []executionRoute) (*composedRoutes, error) {
 func (routes *composedRoutes) CaptureRoute() (string, string, string) {
 	return routes.tenant, routes.policy, routes.profile
 }
-func (routes *composedRoutes) Plan(input verification.PlanInput) ([]verification.PlannedCheck, error) {
+func (routes *composedRoutes) Plan(ctx context.Context, input verification.PlanInput) ([]verification.PlannedCheck, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	var result []verification.PlannedCheck
 	for _, route := range routes.routes {
-		checks, err := route.planner.Plan(input)
+		if route.registration != nil {
+			selected, err := route.registration.plan(ctx, input)
+			if err != nil {
+				return nil, err
+			}
+			if selected != nil {
+				checks, err := selected.Plan(ctx, input)
+				if err != nil {
+					return nil, err
+				}
+				result = append(result, checks...)
+				continue
+			}
+		}
+		checks, err := route.planner.Plan(ctx, input)
 		if err != nil {
 			return nil, err
 		}
@@ -91,6 +178,17 @@ func (routes *composedRoutes) Prepare(ctx context.Context, tx pg.Transaction, sc
 	preparation := routes.preparations[definition.Name]
 	if preparation == nil || routes.kinds[definition.Name] != definition.RunnerKind {
 		return verification.Provenance{}, nil, verification.ErrPlanUnavailable
+	}
+	if registration := routes.registrations[definition.Name]; registration != nil {
+		selected, chosen, err := registration.selectPlan(ctx, scope, definition.Provenance.Configuration)
+		if err != nil {
+			return verification.Provenance{}, nil, err
+		}
+		if chosen {
+			bound := *registration.preparation
+			bound.Plan = selected
+			return bound.Prepare(ctx, tx, scope, verificationID, checkID, attemptID, definition, now, deadline)
+		}
 	}
 	return preparation.Prepare(ctx, tx, scope, verificationID, checkID, attemptID, definition, now, deadline)
 }

@@ -18,6 +18,8 @@ service ProviderRunnerService {
   rpc Execute(ProviderRunnerServiceExecuteRequest) returns (ProviderRunnerServiceExecuteResponse);
   // Advance submits once or queries status without reusing evidence.
   rpc Advance(ProviderRunnerServiceAdvanceRequest) returns (ProviderRunnerServiceAdvanceResponse);
+  // VerifyProviderCallback authenticates one bounded raw provider callback.
+  rpc VerifyProviderCallback(ProviderRunnerServiceVerifyProviderCallbackRequest) returns (ProviderRunnerServiceVerifyProviderCallbackResponse);
   // Health returns a bounded, non-sensitive readiness classification.
   rpc Health(ProviderRunnerServiceHealthRequest) returns (ProviderRunnerServiceHealthResponse);
 }
@@ -260,6 +262,7 @@ message ProviderRequest {
   google.protobuf.Timestamp deadline = 13 [(buf.validate.field).required = true];
   TraceContext trace = 14 [(buf.validate.field).required = true];
   repeated ProviderInputReference inputs = 15 [(buf.validate.field).repeated.max_items = 32];
+  string callback_reference = 16 [(buf.validate.field).string.pattern = "^$|^pcb_[0-9A-HJKMNP-TV-Z]{26}$"];
 }
 
 // ProviderResult is the bounded terminal provider result.
@@ -351,4 +354,34 @@ message ProviderRunnerServiceAdvanceRequest {
 message ProviderRunnerServiceAdvanceResponse {
  string provider_job_id = 1 [(buf.validate.field).string.max_len = 128];
  ProviderResult result = 2;
+}
+
+// ProviderCallbackHeader is one bounded raw provider callback header.
+message ProviderCallbackHeader {
+  string name = 1 [(buf.validate.field).string = {min_len: 1, max_len: 128}];
+  string value = 2 [(buf.validate.field).string = {min_len: 1, max_len: 1024}];
+}
+
+// ProviderCallback is one bounded raw callback presented for adapter verification.
+message ProviderCallback {
+  string method = 1 [(buf.validate.field).string = {min_len: 1, max_len: 16}];
+  repeated ProviderCallbackHeader headers = 2 [(buf.validate.field).repeated.max_items = 64];
+  string body = 3 [(buf.validate.field).string = {min_len: 1, max_len: 65536}];
+}
+
+// ProviderRunnerServiceVerifyProviderCallbackRequest carries the persisted
+// attempt reference and its bounded raw callback.
+message ProviderRunnerServiceVerifyProviderCallbackRequest {
+  ProviderRequest request = 1 [(buf.validate.field).required = true];
+  ProviderCallback callback = 2 [(buf.validate.field).required = true];
+}
+
+// ProviderRunnerServiceVerifyProviderCallbackResponse returns verified
+// pending or terminal progress, or a bounded rejection code. Raw provider
+// payloads are never returned.
+message ProviderRunnerServiceVerifyProviderCallbackResponse {
+  string provider_job_id = 1 [(buf.validate.field).string.max_len = 128];
+  string replay_id = 2 [(buf.validate.field).string = {max_len: 200, pattern: "^$|^[A-Za-z0-9_.:-]{1,200}$"}];
+  ProviderResult result = 3;
+  string rejection_code = 4 [(buf.validate.field).string.max_len = 64];
 }
