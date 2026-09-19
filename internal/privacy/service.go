@@ -20,6 +20,8 @@ const (
 	PermissionRequestDeletion Permission = "deletions:request"
 	// PermissionRunDeletion permits deletion execution and retry.
 	PermissionRunDeletion Permission = "deletions:run"
+	// PermissionReadDeletion permits tenant-scoped deletion and retention inspection.
+	PermissionReadDeletion Permission = "deletions:read"
 	// PermissionManageHold permits legal-hold creation and release.
 	PermissionManageHold Permission = "legal_holds:manage"
 )
@@ -56,6 +58,14 @@ type Repository interface {
 // transition repository used by request paths.
 type SchedulerRepository interface {
 	Due(context.Context, tenant.Scope, time.Time, int) ([]id.Deletion, error)
+}
+
+// ReadRepository supplies bounded tenant-scoped lifecycle inspection reads.
+// Deletions are ascending by identifier; a non-empty aggregate filter and
+// position are exact.
+type ReadRepository interface {
+	ListDeletions(context.Context, tenant.Scope, string, string, int) ([]Deletion, error)
+	RetainedRecords(context.Context, tenant.Scope, string) ([]RetentionRecord, error)
 }
 
 // HoldRepository owns legal-hold administration transitions.
@@ -265,6 +275,87 @@ func (service *Service) RunDue(ctx context.Context, scope tenant.Scope, actor Ac
 		}
 	}
 	return results, failures
+}
+
+// FindDeletion loads one tenant-scoped deletion workflow.
+func (service *Service) FindDeletion(ctx context.Context, scope tenant.Scope, actor Actor, identifier id.Deletion) (Deletion, error) {
+	if !actor.permits(PermissionReadDeletion) || identifier.IsZero() {
+		return Deletion{}, ErrConflict
+	}
+	return service.repository.Find(ctx, scope, identifier)
+}
+
+// DeletionStatus projects one deletion with exact target states and active holds.
+func (service *Service) DeletionStatus(ctx context.Context, scope tenant.Scope, actor Actor, identifier id.Deletion) (DeletionStatus, error) {
+	if !actor.permits(PermissionReadDeletion) || identifier.IsZero() {
+		return DeletionStatus{}, ErrConflict
+	}
+	deletion, err := service.repository.Find(ctx, scope, identifier)
+	if err != nil {
+		return DeletionStatus{}, err
+	}
+	holds, err := service.repository.ActiveHolds(ctx, scope, deletion.AggregateID, service.now().UTC())
+	if err != nil {
+		return DeletionStatus{}, err
+	}
+	return deletion.Status(holds), nil
+}
+
+// ListDeletions returns one bounded ascending page, optionally filtered by
+// exact aggregate. A non-empty position is the previous page's last identifier.
+func (service *Service) ListDeletions(ctx context.Context, scope tenant.Scope, actor Actor, aggregateID, position string, limit int) (DeletionPage, error) {
+	if !actor.permits(PermissionReadDeletion) || limit < 1 || limit > 100 ||
+		(aggregateID != "" && !token(aggregateID, 200)) || (position != "" && !token(position, 64)) {
+		return DeletionPage{}, ErrConflict
+	}
+	repository, ok := service.repository.(ReadRepository)
+	if !ok {
+		return DeletionPage{}, ErrInvalid
+	}
+	deletions, err := repository.ListDeletions(ctx, scope, aggregateID, position, limit+1)
+	if err != nil {
+		return DeletionPage{}, err
+	}
+	page := DeletionPage{HasMore: len(deletions) > limit}
+	if page.HasMore {
+		deletions = deletions[:limit]
+	}
+	if deletions == nil {
+		deletions = []Deletion{}
+	}
+	return DeletionPage{Deletions: deletions, HasMore: page.HasMore}, nil
+}
+
+// ResolveRetention recomputes typed retention meaning read-only for each
+// retained evidence object of one aggregate and includes active holds. It
+// never trusts denormalised deadlines over privacy.Resolve.
+func (service *Service) ResolveRetention(ctx context.Context, scope tenant.Scope, actor Actor, aggregateID string) (RetentionResolution, error) {
+	if !actor.permits(PermissionReadDeletion) || !token(aggregateID, 200) {
+		return RetentionResolution{}, ErrConflict
+	}
+	repository, ok := service.repository.(ReadRepository)
+	if !ok {
+		return RetentionResolution{}, ErrInvalid
+	}
+	records, err := repository.RetainedRecords(ctx, scope, aggregateID)
+	if err != nil {
+		return RetentionResolution{}, err
+	}
+	holds, err := service.repository.ActiveHolds(ctx, scope, aggregateID, service.now().UTC())
+	if err != nil {
+		return RetentionResolution{}, err
+	}
+	resolution := RetentionResolution{AggregateID: aggregateID, Records: make([]RetentionDeadline, 0, len(records)), Holds: append([]Hold(nil), holds...)}
+	for _, record := range records {
+		resolved, resolveErr := Resolve(record.Class, record.Region, record.CreatedAt.UTC(), record.Requested, 0, nil)
+		if resolveErr != nil {
+			// A pinned binding that cannot be reproduced is a state conflict,
+			// never a missing resource or a silently different deadline.
+			return RetentionResolution{}, fmt.Errorf("%w: retention resolution for %s", ErrConflict, record.ID)
+		}
+		resolution.Records = append(resolution.Records, RetentionDeadline{ID: record.ID, Class: resolved.Class, Region: resolved.Region, Duration: resolved.Duration, ExpiresAt: resolved.ExpiresAt})
+	}
+	return resolution, nil
 }
 
 // CreateHold creates an auditable hold without granting evidence access.

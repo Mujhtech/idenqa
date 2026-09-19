@@ -17,6 +17,7 @@ import (
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/platform/telemetry"
 	"github.com/Mujhtech/idenqa/internal/tenant"
+	"github.com/Mujhtech/idenqa/internal/tenantexport"
 	"github.com/Mujhtech/idenqa/internal/transport/httpapi"
 	"github.com/go-chi/chi/v5"
 )
@@ -247,7 +248,7 @@ func newTestHTTPComponents(t *testing.T) (httpapi.Dependencies, *httpapi.TenantR
 	if err != nil {
 		t.Fatalf("NewAccessMiddleware() error = %v", err)
 	}
-	tenantRoutes, err := httpapi.NewTenantRoutes(accessMiddleware, stubTenantReader{}, logger)
+	tenantRoutes, err := httpapi.NewTenantRoutes(accessMiddleware, stubTenantReader{}, stubTenantExporter{}, logger)
 	if err != nil {
 		t.Fatalf("NewTenantRoutes() error = %v", err)
 	}
@@ -265,6 +266,12 @@ type stubAuthenticator struct{}
 
 func (stubAuthenticator) Authenticate(context.Context, string) (access.Context, error) {
 	return access.Context{}, access.ErrInvalidCredential
+}
+
+type stubTenantExporter struct{}
+
+func (stubTenantExporter) Export(context.Context, tenantexport.Authority, []tenantexport.Collection, func([]byte) error) error {
+	return nil
 }
 
 type stubTenantReader struct{}

@@ -66,7 +66,7 @@ func connectionDeadlines(
 ) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-			if isWebSocketUpgrade(request) {
+			if isLongLivedRequest(request) {
 				next.ServeHTTP(writer, request)
 
 				return
@@ -127,7 +127,7 @@ func defaultDeadline(
 ) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-			if isWebSocketUpgrade(request) {
+			if isLongLivedRequest(request) {
 				next.ServeHTTP(writer, request)
 
 				return
@@ -189,6 +189,12 @@ func isEvidenceUploadBodyRequest(request *http.Request) bool {
 	_, err := id.ParseUpload(rawID)
 
 	return err == nil
+}
+
+// isLongLivedRequest exempts transports that own their own bounded deadline,
+// write window, heartbeats, or size guard from the ordinary request timeout.
+func isLongLivedRequest(request *http.Request) bool {
+	return isWebSocketUpgrade(request) || isEventStreamRequest(request) || isTenantExportRequest(request)
 }
 
 func isWebSocketUpgrade(request *http.Request) bool {

@@ -44,11 +44,15 @@ import (
 	privacypostgres "github.com/Mujhtech/idenqa/internal/privacy/postgres"
 	"github.com/Mujhtech/idenqa/internal/proposal"
 	proposalpostgres "github.com/Mujhtech/idenqa/internal/proposal/postgres"
+	"github.com/Mujhtech/idenqa/internal/provider"
+	providerpostgres "github.com/Mujhtech/idenqa/internal/provider/postgres"
 	"github.com/Mujhtech/idenqa/internal/realtime"
 	realtimepostgres "github.com/Mujhtech/idenqa/internal/realtime/postgres"
 	"github.com/Mujhtech/idenqa/internal/review"
 	reviewpostgres "github.com/Mujhtech/idenqa/internal/review/postgres"
 	tenantpostgres "github.com/Mujhtech/idenqa/internal/tenant/postgres"
+	"github.com/Mujhtech/idenqa/internal/tenantexport"
+	tenantexportpostgres "github.com/Mujhtech/idenqa/internal/tenantexport/postgres"
 	"github.com/Mujhtech/idenqa/internal/transport/httpapi"
 	transportrealtime "github.com/Mujhtech/idenqa/internal/transport/realtime"
 	"github.com/Mujhtech/idenqa/internal/verification"
@@ -112,6 +116,8 @@ type Process struct {
 	telemetry        shutdowner
 	realtime         connectionDrainer
 	wakeups          closer
+	webhookWakeups   closer
+	providerRunner   closer
 	evidence         EvidenceLifecycle
 	database         database
 	databaseInterval time.Duration
@@ -169,6 +175,8 @@ func newProcess(
 ) (*Process, error) {
 	constructed := false
 	var wakeupHub *realtimepostgres.WakeupHub
+	var webhookWakeupHub *deliverypostgres.WakeupHub
+	var providerRunner closer
 	defer func() {
 		if !constructed && infrastructure.enabled() {
 			_ = infrastructure.lifecycle.Shutdown(context.Background())
@@ -177,6 +185,16 @@ func newProcess(
 	defer func() {
 		if !constructed && wakeupHub != nil {
 			wakeupHub.Close()
+		}
+	}()
+	defer func() {
+		if !constructed && webhookWakeupHub != nil {
+			webhookWakeupHub.Close()
+		}
+	}()
+	defer func() {
+		if !constructed && providerRunner != nil {
+			providerRunner.Close()
 		}
 	}()
 	if err := configuration.ValidateRealtimeBootstrap(); err != nil {
@@ -304,19 +322,54 @@ func newProcess(
 
 		return nil, fmt.Errorf("construct tenant reader: %w", err)
 	}
-	tenantRoutes, err := httpapi.NewTenantRoutes(accessMiddleware, tenantReader, logger)
-	if err != nil {
-		_ = providers.Shutdown(context.Background())
-		connectionPool.Close()
-
-		return nil, fmt.Errorf("construct tenant routes: %w", err)
-	}
 	policyStore, err := policypostgres.New(connectionPool, infrastructure.keys)
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
 		connectionPool.Close()
 
 		return nil, fmt.Errorf("construct policy decision persistence: %w", err)
+	}
+	tenantExportStore, err := tenantexportpostgres.New(connectionPool, policyStore)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+
+		return nil, fmt.Errorf("construct tenant export persistence: %w", err)
+	}
+	tenantExporter, err := tenantexport.NewExporter(tenantexport.Sources{
+		Tenant:                  tenantExportStore,
+		CaptureProfiles:         tenantExportStore,
+		Policies:                tenantExportStore,
+		PolicyRevisions:         tenantExportStore,
+		PolicyActivations:       tenantExportStore,
+		Verifications:           tenantExportStore,
+		VerificationTransitions: tenantExportStore,
+		VerificationChecks:      tenantExportStore,
+		VerificationAttempts:    tenantExportStore,
+		Decisions:               tenantExportStore,
+		AuditRecords:            tenantExportStore,
+		WebhookEndpoints:        tenantExportStore,
+		ReviewCases:             tenantExportStore,
+		ReviewFindings:          tenantExportStore,
+		IdentitySubjects:        tenantExportStore,
+		IdentityRecords:         tenantExportStore,
+		EvidenceAssets:          tenantExportStore,
+		FraudConfiguration:      tenantExportStore,
+		PrivacyDeletions:        tenantExportStore,
+		PrivacyHolds:            tenantExportStore,
+	}, nil)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+
+		return nil, fmt.Errorf("construct tenant exporter: %w", err)
+	}
+	tenantRoutes, err := httpapi.NewTenantRoutes(accessMiddleware, tenantReader, tenantExporter, logger)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+
+		return nil, fmt.Errorf("construct tenant routes: %w", err)
 	}
 	decisionReader, err := policy.NewReader(policyStore)
 	if err != nil {
@@ -520,6 +573,8 @@ func newProcess(
 		captureMiddleware,
 		sessionService,
 		catalog,
+		decisionReader,
+		reviewService,
 		logger,
 	)
 	if err != nil {
@@ -769,6 +824,24 @@ func newProcess(
 		connectionPool.Close()
 		return nil, err
 	}
+	registrationStore, err := providerpostgres.NewRegistrationStore(connectionPool, clock.System{})
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, fmt.Errorf("construct provider registration persistence: %w", err)
+	}
+	registrationService, err := provider.NewRegistrationManagement(registrationStore, identifiers, time.Now, configuration.VerificationIdempotencyTTL, configuredProviderManifests(configuration))
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, fmt.Errorf("construct provider registration service: %w", err)
+	}
+	providerRegistrationRoutes, err := httpapi.NewProviderRoutes(accessMiddleware, registrationService, cursorCodec, logger)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, fmt.Errorf("construct provider registration routes: %w", err)
+	}
 	policyManagementStore, err := policypostgres.NewManagementStore(connectionPool, infrastructure.keys, time.Now)
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
@@ -782,6 +855,24 @@ func newProcess(
 		return nil, err
 	}
 	policyRoutes, err := httpapi.NewPolicyRoutes(accessMiddleware, policyManagement, cursorCodec, logger)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, err
+	}
+	policySimulator, err := policy.NewSimulator(policycel.Compiler{})
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, err
+	}
+	policyScenarioSuite, err := policy.NewScenarioSuite(policySimulator)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, err
+	}
+	policySimulationRoutes, err := httpapi.NewPolicySimulationRoutes(accessMiddleware, policyManagement, policySimulator, policyScenarioSuite, logger)
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
 		connectionPool.Close()
@@ -817,7 +908,31 @@ func newProcess(
 		connectionPool.Close()
 		return nil, err
 	}
-	webhookRoutes, err := httpapi.NewWebhookRoutes(accessMiddleware, webhookService, cursorCodec, logger)
+	webhookStream, err := delivery.NewStream(webhookStore, infrastructure.keys)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, err
+	}
+	if source, ok := connectionPool.(notificationDatabase); ok {
+		listener, listenErr := source.OpenNotificationListener(ctx, deliverypostgres.WebhookEventChannel)
+		if listenErr != nil {
+			logger.WarnContext(ctx, "webhook event notification listener unavailable; using durable polling")
+		} else {
+			webhookWakeupHub, err = deliverypostgres.NewWakeupHub(listener)
+			if err != nil {
+				listener.Close()
+				_ = providers.Shutdown(context.Background())
+				connectionPool.Close()
+				return nil, fmt.Errorf("construct webhook event wakeup hub: %w", err)
+			}
+		}
+	}
+	var webhookWakeups httpapi.WebhookEventWakeups
+	if webhookWakeupHub != nil {
+		webhookWakeups = webhookWakeupHub
+	}
+	webhookRoutes, err := httpapi.NewWebhookRoutes(accessMiddleware, webhookService, webhookStream, webhookWakeups, cursorCodec, logger)
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
 		connectionPool.Close()
@@ -904,7 +1019,7 @@ func newProcess(
 	}
 
 	routes := []RouteRegistrar{
-		assuranceRoutes, identityRoutes, fraudRoutes, followupRoutes, reviewManagementRoutes, proposalRoutes, tenantRoutes, modelRoutes, policyRoutes, webhookRoutes, decisionRoutes, reviewRoutes, profileRoutes, verificationRoutes, captureOutcomeRoutes, cancellationRoutes, authorityRoutes, connectionRoutes, realtimeRoutes,
+		assuranceRoutes, identityRoutes, fraudRoutes, followupRoutes, reviewManagementRoutes, proposalRoutes, tenantRoutes, modelRoutes, policyRoutes, policySimulationRoutes, webhookRoutes, decisionRoutes, reviewRoutes, profileRoutes, verificationRoutes, captureOutcomeRoutes, cancellationRoutes, authorityRoutes, connectionRoutes, realtimeRoutes, providerRegistrationRoutes,
 	}
 	internalRoutes := []InternalRouteRegistrar{}
 	if nativeBootstrapRoutes != nil {
@@ -990,7 +1105,7 @@ func newProcess(
 			connectionPool.Close()
 			return nil, fmt.Errorf("construct privacy service: %w", err)
 		}
-		privacyRoutes, err := httpapi.NewPrivacyRoutes(accessMiddleware, privacyService, logger)
+		privacyRoutes, err := httpapi.NewPrivacyRoutes(accessMiddleware, privacyService, cursorCodec, logger)
 		if err != nil {
 			_ = providers.Shutdown(context.Background())
 			connectionPool.Close()
@@ -1086,6 +1201,14 @@ func newProcess(
 			connectionPool.Close()
 			return nil, err
 		}
+		callbackRoutes, callbackRunner, err := newProviderCallbackRoutes(configuration, connectionPool, identifiers, logger)
+		if err != nil {
+			_ = providers.Shutdown(context.Background())
+			connectionPool.Close()
+			return nil, err
+		}
+		routes = append(routes, callbackRoutes)
+		providerRunner = callbackRunner
 		internalRoutes = append(internalRoutes, providerRoutes)
 	}
 	if configuration.ModelRuntimeFile != "" {
@@ -1136,6 +1259,8 @@ func newProcess(
 		telemetry:        providers,
 		realtime:         connectionLifecycle,
 		wakeups:          wakeupHub,
+		webhookWakeups:   webhookWakeupHub,
+		providerRunner:   providerRunner,
 		evidence:         infrastructure.lifecycle,
 		database:         connectionPool,
 		databaseInterval: configuration.DatabaseHealthInterval,
@@ -1263,6 +1388,12 @@ func (process *Process) Run(ctx context.Context) (runErr error) {
 		if process.database != nil {
 			if process.wakeups != nil {
 				process.wakeups.Close()
+			}
+			if process.webhookWakeups != nil {
+				process.webhookWakeups.Close()
+			}
+			if process.providerRunner != nil {
+				process.providerRunner.Close()
 			}
 			process.database.Close()
 		}

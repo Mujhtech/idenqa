@@ -58,6 +58,7 @@ type Process struct {
 	deliveryLifecycle      EvidenceLifecycle
 	deliveryCoordinator    *deliverytask.Coordinator
 	fanoutCoordinator      *deliverytask.FanoutCoordinator
+	webhookRetention       *deliverypostgres.Store
 	expiryCoordinator      *verificationtask.ExpiryCoordinator
 	logger                 *slog.Logger
 	workerID               string
@@ -189,13 +190,18 @@ func NewProcessWithInfrastructure(ctx context.Context, configuration config.Work
 	}
 	routes := []executionRoute{}
 	if realProvider != nil {
-		routes = append(routes, executionRoute{realProvider.plan, realProvider.preparation, realProvider.plan.OutputSignals()})
+		route := executionRoute{planner: realProvider.plan, preparation: realProvider.preparation, signals: realProvider.plan.OutputSignals()}
+		if realProvider.registrations != nil {
+			route.registration = &registrationRoute{source: realProvider.registrations, manifest: realProvider.plan.Manifest,
+				template: realProvider.plan.Binding, deployment: realProvider.plan, preparation: realProvider.preparation}
+		}
+		routes = append(routes, route)
 	}
 	if realModel != nil {
-		routes = append(routes, executionRoute{realModel.plan, realModel.preparation, realModel.signals})
+		routes = append(routes, executionRoute{planner: realModel.plan, preparation: realModel.preparation, signals: realModel.signals})
 	}
 	if len(routes) > 0 {
-		combined, composeErr := composeRoutes(routes)
+		combined, composeErr := composeRoutes(ctx, routes)
 		if composeErr != nil {
 			connectionPool.Close()
 			return nil, composeErr
@@ -256,6 +262,24 @@ func NewProcessWithInfrastructure(ctx context.Context, configuration config.Work
 			connectionPool.Close()
 			return nil, err
 		}
+	}
+	lifecycleStore, err := verificationpostgres.NewLifecycleStore(connectionPool, deliveryInfrastructure.wrapper, clock.System{})
+	if err != nil {
+		connectionPool.Close()
+		return nil, fmt.Errorf("construct verification lifecycle store: %w", err)
+	}
+	externalWait, err := verificationpostgres.NewExternalWaitStore(connectionPool, lifecycleStore, identifiers, clock.System{})
+	if err != nil {
+		connectionPool.Close()
+		return nil, fmt.Errorf("construct verification external wait store: %w", err)
+	}
+	if err := executeHandler.WithExternalWait(externalWait); err != nil {
+		connectionPool.Close()
+		return nil, fmt.Errorf("configure verification external wait: %w", err)
+	}
+	if err := executeHandler.WithSemanticRetries(identifiers, adapter); err != nil {
+		connectionPool.Close()
+		return nil, fmt.Errorf("configure verification semantic retries: %w", err)
 	}
 	if err := registry.Register(verificationtask.ExecuteKey, executeHandler); err != nil {
 		connectionPool.Close()
@@ -389,6 +413,7 @@ func NewProcessWithInfrastructure(ctx context.Context, configuration config.Work
 	}
 	var deliveryCoordinator *deliverytask.Coordinator
 	var fanoutCoordinator *deliverytask.FanoutCoordinator
+	var webhookRetention *deliverypostgres.Store
 	if deliveryInfrastructure.enabled() {
 		store, err := deliverypostgres.New(connectionPool)
 		if err != nil {
@@ -423,6 +448,7 @@ func NewProcessWithInfrastructure(ctx context.Context, configuration config.Work
 			connectionPool.Close()
 			return nil, err
 		}
+		webhookRetention = store
 	}
 	var privacyCoordinator *privacytask.Coordinator
 	if infrastructure.enabled() {
@@ -548,6 +574,7 @@ func NewProcessWithInfrastructure(ctx context.Context, configuration config.Work
 	process := &Process{providerConnection: providerConnection,
 		deliveryCoordinator: deliveryCoordinator,
 		fanoutCoordinator:   fanoutCoordinator,
+		webhookRetention:    webhookRetention,
 		expiryCoordinator:   expiryCoordinator,
 		processing:          processing, processingBatch: configuration.ReconciliationBatchSize,
 		identity: identityStore, fraud: fraudStore, reviewWorker: reviewWorker, worker: backgroundWorker, coordinator: coordinator, policyCoordinator: policyCoordinator, privacyCoordinator: privacyCoordinator, duties: adapter,
@@ -610,6 +637,7 @@ func (process *Process) runCoordination(ctx context.Context) {
 	process.scheduleReconciliations(ctx)
 	process.schedulePolicyAuthorships(ctx)
 	process.schedulePrivacyDeletions(ctx)
+	process.expireWebhookData(ctx)
 	process.projectPendingProgress(ctx)
 	for {
 		select {
@@ -618,6 +646,7 @@ func (process *Process) runCoordination(ctx context.Context) {
 		case <-reconciliationTicker.C:
 			process.scheduleReconciliations(ctx)
 			process.schedulePrivacyDeletions(ctx)
+			process.expireWebhookData(ctx)
 		case <-progressTicker.C:
 			process.scheduleExpirations(ctx)
 			process.scheduleWebhookDeliveries(ctx)
@@ -632,6 +661,26 @@ func (process *Process) runCoordination(ctx context.Context) {
 				process.logger.DebugContext(ctx, "projected notified verification progress", "count", projected)
 			}
 		}
+	}
+}
+
+func (process *Process) expireWebhookData(ctx context.Context) {
+	if process.webhookRetention == nil {
+		return
+	}
+	lease := min(2*process.reconciliationInterval, 2*time.Hour)
+	claimed, err := process.duties.RunDuty(ctx, taskheadgate.DutyWebhookRetention, process.workerID, lease, func(ctx context.Context) error {
+		result, err := process.webhookRetention.ExpireWebhookData(ctx, time.Now().UTC().Truncate(time.Microsecond), 500)
+		if err == nil && (result.PayloadsExpired > 0 || result.TombstonesPurged > 0) {
+			process.logger.InfoContext(ctx, "expired webhook retention data",
+				"payloads", result.PayloadsExpired, "attempts", result.AttemptsExpired, "tombstones", result.TombstonesPurged)
+		}
+		return err
+	})
+	if err != nil && !errors.Is(err, context.Canceled) {
+		process.logger.ErrorContext(ctx, "expire webhook retention data", "error", err)
+	} else if claimed {
+		process.logger.DebugContext(ctx, "completed webhook retention duty")
 	}
 }
 

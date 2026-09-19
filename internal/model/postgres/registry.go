@@ -39,11 +39,11 @@ func NewRegistryStore(pool registryTransaction, now func() time.Time) (*Registry
 	return &RegistryStore{pool, now}, nil
 }
 
-func (store *RegistryStore) scoped(ctx context.Context, scope tenant.Scope, readOnly bool, work func(context.Context, pg.Transaction) error) error {
+func (store *RegistryStore) readScoped(ctx context.Context, scope tenant.Scope, work func(context.Context, pg.Transaction) error) error {
 	if scope.ID().IsZero() {
 		return model.ErrRegistryInvalid
 	}
-	return store.pool.WithinTransaction(ctx, pg.TransactionOptions{ReadOnly: readOnly}, func(ctx context.Context, tx pg.Transaction) error {
+	return store.pool.WithinTransaction(ctx, pg.TransactionOptions{ReadOnly: true}, func(ctx context.Context, tx pg.Transaction) error {
 		if _, err := sqlgen.New(tx).SetTenantScope(ctx, scope.ID().String()); err != nil {
 			return err
 		}
@@ -54,7 +54,7 @@ func (store *RegistryStore) scoped(ctx context.Context, scope tenant.Scope, read
 // Get reads the current pointer without changing immutable execution meaning.
 func (store *RegistryStore) Get(ctx context.Context, scope tenant.Scope, name string) (model.RegistryState, error) {
 	var result model.RegistryState
-	err := store.scoped(ctx, scope, true, func(ctx context.Context, tx pg.Transaction) error {
+	err := store.readScoped(ctx, scope, func(ctx context.Context, tx pg.Transaction) error {
 		var err error
 		result, err = readRegistry(ctx, tx, scope, name, false)
 		return err
@@ -82,7 +82,7 @@ func readRegistry(ctx context.Context, tx pg.Transaction, scope tenant.Scope, na
 // Revision retrieves and verifies an immutable canonical content digest.
 func (store *RegistryStore) Revision(ctx context.Context, scope tenant.Scope, name, kind string, number int64) (model.RegistryRevision, error) {
 	var result model.RegistryRevision
-	err := store.scoped(ctx, scope, true, func(ctx context.Context, tx pg.Transaction) error {
+	err := store.readScoped(ctx, scope, func(ctx context.Context, tx pg.Transaction) error {
 		var err error
 		result, err = readRegistryRevision(ctx, tx, scope, name, kind, number)
 		return err
@@ -124,7 +124,7 @@ func (store *RegistryStore) History(ctx context.Context, scope tenant.Scope, nam
 		return nil, model.ErrRegistryInvalid
 	}
 	result := []model.RegistryReceipt{}
-	err := store.scoped(ctx, scope, true, func(ctx context.Context, tx pg.Transaction) error {
+	err := store.readScoped(ctx, scope, func(ctx context.Context, tx pg.Transaction) error {
 		rows, err := tx.Query(ctx, `SELECT receipt FROM idenqa.model_registry_history WHERE tenant_id=$1 AND name=$2 AND ($3::bigint=0 OR version<$3) ORDER BY version DESC LIMIT $4`, scope.ID().String(), name, before, limit)
 		if err != nil {
 			return err
@@ -144,6 +144,29 @@ func (store *RegistryStore) History(ctx context.Context, scope tenant.Scope, nam
 		return rows.Err()
 	})
 	return result, err
+}
+
+// RollbackEligible reports whether the exact deployment was ever activated for one tenant model.
+func (store *RegistryStore) RollbackEligible(ctx context.Context, scope tenant.Scope, name string, deployment model.Deployment) (bool, error) {
+	var result bool
+	err := store.readScoped(ctx, scope, func(ctx context.Context, tx pg.Transaction) error {
+		var err error
+		result, err = readRollbackEligible(ctx, tx, scope, name, deployment)
+		return err
+	})
+	return result, err
+}
+
+func readRollbackEligible(ctx context.Context, tx pg.Transaction, scope tenant.Scope, name string, deployment model.Deployment) (bool, error) {
+	raw, err := json.Marshal(deployment)
+	if err != nil {
+		return false, err
+	}
+	var exists bool
+	if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM idenqa.model_registry_history WHERE tenant_id=$1 AND name=$2 AND receipt->>'operation' IN ('activate','rollback') AND receipt->'state'->'active'=$3::jsonb)`, scope.ID().String(), name, raw).Scan(&exists); err != nil {
+		return false, err
+	}
+	return exists, nil
 }
 
 // Apply reserves idempotency before locking the root; audit, outbox and history share COMMIT.
@@ -292,15 +315,11 @@ func applyRegistry(ctx context.Context, tx pg.Transaction, scope tenant.Scope, c
 			return err
 		}
 		if command.Operation == "rollback" {
-			raw, err := json.Marshal(deployment)
+			eligible, err := readRollbackEligible(ctx, tx, scope, command.Name, deployment)
 			if err != nil {
 				return err
 			}
-			var exists bool
-			if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM idenqa.model_registry_history WHERE tenant_id=$1 AND name=$2 AND receipt->>'operation' IN ('activate','rollback') AND receipt->'state'->'active'=$3::jsonb)`, scope.ID().String(), command.Name, raw).Scan(&exists); err != nil {
-				return err
-			}
-			if !exists {
+			if !eligible {
 				return model.ErrRegistryConflict
 			}
 		}

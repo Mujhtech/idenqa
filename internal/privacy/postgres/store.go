@@ -86,51 +86,177 @@ func (store *Store) Find(ctx context.Context, scope tenant.Scope, identifier id.
 		if err := setScope(ctx, tx, scope); err != nil {
 			return err
 		}
-		var state string
-		var failure *string
-		var backupSeconds int64
-		err := tx.QueryRow(ctx, `SELECT aggregate_id,region,state,backup_expires_at,failure_class,version,requested_at,updated_at,backup_retention_seconds
-			FROM idenqa.deletion_requests WHERE tenant_id=$1 AND id=$2`, scope.ID().String(), identifier.String()).Scan(
-			&result.AggregateID, &result.Region, &state, &result.BackupExpiresAt, &failure, &result.Version, &result.RequestedAt, &result.UpdatedAt, &backupSeconds)
-		if errors.Is(err, pgx.ErrNoRows) {
-			return privacy.ErrInvalid
-		}
+		value, err := findDeletion(ctx, tx, scope, identifier)
 		if err != nil {
-			return fmt.Errorf("find deletion request: %w", err)
+			return err
 		}
-		result.ID, result.State = identifier, privacy.DeletionState(state)
-		result.BackupRetention = time.Duration(backupSeconds) * time.Second
-		result.BackupExpiresAt = result.BackupExpiresAt.UTC()
-		result.RequestedAt = result.RequestedAt.UTC()
-		result.UpdatedAt = result.UpdatedAt.UTC()
-		if failure != nil {
-			result.FailureClass = *failure
+		result = value
+		return nil
+	})
+	return result, err
+}
+
+func findDeletion(ctx context.Context, tx platformpostgres.Transaction, scope tenant.Scope, identifier id.Deletion) (privacy.Deletion, error) {
+	var result privacy.Deletion
+	var state string
+	var failure *string
+	var backupSeconds int64
+	err := tx.QueryRow(ctx, `SELECT aggregate_id,region,state,backup_expires_at,failure_class,version,requested_at,updated_at,backup_retention_seconds
+		FROM idenqa.deletion_requests WHERE tenant_id=$1 AND id=$2`, scope.ID().String(), identifier.String()).Scan(
+		&result.AggregateID, &result.Region, &state, &result.BackupExpiresAt, &failure, &result.Version, &result.RequestedAt, &result.UpdatedAt, &backupSeconds)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return privacy.Deletion{}, privacy.ErrInvalid
+	}
+	if err != nil {
+		return privacy.Deletion{}, fmt.Errorf("find deletion request: %w", err)
+	}
+	result.ID, result.State = identifier, privacy.DeletionState(state)
+	result.BackupRetention = time.Duration(backupSeconds) * time.Second
+	result.BackupExpiresAt = result.BackupExpiresAt.UTC()
+	result.RequestedAt = result.RequestedAt.UTC()
+	result.UpdatedAt = result.UpdatedAt.UTC()
+	if failure != nil {
+		result.FailureClass = *failure
+	}
+	rows, err := tx.Query(ctx, `SELECT kind,reference,region,attempts,deleted_at,last_failure_class
+		FROM idenqa.deletion_targets WHERE tenant_id=$1 AND deletion_id=$2 ORDER BY kind,reference`, scope.ID().String(), identifier.String())
+	if err != nil {
+		return privacy.Deletion{}, fmt.Errorf("find deletion targets: %w", err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var target privacy.Target
+		var deleted *time.Time
+		var lastFailure *string
+		if err := rows.Scan(&target.Kind, &target.Reference, &target.Region, &target.Attempts, &deleted, &lastFailure); err != nil {
+			return privacy.Deletion{}, fmt.Errorf("scan deletion target: %w", err)
 		}
-		rows, err := tx.Query(ctx, `SELECT kind,reference,region,attempts,deleted_at,last_failure_class
-			FROM idenqa.deletion_targets WHERE tenant_id=$1 AND deletion_id=$2 ORDER BY kind,reference`, scope.ID().String(), identifier.String())
+		if deleted != nil {
+			target.DeletedAt = deleted.UTC()
+		}
+		if lastFailure != nil {
+			target.LastFailureClass = *lastFailure
+		}
+		result.Targets = append(result.Targets, target)
+	}
+	if err := rows.Err(); err != nil {
+		return privacy.Deletion{}, fmt.Errorf("iterate deletion targets: %w", err)
+	}
+	if err := result.Validate(); err != nil {
+		return privacy.Deletion{}, err
+	}
+	return result, nil
+}
+
+// ListDeletions returns a bounded ascending identifier page, optionally
+// filtered by exact aggregate and positioned after one identifier.
+func (store *Store) ListDeletions(ctx context.Context, scope tenant.Scope, aggregateID, position string, limit int) ([]privacy.Deletion, error) {
+	if limit < 1 || limit > 101 || (aggregateID != "" && len(aggregateID) > 200) || (position != "" && len(position) > 64) {
+		return nil, privacy.ErrInvalid
+	}
+	var identifiers []id.Deletion
+	err := store.pool.WithinTransaction(ctx, platformpostgres.TransactionOptions{ReadOnly: true}, func(ctx context.Context, tx platformpostgres.Transaction) error {
+		if err := setScope(ctx, tx, scope); err != nil {
+			return err
+		}
+		rows, err := tx.Query(ctx, `SELECT id FROM idenqa.deletion_requests
+			WHERE tenant_id=$1 AND ($2='' OR aggregate_id=$2) AND ($3='' OR id>$3)
+			ORDER BY id LIMIT $4`, scope.ID().String(), aggregateID, position, limit)
 		if err != nil {
-			return fmt.Errorf("find deletion targets: %w", err)
+			return fmt.Errorf("list deletion requests: %w", err)
 		}
 		defer rows.Close()
 		for rows.Next() {
-			var target privacy.Target
-			var deleted *time.Time
-			var lastFailure *string
-			if err := rows.Scan(&target.Kind, &target.Reference, &target.Region, &target.Attempts, &deleted, &lastFailure); err != nil {
-				return fmt.Errorf("scan deletion target: %w", err)
+			var encoded string
+			if err := rows.Scan(&encoded); err != nil {
+				return fmt.Errorf("scan deletion request: %w", err)
 			}
-			if deleted != nil {
-				target.DeletedAt = deleted.UTC()
+			identifier, err := id.ParseDeletion(encoded)
+			if err != nil {
+				return privacy.ErrInvalid
 			}
-			if lastFailure != nil {
-				target.LastFailureClass = *lastFailure
+			identifiers = append(identifiers, identifier)
+		}
+		return rows.Err()
+	})
+	if err != nil {
+		return nil, err
+	}
+	result := make([]privacy.Deletion, 0, len(identifiers))
+	err = store.pool.WithinTransaction(ctx, platformpostgres.TransactionOptions{ReadOnly: true}, func(ctx context.Context, tx platformpostgres.Transaction) error {
+		if err := setScope(ctx, tx, scope); err != nil {
+			return err
+		}
+		for _, identifier := range identifiers {
+			value, err := findDeletion(ctx, tx, scope, identifier)
+			if err != nil {
+				return err
 			}
-			result.Targets = append(result.Targets, target)
+			result = append(result, value)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// RetainedRecords lists non-deleted evidence objects of one aggregate with
+// their exact pinned tenant retention request, if any. Mapping to typed
+// resolution remains the application service's responsibility.
+func (store *Store) RetainedRecords(ctx context.Context, scope tenant.Scope, aggregateID string) ([]privacy.RetentionRecord, error) {
+	const retentionRecordLimit = 1000
+	if len(aggregateID) > 200 {
+		return nil, privacy.ErrInvalid
+	}
+	var result []privacy.RetentionRecord
+	err := store.pool.WithinTransaction(ctx, platformpostgres.TransactionOptions{ReadOnly: true}, func(ctx context.Context, tx platformpostgres.Transaction) error {
+		if err := setScope(ctx, tx, scope); err != nil {
+			return err
+		}
+		rows, err := tx.Query(ctx, `SELECT a.id,a.retention_class,a.region,a.created_at,b.region,b.retention_seconds
+			FROM idenqa.evidence_assets a
+			LEFT JOIN idenqa.retention_bindings b ON b.tenant_id=a.tenant_id AND b.aggregate_id=a.verification_id
+				AND b.data_class = CASE WHEN a.retention_class = 'derived_evidence' THEN 'derived_evidence' ELSE 'raw_evidence' END
+			WHERE a.tenant_id=$1 AND a.verification_id=$2 AND a.state<>'deleted'
+			ORDER BY a.created_at,a.id LIMIT $3`, scope.ID().String(), aggregateID, retentionRecordLimit+1)
+		if err != nil {
+			return fmt.Errorf("list retained records: %w", err)
+		}
+		defer rows.Close()
+		for rows.Next() {
+			var record privacy.RetentionRecord
+			var retentionClass string
+			var bindingRegion *string
+			var bindingSeconds *int64
+			if err := rows.Scan(&record.ID, &retentionClass, &record.Region, &record.CreatedAt, &bindingRegion, &bindingSeconds); err != nil {
+				return fmt.Errorf("scan retained record: %w", err)
+			}
+			// Evidence assets carry the tenant's opaque retention reference.
+			// Classify them for the public typed resolution exactly as the
+			// deletion target planner does: only an explicit derived-evidence
+			// marker is derived; every other reference is collected evidence.
+			record.Class = privacy.DataClassRawEvidence
+			if retentionClass == string(privacy.DataClassDerivedEvidence) {
+				record.Class = privacy.DataClassDerivedEvidence
+			}
+			if bindingRegion != nil {
+				if *bindingRegion != record.Region || bindingSeconds == nil || *bindingSeconds <= 0 {
+					return privacy.ErrInvalid
+				}
+				record.Requested = time.Duration(*bindingSeconds) * time.Second
+			}
+			record.CreatedAt = record.CreatedAt.UTC()
+			result = append(result, record)
 		}
 		if err := rows.Err(); err != nil {
-			return fmt.Errorf("iterate deletion targets: %w", err)
+			return err
 		}
-		return result.Validate()
+		if len(result) > retentionRecordLimit {
+			return privacy.ErrInvalid
+		}
+		return nil
 	})
 	return result, err
 }

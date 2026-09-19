@@ -35,6 +35,10 @@ func TestManagementRequiresApplicationAuthorityBeforeRepositoryAccess(t *testing
 			_, err := service.Execute(ctx, access.Context{}, "key", policy.Command{Operation: "activate"})
 			return err
 		}},
+		{"diff", func(ctx context.Context) error {
+			_, err := service.Diff(ctx, access.Context{}, id.Policy{}, 1, 2)
+			return err
+		}},
 		{"rollback", func(ctx context.Context) error {
 			_, err := service.Execute(ctx, access.Context{}, "key", policy.Command{Operation: "rollback"})
 			return err

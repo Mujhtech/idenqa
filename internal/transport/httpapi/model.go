@@ -1,10 +1,15 @@
 package httpapi
 
 import (
+	"bytes"
 	"errors"
+	"io"
 	"log/slog"
 	"net/http"
 	"strconv"
+	"unicode/utf8"
+
+	policyv1 "github.com/Mujhtech/idenqa/contracts/policy/v1"
 
 	"github.com/Mujhtech/idenqa/internal/access"
 	"github.com/Mujhtech/idenqa/internal/model"
@@ -33,6 +38,7 @@ func (routes *ModelRoutes) Register(router chi.Router) {
 	router.With(routes.access.Authenticate, routes.access.Require(access.PermissionModelsRead)).Get("/models/{modelName}", routes.get)
 	router.With(routes.access.Authenticate, routes.access.Require(access.PermissionModelsRead)).Get("/models/{modelName}/revisions/{kind}/{revision}", routes.revision)
 	router.With(routes.access.Authenticate, routes.access.Require(access.PermissionModelsRead)).Get("/models/{modelName}/history", routes.history)
+	router.With(routes.access.Authenticate, routes.access.Require(access.PermissionModelsWrite)).Post("/models/{modelName}/validate", routes.validate)
 	for _, operation := range []string{"register", "threshold", "activate", "rollback", "retire"} {
 		permission := access.PermissionModelsWrite
 		if operation == "activate" || operation == "rollback" || operation == "retire" {
@@ -126,6 +132,29 @@ func (routes *ModelRoutes) history(w http.ResponseWriter, r *http.Request) {
 	actor, _ := AccessContext(r.Context())
 	result, err := routes.service.History(r.Context(), actor, chi.URLParam(r, "modelName"), before, limit)
 	routes.reply(w, r, result, err)
+}
+
+// validate checks a closed command document without persisting registry state.
+func (routes *ModelRoutes) validate(w http.ResponseWriter, r *http.Request) {
+	body, err := decodeModelValidationJSON(r)
+	if err != nil {
+		routes.reply(w, r, nil, invalidRequest(err))
+		return
+	}
+	actor, _ := AccessContext(r.Context())
+	result, err := routes.service.Validate(r.Context(), actor, chi.URLParam(r, "modelName"), body)
+	routes.reply(w, r, result, err)
+}
+
+func decodeModelValidationJSON(request *http.Request) (model.ValidationRequest, error) {
+	var zero model.ValidationRequest
+	raw, err := io.ReadAll(io.LimitReader(request.Body, 2*policyv1.MaximumDocumentBytes+1))
+	if err != nil || len(raw) > 2*policyv1.MaximumDocumentBytes || !utf8.Valid(raw) || rejectPolicyDuplicates(raw) != nil {
+		return zero, model.ErrRegistryInvalid
+	}
+	cloned := request.Clone(request.Context())
+	cloned.Body = io.NopCloser(bytes.NewReader(raw))
+	return decodeJSONBody[model.ValidationRequest](cloned)
 }
 func (routes *ModelRoutes) reply(w http.ResponseWriter, r *http.Request, value any, err error) {
 	w.Header().Set("Cache-Control", "no-store")

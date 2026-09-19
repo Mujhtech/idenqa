@@ -338,6 +338,25 @@ func (service *Management) GetRevision(ctx context.Context, actor access.Context
 	return RevisionDocument{revisionInfo(revision), revision.Canonical()}, nil
 }
 
+// Diff compares two visible stored revisions as bounded canonical structure.
+func (service *Management) Diff(ctx context.Context, actor access.Context, identifier id.Policy, from, to uint32) (RevisionDiff, error) {
+	if err := actor.Require(access.PermissionPoliciesRead); err != nil {
+		return RevisionDiff{}, err
+	}
+	if identifier.IsZero() || from == 0 || to == 0 {
+		return RevisionDiff{}, ErrInvalid
+	}
+	fromRevision, err := service.repository.FindRevision(ctx, actor.TenantScope(), identifier, from)
+	if err != nil {
+		return RevisionDiff{}, err
+	}
+	toRevision, err := service.repository.FindRevision(ctx, actor.TenantScope(), identifier, to)
+	if err != nil {
+		return RevisionDiff{}, err
+	}
+	return DiffRevisions(fromRevision, toRevision)
+}
+
 // Revisions returns validated source-free revision history.
 func (service *Management) Revisions(ctx context.Context, actor access.Context, identifier id.Policy, before uint32, limit int) ([]RevisionInfo, bool, uint32, error) {
 	if _, err := service.Get(ctx, actor, identifier); err != nil {

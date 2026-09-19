@@ -139,8 +139,8 @@ func (value ThresholdSet) Validate() error {
 	return nil
 }
 
-// Validate rejects irrelevant fields so replay meaning cannot hide ignored inputs.
-func (command RegistryCommand) Validate() error {
+// validateEnvelope rejects irrelevant fields so replay meaning cannot hide ignored inputs.
+func (command RegistryCommand) validateEnvelope() error {
 	if !registryName.MatchString(command.Name) || !registryName.MatchString(command.Reason) || command.ExpectedVersion < 0 || command.ExpectedVersion == math.MaxInt64 {
 		return ErrRegistryInvalid
 	}
@@ -149,12 +149,10 @@ func (command RegistryCommand) Validate() error {
 		if command.Registration == nil || command.Thresholds != nil || command.Deployment != nil {
 			return ErrRegistryInvalid
 		}
-		return command.Registration.Validate()
 	case "threshold":
 		if command.Thresholds == nil || command.Registration != nil || command.Deployment != nil {
 			return ErrRegistryInvalid
 		}
-		return command.Thresholds.Validate()
 	case "activate", "rollback":
 		if command.Registration != nil || command.Thresholds != nil || command.Deployment == nil || command.Deployment.ModelRevision < 1 || command.Deployment.ThresholdRevision < 1 || !registryName.MatchString(command.Deployment.Region) {
 			return ErrRegistryInvalid
@@ -165,6 +163,20 @@ func (command RegistryCommand) Validate() error {
 		}
 	default:
 		return ErrRegistryInvalid
+	}
+	return nil
+}
+
+// Validate rejects irrelevant fields so replay meaning cannot hide ignored inputs.
+func (command RegistryCommand) Validate() error {
+	if err := command.validateEnvelope(); err != nil {
+		return err
+	}
+	switch command.Operation {
+	case "register":
+		return command.Registration.Validate()
+	case "threshold":
+		return command.Thresholds.Validate()
 	}
 	return nil
 }

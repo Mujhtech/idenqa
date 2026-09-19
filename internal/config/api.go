@@ -479,6 +479,14 @@ func loadAPIInto(envFile string, target any, configuration *API, providerEvidenc
 	return nil
 }
 
+// cliEnvironmentKeys are command-line credential variables that are not part of
+// any process configuration schema. Commands such as doctor and synthetic read
+// them directly, and operators commonly export them alongside the shared dotenv
+// file, so they must not be rejected as misspelled process settings.
+var cliEnvironmentKeys = map[string]struct{}{
+	"IDENQA_API_KEY": {},
+}
+
 // checkDisallowedCoreEnvironment validates the complete open-source core
 // namespace. API processes and administrative commands commonly share one
 // dotenv file with the worker, so documented worker settings must not be
@@ -499,6 +507,9 @@ func checkDisallowedCoreEnvironment(target any) error {
 	for _, entry := range os.Environ() {
 		name, _, _ := strings.Cut(entry, "=")
 		if !strings.HasPrefix(name, environmentPrefix) {
+			continue
+		}
+		if _, exists := cliEnvironmentKeys[name]; exists {
 			continue
 		}
 		if _, exists := allowed[name]; !exists {

@@ -17,6 +17,7 @@ type RegistryRepository interface {
 	Get(context.Context, tenant.Scope, string) (RegistryState, error)
 	Revision(context.Context, tenant.Scope, string, string, int64) (RegistryRevision, error)
 	History(context.Context, tenant.Scope, string, int64, int) ([]RegistryReceipt, error)
+	RollbackEligible(context.Context, tenant.Scope, string, Deployment) (bool, error)
 }
 
 type registryIDs interface{ NewEvent() (id.Event, error) }

@@ -11,6 +11,7 @@ import (
 	"github.com/Mujhtech/idenqa/internal/access"
 	openapiv1 "github.com/Mujhtech/idenqa/internal/gen/openapi/v1"
 	"github.com/Mujhtech/idenqa/internal/tenant"
+	"github.com/Mujhtech/idenqa/internal/tenantexport"
 )
 
 func TestTenantRoutesReturnAuthenticatedTenant(t *testing.T) {
@@ -23,7 +24,7 @@ func TestTenantRoutesReturnAuthenticatedTenant(t *testing.T) {
 		t.Fatalf("Restore() error = %v", err)
 	}
 	reader := &tenantHTTPReaderStub{value: value}
-	routes, err := NewTenantRoutes(fixture.middleware, reader, fixture.logger)
+	routes, err := NewTenantRoutes(fixture.middleware, reader, tenantHTTPExporterStub{}, fixture.logger)
 	if err != nil {
 		t.Fatalf("NewTenantRoutes() error = %v", err)
 	}
@@ -64,6 +65,7 @@ func TestTenantRoutesSupportGeneratedClient(t *testing.T) {
 	routes, err := NewTenantRoutes(
 		fixture.middleware,
 		&tenantHTTPReaderStub{value: value},
+		tenantHTTPExporterStub{},
 		fixture.logger,
 	)
 	if err != nil {
@@ -121,6 +123,7 @@ func TestTenantRoutesMapApplicationFailure(t *testing.T) {
 	routes, err := NewTenantRoutes(
 		fixture.middleware,
 		&tenantHTTPReaderStub{err: tenant.ErrNotFound},
+		tenantHTTPExporterStub{},
 		fixture.logger,
 	)
 	if err != nil {
@@ -143,15 +146,24 @@ func TestNewTenantRoutesRequiresDependencies(t *testing.T) {
 
 	fixture := newHTTPAccessFixture(t, nil, access.Pattern("tenant:read"))
 	reader := &tenantHTTPReaderStub{}
-	if _, err := NewTenantRoutes(nil, reader, fixture.logger); err == nil {
+	if _, err := NewTenantRoutes(nil, reader, tenantHTTPExporterStub{}, fixture.logger); err == nil {
 		t.Error("NewTenantRoutes(nil middleware) error = nil")
 	}
-	if _, err := NewTenantRoutes(fixture.middleware, nil, fixture.logger); err == nil {
+	if _, err := NewTenantRoutes(fixture.middleware, nil, tenantHTTPExporterStub{}, fixture.logger); err == nil {
 		t.Error("NewTenantRoutes(nil reader) error = nil")
 	}
-	if _, err := NewTenantRoutes(fixture.middleware, reader, nil); err == nil {
+	if _, err := NewTenantRoutes(fixture.middleware, reader, nil, fixture.logger); err == nil {
+		t.Error("NewTenantRoutes(nil exporter) error = nil")
+	}
+	if _, err := NewTenantRoutes(fixture.middleware, reader, tenantHTTPExporterStub{}, nil); err == nil {
 		t.Error("NewTenantRoutes(nil logger) error = nil")
 	}
+}
+
+type tenantHTTPExporterStub struct{}
+
+func (tenantHTTPExporterStub) Export(context.Context, tenantexport.Authority, []tenantexport.Collection, func([]byte) error) error {
+	return nil
 }
 
 type tenantHTTPReaderStub struct {

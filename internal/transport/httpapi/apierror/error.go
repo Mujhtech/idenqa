@@ -25,6 +25,7 @@ const (
 	CodeInvalidRequest              = "INVALID_REQUEST"
 	CodeInternalError               = "INTERNAL_ERROR"
 	CodeNotFound                    = "NOT_FOUND"
+	CodeGone                        = "GONE"
 	CodeMethodNotAllowed            = "METHOD_NOT_ALLOWED"
 	CodeConflict                    = "CONFLICT"
 	CodeIdempotencyConflict         = "IDEMPOTENCY_CONFLICT"

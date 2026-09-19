@@ -19,32 +19,38 @@ type TenantReader interface {
 	Current(context.Context, access.Context) (tenant.Tenant, error)
 }
 
-// TenantRoutes adapts the authenticated tenant read use case to HTTP.
+// TenantRoutes adapts the authenticated tenant read and export use cases to HTTP.
 type TenantRoutes struct {
-	access *AccessMiddleware
-	reader TenantReader
-	logger *slog.Logger
+	access   *AccessMiddleware
+	reader   TenantReader
+	exporter TenantExporter
+	logger   *slog.Logger
 }
 
 // NewTenantRoutes constructs the protected tenant HTTP surface.
 func NewTenantRoutes(
 	accessMiddleware *AccessMiddleware,
 	reader TenantReader,
+	exporter TenantExporter,
 	logger *slog.Logger,
 ) (*TenantRoutes, error) {
-	if accessMiddleware == nil || reader == nil || logger == nil {
+	if accessMiddleware == nil || reader == nil || exporter == nil || logger == nil {
 		return nil, errors.New("tenant route dependencies are required")
 	}
 
-	return &TenantRoutes{access: accessMiddleware, reader: reader, logger: logger}, nil
+	return &TenantRoutes{access: accessMiddleware, reader: reader, exporter: exporter, logger: logger}, nil
 }
 
-// Register adds the authenticated tenant metadata route.
+// Register adds the authenticated tenant metadata and export routes.
 func (routes *TenantRoutes) Register(router chi.Router) {
 	router.With(
 		routes.access.Authenticate,
 		routes.access.Require(access.PermissionTenantRead),
 	).Get("/tenant", routes.current)
+	router.With(
+		routes.access.Authenticate,
+		routes.access.Require(access.PermissionTenantExport),
+	).Get("/tenant/export", routes.export)
 }
 
 func (routes *TenantRoutes) current(writer http.ResponseWriter, request *http.Request) {

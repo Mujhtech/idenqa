@@ -35,6 +35,8 @@ const (
 	DutyPolicyAuthorship = "idenqa-policy-authorship"
 	// DutyPrivacyDeletion elects one installation-wide lifecycle scheduler.
 	DutyPrivacyDeletion = "idenqa-privacy-deletion"
+	// DutyWebhookRetention elects one installation-wide payload expiry worker.
+	DutyWebhookRetention = "idenqa-webhook-retention"
 
 	headerTaskName       = "idenqa-task-name"
 	headerIdempotencyKey = "idenqa-idempotency-key"

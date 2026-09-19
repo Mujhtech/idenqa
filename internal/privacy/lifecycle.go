@@ -2,6 +2,8 @@
 package privacy
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"slices"
@@ -345,4 +347,86 @@ func (deletion Deletion) SuspendForHold(now time.Time) (Deletion, error) {
 	deletion.UpdatedAt = now
 	deletion.Version++
 	return deletion, nil
+}
+
+// TargetState is the observable state of one exact deletion target.
+type TargetState string
+
+const (
+	// TargetPending is an exact copy that has no recorded deletion outcome.
+	TargetPending TargetState = "pending"
+	// TargetDeleted is an exact copy with a recorded idempotent deletion.
+	TargetDeleted TargetState = "deleted"
+	// TargetFailed is an exact copy whose last attempt failed.
+	TargetFailed TargetState = "failed"
+)
+
+// TargetStatus is a safe read-only projection of one exact deletion target.
+// Reference is a stable non-reversible digest; object locations and encoded
+// evidence references never leave the persistence boundary.
+type TargetStatus struct {
+	Kind         string
+	Reference    string
+	State        TargetState
+	FailureClass string
+}
+
+// DeletionStatus is the safe observable read model of one deletion workflow.
+type DeletionStatus struct {
+	Deletion Deletion
+	Targets  []TargetStatus
+	Holds    []Hold
+}
+
+// Status projects exact target states and reference digests for inspection.
+func (deletion Deletion) Status(holds []Hold) DeletionStatus {
+	targets := make([]TargetStatus, 0, len(deletion.Targets))
+	for _, target := range deletion.Targets {
+		state := TargetPending
+		switch {
+		case !target.DeletedAt.IsZero():
+			state = TargetDeleted
+		case target.LastFailureClass != "":
+			state = TargetFailed
+		}
+		targets = append(targets, TargetStatus{Kind: target.Kind, Reference: targetReferenceDigest(target.Reference), State: state, FailureClass: target.LastFailureClass})
+	}
+	return DeletionStatus{Deletion: deletion, Targets: targets, Holds: append([]Hold(nil), holds...)}
+}
+
+// DeletionPage is one bounded ascending page of deletion workflows.
+type DeletionPage struct {
+	Deletions []Deletion
+	HasMore   bool
+}
+
+// RetentionRecord is one observed retained evidence object or derived record.
+// Requested is the exact tenant retention request pinned at creation, or zero.
+type RetentionRecord struct {
+	ID        string
+	Class     DataClass
+	Region    string
+	CreatedAt time.Time
+	Requested time.Duration
+}
+
+// RetentionDeadline is the typed resolution of one retained record.
+type RetentionDeadline struct {
+	ID        string
+	Class     DataClass
+	Region    string
+	Duration  time.Duration
+	ExpiresAt time.Time
+}
+
+// RetentionResolution is the read-only retention meaning of one aggregate.
+type RetentionResolution struct {
+	AggregateID string
+	Records     []RetentionDeadline
+	Holds       []Hold
+}
+
+func targetReferenceDigest(reference string) string {
+	digest := sha256.Sum256([]byte(reference))
+	return hex.EncodeToString(digest[:12])
 }

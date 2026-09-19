@@ -3,6 +3,7 @@
 package integration_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	modelv1 "github.com/Mujhtech/idenqa/contracts/model/v1"
+	"github.com/Mujhtech/idenqa/internal/access"
 	accesspostgres "github.com/Mujhtech/idenqa/internal/access/postgres"
 	"github.com/Mujhtech/idenqa/internal/model"
 	modelpostgres "github.com/Mujhtech/idenqa/internal/model/postgres"
@@ -288,4 +290,202 @@ func TestModelRegistryAtomicHistoryIsolationAndRetirement(t *testing.T) {
 		t.Fatal("immutable registry revision changed")
 	}
 
+}
+
+func TestModelRegistryValidationRoundTripIsolationAndReplay(t *testing.T) {
+	database := createIsolatedDatabase(t)
+	ctx := t.Context()
+	migrator, err := pg.OpenMigrator(ctx, migrationConfig(database.url))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := migrator.Up(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if err := migrator.Close(); err != nil {
+		t.Fatal(err)
+	}
+	admin, err := pg.Open(ctx, poolConfig(database.url))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer admin.Close()
+	ids, err := id.NewSystemGenerator()
+	if err != nil {
+		t.Fatal(err)
+	}
+	now := time.Now().UTC().Truncate(time.Microsecond)
+	tenantID, _ := seedExecutionVerification(t, admin, ids, now)
+	otherID, _ := seedExecutionVerification(t, admin, ids, now)
+	scope, err := tenant.NewScope(tenantID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	other, err := tenant.NewScope(otherID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cfg := poolConfig(database.url)
+	cfg.Role = database.createRuntimeRole(t)
+	runtime, err := pg.Open(ctx, cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer runtime.Close()
+	peppers, err := access.NewPepperSet(1, map[access.PepperVersion][]byte{1: bytes.Repeat([]byte{0x64}, 32)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	accessStore, err := accesspostgres.New(runtime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	authenticator, err := access.NewAuthenticator(accessStore, peppers, clock.System{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	key, presented := newFullScopeIntegrationCredential(t, ids, tenantID, now, peppers)
+	if err := accessStore.Create(ctx, scope, key); err != nil {
+		t.Fatal(err)
+	}
+	actor, err := authenticator.Authenticate(ctx, presented.Reveal())
+	if err != nil {
+		t.Fatal(err)
+	}
+	otherKey, otherPresented := newFullScopeIntegrationCredential(t, ids, otherID, now, peppers)
+	if err := accessStore.Create(ctx, other, otherKey); err != nil {
+		t.Fatal(err)
+	}
+	otherActor, err := authenticator.Authenticate(ctx, otherPresented.Reveal())
+	if err != nil {
+		t.Fatal(err)
+	}
+	store, err := modelpostgres.NewRegistryStore(runtime, func() time.Time { return now })
+	if err != nil {
+		t.Fatal(err)
+	}
+	service, err := model.NewManagement(store, ids, func() time.Time { return now }, time.Hour)
+	if err != nil {
+		t.Fatal(err)
+	}
+	hash := "sha256:" + strings.Repeat("a", 64)
+	ref := modelv1.ConfigurationReference{ModelID: "mdl_01K4AR9V8FQ2G7ZXCPNM5T6JWH", ConfigurationRef: "configuration://model/test", ConfigurationDigest: hash}
+	provenance := modelv1.Provenance{ModelID: ref.ModelID, ModelVersion: "0.1.0", ModelDigest: hash, RuntimeDigest: hash, PreprocessingDigest: hash, OutputSchemaDigest: hash, Contract: modelv1.CurrentVersion}
+	registration := model.Registration{Manifest: modelv1.Manifest{Provenance: provenance, Capabilities: []modelv1.Capability{{Evaluation: "idenqa.check.passive_pad", AcceptedEvidence: []string{"idenqa.evidence.selfie_image"}, OutputSignals: []string{"idenqa.signal.passive_pad"}}}, Restrictions: modelv1.Restrictions{MaximumGrants: 1, MaximumInputBytes: 1024, MaximumResultSize: 4096, MaximumDuration: 30 * time.Second}}, Configuration: ref, Owner: "fixture", License: "synthetic-only", TrainingProvenance: "synthetic", IntendedUse: "evaluation", ProhibitedUse: "production", Regions: []string{"ng"}, HardwareClass: "cpu", EvaluationOnly: true}
+	threshold := model.ThresholdSet{Configuration: ref, Provenance: provenance, ScoreName: "real_score", Minimum: 0, Maximum: 1, Cutoff: 0.5, HigherIsGenuine: true, EvaluationReportDigest: hash, EvaluationOnly: true}
+	second := threshold
+	second.Cutoff = 0.6
+	execute := func(key string, command model.RegistryCommand) model.RegistryReceipt {
+		t.Helper()
+		receipt, err := service.Execute(ctx, actor, key, command)
+		if err != nil {
+			t.Fatalf("execute %s: %v", command.Operation, err)
+		}
+		return receipt
+	}
+	validate := func(request model.ValidationRequest) model.ValidationReport {
+		t.Helper()
+		report, err := service.Validate(ctx, actor, "pad", request)
+		if err != nil {
+			t.Fatalf("validate %s: %v", request.Operation, err)
+		}
+		return report
+	}
+	if report := validate(model.ValidationRequest{Operation: "register", Reason: "evaluation", Registration: &registration}); !report.Accepted || len(report.ReasonCodes) != 0 {
+		t.Fatalf("new registration report = %+v", report)
+	}
+	registered := execute("round-register", model.RegistryCommand{Name: "pad", Operation: "register", Reason: "evaluation", Registration: &registration})
+	if registered.State.Version != 1 || registered.Revision == nil || registered.State.ModelRevision != 1 {
+		t.Fatalf("registration receipt = %+v", registered)
+	}
+	replay := execute("round-register", model.RegistryCommand{Name: "pad", Operation: "register", Reason: "evaluation", Registration: &registration})
+	if !replay.Replayed || replay.State.Version != 1 {
+		t.Fatalf("registration replay = %+v", replay)
+	}
+	if report := validate(model.ValidationRequest{Operation: "threshold", Reason: "evaluation", ExpectedVersion: 1, Thresholds: &threshold}); !report.Accepted {
+		t.Fatalf("threshold report = %+v", report)
+	}
+	first := execute("round-threshold-1", model.RegistryCommand{Name: "pad", Operation: "threshold", Reason: "evaluation", ExpectedVersion: 1, Thresholds: &threshold})
+	if first.State.Version != 2 || first.Revision == nil || first.State.ThresholdRevision != 1 {
+		t.Fatalf("threshold receipt = %+v", first)
+	}
+	if report := validate(model.ValidationRequest{Operation: "threshold", Reason: "evaluation", ExpectedVersion: 2, Thresholds: &second}); !report.Accepted {
+		t.Fatalf("second threshold report = %+v", report)
+	}
+	secondReceipt := execute("round-threshold-2", model.RegistryCommand{Name: "pad", Operation: "threshold", Reason: "evaluation", ExpectedVersion: 2, Thresholds: &second})
+	if secondReceipt.State.Version != 3 || secondReceipt.State.ThresholdRevision != 2 {
+		t.Fatalf("second threshold receipt = %+v", secondReceipt)
+	}
+	firstDeployment := model.Deployment{ModelRevision: 1, ThresholdRevision: 1, Region: "ng"}
+	if report := validate(model.ValidationRequest{Operation: "activate", Reason: "evaluation", ExpectedVersion: 3, Deployment: &firstDeployment}); !report.Accepted {
+		t.Fatalf("first activation report = %+v", report)
+	}
+	execute("round-activate-1", model.RegistryCommand{Name: "pad", Operation: "activate", Reason: "evaluation", ExpectedVersion: 3, Deployment: &firstDeployment})
+	secondDeployment := model.Deployment{ModelRevision: 1, ThresholdRevision: 2, Region: "ng"}
+	if report := validate(model.ValidationRequest{Operation: "activate", Reason: "evaluation", ExpectedVersion: 4, Deployment: &secondDeployment}); !report.Accepted {
+		t.Fatalf("second activation report = %+v", report)
+	}
+	execute("round-activate-2", model.RegistryCommand{Name: "pad", Operation: "activate", Reason: "evaluation", ExpectedVersion: 4, Deployment: &secondDeployment})
+	if report := validate(model.ValidationRequest{Operation: "rollback", Reason: "evaluation", ExpectedVersion: 5, Deployment: &firstDeployment}); !report.Accepted {
+		t.Fatalf("rollback report = %+v", report)
+	}
+	missing := model.Deployment{ModelRevision: 1, ThresholdRevision: 9, Region: "ng"}
+	if report := validate(model.ValidationRequest{Operation: "rollback", Reason: "evaluation", ExpectedVersion: 5, Deployment: &missing}); report.Accepted || len(report.ReasonCodes) != 1 || report.ReasonCodes[0] != model.ValidationRevisionNotFound {
+		t.Fatalf("missing revision report = %+v", report)
+	}
+	rollback := execute("round-rollback", model.RegistryCommand{Name: "pad", Operation: "rollback", Reason: "evaluation", ExpectedVersion: 5, Deployment: &firstDeployment})
+	if rollback.State.Version != 6 || rollback.State.Active == nil || *rollback.State.Active != firstDeployment {
+		t.Fatalf("rollback receipt = %+v", rollback)
+	}
+	rollbackReplay := execute("round-rollback", model.RegistryCommand{Name: "pad", Operation: "rollback", Reason: "evaluation", ExpectedVersion: 5, Deployment: &firstDeployment})
+	if !rollbackReplay.Replayed || rollbackReplay.State.Version != 6 {
+		t.Fatalf("rollback replay = %+v", rollbackReplay)
+	}
+	if report := validate(model.ValidationRequest{Operation: "retire", Reason: "evaluation", ExpectedVersion: 6}); !report.Accepted {
+		t.Fatalf("retirement report = %+v", report)
+	}
+	retired := execute("round-retire", model.RegistryCommand{Name: "pad", Operation: "retire", Reason: "evaluation", ExpectedVersion: 6})
+	if retired.State.Version != 7 || retired.State.Active != nil {
+		t.Fatalf("retirement receipt = %+v", retired)
+	}
+	if report := validate(model.ValidationRequest{Operation: "retire", Reason: "evaluation", ExpectedVersion: 7}); report.Accepted || len(report.ReasonCodes) != 1 || report.ReasonCodes[0] != model.ValidationStateConflict {
+		t.Fatalf("second retirement report = %+v", report)
+	}
+	production := registration
+	production.EvaluationOnly = false
+	if report := validate(model.ValidationRequest{Operation: "register", Reason: "evaluation", ExpectedVersion: 7, Registration: &production}); report.Accepted || len(report.ReasonCodes) != 1 || report.ReasonCodes[0] != model.ValidationRegistrationInvalid {
+		t.Fatalf("production report = %+v", report)
+	}
+	if report := validate(model.ValidationRequest{Operation: "activate", Reason: "evaluation", ExpectedVersion: 99, Deployment: &firstDeployment}); report.Accepted || len(report.ReasonCodes) != 1 || report.ReasonCodes[0] != model.ValidationVersionConflict {
+		t.Fatalf("stale version report = %+v", report)
+	}
+	history, err := store.History(ctx, scope, "pad", 0, 100)
+	if err != nil || len(history) != 7 {
+		t.Fatalf("history = %d receipts, err = %v", len(history), err)
+	}
+	if _, err := store.Revision(ctx, scope, "pad", "model", 1); err != nil {
+		t.Fatalf("immutable model revision after retirement: %v", err)
+	}
+	if _, err := store.Get(ctx, other, "pad"); !errors.Is(err, model.ErrRegistryNotFound) {
+		t.Fatalf("cross tenant visible: %v", err)
+	}
+	if _, err := store.Revision(ctx, other, "pad", "model", 1); !errors.Is(err, model.ErrRegistryNotFound) {
+		t.Fatalf("cross tenant revision visible: %v", err)
+	}
+	if report, err := service.Validate(ctx, otherActor, "pad", model.ValidationRequest{Operation: "activate", Reason: "evaluation", Deployment: &firstDeployment}); err != nil || report.Accepted || len(report.ReasonCodes) != 1 || report.ReasonCodes[0] != model.ValidationRegistryNotFound {
+		t.Fatalf("cross tenant validation = %+v, %v", report, err)
+	}
+	// RLS must hide rows even when a query omits its tenant predicate.
+	if err := runtime.WithinTransaction(ctx, pg.TransactionOptions{ReadOnly: true}, func(ctx context.Context, tx pg.Transaction) error {
+		var count int
+		if err := tx.QueryRow(ctx, `SELECT count(*) FROM idenqa.model_registries`).Scan(&count); err != nil {
+			return err
+		}
+		if count != 0 {
+			return errors.New("unscoped registry rows visible")
+		}
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
 }

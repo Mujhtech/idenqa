@@ -20,6 +20,7 @@ import (
 	idenqapostgres "github.com/Mujhtech/idenqa/internal/platform/postgres"
 	"github.com/Mujhtech/idenqa/internal/tenant"
 	tenantpostgres "github.com/Mujhtech/idenqa/internal/tenant/postgres"
+	"github.com/Mujhtech/idenqa/internal/tenantexport"
 	"github.com/Mujhtech/idenqa/internal/transport/httpapi"
 	"github.com/Mujhtech/idenqa/internal/transport/httpapi/respond"
 	"github.com/go-chi/chi/v5"
@@ -217,6 +218,7 @@ func TestAPIKeyPersistenceIsolationAndLifecycle(t *testing.T) {
 	tenantRoutes, err := httpapi.NewTenantRoutes(
 		accessMiddleware,
 		tenantReader,
+		integrationTenantExporter{},
 		slog.New(slog.NewJSONHandler(io.Discard, nil)),
 	)
 	if err != nil {
@@ -380,4 +382,10 @@ func writeIntegrationProblem(t *testing.T, writer http.ResponseWriter, request *
 	if writeErr := respond.WriteProblem(writer, request, err, ""); writeErr != nil {
 		t.Fatalf("write integration problem: %v", writeErr)
 	}
+}
+
+type integrationTenantExporter struct{}
+
+func (integrationTenantExporter) Export(context.Context, tenantexport.Authority, []tenantexport.Collection, func([]byte) error) error {
+	return nil
 }
