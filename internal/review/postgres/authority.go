@@ -72,6 +72,13 @@ func (a *Authority) ResolveWithin(ctx context.Context, tx pg.Transaction, scope 
 	if err != nil {
 		return review.Principal{}, err
 	}
+	if source, ok := a.fallback.(review.CertificationVerifierSource); ok {
+		verifier, err := source.CertificationVerifier()
+		if err != nil {
+			return review.Principal{}, review.ErrForbidden
+		}
+		registry = registry.WithCertificationVerifier(verifier)
+	}
 	return registry.ResolveReviewer(ctx, scope, actor, region, at)
 }
 func resolveWithin(ctx context.Context, tx pg.Transaction, authority review.Authority, scope tenant.Scope, actor review.Actor, region string, at time.Time) (review.Principal, error) {

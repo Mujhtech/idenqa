@@ -18,6 +18,8 @@ var (
 	ErrConflict = errors.New("review: conflict")
 	// ErrForbidden means the principal lacks authority or independence.
 	ErrForbidden = errors.New("review: forbidden")
+	// ErrCaseNotFound means no visible review case references the verification.
+	ErrCaseNotFound = errors.New("review: case not found")
 )
 
 // Permission is an application authority required by review operations.

@@ -34,6 +34,7 @@ import (
 
 type captureAcceptanceFixture struct {
 	admin, runtime *pg.Pool
+	database       *isolatedDatabase
 	scope          tenant.Scope
 	authorities    *authoritypostgres.Store
 	creation       verification.SessionCreation

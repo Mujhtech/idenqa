@@ -199,6 +199,72 @@ func (store *Store) findCaseWithin(ctx context.Context, scope tenant.Scope, tx p
 	return result, err
 }
 
+// FindCaseForVerification restores the highest-version review case currently
+// attached to one verification without loading immutable findings.
+func (store *Store) FindCaseForVerification(ctx context.Context, scope tenant.Scope, verification id.Verification) (review.Case, error) {
+	var result review.Case
+	err := store.pool.WithinTransaction(ctx, platformpostgres.TransactionOptions{ReadOnly: true}, func(ctx context.Context, tx platformpostgres.Transaction) error {
+		if err := setScope(ctx, tx, scope); err != nil {
+			return err
+		}
+		var identifier, verificationID string
+		var challengedID, supersedingID, routingID, assignedReviewer *string
+		var findingRules []byte
+		var oversight, state string
+		err := tx.QueryRow(ctx, `SELECT id,verification_id,challenged_decision_id,superseding_decision_id,routing_request_id,region,required_certification,
+		oversight,state,assigned_reviewer,version,created_at,updated_at,permitted_findings FROM idenqa.review_cases
+		WHERE tenant_id=$1 AND verification_id=$2 ORDER BY version DESC,created_at DESC,id DESC LIMIT 1`,
+			scope.ID().String(), verification.String()).Scan(&identifier, &verificationID, &challengedID, &supersedingID, &routingID, &result.Region, &result.RequiredCertificate,
+			&oversight, &state, &assignedReviewer, &result.Version, &result.CreatedAt, &result.UpdatedAt, &findingRules)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return review.ErrCaseNotFound
+		}
+		if err != nil {
+			return err
+		}
+		result.ID, err = id.ParseReviewCase(identifier)
+		if err != nil {
+			return review.ErrInvalid
+		}
+		result.VerificationID, err = id.ParseVerification(verificationID)
+		if err != nil {
+			return review.ErrInvalid
+		}
+		result.CreatedAt = result.CreatedAt.UTC()
+		result.UpdatedAt = result.UpdatedAt.UTC()
+		if assignedReviewer != nil {
+			result.AssignedReviewer = *assignedReviewer
+		}
+		if err := json.Unmarshal(findingRules, &result.PermittedFindings); err != nil {
+			return review.ErrInvalid
+		}
+		if challengedID != nil {
+			result.ChallengedDecision, err = id.ParseDecision(*challengedID)
+			if err != nil {
+				return review.ErrInvalid
+			}
+		}
+		if routingID != nil {
+			result.RoutingRequest, err = id.ParseDecision(*routingID)
+			if err != nil {
+				return review.ErrInvalid
+			}
+		}
+		if supersedingID != nil {
+			result.SupersedesDecision, err = id.ParseDecision(*supersedingID)
+			if err != nil {
+				return review.ErrInvalid
+			}
+		}
+		result.Oversight, result.State = review.Oversight(oversight), review.CaseState(state)
+		return result.Validate()
+	})
+	if err != nil {
+		return review.Case{}, err
+	}
+	return result, nil
+}
+
 // SaveCase applies an optimistic case transition and optional immutable finding.
 func (store *Store) SaveCase(ctx context.Context, scope tenant.Scope, actor review.Actor, value review.Case, expectedVersion int64, finding *review.Finding) error {
 	if value.Validate() != nil || value.Version != expectedVersion+1 {

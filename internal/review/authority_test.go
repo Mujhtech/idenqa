@@ -64,6 +64,102 @@ func TestReviewerAuthorityIsolationExpiryAndRotation(t *testing.T) {
 	}
 }
 
+type recordingVerifier struct {
+	err   error
+	calls []review.CertificateAssertion
+}
+
+func (verifier *recordingVerifier) Verify(_ context.Context, _ tenant.Scope, assertion review.CertificateAssertion) error {
+	verifier.calls = append(verifier.calls, assertion)
+	return verifier.err
+}
+
+func TestReviewerAuthorityExternalCertificationAssertions(t *testing.T) {
+	now := time.Date(2026, 9, 19, 12, 0, 0, 0, time.UTC)
+	tenantID, _ := id.ParseTenant("ten_01K4AR9V8FQ2G7ZXCPNM5T6JWH")
+	scope, _ := tenant.NewScope(tenantID)
+	key, _ := id.ParseAPIKey("key_01K4AR9V8FQ2G7ZXCPNM5T6JWH")
+	assertion := review.CertificateAssertion{Certificate: "document.level2", Region: "ng-1", Token: "v1.payload.signature"}
+	base := review.Assignment{
+		TenantID: tenantID.String(), APIKeyID: key.String(), OperatorID: "operator-1",
+		Permissions: []review.Permission{review.PermissionClaim}, Certifications: []string{"document.level2"},
+		CertificationAssertions: []review.CertificateAssertion{assertion}, Regions: []string{"ng-1"},
+		NotBefore: now, ExpiresAt: now.Add(time.Hour),
+	}
+	actor := review.Actor{ID: key.String()}
+
+	// A configured verifier requires the exact configured assertion and passes
+	// the operator identity, certificate and region binding to verification.
+	verifier := &recordingVerifier{}
+	registry, err := review.NewRegistry([]review.Assignment{base})
+	if err != nil {
+		t.Fatal(err)
+	}
+	principal, err := registry.WithCertificationVerifier(verifier).ResolveReviewer(context.Background(), scope, actor, "ng-1", now)
+	if err != nil || principal.ID != "operator-1" || len(verifier.calls) != 1 {
+		t.Fatalf("verified principal=%+v calls=%+v error=%v", principal, verifier.calls, err)
+	}
+	if verifier.calls[0].ReviewerID != "operator-1" || verifier.calls[0].Certificate != "document.level2" || verifier.calls[0].Region != "ng-1" || verifier.calls[0].Token != assertion.Token {
+		t.Fatalf("verifier binding = %+v", verifier.calls[0])
+	}
+	verifier.err = review.ErrForbidden
+	if _, err := registry.WithCertificationVerifier(verifier).ResolveReviewer(context.Background(), scope, actor, "ng-1", now); !errors.Is(err, review.ErrForbidden) {
+		t.Fatalf("denied assertion error=%v", err)
+	}
+
+	// Without a configured verifier the tenant-attested behaviour is unchanged.
+	attested, err := review.NewRegistry([]review.Assignment{base})
+	if err != nil {
+		t.Fatal(err)
+	}
+	principal, err = attested.ResolveReviewer(context.Background(), scope, actor, "ng-1", now)
+	if err != nil || principal.ID != "operator-1" {
+		t.Fatalf("tenant-attested principal=%+v error=%v", principal, err)
+	}
+
+	// A configured verifier fails closed when the assignment carries no assertion.
+	unasserted := base
+	unasserted.CertificationAssertions = nil
+	registry, err = review.NewRegistry([]review.Assignment{unasserted})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := registry.WithCertificationVerifier(&recordingVerifier{}).ResolveReviewer(context.Background(), scope, actor, "ng-1", now); !errors.Is(err, review.ErrForbidden) {
+		t.Fatalf("missing assertion error=%v", err)
+	}
+}
+
+func TestReviewRegistryRejectsInvalidCertificationAssertions(t *testing.T) {
+	now := time.Date(2026, 9, 19, 12, 0, 0, 0, time.UTC)
+	base := review.Assignment{ // #nosec G101 -- public test fixtures, not credentials.
+		TenantID: "ten_01K4AR9V8FQ2G7ZXCPNM5T6JWH", APIKeyID: "key_01K4AR9V8FQ2G7ZXCPNM5T6JWH", OperatorID: "operator-1",
+		Permissions: []review.Permission{review.PermissionClaim}, Certifications: []string{"document.level2"}, Regions: []string{"ng-1"},
+		NotBefore: now, ExpiresAt: now.Add(time.Hour),
+	}
+	for _, test := range []struct {
+		name       string
+		assertions []review.CertificateAssertion
+	}{
+		{name: "unknown_certificate", assertions: []review.CertificateAssertion{{Certificate: "document.level3", Region: "ng-1", Token: "v1.token"}}},
+		{name: "unknown_region", assertions: []review.CertificateAssertion{{Certificate: "document.level2", Region: "us-1", Token: "v1.token"}}},
+		{name: "empty_token", assertions: []review.CertificateAssertion{{Certificate: "document.level2", Region: "ng-1"}}},
+		{name: "whitespace_token", assertions: []review.CertificateAssertion{{Certificate: "document.level2", Region: "ng-1", Token: "v1 token"}}},
+		{name: "mismatched_reviewer", assertions: []review.CertificateAssertion{{ReviewerID: "operator-2", Certificate: "document.level2", Region: "ng-1", Token: "v1.token"}}},
+		{name: "duplicate_binding", assertions: []review.CertificateAssertion{
+			{Certificate: "document.level2", Region: "ng-1", Token: "v1.token"},
+			{Certificate: "document.level2", Region: "ng-1", Token: "v1.other"},
+		}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			assignment := base
+			assignment.CertificationAssertions = test.assertions
+			if _, err := review.NewRegistry([]review.Assignment{assignment}); !errors.Is(err, review.ErrInvalid) {
+				t.Fatalf("NewRegistry() error = %v, want ErrInvalid", err)
+			}
+		})
+	}
+}
+
 type authorityCaseRepository struct {
 	review.Repository
 	value review.Case

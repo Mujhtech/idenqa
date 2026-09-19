@@ -115,12 +115,6 @@ func (m *Management) Read(ctx context.Context, auth access.Context, kind, refere
 	return m.repository.ReadAdministration(ctx, auth.TenantScope(), kind, reference)
 }
 
-// CertificationVerifier is supplied by deployments integrating an external issuer.
-// No caller assertion may substitute for this verification result.
-type CertificationVerifier interface {
-	VerifyCertification(context.Context, tenant.Scope, string, string, time.Time) (bool, error)
-}
-
 // QueueConfiguration changes operational priority and SLA without changing policy or case versions.
 type QueueConfiguration struct {
 	Priority  int       `json:"priority"`

@@ -20,6 +20,7 @@ type Actor struct{ ID string }
 type Repository interface {
 	CreateCase(context.Context, tenant.Scope, Actor, Case) error
 	FindCase(context.Context, tenant.Scope, id.ReviewCase) (Case, error)
+	FindCaseForVerification(context.Context, tenant.Scope, id.Verification) (Case, error)
 	SaveCase(context.Context, tenant.Scope, Actor, Case, int64, *Finding) error
 	FindGrants(context.Context, tenant.Scope, string, string, []id.Grant, time.Time) ([]EvidenceGrant, error)
 	CreateAppeal(context.Context, tenant.Scope, Actor, Appeal, time.Time) error
@@ -96,6 +97,22 @@ func (service *Service) FindCase(ctx context.Context, scope tenant.Scope, actor 
 		return Case{}, ErrForbidden
 	}
 	return service.repository.FindCase(ctx, scope, identifier)
+}
+
+// FindCaseForVerification returns the current non-evidence case metadata for a
+// verification without exposing findings or evidence.
+func (service *Service) FindCaseForVerification(ctx context.Context, scope tenant.Scope, actor Actor, verification id.Verification) (Case, error) {
+	if actor.ID == "" || verification.IsZero() {
+		return Case{}, ErrForbidden
+	}
+	value, err := service.repository.FindCaseForVerification(ctx, scope, verification)
+	if err != nil {
+		if errors.Is(err, ErrCaseNotFound) {
+			return Case{}, ErrCaseNotFound
+		}
+		return Case{}, err
+	}
+	return value, nil
 }
 
 // Claim applies certification and optimistic assignment rules.

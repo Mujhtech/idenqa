@@ -282,7 +282,7 @@ func runAuthorityPersistenceInRegion(t *testing.T, exercise func(captureAcceptan
 
 	if exercise != nil {
 		exercise(captureAcceptanceFixture{
-			admin: adminPool, runtime: runtimePool, scope: ownerScope, authorities: store,
+			admin: adminPool, runtime: runtimePool, database: database, scope: ownerScope, authorities: store,
 			creation: created, registry: registry, catalog: catalog,
 			ids: generator, declaration: storedAuthority, now: now.Add(8 * time.Minute),
 		})
