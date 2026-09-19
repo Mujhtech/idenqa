@@ -43,6 +43,16 @@ func newRootCommand(info buildinfo.Info) *cobra.Command {
 		newWorkCommand(),
 		newWebhookCommand(),
 		newProposalCommand(),
+		newReviewCommand(),
+		newModelCommand(),
+		newProviderCommand(),
+		newPrivacyCommand(),
+		newSubjectCommand(),
+		newExportCommand(),
+		newAssuranceCommand(),
+		newFraudCommand(),
+		newSyntheticCommand(),
+		newDoctorCommand(),
 	)
 
 	return root

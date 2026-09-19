@@ -65,6 +65,7 @@ func newPolicyCommandWith(openRepository policyRepositoryOpener) *cobra.Command 
 	)
 	command.AddCommand(decision)
 	addPolicyAdminCommands(command)
+	addPolicySimulationCommands(command)
 	return command
 }
 

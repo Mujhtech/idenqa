@@ -43,6 +43,7 @@ func newProposalCommand() *cobra.Command {
 	root.AddCommand(newProposalOperation("approve"))
 	root.AddCommand(newProposalOperation("reject"))
 	root.AddCommand(newProposalOperation("cancel"))
+	root.AddCommand(newProposalExecuteCommand())
 	root.AddCommand(newProposalModeCommand())
 	root.AddCommand(newProposalPromptCommand())
 	return root
@@ -148,6 +149,25 @@ func newProposalPromptOperation(operation string) *cobra.Command {
 		flags.StringVar(&options.identifier, "id", "", "prompt identifier")
 		flags.Int64Var(&options.version, "version", 0, "prompt version")
 	}
+	return command
+}
+
+func newProposalExecuteCommand() *cobra.Command {
+	options := &proposalOptions{}
+	command := &cobra.Command{
+		Use:   "execute <commandID>",
+		Short: "Proposal accepted-command execute",
+		Args:  cli.UsageArgs(cobra.ExactArgs(1)),
+		RunE: func(command *cobra.Command, args []string) error {
+			accepted, err := id.ParseAcceptedCommand(args[0])
+			if err != nil {
+				return cli.UsageError(errors.New("a valid accepted-command id is required"))
+			}
+			return runProposalHTTP(command, options, http.MethodPost, "/v1/accepted-commands/"+accepted.String()+"/execute", nil)
+		},
+	}
+	command.Flags().StringVar(&options.baseURL, "api-url", "", "Core API base URL (HTTPS, or local loopback HTTP)")
+	command.Flags().StringVar(&options.keyFile, "api-key-file", "", "read API credential from this file (otherwise IDENQA_API_KEY)")
 	return command
 }
 
