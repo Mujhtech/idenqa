@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "registry": {
+    "schema_version": 1,
+    "revision": 1,
+    "digest": "sha256:71ef9df77044f9bf5eeb7ae448da3d98811ff4cb3f2541f459e60b4628a5364f"
+  },
+  "requirements": [
+    {
+      "key": "selfie",
+      "purpose": "idenqa.purpose.identity_verification",
+      "evidence_type": "idenqa.evidence.selfie_image",
+      "artefacts": ["idenqa.artefact.selfie_image"],
+      "acquisition": {
+        "strategy": "any_of",
+        "methods": ["idenqa.method.live_camera"]
+      },
+      "required_assurances": [],
+      "constraints": [],
+      "fallbacks": [
+        {
+          "on": ["method_unavailable", "capture_failed"],
+          "acquisition": {
+            "strategy": "any_of",
+            "methods": ["idenqa.method.file_upload"]
+          }
+        }
+      ]
+    }
+  ]
+}

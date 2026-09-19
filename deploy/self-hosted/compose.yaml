@@ -1,0 +1,361 @@
+# Self-hosted Idenqa Core — the complete open-source operational contract.
+#
+# This stack composes PostgreSQL, S3-compatible object storage, migrations,
+# the API, the background worker, the isolated provider and model runners,
+# Capture Web, and an example signed-webhook receiver without Cloud or Console.
+#
+# The development Compose file at deploy/dev/compose.yaml stays PostgreSQL-only
+# for the integration suites. This file is the packaged deployment.
+#
+# All images are pinned by digest. Development credentials are either
+# non-production constants in .env.example or generated into the shared runtime
+# volume by the one-shot `provision` service. Nothing here is production-ready:
+# replace the local keyring, development CA, database credentials, object-store
+# credentials, and exposed ports before operating a real installation.
+#
+# Usage:
+#   cp deploy/self-hosted/.env.example deploy/self-hosted/.env   # optional overrides
+#   docker compose -f deploy/self-hosted/compose.yaml up -d --wait
+#   deploy/self-hosted/smoke.sh
+#
+# The S3-backed API distribution is optional because the current worker has no
+# S3 evidence adapter: the complete worker-backed gate uses the root API's
+# local evidence volume. Enable the distribution with `--profile s3` against
+# the same MinIO service.
+
+name: idenqa-self-hosted
+
+x-core-image: &core-image
+  image: idenqa-core:${IDENQA_IMAGE_TAG:-dev}
+  build:
+    context: ../..
+    dockerfile: deploy/self-hosted/Dockerfile
+    target: core
+    args:
+      VERSION: ${IDENQA_IMAGE_VERSION:-dev}
+      COMMIT: ${IDENQA_IMAGE_COMMIT:-unknown}
+      BUILD_DATE: ${IDENQA_IMAGE_DATE:-unknown}
+  networks: [core]
+  restart: unless-stopped
+
+# Shared open-source core settings. Every value is a development default; the
+# worker and API additionally load generated secrets from /run/idenqa.
+x-core-environment: &core-environment
+  IDENQA_ENVIRONMENT: development
+  IDENQA_DATABASE_URL: postgres://idenqa:idenqa_dev@postgres:5432/idenqa?sslmode=disable
+  # Development-only convenience: the same role performs explicit migrations and
+  # audited administration. Split these in any real deployment.
+  IDENQA_DATABASE_ADMIN_URL: postgres://idenqa:idenqa_dev@postgres:5432/idenqa?sslmode=disable
+  IDENQA_HEADGATE_INSTALLATION_ID: ${IDENQA_HEADGATE_INSTALLATION_ID:-idenqa-self-hosted}
+  IDENQA_HEADGATE_SCHEMA: ${IDENQA_HEADGATE_SCHEMA:-headgate}
+  IDENQA_REGION: ${IDENQA_REGION:-tenant-local}
+  IDENQA_REALTIME_WEBSOCKET_URL: ws://127.0.0.1:${IDENQA_API_HOST_PORT:-8080}/v1/capture/socket
+  IDENQA_HTTP_CORS_ALLOWED_ORIGINS: http://localhost:4173,http://127.0.0.1:4173
+  IDENQA_HTTP_HOST: 0.0.0.0
+  IDENQA_HTTP_PORT: "8080"
+  # API-key administration requires a positive rotation-overlap policy; zero
+  # fails closed when an administrator issues a key.
+  IDENQA_API_KEY_MAXIMUM_ROTATION_OVERLAP: ${IDENQA_API_KEY_MAXIMUM_ROTATION_OVERLAP:-24h}
+  IDENQA_LOG_LEVEL: ${IDENQA_LOG_LEVEL:-info}
+  IDENQA_LOG_FORMAT: json
+
+x-local-evidence: &local-evidence
+  IDENQA_EVIDENCE_LOCAL_DIRECTORY: /var/lib/idenqa/evidence
+  IDENQA_EVIDENCE_LOCAL_KEYRING_FILE: /run/idenqa/evidence-keyring.json
+
+x-core-volumes: &core-volumes
+  - run-data:/run/idenqa:ro
+  - state-data:/state
+  - evidence-data:/var/lib/idenqa/evidence
+
+services:
+  postgres:
+    image: postgres:18.4@sha256:a02db8cac496f15b094798a38254f14d6e00741f709360e5e00bb6668ea31636
+    environment:
+      POSTGRES_DB: idenqa
+      POSTGRES_USER: idenqa
+      POSTGRES_PASSWORD: ${IDENQA_POSTGRES_PASSWORD:-idenqa_dev}
+    # 5433 avoids the deploy/dev integration PostgreSQL on 5432.
+    ports:
+      - "${IDENQA_SELF_HOSTED_POSTGRES_PORT:-5433}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U idenqa -d idenqa"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    networks: [core]
+    restart: unless-stopped
+
+  minio:
+    image: quay.io/minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${IDENQA_MINIO_ROOT_USER:-idenqa}
+      MINIO_ROOT_PASSWORD: ${IDENQA_MINIO_ROOT_PASSWORD:-idenqa_dev_minio}
+    ports:
+      - "${IDENQA_MINIO_API_PORT:-9000}:9000"
+      - "${IDENQA_MINIO_CONSOLE_PORT:-9001}:9001"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    volumes:
+      - minio-data:/data
+    networks: [core]
+    restart: unless-stopped
+
+  minio-init:
+    image: quay.io/minio/mc@sha256:a7fe349ef4bd8521fb8497f55c6042871b2ae640607cf99d9bede5e9bdf11727
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >-
+        mc alias set local http://minio:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD" &&
+        mc mb --ignore-existing local/idenqa-evidence &&
+        mc anonymous set none local/idenqa-evidence
+    environment:
+      MINIO_ROOT_USER: ${IDENQA_MINIO_ROOT_USER:-idenqa}
+      MINIO_ROOT_PASSWORD: ${IDENQA_MINIO_ROOT_PASSWORD:-idenqa_dev_minio}
+    networks: [core]
+    restart: "no"
+
+  provision:
+    <<: *core-image
+    user: "0:0"
+    entrypoint: ["/bin/sh", "/usr/local/bin/provision-self-hosted.sh"]
+    volumes:
+      - run-data:/run/idenqa
+      - state-data:/state
+      - evidence-data:/var/lib/idenqa/evidence
+    restart: "no"
+
+  migrate:
+    <<: *core-image
+    depends_on:
+      postgres:
+        condition: service_healthy
+    entrypoint: ["idenqa-entrypoint", "sh", "-c"]
+    command: ["idenqa migrate up && idenqa migrate headgate up"]
+    environment:
+      <<: *core-environment
+    restart: "no"
+
+  api:
+    <<: *core-image
+    depends_on:
+      postgres:
+        condition: service_healthy
+      provision:
+        condition: service_completed_successfully
+      migrate:
+        condition: service_completed_successfully
+    command: ["api"]
+    environment:
+      <<: [*core-environment, *local-evidence]
+    volumes: *core-volumes
+    ports:
+      - "${IDENQA_API_HOST_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/readyz >/dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  worker:
+    <<: *core-image
+    depends_on:
+      postgres:
+        condition: service_healthy
+      provision:
+        condition: service_completed_successfully
+      migrate:
+        condition: service_completed_successfully
+    command: ["worker"]
+    environment:
+      <<: [*core-environment, *local-evidence]
+      # Trust the development CA for the packaged webhook receiver's TLS.
+      SSL_CERT_FILE: /run/idenqa/tls/ca.crt
+      # The synthetic fixture plan exists only for synthetic-data installations.
+      IDENQA_WORKER_SYNTHETIC_PROCESSING: "true"
+      IDENQA_WORKER_ID: ${IDENQA_WORKER_ID:-self-hosted-worker}
+      # Development pacing so the smoke gate observes recovery within bounds.
+      IDENQA_WORKER_LEASE_DURATION: 10s
+      IDENQA_WORKER_RECONCILIATION_SWEEP_INTERVAL: 5s
+      IDENQA_WORKER_PROGRESS_POLL_INTERVAL: 500ms
+    volumes: *core-volumes
+    healthcheck:
+      # The Go worker has no HTTP surface; this is a process liveness check.
+      test: ["CMD-SHELL", "kill -0 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  adapter-runner:
+    <<: *core-image
+    depends_on:
+      provision:
+        condition: service_completed_successfully
+    command: ["adapter-runner", "--config", "/run/idenqa/adapter-runner.json"]
+    environment:
+      SSL_CERT_FILE: /run/idenqa/tls/ca.crt
+    volumes:
+      - run-data:/run/idenqa:ro
+    ports:
+      - "${IDENQA_ADAPTER_RUNNER_HOST_PORT:-9090}:9090"
+    healthcheck:
+      # gRPC has no HTTP health surface; prove the TLS listener accepts TCP.
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/9090'"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  model-runner:
+    image: idenqa-model-runner:${IDENQA_IMAGE_TAG:-dev}
+    build:
+      context: ../..
+      dockerfile: deploy/self-hosted/Dockerfile
+      target: model-runner
+      args:
+        VERSION: ${IDENQA_IMAGE_VERSION:-dev}
+        COMMIT: ${IDENQA_IMAGE_COMMIT:-unknown}
+        BUILD_DATE: ${IDENQA_IMAGE_DATE:-unknown}
+    # The isolated runner needs the hash-locked Python ONNX runtime and an
+    # approved model. The packaged evaluation fixture is enough to prove the
+    # runner boundary but is not a trained or accepted PAD model, so the
+    # service is opt-in.
+    profiles: ["model"]
+    depends_on:
+      provision:
+        condition: service_completed_successfully
+    environment:
+      SSL_CERT_FILE: /run/idenqa/tls/ca.crt
+    volumes:
+      - run-data:/run/idenqa
+    ports:
+      - "${IDENQA_MODEL_RUNNER_HOST_PORT:-9091}:9091"
+    networks: [core]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "kill -0 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  capture-web:
+    image: idenqa-capture-web:${IDENQA_IMAGE_TAG:-dev}
+    build:
+      context: ../..
+      dockerfile: deploy/self-hosted/Dockerfile
+      target: capture-web
+      args:
+        VERSION: ${IDENQA_IMAGE_VERSION:-dev}
+        COMMIT: ${IDENQA_IMAGE_COMMIT:-unknown}
+        BUILD_DATE: ${IDENQA_IMAGE_DATE:-unknown}
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      IDENQA_DEMO_CORE_URL: http://api:8080
+      IDENQA_DEMO_REGION: ${IDENQA_REGION:-tenant-local}
+    volumes:
+      - state-data:/state:ro
+    ports:
+      - "${IDENQA_CAPTURE_WEB_HOST_PORT:-4173}:4173"
+    networks: [core]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:4173/hosted.html >/dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  webhook-receiver:
+    <<: *core-image
+    depends_on:
+      provision:
+        condition: service_completed_successfully
+    command: ["webhook-receiver"]
+    environment:
+      IDENQA_WEBHOOK_LISTEN_ADDRESS: ":443"
+      IDENQA_WEBHOOK_CERTIFICATE_FILE: /run/idenqa/tls/webhook-receiver.crt
+      IDENQA_WEBHOOK_PRIVATE_KEY_FILE: /run/idenqa/tls/webhook-receiver.key
+      IDENQA_WEBHOOK_SECRET_FILE: /state/webhook-secret
+      IDENQA_WEBHOOK_RECORD_FILE: /state/verified-events.ndjson
+      IDENQA_WEBHOOK_TOLERANCE: 5m
+    volumes:
+      - run-data:/run/idenqa:ro
+      - state-data:/state
+    # Bind the callback listener on port 443 while running as a non-root user.
+    sysctls:
+      net.ipv4.ip_unprivileged_port_start: "0"
+    networks:
+      core:
+        ipv4_address: 11.77.0.10
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fk https://127.0.0.1/healthz >/dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  # Optional S3-backed API distribution. It shares the MinIO service and the
+  # local KEK keyring; the worker does not currently have an S3 evidence
+  # adapter, so the default worker-backed gate uses the root `api` service.
+  api-s3:
+    <<: *core-image
+    profiles: ["s3"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+      provision:
+        condition: service_completed_successfully
+      migrate:
+        condition: service_completed_successfully
+    command: ["api-s3"]
+    environment:
+      <<: *core-environment
+      IDENQA_EVIDENCE_LOCAL_KEYRING_FILE: /run/idenqa/evidence-keyring.json
+      IDENQA_S3_BUCKET: ${IDENQA_S3_BUCKET:-idenqa-evidence}
+      IDENQA_S3_PREFIX: ${IDENQA_S3_PREFIX:-self-hosted/evidence}
+      IDENQA_S3_REGION: ${IDENQA_S3_REGION:-us-east-1}
+      IDENQA_S3_ENDPOINT: http://minio:9000
+      IDENQA_S3_FORCE_PATH_STYLE: "true"
+      IDENQA_S3_ALLOW_HTTP: "true"
+      AWS_ACCESS_KEY_ID: ${IDENQA_MINIO_ROOT_USER:-idenqa}
+      AWS_SECRET_ACCESS_KEY: ${IDENQA_MINIO_ROOT_PASSWORD:-idenqa_dev_minio}
+    volumes:
+      - run-data:/run/idenqa:ro
+    ports:
+      - "${IDENQA_S3_API_HOST_PORT:-8081}:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/readyz >/dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+volumes:
+  postgres-data:
+  minio-data:
+  run-data:
+  state-data:
+  evidence-data:
+
+networks:
+  core:
+    driver: bridge
+    ipam:
+      config:
+        # The webhook callback transport rejects loopback and RFC1918 targets.
+        # This isolated development network uses an address range the public
+        # transport treats as ordinary global unicast so the packaged worker
+        # can exercise its real signature and DNS-pinning path. Never reuse
+        # this range for production traffic.
+        - subnet: 11.77.0.0/24
+          gateway: 11.77.0.1

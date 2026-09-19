@@ -1,0 +1,18 @@
+{
+  "schema_major": 1,
+  "schema_minor": 0,
+  "verified_assurance": "synthetic.fixture",
+  "rules": [
+    {
+      "name": "synthetic_success",
+      "when": "facts[\"synthetic.document\"] == \"satisfied\" && facts[\"synthetic.liveness\"] == \"satisfied\"",
+      "result": {
+        "state": "satisfied",
+        "directive": "complete_verified",
+        "priority": 1,
+        "contributing_facts": ["synthetic.document", "synthetic.liveness"],
+        "reason_codes": []
+      }
+    }
+  ]
+}

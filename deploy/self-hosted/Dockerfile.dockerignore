@@ -1,0 +1,16 @@
+# Keep the self-hosted build context to source, manifests, and fixtures.
+.git
+.github
+.cache
+.pnpm-store
+**/node_modules
+**/dist
+**/test-results
+**/.build
+**/.gradle
+**/.kotlin
+bin
+docs
+sdk/kotlin
+sdk/swift
+capture/web/test-results

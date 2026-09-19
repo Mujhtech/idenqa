@@ -1,0 +1,68 @@
+# Published-image override for the self-hosted Idenqa Core stack.
+#
+# Use this override to run the stack from images published by
+# .github/workflows/images.yml instead of building locally:
+#
+#   IDENQA_IMAGE_REPOSITORY=ghcr.io/<owner> \
+#   IDENQA_IMAGE_TAG=1.2.3 \
+#   docker compose \
+#     -f deploy/self-hosted/compose.yaml \
+#     -f deploy/self-hosted/compose.published.yaml \
+#     up -d --wait
+#
+# IDENQA_IMAGE_REPOSITORY defaults to the placeholder ghcr.io/OWNER. Replace
+# OWNER (or pass an explicit value) with the lowercase GitHub owner/namespace
+# whose images were published, or another registry mirroring the same
+# repositories. The workflow publishes:
+#
+#   <repository>/idenqa-core          core, migration, provisioning, API,
+#                                     worker, runners, webhook receiver
+#   <repository>/idenqa-capture-web   Capture Web host
+#   <repository>/idenqa-model-runner  model (--profile model)
+#
+# IDENQA_IMAGE_TAG defaults to `latest`, matching the workflow's
+# `flavor: latest=auto` behavior: `latest` is published only for stable `v*`
+# releases. Pin an exact release (`1.2.3`) or a commit (`sha-<commit>`) for
+# reproducible installations.
+#
+# Every service that inherits `x-core-image` in the base file receives an
+# explicit `build: !reset null` (Compose >= 2.24) instead of a YAML merge key:
+# Compose does not carry the `!reset` tag through `<<` merges, and without the
+# reset the base file's build contexts would remain and Compose would offer to
+# build locally. The optional `s3` and `model` profiles are defined by the base
+# file and are preserved unchanged by this override. Development credentials
+# and generated runtime secrets still come from deploy/self-hosted/.env and the
+# one-shot `provision` service exactly as in the base stack.
+
+x-published-core-image: &published-core-image ${IDENQA_IMAGE_REPOSITORY:-ghcr.io/OWNER}/idenqa-core:${IDENQA_IMAGE_TAG:-latest}
+x-published-capture-web-image: &published-capture-web-image ${IDENQA_IMAGE_REPOSITORY:-ghcr.io/OWNER}/idenqa-capture-web:${IDENQA_IMAGE_TAG:-latest}
+x-published-model-runner-image: &published-model-runner-image ${IDENQA_IMAGE_REPOSITORY:-ghcr.io/OWNER}/idenqa-model-runner:${IDENQA_IMAGE_TAG:-latest}
+
+services:
+  provision:
+    image: *published-core-image
+    build: !reset null
+  migrate:
+    image: *published-core-image
+    build: !reset null
+  api:
+    image: *published-core-image
+    build: !reset null
+  worker:
+    image: *published-core-image
+    build: !reset null
+  adapter-runner:
+    image: *published-core-image
+    build: !reset null
+  webhook-receiver:
+    image: *published-core-image
+    build: !reset null
+  api-s3:
+    image: *published-core-image
+    build: !reset null
+  capture-web:
+    image: *published-capture-web-image
+    build: !reset null
+  model-runner:
+    image: *published-model-runner-image
+    build: !reset null
