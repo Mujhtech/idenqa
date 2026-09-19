@@ -267,7 +267,12 @@ idenqa webhook deliveries --api-url https://core.example.com \
 idenqa webhook replay --api-url https://core.example.com \
   --api-key-file ./backend.key --id "$DELIVERY_ID" \
   --reason receiver_recovered --idempotency-key replay-failed-delivery-1 --confirm
+idenqa webhook listen --api-url https://core.example.com \
+  --api-key-file ./backend.key --event-types verification.completed \
+  --forward-to http://localhost:4242/webhook --secret-out ./listen-secret.key
 ```
+
+`webhook listen` streams live catalogue events with `webhooks:read`, prints one summary per event (or the canonical envelope with `--json`), reconnects with `Last-Event-ID`, and with `--forward-to` forwards exact bytes to a loopback receiver signed with the canonical `Idenqa-Signature`, `Idenqa-Timestamp` and `Idenqa-Event-ID` headers. It uses exactly one of `--secret-file` (an existing Base64URL secret) or `--secret-out` (a new owner-only generated secret that persists across restarts); `--print-secret` prints the configured secret and exits. Verify forwards with the Go SDK `WebhookVerifier`. The stream can miss events while the listener is offline; receivers must continue deduplicating by event ID.
 
 `--secret-out` must name a new file; it is created owner-only before the request and never overwritten. Replayed create/rotate responses produce no secret file. Rotation, disablement and replay require `--confirm`. Credentials may alternatively come from `IDENQA_API_KEY`; they are never command-line arguments. Runtime API/file failures return exit status 1, invalid arguments return 2. Replay requires the API and worker to share their configured Headgate installation and schema.
 

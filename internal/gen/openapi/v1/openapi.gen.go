@@ -1124,6 +1124,171 @@ func (e ModeConfigMode) Valid() bool {
 	}
 }
 
+// Defines values for ModelRegistrationEvaluationOnly.
+const (
+	ModelRegistrationEvaluationOnlyTrue ModelRegistrationEvaluationOnly = true
+)
+
+// Valid indicates whether the value is a known member of the ModelRegistrationEvaluationOnly enum.
+func (e ModelRegistrationEvaluationOnly) Valid() bool {
+	switch e {
+	case ModelRegistrationEvaluationOnlyTrue:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ModelRegistryReceiptOperation.
+const (
+	ModelRegistryReceiptOperationActivate  ModelRegistryReceiptOperation = "activate"
+	ModelRegistryReceiptOperationRegister  ModelRegistryReceiptOperation = "register"
+	ModelRegistryReceiptOperationRetire    ModelRegistryReceiptOperation = "retire"
+	ModelRegistryReceiptOperationRollback  ModelRegistryReceiptOperation = "rollback"
+	ModelRegistryReceiptOperationThreshold ModelRegistryReceiptOperation = "threshold"
+)
+
+// Valid indicates whether the value is a known member of the ModelRegistryReceiptOperation enum.
+func (e ModelRegistryReceiptOperation) Valid() bool {
+	switch e {
+	case ModelRegistryReceiptOperationActivate:
+		return true
+	case ModelRegistryReceiptOperationRegister:
+		return true
+	case ModelRegistryReceiptOperationRetire:
+		return true
+	case ModelRegistryReceiptOperationRollback:
+		return true
+	case ModelRegistryReceiptOperationThreshold:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ModelRegistryRevisionKind.
+const (
+	ModelRegistryRevisionKindModel     ModelRegistryRevisionKind = "model"
+	ModelRegistryRevisionKindThreshold ModelRegistryRevisionKind = "threshold"
+)
+
+// Valid indicates whether the value is a known member of the ModelRegistryRevisionKind enum.
+func (e ModelRegistryRevisionKind) Valid() bool {
+	switch e {
+	case ModelRegistryRevisionKindModel:
+		return true
+	case ModelRegistryRevisionKindThreshold:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ModelThresholdSetEvaluationOnly.
+const (
+	ModelThresholdSetEvaluationOnlyTrue ModelThresholdSetEvaluationOnly = true
+)
+
+// Valid indicates whether the value is a known member of the ModelThresholdSetEvaluationOnly enum.
+func (e ModelThresholdSetEvaluationOnly) Valid() bool {
+	switch e {
+	case ModelThresholdSetEvaluationOnlyTrue:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ModelValidationReportOperation.
+const (
+	ModelValidationReportOperationActivate  ModelValidationReportOperation = "activate"
+	ModelValidationReportOperationRegister  ModelValidationReportOperation = "register"
+	ModelValidationReportOperationRetire    ModelValidationReportOperation = "retire"
+	ModelValidationReportOperationRollback  ModelValidationReportOperation = "rollback"
+	ModelValidationReportOperationThreshold ModelValidationReportOperation = "threshold"
+)
+
+// Valid indicates whether the value is a known member of the ModelValidationReportOperation enum.
+func (e ModelValidationReportOperation) Valid() bool {
+	switch e {
+	case ModelValidationReportOperationActivate:
+		return true
+	case ModelValidationReportOperationRegister:
+		return true
+	case ModelValidationReportOperationRetire:
+		return true
+	case ModelValidationReportOperationRollback:
+		return true
+	case ModelValidationReportOperationThreshold:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ModelValidationReportReasonCodes.
+const (
+	CommandInvalid      ModelValidationReportReasonCodes = "command_invalid"
+	DeploymentInvalid   ModelValidationReportReasonCodes = "deployment_invalid"
+	RegistrationInvalid ModelValidationReportReasonCodes = "registration_invalid"
+	RegistryNotFound    ModelValidationReportReasonCodes = "registry_not_found"
+	RevisionNotFound    ModelValidationReportReasonCodes = "revision_not_found"
+	StateConflict       ModelValidationReportReasonCodes = "state_conflict"
+	ThresholdInvalid    ModelValidationReportReasonCodes = "threshold_invalid"
+	VersionConflict     ModelValidationReportReasonCodes = "version_conflict"
+)
+
+// Valid indicates whether the value is a known member of the ModelValidationReportReasonCodes enum.
+func (e ModelValidationReportReasonCodes) Valid() bool {
+	switch e {
+	case CommandInvalid:
+		return true
+	case DeploymentInvalid:
+		return true
+	case RegistrationInvalid:
+		return true
+	case RegistryNotFound:
+		return true
+	case RevisionNotFound:
+		return true
+	case StateConflict:
+		return true
+	case ThresholdInvalid:
+		return true
+	case VersionConflict:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ModelValidationRequestOperation.
+const (
+	ModelValidationRequestOperationActivate  ModelValidationRequestOperation = "activate"
+	ModelValidationRequestOperationRegister  ModelValidationRequestOperation = "register"
+	ModelValidationRequestOperationRetire    ModelValidationRequestOperation = "retire"
+	ModelValidationRequestOperationRollback  ModelValidationRequestOperation = "rollback"
+	ModelValidationRequestOperationThreshold ModelValidationRequestOperation = "threshold"
+)
+
+// Valid indicates whether the value is a known member of the ModelValidationRequestOperation enum.
+func (e ModelValidationRequestOperation) Valid() bool {
+	switch e {
+	case ModelValidationRequestOperationActivate:
+		return true
+	case ModelValidationRequestOperationRegister:
+		return true
+	case ModelValidationRequestOperationRetire:
+		return true
+	case ModelValidationRequestOperationRollback:
+		return true
+	case ModelValidationRequestOperationThreshold:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for NativeBootstrapRequestProofAlgorithm.
 const (
 	ES256 NativeBootstrapRequestProofAlgorithm = "ES256"
@@ -1496,6 +1661,66 @@ func (e PolicyOutcome) Valid() bool {
 	}
 }
 
+// Defines values for PolicyRegressionReportSchemaMajor.
+const (
+	PolicyRegressionReportSchemaMajorN1 PolicyRegressionReportSchemaMajor = 1
+)
+
+// Valid indicates whether the value is a known member of the PolicyRegressionReportSchemaMajor enum.
+func (e PolicyRegressionReportSchemaMajor) Valid() bool {
+	switch e {
+	case PolicyRegressionReportSchemaMajorN1:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PolicyRegressionReportSchemaMinor.
+const (
+	PolicyRegressionReportSchemaMinorN0 PolicyRegressionReportSchemaMinor = 0
+)
+
+// Valid indicates whether the value is a known member of the PolicyRegressionReportSchemaMinor enum.
+func (e PolicyRegressionReportSchemaMinor) Valid() bool {
+	switch e {
+	case PolicyRegressionReportSchemaMinorN0:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PolicyRegressionSuiteSchemaMajor.
+const (
+	PolicyRegressionSuiteSchemaMajorN1 PolicyRegressionSuiteSchemaMajor = 1
+)
+
+// Valid indicates whether the value is a known member of the PolicyRegressionSuiteSchemaMajor enum.
+func (e PolicyRegressionSuiteSchemaMajor) Valid() bool {
+	switch e {
+	case PolicyRegressionSuiteSchemaMajorN1:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PolicyRegressionSuiteSchemaMinor.
+const (
+	PolicyRegressionSuiteSchemaMinorN0 PolicyRegressionSuiteSchemaMinor = 0
+)
+
+// Valid indicates whether the value is a known member of the PolicyRegressionSuiteSchemaMinor enum.
+func (e PolicyRegressionSuiteSchemaMinor) Valid() bool {
+	switch e {
+	case PolicyRegressionSuiteSchemaMinorN0:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for PolicyRequirementState.
 const (
 	PolicyRequirementStateInconclusive PolicyRequirementState = "inconclusive"
@@ -1523,6 +1748,132 @@ func (e PolicyRequirementState) Valid() bool {
 	}
 }
 
+// Defines values for PolicyRevisionDiffSchemaMajor.
+const (
+	PolicyRevisionDiffSchemaMajorN1 PolicyRevisionDiffSchemaMajor = 1
+)
+
+// Valid indicates whether the value is a known member of the PolicyRevisionDiffSchemaMajor enum.
+func (e PolicyRevisionDiffSchemaMajor) Valid() bool {
+	switch e {
+	case PolicyRevisionDiffSchemaMajorN1:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PolicyRevisionDiffSchemaMinor.
+const (
+	PolicyRevisionDiffSchemaMinorN0 PolicyRevisionDiffSchemaMinor = 0
+)
+
+// Valid indicates whether the value is a known member of the PolicyRevisionDiffSchemaMinor enum.
+func (e PolicyRevisionDiffSchemaMinor) Valid() bool {
+	switch e {
+	case PolicyRevisionDiffSchemaMinorN0:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PolicyRevisionDiffChangeKind.
+const (
+	Added   PolicyRevisionDiffChangeKind = "added"
+	Changed PolicyRevisionDiffChangeKind = "changed"
+	Removed PolicyRevisionDiffChangeKind = "removed"
+)
+
+// Valid indicates whether the value is a known member of the PolicyRevisionDiffChangeKind enum.
+func (e PolicyRevisionDiffChangeKind) Valid() bool {
+	switch e {
+	case Added:
+		return true
+	case Changed:
+		return true
+	case Removed:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PolicySimulationInputSchemaMajor.
+const (
+	PolicySimulationInputSchemaMajorN1 PolicySimulationInputSchemaMajor = 1
+)
+
+// Valid indicates whether the value is a known member of the PolicySimulationInputSchemaMajor enum.
+func (e PolicySimulationInputSchemaMajor) Valid() bool {
+	switch e {
+	case PolicySimulationInputSchemaMajorN1:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PolicySimulationInputSchemaMinor.
+const (
+	PolicySimulationInputSchemaMinorN0 PolicySimulationInputSchemaMinor = 0
+)
+
+// Valid indicates whether the value is a known member of the PolicySimulationInputSchemaMinor enum.
+func (e PolicySimulationInputSchemaMinor) Valid() bool {
+	switch e {
+	case PolicySimulationInputSchemaMinorN0:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PolicySimulationReportReproduced.
+const (
+	PolicySimulationReportReproducedTrue PolicySimulationReportReproduced = true
+)
+
+// Valid indicates whether the value is a known member of the PolicySimulationReportReproduced enum.
+func (e PolicySimulationReportReproduced) Valid() bool {
+	switch e {
+	case PolicySimulationReportReproducedTrue:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PolicySimulationReportSchemaMajor.
+const (
+	PolicySimulationReportSchemaMajorN1 PolicySimulationReportSchemaMajor = 1
+)
+
+// Valid indicates whether the value is a known member of the PolicySimulationReportSchemaMajor enum.
+func (e PolicySimulationReportSchemaMajor) Valid() bool {
+	switch e {
+	case PolicySimulationReportSchemaMajorN1:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PolicySimulationReportSchemaMinor.
+const (
+	PolicySimulationReportSchemaMinorN0 PolicySimulationReportSchemaMinor = 0
+)
+
+// Valid indicates whether the value is a known member of the PolicySimulationReportSchemaMinor enum.
+func (e PolicySimulationReportSchemaMinor) Valid() bool {
+	switch e {
+	case PolicySimulationReportSchemaMinorN0:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for PolicyValidationValid.
 const (
 	PolicyValidationValidTrue PolicyValidationValid = true
@@ -1532,6 +1883,75 @@ const (
 func (e PolicyValidationValid) Valid() bool {
 	switch e {
 	case PolicyValidationValidTrue:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PrivacyDeletionState.
+const (
+	PrivacyDeletionStateAwaitingBackupExpiry PrivacyDeletionState = "awaiting_backup_expiry"
+	PrivacyDeletionStateBlockedByLegalHold   PrivacyDeletionState = "blocked_by_legal_hold"
+	PrivacyDeletionStateCompleted            PrivacyDeletionState = "completed"
+	PrivacyDeletionStateFailed               PrivacyDeletionState = "failed"
+	PrivacyDeletionStateInProgress           PrivacyDeletionState = "in_progress"
+	PrivacyDeletionStateRequested            PrivacyDeletionState = "requested"
+)
+
+// Valid indicates whether the value is a known member of the PrivacyDeletionState enum.
+func (e PrivacyDeletionState) Valid() bool {
+	switch e {
+	case PrivacyDeletionStateAwaitingBackupExpiry:
+		return true
+	case PrivacyDeletionStateBlockedByLegalHold:
+		return true
+	case PrivacyDeletionStateCompleted:
+		return true
+	case PrivacyDeletionStateFailed:
+		return true
+	case PrivacyDeletionStateInProgress:
+		return true
+	case PrivacyDeletionStateRequested:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PrivacyRetentionRecordDataClass.
+const (
+	DerivedEvidence PrivacyRetentionRecordDataClass = "derived_evidence"
+	RawEvidence     PrivacyRetentionRecordDataClass = "raw_evidence"
+)
+
+// Valid indicates whether the value is a known member of the PrivacyRetentionRecordDataClass enum.
+func (e PrivacyRetentionRecordDataClass) Valid() bool {
+	switch e {
+	case DerivedEvidence:
+		return true
+	case RawEvidence:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PrivacyTargetState.
+const (
+	PrivacyTargetStateDeleted PrivacyTargetState = "deleted"
+	PrivacyTargetStateFailed  PrivacyTargetState = "failed"
+	PrivacyTargetStatePending PrivacyTargetState = "pending"
+)
+
+// Valid indicates whether the value is a known member of the PrivacyTargetState enum.
+func (e PrivacyTargetState) Valid() bool {
+	switch e {
+	case PrivacyTargetStateDeleted:
+		return true
+	case PrivacyTargetStateFailed:
+		return true
+	case PrivacyTargetStatePending:
 		return true
 	default:
 		return false
@@ -1745,6 +2165,210 @@ func (e ProposalRequestMode) Valid() bool {
 	}
 }
 
+// Defines values for ProviderFailureClass.
+const (
+	ProviderFailureClassCancelled        ProviderFailureClass = "cancelled"
+	ProviderFailureClassDeadlineExceeded ProviderFailureClass = "deadline_exceeded"
+	ProviderFailureClassInternal         ProviderFailureClass = "internal"
+	ProviderFailureClassInvalidRequest   ProviderFailureClass = "invalid_request"
+	ProviderFailureClassProviderRejected ProviderFailureClass = "provider_rejected"
+	ProviderFailureClassRateLimited      ProviderFailureClass = "rate_limited"
+	ProviderFailureClassUnauthenticated  ProviderFailureClass = "unauthenticated"
+	ProviderFailureClassUnauthorized     ProviderFailureClass = "unauthorized"
+	ProviderFailureClassUnavailable      ProviderFailureClass = "unavailable"
+	ProviderFailureClassUnsupported      ProviderFailureClass = "unsupported"
+)
+
+// Valid indicates whether the value is a known member of the ProviderFailureClass enum.
+func (e ProviderFailureClass) Valid() bool {
+	switch e {
+	case ProviderFailureClassCancelled:
+		return true
+	case ProviderFailureClassDeadlineExceeded:
+		return true
+	case ProviderFailureClassInternal:
+		return true
+	case ProviderFailureClassInvalidRequest:
+		return true
+	case ProviderFailureClassProviderRejected:
+		return true
+	case ProviderFailureClassRateLimited:
+		return true
+	case ProviderFailureClassUnauthenticated:
+		return true
+	case ProviderFailureClassUnauthorized:
+		return true
+	case ProviderFailureClassUnavailable:
+		return true
+	case ProviderFailureClassUnsupported:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ProviderFailureSimulationAttemptState.
+const (
+	ProviderFailureSimulationAttemptStateCancelled ProviderFailureSimulationAttemptState = "cancelled"
+	ProviderFailureSimulationAttemptStateFailed    ProviderFailureSimulationAttemptState = "failed"
+	ProviderFailureSimulationAttemptStateTimedOut  ProviderFailureSimulationAttemptState = "timed_out"
+)
+
+// Valid indicates whether the value is a known member of the ProviderFailureSimulationAttemptState enum.
+func (e ProviderFailureSimulationAttemptState) Valid() bool {
+	switch e {
+	case ProviderFailureSimulationAttemptStateCancelled:
+		return true
+	case ProviderFailureSimulationAttemptStateFailed:
+		return true
+	case ProviderFailureSimulationAttemptStateTimedOut:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ProviderFailureSimulationCheckState.
+const (
+	ProviderFailureSimulationCheckStateCancelled ProviderFailureSimulationCheckState = "cancelled"
+	ProviderFailureSimulationCheckStateFailed    ProviderFailureSimulationCheckState = "failed"
+	ProviderFailureSimulationCheckStateTimedOut  ProviderFailureSimulationCheckState = "timed_out"
+)
+
+// Valid indicates whether the value is a known member of the ProviderFailureSimulationCheckState enum.
+func (e ProviderFailureSimulationCheckState) Valid() bool {
+	switch e {
+	case ProviderFailureSimulationCheckStateCancelled:
+		return true
+	case ProviderFailureSimulationCheckStateFailed:
+		return true
+	case ProviderFailureSimulationCheckStateTimedOut:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ProviderFailureSimulationProducesIdentityOutcome.
+const (
+	False ProviderFailureSimulationProducesIdentityOutcome = false
+)
+
+// Valid indicates whether the value is a known member of the ProviderFailureSimulationProducesIdentityOutcome enum.
+func (e ProviderFailureSimulationProducesIdentityOutcome) Valid() bool {
+	switch e {
+	case False:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ProviderRegistrationHealthLastOutcome.
+const (
+	ProviderRegistrationHealthLastOutcomeCompleted ProviderRegistrationHealthLastOutcome = "completed"
+	ProviderRegistrationHealthLastOutcomeFailed    ProviderRegistrationHealthLastOutcome = "failed"
+)
+
+// Valid indicates whether the value is a known member of the ProviderRegistrationHealthLastOutcome enum.
+func (e ProviderRegistrationHealthLastOutcome) Valid() bool {
+	switch e {
+	case ProviderRegistrationHealthLastOutcomeCompleted:
+		return true
+	case ProviderRegistrationHealthLastOutcomeFailed:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ProviderRegistrationOperation.
+const (
+	Create  ProviderRegistrationOperation = "create"
+	Disable ProviderRegistrationOperation = "disable"
+	Enable  ProviderRegistrationOperation = "enable"
+	Update  ProviderRegistrationOperation = "update"
+)
+
+// Valid indicates whether the value is a known member of the ProviderRegistrationOperation enum.
+func (e ProviderRegistrationOperation) Valid() bool {
+	switch e {
+	case Create:
+		return true
+	case Disable:
+		return true
+	case Enable:
+		return true
+	case Update:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ProviderRetryDisposition.
+const (
+	Backoff   ProviderRetryDisposition = "backoff"
+	Never     ProviderRetryDisposition = "never"
+	Reconcile ProviderRetryDisposition = "reconcile"
+)
+
+// Valid indicates whether the value is a known member of the ProviderRetryDisposition enum.
+func (e ProviderRetryDisposition) Valid() bool {
+	switch e {
+	case Backoff:
+		return true
+	case Never:
+		return true
+	case Reconcile:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ProviderValidationReasonCode.
+const (
+	ProviderValidationReasonCodeAccepted             ProviderValidationReasonCode = "accepted"
+	ProviderValidationReasonCodeAdapterMismatch      ProviderValidationReasonCode = "adapter_mismatch"
+	ProviderValidationReasonCodeAdapterUnknown       ProviderValidationReasonCode = "adapter_unknown"
+	ProviderValidationReasonCodeConfigurationInvalid ProviderValidationReasonCode = "configuration_invalid"
+	ProviderValidationReasonCodeInputsInvalid        ProviderValidationReasonCode = "inputs_invalid"
+	ProviderValidationReasonCodeRegionInvalid        ProviderValidationReasonCode = "region_invalid"
+	ProviderValidationReasonCodeRestrictionsInvalid  ProviderValidationReasonCode = "restrictions_invalid"
+	ProviderValidationReasonCodeSchemaMismatch       ProviderValidationReasonCode = "schema_mismatch"
+	ProviderValidationReasonCodeSecretMaterial       ProviderValidationReasonCode = "secret_material"
+	ProviderValidationReasonCodeSelfieInvalid        ProviderValidationReasonCode = "selfie_invalid"
+)
+
+// Valid indicates whether the value is a known member of the ProviderValidationReasonCode enum.
+func (e ProviderValidationReasonCode) Valid() bool {
+	switch e {
+	case ProviderValidationReasonCodeAccepted:
+		return true
+	case ProviderValidationReasonCodeAdapterMismatch:
+		return true
+	case ProviderValidationReasonCodeAdapterUnknown:
+		return true
+	case ProviderValidationReasonCodeConfigurationInvalid:
+		return true
+	case ProviderValidationReasonCodeInputsInvalid:
+		return true
+	case ProviderValidationReasonCodeRegionInvalid:
+		return true
+	case ProviderValidationReasonCodeRestrictionsInvalid:
+		return true
+	case ProviderValidationReasonCodeSchemaMismatch:
+		return true
+	case ProviderValidationReasonCodeSecretMaterial:
+		return true
+	case ProviderValidationReasonCodeSelfieInvalid:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ReviewAppealResolutionRequestOutcome.
 const (
 	MoreInput  ReviewAppealResolutionRequestOutcome = "more_input"
@@ -1925,6 +2549,21 @@ func (e VerificationSessionState) Valid() bool {
 	}
 }
 
+// Defines values for WebhookCreateSchemaVersion.
+const (
+	WebhookCreateSchemaVersionN10 WebhookCreateSchemaVersion = "1.0"
+)
+
+// Valid indicates whether the value is a known member of the WebhookCreateSchemaVersion enum.
+func (e WebhookCreateSchemaVersion) Valid() bool {
+	switch e {
+	case WebhookCreateSchemaVersionN10:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for WebhookDeliveryState.
 const (
 	WebhookDeliveryStateCancelled WebhookDeliveryState = "cancelled"
@@ -1943,6 +2582,36 @@ func (e WebhookDeliveryState) Valid() bool {
 	case WebhookDeliveryStateExhausted:
 		return true
 	case WebhookDeliveryStatePending:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for WebhookEndpointSchemaVersion.
+const (
+	WebhookEndpointSchemaVersionN10 WebhookEndpointSchemaVersion = "1.0"
+)
+
+// Valid indicates whether the value is a known member of the WebhookEndpointSchemaVersion enum.
+func (e WebhookEndpointSchemaVersion) Valid() bool {
+	switch e {
+	case WebhookEndpointSchemaVersionN10:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for WebhookSubscriptionsSchemaVersion.
+const (
+	WebhookSubscriptionsSchemaVersionN10 WebhookSubscriptionsSchemaVersion = "1.0"
+)
+
+// Valid indicates whether the value is a known member of the WebhookSubscriptionsSchemaVersion enum.
+func (e WebhookSubscriptionsSchemaVersion) Valid() bool {
+	switch e {
+	case WebhookSubscriptionsSchemaVersionN10:
 		return true
 	default:
 		return false
@@ -2860,6 +3529,251 @@ type ModeConfig struct {
 // ModeConfigMode defines model for ModeConfig.Mode.
 type ModeConfigMode string
 
+// ModelCapability One stable evaluation capability declared by an evaluation model.
+type ModelCapability struct {
+	AcceptedEvidence   []string `json:"accepted_evidence"`
+	Evaluation         string   `json:"evaluation"`
+	OutputSignals      []string `json:"output_signals"`
+	RequiredAssurances []string `json:"required_assurances"`
+}
+
+// ModelConfigurationReference Reference-only immutable runtime configuration. It is never an object location for raw evidence.
+type ModelConfigurationReference struct {
+	// ConfigurationDigest Lowercase SHA-256 digest including its algorithm prefix.
+	ConfigurationDigest ModelDigest `json:"configuration_digest"`
+
+	// ConfigurationReference Opaque immutable configuration locator.
+	ConfigurationReference string `json:"configuration_reference"`
+	ModelRegistrationID    string `json:"model_registration_id"`
+}
+
+// ModelContractVersion Accepted model-contract version. Only the current v1.0 contract is accepted.
+type ModelContractVersion struct {
+	Major int `json:"major"`
+	Minor int `json:"minor"`
+}
+
+// ModelDeployment One evaluation-only model and threshold revision pair selected for a declared region.
+type ModelDeployment struct {
+	ModelRevision     int64  `json:"model_revision"`
+	Region            string `json:"region"`
+	ThresholdRevision int64  `json:"threshold_revision"`
+}
+
+// ModelDeploymentWrite Version-checked evaluation deployment command for activate, rollback, or side-effect-free validation.
+type ModelDeploymentWrite struct {
+	// Deployment One evaluation-only model and threshold revision pair selected for a declared region.
+	Deployment      ModelDeployment `json:"deployment"`
+	ExpectedVersion int64           `json:"expected_version"`
+	Reason          string          `json:"reason"`
+}
+
+// ModelDigest Lowercase SHA-256 digest including its algorithm prefix.
+type ModelDigest = string
+
+// ModelManifest Immutable evaluation model capability and resource advertisement.
+type ModelManifest struct {
+	Capabilities []ModelCapability `json:"capabilities"`
+
+	// Provenance Exact immutable execution provenance pins for one evaluation model.
+	Provenance ModelProvenance `json:"provenance"`
+
+	// Restrictions Exact resource bounds enforced for one evaluation execution.
+	Restrictions ModelRestrictions `json:"restrictions"`
+}
+
+// ModelProvenance Exact immutable execution provenance pins for one evaluation model.
+type ModelProvenance struct {
+	// Contract Accepted model-contract version. Only the current v1.0 contract is accepted.
+	Contract ModelContractVersion `json:"contract"`
+
+	// ModelDigest Lowercase SHA-256 digest including its algorithm prefix.
+	ModelDigest ModelDigest `json:"model_digest"`
+
+	// ModelID Registered model identifier matching the configuration reference model registration identifier.
+	ModelID string `json:"model_id"`
+
+	// ModelVersion Three-part numeric model version without leading zeros.
+	ModelVersion string `json:"model_version"`
+
+	// OutputSchemaDigest Lowercase SHA-256 digest including its algorithm prefix.
+	OutputSchemaDigest ModelDigest `json:"output_schema_digest"`
+
+	// PreprocessingDigest Lowercase SHA-256 digest including its algorithm prefix.
+	PreprocessingDigest ModelDigest `json:"preprocessing_digest"`
+
+	// RuntimeDigest Lowercase SHA-256 digest including its algorithm prefix.
+	RuntimeDigest ModelDigest `json:"runtime_digest"`
+}
+
+// ModelRegistration Evaluation-only governance declarations with exact manifest and configuration pins. Registration is rejected unless evaluation_only is true.
+type ModelRegistration struct {
+	// Configuration Reference-only immutable runtime configuration. It is never an object location for raw evidence.
+	Configuration ModelConfigurationReference `json:"configuration"`
+
+	// EvaluationOnly Production registration is rejected; only true is accepted.
+	EvaluationOnly ModelRegistrationEvaluationOnly `json:"evaluation_only"`
+	HardwareClass  string                          `json:"hardware_class"`
+	IntendedUse    string                          `json:"intended_use"`
+	License        string                          `json:"license"`
+
+	// Manifest Immutable evaluation model capability and resource advertisement.
+	Manifest           ModelManifest `json:"manifest"`
+	Owner              string        `json:"owner"`
+	ProhibitedUse      string        `json:"prohibited_use"`
+	Regions            []string      `json:"regions"`
+	TrainingProvenance string        `json:"training_provenance"`
+}
+
+// ModelRegistrationEvaluationOnly Production registration is rejected; only true is accepted.
+type ModelRegistrationEvaluationOnly bool
+
+// ModelRegistrationWrite Version-checked evaluation-only model registration command.
+type ModelRegistrationWrite struct {
+	ExpectedVersion int64  `json:"expected_version"`
+	Reason          string `json:"reason"`
+
+	// Registration Evaluation-only governance declarations with exact manifest and configuration pins. Registration is rejected unless evaluation_only is true.
+	Registration ModelRegistration `json:"registration"`
+}
+
+// ModelRegistryName Tenant-owned evaluation-model registry name.
+type ModelRegistryName = string
+
+// ModelRegistryReceipt Original safe result of one evaluation-registry command with the original actor and replay marker.
+type ModelRegistryReceipt struct {
+	// ActorID Non-secret authenticating API-key record identifier.
+	ActorID   string                        `json:"actor_id"`
+	Operation ModelRegistryReceiptOperation `json:"operation"`
+	Reason    string                        `json:"reason"`
+	Replayed  bool                          `json:"replayed"`
+
+	// Revision Immutable evaluation revision. Model and threshold families are independently numbered.
+	Revision *ModelRegistryRevision `json:"revision,omitempty"`
+
+	// State Current optimistic-concurrency pointer for one evaluation-only registry. It is not mutable model meaning and never selects a production model.
+	State ModelRegistryState `json:"state"`
+}
+
+// ModelRegistryReceiptOperation defines model for ModelRegistryReceipt.Operation.
+type ModelRegistryReceiptOperation string
+
+// ModelRegistryRevision Immutable evaluation revision. Model and threshold families are independently numbered.
+type ModelRegistryRevision struct {
+	CreatedAt time.Time `json:"created_at"`
+
+	// Digest Lowercase SHA-256 digest including its algorithm prefix.
+	Digest ModelDigest               `json:"digest"`
+	Kind   ModelRegistryRevisionKind `json:"kind"`
+
+	// Registration Evaluation-only governance declarations with exact manifest and configuration pins. Registration is rejected unless evaluation_only is true.
+	Registration *ModelRegistration `json:"registration,omitempty"`
+	Revision     int64              `json:"revision"`
+
+	// Thresholds Evaluation operating point pinned to the complete immutable execution provenance. A threshold value never establishes verification assurance and production thresholds are rejected.
+	Thresholds *ModelThresholdSet `json:"thresholds,omitempty"`
+}
+
+// ModelRegistryRevisionKind defines model for ModelRegistryRevision.Kind.
+type ModelRegistryRevisionKind string
+
+// ModelRegistryState Current optimistic-concurrency pointer for one evaluation-only registry. It is not mutable model meaning and never selects a production model.
+type ModelRegistryState struct {
+	// Active One evaluation-only model and threshold revision pair selected for a declared region.
+	Active                  *ModelDeployment `json:"active,omitempty"`
+	LatestModelRevision     int64            `json:"latest_model_revision"`
+	LatestThresholdRevision int64            `json:"latest_threshold_revision"`
+
+	// Name Tenant-owned evaluation-model registry name.
+	Name      ModelRegistryName `json:"name"`
+	UpdatedAt time.Time         `json:"updated_at"`
+	Version   int64             `json:"version"`
+}
+
+// ModelRestrictions Exact resource bounds enforced for one evaluation execution.
+type ModelRestrictions struct {
+	// MaximumDuration Maximum execution duration in nanoseconds.
+	MaximumDuration   int64 `json:"maximum_duration"`
+	MaximumGrants     int   `json:"maximum_grants"`
+	MaximumInputBytes int64 `json:"maximum_input_bytes"`
+	MaximumResultSize int64 `json:"maximum_result_size"`
+	NetworkAllowed    bool  `json:"network_allowed"`
+}
+
+// ModelRetirementWrite Version-checked evaluation retirement command. Retirement clears the active evaluation deployment and fences new attempts.
+type ModelRetirementWrite struct {
+	ExpectedVersion int64  `json:"expected_version"`
+	Reason          string `json:"reason"`
+}
+
+// ModelThresholdSet Evaluation operating point pinned to the complete immutable execution provenance. A threshold value never establishes verification assurance and production thresholds are rejected.
+type ModelThresholdSet struct {
+	// Configuration Reference-only immutable runtime configuration. It is never an object location for raw evidence.
+	Configuration ModelConfigurationReference `json:"configuration"`
+	Cutoff        float32                     `json:"cutoff"`
+
+	// EvaluationOnly Production thresholds are rejected; only true is accepted.
+	EvaluationOnly ModelThresholdSetEvaluationOnly `json:"evaluation_only"`
+
+	// EvaluationReportDigest Lowercase SHA-256 digest including its algorithm prefix.
+	EvaluationReportDigest ModelDigest `json:"evaluation_report_digest"`
+	HigherIsGenuine        bool        `json:"higher_is_genuine"`
+	Maximum                float32     `json:"maximum"`
+	Minimum                float32     `json:"minimum"`
+
+	// Provenance Exact immutable execution provenance pins for one evaluation model.
+	Provenance ModelProvenance `json:"provenance"`
+	ScoreName  string          `json:"score_name"`
+}
+
+// ModelThresholdSetEvaluationOnly Production thresholds are rejected; only true is accepted.
+type ModelThresholdSetEvaluationOnly bool
+
+// ModelThresholdWrite Version-checked evaluation threshold revision command.
+type ModelThresholdWrite struct {
+	ExpectedVersion int64  `json:"expected_version"`
+	Reason          string `json:"reason"`
+
+	// Thresholds Evaluation operating point pinned to the complete immutable execution provenance. A threshold value never establishes verification assurance and production thresholds are rejected.
+	Thresholds ModelThresholdSet `json:"thresholds"`
+}
+
+// ModelValidationReport Bounded side-effect-free validation result. Accepted means the supplied command passes domain and current-state checks; it does not approve production use and persists nothing.
+type ModelValidationReport struct {
+	Accepted  bool                           `json:"accepted"`
+	Operation ModelValidationReportOperation `json:"operation"`
+
+	// ReasonCodes Stable bounded reason codes; empty when accepted.
+	ReasonCodes []ModelValidationReportReasonCodes `json:"reason_codes"`
+}
+
+// ModelValidationReportOperation defines model for ModelValidationReport.Operation.
+type ModelValidationReportOperation string
+
+// ModelValidationReportReasonCodes defines model for ModelValidationReport.ReasonCodes.
+type ModelValidationReportReasonCodes string
+
+// ModelValidationRequest One closed evaluation-registry command document. Only the fields belonging to the
+// selected operation are accepted. Validation is side-effect-free: nothing is
+// persisted, no idempotency key is used, and no receipt, audit or outbox record is
+// created. The registry is evaluation-only and production activation is rejected.
+type ModelValidationRequest struct {
+	// Deployment One evaluation-only model and threshold revision pair selected for a declared region.
+	Deployment      *ModelDeployment                `json:"deployment,omitempty"`
+	ExpectedVersion int64                           `json:"expected_version"`
+	Operation       ModelValidationRequestOperation `json:"operation"`
+	Reason          string                          `json:"reason"`
+
+	// Registration Evaluation-only governance declarations with exact manifest and configuration pins. Registration is rejected unless evaluation_only is true.
+	Registration *ModelRegistration `json:"registration,omitempty"`
+
+	// Thresholds Evaluation operating point pinned to the complete immutable execution provenance. A threshold value never establishes verification assurance and production thresholds are rejected.
+	Thresholds *ModelThresholdSet `json:"thresholds,omitempty"`
+}
+
+// ModelValidationRequestOperation defines model for ModelValidationRequest.Operation.
+type ModelValidationRequestOperation string
+
 // NativeBootstrapRequest Single-use native application proof and non-authoritative capability advertisement.
 type NativeBootstrapRequest struct {
 	ApplicationID string  `json:"application_id"`
@@ -3349,8 +4263,162 @@ type PolicyObservationID = string
 // PolicyOutcome Authoritative terminal verification conclusion.
 type PolicyOutcome string
 
+// PolicyRegressionCase Safe actual summary for one uniquely named scenario.
+type PolicyRegressionCase struct {
+	// Actual Bounded source-free synthetic simulation summary. It omits facts, provenance, reason codes, expressions, and canonical input bytes; reproduced always means the exact portable meaning was restored, never that production state was justified.
+	Actual PolicySimulationReport `json:"actual"`
+
+	// ExpectedEvaluationDigest Lowercase hexadecimal SHA-256 digest of canonical policy data.
+	ExpectedEvaluationDigest PolicyDigest `json:"expected_evaluation_digest"`
+	Matches                  bool         `json:"matches"`
+	Name                     string       `json:"name"`
+}
+
+// PolicyRegressionExpectation Exact canonical requirement results and assurance resolved against the scenario snapshot. An expectation mismatch is data, not an execution failure.
+type PolicyRegressionExpectation struct {
+	Assurance *string                            `json:"assurance,omitempty"`
+	Results   []PolicyCanonicalRequirementResult `json:"results"`
+}
+
+// PolicyRegressionReport Canonical input-order-independent regression summary. passed is true only when every case matched; execution failures are reported as problems instead.
+type PolicyRegressionReport struct {
+	Cases []PolicyRegressionCase `json:"cases"`
+
+	// Digest Lowercase hexadecimal SHA-256 digest of canonical policy data.
+	Digest      PolicyDigest                      `json:"digest"`
+	Passed      bool                              `json:"passed"`
+	SchemaMajor PolicyRegressionReportSchemaMajor `json:"schema_major"`
+	SchemaMinor PolicyRegressionReportSchemaMinor `json:"schema_minor"`
+}
+
+// PolicyRegressionReportSchemaMajor defines model for PolicyRegressionReport.SchemaMajor.
+type PolicyRegressionReportSchemaMajor int
+
+// PolicyRegressionReportSchemaMinor defines model for PolicyRegressionReport.SchemaMinor.
+type PolicyRegressionReportSchemaMinor int
+
+// PolicyRegressionScenario One uniquely named synthetic example and its exact expected meaning.
+type PolicyRegressionScenario struct {
+	// Expectation Exact canonical requirement results and assurance resolved against the scenario snapshot. An expectation mismatch is data, not an execution failure.
+	Expectation PolicyRegressionExpectation `json:"expectation"`
+
+	// Input Closed portable simulation input. The policy document is normalised to canonical meaning without registration; facts carry typed provenance references and never raw evidence bytes.
+	Input PolicySimulationInput `json:"input"`
+	Name  string                `json:"name"`
+}
+
+// PolicyRegressionSuite Closed portable regression suite. Every scenario carries one synthetic simulation input and the exact canonical requirement results expected from it.
+type PolicyRegressionSuite struct {
+	Scenarios   []PolicyRegressionScenario       `json:"scenarios"`
+	SchemaMajor PolicyRegressionSuiteSchemaMajor `json:"schema_major"`
+	SchemaMinor PolicyRegressionSuiteSchemaMinor `json:"schema_minor"`
+}
+
+// PolicyRegressionSuiteSchemaMajor defines model for PolicyRegressionSuite.SchemaMajor.
+type PolicyRegressionSuiteSchemaMajor int
+
+// PolicyRegressionSuiteSchemaMinor defines model for PolicyRegressionSuite.SchemaMinor.
+type PolicyRegressionSuiteSchemaMinor int
+
 // PolicyRequirementState Closed result state for one policy requirement.
 type PolicyRequirementState string
+
+// PolicyRevisionDiff Deterministic bounded structural difference between two immutable revisions of one policy. schema_major, schema_minor, policy_id, revision, and digests are reported on identity fields and never repeated inside changes.
+type PolicyRevisionDiff struct {
+	// ChangeCount Total structural changes, including changes beyond the exposed list.
+	ChangeCount int                        `json:"change_count"`
+	Changes     []PolicyRevisionDiffChange `json:"changes"`
+
+	// Digest Lowercase hexadecimal SHA-256 digest of canonical policy data.
+	Digest PolicyDigest `json:"digest"`
+
+	// From Immutable revision identity for one diff side.
+	From PolicyRevisionDiffSide `json:"from"`
+
+	// Identical True when both revisions carry the same canonical meaning.
+	Identical bool `json:"identical"`
+
+	// PolicyID Stable identifier for one tenant-owned policy.
+	PolicyID    PolicyID                      `json:"policy_id"`
+	SchemaMajor PolicyRevisionDiffSchemaMajor `json:"schema_major"`
+	SchemaMinor PolicyRevisionDiffSchemaMinor `json:"schema_minor"`
+
+	// To Immutable revision identity for one diff side.
+	To PolicyRevisionDiffSide `json:"to"`
+
+	// Truncated True when change_count exceeds the exposed bounded change list.
+	Truncated bool `json:"truncated"`
+}
+
+// PolicyRevisionDiffSchemaMajor defines model for PolicyRevisionDiff.SchemaMajor.
+type PolicyRevisionDiffSchemaMajor int
+
+// PolicyRevisionDiffSchemaMinor defines model for PolicyRevisionDiff.SchemaMinor.
+type PolicyRevisionDiffSchemaMinor int
+
+// PolicyRevisionDiffChange One bounded canonical JSON-pointer change with safe canonical fragments.
+type PolicyRevisionDiffChange struct {
+	Kind PolicyRevisionDiffChangeKind `json:"kind"`
+
+	// New Canonical JSON fragment added or replacing; absent for removals.
+	New *PolicyRevisionDiffChange_New `json:"new,omitempty"`
+
+	// Old Canonical JSON fragment removed or replaced; absent for additions.
+	Old *PolicyRevisionDiffChange_Old `json:"old,omitempty"`
+
+	// Path JSON Pointer-like path into the canonical policy document.
+	Path string `json:"path"`
+}
+
+// PolicyRevisionDiffChangeKind defines model for PolicyRevisionDiffChange.Kind.
+type PolicyRevisionDiffChangeKind string
+
+// PolicyRevisionDiffChangeNew0 defines model for PolicyRevisionDiffChange.New.0.
+type PolicyRevisionDiffChangeNew0 = map[string]interface{}
+
+// PolicyRevisionDiffChangeNew1 defines model for PolicyRevisionDiffChange.New.1.
+type PolicyRevisionDiffChangeNew1 = []interface{}
+
+// PolicyRevisionDiffChangeNew2 defines model for PolicyRevisionDiffChange.New.2.
+type PolicyRevisionDiffChangeNew2 = string
+
+// PolicyRevisionDiffChangeNew3 defines model for PolicyRevisionDiffChange.New.3.
+type PolicyRevisionDiffChangeNew3 = float32
+
+// PolicyRevisionDiffChangeNew4 defines model for PolicyRevisionDiffChange.New.4.
+type PolicyRevisionDiffChangeNew4 = bool
+
+// PolicyRevisionDiffChange_New Canonical JSON fragment added or replacing; absent for removals.
+type PolicyRevisionDiffChange_New struct {
+	union json.RawMessage
+}
+
+// PolicyRevisionDiffChangeOld0 defines model for PolicyRevisionDiffChange.Old.0.
+type PolicyRevisionDiffChangeOld0 = map[string]interface{}
+
+// PolicyRevisionDiffChangeOld1 defines model for PolicyRevisionDiffChange.Old.1.
+type PolicyRevisionDiffChangeOld1 = []interface{}
+
+// PolicyRevisionDiffChangeOld2 defines model for PolicyRevisionDiffChange.Old.2.
+type PolicyRevisionDiffChangeOld2 = string
+
+// PolicyRevisionDiffChangeOld3 defines model for PolicyRevisionDiffChange.Old.3.
+type PolicyRevisionDiffChangeOld3 = float32
+
+// PolicyRevisionDiffChangeOld4 defines model for PolicyRevisionDiffChange.Old.4.
+type PolicyRevisionDiffChangeOld4 = bool
+
+// PolicyRevisionDiffChange_Old Canonical JSON fragment removed or replaced; absent for additions.
+type PolicyRevisionDiffChange_Old struct {
+	union json.RawMessage
+}
+
+// PolicyRevisionDiffSide Immutable revision identity for one diff side.
+type PolicyRevisionDiffSide struct {
+	// Digest Lowercase hexadecimal SHA-256 digest of canonical policy data.
+	Digest   PolicyDigest `json:"digest"`
+	Revision int64        `json:"revision"`
+}
 
 // PolicyRevisionDocument Explicitly requested immutable policy source plus its compiled identity.
 type PolicyRevisionDocument struct {
@@ -3396,6 +4464,93 @@ type PolicyRevisionWrite struct {
 	ExpectedRevision int64            `json:"expected_revision"`
 }
 
+// PolicySimulationInput Closed portable simulation input. The policy document is normalised to canonical meaning without registration; facts carry typed provenance references and never raw evidence bytes.
+type PolicySimulationInput struct {
+	// AcknowledgementID Stable identifier for one append-only subject response.
+	AcknowledgementID SubjectResponseID `json:"acknowledgement_id"`
+
+	// AuthorityID Stable identifier for one tenant-declared processing authority.
+	AuthorityID ProcessingAuthorityID `json:"authority_id"`
+
+	// EvaluatedAt Explicit UTC evaluation time; local offsets are rejected.
+	EvaluatedAt time.Time             `json:"evaluated_at"`
+	Facts       []PolicyCanonicalFact `json:"facts"`
+
+	// Policy Exact public policy document including server-assigned identity and revision. Authorised retrieval deliberately exposes expressions.
+	Policy      PolicyDocument                   `json:"policy"`
+	Region      string                           `json:"region"`
+	SchemaMajor PolicySimulationInputSchemaMajor `json:"schema_major"`
+	SchemaMinor PolicySimulationInputSchemaMinor `json:"schema_minor"`
+
+	// TenantID Stable Idenqa tenant identifier.
+	TenantID TenantID `json:"tenant_id"`
+
+	// VerificationID Stable Idenqa verification-session identifier.
+	VerificationID VerificationSessionID `json:"verification_id"`
+}
+
+// PolicySimulationInputSchemaMajor defines model for PolicySimulationInput.SchemaMajor.
+type PolicySimulationInputSchemaMajor int
+
+// PolicySimulationInputSchemaMinor defines model for PolicySimulationInput.SchemaMinor.
+type PolicySimulationInputSchemaMinor int
+
+// PolicySimulationReport Bounded source-free synthetic simulation summary. It omits facts, provenance, reason codes, expressions, and canonical input bytes; reproduced always means the exact portable meaning was restored, never that production state was justified.
+type PolicySimulationReport struct {
+	Assurance *string `json:"assurance,omitempty"`
+
+	// AuthorisesCompletion True only for a closed terminal directive with a matching outcome.
+	AuthorisesCompletion bool `json:"authorises_completion"`
+
+	// BundleDigest Lowercase hexadecimal SHA-256 digest of canonical policy data.
+	BundleDigest PolicyDigest `json:"bundle_digest"`
+
+	// Directive Closed workflow intent selected by deterministic policy resolution.
+	Directive   PolicyDirective `json:"directive"`
+	EvaluatedAt time.Time       `json:"evaluated_at"`
+
+	// EvaluationDigest Lowercase hexadecimal SHA-256 digest of canonical policy data.
+	EvaluationDigest PolicyDigest `json:"evaluation_digest"`
+
+	// EvaluatorDigest Lowercase hexadecimal SHA-256 digest of canonical policy data.
+	EvaluatorDigest PolicyDigest `json:"evaluator_digest"`
+	EvaluatorMajor  int          `json:"evaluator_major"`
+	EvaluatorMinor  int          `json:"evaluator_minor"`
+	FactCount       int          `json:"fact_count"`
+
+	// Outcome Authoritative terminal verification conclusion.
+	Outcome *PolicyOutcome `json:"outcome,omitempty"`
+
+	// PolicyDigest Lowercase hexadecimal SHA-256 digest of canonical policy data.
+	PolicyDigest PolicyDigest `json:"policy_digest"`
+
+	// PolicyID Stable identifier for one tenant-owned policy.
+	PolicyID         PolicyID                          `json:"policy_id"`
+	PolicyRevision   int64                             `json:"policy_revision"`
+	Reproduced       PolicySimulationReportReproduced  `json:"reproduced"`
+	RequirementCount int                               `json:"requirement_count"`
+	SchemaMajor      PolicySimulationReportSchemaMajor `json:"schema_major"`
+	SchemaMinor      PolicySimulationReportSchemaMinor `json:"schema_minor"`
+
+	// SnapshotDigest Lowercase hexadecimal SHA-256 digest of canonical policy data.
+	SnapshotDigest PolicyDigest `json:"snapshot_digest"`
+
+	// TenantID Stable Idenqa tenant identifier.
+	TenantID TenantID `json:"tenant_id"`
+
+	// VerificationID Stable Idenqa verification-session identifier.
+	VerificationID VerificationSessionID `json:"verification_id"`
+}
+
+// PolicySimulationReportReproduced defines model for PolicySimulationReport.Reproduced.
+type PolicySimulationReportReproduced bool
+
+// PolicySimulationReportSchemaMajor defines model for PolicySimulationReport.SchemaMajor.
+type PolicySimulationReportSchemaMajor int
+
+// PolicySimulationReportSchemaMinor defines model for PolicySimulationReport.SchemaMinor.
+type PolicySimulationReportSchemaMinor int
+
 // PolicySummary Source-free policy metadata. Activation version is distinct from immutable revision numbering.
 type PolicySummary struct {
 	ActivatedAt       *time.Time `json:"activated_at,omitempty"`
@@ -3425,6 +4580,109 @@ type PolicyWrite struct {
 	// Definition Engine-neutral policy meaning. The server assigns policy_id and revision; rule semantics and limits follow contracts/policy/v1.
 	Definition PolicyDefinition `json:"definition"`
 }
+
+// PrivacyDeletionID Stable Idenqa deletion-workflow identifier.
+type PrivacyDeletionID = string
+
+// PrivacyDeletionList Bounded ascending deletion-workflow page with a signed tenant-, filter-, collection- and limit-bound cursor.
+type PrivacyDeletionList struct {
+	Data []PrivacyDeletionSummary `json:"data"`
+
+	// Page Opaque cursor pagination metadata.
+	Page Page `json:"page"`
+}
+
+// PrivacyDeletionState Observable deletion-workflow state.
+type PrivacyDeletionState string
+
+// PrivacyDeletionStatus Full safe deletion-workflow status with exact target states, active holds, and the documented backup boundary.
+type PrivacyDeletionStatus struct {
+	AggregateID     string        `json:"aggregate_id"`
+	BackupExpiresAt time.Time     `json:"backup_expires_at"`
+	FailureClass    *string       `json:"failure_class,omitempty"`
+	Holds           []PrivacyHold `json:"holds"`
+
+	// ID Stable Idenqa deletion-workflow identifier.
+	ID          PrivacyDeletionID `json:"id"`
+	Region      string            `json:"region"`
+	RequestedAt time.Time         `json:"requested_at"`
+
+	// State Observable deletion-workflow state.
+	State       PrivacyDeletionState `json:"state"`
+	TargetCount int                  `json:"target_count"`
+	Targets     []PrivacyTarget      `json:"targets"`
+	UpdatedAt   time.Time            `json:"updated_at"`
+	Version     int64                `json:"version"`
+}
+
+// PrivacyDeletionSummary Safe deletion-workflow summary without target references or evidence metadata.
+type PrivacyDeletionSummary struct {
+	AggregateID string `json:"aggregate_id"`
+
+	// BackupExpiresAt Documented backup boundary; completion never precedes it.
+	BackupExpiresAt time.Time `json:"backup_expires_at"`
+	FailureClass    *string   `json:"failure_class,omitempty"`
+
+	// ID Stable Idenqa deletion-workflow identifier.
+	ID          PrivacyDeletionID `json:"id"`
+	Region      string            `json:"region"`
+	RequestedAt time.Time         `json:"requested_at"`
+
+	// State Observable deletion-workflow state.
+	State       PrivacyDeletionState `json:"state"`
+	TargetCount int                  `json:"target_count"`
+	UpdatedAt   time.Time            `json:"updated_at"`
+	Version     int64                `json:"version"`
+}
+
+// PrivacyHold One legal hold covering the aggregate. Hold documents and evidence are never returned.
+type PrivacyHold struct {
+	AggregateID string `json:"aggregate_id"`
+	Authority   string `json:"authority"`
+	ID          string `json:"id"`
+	Reason      string `json:"reason"`
+
+	// ReleasedAt Present only while a released hold is still observably active.
+	ReleasedAt *time.Time `json:"released_at,omitempty"`
+	ReviewAt   time.Time  `json:"review_at"`
+	StartsAt   time.Time  `json:"starts_at"`
+}
+
+// PrivacyRetentionRecord One retained evidence record with its recomputed typed retention resolution. Content and object locations are never returned.
+type PrivacyRetentionRecord struct {
+	DataClass       PrivacyRetentionRecordDataClass `json:"data_class"`
+	DurationSeconds int64                           `json:"duration_seconds"`
+	ExpiresAt       time.Time                       `json:"expires_at"`
+
+	// ID Stable opaque identifier preallocated for the accepted evidence artefact.
+	ID     EvidenceID `json:"id"`
+	Region string     `json:"region"`
+}
+
+// PrivacyRetentionRecordDataClass defines model for PrivacyRetentionRecord.DataClass.
+type PrivacyRetentionRecordDataClass string
+
+// PrivacyRetentionResolution Read-only typed retention resolution for one aggregate with its active holds.
+type PrivacyRetentionResolution struct {
+	AggregateID string                   `json:"aggregate_id"`
+	Holds       []PrivacyHold            `json:"holds"`
+	Records     []PrivacyRetentionRecord `json:"records"`
+}
+
+// PrivacyTarget Safe target projection. The reference is a stable non-reversible digest, never an object location or encoded evidence reference.
+type PrivacyTarget struct {
+	FailureClass *string `json:"failure_class,omitempty"`
+	Kind         string  `json:"kind"`
+
+	// Reference Opaque non-reversible target-reference digest.
+	Reference string `json:"reference"`
+
+	// State Observable state of one exact deletion target.
+	State PrivacyTargetState `json:"state"`
+}
+
+// PrivacyTargetState Observable state of one exact deletion target.
+type PrivacyTargetState string
 
 // Problem Safe RFC 9457 problem details extended with an Idenqa code and request ID.
 type Problem struct {
@@ -3582,6 +4840,212 @@ type ProposalRequestMode string
 type ProposalVersionRequest struct {
 	ExpectedVersion int `json:"expected_version"`
 }
+
+// ProviderAdapterID Configured deployment adapter identifier.
+type ProviderAdapterID = string
+
+// ProviderConfigurationReference Secret-free provider configuration reference. It names externally resolved
+// credentials and settings; credential values are not representable and Core
+// never stores them.
+type ProviderConfigurationReference struct {
+	CredentialVersion string `json:"credential_version"`
+	ProviderID        string `json:"provider_id"`
+	SchemaDigest      string `json:"schema_digest"`
+
+	// SecretReference External secret-manager reference resolved by the runner.
+	SecretReference string `json:"secret_reference"`
+}
+
+// ProviderFailureClass Stable provider failure classification.
+type ProviderFailureClass string
+
+// ProviderFailureSimulation Pure operational classification preview. A provider failure never produces an identity outcome.
+type ProviderFailureSimulation struct {
+	AttemptState ProviderFailureSimulationAttemptState `json:"attempt_state"`
+	CheckState   ProviderFailureSimulationCheckState   `json:"check_state"`
+
+	// Class Stable provider failure classification.
+	Class                   ProviderFailureClass                             `json:"class"`
+	Code                    string                                           `json:"code"`
+	ProducesIdentityOutcome ProviderFailureSimulationProducesIdentityOutcome `json:"produces_identity_outcome"`
+
+	// Retry Stable retry disposition for execution mechanics.
+	Retry             ProviderRetryDisposition `json:"retry"`
+	RetryAfterSeconds int                      `json:"retry_after_seconds"`
+}
+
+// ProviderFailureSimulationAttemptState defines model for ProviderFailureSimulation.AttemptState.
+type ProviderFailureSimulationAttemptState string
+
+// ProviderFailureSimulationCheckState defines model for ProviderFailureSimulation.CheckState.
+type ProviderFailureSimulationCheckState string
+
+// ProviderFailureSimulationProducesIdentityOutcome defines model for ProviderFailureSimulation.ProducesIdentityOutcome.
+type ProviderFailureSimulationProducesIdentityOutcome bool
+
+// ProviderFailureSimulationRequest One bounded provider failure classification to preview.
+type ProviderFailureSimulationRequest struct {
+	// Class Stable provider failure classification.
+	Class ProviderFailureClass `json:"class"`
+	Code  string               `json:"code"`
+}
+
+// ProviderID Tenant provider registration identifier.
+type ProviderID = string
+
+// ProviderInputReference One secret-free externally resolved structured input reference.
+type ProviderInputReference struct {
+	Name      string `json:"name"`
+	Reference string `json:"reference"`
+}
+
+// ProviderRegion Bounded processing region token for the registered route.
+type ProviderRegion = string
+
+// ProviderRegistration One tenant-owned secret-free provider route registration. Version is the optimistic-concurrency pointer.
+type ProviderRegistration struct {
+	// ActorID Non-secret authenticating API-key record identifier.
+	ActorID string `json:"actor_id"`
+
+	// AdapterID Configured deployment adapter identifier.
+	AdapterID ProviderAdapterID `json:"adapter_id"`
+
+	// Configuration Secret-free provider configuration reference. It names externally resolved
+	// credentials and settings; credential values are not representable and Core
+	// never stores them.
+	Configuration ProviderConfigurationReference `json:"configuration"`
+	CreatedAt     time.Time                      `json:"created_at"`
+	Enabled       bool                           `json:"enabled"`
+
+	// ID Tenant provider registration identifier.
+	ID     ProviderID                `json:"id"`
+	Inputs *[]ProviderInputReference `json:"inputs,omitempty"`
+
+	// Region Bounded processing region token for the registered route.
+	Region ProviderRegion `json:"region"`
+
+	// Restrictions Optional execution restrictions for the registered route. They may only
+	// tighten, never relax, the configured deployment adapter restrictions.
+	Restrictions      *ProviderRestrictions `json:"restrictions,omitempty"`
+	SelfieRequirement *string               `json:"selfie_requirement,omitempty"`
+	UpdatedAt         time.Time             `json:"updated_at"`
+	Version           int64                 `json:"version"`
+}
+
+// ProviderRegistrationCreate Secret-free create command. A repeated identical command returns the original receipt.
+type ProviderRegistrationCreate struct {
+	Reason string `json:"reason"`
+
+	// Registration Closed secret-free registration document. The adapter must match a configured deployment adapter manifest.
+	Registration ProviderRegistrationWrite `json:"registration"`
+}
+
+// ProviderRegistrationHealth Bounded read over the tenant's own persisted request and dispatch records. It is not an external provider probe.
+type ProviderRegistrationHealth struct {
+	// AdapterID Configured deployment adapter identifier.
+	AdapterID           ProviderAdapterID `json:"adapter_id"`
+	CompletedDispatches int64             `json:"completed_dispatches"`
+	FailedDispatches    int64             `json:"failed_dispatches"`
+	LastActivityAt      *time.Time        `json:"last_activity_at,omitempty"`
+
+	// LastFailure Last bounded normalized operational failure for one registration. It says nothing about the subject.
+	LastFailure       *ProviderRegistrationHealthFailure     `json:"last_failure,omitempty"`
+	LastOutcome       *ProviderRegistrationHealthLastOutcome `json:"last_outcome,omitempty"`
+	PendingDispatches int64                                  `json:"pending_dispatches"`
+
+	// RegistrationID Tenant provider registration identifier.
+	RegistrationID ProviderID `json:"registration_id"`
+	Requests       int64      `json:"requests"`
+}
+
+// ProviderRegistrationHealthLastOutcome defines model for ProviderRegistrationHealth.LastOutcome.
+type ProviderRegistrationHealthLastOutcome string
+
+// ProviderRegistrationHealthFailure Last bounded normalized operational failure for one registration. It says nothing about the subject.
+type ProviderRegistrationHealthFailure struct {
+	Class      string     `json:"class"`
+	Code       *string    `json:"code,omitempty"`
+	RecordedAt *time.Time `json:"recorded_at,omitempty"`
+}
+
+// ProviderRegistrationList A bounded descending page of tenant provider registrations.
+type ProviderRegistrationList struct {
+	Data []ProviderRegistration `json:"data"`
+
+	// Page Opaque cursor pagination metadata.
+	Page Page `json:"page"`
+}
+
+// ProviderRegistrationOperation Closed registration command operation.
+type ProviderRegistrationOperation string
+
+// ProviderRegistrationReceipt Original safe result of one registration command with the original actor and replay marker.
+type ProviderRegistrationReceipt struct {
+	// Operation Closed registration command operation.
+	Operation ProviderRegistrationOperation `json:"operation"`
+	Reason    string                        `json:"reason"`
+
+	// Registration One tenant-owned secret-free provider route registration. Version is the optimistic-concurrency pointer.
+	Registration ProviderRegistration `json:"registration"`
+	Replayed     bool                 `json:"replayed"`
+}
+
+// ProviderRegistrationToggle Version-checked enable or disable command.
+type ProviderRegistrationToggle struct {
+	ExpectedVersion int64  `json:"expected_version"`
+	Reason          string `json:"reason"`
+}
+
+// ProviderRegistrationUpdate Version-checked secret-free registration replacement.
+type ProviderRegistrationUpdate struct {
+	ExpectedVersion int64  `json:"expected_version"`
+	Reason          string `json:"reason"`
+
+	// Registration Closed secret-free registration document. The adapter must match a configured deployment adapter manifest.
+	Registration ProviderRegistrationWrite `json:"registration"`
+}
+
+// ProviderRegistrationValidationReport Bounded side-effect-free validation result. Accepted persists nothing and approves nothing.
+type ProviderRegistrationValidationReport struct {
+	Accepted    bool                           `json:"accepted"`
+	ReasonCodes []ProviderValidationReasonCode `json:"reason_codes"`
+}
+
+// ProviderRegistrationWrite Closed secret-free registration document. The adapter must match a configured deployment adapter manifest.
+type ProviderRegistrationWrite struct {
+	// AdapterID Configured deployment adapter identifier.
+	AdapterID ProviderAdapterID `json:"adapter_id"`
+
+	// Configuration Secret-free provider configuration reference. It names externally resolved
+	// credentials and settings; credential values are not representable and Core
+	// never stores them.
+	Configuration ProviderConfigurationReference `json:"configuration"`
+	Inputs        *[]ProviderInputReference      `json:"inputs,omitempty"`
+
+	// Region Bounded processing region token for the registered route.
+	Region ProviderRegion `json:"region"`
+
+	// Restrictions Optional execution restrictions for the registered route. They may only
+	// tighten, never relax, the configured deployment adapter restrictions.
+	Restrictions      *ProviderRestrictions `json:"restrictions,omitempty"`
+	SelfieRequirement *string               `json:"selfie_requirement,omitempty"`
+}
+
+// ProviderRestrictions Optional execution restrictions for the registered route. They may only
+// tighten, never relax, the configured deployment adapter restrictions.
+type ProviderRestrictions struct {
+	// MaximumDuration Maximum duration in nanoseconds.
+	MaximumDuration   int  `json:"maximum_duration"`
+	MaximumGrants     int  `json:"maximum_grants"`
+	MaximumResultSize int  `json:"maximum_result_size"`
+	NetworkRequired   bool `json:"network_required"`
+}
+
+// ProviderRetryDisposition Stable retry disposition for execution mechanics.
+type ProviderRetryDisposition string
+
+// ProviderValidationReasonCode Stable bounded registration-validation reason code.
+type ProviderValidationReasonCode string
 
 // RequestID Stable server-issued request correlation identifier.
 type RequestID = string
@@ -3998,6 +5462,18 @@ type VerificationCancellation struct {
 // VerificationCancellationState The committed workflow state, separate from identity outcome.
 type VerificationCancellationState string
 
+// VerificationCaseReference Current review case reference for one verification without findings or evidence.
+type VerificationCaseReference struct {
+	// CaseID Stable tenant-scoped review-case identifier.
+	CaseID string `json:"case_id"`
+
+	// State Bounded review-case lifecycle state such as open, claimed, awaiting_second, resolved, or escalated.
+	State string `json:"state"`
+
+	// Version Optimistic version of the referenced review case.
+	Version int64 `json:"version"`
+}
+
 // VerificationCreate Tenant request to snapshot an active published capture profile.
 type VerificationCreate struct {
 	// CaptureProfileID Stable Idenqa capture-profile identifier.
@@ -4031,10 +5507,88 @@ type VerificationCreated struct {
 	Session VerificationSession `json:"session"`
 }
 
+// VerificationDecisionReference Current immutable decision reference for one verification without policy facts or evidence.
+type VerificationDecisionReference struct {
+	// DecidedAt Instant the referenced immutable decision was recorded.
+	DecidedAt time.Time `json:"decided_at"`
+
+	// DecisionID Stable identifier for one immutable policy decision.
+	DecisionID PolicyDecisionID `json:"decision_id"`
+
+	// Directive Closed workflow intent selected by deterministic policy resolution.
+	Directive PolicyDirective `json:"directive"`
+
+	// Outcome Authoritative terminal verification conclusion.
+	Outcome PolicyOutcome `json:"outcome"`
+}
+
+// VerificationFailure Bounded operational failure classification for a verification workflow
+// that reached the terminal `failed` state. It explains that the workflow
+// could not proceed and never carries an identity outcome, decision
+// reference, raw evidence, or provider payload.
+type VerificationFailure struct {
+	// Class Bounded failure class naming the writer that failed the workflow.
+	Class string `json:"class"`
+
+	// Code Bounded machine-readable failure code within its class.
+	Code string `json:"code"`
+}
+
+// VerificationInputRequest Bounded projection of the active policy-authored subject-input request.
+// It states which input policy requested without exposing evidence, policy
+// facts, provider payloads, or the recording actor.
+type VerificationInputRequest struct {
+	// CaseID Optional review case that owns a linked recapture request.
+	CaseID *string `json:"case_id,omitempty"`
+
+	// ReasonCodes Deterministic bounded policy reason codes. Codes outside the closed
+	// lowercase token grammar are dropped, and `policy_request_input` is
+	// recorded when the evaluation carries no bounded code.
+	ReasonCodes []string `json:"reason_codes"`
+
+	// RequestedAt Instant the policy routing recorded the input request.
+	RequestedAt time.Time `json:"requested_at"`
+}
+
+// VerificationResume Optimistic precondition for an awaiting-input resume command.
+type VerificationResume struct {
+	ExpectedVersion int64 `json:"expected_version"`
+}
+
+// VerificationResumed Reference-only resume result with a display-once replacement bearer when required.
+type VerificationResumed struct {
+	// CaptureToken Present only for the first successful request that replaced an unusable credential.
+	CaptureToken          *CaptureToken `json:"capture_token,omitempty"`
+	CaptureTokenExpiresAt time.Time     `json:"capture_token_expires_at"`
+	CaptureTokenID        string        `json:"capture_token_id"`
+	Replaced              bool          `json:"replaced"`
+	Replayed              bool          `json:"replayed"`
+
+	// Session Immutable capture requirements and current lifecycle metadata for one verification.
+	Session VerificationSession `json:"session"`
+}
+
 // VerificationSession Immutable capture requirements and current lifecycle metadata for one verification.
 type VerificationSession struct {
 	CreatedAt time.Time `json:"created_at"`
-	ExpiresAt time.Time `json:"expires_at"`
+
+	// CurrentCase Current review case projection. Present only when the caller holds
+	// `reviews:read` and a review case currently references the verification;
+	// omitted otherwise.
+	CurrentCase *VerificationCaseReference `json:"current_case,omitempty"`
+
+	// CurrentDecision Current immutable decision projection. Present only when the caller holds
+	// `decisions:read` and a current decision exists for the verification; omitted
+	// otherwise.
+	CurrentDecision *VerificationDecisionReference `json:"current_decision,omitempty"`
+	ExpiresAt       time.Time                      `json:"expires_at"`
+
+	// Failure Operational failure projection. Present only for the terminal `failed`
+	// state and omitted for every other state and for the subject-safe
+	// capture-token projection. It states that the workflow could not
+	// proceed; it is never an identity outcome, decision reference, raw
+	// evidence, or provider payload.
+	Failure *VerificationFailure `json:"failure,omitempty"`
 
 	// ID Stable Idenqa verification-session identifier.
 	ID VerificationSessionID `json:"id"`
@@ -4049,6 +5603,12 @@ type VerificationSession struct {
 
 	// Region Immutable processing and storage region selected by the server.
 	Region string `json:"region"`
+
+	// RequestedInput Active policy-authored subject-input request. Present only while the
+	// session is `awaiting_input`, omitted for every other state, and never
+	// present on the subject-safe capture-token projection. It carries no
+	// evidence, policy facts, or actor identity.
+	RequestedInput *VerificationInputRequest `json:"requested_input,omitempty"`
 
 	// Requirements A complete portable capture-profile document bound to one exact evidence registry revision.
 	Requirements CaptureProfileDocument `json:"requirements"`
@@ -4094,8 +5654,14 @@ type WebhookAttemptList struct {
 type WebhookCreate struct {
 	// EventTypes Exact catalogue event names to subscribe, or the single wildcard entry `*`. Defaults to `["verification.completed"]` when omitted.
 	EventTypes *[]string `json:"event_types,omitempty"`
-	URL        string    `json:"url"`
+
+	// SchemaVersion Exact supported webhook envelope version. Defaults to `1.0`.
+	SchemaVersion *WebhookCreateSchemaVersion `json:"schema_version,omitempty"`
+	URL           string                      `json:"url"`
 }
+
+// WebhookCreateSchemaVersion Exact supported webhook envelope version. Defaults to `1.0`.
+type WebhookCreateSchemaVersion string
 
 // WebhookDelivery Payload-free delivery state. Replay retains event identity and records a distinct delivery and replay_of.
 type WebhookDelivery struct {
@@ -4147,11 +5713,17 @@ type WebhookEndpoint struct {
 	EventTypes         []string   `json:"event_types"`
 	ID                 string     `json:"id"`
 	PreviousValidUntil *time.Time `json:"previous_valid_until,omitempty"`
-	SecretVersion      int64      `json:"secret_version"`
-	UpdatedAt          time.Time  `json:"updated_at"`
-	URL                string     `json:"url"`
-	Version            int64      `json:"version"`
+
+	// SchemaVersion Exact supported webhook envelope version pinned to this endpoint.
+	SchemaVersion WebhookEndpointSchemaVersion `json:"schema_version"`
+	SecretVersion int64                        `json:"secret_version"`
+	UpdatedAt     time.Time                    `json:"updated_at"`
+	URL           string                       `json:"url"`
+	Version       int64                        `json:"version"`
 }
+
+// WebhookEndpointSchemaVersion Exact supported webhook envelope version pinned to this endpoint.
+type WebhookEndpointSchemaVersion string
 
 // WebhookEndpointList Ascending identifier page, with a tenant-, collection- and limit-bound cursor.
 type WebhookEndpointList struct {
@@ -4167,6 +5739,25 @@ type WebhookEndpointMutation struct {
 	Endpoint      WebhookEndpoint `json:"endpoint"`
 	Replayed      bool            `json:"replayed"`
 	SigningSecret *string         `json:"signing_secret,omitempty"`
+}
+
+// WebhookEvent One canonical catalogue envelope decrypted for an authorised tenant reader.
+type WebhookEvent struct {
+	CreatedAt     time.Time              `json:"created_at"`
+	Data          map[string]interface{} `json:"data"`
+	ID            string                 `json:"id"`
+	Region        string                 `json:"region"`
+	SchemaVersion string                 `json:"schema_version"`
+	TenantID      string                 `json:"tenant_id"`
+	Type          string                 `json:"type"`
+}
+
+// WebhookEventList Ascending insertion-order page of decrypted canonical catalogue envelopes.
+type WebhookEventList struct {
+	Data []WebhookEvent `json:"data"`
+
+	// Page Opaque cursor pagination metadata.
+	Page Page `json:"page"`
 }
 
 // WebhookReplay Replay an exhausted delivery with a distinct delivery ID and unchanged event ID and exact body. Applies to webhook Replay.
@@ -4185,7 +5776,13 @@ type WebhookSubscriptions struct {
 	// EventTypes Exact catalogue event names, or the single wildcard entry `*` for every current and future catalogue event except explicit-only ones.
 	EventTypes      []string `json:"event_types"`
 	ExpectedVersion int64    `json:"expected_version"`
+
+	// SchemaVersion Exact supported webhook envelope version. When omitted, the endpoint keeps its current pin.
+	SchemaVersion *WebhookSubscriptionsSchemaVersion `json:"schema_version,omitempty"`
 }
+
+// WebhookSubscriptionsSchemaVersion Exact supported webhook envelope version. When omitted, the endpoint keeps its current pin.
+type WebhookSubscriptionsSchemaVersion string
 
 // ContentDigest defines model for ContentDigest.
 type ContentDigest = string
@@ -4204,6 +5801,9 @@ type IfNoneMatch = string
 
 // Limit defines model for Limit.
 type Limit = int
+
+// ModelName Tenant-owned evaluation-model registry name.
+type ModelName = ModelRegistryName
 
 // NoticeID Stable identifier for one immutable notice version.
 type NoticeID = NoticeVersionID
@@ -4391,6 +5991,18 @@ type OpenReviewCorrectionParams struct {
 	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
 }
 
+// ListDeletionsParams defines parameters for ListDeletions.
+type ListDeletionsParams struct {
+	// AggregateID Restrict the page to deletion workflows of one exact aggregate.
+	AggregateID *string `form:"aggregate_id,omitempty" json:"aggregate_id,omitempty"`
+
+	// Cursor Opaque continuation cursor returned by the preceding page.
+	Cursor *Cursor `form:"cursor,omitempty" json:"cursor,omitempty"`
+
+	// Limit Maximum collection items to return. The default is 25.
+	Limit *Limit `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
 // CreateEvidenceUploadParams defines parameters for CreateEvidenceUpload.
 type CreateEvidenceUploadParams struct {
 	// IdempotencyKey An RFC 9651 String used to deduplicate a consequential request. It is
@@ -4461,6 +6073,60 @@ type LookupIdentityIdentifierJSONBody struct {
 	Limit      *int                     `json:"limit,omitempty"`
 }
 
+// ActivateModelParams defines parameters for ActivateModel.
+type ActivateModelParams struct {
+	// IdempotencyKey An RFC 9651 String used to deduplicate a consequential request. It is
+	// scoped to the authenticated tenant and operation. Reusing a key with a
+	// different canonical request fingerprint is a conflict. Keys are not
+	// credentials and clients must not place secrets or identity data in them.
+	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
+}
+
+// ListModelHistoryParams defines parameters for ListModelHistory.
+type ListModelHistoryParams struct {
+	// Before Return receipts with a strictly lower registry version. Zero starts from the newest receipt.
+	Before *int64 `form:"before,omitempty" json:"before,omitempty"`
+
+	// Limit Maximum receipts to return from 1 to 100.
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// RegisterModelParams defines parameters for RegisterModel.
+type RegisterModelParams struct {
+	// IdempotencyKey An RFC 9651 String used to deduplicate a consequential request. It is
+	// scoped to the authenticated tenant and operation. Reusing a key with a
+	// different canonical request fingerprint is a conflict. Keys are not
+	// credentials and clients must not place secrets or identity data in them.
+	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
+}
+
+// RetireModelParams defines parameters for RetireModel.
+type RetireModelParams struct {
+	// IdempotencyKey An RFC 9651 String used to deduplicate a consequential request. It is
+	// scoped to the authenticated tenant and operation. Reusing a key with a
+	// different canonical request fingerprint is a conflict. Keys are not
+	// credentials and clients must not place secrets or identity data in them.
+	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
+}
+
+// RollbackModelParams defines parameters for RollbackModel.
+type RollbackModelParams struct {
+	// IdempotencyKey An RFC 9651 String used to deduplicate a consequential request. It is
+	// scoped to the authenticated tenant and operation. Reusing a key with a
+	// different canonical request fingerprint is a conflict. Keys are not
+	// credentials and clients must not place secrets or identity data in them.
+	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
+}
+
+// SetModelThresholdParams defines parameters for SetModelThreshold.
+type SetModelThresholdParams struct {
+	// IdempotencyKey An RFC 9651 String used to deduplicate a consequential request. It is
+	// scoped to the authenticated tenant and operation. Reusing a key with a
+	// different canonical request fingerprint is a conflict. Keys are not
+	// credentials and clients must not place secrets or identity data in them.
+	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
+}
+
 // CreateNoticeVersionParams defines parameters for CreateNoticeVersion.
 type CreateNoticeVersionParams struct {
 	// IdempotencyKey An RFC 9651 String used to deduplicate a consequential request. It is
@@ -4515,6 +6181,15 @@ type AssignPolicyAssuranceParams struct {
 	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
 }
 
+// DiffPolicyRevisionsParams defines parameters for DiffPolicyRevisions.
+type DiffPolicyRevisionsParams struct {
+	// FromRevision Positive immutable source revision number.
+	FromRevision int64 `form:"from_revision" json:"from_revision"`
+
+	// ToRevision Positive immutable target revision number.
+	ToRevision int64 `form:"to_revision" json:"to_revision"`
+}
+
 // ListPolicyRevisionsParams defines parameters for ListPolicyRevisions.
 type ListPolicyRevisionsParams struct {
 	// Limit Maximum collection items to return. The default is 25.
@@ -4561,6 +6236,30 @@ type CreateProposalParams struct {
 	// different canonical request fingerprint is a conflict. Keys are not
 	// credentials and clients must not place secrets or identity data in them.
 	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
+}
+
+// ListProviderRegistrationsParams defines parameters for ListProviderRegistrations.
+type ListProviderRegistrationsParams struct {
+	// Limit Maximum registrations to return from 1 to 100.
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Cursor Opaque integrity-protected continuation cursor.
+	Cursor *Cursor `form:"cursor,omitempty" json:"cursor,omitempty"`
+}
+
+// CreateProviderRegistrationParams defines parameters for CreateProviderRegistration.
+type CreateProviderRegistrationParams struct {
+	// IdempotencyKey An RFC 9651 String used to deduplicate a consequential request. It is
+	// scoped to the authenticated tenant and operation. Reusing a key with a
+	// different canonical request fingerprint is a conflict. Keys are not
+	// credentials and clients must not place secrets or identity data in them.
+	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
+}
+
+// GetRetentionResolutionParams defines parameters for GetRetentionResolution.
+type GetRetentionResolutionParams struct {
+	// AggregateID Exact aggregate whose retained records are resolved.
+	AggregateID string `form:"aggregate_id" json:"aggregate_id"`
 }
 
 // ListReviewCasesParams defines parameters for ListReviewCases.
@@ -4864,6 +6563,12 @@ type LinkIdentityVerificationParams struct {
 	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
 }
 
+// ExportTenantParams defines parameters for ExportTenant.
+type ExportTenantParams struct {
+	// Collections A comma-separated subset of known export collections; omitted streams every collection.
+	Collections *string `form:"collections,omitempty" json:"collections,omitempty"`
+}
+
 // CreateVerificationParams defines parameters for CreateVerification.
 type CreateVerificationParams struct {
 	// IdempotencyKey An RFC 9651 String used to deduplicate a consequential request. It is
@@ -4933,6 +6638,15 @@ type GetLatestDecisionParams struct {
 	IfNoneMatch *IfNoneMatch `json:"If-None-Match,omitempty"`
 }
 
+// ResumeVerificationParams defines parameters for ResumeVerification.
+type ResumeVerificationParams struct {
+	// IdempotencyKey An RFC 9651 String used to deduplicate a consequential request. It is
+	// scoped to the authenticated tenant and operation. Reusing a key with a
+	// different canonical request fingerprint is a conflict. Keys are not
+	// credentials and clients must not place secrets or identity data in them.
+	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
+}
+
 // ReplayWebhookDeliveryParams defines parameters for ReplayWebhookDelivery.
 type ReplayWebhookDeliveryParams struct {
 	// IdempotencyKey An RFC 9651 String used to deduplicate a consequential request. It is
@@ -4996,6 +6710,27 @@ type UpdateWebhookSubscriptionsParams struct {
 	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
 }
 
+// ListWebhookEventsParams defines parameters for ListWebhookEvents.
+type ListWebhookEventsParams struct {
+	// Limit Maximum collection items to return. The default is 25.
+	Limit *Limit `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Cursor Opaque continuation cursor returned by the preceding page.
+	Cursor *Cursor `form:"cursor,omitempty" json:"cursor,omitempty"`
+
+	// EventTypes Comma-separated catalogue event names, or * for all catalogue events.
+	EventTypes *string `form:"event_types,omitempty" json:"event_types,omitempty"`
+}
+
+// StreamWebhookEventsParams defines parameters for StreamWebhookEvents.
+type StreamWebhookEventsParams struct {
+	// EventTypes Comma-separated catalogue event names, or * for all catalogue events.
+	EventTypes *string `form:"event_types,omitempty" json:"event_types,omitempty"`
+
+	// LastEventID The last delivered event sequence; the stream resumes after it.
+	LastEventID *string `json:"Last-Event-ID,omitempty"`
+}
+
 // AssignReviewAppealJSONRequestBody defines body for AssignReviewAppeal for application/json ContentType.
 type AssignReviewAppealJSONRequestBody = ReviewVersionRequest
 
@@ -5047,6 +6782,24 @@ type ConfigureIdentityJSONRequestBody ConfigureIdentityJSONBody
 // LookupIdentityIdentifierJSONRequestBody defines body for LookupIdentityIdentifier for application/json ContentType.
 type LookupIdentityIdentifierJSONRequestBody LookupIdentityIdentifierJSONBody
 
+// ActivateModelJSONRequestBody defines body for ActivateModel for application/json ContentType.
+type ActivateModelJSONRequestBody = ModelDeploymentWrite
+
+// RegisterModelJSONRequestBody defines body for RegisterModel for application/json ContentType.
+type RegisterModelJSONRequestBody = ModelRegistrationWrite
+
+// RetireModelJSONRequestBody defines body for RetireModel for application/json ContentType.
+type RetireModelJSONRequestBody = ModelRetirementWrite
+
+// RollbackModelJSONRequestBody defines body for RollbackModel for application/json ContentType.
+type RollbackModelJSONRequestBody = ModelDeploymentWrite
+
+// SetModelThresholdJSONRequestBody defines body for SetModelThreshold for application/json ContentType.
+type SetModelThresholdJSONRequestBody = ModelThresholdWrite
+
+// ValidateModelJSONRequestBody defines body for ValidateModel for application/json ContentType.
+type ValidateModelJSONRequestBody = ModelValidationRequest
+
 // CreateNoticeVersionJSONRequestBody defines body for CreateNoticeVersion for application/json ContentType.
 type CreateNoticeVersionJSONRequestBody = NoticeVersionCreate
 
@@ -5068,6 +6821,12 @@ type CreatePolicyRevisionJSONRequestBody = PolicyRevisionWrite
 // RollbackPolicyJSONRequestBody defines body for RollbackPolicy for application/json ContentType.
 type RollbackPolicyJSONRequestBody = PolicyActivationWrite
 
+// RunPolicyRegressionJSONRequestBody defines body for RunPolicyRegression for application/json ContentType.
+type RunPolicyRegressionJSONRequestBody = PolicyRegressionSuite
+
+// SimulatePolicyJSONRequestBody defines body for SimulatePolicy for application/json ContentType.
+type SimulatePolicyJSONRequestBody = PolicySimulationInput
+
 // CreatePromptJSONRequestBody defines body for CreatePrompt for application/json ContentType.
 type CreatePromptJSONRequestBody = PromptCreate
 
@@ -5085,6 +6844,24 @@ type CancelProposalJSONRequestBody = ProposalVersionRequest
 
 // RejectProposalJSONRequestBody defines body for RejectProposal for application/json ContentType.
 type RejectProposalJSONRequestBody = ProposalVersionRequest
+
+// CreateProviderRegistrationJSONRequestBody defines body for CreateProviderRegistration for application/json ContentType.
+type CreateProviderRegistrationJSONRequestBody = ProviderRegistrationCreate
+
+// UpdateProviderRegistrationJSONRequestBody defines body for UpdateProviderRegistration for application/json ContentType.
+type UpdateProviderRegistrationJSONRequestBody = ProviderRegistrationUpdate
+
+// DisableProviderRegistrationJSONRequestBody defines body for DisableProviderRegistration for application/json ContentType.
+type DisableProviderRegistrationJSONRequestBody = ProviderRegistrationToggle
+
+// EnableProviderRegistrationJSONRequestBody defines body for EnableProviderRegistration for application/json ContentType.
+type EnableProviderRegistrationJSONRequestBody = ProviderRegistrationToggle
+
+// SimulateProviderFailureJSONRequestBody defines body for SimulateProviderFailure for application/json ContentType.
+type SimulateProviderFailureJSONRequestBody = ProviderFailureSimulationRequest
+
+// ValidateProviderRegistrationJSONRequestBody defines body for ValidateProviderRegistration for application/json ContentType.
+type ValidateProviderRegistrationJSONRequestBody = ProviderRegistrationWrite
 
 // RequestReviewAppealJSONRequestBody defines body for RequestReviewAppeal for application/json ContentType.
 type RequestReviewAppealJSONRequestBody = ReviewAppealRequest
@@ -5158,6 +6935,9 @@ type DeclareProcessingAuthorityJSONRequestBody = ProcessingAuthorityDeclare
 // CancelVerificationJSONRequestBody defines body for CancelVerification for application/json ContentType.
 type CancelVerificationJSONRequestBody = VerificationCancel
 
+// ResumeVerificationJSONRequestBody defines body for ResumeVerification for application/json ContentType.
+type ResumeVerificationJSONRequestBody = VerificationResume
+
 // ReplayWebhookDeliveryJSONRequestBody defines body for ReplayWebhookDelivery for application/json ContentType.
 type ReplayWebhookDeliveryJSONRequestBody = WebhookReplay
 
@@ -5172,6 +6952,286 @@ type RotateWebhookEndpointJSONRequestBody = WebhookRotate
 
 // UpdateWebhookSubscriptionsJSONRequestBody defines body for UpdateWebhookSubscriptions for application/json ContentType.
 type UpdateWebhookSubscriptionsJSONRequestBody = WebhookSubscriptions
+
+// AsPolicyRevisionDiffChangeNew0 returns the union data inside the PolicyRevisionDiffChange_New as a PolicyRevisionDiffChangeNew0
+func (t PolicyRevisionDiffChange_New) AsPolicyRevisionDiffChangeNew0() (PolicyRevisionDiffChangeNew0, error) {
+	var body PolicyRevisionDiffChangeNew0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromPolicyRevisionDiffChangeNew0 overwrites any union data inside the PolicyRevisionDiffChange_New as the provided PolicyRevisionDiffChangeNew0
+func (t *PolicyRevisionDiffChange_New) FromPolicyRevisionDiffChangeNew0(v PolicyRevisionDiffChangeNew0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergePolicyRevisionDiffChangeNew0 performs a merge with any union data inside the PolicyRevisionDiffChange_New, using the provided PolicyRevisionDiffChangeNew0
+func (t *PolicyRevisionDiffChange_New) MergePolicyRevisionDiffChangeNew0(v PolicyRevisionDiffChangeNew0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsPolicyRevisionDiffChangeNew1 returns the union data inside the PolicyRevisionDiffChange_New as a PolicyRevisionDiffChangeNew1
+func (t PolicyRevisionDiffChange_New) AsPolicyRevisionDiffChangeNew1() (PolicyRevisionDiffChangeNew1, error) {
+	var body PolicyRevisionDiffChangeNew1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromPolicyRevisionDiffChangeNew1 overwrites any union data inside the PolicyRevisionDiffChange_New as the provided PolicyRevisionDiffChangeNew1
+func (t *PolicyRevisionDiffChange_New) FromPolicyRevisionDiffChangeNew1(v PolicyRevisionDiffChangeNew1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergePolicyRevisionDiffChangeNew1 performs a merge with any union data inside the PolicyRevisionDiffChange_New, using the provided PolicyRevisionDiffChangeNew1
+func (t *PolicyRevisionDiffChange_New) MergePolicyRevisionDiffChangeNew1(v PolicyRevisionDiffChangeNew1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsPolicyRevisionDiffChangeNew2 returns the union data inside the PolicyRevisionDiffChange_New as a PolicyRevisionDiffChangeNew2
+func (t PolicyRevisionDiffChange_New) AsPolicyRevisionDiffChangeNew2() (PolicyRevisionDiffChangeNew2, error) {
+	var body PolicyRevisionDiffChangeNew2
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromPolicyRevisionDiffChangeNew2 overwrites any union data inside the PolicyRevisionDiffChange_New as the provided PolicyRevisionDiffChangeNew2
+func (t *PolicyRevisionDiffChange_New) FromPolicyRevisionDiffChangeNew2(v PolicyRevisionDiffChangeNew2) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergePolicyRevisionDiffChangeNew2 performs a merge with any union data inside the PolicyRevisionDiffChange_New, using the provided PolicyRevisionDiffChangeNew2
+func (t *PolicyRevisionDiffChange_New) MergePolicyRevisionDiffChangeNew2(v PolicyRevisionDiffChangeNew2) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsPolicyRevisionDiffChangeNew3 returns the union data inside the PolicyRevisionDiffChange_New as a PolicyRevisionDiffChangeNew3
+func (t PolicyRevisionDiffChange_New) AsPolicyRevisionDiffChangeNew3() (PolicyRevisionDiffChangeNew3, error) {
+	var body PolicyRevisionDiffChangeNew3
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromPolicyRevisionDiffChangeNew3 overwrites any union data inside the PolicyRevisionDiffChange_New as the provided PolicyRevisionDiffChangeNew3
+func (t *PolicyRevisionDiffChange_New) FromPolicyRevisionDiffChangeNew3(v PolicyRevisionDiffChangeNew3) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergePolicyRevisionDiffChangeNew3 performs a merge with any union data inside the PolicyRevisionDiffChange_New, using the provided PolicyRevisionDiffChangeNew3
+func (t *PolicyRevisionDiffChange_New) MergePolicyRevisionDiffChangeNew3(v PolicyRevisionDiffChangeNew3) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsPolicyRevisionDiffChangeNew4 returns the union data inside the PolicyRevisionDiffChange_New as a PolicyRevisionDiffChangeNew4
+func (t PolicyRevisionDiffChange_New) AsPolicyRevisionDiffChangeNew4() (PolicyRevisionDiffChangeNew4, error) {
+	var body PolicyRevisionDiffChangeNew4
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromPolicyRevisionDiffChangeNew4 overwrites any union data inside the PolicyRevisionDiffChange_New as the provided PolicyRevisionDiffChangeNew4
+func (t *PolicyRevisionDiffChange_New) FromPolicyRevisionDiffChangeNew4(v PolicyRevisionDiffChangeNew4) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergePolicyRevisionDiffChangeNew4 performs a merge with any union data inside the PolicyRevisionDiffChange_New, using the provided PolicyRevisionDiffChangeNew4
+func (t *PolicyRevisionDiffChange_New) MergePolicyRevisionDiffChangeNew4(v PolicyRevisionDiffChangeNew4) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t PolicyRevisionDiffChange_New) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *PolicyRevisionDiffChange_New) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsPolicyRevisionDiffChangeOld0 returns the union data inside the PolicyRevisionDiffChange_Old as a PolicyRevisionDiffChangeOld0
+func (t PolicyRevisionDiffChange_Old) AsPolicyRevisionDiffChangeOld0() (PolicyRevisionDiffChangeOld0, error) {
+	var body PolicyRevisionDiffChangeOld0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromPolicyRevisionDiffChangeOld0 overwrites any union data inside the PolicyRevisionDiffChange_Old as the provided PolicyRevisionDiffChangeOld0
+func (t *PolicyRevisionDiffChange_Old) FromPolicyRevisionDiffChangeOld0(v PolicyRevisionDiffChangeOld0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergePolicyRevisionDiffChangeOld0 performs a merge with any union data inside the PolicyRevisionDiffChange_Old, using the provided PolicyRevisionDiffChangeOld0
+func (t *PolicyRevisionDiffChange_Old) MergePolicyRevisionDiffChangeOld0(v PolicyRevisionDiffChangeOld0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsPolicyRevisionDiffChangeOld1 returns the union data inside the PolicyRevisionDiffChange_Old as a PolicyRevisionDiffChangeOld1
+func (t PolicyRevisionDiffChange_Old) AsPolicyRevisionDiffChangeOld1() (PolicyRevisionDiffChangeOld1, error) {
+	var body PolicyRevisionDiffChangeOld1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromPolicyRevisionDiffChangeOld1 overwrites any union data inside the PolicyRevisionDiffChange_Old as the provided PolicyRevisionDiffChangeOld1
+func (t *PolicyRevisionDiffChange_Old) FromPolicyRevisionDiffChangeOld1(v PolicyRevisionDiffChangeOld1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergePolicyRevisionDiffChangeOld1 performs a merge with any union data inside the PolicyRevisionDiffChange_Old, using the provided PolicyRevisionDiffChangeOld1
+func (t *PolicyRevisionDiffChange_Old) MergePolicyRevisionDiffChangeOld1(v PolicyRevisionDiffChangeOld1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsPolicyRevisionDiffChangeOld2 returns the union data inside the PolicyRevisionDiffChange_Old as a PolicyRevisionDiffChangeOld2
+func (t PolicyRevisionDiffChange_Old) AsPolicyRevisionDiffChangeOld2() (PolicyRevisionDiffChangeOld2, error) {
+	var body PolicyRevisionDiffChangeOld2
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromPolicyRevisionDiffChangeOld2 overwrites any union data inside the PolicyRevisionDiffChange_Old as the provided PolicyRevisionDiffChangeOld2
+func (t *PolicyRevisionDiffChange_Old) FromPolicyRevisionDiffChangeOld2(v PolicyRevisionDiffChangeOld2) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergePolicyRevisionDiffChangeOld2 performs a merge with any union data inside the PolicyRevisionDiffChange_Old, using the provided PolicyRevisionDiffChangeOld2
+func (t *PolicyRevisionDiffChange_Old) MergePolicyRevisionDiffChangeOld2(v PolicyRevisionDiffChangeOld2) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsPolicyRevisionDiffChangeOld3 returns the union data inside the PolicyRevisionDiffChange_Old as a PolicyRevisionDiffChangeOld3
+func (t PolicyRevisionDiffChange_Old) AsPolicyRevisionDiffChangeOld3() (PolicyRevisionDiffChangeOld3, error) {
+	var body PolicyRevisionDiffChangeOld3
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromPolicyRevisionDiffChangeOld3 overwrites any union data inside the PolicyRevisionDiffChange_Old as the provided PolicyRevisionDiffChangeOld3
+func (t *PolicyRevisionDiffChange_Old) FromPolicyRevisionDiffChangeOld3(v PolicyRevisionDiffChangeOld3) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergePolicyRevisionDiffChangeOld3 performs a merge with any union data inside the PolicyRevisionDiffChange_Old, using the provided PolicyRevisionDiffChangeOld3
+func (t *PolicyRevisionDiffChange_Old) MergePolicyRevisionDiffChangeOld3(v PolicyRevisionDiffChangeOld3) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsPolicyRevisionDiffChangeOld4 returns the union data inside the PolicyRevisionDiffChange_Old as a PolicyRevisionDiffChangeOld4
+func (t PolicyRevisionDiffChange_Old) AsPolicyRevisionDiffChangeOld4() (PolicyRevisionDiffChangeOld4, error) {
+	var body PolicyRevisionDiffChangeOld4
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromPolicyRevisionDiffChangeOld4 overwrites any union data inside the PolicyRevisionDiffChange_Old as the provided PolicyRevisionDiffChangeOld4
+func (t *PolicyRevisionDiffChange_Old) FromPolicyRevisionDiffChangeOld4(v PolicyRevisionDiffChangeOld4) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergePolicyRevisionDiffChangeOld4 performs a merge with any union data inside the PolicyRevisionDiffChange_Old, using the provided PolicyRevisionDiffChangeOld4
+func (t *PolicyRevisionDiffChange_Old) MergePolicyRevisionDiffChangeOld4(v PolicyRevisionDiffChangeOld4) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t PolicyRevisionDiffChange_Old) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *PolicyRevisionDiffChange_Old) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
 
 // RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
@@ -5578,6 +7638,20 @@ type ClientInterface interface {
 	// Corresponds with POST /v1/decisions/{decisionID}/review-cases (the `OpenReviewCorrection` operationId).
 	OpenReviewCorrection(ctx context.Context, decisionID string, params *OpenReviewCorrectionParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ListDeletions List tenant deletion workflows
+	//
+	// Requires deletions:read. Returns a bounded ascending page of deletion workflows, optionally restricted to one exact aggregate. Responses never return object locations, encoded target references, or raw evidence.
+	//
+	// Corresponds with GET /v1/deletions (the `ListDeletions` operationId).
+	ListDeletions(ctx context.Context, params *ListDeletionsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetDeletionStatus Get one deletion workflow status
+	//
+	// Requires deletions:read. Returns exact target states and digests, active holds, and the documented backup boundary. Raw object references and evidence bytes are never returned.
+	//
+	// Corresponds with GET /v1/deletions/{deletionID} (the `GetDeletionStatus` operationId).
+	GetDeletionStatus(ctx context.Context, deletionID PrivacyDeletionID, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// CreateEvidenceUploadWithBody Issue a requirement-bound evidence-upload intent
 	//
 	// Takes any type of body and a specified content type.
@@ -5752,6 +7826,202 @@ type ClientInterface interface {
 	// Corresponds with GET /v1/identity/receipts/{digest} (the `GetIdentityReceipt` operationId).
 	GetIdentityReceipt(ctx context.Context, digest PolicyDigest, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetModel Get one evaluation-model registry state
+	//
+	// Requires models:read. Returns the current optimistic-concurrency pointer for one
+	// tenant-owned evaluation-only registry: the independently numbered model and
+	// threshold revision watermarks and the optional active evaluation deployment. The
+	// registry is evaluation-only; production activation is rejected and this route
+	// never selects a production model.
+	//
+	// Corresponds with GET /v1/models/{modelName} (the `GetModel` operationId).
+	GetModel(ctx context.Context, modelName ModelName, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ActivateModelWithBody Activate an evaluation-only deployment
+	//
+	// Requires models:activate and exactly one Idempotency-Key. Version-checks the
+	// current registry pointer, resolves the exact immutable model and threshold
+	// revisions, and verifies the declared region before recording one evaluation-only
+	// deployment. The registry is evaluation-only: production activation is rejected and
+	// this route never selects a production model. A repeated identical command returns
+	// the original receipt with replayed=true.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/models/{modelName}/activate (the `ActivateModel` operationId).
+	ActivateModelWithBody(ctx context.Context, modelName ModelName, params *ActivateModelParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ActivateModel Activate an evaluation-only deployment
+	//
+	// Requires models:activate and exactly one Idempotency-Key. Version-checks the
+	// current registry pointer, resolves the exact immutable model and threshold
+	// revisions, and verifies the declared region before recording one evaluation-only
+	// deployment. The registry is evaluation-only: production activation is rejected and
+	// this route never selects a production model. A repeated identical command returns
+	// the original receipt with replayed=true.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/models/{modelName}/activate (the `ActivateModel` operationId).
+	ActivateModel(ctx context.Context, modelName ModelName, params *ActivateModelParams, body ActivateModelJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListModelHistory List immutable evaluation-registry command history
+	//
+	// Requires models:read. Returns a bounded newest-first page of immutable command
+	// receipts for one tenant-owned evaluation-only registry. Receipts preserve the
+	// exact recorded state and original actor without exposing declared training
+	// materials or scores, and immutable revisions survive retirement. This route never
+	// selects a production model.
+	//
+	// Corresponds with GET /v1/models/{modelName}/history (the `ListModelHistory` operationId).
+	ListModelHistory(ctx context.Context, modelName ModelName, params *ListModelHistoryParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RegisterModelWithBody Register an immutable evaluation model revision
+	//
+	// Requires models:write and exactly one Idempotency-Key. Appends one immutable
+	// evaluation-only model revision with declared owner, licence, training provenance,
+	// intended and prohibited use, regions, hardware class, and exact manifest and
+	// configuration pins. The registry is evaluation-only: production activation is
+	// rejected, this route never selects a production model, and a repeated identical
+	// command returns the original receipt with replayed=true.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/models/{modelName}/register (the `RegisterModel` operationId).
+	RegisterModelWithBody(ctx context.Context, modelName ModelName, params *RegisterModelParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RegisterModel Register an immutable evaluation model revision
+	//
+	// Requires models:write and exactly one Idempotency-Key. Appends one immutable
+	// evaluation-only model revision with declared owner, licence, training provenance,
+	// intended and prohibited use, regions, hardware class, and exact manifest and
+	// configuration pins. The registry is evaluation-only: production activation is
+	// rejected, this route never selects a production model, and a repeated identical
+	// command returns the original receipt with replayed=true.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/models/{modelName}/register (the `RegisterModel` operationId).
+	RegisterModel(ctx context.Context, modelName ModelName, params *RegisterModelParams, body RegisterModelJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RetireModelWithBody Retire the active evaluation deployment
+	//
+	// Requires models:activate and exactly one Idempotency-Key. Version-checks the
+	// current registry pointer and clears the active evaluation deployment, immediately
+	// fencing new attempts while immutable revisions and history remain readable. The
+	// registry is evaluation-only and this route never selects a production model.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/models/{modelName}/retire (the `RetireModel` operationId).
+	RetireModelWithBody(ctx context.Context, modelName ModelName, params *RetireModelParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RetireModel Retire the active evaluation deployment
+	//
+	// Requires models:activate and exactly one Idempotency-Key. Version-checks the
+	// current registry pointer and clears the active evaluation deployment, immediately
+	// fencing new attempts while immutable revisions and history remain readable. The
+	// registry is evaluation-only and this route never selects a production model.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/models/{modelName}/retire (the `RetireModel` operationId).
+	RetireModel(ctx context.Context, modelName ModelName, params *RetireModelParams, body RetireModelJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetModelRevision Get one immutable evaluation-model revision
+	//
+	// Requires models:read. Returns one explicitly requested immutable evaluation-only
+	// registration or threshold revision with its canonical content digest. Model and
+	// threshold revisions are independently numbered and immutable provenance survives
+	// retirement. This route never selects a production model.
+	//
+	// Corresponds with GET /v1/models/{modelName}/revisions/{kind}/{revision} (the `GetModelRevision` operationId).
+	GetModelRevision(ctx context.Context, modelName ModelName, kind string, revision int64, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RollbackModelWithBody Roll back to a previously activated evaluation deployment
+	//
+	// Requires models:activate and exactly one Idempotency-Key. Version-checks the
+	// current registry pointer, resolves the exact immutable model and threshold
+	// revisions, verifies the declared region, and records an operational rollback to a
+	// pair that was previously activated. The registry is evaluation-only: production
+	// activation is rejected and this route never selects a production model.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/models/{modelName}/rollback (the `RollbackModel` operationId).
+	RollbackModelWithBody(ctx context.Context, modelName ModelName, params *RollbackModelParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RollbackModel Roll back to a previously activated evaluation deployment
+	//
+	// Requires models:activate and exactly one Idempotency-Key. Version-checks the
+	// current registry pointer, resolves the exact immutable model and threshold
+	// revisions, verifies the declared region, and records an operational rollback to a
+	// pair that was previously activated. The registry is evaluation-only: production
+	// activation is rejected and this route never selects a production model.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/models/{modelName}/rollback (the `RollbackModel` operationId).
+	RollbackModel(ctx context.Context, modelName ModelName, params *RollbackModelParams, body RollbackModelJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SetModelThresholdWithBody Register an immutable evaluation threshold revision
+	//
+	// Requires models:write and exactly one Idempotency-Key. Appends one immutable
+	// evaluation threshold operating point pinned to the complete execution provenance.
+	// Thresholds are evaluation operating points, never accepted verification assurance,
+	// and production activation is rejected. A repeated identical command returns the
+	// original receipt with replayed=true.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/models/{modelName}/threshold (the `SetModelThreshold` operationId).
+	SetModelThresholdWithBody(ctx context.Context, modelName ModelName, params *SetModelThresholdParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SetModelThreshold Register an immutable evaluation threshold revision
+	//
+	// Requires models:write and exactly one Idempotency-Key. Appends one immutable
+	// evaluation threshold operating point pinned to the complete execution provenance.
+	// Thresholds are evaluation operating points, never accepted verification assurance,
+	// and production activation is rejected. A repeated identical command returns the
+	// original receipt with replayed=true.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/models/{modelName}/threshold (the `SetModelThreshold` operationId).
+	SetModelThreshold(ctx context.Context, modelName ModelName, params *SetModelThresholdParams, body SetModelThresholdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ValidateModelWithBody Validate an evaluation-registry command without persistence
+	//
+	// Requires models:write and no Idempotency-Key. Side-effect-free validation of the
+	// exact closed command document that would be submitted to register, threshold,
+	// activate, rollback or retire. Domain document validation and, for deployment
+	// commands, stored revision, declared region, current version and previously
+	// activated eligibility are checked against the current registry state. Nothing is
+	// persisted and no revision, deployment, receipt, audit or outbox record is created.
+	// The registry is evaluation-only: production activation is rejected and this route
+	// never selects a production model.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/models/{modelName}/validate (the `ValidateModel` operationId).
+	ValidateModelWithBody(ctx context.Context, modelName ModelName, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ValidateModel Validate an evaluation-registry command without persistence
+	//
+	// Requires models:write and no Idempotency-Key. Side-effect-free validation of the
+	// exact closed command document that would be submitted to register, threshold,
+	// activate, rollback or retire. Domain document validation and, for deployment
+	// commands, stored revision, declared region, current version and previously
+	// activated eligibility are checked against the current registry state. Nothing is
+	// persisted and no revision, deployment, receipt, audit or outbox record is created.
+	// The registry is evaluation-only: production activation is rejected and this route
+	// never selects a production model.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/models/{modelName}/validate (the `ValidateModel` operationId).
+	ValidateModel(ctx context.Context, modelName ModelName, body ValidateModelJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// CreateNoticeVersionWithBody Create an immutable subject-facing notice version
 	//
 	// Takes any type of body and a specified content type.
@@ -5871,6 +8141,13 @@ type ClientInterface interface {
 	// Corresponds with PUT /v1/policies/{policyID}/assurance (the `AssignPolicyAssurance` operationId).
 	AssignPolicyAssurance(ctx context.Context, policyID PolicyID, params *AssignPolicyAssuranceParams, body AssignPolicyAssuranceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// DiffPolicyRevisions Diff two stored policy revisions
+	//
+	// Requires policies:read. Bounded canonical structural difference between two immutable revisions of one policy. Identity fields are reported on from and to and are never repeated as changes. The result is deterministic, omitted fragments are absent, and no expression is evaluated or registered.
+	//
+	// Corresponds with GET /v1/policies/{policyID}/diff (the `DiffPolicyRevisions` operationId).
+	DiffPolicyRevisions(ctx context.Context, policyID string, params *DiffPolicyRevisionsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListPolicyRevisions List immutable revisions
 	//
 	// Requires policies:read. Bounded newest-first metadata page with a signed tenant-, policy-, collection- and limit-bound cursor. Applies to list immutable revisions.
@@ -5920,6 +8197,42 @@ type ClientInterface interface {
 	//
 	// Corresponds with POST /v1/policies/{policyID}/rollback (the `RollbackPolicy` operationId).
 	RollbackPolicy(ctx context.Context, policyID string, params *RollbackPolicyParams, body RollbackPolicyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RunPolicyRegressionWithBody Run a bounded portable policy scenario suite
+	//
+	// Requires policies:read. Side-effect-free deterministic evaluation of one portable `PolicyRegressionSuite` document holding at most the documented scenario maximum. Every scenario is a closed `PolicySimulationInput` with an exact canonical expectation; execution failures reject the request while expectation mismatches are reported as data with passed=false. No production facts are read and no policy is registered, activated, decided, tasked, or audited.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/policy-regressions (the `RunPolicyRegression` operationId).
+	RunPolicyRegressionWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RunPolicyRegression Run a bounded portable policy scenario suite
+	//
+	// Requires policies:read. Side-effect-free deterministic evaluation of one portable `PolicyRegressionSuite` document holding at most the documented scenario maximum. Every scenario is a closed `PolicySimulationInput` with an exact canonical expectation; execution failures reject the request while expectation mismatches are reported as data with passed=false. No production facts are read and no policy is registered, activated, decided, tasked, or audited.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/policy-regressions (the `RunPolicyRegression` operationId).
+	RunPolicyRegression(ctx context.Context, body RunPolicyRegressionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SimulatePolicyWithBody Evaluate one portable synthetic policy simulation
+	//
+	// Requires policies:read. Side-effect-free deterministic evaluation of one portable `PolicySimulationInput` document. The embedded policy uses the same closed `PolicyDocument` meaning accepted by revision creation, normalised to canonical form, but is never registered, activated, decided, tasked, or audited. Supplied facts use the canonical `PolicyCanonicalFact` shape without evidence bytes. No production facts are read and no expression source is returned. The request body is bounded by the portable simulation input limit.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/policy-simulations (the `SimulatePolicy` operationId).
+	SimulatePolicyWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SimulatePolicy Evaluate one portable synthetic policy simulation
+	//
+	// Requires policies:read. Side-effect-free deterministic evaluation of one portable `PolicySimulationInput` document. The embedded policy uses the same closed `PolicyDocument` meaning accepted by revision creation, normalised to canonical form, but is never registered, activated, decided, tasked, or audited. Supplied facts use the canonical `PolicyCanonicalFact` shape without evidence bytes. No production facts are read and no expression source is returned. The request body is bounded by the portable simulation input limit.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/policy-simulations (the `SimulatePolicy` operationId).
+	SimulatePolicy(ctx context.Context, body SimulatePolicyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// CreatePromptWithBody Create immutable prompt version
 	//
@@ -6028,6 +8341,196 @@ type ClientInterface interface {
 	//
 	// Corresponds with POST /v1/proposals/{proposalID}/reject (the `RejectProposal` operationId).
 	RejectProposal(ctx context.Context, proposalID string, body RejectProposalJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListProviderRegistrations List tenant provider registrations
+	//
+	// Requires providers:read. Returns a bounded newest-first page of tenant-owned
+	// secret-free provider registrations. Registrations name externally resolved
+	// credentials; Core never stores or returns a credential value, and this route
+	// performs no external provider probe.
+	//
+	// Corresponds with GET /v1/providers (the `ListProviderRegistrations` operationId).
+	ListProviderRegistrations(ctx context.Context, params *ListProviderRegistrationsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateProviderRegistrationWithBody Register a tenant provider route
+	//
+	// Requires providers:write and exactly one Idempotency-Key. Creates one disabled
+	// tenant-owned registration whose adapter must match a configured deployment
+	// adapter manifest and whose configuration and structured inputs are secret-free
+	// external references. Credential values, inline secrets and weak or unrecognised
+	// configuration shapes are rejected. A repeated identical command returns the
+	// original receipt with replayed=true. The registration is enabled only through
+	// the explicit enable route.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/providers (the `CreateProviderRegistration` operationId).
+	CreateProviderRegistrationWithBody(ctx context.Context, params *CreateProviderRegistrationParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateProviderRegistration Register a tenant provider route
+	//
+	// Requires providers:write and exactly one Idempotency-Key. Creates one disabled
+	// tenant-owned registration whose adapter must match a configured deployment
+	// adapter manifest and whose configuration and structured inputs are secret-free
+	// external references. Credential values, inline secrets and weak or unrecognised
+	// configuration shapes are rejected. A repeated identical command returns the
+	// original receipt with replayed=true. The registration is enabled only through
+	// the explicit enable route.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/providers (the `CreateProviderRegistration` operationId).
+	CreateProviderRegistration(ctx context.Context, params *CreateProviderRegistrationParams, body CreateProviderRegistrationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetProviderRegistration Get one tenant provider registration
+	//
+	// Requires providers:read. Returns one tenant-owned secret-free registration with
+	// its optimistic-concurrency version and latest attributed actor. Cross-tenant and
+	// absent registrations are indistinguishable. No credential value or external
+	// provider state is returned.
+	//
+	// Corresponds with GET /v1/providers/{providerID} (the `GetProviderRegistration` operationId).
+	GetProviderRegistration(ctx context.Context, providerID ProviderID, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateProviderRegistrationWithBody Update one tenant provider registration
+	//
+	// Requires providers:write. Version-checks the registration pointer and replaces
+	// the secret-free adapter, region, configuration reference, structured inputs,
+	// selfie requirement and optional restrictions. The adapter must match a
+	// configured deployment adapter manifest and credential values are rejected. The
+	// enabled state is unchanged; use enable or disable explicitly.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with PUT /v1/providers/{providerID} (the `UpdateProviderRegistration` operationId).
+	UpdateProviderRegistrationWithBody(ctx context.Context, providerID ProviderID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateProviderRegistration Update one tenant provider registration
+	//
+	// Requires providers:write. Version-checks the registration pointer and replaces
+	// the secret-free adapter, region, configuration reference, structured inputs,
+	// selfie requirement and optional restrictions. The adapter must match a
+	// configured deployment adapter manifest and credential values are rejected. The
+	// enabled state is unchanged; use enable or disable explicitly.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with PUT /v1/providers/{providerID} (the `UpdateProviderRegistration` operationId).
+	UpdateProviderRegistration(ctx context.Context, providerID ProviderID, body UpdateProviderRegistrationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DisableProviderRegistrationWithBody Disable one tenant provider registration
+	//
+	// Requires providers:write. Version-checks the registration pointer and disables
+	// the tenant registration so planning falls back to the deployment-configured
+	// provider route. The command is attributed and appended to immutable history.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/providers/{providerID}/disable (the `DisableProviderRegistration` operationId).
+	DisableProviderRegistrationWithBody(ctx context.Context, providerID ProviderID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DisableProviderRegistration Disable one tenant provider registration
+	//
+	// Requires providers:write. Version-checks the registration pointer and disables
+	// the tenant registration so planning falls back to the deployment-configured
+	// provider route. The command is attributed and appended to immutable history.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/providers/{providerID}/disable (the `DisableProviderRegistration` operationId).
+	DisableProviderRegistration(ctx context.Context, providerID ProviderID, body DisableProviderRegistrationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// EnableProviderRegistrationWithBody Enable one tenant provider registration
+	//
+	// Requires providers:write. Version-checks the registration pointer and enables
+	// the tenant registration. At most one enabled registration exists per tenant,
+	// adapter and region; enabling a second registration for the same scope is a
+	// conflict. The command is attributed and appended to immutable history.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/providers/{providerID}/enable (the `EnableProviderRegistration` operationId).
+	EnableProviderRegistrationWithBody(ctx context.Context, providerID ProviderID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// EnableProviderRegistration Enable one tenant provider registration
+	//
+	// Requires providers:write. Version-checks the registration pointer and enables
+	// the tenant registration. At most one enabled registration exists per tenant,
+	// adapter and region; enabling a second registration for the same scope is a
+	// conflict. The command is attributed and appended to immutable history.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/providers/{providerID}/enable (the `EnableProviderRegistration` operationId).
+	EnableProviderRegistration(ctx context.Context, providerID ProviderID, body EnableProviderRegistrationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SimulateProviderFailureWithBody Preview provider failure classification
+	//
+	// Requires providers:read and no Idempotency-Key. Pure side-effect-free preview of
+	// how the owned normalisation classifies one bounded provider failure class and
+	// code: the operational attempt/check state and retry disposition. It confirms
+	// that a provider failure never produces an identity outcome. Nothing is
+	// dispatched, persisted or mutated, and no external provider is contacted.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/providers/{providerID}/failure-simulations (the `SimulateProviderFailure` operationId).
+	SimulateProviderFailureWithBody(ctx context.Context, providerID ProviderID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SimulateProviderFailure Preview provider failure classification
+	//
+	// Requires providers:read and no Idempotency-Key. Pure side-effect-free preview of
+	// how the owned normalisation classifies one bounded provider failure class and
+	// code: the operational attempt/check state and retry disposition. It confirms
+	// that a provider failure never produces an identity outcome. Nothing is
+	// dispatched, persisted or mutated, and no external provider is contacted.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/providers/{providerID}/failure-simulations (the `SimulateProviderFailure` operationId).
+	SimulateProviderFailure(ctx context.Context, providerID ProviderID, body SimulateProviderFailureJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetProviderRegistrationHealth Read bounded registration health
+	//
+	// Requires providers:read. Returns a bounded read over the tenant's own persisted
+	// provider requests and dispatch receipts for this registration: counts by
+	// dispatch state and the last normalized outcome or failure class. It never
+	// performs an external provider probe, returns no provider topology and never
+	// exposes evidence bytes.
+	//
+	// Corresponds with GET /v1/providers/{providerID}/health (the `GetProviderRegistrationHealth` operationId).
+	GetProviderRegistrationHealth(ctx context.Context, providerID ProviderID, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ValidateProviderRegistrationWithBody Validate a provider registration document without persistence
+	//
+	// Requires providers:write and no Idempotency-Key. Side-effect-free validation of
+	// one secret-free registration document against the configured deployment adapter
+	// manifest. Nothing is persisted and no registration, receipt, history, audit or
+	// outbox record is created. The report never echoes supplied values.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/providers/{providerID}/validate (the `ValidateProviderRegistration` operationId).
+	ValidateProviderRegistrationWithBody(ctx context.Context, providerID ProviderID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ValidateProviderRegistration Validate a provider registration document without persistence
+	//
+	// Requires providers:write and no Idempotency-Key. Side-effect-free validation of
+	// one secret-free registration document against the configured deployment adapter
+	// manifest. Nothing is persisted and no registration, receipt, history, audit or
+	// outbox record is created. The report never echoes supplied values.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/providers/{providerID}/validate (the `ValidateProviderRegistration` operationId).
+	ValidateProviderRegistration(ctx context.Context, providerID ProviderID, body ValidateProviderRegistrationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetRetentionResolution Resolve typed retention for one aggregate
+	//
+	// Requires deletions:read. Read-only inspection recomputes each retained evidence record with the selected typed retention resolution and returns active holds. It does not extend, shorten, or otherwise invent retention meaning.
+	//
+	// Corresponds with GET /v1/retention/resolutions (the `GetRetentionResolution` operationId).
+	GetRetentionResolution(ctx context.Context, params *GetRetentionResolutionParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListReviewCases List review cases
 	//
@@ -6505,6 +9008,18 @@ type ClientInterface interface {
 	// Corresponds with GET /v1/tenant (the `GetCurrentTenant` operationId).
 	GetCurrentTenant(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ExportTenant Export the authenticated tenant
+	//
+	// Streams a bounded, portable, tenant-owned canonical NDJSON export for
+	// portability and offboarding. The header announces the selected
+	// collections, per-collection records follow in canonical order, and the
+	// footer carries per-collection counts plus the SHA-256 digest of every
+	// preceding byte. Raw evidence bytes, credentials, endpoint secrets, and
+	// provider payloads are never included.
+	//
+	// Corresponds with GET /v1/tenant/export (the `ExportTenant` operationId).
+	ExportTenant(ctx context.Context, params *ExportTenantParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// CreateVerificationWithBody Create a verification session
 	//
 	// Creates a collecting verification from the active published revision of
@@ -6613,6 +9128,32 @@ type ClientInterface interface {
 	//
 	// Corresponds with GET /v1/verifications/{verificationID}/decision (the `GetLatestDecision` operationId).
 	GetLatestDecision(ctx context.Context, verificationID VerificationID, params *GetLatestDecisionParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ResumeVerificationWithBody Resume a verification awaiting subject input
+	//
+	// Requires verification_sessions:resume and a fresh subject authorisation
+	// recorded after the session entered awaiting_input. Reuses a still-live
+	// capture credential; otherwise atomically replaces it without extending
+	// the verification deadline. Exact replay returns references only and
+	// never returns capture bearer material again.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/verifications/{verificationID}/resume (the `ResumeVerification` operationId).
+	ResumeVerificationWithBody(ctx context.Context, verificationID VerificationID, params *ResumeVerificationParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ResumeVerification Resume a verification awaiting subject input
+	//
+	// Requires verification_sessions:resume and a fresh subject authorisation
+	// recorded after the session entered awaiting_input. Reuses a still-live
+	// capture credential; otherwise atomically replaces it without extending
+	// the verification deadline. Exact replay returns references only and
+	// never returns capture bearer material again.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/verifications/{verificationID}/resume (the `ResumeVerification` operationId).
+	ResumeVerification(ctx context.Context, verificationID VerificationID, params *ResumeVerificationParams, body ResumeVerificationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetWebhookDelivery Get delivery metadata
 	//
@@ -6738,6 +9279,20 @@ type ClientInterface interface {
 	//
 	// Corresponds with POST /v1/webhook-endpoints/{endpointID}/subscriptions (the `UpdateWebhookSubscriptions` operationId).
 	UpdateWebhookSubscriptions(ctx context.Context, endpointID string, params *UpdateWebhookSubscriptionsParams, body UpdateWebhookSubscriptionsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListWebhookEvents List catalogue events
+	//
+	// Requires webhooks:read. Ascending insertion-order page of decrypted canonical catalogue envelopes with a tenant-, collection-, filter- and limit-bound cursor. Delivery and attempt inspection remain payload-free.
+	//
+	// Corresponds with GET /v1/webhook-events (the `ListWebhookEvents` operationId).
+	ListWebhookEvents(ctx context.Context, params *ListWebhookEventsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// StreamWebhookEvents Stream live catalogue events
+	//
+	// Requires webhooks:read. Server-Sent Events feed of decrypted canonical catalogue envelopes. Each event frame carries its durable sequence as the SSE id and the canonical envelope as data; reconnect with the Last-Event-ID header to resume after that sequence. Heartbeat comments keep the connection alive. Receivers must deduplicate by event id.
+	//
+	// Corresponds with GET /v1/webhook-events/stream (the `StreamWebhookEvents` operationId).
+	StreamWebhookEvents(ctx context.Context, params *StreamWebhookEventsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 // ExecuteAcceptedCommand Execute a guardrail-approved accepted command (idempotent replay)
@@ -7481,6 +10036,40 @@ func (c *Client) OpenReviewCorrection(ctx context.Context, decisionID string, pa
 	return c.Client.Do(req)
 }
 
+// ListDeletions List tenant deletion workflows
+//
+// Requires deletions:read. Returns a bounded ascending page of deletion workflows, optionally restricted to one exact aggregate. Responses never return object locations, encoded target references, or raw evidence.
+//
+// Corresponds with GET /v1/deletions (the `ListDeletions` operationId).
+func (c *Client) ListDeletions(ctx context.Context, params *ListDeletionsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListDeletionsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetDeletionStatus Get one deletion workflow status
+//
+// Requires deletions:read. Returns exact target states and digests, active holds, and the documented backup boundary. Raw object references and evidence bytes are never returned.
+//
+// Corresponds with GET /v1/deletions/{deletionID} (the `GetDeletionStatus` operationId).
+func (c *Client) GetDeletionStatus(ctx context.Context, deletionID PrivacyDeletionID, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetDeletionStatusRequest(c.Server, deletionID)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // CreateEvidenceUploadWithBody Issue a requirement-bound evidence-upload intent
 //
 // Takes any type of body and a specified content type.
@@ -7865,6 +10454,352 @@ func (c *Client) GetIdentityReceipt(ctx context.Context, digest PolicyDigest, re
 	return c.Client.Do(req)
 }
 
+// GetModel Get one evaluation-model registry state
+//
+// Requires models:read. Returns the current optimistic-concurrency pointer for one
+// tenant-owned evaluation-only registry: the independently numbered model and
+// threshold revision watermarks and the optional active evaluation deployment. The
+// registry is evaluation-only; production activation is rejected and this route
+// never selects a production model.
+//
+// Corresponds with GET /v1/models/{modelName} (the `GetModel` operationId).
+func (c *Client) GetModel(ctx context.Context, modelName ModelName, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetModelRequest(c.Server, modelName)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ActivateModelWithBody Activate an evaluation-only deployment
+//
+// Requires models:activate and exactly one Idempotency-Key. Version-checks the
+// current registry pointer, resolves the exact immutable model and threshold
+// revisions, and verifies the declared region before recording one evaluation-only
+// deployment. The registry is evaluation-only: production activation is rejected and
+// this route never selects a production model. A repeated identical command returns
+// the original receipt with replayed=true.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/models/{modelName}/activate (the `ActivateModel` operationId).
+func (c *Client) ActivateModelWithBody(ctx context.Context, modelName ModelName, params *ActivateModelParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewActivateModelRequestWithBody(c.Server, modelName, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ActivateModel Activate an evaluation-only deployment
+//
+// Requires models:activate and exactly one Idempotency-Key. Version-checks the
+// current registry pointer, resolves the exact immutable model and threshold
+// revisions, and verifies the declared region before recording one evaluation-only
+// deployment. The registry is evaluation-only: production activation is rejected and
+// this route never selects a production model. A repeated identical command returns
+// the original receipt with replayed=true.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/models/{modelName}/activate (the `ActivateModel` operationId).
+func (c *Client) ActivateModel(ctx context.Context, modelName ModelName, params *ActivateModelParams, body ActivateModelJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewActivateModelRequest(c.Server, modelName, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListModelHistory List immutable evaluation-registry command history
+//
+// Requires models:read. Returns a bounded newest-first page of immutable command
+// receipts for one tenant-owned evaluation-only registry. Receipts preserve the
+// exact recorded state and original actor without exposing declared training
+// materials or scores, and immutable revisions survive retirement. This route never
+// selects a production model.
+//
+// Corresponds with GET /v1/models/{modelName}/history (the `ListModelHistory` operationId).
+func (c *Client) ListModelHistory(ctx context.Context, modelName ModelName, params *ListModelHistoryParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListModelHistoryRequest(c.Server, modelName, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// RegisterModelWithBody Register an immutable evaluation model revision
+//
+// Requires models:write and exactly one Idempotency-Key. Appends one immutable
+// evaluation-only model revision with declared owner, licence, training provenance,
+// intended and prohibited use, regions, hardware class, and exact manifest and
+// configuration pins. The registry is evaluation-only: production activation is
+// rejected, this route never selects a production model, and a repeated identical
+// command returns the original receipt with replayed=true.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/models/{modelName}/register (the `RegisterModel` operationId).
+func (c *Client) RegisterModelWithBody(ctx context.Context, modelName ModelName, params *RegisterModelParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRegisterModelRequestWithBody(c.Server, modelName, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// RegisterModel Register an immutable evaluation model revision
+//
+// Requires models:write and exactly one Idempotency-Key. Appends one immutable
+// evaluation-only model revision with declared owner, licence, training provenance,
+// intended and prohibited use, regions, hardware class, and exact manifest and
+// configuration pins. The registry is evaluation-only: production activation is
+// rejected, this route never selects a production model, and a repeated identical
+// command returns the original receipt with replayed=true.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/models/{modelName}/register (the `RegisterModel` operationId).
+func (c *Client) RegisterModel(ctx context.Context, modelName ModelName, params *RegisterModelParams, body RegisterModelJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRegisterModelRequest(c.Server, modelName, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// RetireModelWithBody Retire the active evaluation deployment
+//
+// Requires models:activate and exactly one Idempotency-Key. Version-checks the
+// current registry pointer and clears the active evaluation deployment, immediately
+// fencing new attempts while immutable revisions and history remain readable. The
+// registry is evaluation-only and this route never selects a production model.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/models/{modelName}/retire (the `RetireModel` operationId).
+func (c *Client) RetireModelWithBody(ctx context.Context, modelName ModelName, params *RetireModelParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRetireModelRequestWithBody(c.Server, modelName, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// RetireModel Retire the active evaluation deployment
+//
+// Requires models:activate and exactly one Idempotency-Key. Version-checks the
+// current registry pointer and clears the active evaluation deployment, immediately
+// fencing new attempts while immutable revisions and history remain readable. The
+// registry is evaluation-only and this route never selects a production model.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/models/{modelName}/retire (the `RetireModel` operationId).
+func (c *Client) RetireModel(ctx context.Context, modelName ModelName, params *RetireModelParams, body RetireModelJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRetireModelRequest(c.Server, modelName, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetModelRevision Get one immutable evaluation-model revision
+//
+// Requires models:read. Returns one explicitly requested immutable evaluation-only
+// registration or threshold revision with its canonical content digest. Model and
+// threshold revisions are independently numbered and immutable provenance survives
+// retirement. This route never selects a production model.
+//
+// Corresponds with GET /v1/models/{modelName}/revisions/{kind}/{revision} (the `GetModelRevision` operationId).
+func (c *Client) GetModelRevision(ctx context.Context, modelName ModelName, kind string, revision int64, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetModelRevisionRequest(c.Server, modelName, kind, revision)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// RollbackModelWithBody Roll back to a previously activated evaluation deployment
+//
+// Requires models:activate and exactly one Idempotency-Key. Version-checks the
+// current registry pointer, resolves the exact immutable model and threshold
+// revisions, verifies the declared region, and records an operational rollback to a
+// pair that was previously activated. The registry is evaluation-only: production
+// activation is rejected and this route never selects a production model.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/models/{modelName}/rollback (the `RollbackModel` operationId).
+func (c *Client) RollbackModelWithBody(ctx context.Context, modelName ModelName, params *RollbackModelParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRollbackModelRequestWithBody(c.Server, modelName, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// RollbackModel Roll back to a previously activated evaluation deployment
+//
+// Requires models:activate and exactly one Idempotency-Key. Version-checks the
+// current registry pointer, resolves the exact immutable model and threshold
+// revisions, verifies the declared region, and records an operational rollback to a
+// pair that was previously activated. The registry is evaluation-only: production
+// activation is rejected and this route never selects a production model.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/models/{modelName}/rollback (the `RollbackModel` operationId).
+func (c *Client) RollbackModel(ctx context.Context, modelName ModelName, params *RollbackModelParams, body RollbackModelJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRollbackModelRequest(c.Server, modelName, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// SetModelThresholdWithBody Register an immutable evaluation threshold revision
+//
+// Requires models:write and exactly one Idempotency-Key. Appends one immutable
+// evaluation threshold operating point pinned to the complete execution provenance.
+// Thresholds are evaluation operating points, never accepted verification assurance,
+// and production activation is rejected. A repeated identical command returns the
+// original receipt with replayed=true.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/models/{modelName}/threshold (the `SetModelThreshold` operationId).
+func (c *Client) SetModelThresholdWithBody(ctx context.Context, modelName ModelName, params *SetModelThresholdParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSetModelThresholdRequestWithBody(c.Server, modelName, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// SetModelThreshold Register an immutable evaluation threshold revision
+//
+// Requires models:write and exactly one Idempotency-Key. Appends one immutable
+// evaluation threshold operating point pinned to the complete execution provenance.
+// Thresholds are evaluation operating points, never accepted verification assurance,
+// and production activation is rejected. A repeated identical command returns the
+// original receipt with replayed=true.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/models/{modelName}/threshold (the `SetModelThreshold` operationId).
+func (c *Client) SetModelThreshold(ctx context.Context, modelName ModelName, params *SetModelThresholdParams, body SetModelThresholdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSetModelThresholdRequest(c.Server, modelName, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ValidateModelWithBody Validate an evaluation-registry command without persistence
+//
+// Requires models:write and no Idempotency-Key. Side-effect-free validation of the
+// exact closed command document that would be submitted to register, threshold,
+// activate, rollback or retire. Domain document validation and, for deployment
+// commands, stored revision, declared region, current version and previously
+// activated eligibility are checked against the current registry state. Nothing is
+// persisted and no revision, deployment, receipt, audit or outbox record is created.
+// The registry is evaluation-only: production activation is rejected and this route
+// never selects a production model.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/models/{modelName}/validate (the `ValidateModel` operationId).
+func (c *Client) ValidateModelWithBody(ctx context.Context, modelName ModelName, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewValidateModelRequestWithBody(c.Server, modelName, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ValidateModel Validate an evaluation-registry command without persistence
+//
+// Requires models:write and no Idempotency-Key. Side-effect-free validation of the
+// exact closed command document that would be submitted to register, threshold,
+// activate, rollback or retire. Domain document validation and, for deployment
+// commands, stored revision, declared region, current version and previously
+// activated eligibility are checked against the current registry state. Nothing is
+// persisted and no revision, deployment, receipt, audit or outbox record is created.
+// The registry is evaluation-only: production activation is rejected and this route
+// never selects a production model.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/models/{modelName}/validate (the `ValidateModel` operationId).
+func (c *Client) ValidateModel(ctx context.Context, modelName ModelName, body ValidateModelJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewValidateModelRequest(c.Server, modelName, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // CreateNoticeVersionWithBody Create an immutable subject-facing notice version
 //
 // Takes any type of body and a specified content type.
@@ -8134,6 +11069,23 @@ func (c *Client) AssignPolicyAssurance(ctx context.Context, policyID PolicyID, p
 	return c.Client.Do(req)
 }
 
+// DiffPolicyRevisions Diff two stored policy revisions
+//
+// Requires policies:read. Bounded canonical structural difference between two immutable revisions of one policy. Identity fields are reported on from and to and are never repeated as changes. The result is deterministic, omitted fragments are absent, and no expression is evaluated or registered.
+//
+// Corresponds with GET /v1/policies/{policyID}/diff (the `DiffPolicyRevisions` operationId).
+func (c *Client) DiffPolicyRevisions(ctx context.Context, policyID string, params *DiffPolicyRevisionsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDiffPolicyRevisionsRequest(c.Server, policyID, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // ListPolicyRevisions List immutable revisions
 //
 // Requires policies:read. Bounded newest-first metadata page with a signed tenant-, policy-, collection- and limit-bound cursor. Applies to list immutable revisions.
@@ -8234,6 +11186,82 @@ func (c *Client) RollbackPolicyWithBody(ctx context.Context, policyID string, pa
 // Corresponds with POST /v1/policies/{policyID}/rollback (the `RollbackPolicy` operationId).
 func (c *Client) RollbackPolicy(ctx context.Context, policyID string, params *RollbackPolicyParams, body RollbackPolicyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewRollbackPolicyRequest(c.Server, policyID, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// RunPolicyRegressionWithBody Run a bounded portable policy scenario suite
+//
+// Requires policies:read. Side-effect-free deterministic evaluation of one portable `PolicyRegressionSuite` document holding at most the documented scenario maximum. Every scenario is a closed `PolicySimulationInput` with an exact canonical expectation; execution failures reject the request while expectation mismatches are reported as data with passed=false. No production facts are read and no policy is registered, activated, decided, tasked, or audited.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/policy-regressions (the `RunPolicyRegression` operationId).
+func (c *Client) RunPolicyRegressionWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRunPolicyRegressionRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// RunPolicyRegression Run a bounded portable policy scenario suite
+//
+// Requires policies:read. Side-effect-free deterministic evaluation of one portable `PolicyRegressionSuite` document holding at most the documented scenario maximum. Every scenario is a closed `PolicySimulationInput` with an exact canonical expectation; execution failures reject the request while expectation mismatches are reported as data with passed=false. No production facts are read and no policy is registered, activated, decided, tasked, or audited.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/policy-regressions (the `RunPolicyRegression` operationId).
+func (c *Client) RunPolicyRegression(ctx context.Context, body RunPolicyRegressionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRunPolicyRegressionRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// SimulatePolicyWithBody Evaluate one portable synthetic policy simulation
+//
+// Requires policies:read. Side-effect-free deterministic evaluation of one portable `PolicySimulationInput` document. The embedded policy uses the same closed `PolicyDocument` meaning accepted by revision creation, normalised to canonical form, but is never registered, activated, decided, tasked, or audited. Supplied facts use the canonical `PolicyCanonicalFact` shape without evidence bytes. No production facts are read and no expression source is returned. The request body is bounded by the portable simulation input limit.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/policy-simulations (the `SimulatePolicy` operationId).
+func (c *Client) SimulatePolicyWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSimulatePolicyRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// SimulatePolicy Evaluate one portable synthetic policy simulation
+//
+// Requires policies:read. Side-effect-free deterministic evaluation of one portable `PolicySimulationInput` document. The embedded policy uses the same closed `PolicyDocument` meaning accepted by revision creation, normalised to canonical form, but is never registered, activated, decided, tasked, or audited. Supplied facts use the canonical `PolicyCanonicalFact` shape without evidence bytes. No production facts are read and no expression source is returned. The request body is bounded by the portable simulation input limit.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/policy-simulations (the `SimulatePolicy` operationId).
+func (c *Client) SimulatePolicy(ctx context.Context, body SimulatePolicyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSimulatePolicyRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -8502,6 +11530,356 @@ func (c *Client) RejectProposalWithBody(ctx context.Context, proposalID string, 
 // Corresponds with POST /v1/proposals/{proposalID}/reject (the `RejectProposal` operationId).
 func (c *Client) RejectProposal(ctx context.Context, proposalID string, body RejectProposalJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewRejectProposalRequest(c.Server, proposalID, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListProviderRegistrations List tenant provider registrations
+//
+// Requires providers:read. Returns a bounded newest-first page of tenant-owned
+// secret-free provider registrations. Registrations name externally resolved
+// credentials; Core never stores or returns a credential value, and this route
+// performs no external provider probe.
+//
+// Corresponds with GET /v1/providers (the `ListProviderRegistrations` operationId).
+func (c *Client) ListProviderRegistrations(ctx context.Context, params *ListProviderRegistrationsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListProviderRegistrationsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateProviderRegistrationWithBody Register a tenant provider route
+//
+// Requires providers:write and exactly one Idempotency-Key. Creates one disabled
+// tenant-owned registration whose adapter must match a configured deployment
+// adapter manifest and whose configuration and structured inputs are secret-free
+// external references. Credential values, inline secrets and weak or unrecognised
+// configuration shapes are rejected. A repeated identical command returns the
+// original receipt with replayed=true. The registration is enabled only through
+// the explicit enable route.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/providers (the `CreateProviderRegistration` operationId).
+func (c *Client) CreateProviderRegistrationWithBody(ctx context.Context, params *CreateProviderRegistrationParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateProviderRegistrationRequestWithBody(c.Server, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateProviderRegistration Register a tenant provider route
+//
+// Requires providers:write and exactly one Idempotency-Key. Creates one disabled
+// tenant-owned registration whose adapter must match a configured deployment
+// adapter manifest and whose configuration and structured inputs are secret-free
+// external references. Credential values, inline secrets and weak or unrecognised
+// configuration shapes are rejected. A repeated identical command returns the
+// original receipt with replayed=true. The registration is enabled only through
+// the explicit enable route.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/providers (the `CreateProviderRegistration` operationId).
+func (c *Client) CreateProviderRegistration(ctx context.Context, params *CreateProviderRegistrationParams, body CreateProviderRegistrationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateProviderRegistrationRequest(c.Server, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetProviderRegistration Get one tenant provider registration
+//
+// Requires providers:read. Returns one tenant-owned secret-free registration with
+// its optimistic-concurrency version and latest attributed actor. Cross-tenant and
+// absent registrations are indistinguishable. No credential value or external
+// provider state is returned.
+//
+// Corresponds with GET /v1/providers/{providerID} (the `GetProviderRegistration` operationId).
+func (c *Client) GetProviderRegistration(ctx context.Context, providerID ProviderID, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetProviderRegistrationRequest(c.Server, providerID)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// UpdateProviderRegistrationWithBody Update one tenant provider registration
+//
+// Requires providers:write. Version-checks the registration pointer and replaces
+// the secret-free adapter, region, configuration reference, structured inputs,
+// selfie requirement and optional restrictions. The adapter must match a
+// configured deployment adapter manifest and credential values are rejected. The
+// enabled state is unchanged; use enable or disable explicitly.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with PUT /v1/providers/{providerID} (the `UpdateProviderRegistration` operationId).
+func (c *Client) UpdateProviderRegistrationWithBody(ctx context.Context, providerID ProviderID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateProviderRegistrationRequestWithBody(c.Server, providerID, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// UpdateProviderRegistration Update one tenant provider registration
+//
+// Requires providers:write. Version-checks the registration pointer and replaces
+// the secret-free adapter, region, configuration reference, structured inputs,
+// selfie requirement and optional restrictions. The adapter must match a
+// configured deployment adapter manifest and credential values are rejected. The
+// enabled state is unchanged; use enable or disable explicitly.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with PUT /v1/providers/{providerID} (the `UpdateProviderRegistration` operationId).
+func (c *Client) UpdateProviderRegistration(ctx context.Context, providerID ProviderID, body UpdateProviderRegistrationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateProviderRegistrationRequest(c.Server, providerID, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// DisableProviderRegistrationWithBody Disable one tenant provider registration
+//
+// Requires providers:write. Version-checks the registration pointer and disables
+// the tenant registration so planning falls back to the deployment-configured
+// provider route. The command is attributed and appended to immutable history.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/providers/{providerID}/disable (the `DisableProviderRegistration` operationId).
+func (c *Client) DisableProviderRegistrationWithBody(ctx context.Context, providerID ProviderID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDisableProviderRegistrationRequestWithBody(c.Server, providerID, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// DisableProviderRegistration Disable one tenant provider registration
+//
+// Requires providers:write. Version-checks the registration pointer and disables
+// the tenant registration so planning falls back to the deployment-configured
+// provider route. The command is attributed and appended to immutable history.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/providers/{providerID}/disable (the `DisableProviderRegistration` operationId).
+func (c *Client) DisableProviderRegistration(ctx context.Context, providerID ProviderID, body DisableProviderRegistrationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDisableProviderRegistrationRequest(c.Server, providerID, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// EnableProviderRegistrationWithBody Enable one tenant provider registration
+//
+// Requires providers:write. Version-checks the registration pointer and enables
+// the tenant registration. At most one enabled registration exists per tenant,
+// adapter and region; enabling a second registration for the same scope is a
+// conflict. The command is attributed and appended to immutable history.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/providers/{providerID}/enable (the `EnableProviderRegistration` operationId).
+func (c *Client) EnableProviderRegistrationWithBody(ctx context.Context, providerID ProviderID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewEnableProviderRegistrationRequestWithBody(c.Server, providerID, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// EnableProviderRegistration Enable one tenant provider registration
+//
+// Requires providers:write. Version-checks the registration pointer and enables
+// the tenant registration. At most one enabled registration exists per tenant,
+// adapter and region; enabling a second registration for the same scope is a
+// conflict. The command is attributed and appended to immutable history.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/providers/{providerID}/enable (the `EnableProviderRegistration` operationId).
+func (c *Client) EnableProviderRegistration(ctx context.Context, providerID ProviderID, body EnableProviderRegistrationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewEnableProviderRegistrationRequest(c.Server, providerID, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// SimulateProviderFailureWithBody Preview provider failure classification
+//
+// Requires providers:read and no Idempotency-Key. Pure side-effect-free preview of
+// how the owned normalisation classifies one bounded provider failure class and
+// code: the operational attempt/check state and retry disposition. It confirms
+// that a provider failure never produces an identity outcome. Nothing is
+// dispatched, persisted or mutated, and no external provider is contacted.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/providers/{providerID}/failure-simulations (the `SimulateProviderFailure` operationId).
+func (c *Client) SimulateProviderFailureWithBody(ctx context.Context, providerID ProviderID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSimulateProviderFailureRequestWithBody(c.Server, providerID, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// SimulateProviderFailure Preview provider failure classification
+//
+// Requires providers:read and no Idempotency-Key. Pure side-effect-free preview of
+// how the owned normalisation classifies one bounded provider failure class and
+// code: the operational attempt/check state and retry disposition. It confirms
+// that a provider failure never produces an identity outcome. Nothing is
+// dispatched, persisted or mutated, and no external provider is contacted.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/providers/{providerID}/failure-simulations (the `SimulateProviderFailure` operationId).
+func (c *Client) SimulateProviderFailure(ctx context.Context, providerID ProviderID, body SimulateProviderFailureJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSimulateProviderFailureRequest(c.Server, providerID, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetProviderRegistrationHealth Read bounded registration health
+//
+// Requires providers:read. Returns a bounded read over the tenant's own persisted
+// provider requests and dispatch receipts for this registration: counts by
+// dispatch state and the last normalized outcome or failure class. It never
+// performs an external provider probe, returns no provider topology and never
+// exposes evidence bytes.
+//
+// Corresponds with GET /v1/providers/{providerID}/health (the `GetProviderRegistrationHealth` operationId).
+func (c *Client) GetProviderRegistrationHealth(ctx context.Context, providerID ProviderID, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetProviderRegistrationHealthRequest(c.Server, providerID)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ValidateProviderRegistrationWithBody Validate a provider registration document without persistence
+//
+// Requires providers:write and no Idempotency-Key. Side-effect-free validation of
+// one secret-free registration document against the configured deployment adapter
+// manifest. Nothing is persisted and no registration, receipt, history, audit or
+// outbox record is created. The report never echoes supplied values.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/providers/{providerID}/validate (the `ValidateProviderRegistration` operationId).
+func (c *Client) ValidateProviderRegistrationWithBody(ctx context.Context, providerID ProviderID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewValidateProviderRegistrationRequestWithBody(c.Server, providerID, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ValidateProviderRegistration Validate a provider registration document without persistence
+//
+// Requires providers:write and no Idempotency-Key. Side-effect-free validation of
+// one secret-free registration document against the configured deployment adapter
+// manifest. Nothing is persisted and no registration, receipt, history, audit or
+// outbox record is created. The report never echoes supplied values.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/providers/{providerID}/validate (the `ValidateProviderRegistration` operationId).
+func (c *Client) ValidateProviderRegistration(ctx context.Context, providerID ProviderID, body ValidateProviderRegistrationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewValidateProviderRegistrationRequest(c.Server, providerID, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetRetentionResolution Resolve typed retention for one aggregate
+//
+// Requires deletions:read. Read-only inspection recomputes each retained evidence record with the selected typed retention resolution and returns active holds. It does not extend, shorten, or otherwise invent retention meaning.
+//
+// Corresponds with GET /v1/retention/resolutions (the `GetRetentionResolution` operationId).
+func (c *Client) GetRetentionResolution(ctx context.Context, params *GetRetentionResolutionParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetRetentionResolutionRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -9548,6 +12926,28 @@ func (c *Client) GetCurrentTenant(ctx context.Context, reqEditors ...RequestEdit
 	return c.Client.Do(req)
 }
 
+// ExportTenant Export the authenticated tenant
+//
+// Streams a bounded, portable, tenant-owned canonical NDJSON export for
+// portability and offboarding. The header announces the selected
+// collections, per-collection records follow in canonical order, and the
+// footer carries per-collection counts plus the SHA-256 digest of every
+// preceding byte. Raw evidence bytes, credentials, endpoint secrets, and
+// provider payloads are never included.
+//
+// Corresponds with GET /v1/tenant/export (the `ExportTenant` operationId).
+func (c *Client) ExportTenant(ctx context.Context, params *ExportTenantParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewExportTenantRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // CreateVerificationWithBody Create a verification session
 //
 // Creates a collecting verification from the active published revision of
@@ -9777,6 +13177,52 @@ func (c *Client) CancelVerification(ctx context.Context, verificationID Verifica
 // Corresponds with GET /v1/verifications/{verificationID}/decision (the `GetLatestDecision` operationId).
 func (c *Client) GetLatestDecision(ctx context.Context, verificationID VerificationID, params *GetLatestDecisionParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetLatestDecisionRequest(c.Server, verificationID, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ResumeVerificationWithBody Resume a verification awaiting subject input
+//
+// Requires verification_sessions:resume and a fresh subject authorisation
+// recorded after the session entered awaiting_input. Reuses a still-live
+// capture credential; otherwise atomically replaces it without extending
+// the verification deadline. Exact replay returns references only and
+// never returns capture bearer material again.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/verifications/{verificationID}/resume (the `ResumeVerification` operationId).
+func (c *Client) ResumeVerificationWithBody(ctx context.Context, verificationID VerificationID, params *ResumeVerificationParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewResumeVerificationRequestWithBody(c.Server, verificationID, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ResumeVerification Resume a verification awaiting subject input
+//
+// Requires verification_sessions:resume and a fresh subject authorisation
+// recorded after the session entered awaiting_input. Reuses a still-live
+// capture credential; otherwise atomically replaces it without extending
+// the verification deadline. Exact replay returns references only and
+// never returns capture bearer material again.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/verifications/{verificationID}/resume (the `ResumeVerification` operationId).
+func (c *Client) ResumeVerification(ctx context.Context, verificationID VerificationID, params *ResumeVerificationParams, body ResumeVerificationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewResumeVerificationRequest(c.Server, verificationID, params, body)
 	if err != nil {
 		return nil, err
 	}
@@ -10052,6 +13498,40 @@ func (c *Client) UpdateWebhookSubscriptionsWithBody(ctx context.Context, endpoin
 // Corresponds with POST /v1/webhook-endpoints/{endpointID}/subscriptions (the `UpdateWebhookSubscriptions` operationId).
 func (c *Client) UpdateWebhookSubscriptions(ctx context.Context, endpointID string, params *UpdateWebhookSubscriptionsParams, body UpdateWebhookSubscriptionsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUpdateWebhookSubscriptionsRequest(c.Server, endpointID, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListWebhookEvents List catalogue events
+//
+// Requires webhooks:read. Ascending insertion-order page of decrypted canonical catalogue envelopes with a tenant-, collection-, filter- and limit-bound cursor. Delivery and attempt inspection remain payload-free.
+//
+// Corresponds with GET /v1/webhook-events (the `ListWebhookEvents` operationId).
+func (c *Client) ListWebhookEvents(ctx context.Context, params *ListWebhookEventsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListWebhookEventsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// StreamWebhookEvents Stream live catalogue events
+//
+// Requires webhooks:read. Server-Sent Events feed of decrypted canonical catalogue envelopes. Each event frame carries its durable sequence as the SSE id and the canonical envelope as data; reconnect with the Last-Event-ID header to resume after that sequence. Heartbeat comments keep the connection alive. Receivers must deduplicate by event id.
+//
+// Corresponds with GET /v1/webhook-events/stream (the `StreamWebhookEvents` operationId).
+func (c *Client) StreamWebhookEvents(ctx context.Context, params *StreamWebhookEventsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewStreamWebhookEventsRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -11408,6 +14888,118 @@ func NewOpenReviewCorrectionRequest(server string, decisionID string, params *Op
 	return req, nil
 }
 
+// NewListDeletionsRequest constructs an http.Request for the ListDeletions method
+func NewListDeletionsRequest(server string, params *ListDeletionsParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/deletions")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.AggregateID != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "aggregate_id", *params.AggregateID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Cursor != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "cursor", *params.Cursor, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetDeletionStatusRequest constructs an http.Request for the GetDeletionStatus method
+func NewGetDeletionStatusRequest(server string, deletionID PrivacyDeletionID) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "deletionID", deletionID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/deletions/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewCreateEvidenceUploadRequest calls the generic CreateEvidenceUpload builder with application/json body
 func NewCreateEvidenceUploadRequest(server string, params *CreateEvidenceUploadParams, body CreateEvidenceUploadJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -12029,6 +15621,508 @@ func NewGetIdentityReceiptRequest(server string, digest PolicyDigest) (*http.Req
 	return req, nil
 }
 
+// NewGetModelRequest constructs an http.Request for the GetModel method
+func NewGetModelRequest(server string, modelName ModelName) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "modelName", modelName, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/models/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewActivateModelRequest calls the generic ActivateModel builder with application/json body
+func NewActivateModelRequest(server string, modelName ModelName, params *ActivateModelParams, body ActivateModelJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewActivateModelRequestWithBody(server, modelName, params, "application/json", bodyReader)
+}
+
+// NewActivateModelRequestWithBody constructs an http.Request for the ActivateModel method, with any body, and a specified content type
+func NewActivateModelRequestWithBody(server string, modelName ModelName, params *ActivateModelParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "modelName", modelName, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/models/%s/activate", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithOptions("simple", false, "Idempotency-Key", params.IdempotencyKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam0)
+
+	}
+
+	return req, nil
+}
+
+// NewListModelHistoryRequest constructs an http.Request for the ListModelHistory method
+func NewListModelHistoryRequest(server string, modelName ModelName, params *ListModelHistoryParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "modelName", modelName, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/models/%s/history", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Before != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "before", *params.Before, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: "int64"}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewRegisterModelRequest calls the generic RegisterModel builder with application/json body
+func NewRegisterModelRequest(server string, modelName ModelName, params *RegisterModelParams, body RegisterModelJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewRegisterModelRequestWithBody(server, modelName, params, "application/json", bodyReader)
+}
+
+// NewRegisterModelRequestWithBody constructs an http.Request for the RegisterModel method, with any body, and a specified content type
+func NewRegisterModelRequestWithBody(server string, modelName ModelName, params *RegisterModelParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "modelName", modelName, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/models/%s/register", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithOptions("simple", false, "Idempotency-Key", params.IdempotencyKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam0)
+
+	}
+
+	return req, nil
+}
+
+// NewRetireModelRequest calls the generic RetireModel builder with application/json body
+func NewRetireModelRequest(server string, modelName ModelName, params *RetireModelParams, body RetireModelJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewRetireModelRequestWithBody(server, modelName, params, "application/json", bodyReader)
+}
+
+// NewRetireModelRequestWithBody constructs an http.Request for the RetireModel method, with any body, and a specified content type
+func NewRetireModelRequestWithBody(server string, modelName ModelName, params *RetireModelParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "modelName", modelName, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/models/%s/retire", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithOptions("simple", false, "Idempotency-Key", params.IdempotencyKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam0)
+
+	}
+
+	return req, nil
+}
+
+// NewGetModelRevisionRequest constructs an http.Request for the GetModelRevision method
+func NewGetModelRevisionRequest(server string, modelName ModelName, kind string, revision int64) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "modelName", modelName, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "kind", kind, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithOptions("simple", false, "revision", revision, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "integer", Format: "int64"})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/models/%s/revisions/%s/%s", pathParam0, pathParam1, pathParam2)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewRollbackModelRequest calls the generic RollbackModel builder with application/json body
+func NewRollbackModelRequest(server string, modelName ModelName, params *RollbackModelParams, body RollbackModelJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewRollbackModelRequestWithBody(server, modelName, params, "application/json", bodyReader)
+}
+
+// NewRollbackModelRequestWithBody constructs an http.Request for the RollbackModel method, with any body, and a specified content type
+func NewRollbackModelRequestWithBody(server string, modelName ModelName, params *RollbackModelParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "modelName", modelName, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/models/%s/rollback", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithOptions("simple", false, "Idempotency-Key", params.IdempotencyKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam0)
+
+	}
+
+	return req, nil
+}
+
+// NewSetModelThresholdRequest calls the generic SetModelThreshold builder with application/json body
+func NewSetModelThresholdRequest(server string, modelName ModelName, params *SetModelThresholdParams, body SetModelThresholdJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewSetModelThresholdRequestWithBody(server, modelName, params, "application/json", bodyReader)
+}
+
+// NewSetModelThresholdRequestWithBody constructs an http.Request for the SetModelThreshold method, with any body, and a specified content type
+func NewSetModelThresholdRequestWithBody(server string, modelName ModelName, params *SetModelThresholdParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "modelName", modelName, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/models/%s/threshold", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithOptions("simple", false, "Idempotency-Key", params.IdempotencyKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam0)
+
+	}
+
+	return req, nil
+}
+
+// NewValidateModelRequest calls the generic ValidateModel builder with application/json body
+func NewValidateModelRequest(server string, modelName ModelName, body ValidateModelJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewValidateModelRequestWithBody(server, modelName, "application/json", bodyReader)
+}
+
+// NewValidateModelRequestWithBody constructs an http.Request for the ValidateModel method, with any body, and a specified content type
+func NewValidateModelRequestWithBody(server string, modelName ModelName, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "modelName", modelName, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/models/%s/validate", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewCreateNoticeVersionRequest calls the generic CreateNoticeVersion builder with application/json body
 func NewCreateNoticeVersionRequest(server string, params *CreateNoticeVersionParams, body CreateNoticeVersionJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -12536,6 +16630,71 @@ func NewAssignPolicyAssuranceRequestWithBody(server string, policyID PolicyID, p
 	return req, nil
 }
 
+// NewDiffPolicyRevisionsRequest constructs an http.Request for the DiffPolicyRevisions method
+func NewDiffPolicyRevisionsRequest(server string, policyID string, params *DiffPolicyRevisionsParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "policyID", policyID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/policies/%s/diff", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if queryFrag, err := runtime.StyleParamWithOptions("form", true, "from_revision", params.FromRevision, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: "int64"}); err != nil {
+			return nil, err
+		} else {
+			for _, qp := range strings.Split(queryFrag, "&") {
+				rawQueryFragments = append(rawQueryFragments, qp)
+			}
+		}
+
+		if queryFrag, err := runtime.StyleParamWithOptions("form", true, "to_revision", params.ToRevision, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: "int64"}); err != nil {
+			return nil, err
+		} else {
+			for _, qp := range strings.Split(queryFrag, "&") {
+				rawQueryFragments = append(rawQueryFragments, qp)
+			}
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewListPolicyRevisionsRequest constructs an http.Request for the ListPolicyRevisions method
 func NewListPolicyRevisionsRequest(server string, policyID string, params *ListPolicyRevisionsParams) (*http.Request, error) {
 	var err error
@@ -12766,6 +16925,86 @@ func NewRollbackPolicyRequestWithBody(server string, policyID string, params *Ro
 		req.Header.Set("Idempotency-Key", headerParam0)
 
 	}
+
+	return req, nil
+}
+
+// NewRunPolicyRegressionRequest calls the generic RunPolicyRegression builder with application/json body
+func NewRunPolicyRegressionRequest(server string, body RunPolicyRegressionJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewRunPolicyRegressionRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewRunPolicyRegressionRequestWithBody constructs an http.Request for the RunPolicyRegression method, with any body, and a specified content type
+func NewRunPolicyRegressionRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/policy-regressions")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewSimulatePolicyRequest calls the generic SimulatePolicy builder with application/json body
+func NewSimulatePolicyRequest(server string, body SimulatePolicyJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewSimulatePolicyRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewSimulatePolicyRequestWithBody constructs an http.Request for the SimulatePolicy method, with any body, and a specified content type
+func NewSimulatePolicyRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/policy-simulations")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
 }
@@ -13234,6 +17473,478 @@ func NewRejectProposalRequestWithBody(server string, proposalID string, contentT
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewListProviderRegistrationsRequest constructs an http.Request for the ListProviderRegistrations method
+func NewListProviderRegistrationsRequest(server string, params *ListProviderRegistrationsParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/providers")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Cursor != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "cursor", *params.Cursor, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreateProviderRegistrationRequest calls the generic CreateProviderRegistration builder with application/json body
+func NewCreateProviderRegistrationRequest(server string, params *CreateProviderRegistrationParams, body CreateProviderRegistrationJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateProviderRegistrationRequestWithBody(server, params, "application/json", bodyReader)
+}
+
+// NewCreateProviderRegistrationRequestWithBody constructs an http.Request for the CreateProviderRegistration method, with any body, and a specified content type
+func NewCreateProviderRegistrationRequestWithBody(server string, params *CreateProviderRegistrationParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/providers")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithOptions("simple", false, "Idempotency-Key", params.IdempotencyKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam0)
+
+	}
+
+	return req, nil
+}
+
+// NewGetProviderRegistrationRequest constructs an http.Request for the GetProviderRegistration method
+func NewGetProviderRegistrationRequest(server string, providerID ProviderID) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "providerID", providerID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/providers/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdateProviderRegistrationRequest calls the generic UpdateProviderRegistration builder with application/json body
+func NewUpdateProviderRegistrationRequest(server string, providerID ProviderID, body UpdateProviderRegistrationJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateProviderRegistrationRequestWithBody(server, providerID, "application/json", bodyReader)
+}
+
+// NewUpdateProviderRegistrationRequestWithBody constructs an http.Request for the UpdateProviderRegistration method, with any body, and a specified content type
+func NewUpdateProviderRegistrationRequestWithBody(server string, providerID ProviderID, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "providerID", providerID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/providers/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPut, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDisableProviderRegistrationRequest calls the generic DisableProviderRegistration builder with application/json body
+func NewDisableProviderRegistrationRequest(server string, providerID ProviderID, body DisableProviderRegistrationJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewDisableProviderRegistrationRequestWithBody(server, providerID, "application/json", bodyReader)
+}
+
+// NewDisableProviderRegistrationRequestWithBody constructs an http.Request for the DisableProviderRegistration method, with any body, and a specified content type
+func NewDisableProviderRegistrationRequestWithBody(server string, providerID ProviderID, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "providerID", providerID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/providers/%s/disable", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewEnableProviderRegistrationRequest calls the generic EnableProviderRegistration builder with application/json body
+func NewEnableProviderRegistrationRequest(server string, providerID ProviderID, body EnableProviderRegistrationJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewEnableProviderRegistrationRequestWithBody(server, providerID, "application/json", bodyReader)
+}
+
+// NewEnableProviderRegistrationRequestWithBody constructs an http.Request for the EnableProviderRegistration method, with any body, and a specified content type
+func NewEnableProviderRegistrationRequestWithBody(server string, providerID ProviderID, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "providerID", providerID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/providers/%s/enable", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewSimulateProviderFailureRequest calls the generic SimulateProviderFailure builder with application/json body
+func NewSimulateProviderFailureRequest(server string, providerID ProviderID, body SimulateProviderFailureJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewSimulateProviderFailureRequestWithBody(server, providerID, "application/json", bodyReader)
+}
+
+// NewSimulateProviderFailureRequestWithBody constructs an http.Request for the SimulateProviderFailure method, with any body, and a specified content type
+func NewSimulateProviderFailureRequestWithBody(server string, providerID ProviderID, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "providerID", providerID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/providers/%s/failure-simulations", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetProviderRegistrationHealthRequest constructs an http.Request for the GetProviderRegistrationHealth method
+func NewGetProviderRegistrationHealthRequest(server string, providerID ProviderID) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "providerID", providerID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/providers/%s/health", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewValidateProviderRegistrationRequest calls the generic ValidateProviderRegistration builder with application/json body
+func NewValidateProviderRegistrationRequest(server string, providerID ProviderID, body ValidateProviderRegistrationJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewValidateProviderRegistrationRequestWithBody(server, providerID, "application/json", bodyReader)
+}
+
+// NewValidateProviderRegistrationRequestWithBody constructs an http.Request for the ValidateProviderRegistration method, with any body, and a specified content type
+func NewValidateProviderRegistrationRequestWithBody(server string, providerID ProviderID, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "providerID", providerID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/providers/%s/validate", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetRetentionResolutionRequest constructs an http.Request for the GetRetentionResolution method
+func NewGetRetentionResolutionRequest(server string, params *GetRetentionResolutionParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/retention/resolutions")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if queryFrag, err := runtime.StyleParamWithOptions("form", true, "aggregate_id", params.AggregateID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			return nil, err
+		} else {
+			for _, qp := range strings.Split(queryFrag, "&") {
+				rawQueryFragments = append(rawQueryFragments, qp)
+			}
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	return req, nil
 }
@@ -15340,6 +20051,60 @@ func NewGetCurrentTenantRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
+// NewExportTenantRequest constructs an http.Request for the ExportTenant method
+func NewExportTenantRequest(server string, params *ExportTenantParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/tenant/export")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Collections != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "collections", *params.Collections, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewCreateVerificationRequest calls the generic CreateVerification builder with application/json body
 func NewCreateVerificationRequest(server string, params *CreateVerificationParams, body CreateVerificationJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -15826,6 +20591,66 @@ func NewGetLatestDecisionRequest(server string, verificationID VerificationID, p
 
 			req.Header.Set("If-None-Match", headerParam0)
 		}
+
+	}
+
+	return req, nil
+}
+
+// NewResumeVerificationRequest calls the generic ResumeVerification builder with application/json body
+func NewResumeVerificationRequest(server string, verificationID VerificationID, params *ResumeVerificationParams, body ResumeVerificationJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewResumeVerificationRequestWithBody(server, verificationID, params, "application/json", bodyReader)
+}
+
+// NewResumeVerificationRequestWithBody constructs an http.Request for the ResumeVerification method, with any body, and a specified content type
+func NewResumeVerificationRequestWithBody(server string, verificationID VerificationID, params *ResumeVerificationParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "verificationID", verificationID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/verifications/%s/resume", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithOptions("simple", false, "Idempotency-Key", params.IdempotencyKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam0)
 
 	}
 
@@ -16366,6 +21191,153 @@ func NewUpdateWebhookSubscriptionsRequestWithBody(server string, endpointID stri
 	return req, nil
 }
 
+// NewListWebhookEventsRequest constructs an http.Request for the ListWebhookEvents method
+func NewListWebhookEventsRequest(server string, params *ListWebhookEventsParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/webhook-events")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Cursor != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "cursor", *params.Cursor, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.EventTypes != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "event_types", *params.EventTypes, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewStreamWebhookEventsRequest constructs an http.Request for the StreamWebhookEvents method
+func NewStreamWebhookEventsRequest(server string, params *StreamWebhookEventsParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/webhook-events/stream")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.EventTypes != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "event_types", *params.EventTypes, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.LastEventID != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "Last-Event-ID", *params.LastEventID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("Last-Event-ID", headerParam0)
+		}
+
+	}
+
+	return req, nil
+}
+
 func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
 	for _, r := range c.RequestEditors {
 		if err := r(ctx, req); err != nil {
@@ -16779,6 +21751,24 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with POST /v1/decisions/{decisionID}/review-cases (the `OpenReviewCorrection` operationId).
 	OpenReviewCorrectionWithResponse(ctx context.Context, decisionID string, params *OpenReviewCorrectionParams, reqEditors ...RequestEditorFn) (*OpenReviewCorrectionResponse, error)
 
+	// ListDeletionsWithResponse List tenant deletion workflows
+	//
+	// Requires deletions:read. Returns a bounded ascending page of deletion workflows, optionally restricted to one exact aggregate. Responses never return object locations, encoded target references, or raw evidence.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/deletions (the `ListDeletions` operationId).
+	ListDeletionsWithResponse(ctx context.Context, params *ListDeletionsParams, reqEditors ...RequestEditorFn) (*ListDeletionsResponse, error)
+
+	// GetDeletionStatusWithResponse Get one deletion workflow status
+	//
+	// Requires deletions:read. Returns exact target states and digests, active holds, and the documented backup boundary. Raw object references and evidence bytes are never returned.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/deletions/{deletionID} (the `GetDeletionStatus` operationId).
+	GetDeletionStatusWithResponse(ctx context.Context, deletionID PrivacyDeletionID, reqEditors ...RequestEditorFn) (*GetDeletionStatusResponse, error)
+
 	// CreateEvidenceUploadWithBodyWithResponse Issue a requirement-bound evidence-upload intent
 	//
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
@@ -16969,6 +21959,208 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with GET /v1/identity/receipts/{digest} (the `GetIdentityReceipt` operationId).
 	GetIdentityReceiptWithResponse(ctx context.Context, digest PolicyDigest, reqEditors ...RequestEditorFn) (*GetIdentityReceiptResponse, error)
 
+	// GetModelWithResponse Get one evaluation-model registry state
+	//
+	// Requires models:read. Returns the current optimistic-concurrency pointer for one
+	// tenant-owned evaluation-only registry: the independently numbered model and
+	// threshold revision watermarks and the optional active evaluation deployment. The
+	// registry is evaluation-only; production activation is rejected and this route
+	// never selects a production model.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/models/{modelName} (the `GetModel` operationId).
+	GetModelWithResponse(ctx context.Context, modelName ModelName, reqEditors ...RequestEditorFn) (*GetModelResponse, error)
+
+	// ActivateModelWithBodyWithResponse Activate an evaluation-only deployment
+	//
+	// Requires models:activate and exactly one Idempotency-Key. Version-checks the
+	// current registry pointer, resolves the exact immutable model and threshold
+	// revisions, and verifies the declared region before recording one evaluation-only
+	// deployment. The registry is evaluation-only: production activation is rejected and
+	// this route never selects a production model. A repeated identical command returns
+	// the original receipt with replayed=true.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/models/{modelName}/activate (the `ActivateModel` operationId).
+	ActivateModelWithBodyWithResponse(ctx context.Context, modelName ModelName, params *ActivateModelParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ActivateModelResponse, error)
+
+	// ActivateModelWithResponse Activate an evaluation-only deployment
+	//
+	// Requires models:activate and exactly one Idempotency-Key. Version-checks the
+	// current registry pointer, resolves the exact immutable model and threshold
+	// revisions, and verifies the declared region before recording one evaluation-only
+	// deployment. The registry is evaluation-only: production activation is rejected and
+	// this route never selects a production model. A repeated identical command returns
+	// the original receipt with replayed=true.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/models/{modelName}/activate (the `ActivateModel` operationId).
+	ActivateModelWithResponse(ctx context.Context, modelName ModelName, params *ActivateModelParams, body ActivateModelJSONRequestBody, reqEditors ...RequestEditorFn) (*ActivateModelResponse, error)
+
+	// ListModelHistoryWithResponse List immutable evaluation-registry command history
+	//
+	// Requires models:read. Returns a bounded newest-first page of immutable command
+	// receipts for one tenant-owned evaluation-only registry. Receipts preserve the
+	// exact recorded state and original actor without exposing declared training
+	// materials or scores, and immutable revisions survive retirement. This route never
+	// selects a production model.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/models/{modelName}/history (the `ListModelHistory` operationId).
+	ListModelHistoryWithResponse(ctx context.Context, modelName ModelName, params *ListModelHistoryParams, reqEditors ...RequestEditorFn) (*ListModelHistoryResponse, error)
+
+	// RegisterModelWithBodyWithResponse Register an immutable evaluation model revision
+	//
+	// Requires models:write and exactly one Idempotency-Key. Appends one immutable
+	// evaluation-only model revision with declared owner, licence, training provenance,
+	// intended and prohibited use, regions, hardware class, and exact manifest and
+	// configuration pins. The registry is evaluation-only: production activation is
+	// rejected, this route never selects a production model, and a repeated identical
+	// command returns the original receipt with replayed=true.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/models/{modelName}/register (the `RegisterModel` operationId).
+	RegisterModelWithBodyWithResponse(ctx context.Context, modelName ModelName, params *RegisterModelParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RegisterModelResponse, error)
+
+	// RegisterModelWithResponse Register an immutable evaluation model revision
+	//
+	// Requires models:write and exactly one Idempotency-Key. Appends one immutable
+	// evaluation-only model revision with declared owner, licence, training provenance,
+	// intended and prohibited use, regions, hardware class, and exact manifest and
+	// configuration pins. The registry is evaluation-only: production activation is
+	// rejected, this route never selects a production model, and a repeated identical
+	// command returns the original receipt with replayed=true.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/models/{modelName}/register (the `RegisterModel` operationId).
+	RegisterModelWithResponse(ctx context.Context, modelName ModelName, params *RegisterModelParams, body RegisterModelJSONRequestBody, reqEditors ...RequestEditorFn) (*RegisterModelResponse, error)
+
+	// RetireModelWithBodyWithResponse Retire the active evaluation deployment
+	//
+	// Requires models:activate and exactly one Idempotency-Key. Version-checks the
+	// current registry pointer and clears the active evaluation deployment, immediately
+	// fencing new attempts while immutable revisions and history remain readable. The
+	// registry is evaluation-only and this route never selects a production model.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/models/{modelName}/retire (the `RetireModel` operationId).
+	RetireModelWithBodyWithResponse(ctx context.Context, modelName ModelName, params *RetireModelParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RetireModelResponse, error)
+
+	// RetireModelWithResponse Retire the active evaluation deployment
+	//
+	// Requires models:activate and exactly one Idempotency-Key. Version-checks the
+	// current registry pointer and clears the active evaluation deployment, immediately
+	// fencing new attempts while immutable revisions and history remain readable. The
+	// registry is evaluation-only and this route never selects a production model.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/models/{modelName}/retire (the `RetireModel` operationId).
+	RetireModelWithResponse(ctx context.Context, modelName ModelName, params *RetireModelParams, body RetireModelJSONRequestBody, reqEditors ...RequestEditorFn) (*RetireModelResponse, error)
+
+	// GetModelRevisionWithResponse Get one immutable evaluation-model revision
+	//
+	// Requires models:read. Returns one explicitly requested immutable evaluation-only
+	// registration or threshold revision with its canonical content digest. Model and
+	// threshold revisions are independently numbered and immutable provenance survives
+	// retirement. This route never selects a production model.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/models/{modelName}/revisions/{kind}/{revision} (the `GetModelRevision` operationId).
+	GetModelRevisionWithResponse(ctx context.Context, modelName ModelName, kind string, revision int64, reqEditors ...RequestEditorFn) (*GetModelRevisionResponse, error)
+
+	// RollbackModelWithBodyWithResponse Roll back to a previously activated evaluation deployment
+	//
+	// Requires models:activate and exactly one Idempotency-Key. Version-checks the
+	// current registry pointer, resolves the exact immutable model and threshold
+	// revisions, verifies the declared region, and records an operational rollback to a
+	// pair that was previously activated. The registry is evaluation-only: production
+	// activation is rejected and this route never selects a production model.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/models/{modelName}/rollback (the `RollbackModel` operationId).
+	RollbackModelWithBodyWithResponse(ctx context.Context, modelName ModelName, params *RollbackModelParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RollbackModelResponse, error)
+
+	// RollbackModelWithResponse Roll back to a previously activated evaluation deployment
+	//
+	// Requires models:activate and exactly one Idempotency-Key. Version-checks the
+	// current registry pointer, resolves the exact immutable model and threshold
+	// revisions, verifies the declared region, and records an operational rollback to a
+	// pair that was previously activated. The registry is evaluation-only: production
+	// activation is rejected and this route never selects a production model.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/models/{modelName}/rollback (the `RollbackModel` operationId).
+	RollbackModelWithResponse(ctx context.Context, modelName ModelName, params *RollbackModelParams, body RollbackModelJSONRequestBody, reqEditors ...RequestEditorFn) (*RollbackModelResponse, error)
+
+	// SetModelThresholdWithBodyWithResponse Register an immutable evaluation threshold revision
+	//
+	// Requires models:write and exactly one Idempotency-Key. Appends one immutable
+	// evaluation threshold operating point pinned to the complete execution provenance.
+	// Thresholds are evaluation operating points, never accepted verification assurance,
+	// and production activation is rejected. A repeated identical command returns the
+	// original receipt with replayed=true.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/models/{modelName}/threshold (the `SetModelThreshold` operationId).
+	SetModelThresholdWithBodyWithResponse(ctx context.Context, modelName ModelName, params *SetModelThresholdParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SetModelThresholdResponse, error)
+
+	// SetModelThresholdWithResponse Register an immutable evaluation threshold revision
+	//
+	// Requires models:write and exactly one Idempotency-Key. Appends one immutable
+	// evaluation threshold operating point pinned to the complete execution provenance.
+	// Thresholds are evaluation operating points, never accepted verification assurance,
+	// and production activation is rejected. A repeated identical command returns the
+	// original receipt with replayed=true.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/models/{modelName}/threshold (the `SetModelThreshold` operationId).
+	SetModelThresholdWithResponse(ctx context.Context, modelName ModelName, params *SetModelThresholdParams, body SetModelThresholdJSONRequestBody, reqEditors ...RequestEditorFn) (*SetModelThresholdResponse, error)
+
+	// ValidateModelWithBodyWithResponse Validate an evaluation-registry command without persistence
+	//
+	// Requires models:write and no Idempotency-Key. Side-effect-free validation of the
+	// exact closed command document that would be submitted to register, threshold,
+	// activate, rollback or retire. Domain document validation and, for deployment
+	// commands, stored revision, declared region, current version and previously
+	// activated eligibility are checked against the current registry state. Nothing is
+	// persisted and no revision, deployment, receipt, audit or outbox record is created.
+	// The registry is evaluation-only: production activation is rejected and this route
+	// never selects a production model.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/models/{modelName}/validate (the `ValidateModel` operationId).
+	ValidateModelWithBodyWithResponse(ctx context.Context, modelName ModelName, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ValidateModelResponse, error)
+
+	// ValidateModelWithResponse Validate an evaluation-registry command without persistence
+	//
+	// Requires models:write and no Idempotency-Key. Side-effect-free validation of the
+	// exact closed command document that would be submitted to register, threshold,
+	// activate, rollback or retire. Domain document validation and, for deployment
+	// commands, stored revision, declared region, current version and previously
+	// activated eligibility are checked against the current registry state. Nothing is
+	// persisted and no revision, deployment, receipt, audit or outbox record is created.
+	// The registry is evaluation-only: production activation is rejected and this route
+	// never selects a production model.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/models/{modelName}/validate (the `ValidateModel` operationId).
+	ValidateModelWithResponse(ctx context.Context, modelName ModelName, body ValidateModelJSONRequestBody, reqEditors ...RequestEditorFn) (*ValidateModelResponse, error)
+
 	// CreateNoticeVersionWithBodyWithResponse Create an immutable subject-facing notice version
 	//
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
@@ -17098,6 +22290,15 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with PUT /v1/policies/{policyID}/assurance (the `AssignPolicyAssurance` operationId).
 	AssignPolicyAssuranceWithResponse(ctx context.Context, policyID PolicyID, params *AssignPolicyAssuranceParams, body AssignPolicyAssuranceJSONRequestBody, reqEditors ...RequestEditorFn) (*AssignPolicyAssuranceResponse, error)
 
+	// DiffPolicyRevisionsWithResponse Diff two stored policy revisions
+	//
+	// Requires policies:read. Bounded canonical structural difference between two immutable revisions of one policy. Identity fields are reported on from and to and are never repeated as changes. The result is deterministic, omitted fragments are absent, and no expression is evaluated or registered.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/policies/{policyID}/diff (the `DiffPolicyRevisions` operationId).
+	DiffPolicyRevisionsWithResponse(ctx context.Context, policyID string, params *DiffPolicyRevisionsParams, reqEditors ...RequestEditorFn) (*DiffPolicyRevisionsResponse, error)
+
 	// ListPolicyRevisionsWithResponse List immutable revisions
 	//
 	// Requires policies:read. Bounded newest-first metadata page with a signed tenant-, policy-, collection- and limit-bound cursor. Applies to list immutable revisions.
@@ -17151,6 +22352,42 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with POST /v1/policies/{policyID}/rollback (the `RollbackPolicy` operationId).
 	RollbackPolicyWithResponse(ctx context.Context, policyID string, params *RollbackPolicyParams, body RollbackPolicyJSONRequestBody, reqEditors ...RequestEditorFn) (*RollbackPolicyResponse, error)
+
+	// RunPolicyRegressionWithBodyWithResponse Run a bounded portable policy scenario suite
+	//
+	// Requires policies:read. Side-effect-free deterministic evaluation of one portable `PolicyRegressionSuite` document holding at most the documented scenario maximum. Every scenario is a closed `PolicySimulationInput` with an exact canonical expectation; execution failures reject the request while expectation mismatches are reported as data with passed=false. No production facts are read and no policy is registered, activated, decided, tasked, or audited.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/policy-regressions (the `RunPolicyRegression` operationId).
+	RunPolicyRegressionWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RunPolicyRegressionResponse, error)
+
+	// RunPolicyRegressionWithResponse Run a bounded portable policy scenario suite
+	//
+	// Requires policies:read. Side-effect-free deterministic evaluation of one portable `PolicyRegressionSuite` document holding at most the documented scenario maximum. Every scenario is a closed `PolicySimulationInput` with an exact canonical expectation; execution failures reject the request while expectation mismatches are reported as data with passed=false. No production facts are read and no policy is registered, activated, decided, tasked, or audited.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/policy-regressions (the `RunPolicyRegression` operationId).
+	RunPolicyRegressionWithResponse(ctx context.Context, body RunPolicyRegressionJSONRequestBody, reqEditors ...RequestEditorFn) (*RunPolicyRegressionResponse, error)
+
+	// SimulatePolicyWithBodyWithResponse Evaluate one portable synthetic policy simulation
+	//
+	// Requires policies:read. Side-effect-free deterministic evaluation of one portable `PolicySimulationInput` document. The embedded policy uses the same closed `PolicyDocument` meaning accepted by revision creation, normalised to canonical form, but is never registered, activated, decided, tasked, or audited. Supplied facts use the canonical `PolicyCanonicalFact` shape without evidence bytes. No production facts are read and no expression source is returned. The request body is bounded by the portable simulation input limit.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/policy-simulations (the `SimulatePolicy` operationId).
+	SimulatePolicyWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SimulatePolicyResponse, error)
+
+	// SimulatePolicyWithResponse Evaluate one portable synthetic policy simulation
+	//
+	// Requires policies:read. Side-effect-free deterministic evaluation of one portable `PolicySimulationInput` document. The embedded policy uses the same closed `PolicyDocument` meaning accepted by revision creation, normalised to canonical form, but is never registered, activated, decided, tasked, or audited. Supplied facts use the canonical `PolicyCanonicalFact` shape without evidence bytes. No production facts are read and no expression source is returned. The request body is bounded by the portable simulation input limit.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/policy-simulations (the `SimulatePolicy` operationId).
+	SimulatePolicyWithResponse(ctx context.Context, body SimulatePolicyJSONRequestBody, reqEditors ...RequestEditorFn) (*SimulatePolicyResponse, error)
 
 	// CreatePromptWithBodyWithResponse Create immutable prompt version
 	//
@@ -17267,6 +22504,204 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with POST /v1/proposals/{proposalID}/reject (the `RejectProposal` operationId).
 	RejectProposalWithResponse(ctx context.Context, proposalID string, body RejectProposalJSONRequestBody, reqEditors ...RequestEditorFn) (*RejectProposalResponse, error)
+
+	// ListProviderRegistrationsWithResponse List tenant provider registrations
+	//
+	// Requires providers:read. Returns a bounded newest-first page of tenant-owned
+	// secret-free provider registrations. Registrations name externally resolved
+	// credentials; Core never stores or returns a credential value, and this route
+	// performs no external provider probe.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/providers (the `ListProviderRegistrations` operationId).
+	ListProviderRegistrationsWithResponse(ctx context.Context, params *ListProviderRegistrationsParams, reqEditors ...RequestEditorFn) (*ListProviderRegistrationsResponse, error)
+
+	// CreateProviderRegistrationWithBodyWithResponse Register a tenant provider route
+	//
+	// Requires providers:write and exactly one Idempotency-Key. Creates one disabled
+	// tenant-owned registration whose adapter must match a configured deployment
+	// adapter manifest and whose configuration and structured inputs are secret-free
+	// external references. Credential values, inline secrets and weak or unrecognised
+	// configuration shapes are rejected. A repeated identical command returns the
+	// original receipt with replayed=true. The registration is enabled only through
+	// the explicit enable route.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/providers (the `CreateProviderRegistration` operationId).
+	CreateProviderRegistrationWithBodyWithResponse(ctx context.Context, params *CreateProviderRegistrationParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateProviderRegistrationResponse, error)
+
+	// CreateProviderRegistrationWithResponse Register a tenant provider route
+	//
+	// Requires providers:write and exactly one Idempotency-Key. Creates one disabled
+	// tenant-owned registration whose adapter must match a configured deployment
+	// adapter manifest and whose configuration and structured inputs are secret-free
+	// external references. Credential values, inline secrets and weak or unrecognised
+	// configuration shapes are rejected. A repeated identical command returns the
+	// original receipt with replayed=true. The registration is enabled only through
+	// the explicit enable route.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/providers (the `CreateProviderRegistration` operationId).
+	CreateProviderRegistrationWithResponse(ctx context.Context, params *CreateProviderRegistrationParams, body CreateProviderRegistrationJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateProviderRegistrationResponse, error)
+
+	// GetProviderRegistrationWithResponse Get one tenant provider registration
+	//
+	// Requires providers:read. Returns one tenant-owned secret-free registration with
+	// its optimistic-concurrency version and latest attributed actor. Cross-tenant and
+	// absent registrations are indistinguishable. No credential value or external
+	// provider state is returned.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/providers/{providerID} (the `GetProviderRegistration` operationId).
+	GetProviderRegistrationWithResponse(ctx context.Context, providerID ProviderID, reqEditors ...RequestEditorFn) (*GetProviderRegistrationResponse, error)
+
+	// UpdateProviderRegistrationWithBodyWithResponse Update one tenant provider registration
+	//
+	// Requires providers:write. Version-checks the registration pointer and replaces
+	// the secret-free adapter, region, configuration reference, structured inputs,
+	// selfie requirement and optional restrictions. The adapter must match a
+	// configured deployment adapter manifest and credential values are rejected. The
+	// enabled state is unchanged; use enable or disable explicitly.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PUT /v1/providers/{providerID} (the `UpdateProviderRegistration` operationId).
+	UpdateProviderRegistrationWithBodyWithResponse(ctx context.Context, providerID ProviderID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateProviderRegistrationResponse, error)
+
+	// UpdateProviderRegistrationWithResponse Update one tenant provider registration
+	//
+	// Requires providers:write. Version-checks the registration pointer and replaces
+	// the secret-free adapter, region, configuration reference, structured inputs,
+	// selfie requirement and optional restrictions. The adapter must match a
+	// configured deployment adapter manifest and credential values are rejected. The
+	// enabled state is unchanged; use enable or disable explicitly.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PUT /v1/providers/{providerID} (the `UpdateProviderRegistration` operationId).
+	UpdateProviderRegistrationWithResponse(ctx context.Context, providerID ProviderID, body UpdateProviderRegistrationJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateProviderRegistrationResponse, error)
+
+	// DisableProviderRegistrationWithBodyWithResponse Disable one tenant provider registration
+	//
+	// Requires providers:write. Version-checks the registration pointer and disables
+	// the tenant registration so planning falls back to the deployment-configured
+	// provider route. The command is attributed and appended to immutable history.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/providers/{providerID}/disable (the `DisableProviderRegistration` operationId).
+	DisableProviderRegistrationWithBodyWithResponse(ctx context.Context, providerID ProviderID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*DisableProviderRegistrationResponse, error)
+
+	// DisableProviderRegistrationWithResponse Disable one tenant provider registration
+	//
+	// Requires providers:write. Version-checks the registration pointer and disables
+	// the tenant registration so planning falls back to the deployment-configured
+	// provider route. The command is attributed and appended to immutable history.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/providers/{providerID}/disable (the `DisableProviderRegistration` operationId).
+	DisableProviderRegistrationWithResponse(ctx context.Context, providerID ProviderID, body DisableProviderRegistrationJSONRequestBody, reqEditors ...RequestEditorFn) (*DisableProviderRegistrationResponse, error)
+
+	// EnableProviderRegistrationWithBodyWithResponse Enable one tenant provider registration
+	//
+	// Requires providers:write. Version-checks the registration pointer and enables
+	// the tenant registration. At most one enabled registration exists per tenant,
+	// adapter and region; enabling a second registration for the same scope is a
+	// conflict. The command is attributed and appended to immutable history.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/providers/{providerID}/enable (the `EnableProviderRegistration` operationId).
+	EnableProviderRegistrationWithBodyWithResponse(ctx context.Context, providerID ProviderID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*EnableProviderRegistrationResponse, error)
+
+	// EnableProviderRegistrationWithResponse Enable one tenant provider registration
+	//
+	// Requires providers:write. Version-checks the registration pointer and enables
+	// the tenant registration. At most one enabled registration exists per tenant,
+	// adapter and region; enabling a second registration for the same scope is a
+	// conflict. The command is attributed and appended to immutable history.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/providers/{providerID}/enable (the `EnableProviderRegistration` operationId).
+	EnableProviderRegistrationWithResponse(ctx context.Context, providerID ProviderID, body EnableProviderRegistrationJSONRequestBody, reqEditors ...RequestEditorFn) (*EnableProviderRegistrationResponse, error)
+
+	// SimulateProviderFailureWithBodyWithResponse Preview provider failure classification
+	//
+	// Requires providers:read and no Idempotency-Key. Pure side-effect-free preview of
+	// how the owned normalisation classifies one bounded provider failure class and
+	// code: the operational attempt/check state and retry disposition. It confirms
+	// that a provider failure never produces an identity outcome. Nothing is
+	// dispatched, persisted or mutated, and no external provider is contacted.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/providers/{providerID}/failure-simulations (the `SimulateProviderFailure` operationId).
+	SimulateProviderFailureWithBodyWithResponse(ctx context.Context, providerID ProviderID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SimulateProviderFailureResponse, error)
+
+	// SimulateProviderFailureWithResponse Preview provider failure classification
+	//
+	// Requires providers:read and no Idempotency-Key. Pure side-effect-free preview of
+	// how the owned normalisation classifies one bounded provider failure class and
+	// code: the operational attempt/check state and retry disposition. It confirms
+	// that a provider failure never produces an identity outcome. Nothing is
+	// dispatched, persisted or mutated, and no external provider is contacted.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/providers/{providerID}/failure-simulations (the `SimulateProviderFailure` operationId).
+	SimulateProviderFailureWithResponse(ctx context.Context, providerID ProviderID, body SimulateProviderFailureJSONRequestBody, reqEditors ...RequestEditorFn) (*SimulateProviderFailureResponse, error)
+
+	// GetProviderRegistrationHealthWithResponse Read bounded registration health
+	//
+	// Requires providers:read. Returns a bounded read over the tenant's own persisted
+	// provider requests and dispatch receipts for this registration: counts by
+	// dispatch state and the last normalized outcome or failure class. It never
+	// performs an external provider probe, returns no provider topology and never
+	// exposes evidence bytes.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/providers/{providerID}/health (the `GetProviderRegistrationHealth` operationId).
+	GetProviderRegistrationHealthWithResponse(ctx context.Context, providerID ProviderID, reqEditors ...RequestEditorFn) (*GetProviderRegistrationHealthResponse, error)
+
+	// ValidateProviderRegistrationWithBodyWithResponse Validate a provider registration document without persistence
+	//
+	// Requires providers:write and no Idempotency-Key. Side-effect-free validation of
+	// one secret-free registration document against the configured deployment adapter
+	// manifest. Nothing is persisted and no registration, receipt, history, audit or
+	// outbox record is created. The report never echoes supplied values.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/providers/{providerID}/validate (the `ValidateProviderRegistration` operationId).
+	ValidateProviderRegistrationWithBodyWithResponse(ctx context.Context, providerID ProviderID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ValidateProviderRegistrationResponse, error)
+
+	// ValidateProviderRegistrationWithResponse Validate a provider registration document without persistence
+	//
+	// Requires providers:write and no Idempotency-Key. Side-effect-free validation of
+	// one secret-free registration document against the configured deployment adapter
+	// manifest. Nothing is persisted and no registration, receipt, history, audit or
+	// outbox record is created. The report never echoes supplied values.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/providers/{providerID}/validate (the `ValidateProviderRegistration` operationId).
+	ValidateProviderRegistrationWithResponse(ctx context.Context, providerID ProviderID, body ValidateProviderRegistrationJSONRequestBody, reqEditors ...RequestEditorFn) (*ValidateProviderRegistrationResponse, error)
+
+	// GetRetentionResolutionWithResponse Resolve typed retention for one aggregate
+	//
+	// Requires deletions:read. Read-only inspection recomputes each retained evidence record with the selected typed retention resolution and returns active holds. It does not extend, shorten, or otherwise invent retention meaning.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/retention/resolutions (the `GetRetentionResolution` operationId).
+	GetRetentionResolutionWithResponse(ctx context.Context, params *GetRetentionResolutionParams, reqEditors ...RequestEditorFn) (*GetRetentionResolutionResponse, error)
 
 	// ListReviewCasesWithResponse List review cases
 	//
@@ -17772,6 +23207,20 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with GET /v1/tenant (the `GetCurrentTenant` operationId).
 	GetCurrentTenantWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetCurrentTenantResponse, error)
 
+	// ExportTenantWithResponse Export the authenticated tenant
+	//
+	// Streams a bounded, portable, tenant-owned canonical NDJSON export for
+	// portability and offboarding. The header announces the selected
+	// collections, per-collection records follow in canonical order, and the
+	// footer carries per-collection counts plus the SHA-256 digest of every
+	// preceding byte. Raw evidence bytes, credentials, endpoint secrets, and
+	// provider payloads are never included.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/tenant/export (the `ExportTenant` operationId).
+	ExportTenantWithResponse(ctx context.Context, params *ExportTenantParams, reqEditors ...RequestEditorFn) (*ExportTenantResponse, error)
+
 	// CreateVerificationWithBodyWithResponse Create a verification session
 	//
 	// Creates a collecting verification from the active published revision of
@@ -17894,6 +23343,32 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with GET /v1/verifications/{verificationID}/decision (the `GetLatestDecision` operationId).
 	GetLatestDecisionWithResponse(ctx context.Context, verificationID VerificationID, params *GetLatestDecisionParams, reqEditors ...RequestEditorFn) (*GetLatestDecisionResponse, error)
+
+	// ResumeVerificationWithBodyWithResponse Resume a verification awaiting subject input
+	//
+	// Requires verification_sessions:resume and a fresh subject authorisation
+	// recorded after the session entered awaiting_input. Reuses a still-live
+	// capture credential; otherwise atomically replaces it without extending
+	// the verification deadline. Exact replay returns references only and
+	// never returns capture bearer material again.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/verifications/{verificationID}/resume (the `ResumeVerification` operationId).
+	ResumeVerificationWithBodyWithResponse(ctx context.Context, verificationID VerificationID, params *ResumeVerificationParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ResumeVerificationResponse, error)
+
+	// ResumeVerificationWithResponse Resume a verification awaiting subject input
+	//
+	// Requires verification_sessions:resume and a fresh subject authorisation
+	// recorded after the session entered awaiting_input. Reuses a still-live
+	// capture credential; otherwise atomically replaces it without extending
+	// the verification deadline. Exact replay returns references only and
+	// never returns capture bearer material again.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/verifications/{verificationID}/resume (the `ResumeVerification` operationId).
+	ResumeVerificationWithResponse(ctx context.Context, verificationID VerificationID, params *ResumeVerificationParams, body ResumeVerificationJSONRequestBody, reqEditors ...RequestEditorFn) (*ResumeVerificationResponse, error)
 
 	// GetWebhookDeliveryWithResponse Get delivery metadata
 	//
@@ -18029,6 +23504,24 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with POST /v1/webhook-endpoints/{endpointID}/subscriptions (the `UpdateWebhookSubscriptions` operationId).
 	UpdateWebhookSubscriptionsWithResponse(ctx context.Context, endpointID string, params *UpdateWebhookSubscriptionsParams, body UpdateWebhookSubscriptionsJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateWebhookSubscriptionsResponse, error)
+
+	// ListWebhookEventsWithResponse List catalogue events
+	//
+	// Requires webhooks:read. Ascending insertion-order page of decrypted canonical catalogue envelopes with a tenant-, collection-, filter- and limit-bound cursor. Delivery and attempt inspection remain payload-free.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/webhook-events (the `ListWebhookEvents` operationId).
+	ListWebhookEventsWithResponse(ctx context.Context, params *ListWebhookEventsParams, reqEditors ...RequestEditorFn) (*ListWebhookEventsResponse, error)
+
+	// StreamWebhookEventsWithResponse Stream live catalogue events
+	//
+	// Requires webhooks:read. Server-Sent Events feed of decrypted canonical catalogue envelopes. Each event frame carries its durable sequence as the SSE id and the canonical envelope as data; reconnect with the Last-Event-ID header to resume after that sequence. Heartbeat comments keep the connection alive. Receivers must deduplicate by event id.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/webhook-events/stream (the `StreamWebhookEvents` operationId).
+	StreamWebhookEventsWithResponse(ctx context.Context, params *StreamWebhookEventsParams, reqEditors ...RequestEditorFn) (*StreamWebhookEventsResponse, error)
 }
 
 // ExecuteAcceptedCommandResponse204Headers the declared response headers of an HTTP 204 response for ExecuteAcceptedCommand
@@ -22255,6 +27748,294 @@ func (r OpenReviewCorrectionResponse) ContentType() string {
 	return ""
 }
 
+// ListDeletionsResponse200Headers the declared response headers of an HTTP 200 response for ListDeletions
+type ListDeletionsResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// ListDeletionsResponse400Headers the declared response headers of an HTTP 400 response for ListDeletions
+type ListDeletionsResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// ListDeletionsResponse401Headers the declared response headers of an HTTP 401 response for ListDeletions
+type ListDeletionsResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// ListDeletionsResponse403Headers the declared response headers of an HTTP 403 response for ListDeletions
+type ListDeletionsResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// ListDeletionsResponse429Headers the declared response headers of an HTTP 429 response for ListDeletions
+type ListDeletionsResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// ListDeletionsResponse500Headers the declared response headers of an HTTP 500 response for ListDeletions
+type ListDeletionsResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// ListDeletionsResponse503Headers the declared response headers of an HTTP 503 response for ListDeletions
+type ListDeletionsResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type ListDeletionsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *PrivacyDeletionList
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ListDeletionsResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ListDeletionsResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ListDeletionsResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListDeletionsResponse403Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *ListDeletionsResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListDeletionsResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ListDeletionsResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListDeletionsResponse) GetJSON200() *PrivacyDeletionList {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ListDeletionsResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListDeletionsResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListDeletionsResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r ListDeletionsResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListDeletionsResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ListDeletionsResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListDeletionsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListDeletionsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListDeletionsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListDeletionsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetDeletionStatusResponse200Headers the declared response headers of an HTTP 200 response for GetDeletionStatus
+type GetDeletionStatusResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// GetDeletionStatusResponse400Headers the declared response headers of an HTTP 400 response for GetDeletionStatus
+type GetDeletionStatusResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// GetDeletionStatusResponse401Headers the declared response headers of an HTTP 401 response for GetDeletionStatus
+type GetDeletionStatusResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// GetDeletionStatusResponse403Headers the declared response headers of an HTTP 403 response for GetDeletionStatus
+type GetDeletionStatusResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// GetDeletionStatusResponse404Headers the declared response headers of an HTTP 404 response for GetDeletionStatus
+type GetDeletionStatusResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// GetDeletionStatusResponse429Headers the declared response headers of an HTTP 429 response for GetDeletionStatus
+type GetDeletionStatusResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// GetDeletionStatusResponse500Headers the declared response headers of an HTTP 500 response for GetDeletionStatus
+type GetDeletionStatusResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// GetDeletionStatusResponse503Headers the declared response headers of an HTTP 503 response for GetDeletionStatus
+type GetDeletionStatusResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type GetDeletionStatusResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *PrivacyDeletionStatus
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetDeletionStatusResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *GetDeletionStatusResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *GetDeletionStatusResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetDeletionStatusResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetDeletionStatusResponse404Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *GetDeletionStatusResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *GetDeletionStatusResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *GetDeletionStatusResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetDeletionStatusResponse) GetJSON200() *PrivacyDeletionStatus {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r GetDeletionStatusResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetDeletionStatusResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetDeletionStatusResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetDeletionStatusResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r GetDeletionStatusResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r GetDeletionStatusResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r GetDeletionStatusResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r GetDeletionStatusResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetDeletionStatusResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetDeletionStatusResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetDeletionStatusResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // CreateEvidenceUploadResponse201Headers the declared response headers of an HTTP 201 response for CreateEvidenceUpload
 type CreateEvidenceUploadResponse201Headers struct {
 	ETag       *string
@@ -23932,6 +29713,1440 @@ func (r GetIdentityReceiptResponse) ContentType() string {
 	return ""
 }
 
+// GetModelResponse200Headers the declared response headers of an HTTP 200 response for GetModel
+type GetModelResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// GetModelResponse400Headers the declared response headers of an HTTP 400 response for GetModel
+type GetModelResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// GetModelResponse401Headers the declared response headers of an HTTP 401 response for GetModel
+type GetModelResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// GetModelResponse403Headers the declared response headers of an HTTP 403 response for GetModel
+type GetModelResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// GetModelResponse404Headers the declared response headers of an HTTP 404 response for GetModel
+type GetModelResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// GetModelResponse429Headers the declared response headers of an HTTP 429 response for GetModel
+type GetModelResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// GetModelResponse500Headers the declared response headers of an HTTP 500 response for GetModel
+type GetModelResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// GetModelResponse503Headers the declared response headers of an HTTP 503 response for GetModel
+type GetModelResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type GetModelResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ModelRegistryState
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetModelResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *GetModelResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *GetModelResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetModelResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetModelResponse404Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *GetModelResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *GetModelResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *GetModelResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetModelResponse) GetJSON200() *ModelRegistryState {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r GetModelResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetModelResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetModelResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetModelResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r GetModelResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r GetModelResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r GetModelResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r GetModelResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetModelResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetModelResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetModelResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ActivateModelResponse200Headers the declared response headers of an HTTP 200 response for ActivateModel
+type ActivateModelResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// ActivateModelResponse400Headers the declared response headers of an HTTP 400 response for ActivateModel
+type ActivateModelResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// ActivateModelResponse401Headers the declared response headers of an HTTP 401 response for ActivateModel
+type ActivateModelResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// ActivateModelResponse403Headers the declared response headers of an HTTP 403 response for ActivateModel
+type ActivateModelResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// ActivateModelResponse404Headers the declared response headers of an HTTP 404 response for ActivateModel
+type ActivateModelResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// ActivateModelResponse409Headers the declared response headers of an HTTP 409 response for ActivateModel
+type ActivateModelResponse409Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+// ActivateModelResponse429Headers the declared response headers of an HTTP 429 response for ActivateModel
+type ActivateModelResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// ActivateModelResponse500Headers the declared response headers of an HTTP 500 response for ActivateModel
+type ActivateModelResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// ActivateModelResponse503Headers the declared response headers of an HTTP 503 response for ActivateModel
+type ActivateModelResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type ActivateModelResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ModelRegistryReceipt
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationProblemJSON409 *Conflict
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ActivateModelResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ActivateModelResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ActivateModelResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ActivateModelResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *ActivateModelResponse404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *ActivateModelResponse409Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *ActivateModelResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ActivateModelResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ActivateModelResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ActivateModelResponse) GetJSON200() *ModelRegistryReceipt {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ActivateModelResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ActivateModelResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ActivateModelResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r ActivateModelResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r ActivateModelResponse) GetApplicationProblemJSON409() *Conflict {
+	return r.ApplicationProblemJSON409
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r ActivateModelResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ActivateModelResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ActivateModelResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ActivateModelResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ActivateModelResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ActivateModelResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ActivateModelResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ListModelHistoryResponse200Headers the declared response headers of an HTTP 200 response for ListModelHistory
+type ListModelHistoryResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// ListModelHistoryResponse400Headers the declared response headers of an HTTP 400 response for ListModelHistory
+type ListModelHistoryResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// ListModelHistoryResponse401Headers the declared response headers of an HTTP 401 response for ListModelHistory
+type ListModelHistoryResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// ListModelHistoryResponse403Headers the declared response headers of an HTTP 403 response for ListModelHistory
+type ListModelHistoryResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// ListModelHistoryResponse404Headers the declared response headers of an HTTP 404 response for ListModelHistory
+type ListModelHistoryResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// ListModelHistoryResponse429Headers the declared response headers of an HTTP 429 response for ListModelHistory
+type ListModelHistoryResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// ListModelHistoryResponse500Headers the declared response headers of an HTTP 500 response for ListModelHistory
+type ListModelHistoryResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// ListModelHistoryResponse503Headers the declared response headers of an HTTP 503 response for ListModelHistory
+type ListModelHistoryResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type ListModelHistoryResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *[]ModelRegistryReceipt
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ListModelHistoryResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ListModelHistoryResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ListModelHistoryResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListModelHistoryResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *ListModelHistoryResponse404Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *ListModelHistoryResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListModelHistoryResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ListModelHistoryResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListModelHistoryResponse) GetJSON200() *[]ModelRegistryReceipt {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ListModelHistoryResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListModelHistoryResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListModelHistoryResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r ListModelHistoryResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r ListModelHistoryResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListModelHistoryResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ListModelHistoryResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListModelHistoryResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListModelHistoryResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListModelHistoryResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListModelHistoryResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// RegisterModelResponse200Headers the declared response headers of an HTTP 200 response for RegisterModel
+type RegisterModelResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// RegisterModelResponse400Headers the declared response headers of an HTTP 400 response for RegisterModel
+type RegisterModelResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// RegisterModelResponse401Headers the declared response headers of an HTTP 401 response for RegisterModel
+type RegisterModelResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// RegisterModelResponse403Headers the declared response headers of an HTTP 403 response for RegisterModel
+type RegisterModelResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// RegisterModelResponse404Headers the declared response headers of an HTTP 404 response for RegisterModel
+type RegisterModelResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// RegisterModelResponse409Headers the declared response headers of an HTTP 409 response for RegisterModel
+type RegisterModelResponse409Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+// RegisterModelResponse429Headers the declared response headers of an HTTP 429 response for RegisterModel
+type RegisterModelResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// RegisterModelResponse500Headers the declared response headers of an HTTP 500 response for RegisterModel
+type RegisterModelResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// RegisterModelResponse503Headers the declared response headers of an HTTP 503 response for RegisterModel
+type RegisterModelResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type RegisterModelResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ModelRegistryReceipt
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationProblemJSON409 *Conflict
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *RegisterModelResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *RegisterModelResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *RegisterModelResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *RegisterModelResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *RegisterModelResponse404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *RegisterModelResponse409Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *RegisterModelResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *RegisterModelResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *RegisterModelResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r RegisterModelResponse) GetJSON200() *ModelRegistryReceipt {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r RegisterModelResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r RegisterModelResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r RegisterModelResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r RegisterModelResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r RegisterModelResponse) GetApplicationProblemJSON409() *Conflict {
+	return r.ApplicationProblemJSON409
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r RegisterModelResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r RegisterModelResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r RegisterModelResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r RegisterModelResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r RegisterModelResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r RegisterModelResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r RegisterModelResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// RetireModelResponse200Headers the declared response headers of an HTTP 200 response for RetireModel
+type RetireModelResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// RetireModelResponse400Headers the declared response headers of an HTTP 400 response for RetireModel
+type RetireModelResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// RetireModelResponse401Headers the declared response headers of an HTTP 401 response for RetireModel
+type RetireModelResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// RetireModelResponse403Headers the declared response headers of an HTTP 403 response for RetireModel
+type RetireModelResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// RetireModelResponse404Headers the declared response headers of an HTTP 404 response for RetireModel
+type RetireModelResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// RetireModelResponse409Headers the declared response headers of an HTTP 409 response for RetireModel
+type RetireModelResponse409Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+// RetireModelResponse429Headers the declared response headers of an HTTP 429 response for RetireModel
+type RetireModelResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// RetireModelResponse500Headers the declared response headers of an HTTP 500 response for RetireModel
+type RetireModelResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// RetireModelResponse503Headers the declared response headers of an HTTP 503 response for RetireModel
+type RetireModelResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type RetireModelResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ModelRegistryReceipt
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationProblemJSON409 *Conflict
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *RetireModelResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *RetireModelResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *RetireModelResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *RetireModelResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *RetireModelResponse404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *RetireModelResponse409Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *RetireModelResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *RetireModelResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *RetireModelResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r RetireModelResponse) GetJSON200() *ModelRegistryReceipt {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r RetireModelResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r RetireModelResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r RetireModelResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r RetireModelResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r RetireModelResponse) GetApplicationProblemJSON409() *Conflict {
+	return r.ApplicationProblemJSON409
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r RetireModelResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r RetireModelResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r RetireModelResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r RetireModelResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r RetireModelResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r RetireModelResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r RetireModelResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetModelRevisionResponse200Headers the declared response headers of an HTTP 200 response for GetModelRevision
+type GetModelRevisionResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// GetModelRevisionResponse400Headers the declared response headers of an HTTP 400 response for GetModelRevision
+type GetModelRevisionResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// GetModelRevisionResponse401Headers the declared response headers of an HTTP 401 response for GetModelRevision
+type GetModelRevisionResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// GetModelRevisionResponse403Headers the declared response headers of an HTTP 403 response for GetModelRevision
+type GetModelRevisionResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// GetModelRevisionResponse404Headers the declared response headers of an HTTP 404 response for GetModelRevision
+type GetModelRevisionResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// GetModelRevisionResponse429Headers the declared response headers of an HTTP 429 response for GetModelRevision
+type GetModelRevisionResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// GetModelRevisionResponse500Headers the declared response headers of an HTTP 500 response for GetModelRevision
+type GetModelRevisionResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// GetModelRevisionResponse503Headers the declared response headers of an HTTP 503 response for GetModelRevision
+type GetModelRevisionResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type GetModelRevisionResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ModelRegistryRevision
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetModelRevisionResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *GetModelRevisionResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *GetModelRevisionResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetModelRevisionResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetModelRevisionResponse404Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *GetModelRevisionResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *GetModelRevisionResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *GetModelRevisionResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetModelRevisionResponse) GetJSON200() *ModelRegistryRevision {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r GetModelRevisionResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetModelRevisionResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetModelRevisionResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetModelRevisionResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r GetModelRevisionResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r GetModelRevisionResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r GetModelRevisionResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r GetModelRevisionResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetModelRevisionResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetModelRevisionResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetModelRevisionResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// RollbackModelResponse200Headers the declared response headers of an HTTP 200 response for RollbackModel
+type RollbackModelResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// RollbackModelResponse400Headers the declared response headers of an HTTP 400 response for RollbackModel
+type RollbackModelResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// RollbackModelResponse401Headers the declared response headers of an HTTP 401 response for RollbackModel
+type RollbackModelResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// RollbackModelResponse403Headers the declared response headers of an HTTP 403 response for RollbackModel
+type RollbackModelResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// RollbackModelResponse404Headers the declared response headers of an HTTP 404 response for RollbackModel
+type RollbackModelResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// RollbackModelResponse409Headers the declared response headers of an HTTP 409 response for RollbackModel
+type RollbackModelResponse409Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+// RollbackModelResponse429Headers the declared response headers of an HTTP 429 response for RollbackModel
+type RollbackModelResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// RollbackModelResponse500Headers the declared response headers of an HTTP 500 response for RollbackModel
+type RollbackModelResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// RollbackModelResponse503Headers the declared response headers of an HTTP 503 response for RollbackModel
+type RollbackModelResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type RollbackModelResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ModelRegistryReceipt
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationProblemJSON409 *Conflict
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *RollbackModelResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *RollbackModelResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *RollbackModelResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *RollbackModelResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *RollbackModelResponse404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *RollbackModelResponse409Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *RollbackModelResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *RollbackModelResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *RollbackModelResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r RollbackModelResponse) GetJSON200() *ModelRegistryReceipt {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r RollbackModelResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r RollbackModelResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r RollbackModelResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r RollbackModelResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r RollbackModelResponse) GetApplicationProblemJSON409() *Conflict {
+	return r.ApplicationProblemJSON409
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r RollbackModelResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r RollbackModelResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r RollbackModelResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r RollbackModelResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r RollbackModelResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r RollbackModelResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r RollbackModelResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// SetModelThresholdResponse200Headers the declared response headers of an HTTP 200 response for SetModelThreshold
+type SetModelThresholdResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// SetModelThresholdResponse400Headers the declared response headers of an HTTP 400 response for SetModelThreshold
+type SetModelThresholdResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// SetModelThresholdResponse401Headers the declared response headers of an HTTP 401 response for SetModelThreshold
+type SetModelThresholdResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// SetModelThresholdResponse403Headers the declared response headers of an HTTP 403 response for SetModelThreshold
+type SetModelThresholdResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// SetModelThresholdResponse404Headers the declared response headers of an HTTP 404 response for SetModelThreshold
+type SetModelThresholdResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// SetModelThresholdResponse409Headers the declared response headers of an HTTP 409 response for SetModelThreshold
+type SetModelThresholdResponse409Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+// SetModelThresholdResponse429Headers the declared response headers of an HTTP 429 response for SetModelThreshold
+type SetModelThresholdResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// SetModelThresholdResponse500Headers the declared response headers of an HTTP 500 response for SetModelThreshold
+type SetModelThresholdResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// SetModelThresholdResponse503Headers the declared response headers of an HTTP 503 response for SetModelThreshold
+type SetModelThresholdResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type SetModelThresholdResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ModelRegistryReceipt
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationProblemJSON409 *Conflict
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *SetModelThresholdResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *SetModelThresholdResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *SetModelThresholdResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *SetModelThresholdResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *SetModelThresholdResponse404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *SetModelThresholdResponse409Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *SetModelThresholdResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *SetModelThresholdResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *SetModelThresholdResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r SetModelThresholdResponse) GetJSON200() *ModelRegistryReceipt {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r SetModelThresholdResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r SetModelThresholdResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r SetModelThresholdResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r SetModelThresholdResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r SetModelThresholdResponse) GetApplicationProblemJSON409() *Conflict {
+	return r.ApplicationProblemJSON409
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r SetModelThresholdResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r SetModelThresholdResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r SetModelThresholdResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r SetModelThresholdResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r SetModelThresholdResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r SetModelThresholdResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r SetModelThresholdResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ValidateModelResponse200Headers the declared response headers of an HTTP 200 response for ValidateModel
+type ValidateModelResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// ValidateModelResponse400Headers the declared response headers of an HTTP 400 response for ValidateModel
+type ValidateModelResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// ValidateModelResponse401Headers the declared response headers of an HTTP 401 response for ValidateModel
+type ValidateModelResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// ValidateModelResponse403Headers the declared response headers of an HTTP 403 response for ValidateModel
+type ValidateModelResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// ValidateModelResponse404Headers the declared response headers of an HTTP 404 response for ValidateModel
+type ValidateModelResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// ValidateModelResponse429Headers the declared response headers of an HTTP 429 response for ValidateModel
+type ValidateModelResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// ValidateModelResponse500Headers the declared response headers of an HTTP 500 response for ValidateModel
+type ValidateModelResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// ValidateModelResponse503Headers the declared response headers of an HTTP 503 response for ValidateModel
+type ValidateModelResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type ValidateModelResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ModelValidationReport
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ValidateModelResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ValidateModelResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ValidateModelResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ValidateModelResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *ValidateModelResponse404Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *ValidateModelResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ValidateModelResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ValidateModelResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ValidateModelResponse) GetJSON200() *ModelValidationReport {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ValidateModelResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ValidateModelResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ValidateModelResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r ValidateModelResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r ValidateModelResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ValidateModelResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ValidateModelResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ValidateModelResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ValidateModelResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ValidateModelResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ValidateModelResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // CreateNoticeVersionResponse201Headers the declared response headers of an HTTP 201 response for CreateNoticeVersion
 type CreateNoticeVersionResponse201Headers struct {
 	Location   *string
@@ -25529,6 +32744,172 @@ func (r AssignPolicyAssuranceResponse) ContentType() string {
 	return ""
 }
 
+// DiffPolicyRevisionsResponse200Headers the declared response headers of an HTTP 200 response for DiffPolicyRevisions
+type DiffPolicyRevisionsResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// DiffPolicyRevisionsResponse400Headers the declared response headers of an HTTP 400 response for DiffPolicyRevisions
+type DiffPolicyRevisionsResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// DiffPolicyRevisionsResponse401Headers the declared response headers of an HTTP 401 response for DiffPolicyRevisions
+type DiffPolicyRevisionsResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// DiffPolicyRevisionsResponse403Headers the declared response headers of an HTTP 403 response for DiffPolicyRevisions
+type DiffPolicyRevisionsResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// DiffPolicyRevisionsResponse404Headers the declared response headers of an HTTP 404 response for DiffPolicyRevisions
+type DiffPolicyRevisionsResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// DiffPolicyRevisionsResponse409Headers the declared response headers of an HTTP 409 response for DiffPolicyRevisions
+type DiffPolicyRevisionsResponse409Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+// DiffPolicyRevisionsResponse429Headers the declared response headers of an HTTP 429 response for DiffPolicyRevisions
+type DiffPolicyRevisionsResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// DiffPolicyRevisionsResponse500Headers the declared response headers of an HTTP 500 response for DiffPolicyRevisions
+type DiffPolicyRevisionsResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// DiffPolicyRevisionsResponse503Headers the declared response headers of an HTTP 503 response for DiffPolicyRevisions
+type DiffPolicyRevisionsResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type DiffPolicyRevisionsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *PolicyRevisionDiff
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationProblemJSON409 *Conflict
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *DiffPolicyRevisionsResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *DiffPolicyRevisionsResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *DiffPolicyRevisionsResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *DiffPolicyRevisionsResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *DiffPolicyRevisionsResponse404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *DiffPolicyRevisionsResponse409Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *DiffPolicyRevisionsResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *DiffPolicyRevisionsResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *DiffPolicyRevisionsResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r DiffPolicyRevisionsResponse) GetJSON200() *PolicyRevisionDiff {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r DiffPolicyRevisionsResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r DiffPolicyRevisionsResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r DiffPolicyRevisionsResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r DiffPolicyRevisionsResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r DiffPolicyRevisionsResponse) GetApplicationProblemJSON409() *Conflict {
+	return r.ApplicationProblemJSON409
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r DiffPolicyRevisionsResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r DiffPolicyRevisionsResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r DiffPolicyRevisionsResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r DiffPolicyRevisionsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r DiffPolicyRevisionsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DiffPolicyRevisionsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r DiffPolicyRevisionsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // ListPolicyRevisionsResponse200Headers the declared response headers of an HTTP 200 response for ListPolicyRevisions
 type ListPolicyRevisionsResponse200Headers struct {
 	XRequestID RequestID
@@ -26187,6 +33568,308 @@ func (r RollbackPolicyResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r RollbackPolicyResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// RunPolicyRegressionResponse200Headers the declared response headers of an HTTP 200 response for RunPolicyRegression
+type RunPolicyRegressionResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// RunPolicyRegressionResponse400Headers the declared response headers of an HTTP 400 response for RunPolicyRegression
+type RunPolicyRegressionResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// RunPolicyRegressionResponse401Headers the declared response headers of an HTTP 401 response for RunPolicyRegression
+type RunPolicyRegressionResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// RunPolicyRegressionResponse403Headers the declared response headers of an HTTP 403 response for RunPolicyRegression
+type RunPolicyRegressionResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// RunPolicyRegressionResponse413Headers the declared response headers of an HTTP 413 response for RunPolicyRegression
+type RunPolicyRegressionResponse413Headers struct {
+	XRequestID RequestID
+}
+
+// RunPolicyRegressionResponse429Headers the declared response headers of an HTTP 429 response for RunPolicyRegression
+type RunPolicyRegressionResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// RunPolicyRegressionResponse500Headers the declared response headers of an HTTP 500 response for RunPolicyRegression
+type RunPolicyRegressionResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// RunPolicyRegressionResponse503Headers the declared response headers of an HTTP 503 response for RunPolicyRegression
+type RunPolicyRegressionResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type RunPolicyRegressionResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *PolicyRegressionReport
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON413 the response for an HTTP 413 `application/problem+json` response
+	ApplicationProblemJSON413 *RequestTooLarge
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *RunPolicyRegressionResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *RunPolicyRegressionResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *RunPolicyRegressionResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *RunPolicyRegressionResponse403Headers
+	// Headers413 the parsed response headers for an HTTP 413 response
+	Headers413 *RunPolicyRegressionResponse413Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *RunPolicyRegressionResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *RunPolicyRegressionResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *RunPolicyRegressionResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r RunPolicyRegressionResponse) GetJSON200() *PolicyRegressionReport {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r RunPolicyRegressionResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r RunPolicyRegressionResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r RunPolicyRegressionResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
+func (r RunPolicyRegressionResponse) GetApplicationProblemJSON413() *RequestTooLarge {
+	return r.ApplicationProblemJSON413
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r RunPolicyRegressionResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r RunPolicyRegressionResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r RunPolicyRegressionResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r RunPolicyRegressionResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r RunPolicyRegressionResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r RunPolicyRegressionResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r RunPolicyRegressionResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// SimulatePolicyResponse200Headers the declared response headers of an HTTP 200 response for SimulatePolicy
+type SimulatePolicyResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// SimulatePolicyResponse400Headers the declared response headers of an HTTP 400 response for SimulatePolicy
+type SimulatePolicyResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// SimulatePolicyResponse401Headers the declared response headers of an HTTP 401 response for SimulatePolicy
+type SimulatePolicyResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// SimulatePolicyResponse403Headers the declared response headers of an HTTP 403 response for SimulatePolicy
+type SimulatePolicyResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// SimulatePolicyResponse413Headers the declared response headers of an HTTP 413 response for SimulatePolicy
+type SimulatePolicyResponse413Headers struct {
+	XRequestID RequestID
+}
+
+// SimulatePolicyResponse429Headers the declared response headers of an HTTP 429 response for SimulatePolicy
+type SimulatePolicyResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// SimulatePolicyResponse500Headers the declared response headers of an HTTP 500 response for SimulatePolicy
+type SimulatePolicyResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// SimulatePolicyResponse503Headers the declared response headers of an HTTP 503 response for SimulatePolicy
+type SimulatePolicyResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type SimulatePolicyResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *PolicySimulationReport
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON413 the response for an HTTP 413 `application/problem+json` response
+	ApplicationProblemJSON413 *RequestTooLarge
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *SimulatePolicyResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *SimulatePolicyResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *SimulatePolicyResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *SimulatePolicyResponse403Headers
+	// Headers413 the parsed response headers for an HTTP 413 response
+	Headers413 *SimulatePolicyResponse413Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *SimulatePolicyResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *SimulatePolicyResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *SimulatePolicyResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r SimulatePolicyResponse) GetJSON200() *PolicySimulationReport {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r SimulatePolicyResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r SimulatePolicyResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r SimulatePolicyResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON413 returns the response for an HTTP 413 `application/problem+json` response
+func (r SimulatePolicyResponse) GetApplicationProblemJSON413() *RequestTooLarge {
+	return r.ApplicationProblemJSON413
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r SimulatePolicyResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r SimulatePolicyResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r SimulatePolicyResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r SimulatePolicyResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r SimulatePolicyResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r SimulatePolicyResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r SimulatePolicyResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -27400,6 +35083,1548 @@ func (r RejectProposalResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r RejectProposalResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ListProviderRegistrationsResponse200Headers the declared response headers of an HTTP 200 response for ListProviderRegistrations
+type ListProviderRegistrationsResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// ListProviderRegistrationsResponse400Headers the declared response headers of an HTTP 400 response for ListProviderRegistrations
+type ListProviderRegistrationsResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// ListProviderRegistrationsResponse401Headers the declared response headers of an HTTP 401 response for ListProviderRegistrations
+type ListProviderRegistrationsResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// ListProviderRegistrationsResponse403Headers the declared response headers of an HTTP 403 response for ListProviderRegistrations
+type ListProviderRegistrationsResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// ListProviderRegistrationsResponse429Headers the declared response headers of an HTTP 429 response for ListProviderRegistrations
+type ListProviderRegistrationsResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// ListProviderRegistrationsResponse500Headers the declared response headers of an HTTP 500 response for ListProviderRegistrations
+type ListProviderRegistrationsResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// ListProviderRegistrationsResponse503Headers the declared response headers of an HTTP 503 response for ListProviderRegistrations
+type ListProviderRegistrationsResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type ListProviderRegistrationsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ProviderRegistrationList
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ListProviderRegistrationsResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ListProviderRegistrationsResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ListProviderRegistrationsResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListProviderRegistrationsResponse403Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *ListProviderRegistrationsResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListProviderRegistrationsResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ListProviderRegistrationsResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListProviderRegistrationsResponse) GetJSON200() *ProviderRegistrationList {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ListProviderRegistrationsResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListProviderRegistrationsResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListProviderRegistrationsResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r ListProviderRegistrationsResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListProviderRegistrationsResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ListProviderRegistrationsResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListProviderRegistrationsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListProviderRegistrationsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListProviderRegistrationsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListProviderRegistrationsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// CreateProviderRegistrationResponse200Headers the declared response headers of an HTTP 200 response for CreateProviderRegistration
+type CreateProviderRegistrationResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// CreateProviderRegistrationResponse400Headers the declared response headers of an HTTP 400 response for CreateProviderRegistration
+type CreateProviderRegistrationResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// CreateProviderRegistrationResponse401Headers the declared response headers of an HTTP 401 response for CreateProviderRegistration
+type CreateProviderRegistrationResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// CreateProviderRegistrationResponse403Headers the declared response headers of an HTTP 403 response for CreateProviderRegistration
+type CreateProviderRegistrationResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// CreateProviderRegistrationResponse409Headers the declared response headers of an HTTP 409 response for CreateProviderRegistration
+type CreateProviderRegistrationResponse409Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+// CreateProviderRegistrationResponse429Headers the declared response headers of an HTTP 429 response for CreateProviderRegistration
+type CreateProviderRegistrationResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// CreateProviderRegistrationResponse500Headers the declared response headers of an HTTP 500 response for CreateProviderRegistration
+type CreateProviderRegistrationResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// CreateProviderRegistrationResponse503Headers the declared response headers of an HTTP 503 response for CreateProviderRegistration
+type CreateProviderRegistrationResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type CreateProviderRegistrationResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ProviderRegistrationReceipt
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationProblemJSON409 *Conflict
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *CreateProviderRegistrationResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *CreateProviderRegistrationResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *CreateProviderRegistrationResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *CreateProviderRegistrationResponse403Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *CreateProviderRegistrationResponse409Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *CreateProviderRegistrationResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *CreateProviderRegistrationResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *CreateProviderRegistrationResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r CreateProviderRegistrationResponse) GetJSON200() *ProviderRegistrationReceipt {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r CreateProviderRegistrationResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r CreateProviderRegistrationResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r CreateProviderRegistrationResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r CreateProviderRegistrationResponse) GetApplicationProblemJSON409() *Conflict {
+	return r.ApplicationProblemJSON409
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r CreateProviderRegistrationResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r CreateProviderRegistrationResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r CreateProviderRegistrationResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r CreateProviderRegistrationResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateProviderRegistrationResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateProviderRegistrationResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CreateProviderRegistrationResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetProviderRegistrationResponse200Headers the declared response headers of an HTTP 200 response for GetProviderRegistration
+type GetProviderRegistrationResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// GetProviderRegistrationResponse400Headers the declared response headers of an HTTP 400 response for GetProviderRegistration
+type GetProviderRegistrationResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// GetProviderRegistrationResponse401Headers the declared response headers of an HTTP 401 response for GetProviderRegistration
+type GetProviderRegistrationResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// GetProviderRegistrationResponse403Headers the declared response headers of an HTTP 403 response for GetProviderRegistration
+type GetProviderRegistrationResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// GetProviderRegistrationResponse404Headers the declared response headers of an HTTP 404 response for GetProviderRegistration
+type GetProviderRegistrationResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// GetProviderRegistrationResponse429Headers the declared response headers of an HTTP 429 response for GetProviderRegistration
+type GetProviderRegistrationResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// GetProviderRegistrationResponse500Headers the declared response headers of an HTTP 500 response for GetProviderRegistration
+type GetProviderRegistrationResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// GetProviderRegistrationResponse503Headers the declared response headers of an HTTP 503 response for GetProviderRegistration
+type GetProviderRegistrationResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type GetProviderRegistrationResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ProviderRegistration
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetProviderRegistrationResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *GetProviderRegistrationResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *GetProviderRegistrationResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetProviderRegistrationResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetProviderRegistrationResponse404Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *GetProviderRegistrationResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *GetProviderRegistrationResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *GetProviderRegistrationResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetProviderRegistrationResponse) GetJSON200() *ProviderRegistration {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r GetProviderRegistrationResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetProviderRegistrationResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetProviderRegistrationResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetProviderRegistrationResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r GetProviderRegistrationResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r GetProviderRegistrationResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r GetProviderRegistrationResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r GetProviderRegistrationResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetProviderRegistrationResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetProviderRegistrationResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetProviderRegistrationResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// UpdateProviderRegistrationResponse200Headers the declared response headers of an HTTP 200 response for UpdateProviderRegistration
+type UpdateProviderRegistrationResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// UpdateProviderRegistrationResponse400Headers the declared response headers of an HTTP 400 response for UpdateProviderRegistration
+type UpdateProviderRegistrationResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// UpdateProviderRegistrationResponse401Headers the declared response headers of an HTTP 401 response for UpdateProviderRegistration
+type UpdateProviderRegistrationResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// UpdateProviderRegistrationResponse403Headers the declared response headers of an HTTP 403 response for UpdateProviderRegistration
+type UpdateProviderRegistrationResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// UpdateProviderRegistrationResponse404Headers the declared response headers of an HTTP 404 response for UpdateProviderRegistration
+type UpdateProviderRegistrationResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// UpdateProviderRegistrationResponse409Headers the declared response headers of an HTTP 409 response for UpdateProviderRegistration
+type UpdateProviderRegistrationResponse409Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+// UpdateProviderRegistrationResponse429Headers the declared response headers of an HTTP 429 response for UpdateProviderRegistration
+type UpdateProviderRegistrationResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// UpdateProviderRegistrationResponse500Headers the declared response headers of an HTTP 500 response for UpdateProviderRegistration
+type UpdateProviderRegistrationResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// UpdateProviderRegistrationResponse503Headers the declared response headers of an HTTP 503 response for UpdateProviderRegistration
+type UpdateProviderRegistrationResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type UpdateProviderRegistrationResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ProviderRegistrationReceipt
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationProblemJSON409 *Conflict
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *UpdateProviderRegistrationResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *UpdateProviderRegistrationResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *UpdateProviderRegistrationResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *UpdateProviderRegistrationResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *UpdateProviderRegistrationResponse404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *UpdateProviderRegistrationResponse409Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *UpdateProviderRegistrationResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *UpdateProviderRegistrationResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *UpdateProviderRegistrationResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r UpdateProviderRegistrationResponse) GetJSON200() *ProviderRegistrationReceipt {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r UpdateProviderRegistrationResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r UpdateProviderRegistrationResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r UpdateProviderRegistrationResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r UpdateProviderRegistrationResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r UpdateProviderRegistrationResponse) GetApplicationProblemJSON409() *Conflict {
+	return r.ApplicationProblemJSON409
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r UpdateProviderRegistrationResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r UpdateProviderRegistrationResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r UpdateProviderRegistrationResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r UpdateProviderRegistrationResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateProviderRegistrationResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateProviderRegistrationResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r UpdateProviderRegistrationResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// DisableProviderRegistrationResponse200Headers the declared response headers of an HTTP 200 response for DisableProviderRegistration
+type DisableProviderRegistrationResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// DisableProviderRegistrationResponse400Headers the declared response headers of an HTTP 400 response for DisableProviderRegistration
+type DisableProviderRegistrationResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// DisableProviderRegistrationResponse401Headers the declared response headers of an HTTP 401 response for DisableProviderRegistration
+type DisableProviderRegistrationResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// DisableProviderRegistrationResponse403Headers the declared response headers of an HTTP 403 response for DisableProviderRegistration
+type DisableProviderRegistrationResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// DisableProviderRegistrationResponse404Headers the declared response headers of an HTTP 404 response for DisableProviderRegistration
+type DisableProviderRegistrationResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// DisableProviderRegistrationResponse409Headers the declared response headers of an HTTP 409 response for DisableProviderRegistration
+type DisableProviderRegistrationResponse409Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+// DisableProviderRegistrationResponse429Headers the declared response headers of an HTTP 429 response for DisableProviderRegistration
+type DisableProviderRegistrationResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// DisableProviderRegistrationResponse500Headers the declared response headers of an HTTP 500 response for DisableProviderRegistration
+type DisableProviderRegistrationResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// DisableProviderRegistrationResponse503Headers the declared response headers of an HTTP 503 response for DisableProviderRegistration
+type DisableProviderRegistrationResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type DisableProviderRegistrationResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ProviderRegistrationReceipt
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationProblemJSON409 *Conflict
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *DisableProviderRegistrationResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *DisableProviderRegistrationResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *DisableProviderRegistrationResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *DisableProviderRegistrationResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *DisableProviderRegistrationResponse404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *DisableProviderRegistrationResponse409Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *DisableProviderRegistrationResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *DisableProviderRegistrationResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *DisableProviderRegistrationResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r DisableProviderRegistrationResponse) GetJSON200() *ProviderRegistrationReceipt {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r DisableProviderRegistrationResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r DisableProviderRegistrationResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r DisableProviderRegistrationResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r DisableProviderRegistrationResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r DisableProviderRegistrationResponse) GetApplicationProblemJSON409() *Conflict {
+	return r.ApplicationProblemJSON409
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r DisableProviderRegistrationResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r DisableProviderRegistrationResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r DisableProviderRegistrationResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r DisableProviderRegistrationResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r DisableProviderRegistrationResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DisableProviderRegistrationResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r DisableProviderRegistrationResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// EnableProviderRegistrationResponse200Headers the declared response headers of an HTTP 200 response for EnableProviderRegistration
+type EnableProviderRegistrationResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// EnableProviderRegistrationResponse400Headers the declared response headers of an HTTP 400 response for EnableProviderRegistration
+type EnableProviderRegistrationResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// EnableProviderRegistrationResponse401Headers the declared response headers of an HTTP 401 response for EnableProviderRegistration
+type EnableProviderRegistrationResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// EnableProviderRegistrationResponse403Headers the declared response headers of an HTTP 403 response for EnableProviderRegistration
+type EnableProviderRegistrationResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// EnableProviderRegistrationResponse404Headers the declared response headers of an HTTP 404 response for EnableProviderRegistration
+type EnableProviderRegistrationResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// EnableProviderRegistrationResponse409Headers the declared response headers of an HTTP 409 response for EnableProviderRegistration
+type EnableProviderRegistrationResponse409Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+// EnableProviderRegistrationResponse429Headers the declared response headers of an HTTP 429 response for EnableProviderRegistration
+type EnableProviderRegistrationResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// EnableProviderRegistrationResponse500Headers the declared response headers of an HTTP 500 response for EnableProviderRegistration
+type EnableProviderRegistrationResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// EnableProviderRegistrationResponse503Headers the declared response headers of an HTTP 503 response for EnableProviderRegistration
+type EnableProviderRegistrationResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type EnableProviderRegistrationResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ProviderRegistrationReceipt
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationProblemJSON409 *Conflict
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *EnableProviderRegistrationResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *EnableProviderRegistrationResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *EnableProviderRegistrationResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *EnableProviderRegistrationResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *EnableProviderRegistrationResponse404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *EnableProviderRegistrationResponse409Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *EnableProviderRegistrationResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *EnableProviderRegistrationResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *EnableProviderRegistrationResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r EnableProviderRegistrationResponse) GetJSON200() *ProviderRegistrationReceipt {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r EnableProviderRegistrationResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r EnableProviderRegistrationResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r EnableProviderRegistrationResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r EnableProviderRegistrationResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r EnableProviderRegistrationResponse) GetApplicationProblemJSON409() *Conflict {
+	return r.ApplicationProblemJSON409
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r EnableProviderRegistrationResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r EnableProviderRegistrationResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r EnableProviderRegistrationResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r EnableProviderRegistrationResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r EnableProviderRegistrationResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r EnableProviderRegistrationResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r EnableProviderRegistrationResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// SimulateProviderFailureResponse200Headers the declared response headers of an HTTP 200 response for SimulateProviderFailure
+type SimulateProviderFailureResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// SimulateProviderFailureResponse400Headers the declared response headers of an HTTP 400 response for SimulateProviderFailure
+type SimulateProviderFailureResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// SimulateProviderFailureResponse401Headers the declared response headers of an HTTP 401 response for SimulateProviderFailure
+type SimulateProviderFailureResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// SimulateProviderFailureResponse403Headers the declared response headers of an HTTP 403 response for SimulateProviderFailure
+type SimulateProviderFailureResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// SimulateProviderFailureResponse404Headers the declared response headers of an HTTP 404 response for SimulateProviderFailure
+type SimulateProviderFailureResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// SimulateProviderFailureResponse429Headers the declared response headers of an HTTP 429 response for SimulateProviderFailure
+type SimulateProviderFailureResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// SimulateProviderFailureResponse500Headers the declared response headers of an HTTP 500 response for SimulateProviderFailure
+type SimulateProviderFailureResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// SimulateProviderFailureResponse503Headers the declared response headers of an HTTP 503 response for SimulateProviderFailure
+type SimulateProviderFailureResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type SimulateProviderFailureResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ProviderFailureSimulation
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *SimulateProviderFailureResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *SimulateProviderFailureResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *SimulateProviderFailureResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *SimulateProviderFailureResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *SimulateProviderFailureResponse404Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *SimulateProviderFailureResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *SimulateProviderFailureResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *SimulateProviderFailureResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r SimulateProviderFailureResponse) GetJSON200() *ProviderFailureSimulation {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r SimulateProviderFailureResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r SimulateProviderFailureResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r SimulateProviderFailureResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r SimulateProviderFailureResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r SimulateProviderFailureResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r SimulateProviderFailureResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r SimulateProviderFailureResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r SimulateProviderFailureResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r SimulateProviderFailureResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r SimulateProviderFailureResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r SimulateProviderFailureResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetProviderRegistrationHealthResponse200Headers the declared response headers of an HTTP 200 response for GetProviderRegistrationHealth
+type GetProviderRegistrationHealthResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// GetProviderRegistrationHealthResponse400Headers the declared response headers of an HTTP 400 response for GetProviderRegistrationHealth
+type GetProviderRegistrationHealthResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// GetProviderRegistrationHealthResponse401Headers the declared response headers of an HTTP 401 response for GetProviderRegistrationHealth
+type GetProviderRegistrationHealthResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// GetProviderRegistrationHealthResponse403Headers the declared response headers of an HTTP 403 response for GetProviderRegistrationHealth
+type GetProviderRegistrationHealthResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// GetProviderRegistrationHealthResponse404Headers the declared response headers of an HTTP 404 response for GetProviderRegistrationHealth
+type GetProviderRegistrationHealthResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// GetProviderRegistrationHealthResponse429Headers the declared response headers of an HTTP 429 response for GetProviderRegistrationHealth
+type GetProviderRegistrationHealthResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// GetProviderRegistrationHealthResponse500Headers the declared response headers of an HTTP 500 response for GetProviderRegistrationHealth
+type GetProviderRegistrationHealthResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// GetProviderRegistrationHealthResponse503Headers the declared response headers of an HTTP 503 response for GetProviderRegistrationHealth
+type GetProviderRegistrationHealthResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type GetProviderRegistrationHealthResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ProviderRegistrationHealth
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetProviderRegistrationHealthResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *GetProviderRegistrationHealthResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *GetProviderRegistrationHealthResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetProviderRegistrationHealthResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetProviderRegistrationHealthResponse404Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *GetProviderRegistrationHealthResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *GetProviderRegistrationHealthResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *GetProviderRegistrationHealthResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetProviderRegistrationHealthResponse) GetJSON200() *ProviderRegistrationHealth {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r GetProviderRegistrationHealthResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetProviderRegistrationHealthResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetProviderRegistrationHealthResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetProviderRegistrationHealthResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r GetProviderRegistrationHealthResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r GetProviderRegistrationHealthResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r GetProviderRegistrationHealthResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r GetProviderRegistrationHealthResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetProviderRegistrationHealthResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetProviderRegistrationHealthResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetProviderRegistrationHealthResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ValidateProviderRegistrationResponse200Headers the declared response headers of an HTTP 200 response for ValidateProviderRegistration
+type ValidateProviderRegistrationResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// ValidateProviderRegistrationResponse400Headers the declared response headers of an HTTP 400 response for ValidateProviderRegistration
+type ValidateProviderRegistrationResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// ValidateProviderRegistrationResponse401Headers the declared response headers of an HTTP 401 response for ValidateProviderRegistration
+type ValidateProviderRegistrationResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// ValidateProviderRegistrationResponse403Headers the declared response headers of an HTTP 403 response for ValidateProviderRegistration
+type ValidateProviderRegistrationResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// ValidateProviderRegistrationResponse404Headers the declared response headers of an HTTP 404 response for ValidateProviderRegistration
+type ValidateProviderRegistrationResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// ValidateProviderRegistrationResponse429Headers the declared response headers of an HTTP 429 response for ValidateProviderRegistration
+type ValidateProviderRegistrationResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// ValidateProviderRegistrationResponse500Headers the declared response headers of an HTTP 500 response for ValidateProviderRegistration
+type ValidateProviderRegistrationResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// ValidateProviderRegistrationResponse503Headers the declared response headers of an HTTP 503 response for ValidateProviderRegistration
+type ValidateProviderRegistrationResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type ValidateProviderRegistrationResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ProviderRegistrationValidationReport
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ValidateProviderRegistrationResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ValidateProviderRegistrationResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ValidateProviderRegistrationResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ValidateProviderRegistrationResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *ValidateProviderRegistrationResponse404Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *ValidateProviderRegistrationResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ValidateProviderRegistrationResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ValidateProviderRegistrationResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ValidateProviderRegistrationResponse) GetJSON200() *ProviderRegistrationValidationReport {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ValidateProviderRegistrationResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ValidateProviderRegistrationResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ValidateProviderRegistrationResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r ValidateProviderRegistrationResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r ValidateProviderRegistrationResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ValidateProviderRegistrationResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ValidateProviderRegistrationResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ValidateProviderRegistrationResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ValidateProviderRegistrationResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ValidateProviderRegistrationResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ValidateProviderRegistrationResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetRetentionResolutionResponse200Headers the declared response headers of an HTTP 200 response for GetRetentionResolution
+type GetRetentionResolutionResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// GetRetentionResolutionResponse400Headers the declared response headers of an HTTP 400 response for GetRetentionResolution
+type GetRetentionResolutionResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// GetRetentionResolutionResponse401Headers the declared response headers of an HTTP 401 response for GetRetentionResolution
+type GetRetentionResolutionResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// GetRetentionResolutionResponse403Headers the declared response headers of an HTTP 403 response for GetRetentionResolution
+type GetRetentionResolutionResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// GetRetentionResolutionResponse404Headers the declared response headers of an HTTP 404 response for GetRetentionResolution
+type GetRetentionResolutionResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// GetRetentionResolutionResponse429Headers the declared response headers of an HTTP 429 response for GetRetentionResolution
+type GetRetentionResolutionResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// GetRetentionResolutionResponse500Headers the declared response headers of an HTTP 500 response for GetRetentionResolution
+type GetRetentionResolutionResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// GetRetentionResolutionResponse503Headers the declared response headers of an HTTP 503 response for GetRetentionResolution
+type GetRetentionResolutionResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type GetRetentionResolutionResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *PrivacyRetentionResolution
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetRetentionResolutionResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *GetRetentionResolutionResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *GetRetentionResolutionResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetRetentionResolutionResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetRetentionResolutionResponse404Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *GetRetentionResolutionResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *GetRetentionResolutionResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *GetRetentionResolutionResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetRetentionResolutionResponse) GetJSON200() *PrivacyRetentionResolution {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r GetRetentionResolutionResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetRetentionResolutionResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetRetentionResolutionResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetRetentionResolutionResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r GetRetentionResolutionResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r GetRetentionResolutionResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r GetRetentionResolutionResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r GetRetentionResolutionResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetRetentionResolutionResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetRetentionResolutionResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetRetentionResolutionResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -33354,6 +42579,138 @@ func (r GetCurrentTenantResponse) ContentType() string {
 	return ""
 }
 
+// ExportTenantResponse200Headers the declared response headers of an HTTP 200 response for ExportTenant
+type ExportTenantResponse200Headers struct {
+	CacheControl       *string
+	ContentDisposition *string
+	XRequestID         RequestID
+}
+
+// ExportTenantResponse400Headers the declared response headers of an HTTP 400 response for ExportTenant
+type ExportTenantResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// ExportTenantResponse401Headers the declared response headers of an HTTP 401 response for ExportTenant
+type ExportTenantResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// ExportTenantResponse403Headers the declared response headers of an HTTP 403 response for ExportTenant
+type ExportTenantResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// ExportTenantResponse429Headers the declared response headers of an HTTP 429 response for ExportTenant
+type ExportTenantResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// ExportTenantResponse500Headers the declared response headers of an HTTP 500 response for ExportTenant
+type ExportTenantResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// ExportTenantResponse503Headers the declared response headers of an HTTP 503 response for ExportTenant
+type ExportTenantResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type ExportTenantResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ExportTenantResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ExportTenantResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ExportTenantResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ExportTenantResponse403Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *ExportTenantResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ExportTenantResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ExportTenantResponse503Headers
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ExportTenantResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ExportTenantResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ExportTenantResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r ExportTenantResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ExportTenantResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ExportTenantResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ExportTenantResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ExportTenantResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ExportTenantResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ExportTenantResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // CreateVerificationResponse201Headers the declared response headers of an HTTP 201 response for CreateVerification
 type CreateVerificationResponse201Headers struct {
 	XRequestID RequestID
@@ -34769,6 +44126,155 @@ func (r GetLatestDecisionResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r GetLatestDecisionResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ResumeVerificationResponse200Headers the declared response headers of an HTTP 200 response for ResumeVerification
+type ResumeVerificationResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// ResumeVerificationResponse400Headers the declared response headers of an HTTP 400 response for ResumeVerification
+type ResumeVerificationResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// ResumeVerificationResponse401Headers the declared response headers of an HTTP 401 response for ResumeVerification
+type ResumeVerificationResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// ResumeVerificationResponse403Headers the declared response headers of an HTTP 403 response for ResumeVerification
+type ResumeVerificationResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// ResumeVerificationResponse404Headers the declared response headers of an HTTP 404 response for ResumeVerification
+type ResumeVerificationResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// ResumeVerificationResponse409Headers the declared response headers of an HTTP 409 response for ResumeVerification
+type ResumeVerificationResponse409Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+// ResumeVerificationResponse500Headers the declared response headers of an HTTP 500 response for ResumeVerification
+type ResumeVerificationResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// ResumeVerificationResponse503Headers the declared response headers of an HTTP 503 response for ResumeVerification
+type ResumeVerificationResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type ResumeVerificationResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *VerificationResumed
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationProblemJSON409 *Conflict
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ResumeVerificationResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ResumeVerificationResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ResumeVerificationResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ResumeVerificationResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *ResumeVerificationResponse404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *ResumeVerificationResponse409Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ResumeVerificationResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ResumeVerificationResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ResumeVerificationResponse) GetJSON200() *VerificationResumed {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ResumeVerificationResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ResumeVerificationResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ResumeVerificationResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r ResumeVerificationResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r ResumeVerificationResponse) GetApplicationProblemJSON409() *Conflict {
+	return r.ApplicationProblemJSON409
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ResumeVerificationResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ResumeVerificationResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ResumeVerificationResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ResumeVerificationResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ResumeVerificationResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ResumeVerificationResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -36435,6 +45941,273 @@ func (r UpdateWebhookSubscriptionsResponse) ContentType() string {
 	return ""
 }
 
+// ListWebhookEventsResponse200Headers the declared response headers of an HTTP 200 response for ListWebhookEvents
+type ListWebhookEventsResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// ListWebhookEventsResponse400Headers the declared response headers of an HTTP 400 response for ListWebhookEvents
+type ListWebhookEventsResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// ListWebhookEventsResponse401Headers the declared response headers of an HTTP 401 response for ListWebhookEvents
+type ListWebhookEventsResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// ListWebhookEventsResponse403Headers the declared response headers of an HTTP 403 response for ListWebhookEvents
+type ListWebhookEventsResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// ListWebhookEventsResponse429Headers the declared response headers of an HTTP 429 response for ListWebhookEvents
+type ListWebhookEventsResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// ListWebhookEventsResponse500Headers the declared response headers of an HTTP 500 response for ListWebhookEvents
+type ListWebhookEventsResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// ListWebhookEventsResponse503Headers the declared response headers of an HTTP 503 response for ListWebhookEvents
+type ListWebhookEventsResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type ListWebhookEventsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *WebhookEventList
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ListWebhookEventsResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ListWebhookEventsResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ListWebhookEventsResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListWebhookEventsResponse403Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *ListWebhookEventsResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListWebhookEventsResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ListWebhookEventsResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListWebhookEventsResponse) GetJSON200() *WebhookEventList {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ListWebhookEventsResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListWebhookEventsResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListWebhookEventsResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r ListWebhookEventsResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListWebhookEventsResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ListWebhookEventsResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListWebhookEventsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListWebhookEventsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListWebhookEventsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListWebhookEventsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// StreamWebhookEventsResponse200Headers the declared response headers of an HTTP 200 response for StreamWebhookEvents
+type StreamWebhookEventsResponse200Headers struct {
+	CacheControl *string
+}
+
+// StreamWebhookEventsResponse400Headers the declared response headers of an HTTP 400 response for StreamWebhookEvents
+type StreamWebhookEventsResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// StreamWebhookEventsResponse401Headers the declared response headers of an HTTP 401 response for StreamWebhookEvents
+type StreamWebhookEventsResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// StreamWebhookEventsResponse403Headers the declared response headers of an HTTP 403 response for StreamWebhookEvents
+type StreamWebhookEventsResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// StreamWebhookEventsResponse429Headers the declared response headers of an HTTP 429 response for StreamWebhookEvents
+type StreamWebhookEventsResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// StreamWebhookEventsResponse500Headers the declared response headers of an HTTP 500 response for StreamWebhookEvents
+type StreamWebhookEventsResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// StreamWebhookEventsResponse503Headers the declared response headers of an HTTP 503 response for StreamWebhookEvents
+type StreamWebhookEventsResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type StreamWebhookEventsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *StreamWebhookEventsResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *StreamWebhookEventsResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *StreamWebhookEventsResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *StreamWebhookEventsResponse403Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *StreamWebhookEventsResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *StreamWebhookEventsResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *StreamWebhookEventsResponse503Headers
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r StreamWebhookEventsResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r StreamWebhookEventsResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r StreamWebhookEventsResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r StreamWebhookEventsResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r StreamWebhookEventsResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r StreamWebhookEventsResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r StreamWebhookEventsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r StreamWebhookEventsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r StreamWebhookEventsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r StreamWebhookEventsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // ExecuteAcceptedCommandWithResponse Execute a guardrail-approved accepted command (idempotent replay)
 //
 // Returns a wrapper object for the known response body format(s).
@@ -37050,6 +46823,36 @@ func (c *ClientWithResponses) OpenReviewCorrectionWithResponse(ctx context.Conte
 	return ParseOpenReviewCorrectionResponse(rsp)
 }
 
+// ListDeletionsWithResponse List tenant deletion workflows
+//
+// Requires deletions:read. Returns a bounded ascending page of deletion workflows, optionally restricted to one exact aggregate. Responses never return object locations, encoded target references, or raw evidence.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/deletions (the `ListDeletions` operationId).
+func (c *ClientWithResponses) ListDeletionsWithResponse(ctx context.Context, params *ListDeletionsParams, reqEditors ...RequestEditorFn) (*ListDeletionsResponse, error) {
+	rsp, err := c.ListDeletions(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListDeletionsResponse(rsp)
+}
+
+// GetDeletionStatusWithResponse Get one deletion workflow status
+//
+// Requires deletions:read. Returns exact target states and digests, active holds, and the documented backup boundary. Raw object references and evidence bytes are never returned.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/deletions/{deletionID} (the `GetDeletionStatus` operationId).
+func (c *ClientWithResponses) GetDeletionStatusWithResponse(ctx context.Context, deletionID PrivacyDeletionID, reqEditors ...RequestEditorFn) (*GetDeletionStatusResponse, error) {
+	rsp, err := c.GetDeletionStatus(ctx, deletionID, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetDeletionStatusResponse(rsp)
+}
+
 // CreateEvidenceUploadWithBodyWithResponse Issue a requirement-bound evidence-upload intent
 //
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
@@ -37366,6 +47169,298 @@ func (c *ClientWithResponses) GetIdentityReceiptWithResponse(ctx context.Context
 	return ParseGetIdentityReceiptResponse(rsp)
 }
 
+// GetModelWithResponse Get one evaluation-model registry state
+//
+// Requires models:read. Returns the current optimistic-concurrency pointer for one
+// tenant-owned evaluation-only registry: the independently numbered model and
+// threshold revision watermarks and the optional active evaluation deployment. The
+// registry is evaluation-only; production activation is rejected and this route
+// never selects a production model.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/models/{modelName} (the `GetModel` operationId).
+func (c *ClientWithResponses) GetModelWithResponse(ctx context.Context, modelName ModelName, reqEditors ...RequestEditorFn) (*GetModelResponse, error) {
+	rsp, err := c.GetModel(ctx, modelName, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetModelResponse(rsp)
+}
+
+// ActivateModelWithBodyWithResponse Activate an evaluation-only deployment
+//
+// Requires models:activate and exactly one Idempotency-Key. Version-checks the
+// current registry pointer, resolves the exact immutable model and threshold
+// revisions, and verifies the declared region before recording one evaluation-only
+// deployment. The registry is evaluation-only: production activation is rejected and
+// this route never selects a production model. A repeated identical command returns
+// the original receipt with replayed=true.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/models/{modelName}/activate (the `ActivateModel` operationId).
+func (c *ClientWithResponses) ActivateModelWithBodyWithResponse(ctx context.Context, modelName ModelName, params *ActivateModelParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ActivateModelResponse, error) {
+	rsp, err := c.ActivateModelWithBody(ctx, modelName, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseActivateModelResponse(rsp)
+}
+
+// ActivateModelWithResponse Activate an evaluation-only deployment
+//
+// Requires models:activate and exactly one Idempotency-Key. Version-checks the
+// current registry pointer, resolves the exact immutable model and threshold
+// revisions, and verifies the declared region before recording one evaluation-only
+// deployment. The registry is evaluation-only: production activation is rejected and
+// this route never selects a production model. A repeated identical command returns
+// the original receipt with replayed=true.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/models/{modelName}/activate (the `ActivateModel` operationId).
+func (c *ClientWithResponses) ActivateModelWithResponse(ctx context.Context, modelName ModelName, params *ActivateModelParams, body ActivateModelJSONRequestBody, reqEditors ...RequestEditorFn) (*ActivateModelResponse, error) {
+	rsp, err := c.ActivateModel(ctx, modelName, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseActivateModelResponse(rsp)
+}
+
+// ListModelHistoryWithResponse List immutable evaluation-registry command history
+//
+// Requires models:read. Returns a bounded newest-first page of immutable command
+// receipts for one tenant-owned evaluation-only registry. Receipts preserve the
+// exact recorded state and original actor without exposing declared training
+// materials or scores, and immutable revisions survive retirement. This route never
+// selects a production model.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/models/{modelName}/history (the `ListModelHistory` operationId).
+func (c *ClientWithResponses) ListModelHistoryWithResponse(ctx context.Context, modelName ModelName, params *ListModelHistoryParams, reqEditors ...RequestEditorFn) (*ListModelHistoryResponse, error) {
+	rsp, err := c.ListModelHistory(ctx, modelName, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListModelHistoryResponse(rsp)
+}
+
+// RegisterModelWithBodyWithResponse Register an immutable evaluation model revision
+//
+// Requires models:write and exactly one Idempotency-Key. Appends one immutable
+// evaluation-only model revision with declared owner, licence, training provenance,
+// intended and prohibited use, regions, hardware class, and exact manifest and
+// configuration pins. The registry is evaluation-only: production activation is
+// rejected, this route never selects a production model, and a repeated identical
+// command returns the original receipt with replayed=true.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/models/{modelName}/register (the `RegisterModel` operationId).
+func (c *ClientWithResponses) RegisterModelWithBodyWithResponse(ctx context.Context, modelName ModelName, params *RegisterModelParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RegisterModelResponse, error) {
+	rsp, err := c.RegisterModelWithBody(ctx, modelName, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRegisterModelResponse(rsp)
+}
+
+// RegisterModelWithResponse Register an immutable evaluation model revision
+//
+// Requires models:write and exactly one Idempotency-Key. Appends one immutable
+// evaluation-only model revision with declared owner, licence, training provenance,
+// intended and prohibited use, regions, hardware class, and exact manifest and
+// configuration pins. The registry is evaluation-only: production activation is
+// rejected, this route never selects a production model, and a repeated identical
+// command returns the original receipt with replayed=true.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/models/{modelName}/register (the `RegisterModel` operationId).
+func (c *ClientWithResponses) RegisterModelWithResponse(ctx context.Context, modelName ModelName, params *RegisterModelParams, body RegisterModelJSONRequestBody, reqEditors ...RequestEditorFn) (*RegisterModelResponse, error) {
+	rsp, err := c.RegisterModel(ctx, modelName, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRegisterModelResponse(rsp)
+}
+
+// RetireModelWithBodyWithResponse Retire the active evaluation deployment
+//
+// Requires models:activate and exactly one Idempotency-Key. Version-checks the
+// current registry pointer and clears the active evaluation deployment, immediately
+// fencing new attempts while immutable revisions and history remain readable. The
+// registry is evaluation-only and this route never selects a production model.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/models/{modelName}/retire (the `RetireModel` operationId).
+func (c *ClientWithResponses) RetireModelWithBodyWithResponse(ctx context.Context, modelName ModelName, params *RetireModelParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RetireModelResponse, error) {
+	rsp, err := c.RetireModelWithBody(ctx, modelName, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRetireModelResponse(rsp)
+}
+
+// RetireModelWithResponse Retire the active evaluation deployment
+//
+// Requires models:activate and exactly one Idempotency-Key. Version-checks the
+// current registry pointer and clears the active evaluation deployment, immediately
+// fencing new attempts while immutable revisions and history remain readable. The
+// registry is evaluation-only and this route never selects a production model.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/models/{modelName}/retire (the `RetireModel` operationId).
+func (c *ClientWithResponses) RetireModelWithResponse(ctx context.Context, modelName ModelName, params *RetireModelParams, body RetireModelJSONRequestBody, reqEditors ...RequestEditorFn) (*RetireModelResponse, error) {
+	rsp, err := c.RetireModel(ctx, modelName, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRetireModelResponse(rsp)
+}
+
+// GetModelRevisionWithResponse Get one immutable evaluation-model revision
+//
+// Requires models:read. Returns one explicitly requested immutable evaluation-only
+// registration or threshold revision with its canonical content digest. Model and
+// threshold revisions are independently numbered and immutable provenance survives
+// retirement. This route never selects a production model.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/models/{modelName}/revisions/{kind}/{revision} (the `GetModelRevision` operationId).
+func (c *ClientWithResponses) GetModelRevisionWithResponse(ctx context.Context, modelName ModelName, kind string, revision int64, reqEditors ...RequestEditorFn) (*GetModelRevisionResponse, error) {
+	rsp, err := c.GetModelRevision(ctx, modelName, kind, revision, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetModelRevisionResponse(rsp)
+}
+
+// RollbackModelWithBodyWithResponse Roll back to a previously activated evaluation deployment
+//
+// Requires models:activate and exactly one Idempotency-Key. Version-checks the
+// current registry pointer, resolves the exact immutable model and threshold
+// revisions, verifies the declared region, and records an operational rollback to a
+// pair that was previously activated. The registry is evaluation-only: production
+// activation is rejected and this route never selects a production model.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/models/{modelName}/rollback (the `RollbackModel` operationId).
+func (c *ClientWithResponses) RollbackModelWithBodyWithResponse(ctx context.Context, modelName ModelName, params *RollbackModelParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RollbackModelResponse, error) {
+	rsp, err := c.RollbackModelWithBody(ctx, modelName, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRollbackModelResponse(rsp)
+}
+
+// RollbackModelWithResponse Roll back to a previously activated evaluation deployment
+//
+// Requires models:activate and exactly one Idempotency-Key. Version-checks the
+// current registry pointer, resolves the exact immutable model and threshold
+// revisions, verifies the declared region, and records an operational rollback to a
+// pair that was previously activated. The registry is evaluation-only: production
+// activation is rejected and this route never selects a production model.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/models/{modelName}/rollback (the `RollbackModel` operationId).
+func (c *ClientWithResponses) RollbackModelWithResponse(ctx context.Context, modelName ModelName, params *RollbackModelParams, body RollbackModelJSONRequestBody, reqEditors ...RequestEditorFn) (*RollbackModelResponse, error) {
+	rsp, err := c.RollbackModel(ctx, modelName, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRollbackModelResponse(rsp)
+}
+
+// SetModelThresholdWithBodyWithResponse Register an immutable evaluation threshold revision
+//
+// Requires models:write and exactly one Idempotency-Key. Appends one immutable
+// evaluation threshold operating point pinned to the complete execution provenance.
+// Thresholds are evaluation operating points, never accepted verification assurance,
+// and production activation is rejected. A repeated identical command returns the
+// original receipt with replayed=true.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/models/{modelName}/threshold (the `SetModelThreshold` operationId).
+func (c *ClientWithResponses) SetModelThresholdWithBodyWithResponse(ctx context.Context, modelName ModelName, params *SetModelThresholdParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SetModelThresholdResponse, error) {
+	rsp, err := c.SetModelThresholdWithBody(ctx, modelName, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSetModelThresholdResponse(rsp)
+}
+
+// SetModelThresholdWithResponse Register an immutable evaluation threshold revision
+//
+// Requires models:write and exactly one Idempotency-Key. Appends one immutable
+// evaluation threshold operating point pinned to the complete execution provenance.
+// Thresholds are evaluation operating points, never accepted verification assurance,
+// and production activation is rejected. A repeated identical command returns the
+// original receipt with replayed=true.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/models/{modelName}/threshold (the `SetModelThreshold` operationId).
+func (c *ClientWithResponses) SetModelThresholdWithResponse(ctx context.Context, modelName ModelName, params *SetModelThresholdParams, body SetModelThresholdJSONRequestBody, reqEditors ...RequestEditorFn) (*SetModelThresholdResponse, error) {
+	rsp, err := c.SetModelThreshold(ctx, modelName, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSetModelThresholdResponse(rsp)
+}
+
+// ValidateModelWithBodyWithResponse Validate an evaluation-registry command without persistence
+//
+// Requires models:write and no Idempotency-Key. Side-effect-free validation of the
+// exact closed command document that would be submitted to register, threshold,
+// activate, rollback or retire. Domain document validation and, for deployment
+// commands, stored revision, declared region, current version and previously
+// activated eligibility are checked against the current registry state. Nothing is
+// persisted and no revision, deployment, receipt, audit or outbox record is created.
+// The registry is evaluation-only: production activation is rejected and this route
+// never selects a production model.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/models/{modelName}/validate (the `ValidateModel` operationId).
+func (c *ClientWithResponses) ValidateModelWithBodyWithResponse(ctx context.Context, modelName ModelName, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ValidateModelResponse, error) {
+	rsp, err := c.ValidateModelWithBody(ctx, modelName, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseValidateModelResponse(rsp)
+}
+
+// ValidateModelWithResponse Validate an evaluation-registry command without persistence
+//
+// Requires models:write and no Idempotency-Key. Side-effect-free validation of the
+// exact closed command document that would be submitted to register, threshold,
+// activate, rollback or retire. Domain document validation and, for deployment
+// commands, stored revision, declared region, current version and previously
+// activated eligibility are checked against the current registry state. Nothing is
+// persisted and no revision, deployment, receipt, audit or outbox record is created.
+// The registry is evaluation-only: production activation is rejected and this route
+// never selects a production model.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/models/{modelName}/validate (the `ValidateModel` operationId).
+func (c *ClientWithResponses) ValidateModelWithResponse(ctx context.Context, modelName ModelName, body ValidateModelJSONRequestBody, reqEditors ...RequestEditorFn) (*ValidateModelResponse, error) {
+	rsp, err := c.ValidateModel(ctx, modelName, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseValidateModelResponse(rsp)
+}
+
 // CreateNoticeVersionWithBodyWithResponse Create an immutable subject-facing notice version
 //
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
@@ -37585,6 +47680,21 @@ func (c *ClientWithResponses) AssignPolicyAssuranceWithResponse(ctx context.Cont
 	return ParseAssignPolicyAssuranceResponse(rsp)
 }
 
+// DiffPolicyRevisionsWithResponse Diff two stored policy revisions
+//
+// Requires policies:read. Bounded canonical structural difference between two immutable revisions of one policy. Identity fields are reported on from and to and are never repeated as changes. The result is deterministic, omitted fragments are absent, and no expression is evaluated or registered.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/policies/{policyID}/diff (the `DiffPolicyRevisions` operationId).
+func (c *ClientWithResponses) DiffPolicyRevisionsWithResponse(ctx context.Context, policyID string, params *DiffPolicyRevisionsParams, reqEditors ...RequestEditorFn) (*DiffPolicyRevisionsResponse, error) {
+	rsp, err := c.DiffPolicyRevisions(ctx, policyID, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDiffPolicyRevisionsResponse(rsp)
+}
+
 // ListPolicyRevisionsWithResponse List immutable revisions
 //
 // Requires policies:read. Bounded newest-first metadata page with a signed tenant-, policy-, collection- and limit-bound cursor. Applies to list immutable revisions.
@@ -37673,6 +47783,66 @@ func (c *ClientWithResponses) RollbackPolicyWithResponse(ctx context.Context, po
 		return nil, err
 	}
 	return ParseRollbackPolicyResponse(rsp)
+}
+
+// RunPolicyRegressionWithBodyWithResponse Run a bounded portable policy scenario suite
+//
+// Requires policies:read. Side-effect-free deterministic evaluation of one portable `PolicyRegressionSuite` document holding at most the documented scenario maximum. Every scenario is a closed `PolicySimulationInput` with an exact canonical expectation; execution failures reject the request while expectation mismatches are reported as data with passed=false. No production facts are read and no policy is registered, activated, decided, tasked, or audited.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/policy-regressions (the `RunPolicyRegression` operationId).
+func (c *ClientWithResponses) RunPolicyRegressionWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RunPolicyRegressionResponse, error) {
+	rsp, err := c.RunPolicyRegressionWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRunPolicyRegressionResponse(rsp)
+}
+
+// RunPolicyRegressionWithResponse Run a bounded portable policy scenario suite
+//
+// Requires policies:read. Side-effect-free deterministic evaluation of one portable `PolicyRegressionSuite` document holding at most the documented scenario maximum. Every scenario is a closed `PolicySimulationInput` with an exact canonical expectation; execution failures reject the request while expectation mismatches are reported as data with passed=false. No production facts are read and no policy is registered, activated, decided, tasked, or audited.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/policy-regressions (the `RunPolicyRegression` operationId).
+func (c *ClientWithResponses) RunPolicyRegressionWithResponse(ctx context.Context, body RunPolicyRegressionJSONRequestBody, reqEditors ...RequestEditorFn) (*RunPolicyRegressionResponse, error) {
+	rsp, err := c.RunPolicyRegression(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRunPolicyRegressionResponse(rsp)
+}
+
+// SimulatePolicyWithBodyWithResponse Evaluate one portable synthetic policy simulation
+//
+// Requires policies:read. Side-effect-free deterministic evaluation of one portable `PolicySimulationInput` document. The embedded policy uses the same closed `PolicyDocument` meaning accepted by revision creation, normalised to canonical form, but is never registered, activated, decided, tasked, or audited. Supplied facts use the canonical `PolicyCanonicalFact` shape without evidence bytes. No production facts are read and no expression source is returned. The request body is bounded by the portable simulation input limit.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/policy-simulations (the `SimulatePolicy` operationId).
+func (c *ClientWithResponses) SimulatePolicyWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SimulatePolicyResponse, error) {
+	rsp, err := c.SimulatePolicyWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSimulatePolicyResponse(rsp)
+}
+
+// SimulatePolicyWithResponse Evaluate one portable synthetic policy simulation
+//
+// Requires policies:read. Side-effect-free deterministic evaluation of one portable `PolicySimulationInput` document. The embedded policy uses the same closed `PolicyDocument` meaning accepted by revision creation, normalised to canonical form, but is never registered, activated, decided, tasked, or audited. Supplied facts use the canonical `PolicyCanonicalFact` shape without evidence bytes. No production facts are read and no expression source is returned. The request body is bounded by the portable simulation input limit.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/policy-simulations (the `SimulatePolicy` operationId).
+func (c *ClientWithResponses) SimulatePolicyWithResponse(ctx context.Context, body SimulatePolicyJSONRequestBody, reqEditors ...RequestEditorFn) (*SimulatePolicyResponse, error) {
+	rsp, err := c.SimulatePolicy(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSimulatePolicyResponse(rsp)
 }
 
 // CreatePromptWithBodyWithResponse Create immutable prompt version
@@ -37885,6 +48055,300 @@ func (c *ClientWithResponses) RejectProposalWithResponse(ctx context.Context, pr
 		return nil, err
 	}
 	return ParseRejectProposalResponse(rsp)
+}
+
+// ListProviderRegistrationsWithResponse List tenant provider registrations
+//
+// Requires providers:read. Returns a bounded newest-first page of tenant-owned
+// secret-free provider registrations. Registrations name externally resolved
+// credentials; Core never stores or returns a credential value, and this route
+// performs no external provider probe.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/providers (the `ListProviderRegistrations` operationId).
+func (c *ClientWithResponses) ListProviderRegistrationsWithResponse(ctx context.Context, params *ListProviderRegistrationsParams, reqEditors ...RequestEditorFn) (*ListProviderRegistrationsResponse, error) {
+	rsp, err := c.ListProviderRegistrations(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListProviderRegistrationsResponse(rsp)
+}
+
+// CreateProviderRegistrationWithBodyWithResponse Register a tenant provider route
+//
+// Requires providers:write and exactly one Idempotency-Key. Creates one disabled
+// tenant-owned registration whose adapter must match a configured deployment
+// adapter manifest and whose configuration and structured inputs are secret-free
+// external references. Credential values, inline secrets and weak or unrecognised
+// configuration shapes are rejected. A repeated identical command returns the
+// original receipt with replayed=true. The registration is enabled only through
+// the explicit enable route.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/providers (the `CreateProviderRegistration` operationId).
+func (c *ClientWithResponses) CreateProviderRegistrationWithBodyWithResponse(ctx context.Context, params *CreateProviderRegistrationParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateProviderRegistrationResponse, error) {
+	rsp, err := c.CreateProviderRegistrationWithBody(ctx, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateProviderRegistrationResponse(rsp)
+}
+
+// CreateProviderRegistrationWithResponse Register a tenant provider route
+//
+// Requires providers:write and exactly one Idempotency-Key. Creates one disabled
+// tenant-owned registration whose adapter must match a configured deployment
+// adapter manifest and whose configuration and structured inputs are secret-free
+// external references. Credential values, inline secrets and weak or unrecognised
+// configuration shapes are rejected. A repeated identical command returns the
+// original receipt with replayed=true. The registration is enabled only through
+// the explicit enable route.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/providers (the `CreateProviderRegistration` operationId).
+func (c *ClientWithResponses) CreateProviderRegistrationWithResponse(ctx context.Context, params *CreateProviderRegistrationParams, body CreateProviderRegistrationJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateProviderRegistrationResponse, error) {
+	rsp, err := c.CreateProviderRegistration(ctx, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateProviderRegistrationResponse(rsp)
+}
+
+// GetProviderRegistrationWithResponse Get one tenant provider registration
+//
+// Requires providers:read. Returns one tenant-owned secret-free registration with
+// its optimistic-concurrency version and latest attributed actor. Cross-tenant and
+// absent registrations are indistinguishable. No credential value or external
+// provider state is returned.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/providers/{providerID} (the `GetProviderRegistration` operationId).
+func (c *ClientWithResponses) GetProviderRegistrationWithResponse(ctx context.Context, providerID ProviderID, reqEditors ...RequestEditorFn) (*GetProviderRegistrationResponse, error) {
+	rsp, err := c.GetProviderRegistration(ctx, providerID, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetProviderRegistrationResponse(rsp)
+}
+
+// UpdateProviderRegistrationWithBodyWithResponse Update one tenant provider registration
+//
+// Requires providers:write. Version-checks the registration pointer and replaces
+// the secret-free adapter, region, configuration reference, structured inputs,
+// selfie requirement and optional restrictions. The adapter must match a
+// configured deployment adapter manifest and credential values are rejected. The
+// enabled state is unchanged; use enable or disable explicitly.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PUT /v1/providers/{providerID} (the `UpdateProviderRegistration` operationId).
+func (c *ClientWithResponses) UpdateProviderRegistrationWithBodyWithResponse(ctx context.Context, providerID ProviderID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateProviderRegistrationResponse, error) {
+	rsp, err := c.UpdateProviderRegistrationWithBody(ctx, providerID, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateProviderRegistrationResponse(rsp)
+}
+
+// UpdateProviderRegistrationWithResponse Update one tenant provider registration
+//
+// Requires providers:write. Version-checks the registration pointer and replaces
+// the secret-free adapter, region, configuration reference, structured inputs,
+// selfie requirement and optional restrictions. The adapter must match a
+// configured deployment adapter manifest and credential values are rejected. The
+// enabled state is unchanged; use enable or disable explicitly.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PUT /v1/providers/{providerID} (the `UpdateProviderRegistration` operationId).
+func (c *ClientWithResponses) UpdateProviderRegistrationWithResponse(ctx context.Context, providerID ProviderID, body UpdateProviderRegistrationJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateProviderRegistrationResponse, error) {
+	rsp, err := c.UpdateProviderRegistration(ctx, providerID, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateProviderRegistrationResponse(rsp)
+}
+
+// DisableProviderRegistrationWithBodyWithResponse Disable one tenant provider registration
+//
+// Requires providers:write. Version-checks the registration pointer and disables
+// the tenant registration so planning falls back to the deployment-configured
+// provider route. The command is attributed and appended to immutable history.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/providers/{providerID}/disable (the `DisableProviderRegistration` operationId).
+func (c *ClientWithResponses) DisableProviderRegistrationWithBodyWithResponse(ctx context.Context, providerID ProviderID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*DisableProviderRegistrationResponse, error) {
+	rsp, err := c.DisableProviderRegistrationWithBody(ctx, providerID, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDisableProviderRegistrationResponse(rsp)
+}
+
+// DisableProviderRegistrationWithResponse Disable one tenant provider registration
+//
+// Requires providers:write. Version-checks the registration pointer and disables
+// the tenant registration so planning falls back to the deployment-configured
+// provider route. The command is attributed and appended to immutable history.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/providers/{providerID}/disable (the `DisableProviderRegistration` operationId).
+func (c *ClientWithResponses) DisableProviderRegistrationWithResponse(ctx context.Context, providerID ProviderID, body DisableProviderRegistrationJSONRequestBody, reqEditors ...RequestEditorFn) (*DisableProviderRegistrationResponse, error) {
+	rsp, err := c.DisableProviderRegistration(ctx, providerID, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDisableProviderRegistrationResponse(rsp)
+}
+
+// EnableProviderRegistrationWithBodyWithResponse Enable one tenant provider registration
+//
+// Requires providers:write. Version-checks the registration pointer and enables
+// the tenant registration. At most one enabled registration exists per tenant,
+// adapter and region; enabling a second registration for the same scope is a
+// conflict. The command is attributed and appended to immutable history.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/providers/{providerID}/enable (the `EnableProviderRegistration` operationId).
+func (c *ClientWithResponses) EnableProviderRegistrationWithBodyWithResponse(ctx context.Context, providerID ProviderID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*EnableProviderRegistrationResponse, error) {
+	rsp, err := c.EnableProviderRegistrationWithBody(ctx, providerID, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseEnableProviderRegistrationResponse(rsp)
+}
+
+// EnableProviderRegistrationWithResponse Enable one tenant provider registration
+//
+// Requires providers:write. Version-checks the registration pointer and enables
+// the tenant registration. At most one enabled registration exists per tenant,
+// adapter and region; enabling a second registration for the same scope is a
+// conflict. The command is attributed and appended to immutable history.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/providers/{providerID}/enable (the `EnableProviderRegistration` operationId).
+func (c *ClientWithResponses) EnableProviderRegistrationWithResponse(ctx context.Context, providerID ProviderID, body EnableProviderRegistrationJSONRequestBody, reqEditors ...RequestEditorFn) (*EnableProviderRegistrationResponse, error) {
+	rsp, err := c.EnableProviderRegistration(ctx, providerID, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseEnableProviderRegistrationResponse(rsp)
+}
+
+// SimulateProviderFailureWithBodyWithResponse Preview provider failure classification
+//
+// Requires providers:read and no Idempotency-Key. Pure side-effect-free preview of
+// how the owned normalisation classifies one bounded provider failure class and
+// code: the operational attempt/check state and retry disposition. It confirms
+// that a provider failure never produces an identity outcome. Nothing is
+// dispatched, persisted or mutated, and no external provider is contacted.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/providers/{providerID}/failure-simulations (the `SimulateProviderFailure` operationId).
+func (c *ClientWithResponses) SimulateProviderFailureWithBodyWithResponse(ctx context.Context, providerID ProviderID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SimulateProviderFailureResponse, error) {
+	rsp, err := c.SimulateProviderFailureWithBody(ctx, providerID, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSimulateProviderFailureResponse(rsp)
+}
+
+// SimulateProviderFailureWithResponse Preview provider failure classification
+//
+// Requires providers:read and no Idempotency-Key. Pure side-effect-free preview of
+// how the owned normalisation classifies one bounded provider failure class and
+// code: the operational attempt/check state and retry disposition. It confirms
+// that a provider failure never produces an identity outcome. Nothing is
+// dispatched, persisted or mutated, and no external provider is contacted.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/providers/{providerID}/failure-simulations (the `SimulateProviderFailure` operationId).
+func (c *ClientWithResponses) SimulateProviderFailureWithResponse(ctx context.Context, providerID ProviderID, body SimulateProviderFailureJSONRequestBody, reqEditors ...RequestEditorFn) (*SimulateProviderFailureResponse, error) {
+	rsp, err := c.SimulateProviderFailure(ctx, providerID, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSimulateProviderFailureResponse(rsp)
+}
+
+// GetProviderRegistrationHealthWithResponse Read bounded registration health
+//
+// Requires providers:read. Returns a bounded read over the tenant's own persisted
+// provider requests and dispatch receipts for this registration: counts by
+// dispatch state and the last normalized outcome or failure class. It never
+// performs an external provider probe, returns no provider topology and never
+// exposes evidence bytes.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/providers/{providerID}/health (the `GetProviderRegistrationHealth` operationId).
+func (c *ClientWithResponses) GetProviderRegistrationHealthWithResponse(ctx context.Context, providerID ProviderID, reqEditors ...RequestEditorFn) (*GetProviderRegistrationHealthResponse, error) {
+	rsp, err := c.GetProviderRegistrationHealth(ctx, providerID, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetProviderRegistrationHealthResponse(rsp)
+}
+
+// ValidateProviderRegistrationWithBodyWithResponse Validate a provider registration document without persistence
+//
+// Requires providers:write and no Idempotency-Key. Side-effect-free validation of
+// one secret-free registration document against the configured deployment adapter
+// manifest. Nothing is persisted and no registration, receipt, history, audit or
+// outbox record is created. The report never echoes supplied values.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/providers/{providerID}/validate (the `ValidateProviderRegistration` operationId).
+func (c *ClientWithResponses) ValidateProviderRegistrationWithBodyWithResponse(ctx context.Context, providerID ProviderID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ValidateProviderRegistrationResponse, error) {
+	rsp, err := c.ValidateProviderRegistrationWithBody(ctx, providerID, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseValidateProviderRegistrationResponse(rsp)
+}
+
+// ValidateProviderRegistrationWithResponse Validate a provider registration document without persistence
+//
+// Requires providers:write and no Idempotency-Key. Side-effect-free validation of
+// one secret-free registration document against the configured deployment adapter
+// manifest. Nothing is persisted and no registration, receipt, history, audit or
+// outbox record is created. The report never echoes supplied values.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/providers/{providerID}/validate (the `ValidateProviderRegistration` operationId).
+func (c *ClientWithResponses) ValidateProviderRegistrationWithResponse(ctx context.Context, providerID ProviderID, body ValidateProviderRegistrationJSONRequestBody, reqEditors ...RequestEditorFn) (*ValidateProviderRegistrationResponse, error) {
+	rsp, err := c.ValidateProviderRegistration(ctx, providerID, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseValidateProviderRegistrationResponse(rsp)
+}
+
+// GetRetentionResolutionWithResponse Resolve typed retention for one aggregate
+//
+// Requires deletions:read. Read-only inspection recomputes each retained evidence record with the selected typed retention resolution and returns active holds. It does not extend, shorten, or otherwise invent retention meaning.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/retention/resolutions (the `GetRetentionResolution` operationId).
+func (c *ClientWithResponses) GetRetentionResolutionWithResponse(ctx context.Context, params *GetRetentionResolutionParams, reqEditors ...RequestEditorFn) (*GetRetentionResolutionResponse, error) {
+	rsp, err := c.GetRetentionResolution(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetRetentionResolutionResponse(rsp)
 }
 
 // ListReviewCasesWithResponse List review cases
@@ -38727,6 +49191,26 @@ func (c *ClientWithResponses) GetCurrentTenantWithResponse(ctx context.Context, 
 	return ParseGetCurrentTenantResponse(rsp)
 }
 
+// ExportTenantWithResponse Export the authenticated tenant
+//
+// Streams a bounded, portable, tenant-owned canonical NDJSON export for
+// portability and offboarding. The header announces the selected
+// collections, per-collection records follow in canonical order, and the
+// footer carries per-collection counts plus the SHA-256 digest of every
+// preceding byte. Raw evidence bytes, credentials, endpoint secrets, and
+// provider payloads are never included.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/tenant/export (the `ExportTenant` operationId).
+func (c *ClientWithResponses) ExportTenantWithResponse(ctx context.Context, params *ExportTenantParams, reqEditors ...RequestEditorFn) (*ExportTenantResponse, error) {
+	rsp, err := c.ExportTenant(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseExportTenantResponse(rsp)
+}
+
 // CreateVerificationWithBodyWithResponse Create a verification session
 //
 // Creates a collecting verification from the active published revision of
@@ -38926,6 +49410,44 @@ func (c *ClientWithResponses) GetLatestDecisionWithResponse(ctx context.Context,
 		return nil, err
 	}
 	return ParseGetLatestDecisionResponse(rsp)
+}
+
+// ResumeVerificationWithBodyWithResponse Resume a verification awaiting subject input
+//
+// Requires verification_sessions:resume and a fresh subject authorisation
+// recorded after the session entered awaiting_input. Reuses a still-live
+// capture credential; otherwise atomically replaces it without extending
+// the verification deadline. Exact replay returns references only and
+// never returns capture bearer material again.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/verifications/{verificationID}/resume (the `ResumeVerification` operationId).
+func (c *ClientWithResponses) ResumeVerificationWithBodyWithResponse(ctx context.Context, verificationID VerificationID, params *ResumeVerificationParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ResumeVerificationResponse, error) {
+	rsp, err := c.ResumeVerificationWithBody(ctx, verificationID, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseResumeVerificationResponse(rsp)
+}
+
+// ResumeVerificationWithResponse Resume a verification awaiting subject input
+//
+// Requires verification_sessions:resume and a fresh subject authorisation
+// recorded after the session entered awaiting_input. Reuses a still-live
+// capture credential; otherwise atomically replaces it without extending
+// the verification deadline. Exact replay returns references only and
+// never returns capture bearer material again.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/verifications/{verificationID}/resume (the `ResumeVerification` operationId).
+func (c *ClientWithResponses) ResumeVerificationWithResponse(ctx context.Context, verificationID VerificationID, params *ResumeVerificationParams, body ResumeVerificationJSONRequestBody, reqEditors ...RequestEditorFn) (*ResumeVerificationResponse, error) {
+	rsp, err := c.ResumeVerification(ctx, verificationID, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseResumeVerificationResponse(rsp)
 }
 
 // GetWebhookDeliveryWithResponse Get delivery metadata
@@ -39151,6 +49673,36 @@ func (c *ClientWithResponses) UpdateWebhookSubscriptionsWithResponse(ctx context
 		return nil, err
 	}
 	return ParseUpdateWebhookSubscriptionsResponse(rsp)
+}
+
+// ListWebhookEventsWithResponse List catalogue events
+//
+// Requires webhooks:read. Ascending insertion-order page of decrypted canonical catalogue envelopes with a tenant-, collection-, filter- and limit-bound cursor. Delivery and attempt inspection remain payload-free.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/webhook-events (the `ListWebhookEvents` operationId).
+func (c *ClientWithResponses) ListWebhookEventsWithResponse(ctx context.Context, params *ListWebhookEventsParams, reqEditors ...RequestEditorFn) (*ListWebhookEventsResponse, error) {
+	rsp, err := c.ListWebhookEvents(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListWebhookEventsResponse(rsp)
+}
+
+// StreamWebhookEventsWithResponse Stream live catalogue events
+//
+// Requires webhooks:read. Server-Sent Events feed of decrypted canonical catalogue envelopes. Each event frame carries its durable sequence as the SSE id and the canonical envelope as data; reconnect with the Last-Event-ID header to resume after that sequence. Heartbeat comments keep the connection alive. Receivers must deduplicate by event id.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/webhook-events/stream (the `StreamWebhookEvents` operationId).
+func (c *ClientWithResponses) StreamWebhookEventsWithResponse(ctx context.Context, params *StreamWebhookEventsParams, reqEditors ...RequestEditorFn) (*StreamWebhookEventsResponse, error) {
+	rsp, err := c.StreamWebhookEvents(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseStreamWebhookEventsResponse(rsp)
 }
 
 // ParseExecuteAcceptedCommandResponse parses an HTTP response from a ExecuteAcceptedCommandWithResponse call
@@ -44439,6 +54991,375 @@ func ParseOpenReviewCorrectionResponse(rsp *http.Response) (*OpenReviewCorrectio
 	return response, nil
 }
 
+// ParseListDeletionsResponse parses an HTTP response from a ListDeletionsWithResponse call
+func ParseListDeletionsResponse(rsp *http.Response) (*ListDeletionsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListDeletionsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest PrivacyDeletionList
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ListDeletionsResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers ListDeletionsResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ListDeletionsResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListDeletionsResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 429:
+		var headers ListDeletionsResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListDeletionsResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ListDeletionsResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetDeletionStatusResponse parses an HTTP response from a GetDeletionStatusWithResponse call
+func ParseGetDeletionStatusResponse(rsp *http.Response) (*GetDeletionStatusResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetDeletionStatusResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest PrivacyDeletionStatus
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetDeletionStatusResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers GetDeletionStatusResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers GetDeletionStatusResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetDeletionStatusResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetDeletionStatusResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 429:
+		var headers GetDeletionStatusResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers GetDeletionStatusResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers GetDeletionStatusResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
 // ParseCreateEvidenceUploadResponse parses an HTTP response from a CreateEvidenceUploadWithResponse call
 func ParseCreateEvidenceUploadResponse(rsp *http.Response) (*CreateEvidenceUploadResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -46387,6 +57308,1863 @@ func ParseGetIdentityReceiptResponse(rsp *http.Response) (*GetIdentityReceiptRes
 		response.Headers500 = &headers
 	case rsp.StatusCode == 503:
 		var headers GetIdentityReceiptResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetModelResponse parses an HTTP response from a GetModelWithResponse call
+func ParseGetModelResponse(rsp *http.Response) (*GetModelResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetModelResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ModelRegistryState
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetModelResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers GetModelResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers GetModelResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetModelResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetModelResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 429:
+		var headers GetModelResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers GetModelResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers GetModelResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseActivateModelResponse parses an HTTP response from a ActivateModelWithResponse call
+func ParseActivateModelResponse(rsp *http.Response) (*ActivateModelResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ActivateModelResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ModelRegistryReceipt
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ActivateModelResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers ActivateModelResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ActivateModelResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ActivateModelResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers ActivateModelResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers ActivateModelResponse409Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 429:
+		var headers ActivateModelResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers ActivateModelResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ActivateModelResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseListModelHistoryResponse parses an HTTP response from a ListModelHistoryWithResponse call
+func ParseListModelHistoryResponse(rsp *http.Response) (*ListModelHistoryResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListModelHistoryResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []ModelRegistryReceipt
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ListModelHistoryResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers ListModelHistoryResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ListModelHistoryResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListModelHistoryResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers ListModelHistoryResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 429:
+		var headers ListModelHistoryResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListModelHistoryResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ListModelHistoryResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseRegisterModelResponse parses an HTTP response from a RegisterModelWithResponse call
+func ParseRegisterModelResponse(rsp *http.Response) (*RegisterModelResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &RegisterModelResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ModelRegistryReceipt
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers RegisterModelResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers RegisterModelResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers RegisterModelResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers RegisterModelResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers RegisterModelResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers RegisterModelResponse409Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 429:
+		var headers RegisterModelResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers RegisterModelResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers RegisterModelResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseRetireModelResponse parses an HTTP response from a RetireModelWithResponse call
+func ParseRetireModelResponse(rsp *http.Response) (*RetireModelResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &RetireModelResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ModelRegistryReceipt
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers RetireModelResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers RetireModelResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers RetireModelResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers RetireModelResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers RetireModelResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers RetireModelResponse409Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 429:
+		var headers RetireModelResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers RetireModelResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers RetireModelResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetModelRevisionResponse parses an HTTP response from a GetModelRevisionWithResponse call
+func ParseGetModelRevisionResponse(rsp *http.Response) (*GetModelRevisionResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetModelRevisionResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ModelRegistryRevision
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetModelRevisionResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers GetModelRevisionResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers GetModelRevisionResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetModelRevisionResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetModelRevisionResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 429:
+		var headers GetModelRevisionResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers GetModelRevisionResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers GetModelRevisionResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseRollbackModelResponse parses an HTTP response from a RollbackModelWithResponse call
+func ParseRollbackModelResponse(rsp *http.Response) (*RollbackModelResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &RollbackModelResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ModelRegistryReceipt
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers RollbackModelResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers RollbackModelResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers RollbackModelResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers RollbackModelResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers RollbackModelResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers RollbackModelResponse409Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 429:
+		var headers RollbackModelResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers RollbackModelResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers RollbackModelResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseSetModelThresholdResponse parses an HTTP response from a SetModelThresholdWithResponse call
+func ParseSetModelThresholdResponse(rsp *http.Response) (*SetModelThresholdResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &SetModelThresholdResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ModelRegistryReceipt
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers SetModelThresholdResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers SetModelThresholdResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers SetModelThresholdResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers SetModelThresholdResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers SetModelThresholdResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers SetModelThresholdResponse409Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 429:
+		var headers SetModelThresholdResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers SetModelThresholdResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers SetModelThresholdResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseValidateModelResponse parses an HTTP response from a ValidateModelWithResponse call
+func ParseValidateModelResponse(rsp *http.Response) (*ValidateModelResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ValidateModelResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ModelValidationReport
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ValidateModelResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers ValidateModelResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ValidateModelResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ValidateModelResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers ValidateModelResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 429:
+		var headers ValidateModelResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers ValidateModelResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ValidateModelResponse503Headers
 		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
 			var value int
 			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
@@ -48460,6 +61238,223 @@ func ParseAssignPolicyAssuranceResponse(rsp *http.Response) (*AssignPolicyAssura
 	return response, nil
 }
 
+// ParseDiffPolicyRevisionsResponse parses an HTTP response from a DiffPolicyRevisionsWithResponse call
+func ParseDiffPolicyRevisionsResponse(rsp *http.Response) (*DiffPolicyRevisionsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DiffPolicyRevisionsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest PolicyRevisionDiff
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers DiffPolicyRevisionsResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers DiffPolicyRevisionsResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers DiffPolicyRevisionsResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers DiffPolicyRevisionsResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers DiffPolicyRevisionsResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers DiffPolicyRevisionsResponse409Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 429:
+		var headers DiffPolicyRevisionsResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers DiffPolicyRevisionsResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers DiffPolicyRevisionsResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
 // ParseListPolicyRevisionsResponse parses an HTTP response from a ListPolicyRevisionsWithResponse call
 func ParseListPolicyRevisionsResponse(rsp *http.Response) (*ListPolicyRevisionsResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -49308,6 +62303,392 @@ func ParseRollbackPolicyResponse(rsp *http.Response) (*RollbackPolicyResponse, e
 		response.Headers500 = &headers
 	case rsp.StatusCode == 503:
 		var headers RollbackPolicyResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseRunPolicyRegressionResponse parses an HTTP response from a RunPolicyRegressionWithResponse call
+func ParseRunPolicyRegressionResponse(rsp *http.Response) (*RunPolicyRegressionResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &RunPolicyRegressionResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest PolicyRegressionReport
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 413:
+		var dest RequestTooLarge
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON413 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers RunPolicyRegressionResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers RunPolicyRegressionResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers RunPolicyRegressionResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers RunPolicyRegressionResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 413:
+		var headers RunPolicyRegressionResponse413Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers413 = &headers
+	case rsp.StatusCode == 429:
+		var headers RunPolicyRegressionResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers RunPolicyRegressionResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers RunPolicyRegressionResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseSimulatePolicyResponse parses an HTTP response from a SimulatePolicyWithResponse call
+func ParseSimulatePolicyResponse(rsp *http.Response) (*SimulatePolicyResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &SimulatePolicyResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest PolicySimulationReport
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 413:
+		var dest RequestTooLarge
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON413 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers SimulatePolicyResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers SimulatePolicyResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers SimulatePolicyResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers SimulatePolicyResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 413:
+		var headers SimulatePolicyResponse413Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers413 = &headers
+	case rsp.StatusCode == 429:
+		var headers SimulatePolicyResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers SimulatePolicyResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers SimulatePolicyResponse503Headers
 		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
 			var value int
 			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
@@ -50713,6 +64094,1998 @@ func ParseRejectProposalResponse(rsp *http.Response) (*RejectProposalResponse, e
 			headers.XRequestID = value
 		}
 		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseListProviderRegistrationsResponse parses an HTTP response from a ListProviderRegistrationsWithResponse call
+func ParseListProviderRegistrationsResponse(rsp *http.Response) (*ListProviderRegistrationsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListProviderRegistrationsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ProviderRegistrationList
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ListProviderRegistrationsResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers ListProviderRegistrationsResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ListProviderRegistrationsResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListProviderRegistrationsResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 429:
+		var headers ListProviderRegistrationsResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListProviderRegistrationsResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ListProviderRegistrationsResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseCreateProviderRegistrationResponse parses an HTTP response from a CreateProviderRegistrationWithResponse call
+func ParseCreateProviderRegistrationResponse(rsp *http.Response) (*CreateProviderRegistrationResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateProviderRegistrationResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ProviderRegistrationReceipt
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers CreateProviderRegistrationResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers CreateProviderRegistrationResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers CreateProviderRegistrationResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers CreateProviderRegistrationResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 409:
+		var headers CreateProviderRegistrationResponse409Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 429:
+		var headers CreateProviderRegistrationResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers CreateProviderRegistrationResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers CreateProviderRegistrationResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetProviderRegistrationResponse parses an HTTP response from a GetProviderRegistrationWithResponse call
+func ParseGetProviderRegistrationResponse(rsp *http.Response) (*GetProviderRegistrationResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetProviderRegistrationResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ProviderRegistration
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetProviderRegistrationResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers GetProviderRegistrationResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers GetProviderRegistrationResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetProviderRegistrationResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetProviderRegistrationResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 429:
+		var headers GetProviderRegistrationResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers GetProviderRegistrationResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers GetProviderRegistrationResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseUpdateProviderRegistrationResponse parses an HTTP response from a UpdateProviderRegistrationWithResponse call
+func ParseUpdateProviderRegistrationResponse(rsp *http.Response) (*UpdateProviderRegistrationResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateProviderRegistrationResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ProviderRegistrationReceipt
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers UpdateProviderRegistrationResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers UpdateProviderRegistrationResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers UpdateProviderRegistrationResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers UpdateProviderRegistrationResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers UpdateProviderRegistrationResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers UpdateProviderRegistrationResponse409Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 429:
+		var headers UpdateProviderRegistrationResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers UpdateProviderRegistrationResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers UpdateProviderRegistrationResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseDisableProviderRegistrationResponse parses an HTTP response from a DisableProviderRegistrationWithResponse call
+func ParseDisableProviderRegistrationResponse(rsp *http.Response) (*DisableProviderRegistrationResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DisableProviderRegistrationResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ProviderRegistrationReceipt
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers DisableProviderRegistrationResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers DisableProviderRegistrationResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers DisableProviderRegistrationResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers DisableProviderRegistrationResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers DisableProviderRegistrationResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers DisableProviderRegistrationResponse409Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 429:
+		var headers DisableProviderRegistrationResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers DisableProviderRegistrationResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers DisableProviderRegistrationResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseEnableProviderRegistrationResponse parses an HTTP response from a EnableProviderRegistrationWithResponse call
+func ParseEnableProviderRegistrationResponse(rsp *http.Response) (*EnableProviderRegistrationResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &EnableProviderRegistrationResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ProviderRegistrationReceipt
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers EnableProviderRegistrationResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers EnableProviderRegistrationResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers EnableProviderRegistrationResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers EnableProviderRegistrationResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers EnableProviderRegistrationResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers EnableProviderRegistrationResponse409Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 429:
+		var headers EnableProviderRegistrationResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers EnableProviderRegistrationResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers EnableProviderRegistrationResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseSimulateProviderFailureResponse parses an HTTP response from a SimulateProviderFailureWithResponse call
+func ParseSimulateProviderFailureResponse(rsp *http.Response) (*SimulateProviderFailureResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &SimulateProviderFailureResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ProviderFailureSimulation
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers SimulateProviderFailureResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers SimulateProviderFailureResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers SimulateProviderFailureResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers SimulateProviderFailureResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers SimulateProviderFailureResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 429:
+		var headers SimulateProviderFailureResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers SimulateProviderFailureResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers SimulateProviderFailureResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetProviderRegistrationHealthResponse parses an HTTP response from a GetProviderRegistrationHealthWithResponse call
+func ParseGetProviderRegistrationHealthResponse(rsp *http.Response) (*GetProviderRegistrationHealthResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetProviderRegistrationHealthResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ProviderRegistrationHealth
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetProviderRegistrationHealthResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers GetProviderRegistrationHealthResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers GetProviderRegistrationHealthResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetProviderRegistrationHealthResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetProviderRegistrationHealthResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 429:
+		var headers GetProviderRegistrationHealthResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers GetProviderRegistrationHealthResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers GetProviderRegistrationHealthResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseValidateProviderRegistrationResponse parses an HTTP response from a ValidateProviderRegistrationWithResponse call
+func ParseValidateProviderRegistrationResponse(rsp *http.Response) (*ValidateProviderRegistrationResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ValidateProviderRegistrationResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ProviderRegistrationValidationReport
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ValidateProviderRegistrationResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers ValidateProviderRegistrationResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ValidateProviderRegistrationResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ValidateProviderRegistrationResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers ValidateProviderRegistrationResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 429:
+		var headers ValidateProviderRegistrationResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers ValidateProviderRegistrationResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ValidateProviderRegistrationResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetRetentionResolutionResponse parses an HTTP response from a GetRetentionResolutionWithResponse call
+func ParseGetRetentionResolutionResponse(rsp *http.Response) (*GetRetentionResolutionResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetRetentionResolutionResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest PrivacyRetentionResolution
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetRetentionResolutionResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers GetRetentionResolutionResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers GetRetentionResolutionResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetRetentionResolutionResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetRetentionResolutionResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 429:
+		var headers GetRetentionResolutionResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers GetRetentionResolutionResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers GetRetentionResolutionResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
 	}
 
 	return response, nil
@@ -58511,6 +73884,189 @@ func ParseGetCurrentTenantResponse(rsp *http.Response) (*GetCurrentTenantRespons
 	return response, nil
 }
 
+// ParseExportTenantResponse parses an HTTP response from a ExportTenantWithResponse call
+func ParseExportTenantResponse(rsp *http.Response) (*ExportTenantResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ExportTenantResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ExportTenantResponse200Headers
+		if values := rsp.Header.Values("Cache-Control"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Cache-Control", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.CacheControl = &value
+		}
+		if values := rsp.Header.Values("Content-Disposition"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Content-Disposition", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ContentDisposition = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers ExportTenantResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ExportTenantResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ExportTenantResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 429:
+		var headers ExportTenantResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers ExportTenantResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ExportTenantResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
 // ParseCreateVerificationResponse parses an HTTP response from a CreateVerificationWithResponse call
 func ParseCreateVerificationResponse(rsp *http.Response) (*CreateVerificationResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -60248,6 +75804,185 @@ func ParseGetLatestDecisionResponse(rsp *http.Response) (*GetLatestDecisionRespo
 		response.Headers500 = &headers
 	case rsp.StatusCode == 503:
 		var headers GetLatestDecisionResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseResumeVerificationResponse parses an HTTP response from a ResumeVerificationWithResponse call
+func ParseResumeVerificationResponse(rsp *http.Response) (*ResumeVerificationResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ResumeVerificationResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest VerificationResumed
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ResumeVerificationResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers ResumeVerificationResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ResumeVerificationResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ResumeVerificationResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers ResumeVerificationResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers ResumeVerificationResponse409Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 500:
+		var headers ResumeVerificationResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ResumeVerificationResponse503Headers
 		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
 			var value int
 			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
@@ -62418,6 +78153,351 @@ func ParseUpdateWebhookSubscriptionsResponse(rsp *http.Response) (*UpdateWebhook
 		response.Headers500 = &headers
 	case rsp.StatusCode == 503:
 		var headers UpdateWebhookSubscriptionsResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseListWebhookEventsResponse parses an HTTP response from a ListWebhookEventsWithResponse call
+func ParseListWebhookEventsResponse(rsp *http.Response) (*ListWebhookEventsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListWebhookEventsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest WebhookEventList
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ListWebhookEventsResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers ListWebhookEventsResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ListWebhookEventsResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListWebhookEventsResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 429:
+		var headers ListWebhookEventsResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListWebhookEventsResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ListWebhookEventsResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseStreamWebhookEventsResponse parses an HTTP response from a StreamWebhookEventsWithResponse call
+func ParseStreamWebhookEventsResponse(rsp *http.Response) (*StreamWebhookEventsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &StreamWebhookEventsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers StreamWebhookEventsResponse200Headers
+		if values := rsp.Header.Values("Cache-Control"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Cache-Control", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.CacheControl = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers StreamWebhookEventsResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers StreamWebhookEventsResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers StreamWebhookEventsResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 429:
+		var headers StreamWebhookEventsResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers StreamWebhookEventsResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers StreamWebhookEventsResponse503Headers
 		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
 			var value int
 			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {

@@ -109,6 +109,7 @@ export type {
   VerificationID,
   VerificationSession,
   VerificationCancellation,
+  VerificationResumed,
   VerificationState,
 } from "./types.js";
 

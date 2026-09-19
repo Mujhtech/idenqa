@@ -42,8 +42,14 @@ tags:
     description: Tenant-isolated correlation, versioned rules and evidence-linked risk receipts.
   - name: Identity
     description: Tenant subjects, encrypted claims, immutable observations and facts, and deterministic provenance.
+  - name: Privacy
+    description: Tenant deletion-workflow status and typed retention resolution without object locations or raw evidence.
   - name: Proposals
     description: Bounded non-authoritative AI proposals, automation modes, accepted commands and the prompt registry.
+  - name: Models
+    description: Evaluation-only model registry administration. Production activation is rejected and these routes never select a production model.
+  - name: Providers
+    description: Tenant-owned secret-free provider route registration and bounded operational health.
 paths:
   /v1/tenant:
     get:
@@ -85,6 +91,60 @@ paths:
           $ref: "#/components/responses/InsufficientScope"
         "404":
           $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /v1/tenant/export:
+    get:
+      operationId: exportTenant
+      summary: Export the authenticated tenant
+      description: |
+        Streams a bounded, portable, tenant-owned canonical NDJSON export for
+        portability and offboarding. The header announces the selected
+        collections, per-collection records follow in canonical order, and the
+        footer carries per-collection counts plus the SHA-256 digest of every
+        preceding byte. Raw evidence bytes, credentials, endpoint secrets, and
+        provider payloads are never included.
+      tags:
+        - Tenant
+      security:
+        - TenantAPIKey: []
+      parameters:
+        - name: collections
+          in: query
+          required: false
+          description: A comma-separated subset of known export collections; omitted streams every collection.
+          schema:
+            type: string
+            maxLength: 1024
+      responses:
+        "200":
+          description: A canonical NDJSON export stream.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+            Cache-Control:
+              description: Always no-store.
+              schema:
+                type: string
+            Content-Disposition:
+              description: Attachment filename for a streamed export.
+              schema:
+                type: string
+          content:
+            application/x-ndjson:
+              schema:
+                type: string
+                description: One canonical JSON export record per line, including the header and footer records.
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
         "429":
           $ref: "#/components/responses/RateLimited"
         "500":
@@ -568,6 +628,79 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/VerificationCancellation"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /v1/verifications/{verificationID}/resume:
+    post:
+      operationId: resumeVerification
+      summary: Resume a verification awaiting subject input
+      description: |
+        Requires verification_sessions:resume and a fresh subject authorisation
+        recorded after the session entered awaiting_input. Reuses a still-live
+        capture credential; otherwise atomically replaces it without extending
+        the verification deadline. Exact replay returns references only and
+        never returns capture bearer material again.
+      tags: [Verifications]
+      security:
+        - TenantAPIKey: []
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+        - $ref: "#/components/parameters/VerificationID"
+      requestBody:
+        required: true
+        description: Exact optimistic precondition for the awaiting-input session.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerificationResume"
+            example:
+              expected_version: 4
+      responses:
+        "200":
+          description: The original committed resume result.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerificationResumed"
+              example:
+                session:
+                  id: ver_01M11HEQG00000000000000000
+                  state: collecting
+                  version: 5
+                  profile_id: prf_01M11HEQG00000000000000000
+                  profile_revision: 1
+                  profile_digest: sha256:284a4418399974a7d1ce691f96ea534e1cd97ee1a9bc0d09de25d4a3b9d48969
+                  policy_id: pol_01M11HEQG00000000000000000
+                  region: ng-1
+                  requirements:
+                    schema_version: 1
+                    registry:
+                      schema_version: 1
+                      revision: 1
+                      digest: sha256:71ef9df77044f9bf5eeb7ae448da3d98811ff4cb3f2541f459e60b4628a5364f
+                    requirements: []
+                  created_at: "2026-09-19T10:00:00Z"
+                  updated_at: "2026-09-19T10:05:00Z"
+                  expires_at: "2026-09-20T10:00:00Z"
+                capture_token_id: ctk_01M11HEQG00000000000000000
+                capture_token_expires_at: "2026-09-19T10:35:00Z"
+                replaced: false
+                replayed: false
         "400":
           $ref: "#/components/responses/InvalidRequest"
         "401":
@@ -2084,6 +2217,105 @@ paths:
           $ref: "#/components/responses/InternalError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /v1/webhook-events:
+    get:
+      operationId: listWebhookEvents
+      summary: List catalogue events
+      description:
+        Requires webhooks:read. Ascending insertion-order page of decrypted canonical catalogue
+        envelopes with a tenant-, collection-, filter- and limit-bound cursor. Delivery and attempt
+        inspection remain payload-free.
+      tags:
+        - Webhooks
+      security:
+        - TenantAPIKey: []
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Cursor"
+        - name: event_types
+          in: query
+          required: false
+          description: Comma-separated catalogue event names, or * for all catalogue events.
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 8192
+      responses:
+        "200":
+          description: The webhook event page completed.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookEventList"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /v1/webhook-events/stream:
+    get:
+      operationId: streamWebhookEvents
+      summary: Stream live catalogue events
+      description:
+        Requires webhooks:read. Server-Sent Events feed of decrypted canonical catalogue envelopes.
+        Each event frame carries its durable sequence as the SSE id and the canonical envelope as data;
+        reconnect with the Last-Event-ID header to resume after that sequence. Heartbeat comments keep
+        the connection alive. Receivers must deduplicate by event id.
+      tags:
+        - Webhooks
+      security:
+        - TenantAPIKey: []
+      parameters:
+        - name: event_types
+          in: query
+          required: false
+          description: Comma-separated catalogue event names, or * for all catalogue events.
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 8192
+        - name: Last-Event-ID
+          in: header
+          required: false
+          description: The last delivered event sequence; the stream resumes after it.
+          schema:
+            type: string
+            pattern: ^[0-9]+$
+      responses:
+        "200":
+          description: A live text/event-stream feed of canonical catalogue envelopes.
+          headers:
+            Cache-Control:
+              description: Always no-store.
+              schema:
+                type: string
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: SSE frames with id, event and data fields; comments are heartbeats.
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
   /v1/policies:
     get:
       operationId: listPolicies
@@ -2548,6 +2780,163 @@ paths:
           $ref: "#/components/responses/NotFound"
         "409":
           $ref: "#/components/responses/Conflict"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /v1/policies/{policyID}/diff:
+    get:
+      operationId: diffPolicyRevisions
+      summary: Diff two stored policy revisions
+      description:
+        Requires policies:read. Bounded canonical structural difference between two immutable
+        revisions of one policy. Identity fields are reported on from and to and are never repeated
+        as changes. The result is deterministic, omitted fragments are absent, and no expression is
+        evaluated or registered.
+      tags:
+        - Policies
+      security:
+        - TenantAPIKey: []
+      parameters:
+        - name: policyID
+          in: path
+          required: true
+          description: Tenant-owned opaque policy identifier.
+          schema:
+            type: string
+        - name: from_revision
+          in: query
+          required: true
+          description: Positive immutable source revision number.
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+            maximum: 4294967295
+        - name: to_revision
+          in: query
+          required: true
+          description: Positive immutable target revision number.
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+            maximum: 4294967295
+      responses:
+        "200":
+          description: The canonical policy revision diff was computed.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PolicyRevisionDiff"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /v1/policy-simulations:
+    post:
+      operationId: simulatePolicy
+      summary: Evaluate one portable synthetic policy simulation
+      description:
+        Requires policies:read. Side-effect-free deterministic evaluation of one portable
+        `PolicySimulationInput` document. The embedded policy uses the same closed `PolicyDocument`
+        meaning accepted by revision creation, normalised to canonical form, but is never registered,
+        activated, decided, tasked, or audited. Supplied facts use the canonical
+        `PolicyCanonicalFact` shape without evidence bytes. No production facts are read and no
+        expression source is returned. The request body is bounded by the portable simulation input
+        limit.
+      tags:
+        - Policies
+      security:
+        - TenantAPIKey: []
+      requestBody:
+        required: true
+        description: Closed portable simulation input document.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PolicySimulationInput"
+      responses:
+        "200":
+          description: The synthetic policy simulation completed.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PolicySimulationReport"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "413":
+          $ref: "#/components/responses/RequestTooLarge"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /v1/policy-regressions:
+    post:
+      operationId: runPolicyRegression
+      summary: Run a bounded portable policy scenario suite
+      description:
+        Requires policies:read. Side-effect-free deterministic evaluation of one portable
+        `PolicyRegressionSuite` document holding at most the documented scenario maximum. Every
+        scenario is a closed `PolicySimulationInput` with an exact canonical expectation; execution
+        failures reject the request while expectation mismatches are reported as data with
+        passed=false. No production facts are read and no policy is registered, activated, decided,
+        tasked, or audited.
+      tags:
+        - Policies
+      security:
+        - TenantAPIKey: []
+      requestBody:
+        required: true
+        description: Closed portable scenario suite document.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PolicyRegressionSuite"
+      responses:
+        "200":
+          description: The policy scenario suite completed with its bounded report.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PolicyRegressionReport"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "413":
+          $ref: "#/components/responses/RequestTooLarge"
         "429":
           $ref: "#/components/responses/RateLimited"
         "500":
@@ -6507,6 +6896,816 @@ paths:
         '401': { $ref: '#/components/responses/Unauthenticated' }
         '403': { $ref: '#/components/responses/InsufficientScope' }
         '500': { $ref: '#/components/responses/InternalError' }
+  /v1/deletions:
+    get:
+      tags: [Privacy]
+      operationId: listDeletions
+      summary: List tenant deletion workflows
+      description: Requires deletions:read. Returns a bounded ascending page of deletion workflows, optionally restricted to one exact aggregate. Responses never return object locations, encoded target references, or raw evidence.
+      security: [TenantAPIKey: []]
+      x-required-scopes: [deletions:read]
+      parameters:
+        - name: aggregate_id
+          in: query
+          required: false
+          description: Restrict the page to deletion workflows of one exact aggregate.
+          schema: { type: string, minLength: 1, maxLength: 200, example: ver_01M11HEQG00000000000000000 }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: A bounded ascending page of deletion workflows.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' } }
+          content: { application/json: { schema: { $ref: '#/components/schemas/PrivacyDeletionList' } } }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v1/deletions/{deletionID}:
+    parameters:
+      - name: deletionID
+        in: path
+        required: true
+        description: Stable deletion-workflow identifier.
+        schema: { $ref: '#/components/schemas/PrivacyDeletionID' }
+    get:
+      tags: [Privacy]
+      operationId: getDeletionStatus
+      summary: Get one deletion workflow status
+      description: Requires deletions:read. Returns exact target states and digests, active holds, and the documented backup boundary. Raw object references and evidence bytes are never returned.
+      security: [TenantAPIKey: []]
+      x-required-scopes: [deletions:read]
+      responses:
+        '200':
+          description: The deletion-workflow status was returned.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PrivacyDeletionStatus' }
+              examples:
+                status:
+                  value:
+                    id: del_01M11HEQG00000000000000000
+                    aggregate_id: ver_01M11HEQG00000000000000000
+                    region: ng-1
+                    state: in_progress
+                    target_count: 2
+                    backup_expires_at: '2026-10-11T00:00:00Z'
+                    failure_class: target_unavailable
+                    version: 3
+                    requested_at: '2026-09-06T00:00:00Z'
+                    updated_at: '2026-09-06T00:05:00Z'
+                    targets:
+                      - { kind: raw_evidence, reference: 3f2a0c9d1b4e6a8c0d2f4b6a, state: deleted }
+                      - { kind: derived_evidence, reference: 9c1b7e5a2d4f6a8c0e2b4d6f, state: failed, failure_class: target_unavailable }
+                    holds:
+                      - { id: hld_01M11HEQG00000000000000000, aggregate_id: ver_01M11HEQG00000000000000000, authority: court-order, reason: pending proceedings, starts_at: '2026-09-06T00:00:00Z', review_at: '2026-10-06T00:00:00Z' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v1/retention/resolutions:
+    get:
+      tags: [Privacy]
+      operationId: getRetentionResolution
+      summary: Resolve typed retention for one aggregate
+      description: Requires deletions:read. Read-only inspection recomputes each retained evidence record with the selected typed retention resolution and returns active holds. It does not extend, shorten, or otherwise invent retention meaning.
+      security: [TenantAPIKey: []]
+      x-required-scopes: [deletions:read]
+      parameters:
+        - name: aggregate_id
+          in: query
+          required: true
+          description: Exact aggregate whose retained records are resolved.
+          schema: { type: string, minLength: 1, maxLength: 200, example: ver_01M11HEQG00000000000000000 }
+      responses:
+        '200':
+          description: The recomputed retention resolution was returned.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PrivacyRetentionResolution' }
+              examples:
+                resolution:
+                  value:
+                    aggregate_id: ver_01M11HEQG00000000000000000
+                    records:
+                      - { id: evd_01M11HEQG00000000000000000, data_class: raw_evidence, region: ng-1, duration_seconds: 2592000, expires_at: '2026-10-06T00:00:00Z' }
+                    holds: []
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v1/models/{modelName}:
+    parameters:
+      - $ref: '#/components/parameters/ModelName'
+    get:
+      tags: [Models]
+      operationId: getModel
+      summary: Get one evaluation-model registry state
+      description: |
+        Requires models:read. Returns the current optimistic-concurrency pointer for one
+        tenant-owned evaluation-only registry: the independently numbered model and
+        threshold revision watermarks and the optional active evaluation deployment. The
+        registry is evaluation-only; production activation is rejected and this route
+        never selects a production model.
+      security: [TenantAPIKey: []]
+      x-required-scopes: [models:read]
+      responses:
+        '200':
+          description: The evaluation-model registry state was returned.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ModelRegistryState' }
+              examples:
+                state:
+                  value:
+                    name: pad
+                    version: 3
+                    latest_model_revision: 1
+                    latest_threshold_revision: 1
+                    active: { model_revision: 1, threshold_revision: 1, region: ng }
+                    updated_at: '2026-09-06T00:00:00Z'
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v1/models/{modelName}/revisions/{kind}/{revision}:
+    parameters:
+      - $ref: '#/components/parameters/ModelName'
+      - name: kind
+        in: path
+        required: true
+        description: Immutable revision family. Model and threshold revisions are numbered independently.
+        schema: { type: string, enum: [model, threshold] }
+      - name: revision
+        in: path
+        required: true
+        description: Positive immutable revision number inside the selected family.
+        schema: { type: integer, format: int64, minimum: 1, maximum: 9007199254740991 }
+    get:
+      tags: [Models]
+      operationId: getModelRevision
+      summary: Get one immutable evaluation-model revision
+      description: |
+        Requires models:read. Returns one explicitly requested immutable evaluation-only
+        registration or threshold revision with its canonical content digest. Model and
+        threshold revisions are independently numbered and immutable provenance survives
+        retirement. This route never selects a production model.
+      security: [TenantAPIKey: []]
+      x-required-scopes: [models:read]
+      responses:
+        '200':
+          description: The immutable evaluation revision was returned.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ModelRegistryRevision' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v1/models/{modelName}/history:
+    parameters:
+      - $ref: '#/components/parameters/ModelName'
+    get:
+      tags: [Models]
+      operationId: listModelHistory
+      summary: List immutable evaluation-registry command history
+      description: |
+        Requires models:read. Returns a bounded newest-first page of immutable command
+        receipts for one tenant-owned evaluation-only registry. Receipts preserve the
+        exact recorded state and original actor without exposing declared training
+        materials or scores, and immutable revisions survive retirement. This route never
+        selects a production model.
+      security: [TenantAPIKey: []]
+      x-required-scopes: [models:read]
+      parameters:
+        - name: before
+          in: query
+          required: false
+          description: Return receipts with a strictly lower registry version. Zero starts from the newest receipt.
+          schema: { type: integer, format: int64, minimum: 0, maximum: 9007199254740990, default: 0 }
+        - name: limit
+          in: query
+          required: false
+          description: Maximum receipts to return from 1 to 100.
+          schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+      responses:
+        '200':
+          description: The bounded command-history page was returned.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' } }
+          content:
+            application/json:
+              schema:
+                type: array
+                maxItems: 100
+                items: { $ref: '#/components/schemas/ModelRegistryReceipt' }
+              examples:
+                empty:
+                  value: []
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v1/models/{modelName}/register:
+    parameters:
+      - $ref: '#/components/parameters/ModelName'
+    post:
+      tags: [Models]
+      operationId: registerModel
+      summary: Register an immutable evaluation model revision
+      description: |
+        Requires models:write and exactly one Idempotency-Key. Appends one immutable
+        evaluation-only model revision with declared owner, licence, training provenance,
+        intended and prohibited use, regions, hardware class, and exact manifest and
+        configuration pins. The registry is evaluation-only: production activation is
+        rejected, this route never selects a production model, and a repeated identical
+        command returns the original receipt with replayed=true.
+      security: [TenantAPIKey: []]
+      x-required-scopes: [models:write]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        description: Version-checked evaluation-only model registration.
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ModelRegistrationWrite' }
+      responses:
+        '200':
+          description: The original registration receipt was returned.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ModelRegistryReceipt' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v1/models/{modelName}/threshold:
+    parameters:
+      - $ref: '#/components/parameters/ModelName'
+    post:
+      tags: [Models]
+      operationId: setModelThreshold
+      summary: Register an immutable evaluation threshold revision
+      description: |
+        Requires models:write and exactly one Idempotency-Key. Appends one immutable
+        evaluation threshold operating point pinned to the complete execution provenance.
+        Thresholds are evaluation operating points, never accepted verification assurance,
+        and production activation is rejected. A repeated identical command returns the
+        original receipt with replayed=true.
+      security: [TenantAPIKey: []]
+      x-required-scopes: [models:write]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        description: Version-checked evaluation threshold revision.
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ModelThresholdWrite' }
+      responses:
+        '200':
+          description: The original threshold receipt was returned.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ModelRegistryReceipt' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v1/models/{modelName}/activate:
+    parameters:
+      - $ref: '#/components/parameters/ModelName'
+    post:
+      tags: [Models]
+      operationId: activateModel
+      summary: Activate an evaluation-only deployment
+      description: |
+        Requires models:activate and exactly one Idempotency-Key. Version-checks the
+        current registry pointer, resolves the exact immutable model and threshold
+        revisions, and verifies the declared region before recording one evaluation-only
+        deployment. The registry is evaluation-only: production activation is rejected and
+        this route never selects a production model. A repeated identical command returns
+        the original receipt with replayed=true.
+      security: [TenantAPIKey: []]
+      x-required-scopes: [models:activate]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        description: Version-checked evaluation deployment selection.
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ModelDeploymentWrite' }
+      responses:
+        '200':
+          description: The original activation receipt was returned.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ModelRegistryReceipt' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v1/models/{modelName}/rollback:
+    parameters:
+      - $ref: '#/components/parameters/ModelName'
+    post:
+      tags: [Models]
+      operationId: rollbackModel
+      summary: Roll back to a previously activated evaluation deployment
+      description: |
+        Requires models:activate and exactly one Idempotency-Key. Version-checks the
+        current registry pointer, resolves the exact immutable model and threshold
+        revisions, verifies the declared region, and records an operational rollback to a
+        pair that was previously activated. The registry is evaluation-only: production
+        activation is rejected and this route never selects a production model.
+      security: [TenantAPIKey: []]
+      x-required-scopes: [models:activate]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        description: Version-checked evaluation rollback selection.
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ModelDeploymentWrite' }
+      responses:
+        '200':
+          description: The original rollback receipt was returned.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ModelRegistryReceipt' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v1/models/{modelName}/retire:
+    parameters:
+      - $ref: '#/components/parameters/ModelName'
+    post:
+      tags: [Models]
+      operationId: retireModel
+      summary: Retire the active evaluation deployment
+      description: |
+        Requires models:activate and exactly one Idempotency-Key. Version-checks the
+        current registry pointer and clears the active evaluation deployment, immediately
+        fencing new attempts while immutable revisions and history remain readable. The
+        registry is evaluation-only and this route never selects a production model.
+      security: [TenantAPIKey: []]
+      x-required-scopes: [models:activate]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        description: Version-checked evaluation retirement.
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ModelRetirementWrite' }
+      responses:
+        '200':
+          description: The original retirement receipt was returned.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ModelRegistryReceipt' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v1/models/{modelName}/validate:
+    parameters:
+      - $ref: '#/components/parameters/ModelName'
+    post:
+      tags: [Models]
+      operationId: validateModel
+      summary: Validate an evaluation-registry command without persistence
+      description: |
+        Requires models:write and no Idempotency-Key. Side-effect-free validation of the
+        exact closed command document that would be submitted to register, threshold,
+        activate, rollback or retire. Domain document validation and, for deployment
+        commands, stored revision, declared region, current version and previously
+        activated eligibility are checked against the current registry state. Nothing is
+        persisted and no revision, deployment, receipt, audit or outbox record is created.
+        The registry is evaluation-only: production activation is rejected and this route
+        never selects a production model.
+      security: [TenantAPIKey: []]
+      x-required-scopes: [models:write]
+      requestBody:
+        required: true
+        description: One closed evaluation-registry command document.
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ModelValidationRequest' }
+      responses:
+        '200':
+          description: The bounded validation report was returned.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ModelValidationReport' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v1/providers:
+    get:
+      tags: [Providers]
+      operationId: listProviderRegistrations
+      summary: List tenant provider registrations
+      description: |
+        Requires providers:read. Returns a bounded newest-first page of tenant-owned
+        secret-free provider registrations. Registrations name externally resolved
+        credentials; Core never stores or returns a credential value, and this route
+        performs no external provider probe.
+      security: [TenantAPIKey: []]
+      x-required-scopes: [providers:read]
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          description: Maximum registrations to return from 1 to 100.
+          schema: { type: integer, minimum: 1, maximum: 100, default: 25 }
+        - name: cursor
+          in: query
+          required: false
+          description: Opaque integrity-protected continuation cursor.
+          schema: { $ref: '#/components/schemas/Cursor' }
+      responses:
+        '200':
+          description: The bounded registration page was returned.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProviderRegistrationList' }
+              examples:
+                empty:
+                  value: { data: [], page: { has_more: false } }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+    post:
+      tags: [Providers]
+      operationId: createProviderRegistration
+      summary: Register a tenant provider route
+      description: |
+        Requires providers:write and exactly one Idempotency-Key. Creates one disabled
+        tenant-owned registration whose adapter must match a configured deployment
+        adapter manifest and whose configuration and structured inputs are secret-free
+        external references. Credential values, inline secrets and weak or unrecognised
+        configuration shapes are rejected. A repeated identical command returns the
+        original receipt with replayed=true. The registration is enabled only through
+        the explicit enable route.
+      security: [TenantAPIKey: []]
+      x-required-scopes: [providers:write]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        description: Secret-free tenant provider registration.
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProviderRegistrationCreate' }
+      responses:
+        '200':
+          description: The original registration receipt was returned.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProviderRegistrationReceipt' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v1/providers/{providerID}:
+    parameters:
+      - $ref: '#/components/parameters/ProviderID'
+    get:
+      tags: [Providers]
+      operationId: getProviderRegistration
+      summary: Get one tenant provider registration
+      description: |
+        Requires providers:read. Returns one tenant-owned secret-free registration with
+        its optimistic-concurrency version and latest attributed actor. Cross-tenant and
+        absent registrations are indistinguishable. No credential value or external
+        provider state is returned.
+      security: [TenantAPIKey: []]
+      x-required-scopes: [providers:read]
+      responses:
+        '200':
+          description: The tenant registration was returned.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProviderRegistration' }
+              examples:
+                disabled:
+                  value:
+                    id: pvr_01M11HEQG00000000000000000
+                    adapter_id: dojah
+                    region: africa
+                    configuration:
+                      provider_id: pvd_01M11HEQG00000000000000000
+                      schema_digest: sha256:284a4418399974a7d1ce691f96ea534e1cd97ee1a9bc0d09de25d4a3b9d48969
+                      secret_reference: secret://provider/dojah/tenant
+                      credential_version: v1
+                    enabled: false
+                    version: 1
+                    actor_id: key_01M11HEQG00000000000000000
+                    created_at: '2026-09-20T00:00:00Z'
+                    updated_at: '2026-09-20T00:00:00Z'
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+    put:
+      tags: [Providers]
+      operationId: updateProviderRegistration
+      summary: Update one tenant provider registration
+      description: |
+        Requires providers:write. Version-checks the registration pointer and replaces
+        the secret-free adapter, region, configuration reference, structured inputs,
+        selfie requirement and optional restrictions. The adapter must match a
+        configured deployment adapter manifest and credential values are rejected. The
+        enabled state is unchanged; use enable or disable explicitly.
+      security: [TenantAPIKey: []]
+      x-required-scopes: [providers:write]
+      requestBody:
+        required: true
+        description: Version-checked secret-free registration replacement.
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProviderRegistrationUpdate' }
+      responses:
+        '200':
+          description: The updated registration receipt was returned.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProviderRegistrationReceipt' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v1/providers/{providerID}/validate:
+    parameters:
+      - $ref: '#/components/parameters/ProviderID'
+    post:
+      tags: [Providers]
+      operationId: validateProviderRegistration
+      summary: Validate a provider registration document without persistence
+      description: |
+        Requires providers:write and no Idempotency-Key. Side-effect-free validation of
+        one secret-free registration document against the configured deployment adapter
+        manifest. Nothing is persisted and no registration, receipt, history, audit or
+        outbox record is created. The report never echoes supplied values.
+      security: [TenantAPIKey: []]
+      x-required-scopes: [providers:write]
+      requestBody:
+        required: true
+        description: One closed secret-free registration document.
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProviderRegistrationWrite' }
+            examples:
+              candidate:
+                value:
+                  adapter_id: dojah
+                  region: africa
+                  configuration:
+                    provider_id: pvd_01M11HEQG00000000000000000
+                    schema_digest: sha256:284a4418399974a7d1ce691f96ea534e1cd97ee1a9bc0d09de25d4a3b9d48969
+                    secret_reference: secret://provider/dojah/tenant
+                    credential_version: v1
+      responses:
+        '200':
+          description: The bounded validation report was returned.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProviderRegistrationValidationReport' }
+              examples:
+                accepted:
+                  value: { accepted: true, reason_codes: [accepted] }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v1/providers/{providerID}/enable:
+    parameters:
+      - $ref: '#/components/parameters/ProviderID'
+    post:
+      tags: [Providers]
+      operationId: enableProviderRegistration
+      summary: Enable one tenant provider registration
+      description: |
+        Requires providers:write. Version-checks the registration pointer and enables
+        the tenant registration. At most one enabled registration exists per tenant,
+        adapter and region; enabling a second registration for the same scope is a
+        conflict. The command is attributed and appended to immutable history.
+      security: [TenantAPIKey: []]
+      x-required-scopes: [providers:write]
+      requestBody:
+        required: true
+        description: Version-checked enable command.
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProviderRegistrationToggle' }
+      responses:
+        '200':
+          description: The enabled registration receipt was returned.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProviderRegistrationReceipt' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v1/providers/{providerID}/disable:
+    parameters:
+      - $ref: '#/components/parameters/ProviderID'
+    post:
+      tags: [Providers]
+      operationId: disableProviderRegistration
+      summary: Disable one tenant provider registration
+      description: |
+        Requires providers:write. Version-checks the registration pointer and disables
+        the tenant registration so planning falls back to the deployment-configured
+        provider route. The command is attributed and appended to immutable history.
+      security: [TenantAPIKey: []]
+      x-required-scopes: [providers:write]
+      requestBody:
+        required: true
+        description: Version-checked disable command.
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProviderRegistrationToggle' }
+      responses:
+        '200':
+          description: The disabled registration receipt was returned.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProviderRegistrationReceipt' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v1/providers/{providerID}/health:
+    parameters:
+      - $ref: '#/components/parameters/ProviderID'
+    get:
+      tags: [Providers]
+      operationId: getProviderRegistrationHealth
+      summary: Read bounded registration health
+      description: |
+        Requires providers:read. Returns a bounded read over the tenant's own persisted
+        provider requests and dispatch receipts for this registration: counts by
+        dispatch state and the last normalized outcome or failure class. It never
+        performs an external provider probe, returns no provider topology and never
+        exposes evidence bytes.
+      security: [TenantAPIKey: []]
+      x-required-scopes: [providers:read]
+      responses:
+        '200':
+          description: The bounded registration health snapshot was returned.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProviderRegistrationHealth' }
+              examples:
+                empty:
+                  value:
+                    registration_id: pvr_01M11HEQG00000000000000000
+                    adapter_id: dojah
+                    requests: 0
+                    pending_dispatches: 0
+                    completed_dispatches: 0
+                    failed_dispatches: 0
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v1/providers/{providerID}/failure-simulations:
+    parameters:
+      - $ref: '#/components/parameters/ProviderID'
+    post:
+      tags: [Providers]
+      operationId: simulateProviderFailure
+      summary: Preview provider failure classification
+      description: |
+        Requires providers:read and no Idempotency-Key. Pure side-effect-free preview of
+        how the owned normalisation classifies one bounded provider failure class and
+        code: the operational attempt/check state and retry disposition. It confirms
+        that a provider failure never produces an identity outcome. Nothing is
+        dispatched, persisted or mutated, and no external provider is contacted.
+      security: [TenantAPIKey: []]
+      x-required-scopes: [providers:read]
+      requestBody:
+        required: true
+        description: One bounded provider failure classification.
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProviderFailureSimulationRequest' }
+      responses:
+        '200':
+          description: The bounded classification preview was returned.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProviderFailureSimulation' }
+              examples:
+                retryable:
+                  value:
+                    class: unavailable
+                    code: provider_unavailable
+                    retry: backoff
+                    retry_after_seconds: 1
+                    attempt_state: failed
+                    check_state: failed
+                    produces_identity_outcome: false
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
 components:
   securitySchemes:
     TenantAPIKey:
@@ -6629,6 +7828,20 @@ components:
       description: Immutable notice-version identifier.
       schema:
         $ref: "#/components/schemas/NoticeVersionID"
+    ModelName:
+      name: modelName
+      in: path
+      required: true
+      description: Tenant-owned evaluation-model registry name.
+      schema:
+        $ref: "#/components/schemas/ModelRegistryName"
+    ProviderID:
+      name: providerID
+      in: path
+      required: true
+      description: Tenant-owned provider registration identifier.
+      schema:
+        $ref: "#/components/schemas/ProviderID"
   headers:
     XRequestID:
       description: Server-issued request identifier. Caller-supplied values are ignored.
@@ -7726,6 +8939,7 @@ components:
         capture_token_expires_at:
           type: string
           format: date-time
+          example: "2026-09-19T10:35:00Z"
         outcome_token:
           $ref: "#/components/schemas/OutcomeToken"
         outcome_token_expires_at:
@@ -9336,6 +10550,488 @@ components:
           - *id006_1
         page:
           has_more: false
+    PolicySimulationInput:
+      type: object
+      description:
+        Closed portable simulation input. The policy document is normalised to canonical meaning
+        without registration; facts carry typed provenance references and never raw evidence bytes.
+      additionalProperties: false
+      required:
+        - schema_major
+        - schema_minor
+        - policy
+        - tenant_id
+        - verification_id
+        - authority_id
+        - acknowledgement_id
+        - region
+        - evaluated_at
+        - facts
+      properties:
+        schema_major:
+          type: integer
+          const: 1
+        schema_minor:
+          type: integer
+          const: 0
+        policy:
+          $ref: "#/components/schemas/PolicyDocument"
+        tenant_id:
+          $ref: "#/components/schemas/TenantID"
+        verification_id:
+          $ref: "#/components/schemas/VerificationSessionID"
+        authority_id:
+          $ref: "#/components/schemas/ProcessingAuthorityID"
+        acknowledgement_id:
+          $ref: "#/components/schemas/SubjectResponseID"
+        region:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^[a-z][a-z0-9._:-]*$
+        evaluated_at:
+          type: string
+          format: date-time
+          description: Explicit UTC evaluation time; local offsets are rejected.
+        facts:
+          type: array
+          minItems: 1
+          maxItems: 128
+          items:
+            $ref: "#/components/schemas/PolicyCanonicalFact"
+      example: &policy_simulation_input_example
+        schema_major: 1
+        schema_minor: 0
+        policy:
+          schema_major: 1
+          schema_minor: 0
+          verified_assurance: synthetic.fixture
+          rules:
+            - name: synthetic_success
+              when: 'facts["synthetic.document"] == "satisfied"'
+              result:
+                state: satisfied
+                directive: complete_verified
+                priority: 1
+                contributing_facts: [synthetic.document]
+                reason_codes: []
+          policy_id: pol_01M11HEQG00000000000000000
+          revision: 3
+        tenant_id: ten_01M11HEQG00000000000000000
+        verification_id: ver_01M11HEQG00000000000000000
+        authority_id: aut_01M11HEQG00000000000000000
+        acknowledgement_id: ack_01M11HEQG00000000000000000
+        region: synthetic.region
+        evaluated_at: "2026-09-19T00:00:00Z"
+        facts:
+          - key: synthetic.document
+            state: satisfied
+            source:
+              kind: processing_authority
+              authority_id: aut_01M11HEQG00000000000000000
+            observed_at: "2026-09-19T00:00:00Z"
+            reason_codes: [synthetic_document]
+    PolicySimulationReport:
+      type: object
+      description:
+        Bounded source-free synthetic simulation summary. It omits facts, provenance, reason codes,
+        expressions, and canonical input bytes; reproduced always means the exact portable meaning
+        was restored, never that production state was justified.
+      additionalProperties: false
+      required:
+        - schema_major
+        - schema_minor
+        - tenant_id
+        - verification_id
+        - policy_id
+        - policy_revision
+        - policy_digest
+        - evaluator_major
+        - evaluator_minor
+        - evaluator_digest
+        - snapshot_digest
+        - evaluation_digest
+        - bundle_digest
+        - directive
+        - authorises_completion
+        - fact_count
+        - requirement_count
+        - evaluated_at
+        - reproduced
+      properties:
+        schema_major:
+          type: integer
+          const: 1
+        schema_minor:
+          type: integer
+          const: 0
+        tenant_id:
+          $ref: "#/components/schemas/TenantID"
+        verification_id:
+          $ref: "#/components/schemas/VerificationSessionID"
+        policy_id:
+          $ref: "#/components/schemas/PolicyID"
+        policy_revision:
+          type: integer
+          format: int64
+          minimum: 1
+          maximum: 4294967295
+        policy_digest:
+          $ref: "#/components/schemas/PolicyDigest"
+        evaluator_major:
+          type: integer
+          minimum: 1
+          maximum: 65535
+        evaluator_minor:
+          type: integer
+          minimum: 0
+          maximum: 65535
+        evaluator_digest:
+          $ref: "#/components/schemas/PolicyDigest"
+        snapshot_digest:
+          $ref: "#/components/schemas/PolicyDigest"
+        evaluation_digest:
+          $ref: "#/components/schemas/PolicyDigest"
+        bundle_digest:
+          $ref: "#/components/schemas/PolicyDigest"
+        directive:
+          $ref: "#/components/schemas/PolicyDirective"
+        outcome:
+          $ref: "#/components/schemas/PolicyOutcome"
+        assurance:
+          type: string
+          minLength: 1
+          maxLength: 128
+          pattern: ^[a-z][a-z0-9._:-]*$
+        authorises_completion:
+          type: boolean
+          description: True only for a closed terminal directive with a matching outcome.
+        fact_count:
+          type: integer
+          minimum: 1
+          maximum: 128
+        requirement_count:
+          type: integer
+          minimum: 1
+          maximum: 128
+        evaluated_at:
+          type: string
+          format: date-time
+        reproduced:
+          type: boolean
+          enum:
+            - true
+      example: &policy_simulation_report_example
+        schema_major: 1
+        schema_minor: 0
+        tenant_id: ten_01M11HEQG00000000000000000
+        verification_id: ver_01M11HEQG00000000000000000
+        policy_id: pol_01M11HEQG00000000000000000
+        policy_revision: 3
+        policy_digest: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+        evaluator_major: 1
+        evaluator_minor: 0
+        evaluator_digest: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+        snapshot_digest: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+        evaluation_digest: dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+        bundle_digest: eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+        directive: complete_verified
+        outcome: verified
+        assurance: synthetic.fixture
+        authorises_completion: true
+        fact_count: 1
+        requirement_count: 1
+        evaluated_at: "2026-09-19T00:00:00Z"
+        reproduced: true
+    PolicyRegressionSuite:
+      type: object
+      description:
+        Closed portable regression suite. Every scenario carries one synthetic simulation input and
+        the exact canonical requirement results expected from it.
+      additionalProperties: false
+      required:
+        - schema_major
+        - schema_minor
+        - scenarios
+      properties:
+        schema_major:
+          type: integer
+          const: 1
+        schema_minor:
+          type: integer
+          const: 0
+        scenarios:
+          type: array
+          minItems: 1
+          maxItems: 256
+          items:
+            $ref: "#/components/schemas/PolicyRegressionScenario"
+      example:
+        schema_major: 1
+        schema_minor: 0
+        scenarios:
+          - name: synthetic_verified
+            input: *policy_simulation_input_example
+            expectation:
+              results:
+                - name: synthetic_success
+                  state: satisfied
+                  contributing_facts: [synthetic.document]
+                  candidate: complete_verified
+                  priority: 1
+                  reason_codes: []
+              assurance: synthetic.fixture
+    PolicyRegressionScenario:
+      type: object
+      description: One uniquely named synthetic example and its exact expected meaning.
+      additionalProperties: false
+      required:
+        - name
+        - input
+        - expectation
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 128
+          pattern: ^[a-z][a-z0-9._:-]*$
+        input:
+          $ref: "#/components/schemas/PolicySimulationInput"
+        expectation:
+          $ref: "#/components/schemas/PolicyRegressionExpectation"
+      example:
+        name: synthetic_verified
+        input: *policy_simulation_input_example
+        expectation:
+          results:
+            - name: synthetic_success
+              state: satisfied
+              contributing_facts: [synthetic.document]
+              candidate: complete_verified
+              priority: 1
+              reason_codes: []
+          assurance: synthetic.fixture
+    PolicyRegressionExpectation:
+      type: object
+      description:
+        Exact canonical requirement results and assurance resolved against the scenario snapshot.
+        An expectation mismatch is data, not an execution failure.
+      additionalProperties: false
+      required:
+        - results
+      properties:
+        results:
+          type: array
+          minItems: 1
+          maxItems: 128
+          items:
+            $ref: "#/components/schemas/PolicyCanonicalRequirementResult"
+        assurance:
+          type: string
+          minLength: 1
+          maxLength: 128
+          pattern: ^[a-z][a-z0-9._:-]*$
+      example:
+        results:
+          - name: synthetic_success
+            state: satisfied
+            contributing_facts: [synthetic.document]
+            candidate: complete_verified
+            priority: 1
+            reason_codes: []
+        assurance: synthetic.fixture
+    PolicyRegressionReport:
+      type: object
+      description:
+        Canonical input-order-independent regression summary. passed is true only when every case
+        matched; execution failures are reported as problems instead.
+      additionalProperties: false
+      required:
+        - schema_major
+        - schema_minor
+        - cases
+        - passed
+        - digest
+      properties:
+        schema_major:
+          type: integer
+          const: 1
+        schema_minor:
+          type: integer
+          const: 0
+        cases:
+          type: array
+          minItems: 1
+          maxItems: 256
+          items:
+            $ref: "#/components/schemas/PolicyRegressionCase"
+        passed:
+          type: boolean
+        digest:
+          $ref: "#/components/schemas/PolicyDigest"
+      example:
+        schema_major: 1
+        schema_minor: 0
+        cases:
+          - name: synthetic_verified
+            actual: *policy_simulation_report_example
+            expected_evaluation_digest: dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+            matches: true
+        passed: true
+        digest: ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+    PolicyRegressionCase:
+      type: object
+      description: Safe actual summary for one uniquely named scenario.
+      additionalProperties: false
+      required:
+        - name
+        - actual
+        - expected_evaluation_digest
+        - matches
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 128
+          pattern: ^[a-z][a-z0-9._:-]*$
+        actual:
+          $ref: "#/components/schemas/PolicySimulationReport"
+        expected_evaluation_digest:
+          $ref: "#/components/schemas/PolicyDigest"
+        matches:
+          type: boolean
+      example:
+        name: synthetic_verified
+        actual: *policy_simulation_report_example
+        expected_evaluation_digest: dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+        matches: true
+    PolicyRevisionDiff:
+      type: object
+      description:
+        Deterministic bounded structural difference between two immutable revisions of one policy.
+        schema_major, schema_minor, policy_id, revision, and digests are reported on identity
+        fields and never repeated inside changes.
+      additionalProperties: false
+      required:
+        - schema_major
+        - schema_minor
+        - policy_id
+        - from
+        - to
+        - identical
+        - truncated
+        - change_count
+        - changes
+        - digest
+      properties:
+        schema_major:
+          type: integer
+          const: 1
+        schema_minor:
+          type: integer
+          const: 0
+        policy_id:
+          $ref: "#/components/schemas/PolicyID"
+        from:
+          $ref: "#/components/schemas/PolicyRevisionDiffSide"
+        to:
+          $ref: "#/components/schemas/PolicyRevisionDiffSide"
+        identical:
+          type: boolean
+          description: True when both revisions carry the same canonical meaning.
+        truncated:
+          type: boolean
+          description: True when change_count exceeds the exposed bounded change list.
+        change_count:
+          type: integer
+          minimum: 0
+          description: Total structural changes, including changes beyond the exposed list.
+        changes:
+          type: array
+          maxItems: 256
+          items:
+            $ref: "#/components/schemas/PolicyRevisionDiffChange"
+        digest:
+          $ref: "#/components/schemas/PolicyDigest"
+      example:
+        schema_major: 1
+        schema_minor: 0
+        policy_id: pol_01M11HEQG00000000000000000
+        from:
+          revision: 1
+          digest: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+        to:
+          revision: 2
+          digest: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+        identical: false
+        truncated: false
+        change_count: 1
+        changes:
+          - path: /verified_assurance
+            kind: changed
+            old: synthetic.first
+            new: synthetic.second
+        digest: cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+    PolicyRevisionDiffSide:
+      type: object
+      description: Immutable revision identity for one diff side.
+      additionalProperties: false
+      required:
+        - revision
+        - digest
+      properties:
+        revision:
+          type: integer
+          format: int64
+          minimum: 1
+          maximum: 4294967295
+        digest:
+          $ref: "#/components/schemas/PolicyDigest"
+      example:
+        revision: 1
+        digest: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    PolicyRevisionDiffChange:
+      type: object
+      description: One bounded canonical JSON-pointer change with safe canonical fragments.
+      additionalProperties: false
+      required:
+        - path
+        - kind
+      properties:
+        path:
+          type: string
+          maxLength: 1024
+          description: JSON Pointer-like path into the canonical policy document.
+          example: /rules/0/result/state
+        kind:
+          type: string
+          enum:
+            - added
+            - removed
+            - changed
+        old:
+          description: Canonical JSON fragment removed or replaced; absent for additions.
+          anyOf:
+            - type: object
+            - type: array
+            - type: string
+            - type: number
+            - type: boolean
+            - type: "null"
+        new:
+          description: Canonical JSON fragment added or replacing; absent for removals.
+          anyOf:
+            - type: object
+            - type: array
+            - type: string
+            - type: number
+            - type: boolean
+            - type: "null"
+      example:
+        path: /verified_assurance
+        kind: changed
+        old: synthetic.first
+        new: synthetic.second
     WebhookEndpoint:
       type: object
       description: Tenant-owned endpoint metadata. Key material is never included.
@@ -9344,6 +11040,7 @@ components:
         - id
         - url
         - event_types
+        - schema_version
         - version
         - secret_version
         - created_at
@@ -9366,6 +11063,10 @@ components:
             type: string
             maxLength: 128
           example: [verification.completed, evidence.ready]
+        schema_version:
+          type: string
+          enum: ["1.0"]
+          description: Exact supported webhook envelope version pinned to this endpoint.
         version:
           type: integer
           format: int64
@@ -9387,6 +11088,7 @@ components:
         id: whk_01M11HEQG00000000000000000
         url: https://example.com/webhooks
         event_types: [verification.completed]
+        schema_version: "1.0"
         version: 1
         secret_version: 1
         created_at: "2026-09-06T00:00:00Z"
@@ -9530,9 +11232,15 @@ components:
             type: string
             maxLength: 128
           example: [verification.completed, evidence.ready]
+        schema_version:
+          type: string
+          enum: ["1.0"]
+          default: "1.0"
+          description: Exact supported webhook envelope version. Defaults to `1.0`.
       example:
         url: https://example.com/webhooks
         event_types: [verification.completed]
+        schema_version: "1.0"
     WebhookSubscriptions:
       type: object
       description: Replace an endpoint's catalogue event subscription under an expected version.
@@ -9557,9 +11265,16 @@ components:
             type: string
             maxLength: 128
           example: [verification.completed, decision.created]
+        schema_version:
+          type: string
+          enum: ["1.0"]
+          description:
+            Exact supported webhook envelope version. When omitted, the endpoint keeps its
+            current pin.
       example:
         expected_version: 1
         event_types: [verification.completed, decision.created]
+        schema_version: "1.0"
     WebhookRotate:
       type: object
       description: "Rotate only when no previous-key overlap remains active. Compare the endpoint version. Applies to webhook Rotate."
@@ -9691,6 +11406,70 @@ components:
       example:
         data:
           - *id003_2
+        page:
+          has_more: false
+    WebhookEvent:
+      type: object
+      description: One canonical catalogue envelope decrypted for an authorised tenant reader.
+      additionalProperties: false
+      required:
+        - id
+        - type
+        - schema_version
+        - created_at
+        - tenant_id
+        - region
+        - data
+      properties:
+        id:
+          type: string
+          pattern: ^evt_[0-9A-HJKMNP-TV-Z]{26}$
+        type:
+          type: string
+          pattern: ^[a-z][a-z0-9_.-]*$
+        schema_version:
+          type: string
+          minLength: 1
+          maxLength: 16
+        created_at:
+          type: string
+          format: date-time
+        tenant_id:
+          type: string
+          pattern: ^ten_[0-9A-HJKMNP-TV-Z]{26}$
+        region:
+          type: string
+          minLength: 1
+          maxLength: 64
+        data:
+          type: object
+          additionalProperties: true
+      example:
+        id: evt_01M11HEQG00000000000000001
+        type: verification.completed
+        schema_version: "1.0"
+        created_at: "2026-09-19T10:00:00Z"
+        tenant_id: ten_01M11HEQG00000000000000000
+        region: ng-lagos
+        data:
+          verification_id: ver_01M11HEQG00000000000000000
+    WebhookEventList:
+      type: object
+      description: Ascending insertion-order page of decrypted canonical catalogue envelopes.
+      additionalProperties: false
+      required:
+        - data
+        - page
+      properties:
+        data:
+          type: array
+          maxItems: 100
+          items:
+            $ref: "#/components/schemas/WebhookEvent"
+        page:
+          $ref: "#/components/schemas/Page"
+      example:
+        data: []
         page:
           has_more: false
     WebhookAttemptList:
@@ -10637,7 +12416,7 @@ components:
           example: "2026-08-27T12:00:00Z"
         digest:
           type: string
-          pattern: ^sha256:[0-9a-f]{64}$
+          pattern: '^sha256:[0-9a-f]{64}$'
           example: sha256:284a4418399974a7d1ce691f96ea534e1cd97ee1a9bc0d09de25d4a3b9d48969
     ProcessingAuthorityDeclare:
       description: Tenant declaration recorded and enforced without Idenqa selecting or certifying a lawful basis.
@@ -10925,6 +12704,45 @@ components:
           format: date-time
           description: The original committed cancellation timestamp.
           example: "2026-09-06T12:00:00Z"
+    VerificationResume:
+      description: Optimistic precondition for an awaiting-input resume command.
+      type: object
+      additionalProperties: false
+      required: [expected_version]
+      properties:
+        expected_version:
+          type: integer
+          format: int64
+          minimum: 1
+          maximum: 9223372036854775806
+          example: 4
+    VerificationResumed:
+      description: Reference-only resume result with a display-once replacement bearer when required.
+      type: object
+      additionalProperties: false
+      required: [session, capture_token_id, capture_token_expires_at, replaced, replayed]
+      properties:
+        session:
+          $ref: "#/components/schemas/VerificationSession"
+        capture_token_id:
+          type: string
+          pattern: ^ctk_[0-9A-HJKMNP-TV-Z]{26}$
+          example: ctk_01M11HEQG00000000000000000
+        capture_token_expires_at:
+          type: string
+          format: date-time
+          example: "2026-09-19T10:35:00Z"
+        capture_token:
+          type: string
+          $ref: "#/components/schemas/CaptureToken"
+          description: Present only for the first successful request that replaced an unusable credential.
+          example: idq_cap_v1.1.eyJ0b2tlbl9pZCI6ImN0a18wMU0xMUhFUUcwMDAwMDAwMDAwMDAwMDAwMCJ9.c2lnbmF0dXJl
+        replaced:
+          type: boolean
+          example: false
+        replayed:
+          type: boolean
+          example: false
     VerificationCreate:
       description: Tenant request to snapshot an active published capture profile.
       type: object
@@ -11006,7 +12824,7 @@ components:
           example: 1
         profile_digest:
           type: string
-          pattern: ^sha256:[0-9a-f]{64}$
+          pattern: '^sha256:[0-9a-f]{64}$'
           example: sha256:284a4418399974a7d1ce691f96ea534e1cd97ee1a9bc0d09de25d4a3b9d48969
         policy_id:
           $ref: "#/components/schemas/PolicyID"
@@ -11015,6 +12833,17 @@ components:
           pattern: ^[a-z][a-z0-9-]{0,62}$
           description: Immutable processing and storage region selected by the server.
           example: ng-1
+        requested_input:
+          description: |
+            Active policy-authored subject-input request. Present only while the
+            session is `awaiting_input`, omitted for every other state, and never
+            present on the subject-safe capture-token projection. It carries no
+            evidence, policy facts, or actor identity.
+          type: object
+          example:
+            reason_codes: [document_authenticity_unavailable]
+            requested_at: "2026-08-27T12:00:01Z"
+          $ref: "#/components/schemas/VerificationInputRequest"
         requirements:
           $ref: "#/components/schemas/CaptureProfileDocument"
         created_at:
@@ -11029,6 +12858,136 @@ components:
           type: string
           format: date-time
           example: "2026-08-28T12:00:00Z"
+        failure:
+          description: |
+            Operational failure projection. Present only for the terminal `failed`
+            state and omitted for every other state and for the subject-safe
+            capture-token projection. It states that the workflow could not
+            proceed; it is never an identity outcome, decision reference, raw
+            evidence, or provider payload.
+          type: object
+          example:
+            class: policy
+            code: workflow_prohibited
+          $ref: "#/components/schemas/VerificationFailure"
+        current_decision:
+          description: |
+            Current immutable decision projection. Present only when the caller holds
+            `decisions:read` and a current decision exists for the verification; omitted
+            otherwise.
+          type: object
+          example:
+            decision_id: dec_01M11HEQG00000000000000000
+            outcome: verified
+            directive: complete_verified
+            decided_at: "2026-08-31T12:00:01Z"
+          $ref: "#/components/schemas/VerificationDecisionReference"
+        current_case:
+          description: |
+            Current review case projection. Present only when the caller holds
+            `reviews:read` and a review case currently references the verification;
+            omitted otherwise.
+          type: object
+          example:
+            case_id: rvc_01M11HEQG00000000000000000
+            state: claimed
+            version: 1
+          $ref: "#/components/schemas/VerificationCaseReference"
+    VerificationFailure:
+      type: object
+      description: |
+        Bounded operational failure classification for a verification workflow
+        that reached the terminal `failed` state. It explains that the workflow
+        could not proceed and never carries an identity outcome, decision
+        reference, raw evidence, or provider payload.
+      additionalProperties: false
+      required: [class, code]
+      properties:
+        class:
+          type: string
+          maxLength: 32
+          pattern: ^[a-z][a-z0-9_]{0,31}$
+          description: Bounded failure class naming the writer that failed the workflow.
+          example: policy
+        code:
+          type: string
+          maxLength: 64
+          pattern: ^[a-z][a-z0-9_]{0,63}$
+          description: Bounded machine-readable failure code within its class.
+          example: workflow_prohibited
+    VerificationDecisionReference:
+      type: object
+      description: Current immutable decision reference for one verification without policy facts or evidence.
+      additionalProperties: false
+      required: [decision_id, outcome, directive, decided_at]
+      properties:
+        decision_id:
+          $ref: "#/components/schemas/PolicyDecisionID"
+        outcome:
+          $ref: "#/components/schemas/PolicyOutcome"
+        directive:
+          $ref: "#/components/schemas/PolicyDirective"
+        decided_at:
+          type: string
+          format: date-time
+          description: Instant the referenced immutable decision was recorded.
+          example: "2026-08-31T12:00:01Z"
+    VerificationCaseReference:
+      type: object
+      description: Current review case reference for one verification without findings or evidence.
+      additionalProperties: false
+      required: [case_id, state, version]
+      properties:
+        case_id:
+          type: string
+          minLength: 1
+          maxLength: 256
+          description: Stable tenant-scoped review-case identifier.
+          example: rvc_01M11HEQG00000000000000000
+        state:
+          type: string
+          minLength: 1
+          maxLength: 256
+          description: Bounded review-case lifecycle state such as open, claimed, awaiting_second, resolved, or escalated.
+          example: claimed
+        version:
+          type: integer
+          format: int64
+          minimum: 1
+          description: Optimistic version of the referenced review case.
+          example: 1
+    VerificationInputRequest:
+      type: object
+      description: |
+        Bounded projection of the active policy-authored subject-input request.
+        It states which input policy requested without exposing evidence, policy
+        facts, provider payloads, or the recording actor.
+      additionalProperties: false
+      required: [reason_codes, requested_at]
+      properties:
+        reason_codes:
+          type: array
+          minItems: 1
+          maxItems: 8
+          description: |
+            Deterministic bounded policy reason codes. Codes outside the closed
+            lowercase token grammar are dropped, and `policy_request_input` is
+            recorded when the evaluation carries no bounded code.
+          items:
+            type: string
+            pattern: ^[a-z][a-z0-9._:-]{0,63}$
+            example: document_authenticity_unavailable
+        requested_at:
+          type: string
+          format: date-time
+          description: Instant the policy routing recorded the input request.
+          example: "2026-08-27T12:00:01Z"
+        case_id:
+          type: string
+          minLength: 1
+          maxLength: 256
+          description: Optional review case that owns a linked recapture request.
+          example: rvc_01M11HEQG00000000000000000
     VerificationCreated:
       description: A new verification session and its display-once capture and read-only outcome credentials.
       type: object
@@ -11294,7 +13253,7 @@ components:
           example: 245760
         expected_digest:
           type: string
-          pattern: ^sha256:[0-9a-f]{64}$
+          pattern: '^sha256:[0-9a-f]{64}$'
           example: sha256:284a4418399974a7d1ce691f96ea534e1cd97ee1a9bc0d09de25d4a3b9d48969
         media_type:
           type: string
@@ -11532,7 +13491,7 @@ components:
           example: 1
         digest:
           type: string
-          pattern: ^sha256:[0-9a-f]{64}$
+          pattern: '^sha256:[0-9a-f]{64}$'
           example: sha256:284a4418399974a7d1ce691f96ea534e1cd97ee1a9bc0d09de25d4a3b9d48969
         updated_at:
           type: string
@@ -11565,7 +13524,7 @@ components:
           $ref: "#/components/schemas/CaptureProfileDocument"
         digest:
           type: string
-          pattern: ^sha256:[0-9a-f]{64}$
+          pattern: '^sha256:[0-9a-f]{64}$'
           example: sha256:284a4418399974a7d1ce691f96ea534e1cd97ee1a9bc0d09de25d4a3b9d48969
         created_at:
           type: string
@@ -11608,7 +13567,7 @@ components:
           example: true
         digest:
           type: string
-          pattern: ^sha256:[0-9a-f]{64}$
+          pattern: '^sha256:[0-9a-f]{64}$'
           example: sha256:284a4418399974a7d1ce691f96ea534e1cd97ee1a9bc0d09de25d4a3b9d48969
     RequestID:
       type: string
@@ -13004,6 +14963,592 @@ components:
         content: { type: string, example: Summarise the review findings. }
         digest: { type: string, pattern: '^[0-9a-f]{64}$', example: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef }
         model_id: { type: string, example: model.test }
+    PrivacyDeletionID:
+      type: string
+      description: Stable Idenqa deletion-workflow identifier.
+      pattern: ^del_[0-9A-HJKMNP-TV-Z]{26}$
+      example: del_01M11HEQG00000000000000000
+    PrivacyTargetState:
+      type: string
+      description: Observable state of one exact deletion target.
+      enum: [pending, deleted, failed]
+      example: pending
+    PrivacyDeletionState:
+      type: string
+      description: Observable deletion-workflow state.
+      enum: [requested, blocked_by_legal_hold, in_progress, awaiting_backup_expiry, completed, failed]
+      example: in_progress
+    PrivacyTarget:
+      type: object
+      description: Safe target projection. The reference is a stable non-reversible digest, never an object location or encoded evidence reference.
+      additionalProperties: false
+      required: [kind, reference, state]
+      properties:
+        kind: { type: string, minLength: 1, maxLength: 64, example: raw_evidence }
+        reference: { type: string, minLength: 1, maxLength: 64, description: Opaque non-reversible target-reference digest., example: 3f2a0c9d1b4e6a8c0d2f4b6a }
+        state: { $ref: '#/components/schemas/PrivacyTargetState' }
+        failure_class: { type: string, maxLength: 128, example: target_unavailable }
+    PrivacyHold:
+      type: object
+      description: One legal hold covering the aggregate. Hold documents and evidence are never returned.
+      additionalProperties: false
+      required: [id, aggregate_id, authority, reason, starts_at, review_at]
+      properties:
+        id: { type: string, pattern: '^hld_[0-9A-HJKMNP-TV-Z]{26}$', example: hld_01M11HEQG00000000000000000 }
+        aggregate_id: { type: string, minLength: 1, maxLength: 200, example: ver_01M11HEQG00000000000000000 }
+        authority: { type: string, minLength: 1, maxLength: 128, example: court-order }
+        reason: { type: string, minLength: 1, maxLength: 256, example: pending proceedings }
+        starts_at: { type: string, format: date-time, example: '2026-09-06T00:00:00Z' }
+        review_at: { type: string, format: date-time, example: '2026-10-06T00:00:00Z' }
+        released_at: { type: string, format: date-time, description: Present only while a released hold is still observably active. }
+    PrivacyDeletionSummary:
+      type: object
+      description: Safe deletion-workflow summary without target references or evidence metadata.
+      additionalProperties: false
+      required: [id, aggregate_id, region, state, target_count, backup_expires_at, version, requested_at, updated_at]
+      properties:
+        id: { $ref: '#/components/schemas/PrivacyDeletionID' }
+        aggregate_id: { type: string, minLength: 1, maxLength: 200, example: ver_01M11HEQG00000000000000000 }
+        region: { type: string, minLength: 1, maxLength: 63, example: ng-1 }
+        state: { $ref: '#/components/schemas/PrivacyDeletionState' }
+        target_count: { type: integer, minimum: 1, maximum: 256, example: 2 }
+        backup_expires_at: { type: string, format: date-time, description: Documented backup boundary; completion never precedes it., example: '2026-10-11T00:00:00Z' }
+        failure_class: { type: string, maxLength: 128, example: target_unavailable }
+        version: { type: integer, format: int64, minimum: 1, example: 3 }
+        requested_at: { type: string, format: date-time, example: '2026-09-06T00:00:00Z' }
+        updated_at: { type: string, format: date-time, example: '2026-09-06T00:05:00Z' }
+    PrivacyDeletionStatus:
+      type: object
+      description: Full safe deletion-workflow status with exact target states, active holds, and the documented backup boundary.
+      additionalProperties: false
+      required: [id, aggregate_id, region, state, target_count, backup_expires_at, version, requested_at, updated_at, targets, holds]
+      properties:
+        id: { $ref: '#/components/schemas/PrivacyDeletionID' }
+        aggregate_id: { type: string, minLength: 1, maxLength: 200, example: ver_01M11HEQG00000000000000000 }
+        region: { type: string, minLength: 1, maxLength: 63, example: ng-1 }
+        state: { $ref: '#/components/schemas/PrivacyDeletionState' }
+        target_count: { type: integer, minimum: 1, maximum: 256, example: 2 }
+        backup_expires_at: { type: string, format: date-time, example: '2026-10-11T00:00:00Z' }
+        failure_class: { type: string, maxLength: 128, example: target_unavailable }
+        version: { type: integer, format: int64, minimum: 1, example: 3 }
+        requested_at: { type: string, format: date-time, example: '2026-09-06T00:00:00Z' }
+        updated_at: { type: string, format: date-time, example: '2026-09-06T00:05:00Z' }
+        targets: { type: array, maxItems: 256, items: { $ref: '#/components/schemas/PrivacyTarget' }, example: [{ kind: raw_evidence, reference: 3f2a0c9d1b4e6a8c0d2f4b6a, state: deleted }] }
+        holds: { type: array, maxItems: 100, items: { $ref: '#/components/schemas/PrivacyHold' }, example: [] }
+    PrivacyDeletionList:
+      type: object
+      description: Bounded ascending deletion-workflow page with a signed tenant-, filter-, collection- and limit-bound cursor.
+      additionalProperties: false
+      required: [data, page]
+      properties:
+        data:
+          type: array
+          maxItems: 100
+          items: { $ref: '#/components/schemas/PrivacyDeletionSummary' }
+        page: { $ref: '#/components/schemas/Page' }
+      example:
+        data: []
+        page:
+          has_more: false
+    PrivacyRetentionRecord:
+      type: object
+      description: One retained evidence record with its recomputed typed retention resolution. Content and object locations are never returned.
+      additionalProperties: false
+      required: [id, data_class, region, duration_seconds, expires_at]
+      properties:
+        id: { $ref: '#/components/schemas/EvidenceID' }
+        data_class: { type: string, enum: [raw_evidence, derived_evidence], example: raw_evidence }
+        region: { type: string, minLength: 1, maxLength: 63, example: ng-1 }
+        duration_seconds: { type: integer, format: int64, minimum: 1, example: 2592000 }
+        expires_at: { type: string, format: date-time, example: '2026-10-06T00:00:00Z' }
+    PrivacyRetentionResolution:
+      type: object
+      description: Read-only typed retention resolution for one aggregate with its active holds.
+      additionalProperties: false
+      required: [aggregate_id, records, holds]
+      properties:
+        aggregate_id: { type: string, minLength: 1, maxLength: 200, example: ver_01M11HEQG00000000000000000 }
+        records: { type: array, maxItems: 1000, items: { $ref: '#/components/schemas/PrivacyRetentionRecord' }, example: [{ id: evd_01M11HEQG00000000000000000, data_class: raw_evidence, region: ng-1, duration_seconds: 2592000, expires_at: '2026-10-06T00:00:00Z' }] }
+        holds: { type: array, maxItems: 100, items: { $ref: '#/components/schemas/PrivacyHold' }, example: [] }
+    ModelRegistryName:
+      type: string
+      description: Tenant-owned evaluation-model registry name.
+      pattern: '^[a-z][a-z0-9._-]{0,63}$'
+      example: pad
+    ModelDigest:
+      type: string
+      description: Lowercase SHA-256 digest including its algorithm prefix.
+      pattern: '^sha256:[0-9a-f]{64}$'
+      example: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    ModelContractVersion:
+      type: object
+      description: Accepted model-contract version. Only the current v1.0 contract is accepted.
+      additionalProperties: false
+      required: [major, minor]
+      properties:
+        major: { type: integer, minimum: 1, maximum: 1, example: 1 }
+        minor: { type: integer, minimum: 0, maximum: 0, example: 0 }
+    ModelProvenance:
+      type: object
+      description: Exact immutable execution provenance pins for one evaluation model.
+      additionalProperties: false
+      required: [model_id, model_version, model_digest, runtime_digest, preprocessing_digest, output_schema_digest, contract]
+      properties:
+        model_id:
+          type: string
+          description: Registered model identifier matching the configuration reference model registration identifier.
+          pattern: ^mdl_[0-9A-HJKMNP-TV-Z]{26}$
+          example: mdl_01M11HEQG00000000000000000
+        model_version:
+          type: string
+          description: Three-part numeric model version without leading zeros.
+          pattern: ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$
+          example: 0.1.0
+        model_digest: { $ref: '#/components/schemas/ModelDigest' }
+        runtime_digest: { $ref: '#/components/schemas/ModelDigest' }
+        preprocessing_digest: { $ref: '#/components/schemas/ModelDigest' }
+        output_schema_digest: { $ref: '#/components/schemas/ModelDigest' }
+        contract: { $ref: '#/components/schemas/ModelContractVersion' }
+    ModelCapability:
+      type: object
+      description: One stable evaluation capability declared by an evaluation model.
+      additionalProperties: false
+      required: [evaluation, accepted_evidence, required_assurances, output_signals]
+      properties:
+        evaluation: { type: string, minLength: 1, maxLength: 160, pattern: '^\S+$', example: idenqa.check.passive_pad }
+        accepted_evidence: { type: array, minItems: 1, maxItems: 32, uniqueItems: true, items: { type: string, minLength: 1, maxLength: 160, pattern: '^\S+$' }, example: [idenqa.evidence.selfie_image] }
+        required_assurances: { type: array, maxItems: 32, uniqueItems: true, items: { type: string, minLength: 1, maxLength: 160, pattern: '^\S+$' }, example: [] }
+        output_signals: { type: array, minItems: 1, maxItems: 64, uniqueItems: true, items: { type: string, minLength: 1, maxLength: 160, pattern: '^\S+$' }, example: [idenqa.signal.passive_pad] }
+    ModelRestrictions:
+      type: object
+      description: Exact resource bounds enforced for one evaluation execution.
+      additionalProperties: false
+      required: [network_allowed, maximum_grants, maximum_input_bytes, maximum_result_size, maximum_duration]
+      properties:
+        network_allowed: { type: boolean, example: false }
+        maximum_grants: { type: integer, minimum: 1, maximum: 32, example: 1 }
+        maximum_input_bytes: { type: integer, format: int64, minimum: 1, maximum: 67108864, example: 1024 }
+        maximum_result_size: { type: integer, format: int64, minimum: 1, maximum: 262144, example: 4096 }
+        maximum_duration: { type: integer, format: int64, minimum: 1, maximum: 600000000000, description: Maximum execution duration in nanoseconds., example: 30000000000 }
+    ModelManifest:
+      type: object
+      description: Immutable evaluation model capability and resource advertisement.
+      additionalProperties: false
+      required: [provenance, capabilities, restrictions]
+      properties:
+        provenance: { $ref: '#/components/schemas/ModelProvenance' }
+        capabilities: { type: array, minItems: 1, maxItems: 64, items: { $ref: '#/components/schemas/ModelCapability' } }
+        restrictions: { $ref: '#/components/schemas/ModelRestrictions' }
+    ModelConfigurationReference:
+      type: object
+      description: Reference-only immutable runtime configuration. It is never an object location for raw evidence.
+      additionalProperties: false
+      required: [model_registration_id, configuration_digest, configuration_reference]
+      properties:
+        model_registration_id: { type: string, pattern: '^mdl_[0-9A-HJKMNP-TV-Z]{26}$', example: mdl_01M11HEQG00000000000000000 }
+        configuration_digest: { $ref: '#/components/schemas/ModelDigest' }
+        configuration_reference:
+          type: string
+          description: Opaque immutable configuration locator.
+          minLength: 17
+          maxLength: 512
+          pattern: ^configuration://\S+$
+          example: configuration://model/test
+    ModelRegistration:
+      type: object
+      description: Evaluation-only governance declarations with exact manifest and configuration pins. Registration is rejected unless evaluation_only is true.
+      additionalProperties: false
+      required: [manifest, configuration, owner, license, training_provenance, intended_use, prohibited_use, regions, hardware_class, evaluation_only]
+      properties:
+        manifest: { $ref: '#/components/schemas/ModelManifest' }
+        configuration: { $ref: '#/components/schemas/ModelConfigurationReference' }
+        owner: { type: string, minLength: 1, maxLength: 512, example: fixture }
+        license: { type: string, minLength: 1, maxLength: 512, example: synthetic-only }
+        training_provenance: { type: string, minLength: 1, maxLength: 512, example: synthetic }
+        intended_use: { type: string, minLength: 1, maxLength: 512, example: evaluation }
+        prohibited_use: { type: string, minLength: 1, maxLength: 512, example: production }
+        regions: { type: array, minItems: 1, maxItems: 32, uniqueItems: true, items: { type: string, pattern: '^[a-z][a-z0-9._-]{0,63}$' }, example: [ng] }
+        hardware_class: { type: string, pattern: '^[a-z][a-z0-9._-]{0,63}$', example: cpu }
+        evaluation_only: { type: boolean, enum: [true], description: Production registration is rejected; only true is accepted., example: true }
+    ModelThresholdSet:
+      type: object
+      description: Evaluation operating point pinned to the complete immutable execution provenance. A threshold value never establishes verification assurance and production thresholds are rejected.
+      additionalProperties: false
+      required: [configuration, provenance, score_name, minimum, maximum, cutoff, higher_is_genuine, evaluation_report_digest, evaluation_only]
+      properties:
+        configuration: { $ref: '#/components/schemas/ModelConfigurationReference' }
+        provenance: { $ref: '#/components/schemas/ModelProvenance' }
+        score_name: { type: string, pattern: '^[a-z][a-z0-9._-]{0,63}$', example: real_score }
+        minimum: { type: number, example: 0 }
+        maximum: { type: number, example: 1 }
+        cutoff: { type: number, example: 0.5 }
+        higher_is_genuine: { type: boolean, example: true }
+        evaluation_report_digest: { $ref: '#/components/schemas/ModelDigest' }
+        evaluation_only: { type: boolean, enum: [true], description: Production thresholds are rejected; only true is accepted., example: true }
+    ModelDeployment:
+      type: object
+      description: One evaluation-only model and threshold revision pair selected for a declared region.
+      additionalProperties: false
+      required: [model_revision, threshold_revision, region]
+      properties:
+        model_revision: { type: integer, format: int64, minimum: 1, maximum: 9007199254740991, example: 1 }
+        threshold_revision: { type: integer, format: int64, minimum: 1, maximum: 9007199254740991, example: 1 }
+        region: { type: string, pattern: '^[a-z][a-z0-9._-]{0,63}$', example: ng }
+    ModelRegistryState:
+      type: object
+      description: Current optimistic-concurrency pointer for one evaluation-only registry. It is not mutable model meaning and never selects a production model.
+      additionalProperties: false
+      required: [name, version, latest_model_revision, latest_threshold_revision, updated_at]
+      properties:
+        name: { $ref: '#/components/schemas/ModelRegistryName' }
+        version: { type: integer, format: int64, minimum: 0, maximum: 9007199254740991, example: 3 }
+        latest_model_revision: { type: integer, format: int64, minimum: 0, maximum: 9007199254740991, example: 1 }
+        latest_threshold_revision: { type: integer, format: int64, minimum: 0, maximum: 9007199254740991, example: 1 }
+        active: { $ref: '#/components/schemas/ModelDeployment' }
+        updated_at: { type: string, format: date-time, example: '2026-09-06T00:00:00Z' }
+    ModelRegistryRevision:
+      type: object
+      description: Immutable evaluation revision. Model and threshold families are independently numbered.
+      additionalProperties: false
+      required: [kind, revision, digest, created_at]
+      properties:
+        kind: { type: string, enum: [model, threshold], example: model }
+        revision: { type: integer, format: int64, minimum: 1, maximum: 9007199254740991, example: 1 }
+        digest: { $ref: '#/components/schemas/ModelDigest' }
+        registration: { $ref: '#/components/schemas/ModelRegistration' }
+        thresholds: { $ref: '#/components/schemas/ModelThresholdSet' }
+        created_at: { type: string, format: date-time, example: '2026-09-06T00:00:00Z' }
+    ModelRegistryReceipt:
+      type: object
+      description: Original safe result of one evaluation-registry command with the original actor and replay marker.
+      additionalProperties: false
+      required: [state, actor_id, operation, reason, replayed]
+      properties:
+        state: { $ref: '#/components/schemas/ModelRegistryState' }
+        revision: { $ref: '#/components/schemas/ModelRegistryRevision' }
+        actor_id: { type: string, minLength: 1, maxLength: 64, description: Non-secret authenticating API-key record identifier., example: key_01M11HEQG00000000000000000 }
+        operation: { type: string, enum: [register, threshold, activate, rollback, retire], example: register }
+        reason: { type: string, pattern: '^[a-z][a-z0-9._-]{0,63}$', example: evaluation }
+        replayed: { type: boolean, example: false }
+    ModelRegistrationWrite:
+      type: object
+      description: Version-checked evaluation-only model registration command.
+      additionalProperties: false
+      required: [expected_version, reason, registration]
+      properties:
+        expected_version: { type: integer, format: int64, minimum: 0, maximum: 9007199254740991, example: 0 }
+        reason: { type: string, pattern: '^[a-z][a-z0-9._-]{0,63}$', example: evaluation }
+        registration: { $ref: '#/components/schemas/ModelRegistration' }
+    ModelThresholdWrite:
+      type: object
+      description: Version-checked evaluation threshold revision command.
+      additionalProperties: false
+      required: [expected_version, reason, thresholds]
+      properties:
+        expected_version: { type: integer, format: int64, minimum: 0, maximum: 9007199254740991, example: 1 }
+        reason: { type: string, pattern: '^[a-z][a-z0-9._-]{0,63}$', example: evaluation }
+        thresholds: { $ref: '#/components/schemas/ModelThresholdSet' }
+    ModelDeploymentWrite:
+      type: object
+      description: Version-checked evaluation deployment command for activate, rollback, or side-effect-free validation.
+      additionalProperties: false
+      required: [expected_version, reason, deployment]
+      properties:
+        expected_version: { type: integer, format: int64, minimum: 0, maximum: 9007199254740991, example: 2 }
+        reason: { type: string, pattern: '^[a-z][a-z0-9._-]{0,63}$', example: evaluation }
+        deployment: { $ref: '#/components/schemas/ModelDeployment' }
+    ModelRetirementWrite:
+      type: object
+      description: Version-checked evaluation retirement command. Retirement clears the active evaluation deployment and fences new attempts.
+      additionalProperties: false
+      required: [expected_version, reason]
+      properties:
+        expected_version: { type: integer, format: int64, minimum: 0, maximum: 9007199254740991, example: 3 }
+        reason: { type: string, pattern: '^[a-z][a-z0-9._-]{0,63}$', example: evaluation }
+    ModelValidationRequest:
+      type: object
+      description: |
+        One closed evaluation-registry command document. Only the fields belonging to the
+        selected operation are accepted. Validation is side-effect-free: nothing is
+        persisted, no idempotency key is used, and no receipt, audit or outbox record is
+        created. The registry is evaluation-only and production activation is rejected.
+      additionalProperties: false
+      required: [operation, expected_version, reason]
+      properties:
+        operation: { type: string, enum: [register, threshold, activate, rollback, retire], example: register }
+        expected_version: { type: integer, format: int64, minimum: 0, maximum: 9007199254740991, example: 0 }
+        reason: { type: string, pattern: '^[a-z][a-z0-9._-]{0,63}$', example: evaluation }
+        registration: { $ref: '#/components/schemas/ModelRegistration' }
+        thresholds: { $ref: '#/components/schemas/ModelThresholdSet' }
+        deployment: { $ref: '#/components/schemas/ModelDeployment' }
+      allOf:
+        - if:
+            properties: { operation: { const: register } }
+            required: [operation]
+          then:
+            type: object
+            required: [registration]
+            not:
+              anyOf:
+                - required: [thresholds]
+                - required: [deployment]
+        - if:
+            properties: { operation: { const: threshold } }
+            required: [operation]
+          then:
+            type: object
+            required: [thresholds]
+            not:
+              anyOf:
+                - required: [registration]
+                - required: [deployment]
+        - if:
+            properties: { operation: { enum: [activate, rollback] } }
+            required: [operation]
+          then:
+            type: object
+            required: [deployment]
+            not:
+              anyOf:
+                - required: [registration]
+                - required: [thresholds]
+        - if:
+            properties: { operation: { const: retire } }
+            required: [operation]
+          then:
+            type: object
+            not:
+              anyOf:
+                - required: [registration]
+                - required: [thresholds]
+                - required: [deployment]
+    ModelValidationReport:
+      type: object
+      description: Bounded side-effect-free validation result. Accepted means the supplied command passes domain and current-state checks; it does not approve production use and persists nothing.
+      additionalProperties: false
+      required: [accepted, operation, reason_codes]
+      properties:
+        accepted: { type: boolean, example: true }
+        operation: { type: string, enum: [register, threshold, activate, rollback, retire], example: register }
+        reason_codes:
+          type: array
+          maxItems: 8
+          uniqueItems: true
+          description: Stable bounded reason codes; empty when accepted.
+          items:
+            type: string
+            enum: [command_invalid, registration_invalid, threshold_invalid, revision_not_found, deployment_invalid, version_conflict, registry_not_found, state_conflict]
+      example: { accepted: true, operation: register, reason_codes: [] }
+    ProviderID:
+      type: string
+      description: Tenant provider registration identifier.
+      pattern: '^pvr_[0-9A-HJKMNP-TV-Z]{26}$'
+      example: pvr_01M11HEQG00000000000000000
+    ProviderAdapterID:
+      type: string
+      description: Configured deployment adapter identifier.
+      pattern: '^[a-z][a-z0-9._-]{0,63}$'
+      example: dojah
+    ProviderRegion:
+      type: string
+      description: Bounded processing region token for the registered route.
+      pattern: '^[a-z][a-z0-9._-]{0,63}$'
+      example: africa
+    ProviderConfigurationReference:
+      type: object
+      description: |
+        Secret-free provider configuration reference. It names externally resolved
+        credentials and settings; credential values are not representable and Core
+        never stores them.
+      additionalProperties: false
+      required: [provider_id, schema_digest, secret_reference, credential_version]
+      properties:
+        provider_id: { type: string, pattern: '^pvd_[0-9A-HJKMNP-TV-Z]{26}$', example: pvd_01M11HEQG00000000000000000 }
+        schema_digest: { type: string, pattern: '^sha256:[0-9a-f]{64}$', example: sha256:284a4418399974a7d1ce691f96ea534e1cd97ee1a9bc0d09de25d4a3b9d48969 }
+        secret_reference: { type: string, pattern: '^secret://', minLength: 10, maxLength: 512, description: External secret-manager reference resolved by the runner. }
+        credential_version: { type: string, minLength: 1, maxLength: 128, example: v1 }
+    ProviderInputReference:
+      type: object
+      description: One secret-free externally resolved structured input reference.
+      additionalProperties: false
+      required: [name, reference]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 160, example: idenqa.input.country }
+        reference: { type: string, pattern: '^secret://', minLength: 10, maxLength: 512, example: 'secret://input/country' }
+    ProviderRestrictions:
+      type: object
+      description: |
+        Optional execution restrictions for the registered route. They may only
+        tighten, never relax, the configured deployment adapter restrictions.
+      additionalProperties: false
+      required: [network_required, maximum_grants, maximum_result_size, maximum_duration]
+      properties:
+        network_required: { type: boolean, example: true }
+        maximum_grants: { type: integer, minimum: 1, maximum: 32, example: 16 }
+        maximum_result_size: { type: integer, minimum: 1, maximum: 262144, example: 32768 }
+        maximum_duration: { type: integer, minimum: 1, maximum: 600000000000, description: Maximum duration in nanoseconds. }
+    ProviderRegistration:
+      type: object
+      description: One tenant-owned secret-free provider route registration. Version is the optimistic-concurrency pointer.
+      additionalProperties: false
+      required: [id, adapter_id, region, configuration, enabled, version, actor_id, created_at, updated_at]
+      properties:
+        id: { $ref: '#/components/schemas/ProviderID' }
+        adapter_id: { $ref: '#/components/schemas/ProviderAdapterID' }
+        region: { $ref: '#/components/schemas/ProviderRegion' }
+        configuration: { $ref: '#/components/schemas/ProviderConfigurationReference' }
+        inputs:
+          type: array
+          maxItems: 2
+          example: []
+          items: { $ref: '#/components/schemas/ProviderInputReference' }
+        selfie_requirement: { type: string, pattern: '^[a-z][a-z0-9._-]{0,63}$', example: selfie }
+        restrictions: { $ref: '#/components/schemas/ProviderRestrictions' }
+        enabled: { type: boolean, example: false }
+        version: { type: integer, format: int64, minimum: 1, maximum: 9007199254740991, example: 1 }
+        actor_id: { type: string, minLength: 1, maxLength: 64, description: Non-secret authenticating API-key record identifier., example: key_01M11HEQG00000000000000000 }
+        created_at: { type: string, format: date-time, example: '2026-09-20T00:00:00Z' }
+        updated_at: { type: string, format: date-time, example: '2026-09-20T00:00:00Z' }
+    ProviderRegistrationWrite:
+      type: object
+      description: Closed secret-free registration document. The adapter must match a configured deployment adapter manifest.
+      additionalProperties: false
+      required: [adapter_id, region, configuration]
+      properties:
+        adapter_id: { $ref: '#/components/schemas/ProviderAdapterID' }
+        region: { $ref: '#/components/schemas/ProviderRegion' }
+        configuration: { $ref: '#/components/schemas/ProviderConfigurationReference' }
+        inputs:
+          type: array
+          maxItems: 2
+          example: []
+          items: { $ref: '#/components/schemas/ProviderInputReference' }
+        selfie_requirement: { type: string, pattern: '^[a-z][a-z0-9._-]{0,63}$', example: selfie }
+        restrictions: { $ref: '#/components/schemas/ProviderRestrictions' }
+    ProviderRegistrationCreate:
+      type: object
+      description: Secret-free create command. A repeated identical command returns the original receipt.
+      additionalProperties: false
+      required: [reason, registration]
+      properties:
+        reason: { type: string, pattern: '^[a-z][a-z0-9._-]{0,63}$', example: onboarding }
+        registration: { $ref: '#/components/schemas/ProviderRegistrationWrite' }
+    ProviderRegistrationUpdate:
+      type: object
+      description: Version-checked secret-free registration replacement.
+      additionalProperties: false
+      required: [expected_version, reason, registration]
+      properties:
+        expected_version: { type: integer, format: int64, minimum: 1, maximum: 9007199254740990, example: 1 }
+        reason: { type: string, pattern: '^[a-z][a-z0-9._-]{0,63}$', example: rotation }
+        registration: { $ref: '#/components/schemas/ProviderRegistrationWrite' }
+    ProviderRegistrationToggle:
+      type: object
+      description: Version-checked enable or disable command.
+      additionalProperties: false
+      required: [expected_version, reason]
+      properties:
+        expected_version: { type: integer, format: int64, minimum: 1, maximum: 9007199254740990, example: 2 }
+        reason: { type: string, pattern: '^[a-z][a-z0-9._-]{0,63}$', example: enable }
+    ProviderRegistrationOperation:
+      type: string
+      description: Closed registration command operation.
+      enum: [create, update, enable, disable]
+      example: create
+    ProviderRegistrationReceipt:
+      type: object
+      description: Original safe result of one registration command with the original actor and replay marker.
+      additionalProperties: false
+      required: [registration, operation, reason, replayed]
+      properties:
+        registration: { $ref: '#/components/schemas/ProviderRegistration' }
+        operation: { $ref: '#/components/schemas/ProviderRegistrationOperation' }
+        reason: { type: string, pattern: '^[a-z][a-z0-9._-]{0,63}$', example: onboarding }
+        replayed: { type: boolean, example: false }
+    ProviderRegistrationList:
+      type: object
+      description: A bounded descending page of tenant provider registrations.
+      additionalProperties: false
+      required: [data, page]
+      properties:
+        data:
+          type: array
+          example: []
+          items: { $ref: '#/components/schemas/ProviderRegistration' }
+        page: { $ref: '#/components/schemas/Page' }
+    ProviderValidationReasonCode:
+      type: string
+      description: Stable bounded registration-validation reason code.
+      enum: [accepted, secret_material, adapter_unknown, adapter_mismatch, region_invalid, configuration_invalid, schema_mismatch, inputs_invalid, selfie_invalid, restrictions_invalid]
+      example: accepted
+    ProviderRegistrationValidationReport:
+      type: object
+      description: Bounded side-effect-free validation result. Accepted persists nothing and approves nothing.
+      additionalProperties: false
+      required: [accepted, reason_codes]
+      properties:
+        accepted: { type: boolean, example: true }
+        reason_codes:
+          type: array
+          maxItems: 8
+          uniqueItems: true
+          example: [accepted]
+          items: { $ref: '#/components/schemas/ProviderValidationReasonCode' }
+    ProviderRegistrationHealthFailure:
+      type: object
+      description: Last bounded normalized operational failure for one registration. It says nothing about the subject.
+      additionalProperties: false
+      required: [class]
+      properties:
+        class: { type: string, maxLength: 100, example: unavailable }
+        code: { type: string, maxLength: 100, example: provider_unavailable }
+        recorded_at: { type: string, format: date-time, example: '2026-09-20T00:00:00Z' }
+    ProviderRegistrationHealth:
+      type: object
+      description: Bounded read over the tenant's own persisted request and dispatch records. It is not an external provider probe.
+      additionalProperties: false
+      required: [registration_id, adapter_id, requests, pending_dispatches, completed_dispatches, failed_dispatches]
+      properties:
+        registration_id: { $ref: '#/components/schemas/ProviderID' }
+        adapter_id: { $ref: '#/components/schemas/ProviderAdapterID' }
+        requests: { type: integer, format: int64, minimum: 0, example: 0 }
+        pending_dispatches: { type: integer, format: int64, minimum: 0, example: 0 }
+        completed_dispatches: { type: integer, format: int64, minimum: 0, example: 0 }
+        failed_dispatches: { type: integer, format: int64, minimum: 0, example: 0 }
+        last_outcome: { type: string, enum: [completed, failed], example: completed }
+        last_failure: { $ref: '#/components/schemas/ProviderRegistrationHealthFailure' }
+        last_activity_at: { type: string, format: date-time, example: '2026-09-20T00:00:00Z' }
+    ProviderFailureClass:
+      type: string
+      description: Stable provider failure classification.
+      enum: [invalid_request, unauthenticated, unauthorized, unsupported, unavailable, rate_limited, deadline_exceeded, cancelled, provider_rejected, internal]
+      example: unavailable
+    ProviderRetryDisposition:
+      type: string
+      description: Stable retry disposition for execution mechanics.
+      enum: [never, backoff, reconcile]
+      example: backoff
+    ProviderFailureSimulationRequest:
+      type: object
+      description: One bounded provider failure classification to preview.
+      additionalProperties: false
+      required: [class, code]
+      properties:
+        class: { $ref: '#/components/schemas/ProviderFailureClass' }
+        code: { type: string, pattern: '^[a-z][a-z0-9._-]{0,63}$', maxLength: 64, example: provider_unavailable }
+    ProviderFailureSimulation:
+      type: object
+      description: Pure operational classification preview. A provider failure never produces an identity outcome.
+      additionalProperties: false
+      required: [class, code, retry, retry_after_seconds, attempt_state, check_state, produces_identity_outcome]
+      properties:
+        class: { $ref: '#/components/schemas/ProviderFailureClass' }
+        code: { type: string, pattern: '^[a-z][a-z0-9._-]{0,63}$', maxLength: 64, example: provider_unavailable }
+        retry: { $ref: '#/components/schemas/ProviderRetryDisposition' }
+        retry_after_seconds: { type: integer, minimum: 0, maximum: 3600, example: 1 }
+        attempt_state: { type: string, enum: [failed, timed_out, cancelled], example: failed }
+        check_state: { type: string, enum: [failed, timed_out, cancelled], example: failed }
+        produces_identity_outcome: { type: boolean, enum: [false], example: false }
   responses:
     CaptureOriginNotAllowed:
       description: The browser Origin is missing, malformed, duplicated, or not allowed.

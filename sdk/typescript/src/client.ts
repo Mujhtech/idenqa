@@ -72,6 +72,7 @@ import {
   verificationCreated,
   verificationSession,
   verificationCancellation,
+  verificationResumed,
   noticeVersion,
   processingAuthority,
   subjectResponse,
@@ -112,6 +113,7 @@ import type {
   VerificationID,
   VerificationSession,
   VerificationCancellation,
+  VerificationResumed,
   NoticeID,
   NoticeVersion,
   NoticeVersionCreate,
@@ -144,6 +146,7 @@ import type {
   WireVerificationCreated,
   WireVerificationSession,
   WireVerificationCancellation,
+  WireVerificationResumed,
   WireNoticeVersion,
   WireNoticeVersionCreate,
   WireProcessingAuthority,
@@ -849,6 +852,23 @@ export class VerificationsClient {
       ...signal(options),
     });
     return mapResponse(response, verificationCancellation);
+  }
+
+  /** Requires verification_sessions:resume; bearer material is display-once. */
+  async resume(
+    verificationId: VerificationID,
+    expectedVersion: number,
+    options: IdempotentRequestOptions,
+  ): Promise<SDKResponse<VerificationResumed>> {
+    const response = await this.#transport.request<WireVerificationResumed>({
+      method: "POST",
+      path: `v1/verifications/${pathSegment(verificationId, "verificationId")}/resume`,
+      bearerToken: this.#token,
+      body: { expected_version: positiveInteger(expectedVersion, "expectedVersion") },
+      headers: idempotencyHeaders(options.idempotencyKey),
+      ...signal(options),
+    });
+    return mapResponse(response, verificationResumed);
   }
 
   async get(

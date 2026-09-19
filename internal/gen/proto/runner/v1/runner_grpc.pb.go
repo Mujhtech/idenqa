@@ -19,11 +19,12 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ProviderRunnerService_Manifest_FullMethodName              = "/idenqa.runner.v1.ProviderRunnerService/Manifest"
-	ProviderRunnerService_ValidateConfiguration_FullMethodName = "/idenqa.runner.v1.ProviderRunnerService/ValidateConfiguration"
-	ProviderRunnerService_Execute_FullMethodName               = "/idenqa.runner.v1.ProviderRunnerService/Execute"
-	ProviderRunnerService_Advance_FullMethodName               = "/idenqa.runner.v1.ProviderRunnerService/Advance"
-	ProviderRunnerService_Health_FullMethodName                = "/idenqa.runner.v1.ProviderRunnerService/Health"
+	ProviderRunnerService_Manifest_FullMethodName               = "/idenqa.runner.v1.ProviderRunnerService/Manifest"
+	ProviderRunnerService_ValidateConfiguration_FullMethodName  = "/idenqa.runner.v1.ProviderRunnerService/ValidateConfiguration"
+	ProviderRunnerService_Execute_FullMethodName                = "/idenqa.runner.v1.ProviderRunnerService/Execute"
+	ProviderRunnerService_Advance_FullMethodName                = "/idenqa.runner.v1.ProviderRunnerService/Advance"
+	ProviderRunnerService_VerifyProviderCallback_FullMethodName = "/idenqa.runner.v1.ProviderRunnerService/VerifyProviderCallback"
+	ProviderRunnerService_Health_FullMethodName                 = "/idenqa.runner.v1.ProviderRunnerService/Health"
 )
 
 // ProviderRunnerServiceClient is the client API for ProviderRunnerService service.
@@ -40,6 +41,8 @@ type ProviderRunnerServiceClient interface {
 	Execute(ctx context.Context, in *ProviderRunnerServiceExecuteRequest, opts ...grpc.CallOption) (*ProviderRunnerServiceExecuteResponse, error)
 	// Advance submits once or queries status without reusing evidence.
 	Advance(ctx context.Context, in *ProviderRunnerServiceAdvanceRequest, opts ...grpc.CallOption) (*ProviderRunnerServiceAdvanceResponse, error)
+	// VerifyProviderCallback authenticates one bounded raw provider callback.
+	VerifyProviderCallback(ctx context.Context, in *ProviderRunnerServiceVerifyProviderCallbackRequest, opts ...grpc.CallOption) (*ProviderRunnerServiceVerifyProviderCallbackResponse, error)
 	// Health returns a bounded, non-sensitive readiness classification.
 	Health(ctx context.Context, in *ProviderRunnerServiceHealthRequest, opts ...grpc.CallOption) (*ProviderRunnerServiceHealthResponse, error)
 }
@@ -92,6 +95,16 @@ func (c *providerRunnerServiceClient) Advance(ctx context.Context, in *ProviderR
 	return out, nil
 }
 
+func (c *providerRunnerServiceClient) VerifyProviderCallback(ctx context.Context, in *ProviderRunnerServiceVerifyProviderCallbackRequest, opts ...grpc.CallOption) (*ProviderRunnerServiceVerifyProviderCallbackResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ProviderRunnerServiceVerifyProviderCallbackResponse)
+	err := c.cc.Invoke(ctx, ProviderRunnerService_VerifyProviderCallback_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *providerRunnerServiceClient) Health(ctx context.Context, in *ProviderRunnerServiceHealthRequest, opts ...grpc.CallOption) (*ProviderRunnerServiceHealthResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ProviderRunnerServiceHealthResponse)
@@ -116,6 +129,8 @@ type ProviderRunnerServiceServer interface {
 	Execute(context.Context, *ProviderRunnerServiceExecuteRequest) (*ProviderRunnerServiceExecuteResponse, error)
 	// Advance submits once or queries status without reusing evidence.
 	Advance(context.Context, *ProviderRunnerServiceAdvanceRequest) (*ProviderRunnerServiceAdvanceResponse, error)
+	// VerifyProviderCallback authenticates one bounded raw provider callback.
+	VerifyProviderCallback(context.Context, *ProviderRunnerServiceVerifyProviderCallbackRequest) (*ProviderRunnerServiceVerifyProviderCallbackResponse, error)
 	// Health returns a bounded, non-sensitive readiness classification.
 	Health(context.Context, *ProviderRunnerServiceHealthRequest) (*ProviderRunnerServiceHealthResponse, error)
 	mustEmbedUnimplementedProviderRunnerServiceServer()
@@ -139,6 +154,9 @@ func (UnimplementedProviderRunnerServiceServer) Execute(context.Context, *Provid
 }
 func (UnimplementedProviderRunnerServiceServer) Advance(context.Context, *ProviderRunnerServiceAdvanceRequest) (*ProviderRunnerServiceAdvanceResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Advance not implemented")
+}
+func (UnimplementedProviderRunnerServiceServer) VerifyProviderCallback(context.Context, *ProviderRunnerServiceVerifyProviderCallbackRequest) (*ProviderRunnerServiceVerifyProviderCallbackResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method VerifyProviderCallback not implemented")
 }
 func (UnimplementedProviderRunnerServiceServer) Health(context.Context, *ProviderRunnerServiceHealthRequest) (*ProviderRunnerServiceHealthResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Health not implemented")
@@ -236,6 +254,24 @@ func _ProviderRunnerService_Advance_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ProviderRunnerService_VerifyProviderCallback_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ProviderRunnerServiceVerifyProviderCallbackRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProviderRunnerServiceServer).VerifyProviderCallback(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProviderRunnerService_VerifyProviderCallback_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProviderRunnerServiceServer).VerifyProviderCallback(ctx, req.(*ProviderRunnerServiceVerifyProviderCallbackRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ProviderRunnerService_Health_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ProviderRunnerServiceHealthRequest)
 	if err := dec(in); err != nil {
@@ -276,6 +312,10 @@ var ProviderRunnerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Advance",
 			Handler:    _ProviderRunnerService_Advance_Handler,
+		},
+		{
+			MethodName: "VerifyProviderCallback",
+			Handler:    _ProviderRunnerService_VerifyProviderCallback_Handler,
 		},
 		{
 			MethodName: "Health",

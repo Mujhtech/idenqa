@@ -49,6 +49,7 @@ import type {
   VerificationCreated,
   VerificationSession,
   VerificationCancellation,
+  VerificationResumed,
   NoticeVersion,
   ProcessingAuthority,
   SubjectResponse,
@@ -69,6 +70,7 @@ import type {
   WireVerificationCreated,
   WireVerificationSession,
   WireVerificationCancellation,
+  WireVerificationResumed,
   WireNoticeVersion,
   WireProcessingAuthority,
   WireSubjectResponse,
@@ -154,6 +156,7 @@ export function verificationSession(value: WireVerificationSession): Verificatio
     profileRevision: value.profile_revision,
     profileDigest: value.profile_digest,
     policyId: value.policy_id,
+    region: value.region,
     requirements: value.requirements,
     createdAt: value.created_at,
     updatedAt: value.updated_at,
@@ -167,6 +170,17 @@ export function verificationCreated(value: WireVerificationCreated): Verificatio
     captureToken: value.capture_token,
     outcomeToken: value.outcome_token,
     outcomeTokenExpiresAt: value.outcome_token_expires_at,
+  };
+}
+
+export function verificationResumed(value: WireVerificationResumed): VerificationResumed {
+  return {
+    session: verificationSession(value.session),
+    captureTokenId: value.capture_token_id,
+    captureTokenExpiresAt: value.capture_token_expires_at,
+    ...(value.capture_token === undefined ? {} : { captureToken: value.capture_token }),
+    replaced: value.replaced,
+    replayed: value.replayed,
   };
 }
 

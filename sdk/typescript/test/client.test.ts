@@ -707,3 +707,52 @@ describe("verification cancellation", () => {
     await expect(capture.cancel(0, { idempotencyKey: "invalid" })).rejects.toThrow();
   });
 });
+
+describe("verification resume", () => {
+  it("maps display-once replacement material and the optimistic request", async () => {
+    const requests: Request[] = [];
+    const fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      requests.push(new Request(input, init));
+      return jsonResponse(
+        {
+          session: {
+            id: "ver_01M11HEQG00000000000000000",
+            state: "collecting",
+            version: 3,
+            profile_id: "prf_01M11HEQG00000000000000000",
+            profile_revision: 1,
+            profile_digest: document.registry.digest,
+            policy_id: "pol_01M11HEQG00000000000000000",
+            region: "tenant.region.ng",
+            requirements: document,
+            created_at: "2026-09-06T12:00:00Z",
+            updated_at: "2026-09-06T12:05:00Z",
+            expires_at: "2026-09-06T13:00:00Z",
+          },
+          capture_token_id: "ctk_01M11HEQG00000000000000000",
+          capture_token_expires_at: "2026-09-06T12:35:00Z",
+          capture_token: "idq_cap_v1.replacement",
+          replaced: true,
+          replayed: false,
+        },
+        200,
+        { "X-Request-ID": "req_resume" },
+      );
+    });
+    const client = new IdenqaClient({
+      baseUrl: "https://core.example.test",
+      apiKey: "tenant-token",
+      fetch,
+    });
+    const result = await client.verifications.resume("ver_01M11HEQG00000000000000000", 2, {
+      idempotencyKey: "resume-1",
+    });
+    expect(result.data.captureToken).toBe("idq_cap_v1.replacement");
+    expect(result.data.session.state).toBe("collecting");
+    expect(
+      requests[0]!.url.endsWith("/v1/verifications/ver_01M11HEQG00000000000000000/resume"),
+    ).toBe(true);
+    expect(requests[0]!.headers.get("Idempotency-Key")).toBe('"resume-1"');
+    expect(await requests[0]!.json()).toEqual({ expected_version: 2 });
+  });
+});

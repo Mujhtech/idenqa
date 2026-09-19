@@ -24,6 +24,31 @@ export interface paths {
         readonly patch?: never;
         readonly trace?: never;
     };
+    readonly "/v1/tenant/export": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Export the authenticated tenant
+         * @description Streams a bounded, portable, tenant-owned canonical NDJSON export for
+         *     portability and offboarding. The header announces the selected
+         *     collections, per-collection records follow in canonical order, and the
+         *     footer carries per-collection counts plus the SHA-256 digest of every
+         *     preceding byte. Raw evidence bytes, credentials, endpoint secrets, and
+         *     provider payloads are never included.
+         */
+        readonly get: operations["exportTenant"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
     readonly "/v1/capture-profiles": {
         readonly parameters: {
             readonly query?: never;
@@ -246,6 +271,30 @@ export interface paths {
          *     Cancellation does not withdraw processing authority or delete retained evidence.
          */
         readonly post: operations["cancelVerification"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/verifications/{verificationID}/resume": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Resume a verification awaiting subject input
+         * @description Requires verification_sessions:resume and a fresh subject authorisation
+         *     recorded after the session entered awaiting_input. Reuses a still-live
+         *     capture credential; otherwise atomically replaces it without extending
+         *     the verification deadline. Exact replay returns references only and
+         *     never returns capture bearer material again.
+         */
+        readonly post: operations["resumeVerification"];
         readonly delete?: never;
         readonly options?: never;
         readonly head?: never;
@@ -869,6 +918,46 @@ export interface paths {
         readonly patch?: never;
         readonly trace?: never;
     };
+    readonly "/v1/webhook-events": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * List catalogue events
+         * @description Requires webhooks:read. Ascending insertion-order page of decrypted canonical catalogue envelopes with a tenant-, collection-, filter- and limit-bound cursor. Delivery and attempt inspection remain payload-free.
+         */
+        readonly get: operations["listWebhookEvents"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/webhook-events/stream": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Stream live catalogue events
+         * @description Requires webhooks:read. Server-Sent Events feed of decrypted canonical catalogue envelopes. Each event frame carries its durable sequence as the SSE id and the canonical envelope as data; reconnect with the Last-Event-ID header to resume after that sequence. Heartbeat comments keep the connection alive. Receivers must deduplicate by event id.
+         */
+        readonly get: operations["streamWebhookEvents"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
     readonly "/v1/policies": {
         readonly parameters: {
             readonly query?: never;
@@ -1031,6 +1120,66 @@ export interface paths {
          * @description Requires policies:activate. Original safe command receipt. Repeated identical commands return it with replayed=true without another revision, activation or audit effect. Applies to restore a previously active revision.
          */
         readonly post: operations["rollbackPolicy"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/policies/{policyID}/diff": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Diff two stored policy revisions
+         * @description Requires policies:read. Bounded canonical structural difference between two immutable revisions of one policy. Identity fields are reported on from and to and are never repeated as changes. The result is deterministic, omitted fragments are absent, and no expression is evaluated or registered.
+         */
+        readonly get: operations["diffPolicyRevisions"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/policy-simulations": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Evaluate one portable synthetic policy simulation
+         * @description Requires policies:read. Side-effect-free deterministic evaluation of one portable `PolicySimulationInput` document. The embedded policy uses the same closed `PolicyDocument` meaning accepted by revision creation, normalised to canonical form, but is never registered, activated, decided, tasked, or audited. Supplied facts use the canonical `PolicyCanonicalFact` shape without evidence bytes. No production facts are read and no expression source is returned. The request body is bounded by the portable simulation input limit.
+         */
+        readonly post: operations["simulatePolicy"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/policy-regressions": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Run a bounded portable policy scenario suite
+         * @description Requires policies:read. Side-effect-free deterministic evaluation of one portable `PolicyRegressionSuite` document holding at most the documented scenario maximum. Every scenario is a closed `PolicySimulationInput` with an exact canonical expectation; execution failures reject the request while expectation mismatches are reported as data with passed=false. No production facts are read and no policy is registered, activated, decided, tasked, or audited.
+         */
+        readonly post: operations["runPolicyRegression"];
         readonly delete?: never;
         readonly options?: never;
         readonly head?: never;
@@ -2222,6 +2371,517 @@ export interface paths {
         readonly patch?: never;
         readonly trace?: never;
     };
+    readonly "/v1/deletions": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * List tenant deletion workflows
+         * @description Requires deletions:read. Returns a bounded ascending page of deletion workflows, optionally restricted to one exact aggregate. Responses never return object locations, encoded target references, or raw evidence.
+         */
+        readonly get: operations["listDeletions"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/deletions/{deletionID}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Stable deletion-workflow identifier. */
+                readonly deletionID: components["schemas"]["PrivacyDeletionID"];
+            };
+            readonly cookie?: never;
+        };
+        /**
+         * Get one deletion workflow status
+         * @description Requires deletions:read. Returns exact target states and digests, active holds, and the documented backup boundary. Raw object references and evidence bytes are never returned.
+         */
+        readonly get: operations["getDeletionStatus"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/retention/resolutions": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Resolve typed retention for one aggregate
+         * @description Requires deletions:read. Read-only inspection recomputes each retained evidence record with the selected typed retention resolution and returns active holds. It does not extend, shorten, or otherwise invent retention meaning.
+         */
+        readonly get: operations["getRetentionResolution"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/models/{modelName}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant-owned evaluation-model registry name. */
+                readonly modelName: components["parameters"]["ModelName"];
+            };
+            readonly cookie?: never;
+        };
+        /**
+         * Get one evaluation-model registry state
+         * @description Requires models:read. Returns the current optimistic-concurrency pointer for one
+         *     tenant-owned evaluation-only registry: the independently numbered model and
+         *     threshold revision watermarks and the optional active evaluation deployment. The
+         *     registry is evaluation-only; production activation is rejected and this route
+         *     never selects a production model.
+         */
+        readonly get: operations["getModel"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/models/{modelName}/revisions/{kind}/{revision}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant-owned evaluation-model registry name. */
+                readonly modelName: components["parameters"]["ModelName"];
+                /** @description Immutable revision family. Model and threshold revisions are numbered independently. */
+                readonly kind: "model" | "threshold";
+                /** @description Positive immutable revision number inside the selected family. */
+                readonly revision: number;
+            };
+            readonly cookie?: never;
+        };
+        /**
+         * Get one immutable evaluation-model revision
+         * @description Requires models:read. Returns one explicitly requested immutable evaluation-only
+         *     registration or threshold revision with its canonical content digest. Model and
+         *     threshold revisions are independently numbered and immutable provenance survives
+         *     retirement. This route never selects a production model.
+         */
+        readonly get: operations["getModelRevision"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/models/{modelName}/history": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant-owned evaluation-model registry name. */
+                readonly modelName: components["parameters"]["ModelName"];
+            };
+            readonly cookie?: never;
+        };
+        /**
+         * List immutable evaluation-registry command history
+         * @description Requires models:read. Returns a bounded newest-first page of immutable command
+         *     receipts for one tenant-owned evaluation-only registry. Receipts preserve the
+         *     exact recorded state and original actor without exposing declared training
+         *     materials or scores, and immutable revisions survive retirement. This route never
+         *     selects a production model.
+         */
+        readonly get: operations["listModelHistory"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/models/{modelName}/register": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant-owned evaluation-model registry name. */
+                readonly modelName: components["parameters"]["ModelName"];
+            };
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Register an immutable evaluation model revision
+         * @description Requires models:write and exactly one Idempotency-Key. Appends one immutable
+         *     evaluation-only model revision with declared owner, licence, training provenance,
+         *     intended and prohibited use, regions, hardware class, and exact manifest and
+         *     configuration pins. The registry is evaluation-only: production activation is
+         *     rejected, this route never selects a production model, and a repeated identical
+         *     command returns the original receipt with replayed=true.
+         */
+        readonly post: operations["registerModel"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/models/{modelName}/threshold": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant-owned evaluation-model registry name. */
+                readonly modelName: components["parameters"]["ModelName"];
+            };
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Register an immutable evaluation threshold revision
+         * @description Requires models:write and exactly one Idempotency-Key. Appends one immutable
+         *     evaluation threshold operating point pinned to the complete execution provenance.
+         *     Thresholds are evaluation operating points, never accepted verification assurance,
+         *     and production activation is rejected. A repeated identical command returns the
+         *     original receipt with replayed=true.
+         */
+        readonly post: operations["setModelThreshold"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/models/{modelName}/activate": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant-owned evaluation-model registry name. */
+                readonly modelName: components["parameters"]["ModelName"];
+            };
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Activate an evaluation-only deployment
+         * @description Requires models:activate and exactly one Idempotency-Key. Version-checks the
+         *     current registry pointer, resolves the exact immutable model and threshold
+         *     revisions, and verifies the declared region before recording one evaluation-only
+         *     deployment. The registry is evaluation-only: production activation is rejected and
+         *     this route never selects a production model. A repeated identical command returns
+         *     the original receipt with replayed=true.
+         */
+        readonly post: operations["activateModel"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/models/{modelName}/rollback": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant-owned evaluation-model registry name. */
+                readonly modelName: components["parameters"]["ModelName"];
+            };
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Roll back to a previously activated evaluation deployment
+         * @description Requires models:activate and exactly one Idempotency-Key. Version-checks the
+         *     current registry pointer, resolves the exact immutable model and threshold
+         *     revisions, verifies the declared region, and records an operational rollback to a
+         *     pair that was previously activated. The registry is evaluation-only: production
+         *     activation is rejected and this route never selects a production model.
+         */
+        readonly post: operations["rollbackModel"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/models/{modelName}/retire": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant-owned evaluation-model registry name. */
+                readonly modelName: components["parameters"]["ModelName"];
+            };
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Retire the active evaluation deployment
+         * @description Requires models:activate and exactly one Idempotency-Key. Version-checks the
+         *     current registry pointer and clears the active evaluation deployment, immediately
+         *     fencing new attempts while immutable revisions and history remain readable. The
+         *     registry is evaluation-only and this route never selects a production model.
+         */
+        readonly post: operations["retireModel"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/models/{modelName}/validate": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant-owned evaluation-model registry name. */
+                readonly modelName: components["parameters"]["ModelName"];
+            };
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Validate an evaluation-registry command without persistence
+         * @description Requires models:write and no Idempotency-Key. Side-effect-free validation of the
+         *     exact closed command document that would be submitted to register, threshold,
+         *     activate, rollback or retire. Domain document validation and, for deployment
+         *     commands, stored revision, declared region, current version and previously
+         *     activated eligibility are checked against the current registry state. Nothing is
+         *     persisted and no revision, deployment, receipt, audit or outbox record is created.
+         *     The registry is evaluation-only: production activation is rejected and this route
+         *     never selects a production model.
+         */
+        readonly post: operations["validateModel"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/providers": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * List tenant provider registrations
+         * @description Requires providers:read. Returns a bounded newest-first page of tenant-owned
+         *     secret-free provider registrations. Registrations name externally resolved
+         *     credentials; Core never stores or returns a credential value, and this route
+         *     performs no external provider probe.
+         */
+        readonly get: operations["listProviderRegistrations"];
+        readonly put?: never;
+        /**
+         * Register a tenant provider route
+         * @description Requires providers:write and exactly one Idempotency-Key. Creates one disabled
+         *     tenant-owned registration whose adapter must match a configured deployment
+         *     adapter manifest and whose configuration and structured inputs are secret-free
+         *     external references. Credential values, inline secrets and weak or unrecognised
+         *     configuration shapes are rejected. A repeated identical command returns the
+         *     original receipt with replayed=true. The registration is enabled only through
+         *     the explicit enable route.
+         */
+        readonly post: operations["createProviderRegistration"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/providers/{providerID}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant-owned provider registration identifier. */
+                readonly providerID: components["parameters"]["ProviderID"];
+            };
+            readonly cookie?: never;
+        };
+        /**
+         * Get one tenant provider registration
+         * @description Requires providers:read. Returns one tenant-owned secret-free registration with
+         *     its optimistic-concurrency version and latest attributed actor. Cross-tenant and
+         *     absent registrations are indistinguishable. No credential value or external
+         *     provider state is returned.
+         */
+        readonly get: operations["getProviderRegistration"];
+        /**
+         * Update one tenant provider registration
+         * @description Requires providers:write. Version-checks the registration pointer and replaces
+         *     the secret-free adapter, region, configuration reference, structured inputs,
+         *     selfie requirement and optional restrictions. The adapter must match a
+         *     configured deployment adapter manifest and credential values are rejected. The
+         *     enabled state is unchanged; use enable or disable explicitly.
+         */
+        readonly put: operations["updateProviderRegistration"];
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/providers/{providerID}/validate": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant-owned provider registration identifier. */
+                readonly providerID: components["parameters"]["ProviderID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Validate a provider registration document without persistence
+         * @description Requires providers:write and no Idempotency-Key. Side-effect-free validation of
+         *     one secret-free registration document against the configured deployment adapter
+         *     manifest. Nothing is persisted and no registration, receipt, history, audit or
+         *     outbox record is created. The report never echoes supplied values.
+         */
+        readonly post: operations["validateProviderRegistration"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/providers/{providerID}/enable": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant-owned provider registration identifier. */
+                readonly providerID: components["parameters"]["ProviderID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Enable one tenant provider registration
+         * @description Requires providers:write. Version-checks the registration pointer and enables
+         *     the tenant registration. At most one enabled registration exists per tenant,
+         *     adapter and region; enabling a second registration for the same scope is a
+         *     conflict. The command is attributed and appended to immutable history.
+         */
+        readonly post: operations["enableProviderRegistration"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/providers/{providerID}/disable": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant-owned provider registration identifier. */
+                readonly providerID: components["parameters"]["ProviderID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Disable one tenant provider registration
+         * @description Requires providers:write. Version-checks the registration pointer and disables
+         *     the tenant registration so planning falls back to the deployment-configured
+         *     provider route. The command is attributed and appended to immutable history.
+         */
+        readonly post: operations["disableProviderRegistration"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/providers/{providerID}/health": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant-owned provider registration identifier. */
+                readonly providerID: components["parameters"]["ProviderID"];
+            };
+            readonly cookie?: never;
+        };
+        /**
+         * Read bounded registration health
+         * @description Requires providers:read. Returns a bounded read over the tenant's own persisted
+         *     provider requests and dispatch receipts for this registration: counts by
+         *     dispatch state and the last normalized outcome or failure class. It never
+         *     performs an external provider probe, returns no provider topology and never
+         *     exposes evidence bytes.
+         */
+        readonly get: operations["getProviderRegistrationHealth"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/providers/{providerID}/failure-simulations": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant-owned provider registration identifier. */
+                readonly providerID: components["parameters"]["ProviderID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Preview provider failure classification
+         * @description Requires providers:read and no Idempotency-Key. Pure side-effect-free preview of
+         *     how the owned normalisation classifies one bounded provider failure class and
+         *     code: the operational attempt/check state and retry disposition. It confirms
+         *     that a provider failure never produces an identity outcome. Nothing is
+         *     dispatched, persisted or mutated, and no external provider is contacted.
+         */
+        readonly post: operations["simulateProviderFailure"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2805,7 +3465,10 @@ export interface components {
             readonly verification_id: string;
             readonly capture_token: string;
             readonly capture_token_id: string;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @example 2026-09-19T10:35:00Z
+             */
             readonly capture_token_expires_at: string;
             readonly outcome_token: components["schemas"]["OutcomeToken"];
             /** Format: date-time */
@@ -3847,6 +4510,466 @@ export interface components {
             readonly page: components["schemas"]["Page"];
         };
         /**
+         * @description Closed portable simulation input. The policy document is normalised to canonical meaning without registration; facts carry typed provenance references and never raw evidence bytes.
+         * @example {
+         *       "schema_major": 1,
+         *       "schema_minor": 0,
+         *       "policy": {
+         *         "schema_major": 1,
+         *         "schema_minor": 0,
+         *         "verified_assurance": "synthetic.fixture",
+         *         "rules": [
+         *           {
+         *             "name": "synthetic_success",
+         *             "when": "facts[\"synthetic.document\"] == \"satisfied\"",
+         *             "result": {
+         *               "state": "satisfied",
+         *               "directive": "complete_verified",
+         *               "priority": 1,
+         *               "contributing_facts": [
+         *                 "synthetic.document"
+         *               ],
+         *               "reason_codes": []
+         *             }
+         *           }
+         *         ],
+         *         "policy_id": "pol_01M11HEQG00000000000000000",
+         *         "revision": 3
+         *       },
+         *       "tenant_id": "ten_01M11HEQG00000000000000000",
+         *       "verification_id": "ver_01M11HEQG00000000000000000",
+         *       "authority_id": "aut_01M11HEQG00000000000000000",
+         *       "acknowledgement_id": "ack_01M11HEQG00000000000000000",
+         *       "region": "synthetic.region",
+         *       "evaluated_at": "2026-09-19T00:00:00Z",
+         *       "facts": [
+         *         {
+         *           "key": "synthetic.document",
+         *           "state": "satisfied",
+         *           "source": {
+         *             "kind": "processing_authority",
+         *             "authority_id": "aut_01M11HEQG00000000000000000"
+         *           },
+         *           "observed_at": "2026-09-19T00:00:00Z",
+         *           "reason_codes": [
+         *             "synthetic_document"
+         *           ]
+         *         }
+         *       ]
+         *     }
+         */
+        readonly PolicySimulationInput: {
+            /** @constant */
+            readonly schema_major: 1;
+            /** @constant */
+            readonly schema_minor: 0;
+            readonly policy: components["schemas"]["PolicyDocument"];
+            readonly tenant_id: components["schemas"]["TenantID"];
+            readonly verification_id: components["schemas"]["VerificationSessionID"];
+            readonly authority_id: components["schemas"]["ProcessingAuthorityID"];
+            readonly acknowledgement_id: components["schemas"]["SubjectResponseID"];
+            readonly region: string;
+            /**
+             * Format: date-time
+             * @description Explicit UTC evaluation time; local offsets are rejected.
+             */
+            readonly evaluated_at: string;
+            readonly facts: readonly components["schemas"]["PolicyCanonicalFact"][];
+        };
+        /**
+         * @description Bounded source-free synthetic simulation summary. It omits facts, provenance, reason codes, expressions, and canonical input bytes; reproduced always means the exact portable meaning was restored, never that production state was justified.
+         * @example {
+         *       "schema_major": 1,
+         *       "schema_minor": 0,
+         *       "tenant_id": "ten_01M11HEQG00000000000000000",
+         *       "verification_id": "ver_01M11HEQG00000000000000000",
+         *       "policy_id": "pol_01M11HEQG00000000000000000",
+         *       "policy_revision": 3,
+         *       "policy_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+         *       "evaluator_major": 1,
+         *       "evaluator_minor": 0,
+         *       "evaluator_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+         *       "snapshot_digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+         *       "evaluation_digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+         *       "bundle_digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+         *       "directive": "complete_verified",
+         *       "outcome": "verified",
+         *       "assurance": "synthetic.fixture",
+         *       "authorises_completion": true,
+         *       "fact_count": 1,
+         *       "requirement_count": 1,
+         *       "evaluated_at": "2026-09-19T00:00:00Z",
+         *       "reproduced": true
+         *     }
+         */
+        readonly PolicySimulationReport: {
+            /** @constant */
+            readonly schema_major: 1;
+            /** @constant */
+            readonly schema_minor: 0;
+            readonly tenant_id: components["schemas"]["TenantID"];
+            readonly verification_id: components["schemas"]["VerificationSessionID"];
+            readonly policy_id: components["schemas"]["PolicyID"];
+            /** Format: int64 */
+            readonly policy_revision: number;
+            readonly policy_digest: components["schemas"]["PolicyDigest"];
+            readonly evaluator_major: number;
+            readonly evaluator_minor: number;
+            readonly evaluator_digest: components["schemas"]["PolicyDigest"];
+            readonly snapshot_digest: components["schemas"]["PolicyDigest"];
+            readonly evaluation_digest: components["schemas"]["PolicyDigest"];
+            readonly bundle_digest: components["schemas"]["PolicyDigest"];
+            readonly directive: components["schemas"]["PolicyDirective"];
+            readonly outcome?: components["schemas"]["PolicyOutcome"];
+            readonly assurance?: string;
+            /** @description True only for a closed terminal directive with a matching outcome. */
+            readonly authorises_completion: boolean;
+            readonly fact_count: number;
+            readonly requirement_count: number;
+            /** Format: date-time */
+            readonly evaluated_at: string;
+            /** @enum {boolean} */
+            readonly reproduced: true;
+        };
+        /**
+         * @description Closed portable regression suite. Every scenario carries one synthetic simulation input and the exact canonical requirement results expected from it.
+         * @example {
+         *       "schema_major": 1,
+         *       "schema_minor": 0,
+         *       "scenarios": [
+         *         {
+         *           "name": "synthetic_verified",
+         *           "input": {
+         *             "schema_major": 1,
+         *             "schema_minor": 0,
+         *             "policy": {
+         *               "schema_major": 1,
+         *               "schema_minor": 0,
+         *               "verified_assurance": "synthetic.fixture",
+         *               "rules": [
+         *                 {
+         *                   "name": "synthetic_success",
+         *                   "when": "facts[\"synthetic.document\"] == \"satisfied\"",
+         *                   "result": {
+         *                     "state": "satisfied",
+         *                     "directive": "complete_verified",
+         *                     "priority": 1,
+         *                     "contributing_facts": [
+         *                       "synthetic.document"
+         *                     ],
+         *                     "reason_codes": []
+         *                   }
+         *                 }
+         *               ],
+         *               "policy_id": "pol_01M11HEQG00000000000000000",
+         *               "revision": 3
+         *             },
+         *             "tenant_id": "ten_01M11HEQG00000000000000000",
+         *             "verification_id": "ver_01M11HEQG00000000000000000",
+         *             "authority_id": "aut_01M11HEQG00000000000000000",
+         *             "acknowledgement_id": "ack_01M11HEQG00000000000000000",
+         *             "region": "synthetic.region",
+         *             "evaluated_at": "2026-09-19T00:00:00Z",
+         *             "facts": [
+         *               {
+         *                 "key": "synthetic.document",
+         *                 "state": "satisfied",
+         *                 "source": {
+         *                   "kind": "processing_authority",
+         *                   "authority_id": "aut_01M11HEQG00000000000000000"
+         *                 },
+         *                 "observed_at": "2026-09-19T00:00:00Z",
+         *                 "reason_codes": [
+         *                   "synthetic_document"
+         *                 ]
+         *               }
+         *             ]
+         *           },
+         *           "expectation": {
+         *             "results": [
+         *               {
+         *                 "name": "synthetic_success",
+         *                 "state": "satisfied",
+         *                 "contributing_facts": [
+         *                   "synthetic.document"
+         *                 ],
+         *                 "candidate": "complete_verified",
+         *                 "priority": 1,
+         *                 "reason_codes": []
+         *               }
+         *             ],
+         *             "assurance": "synthetic.fixture"
+         *           }
+         *         }
+         *       ]
+         *     }
+         */
+        readonly PolicyRegressionSuite: {
+            /** @constant */
+            readonly schema_major: 1;
+            /** @constant */
+            readonly schema_minor: 0;
+            readonly scenarios: readonly components["schemas"]["PolicyRegressionScenario"][];
+        };
+        /**
+         * @description One uniquely named synthetic example and its exact expected meaning.
+         * @example {
+         *       "name": "synthetic_verified",
+         *       "input": {
+         *         "schema_major": 1,
+         *         "schema_minor": 0,
+         *         "policy": {
+         *           "schema_major": 1,
+         *           "schema_minor": 0,
+         *           "verified_assurance": "synthetic.fixture",
+         *           "rules": [
+         *             {
+         *               "name": "synthetic_success",
+         *               "when": "facts[\"synthetic.document\"] == \"satisfied\"",
+         *               "result": {
+         *                 "state": "satisfied",
+         *                 "directive": "complete_verified",
+         *                 "priority": 1,
+         *                 "contributing_facts": [
+         *                   "synthetic.document"
+         *                 ],
+         *                 "reason_codes": []
+         *               }
+         *             }
+         *           ],
+         *           "policy_id": "pol_01M11HEQG00000000000000000",
+         *           "revision": 3
+         *         },
+         *         "tenant_id": "ten_01M11HEQG00000000000000000",
+         *         "verification_id": "ver_01M11HEQG00000000000000000",
+         *         "authority_id": "aut_01M11HEQG00000000000000000",
+         *         "acknowledgement_id": "ack_01M11HEQG00000000000000000",
+         *         "region": "synthetic.region",
+         *         "evaluated_at": "2026-09-19T00:00:00Z",
+         *         "facts": [
+         *           {
+         *             "key": "synthetic.document",
+         *             "state": "satisfied",
+         *             "source": {
+         *               "kind": "processing_authority",
+         *               "authority_id": "aut_01M11HEQG00000000000000000"
+         *             },
+         *             "observed_at": "2026-09-19T00:00:00Z",
+         *             "reason_codes": [
+         *               "synthetic_document"
+         *             ]
+         *           }
+         *         ]
+         *       },
+         *       "expectation": {
+         *         "results": [
+         *           {
+         *             "name": "synthetic_success",
+         *             "state": "satisfied",
+         *             "contributing_facts": [
+         *               "synthetic.document"
+         *             ],
+         *             "candidate": "complete_verified",
+         *             "priority": 1,
+         *             "reason_codes": []
+         *           }
+         *         ],
+         *         "assurance": "synthetic.fixture"
+         *       }
+         *     }
+         */
+        readonly PolicyRegressionScenario: {
+            readonly name: string;
+            readonly input: components["schemas"]["PolicySimulationInput"];
+            readonly expectation: components["schemas"]["PolicyRegressionExpectation"];
+        };
+        /**
+         * @description Exact canonical requirement results and assurance resolved against the scenario snapshot. An expectation mismatch is data, not an execution failure.
+         * @example {
+         *       "results": [
+         *         {
+         *           "name": "synthetic_success",
+         *           "state": "satisfied",
+         *           "contributing_facts": [
+         *             "synthetic.document"
+         *           ],
+         *           "candidate": "complete_verified",
+         *           "priority": 1,
+         *           "reason_codes": []
+         *         }
+         *       ],
+         *       "assurance": "synthetic.fixture"
+         *     }
+         */
+        readonly PolicyRegressionExpectation: {
+            readonly results: readonly components["schemas"]["PolicyCanonicalRequirementResult"][];
+            readonly assurance?: string;
+        };
+        /**
+         * @description Canonical input-order-independent regression summary. passed is true only when every case matched; execution failures are reported as problems instead.
+         * @example {
+         *       "schema_major": 1,
+         *       "schema_minor": 0,
+         *       "cases": [
+         *         {
+         *           "name": "synthetic_verified",
+         *           "actual": {
+         *             "schema_major": 1,
+         *             "schema_minor": 0,
+         *             "tenant_id": "ten_01M11HEQG00000000000000000",
+         *             "verification_id": "ver_01M11HEQG00000000000000000",
+         *             "policy_id": "pol_01M11HEQG00000000000000000",
+         *             "policy_revision": 3,
+         *             "policy_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+         *             "evaluator_major": 1,
+         *             "evaluator_minor": 0,
+         *             "evaluator_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+         *             "snapshot_digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+         *             "evaluation_digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+         *             "bundle_digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+         *             "directive": "complete_verified",
+         *             "outcome": "verified",
+         *             "assurance": "synthetic.fixture",
+         *             "authorises_completion": true,
+         *             "fact_count": 1,
+         *             "requirement_count": 1,
+         *             "evaluated_at": "2026-09-19T00:00:00Z",
+         *             "reproduced": true
+         *           },
+         *           "expected_evaluation_digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+         *           "matches": true
+         *         }
+         *       ],
+         *       "passed": true,
+         *       "digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+         *     }
+         */
+        readonly PolicyRegressionReport: {
+            /** @constant */
+            readonly schema_major: 1;
+            /** @constant */
+            readonly schema_minor: 0;
+            readonly cases: readonly components["schemas"]["PolicyRegressionCase"][];
+            readonly passed: boolean;
+            readonly digest: components["schemas"]["PolicyDigest"];
+        };
+        /**
+         * @description Safe actual summary for one uniquely named scenario.
+         * @example {
+         *       "name": "synthetic_verified",
+         *       "actual": {
+         *         "schema_major": 1,
+         *         "schema_minor": 0,
+         *         "tenant_id": "ten_01M11HEQG00000000000000000",
+         *         "verification_id": "ver_01M11HEQG00000000000000000",
+         *         "policy_id": "pol_01M11HEQG00000000000000000",
+         *         "policy_revision": 3,
+         *         "policy_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+         *         "evaluator_major": 1,
+         *         "evaluator_minor": 0,
+         *         "evaluator_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+         *         "snapshot_digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+         *         "evaluation_digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+         *         "bundle_digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+         *         "directive": "complete_verified",
+         *         "outcome": "verified",
+         *         "assurance": "synthetic.fixture",
+         *         "authorises_completion": true,
+         *         "fact_count": 1,
+         *         "requirement_count": 1,
+         *         "evaluated_at": "2026-09-19T00:00:00Z",
+         *         "reproduced": true
+         *       },
+         *       "expected_evaluation_digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+         *       "matches": true
+         *     }
+         */
+        readonly PolicyRegressionCase: {
+            readonly name: string;
+            readonly actual: components["schemas"]["PolicySimulationReport"];
+            readonly expected_evaluation_digest: components["schemas"]["PolicyDigest"];
+            readonly matches: boolean;
+        };
+        /**
+         * @description Deterministic bounded structural difference between two immutable revisions of one policy. schema_major, schema_minor, policy_id, revision, and digests are reported on identity fields and never repeated inside changes.
+         * @example {
+         *       "schema_major": 1,
+         *       "schema_minor": 0,
+         *       "policy_id": "pol_01M11HEQG00000000000000000",
+         *       "from": {
+         *         "revision": 1,
+         *         "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+         *       },
+         *       "to": {
+         *         "revision": 2,
+         *         "digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+         *       },
+         *       "identical": false,
+         *       "truncated": false,
+         *       "change_count": 1,
+         *       "changes": [
+         *         {
+         *           "path": "/verified_assurance",
+         *           "kind": "changed",
+         *           "old": "synthetic.first",
+         *           "new": "synthetic.second"
+         *         }
+         *       ],
+         *       "digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+         *     }
+         */
+        readonly PolicyRevisionDiff: {
+            /** @constant */
+            readonly schema_major: 1;
+            /** @constant */
+            readonly schema_minor: 0;
+            readonly policy_id: components["schemas"]["PolicyID"];
+            readonly from: components["schemas"]["PolicyRevisionDiffSide"];
+            readonly to: components["schemas"]["PolicyRevisionDiffSide"];
+            /** @description True when both revisions carry the same canonical meaning. */
+            readonly identical: boolean;
+            /** @description True when change_count exceeds the exposed bounded change list. */
+            readonly truncated: boolean;
+            /** @description Total structural changes, including changes beyond the exposed list. */
+            readonly change_count: number;
+            readonly changes: readonly components["schemas"]["PolicyRevisionDiffChange"][];
+            readonly digest: components["schemas"]["PolicyDigest"];
+        };
+        /**
+         * @description Immutable revision identity for one diff side.
+         * @example {
+         *       "revision": 1,
+         *       "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+         *     }
+         */
+        readonly PolicyRevisionDiffSide: {
+            /** Format: int64 */
+            readonly revision: number;
+            readonly digest: components["schemas"]["PolicyDigest"];
+        };
+        /**
+         * @description One bounded canonical JSON-pointer change with safe canonical fragments.
+         * @example {
+         *       "path": "/verified_assurance",
+         *       "kind": "changed",
+         *       "old": "synthetic.first",
+         *       "new": "synthetic.second"
+         *     }
+         */
+        readonly PolicyRevisionDiffChange: {
+            /**
+             * @description JSON Pointer-like path into the canonical policy document.
+             * @example /rules/0/result/state
+             */
+            readonly path: string;
+            /** @enum {string} */
+            readonly kind: "added" | "removed" | "changed";
+            /** @description Canonical JSON fragment removed or replaced; absent for additions. */
+            readonly old?: Record<string, never> | readonly unknown[] | string | number | boolean | null;
+            /** @description Canonical JSON fragment added or replacing; absent for removals. */
+            readonly new?: Record<string, never> | readonly unknown[] | string | number | boolean | null;
+        };
+        /**
          * @description Tenant-owned endpoint metadata. Key material is never included.
          * @example {
          *       "id": "whk_01M11HEQG00000000000000000",
@@ -3854,6 +4977,7 @@ export interface components {
          *       "event_types": [
          *         "verification.completed"
          *       ],
+         *       "schema_version": "1.0",
          *       "version": 1,
          *       "secret_version": 1,
          *       "created_at": "2026-09-06T00:00:00Z",
@@ -3872,6 +4996,11 @@ export interface components {
              *     ]
              */
             readonly event_types: readonly string[];
+            /**
+             * @description Exact supported webhook envelope version pinned to this endpoint.
+             * @enum {string}
+             */
+            readonly schema_version: "1.0";
             /** Format: int64 */
             readonly version: number;
             /** Format: int64 */
@@ -3957,7 +5086,8 @@ export interface components {
          *       "url": "https://example.com/webhooks",
          *       "event_types": [
          *         "verification.completed"
-         *       ]
+         *       ],
+         *       "schema_version": "1.0"
          *     }
          */
         readonly WebhookCreate: {
@@ -3971,6 +5101,12 @@ export interface components {
              *     ]
              */
             readonly event_types?: readonly string[];
+            /**
+             * @description Exact supported webhook envelope version. Defaults to `1.0`.
+             * @default 1.0
+             * @enum {string}
+             */
+            readonly schema_version: "1.0";
         };
         /**
          * @description Replace an endpoint's catalogue event subscription under an expected version.
@@ -3979,7 +5115,8 @@ export interface components {
          *       "event_types": [
          *         "verification.completed",
          *         "decision.created"
-         *       ]
+         *       ],
+         *       "schema_version": "1.0"
          *     }
          */
         readonly WebhookSubscriptions: {
@@ -3996,6 +5133,11 @@ export interface components {
              *     ]
              */
             readonly event_types: readonly string[];
+            /**
+             * @description Exact supported webhook envelope version. When omitted, the endpoint keeps its current pin.
+             * @enum {string}
+             */
+            readonly schema_version?: "1.0";
         };
         /**
          * @description Rotate only when no previous-key overlap remains active. Compare the endpoint version. Applies to webhook Rotate.
@@ -4040,6 +5182,7 @@ export interface components {
          *         "event_types": [
          *           "verification.completed"
          *         ],
+         *         "schema_version": "1.0",
          *         "version": 1,
          *         "secret_version": 1,
          *         "created_at": "2026-09-06T00:00:00Z",
@@ -4085,6 +5228,7 @@ export interface components {
          *           "event_types": [
          *             "verification.completed"
          *           ],
+         *           "schema_version": "1.0",
          *           "version": 1,
          *           "secret_version": 1,
          *           "created_at": "2026-09-06T00:00:00Z",
@@ -4124,6 +5268,45 @@ export interface components {
          */
         readonly WebhookDeliveryList: {
             readonly data: readonly components["schemas"]["WebhookDelivery"][];
+            readonly page: components["schemas"]["Page"];
+        };
+        /**
+         * @description One canonical catalogue envelope decrypted for an authorised tenant reader.
+         * @example {
+         *       "id": "evt_01M11HEQG00000000000000001",
+         *       "type": "verification.completed",
+         *       "schema_version": "1.0",
+         *       "created_at": "2026-09-19T10:00:00Z",
+         *       "tenant_id": "ten_01M11HEQG00000000000000000",
+         *       "region": "ng-lagos",
+         *       "data": {
+         *         "verification_id": "ver_01M11HEQG00000000000000000"
+         *       }
+         *     }
+         */
+        readonly WebhookEvent: {
+            readonly id: string;
+            readonly type: string;
+            readonly schema_version: string;
+            /** Format: date-time */
+            readonly created_at: string;
+            readonly tenant_id: string;
+            readonly region: string;
+            readonly data: {
+                readonly [key: string]: unknown;
+            };
+        };
+        /**
+         * @description Ascending insertion-order page of decrypted canonical catalogue envelopes.
+         * @example {
+         *       "data": [],
+         *       "page": {
+         *         "has_more": false
+         *       }
+         *     }
+         */
+        readonly WebhookEventList: {
+            readonly data: readonly components["schemas"]["WebhookEvent"][];
             readonly page: components["schemas"]["Page"];
         };
         /**
@@ -4688,6 +5871,34 @@ export interface components {
              */
             readonly occurred_at: string;
         };
+        /** @description Optimistic precondition for an awaiting-input resume command. */
+        readonly VerificationResume: {
+            /**
+             * Format: int64
+             * @example 4
+             */
+            readonly expected_version: number;
+        };
+        /** @description Reference-only resume result with a display-once replacement bearer when required. */
+        readonly VerificationResumed: {
+            readonly session: components["schemas"]["VerificationSession"];
+            /** @example ctk_01M11HEQG00000000000000000 */
+            readonly capture_token_id: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-19T10:35:00Z
+             */
+            readonly capture_token_expires_at: string;
+            /**
+             * @description Present only for the first successful request that replaced an unusable credential.
+             * @example idq_cap_v1.1.eyJ0b2tlbl9pZCI6ImN0a18wMU0xMUhFUUcwMDAwMDAwMDAwMDAwMDAwMCJ9.c2lnbmF0dXJl
+             */
+            readonly capture_token?: components["schemas"]["CaptureToken"];
+            /** @example false */
+            readonly replaced: boolean;
+            /** @example false */
+            readonly replayed: boolean;
+        };
         /** @description Tenant request to snapshot an active published capture profile. */
         readonly VerificationCreate: {
             readonly capture_profile_id: components["schemas"]["CaptureProfileID"];
@@ -4738,6 +5949,19 @@ export interface components {
              * @example ng-1
              */
             readonly region: string;
+            /**
+             * @description Active policy-authored subject-input request. Present only while the
+             *     session is `awaiting_input`, omitted for every other state, and never
+             *     present on the subject-safe capture-token projection. It carries no
+             *     evidence, policy facts, or actor identity.
+             * @example {
+             *       "reason_codes": [
+             *         "document_authenticity_unavailable"
+             *       ],
+             *       "requested_at": "2026-08-27T12:00:01Z"
+             *     }
+             */
+            readonly requested_input?: components["schemas"]["VerificationInputRequest"];
             readonly requirements: components["schemas"]["profile.schema"];
             /**
              * Format: date-time
@@ -4754,6 +5978,114 @@ export interface components {
              * @example 2026-08-28T12:00:00Z
              */
             readonly expires_at: string;
+            /**
+             * @description Operational failure projection. Present only for the terminal `failed`
+             *     state and omitted for every other state and for the subject-safe
+             *     capture-token projection. It states that the workflow could not
+             *     proceed; it is never an identity outcome, decision reference, raw
+             *     evidence, or provider payload.
+             * @example {
+             *       "class": "policy",
+             *       "code": "workflow_prohibited"
+             *     }
+             */
+            readonly failure?: components["schemas"]["VerificationFailure"];
+            /**
+             * @description Current immutable decision projection. Present only when the caller holds
+             *     `decisions:read` and a current decision exists for the verification; omitted
+             *     otherwise.
+             * @example {
+             *       "decision_id": "dec_01M11HEQG00000000000000000",
+             *       "outcome": "verified",
+             *       "directive": "complete_verified",
+             *       "decided_at": "2026-08-31T12:00:01Z"
+             *     }
+             */
+            readonly current_decision?: components["schemas"]["VerificationDecisionReference"];
+            /**
+             * @description Current review case projection. Present only when the caller holds
+             *     `reviews:read` and a review case currently references the verification;
+             *     omitted otherwise.
+             * @example {
+             *       "case_id": "rvc_01M11HEQG00000000000000000",
+             *       "state": "claimed",
+             *       "version": 1
+             *     }
+             */
+            readonly current_case?: components["schemas"]["VerificationCaseReference"];
+        };
+        /**
+         * @description Bounded operational failure classification for a verification workflow
+         *     that reached the terminal `failed` state. It explains that the workflow
+         *     could not proceed and never carries an identity outcome, decision
+         *     reference, raw evidence, or provider payload.
+         */
+        readonly VerificationFailure: {
+            /**
+             * @description Bounded failure class naming the writer that failed the workflow.
+             * @example policy
+             */
+            readonly class: string;
+            /**
+             * @description Bounded machine-readable failure code within its class.
+             * @example workflow_prohibited
+             */
+            readonly code: string;
+        };
+        /** @description Current immutable decision reference for one verification without policy facts or evidence. */
+        readonly VerificationDecisionReference: {
+            readonly decision_id: components["schemas"]["PolicyDecisionID"];
+            readonly outcome: components["schemas"]["PolicyOutcome"];
+            readonly directive: components["schemas"]["PolicyDirective"];
+            /**
+             * Format: date-time
+             * @description Instant the referenced immutable decision was recorded.
+             * @example 2026-08-31T12:00:01Z
+             */
+            readonly decided_at: string;
+        };
+        /** @description Current review case reference for one verification without findings or evidence. */
+        readonly VerificationCaseReference: {
+            /**
+             * @description Stable tenant-scoped review-case identifier.
+             * @example rvc_01M11HEQG00000000000000000
+             */
+            readonly case_id: string;
+            /**
+             * @description Bounded review-case lifecycle state such as open, claimed, awaiting_second, resolved, or escalated.
+             * @example claimed
+             */
+            readonly state: string;
+            /**
+             * Format: int64
+             * @description Optimistic version of the referenced review case.
+             * @example 1
+             */
+            readonly version: number;
+        };
+        /**
+         * @description Bounded projection of the active policy-authored subject-input request.
+         *     It states which input policy requested without exposing evidence, policy
+         *     facts, provider payloads, or the recording actor.
+         */
+        readonly VerificationInputRequest: {
+            /**
+             * @description Deterministic bounded policy reason codes. Codes outside the closed
+             *     lowercase token grammar are dropped, and `policy_request_input` is
+             *     recorded when the evaluation carries no bounded code.
+             */
+            readonly reason_codes: readonly string[];
+            /**
+             * Format: date-time
+             * @description Instant the policy routing recorded the input request.
+             * @example 2026-08-27T12:00:01Z
+             */
+            readonly requested_at: string;
+            /**
+             * @description Optional review case that owns a linked recapture request.
+             * @example rvc_01M11HEQG00000000000000000
+             */
+            readonly case_id?: string;
         };
         /** @description A new verification session and its display-once capture and read-only outcome credentials. */
         readonly VerificationCreated: {
@@ -5801,6 +7133,755 @@ export interface components {
             /** @example model.test */
             readonly model_id: string;
         };
+        /**
+         * @description Stable Idenqa deletion-workflow identifier.
+         * @example del_01M11HEQG00000000000000000
+         */
+        readonly PrivacyDeletionID: string;
+        /**
+         * @description Observable state of one exact deletion target.
+         * @example pending
+         * @enum {string}
+         */
+        readonly PrivacyTargetState: "pending" | "deleted" | "failed";
+        /**
+         * @description Observable deletion-workflow state.
+         * @example in_progress
+         * @enum {string}
+         */
+        readonly PrivacyDeletionState: "requested" | "blocked_by_legal_hold" | "in_progress" | "awaiting_backup_expiry" | "completed" | "failed";
+        /** @description Safe target projection. The reference is a stable non-reversible digest, never an object location or encoded evidence reference. */
+        readonly PrivacyTarget: {
+            /** @example raw_evidence */
+            readonly kind: string;
+            /**
+             * @description Opaque non-reversible target-reference digest.
+             * @example 3f2a0c9d1b4e6a8c0d2f4b6a
+             */
+            readonly reference: string;
+            readonly state: components["schemas"]["PrivacyTargetState"];
+            /** @example target_unavailable */
+            readonly failure_class?: string;
+        };
+        /** @description One legal hold covering the aggregate. Hold documents and evidence are never returned. */
+        readonly PrivacyHold: {
+            /** @example hld_01M11HEQG00000000000000000 */
+            readonly id: string;
+            /** @example ver_01M11HEQG00000000000000000 */
+            readonly aggregate_id: string;
+            /** @example court-order */
+            readonly authority: string;
+            /** @example pending proceedings */
+            readonly reason: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-06T00:00:00Z
+             */
+            readonly starts_at: string;
+            /**
+             * Format: date-time
+             * @example 2026-10-06T00:00:00Z
+             */
+            readonly review_at: string;
+            /**
+             * Format: date-time
+             * @description Present only while a released hold is still observably active.
+             */
+            readonly released_at?: string;
+        };
+        /** @description Safe deletion-workflow summary without target references or evidence metadata. */
+        readonly PrivacyDeletionSummary: {
+            readonly id: components["schemas"]["PrivacyDeletionID"];
+            /** @example ver_01M11HEQG00000000000000000 */
+            readonly aggregate_id: string;
+            /** @example ng-1 */
+            readonly region: string;
+            readonly state: components["schemas"]["PrivacyDeletionState"];
+            /** @example 2 */
+            readonly target_count: number;
+            /**
+             * Format: date-time
+             * @description Documented backup boundary; completion never precedes it.
+             * @example 2026-10-11T00:00:00Z
+             */
+            readonly backup_expires_at: string;
+            /** @example target_unavailable */
+            readonly failure_class?: string;
+            /**
+             * Format: int64
+             * @example 3
+             */
+            readonly version: number;
+            /**
+             * Format: date-time
+             * @example 2026-09-06T00:00:00Z
+             */
+            readonly requested_at: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-06T00:05:00Z
+             */
+            readonly updated_at: string;
+        };
+        /** @description Full safe deletion-workflow status with exact target states, active holds, and the documented backup boundary. */
+        readonly PrivacyDeletionStatus: {
+            readonly id: components["schemas"]["PrivacyDeletionID"];
+            /** @example ver_01M11HEQG00000000000000000 */
+            readonly aggregate_id: string;
+            /** @example ng-1 */
+            readonly region: string;
+            readonly state: components["schemas"]["PrivacyDeletionState"];
+            /** @example 2 */
+            readonly target_count: number;
+            /**
+             * Format: date-time
+             * @example 2026-10-11T00:00:00Z
+             */
+            readonly backup_expires_at: string;
+            /** @example target_unavailable */
+            readonly failure_class?: string;
+            /**
+             * Format: int64
+             * @example 3
+             */
+            readonly version: number;
+            /**
+             * Format: date-time
+             * @example 2026-09-06T00:00:00Z
+             */
+            readonly requested_at: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-06T00:05:00Z
+             */
+            readonly updated_at: string;
+            /**
+             * @example [
+             *       {
+             *         "kind": "raw_evidence",
+             *         "reference": "3f2a0c9d1b4e6a8c0d2f4b6a",
+             *         "state": "deleted"
+             *       }
+             *     ]
+             */
+            readonly targets: readonly components["schemas"]["PrivacyTarget"][];
+            /** @example [] */
+            readonly holds: readonly components["schemas"]["PrivacyHold"][];
+        };
+        /**
+         * @description Bounded ascending deletion-workflow page with a signed tenant-, filter-, collection- and limit-bound cursor.
+         * @example {
+         *       "data": [],
+         *       "page": {
+         *         "has_more": false
+         *       }
+         *     }
+         */
+        readonly PrivacyDeletionList: {
+            readonly data: readonly components["schemas"]["PrivacyDeletionSummary"][];
+            readonly page: components["schemas"]["Page"];
+        };
+        /** @description One retained evidence record with its recomputed typed retention resolution. Content and object locations are never returned. */
+        readonly PrivacyRetentionRecord: {
+            readonly id: components["schemas"]["EvidenceID"];
+            /**
+             * @example raw_evidence
+             * @enum {string}
+             */
+            readonly data_class: "raw_evidence" | "derived_evidence";
+            /** @example ng-1 */
+            readonly region: string;
+            /**
+             * Format: int64
+             * @example 2592000
+             */
+            readonly duration_seconds: number;
+            /**
+             * Format: date-time
+             * @example 2026-10-06T00:00:00Z
+             */
+            readonly expires_at: string;
+        };
+        /** @description Read-only typed retention resolution for one aggregate with its active holds. */
+        readonly PrivacyRetentionResolution: {
+            /** @example ver_01M11HEQG00000000000000000 */
+            readonly aggregate_id: string;
+            /**
+             * @example [
+             *       {
+             *         "id": "evd_01M11HEQG00000000000000000",
+             *         "data_class": "raw_evidence",
+             *         "region": "ng-1",
+             *         "duration_seconds": 2592000,
+             *         "expires_at": "2026-10-06T00:00:00Z"
+             *       }
+             *     ]
+             */
+            readonly records: readonly components["schemas"]["PrivacyRetentionRecord"][];
+            /** @example [] */
+            readonly holds: readonly components["schemas"]["PrivacyHold"][];
+        };
+        /**
+         * @description Tenant-owned evaluation-model registry name.
+         * @example pad
+         */
+        readonly ModelRegistryName: string;
+        /**
+         * @description Lowercase SHA-256 digest including its algorithm prefix.
+         * @example sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+         */
+        readonly ModelDigest: string;
+        /** @description Accepted model-contract version. Only the current v1.0 contract is accepted. */
+        readonly ModelContractVersion: {
+            /** @example 1 */
+            readonly major: number;
+            /** @example 0 */
+            readonly minor: number;
+        };
+        /** @description Exact immutable execution provenance pins for one evaluation model. */
+        readonly ModelProvenance: {
+            /**
+             * @description Registered model identifier matching the configuration reference model registration identifier.
+             * @example mdl_01M11HEQG00000000000000000
+             */
+            readonly model_id: string;
+            /**
+             * @description Three-part numeric model version without leading zeros.
+             * @example 0.1.0
+             */
+            readonly model_version: string;
+            readonly model_digest: components["schemas"]["ModelDigest"];
+            readonly runtime_digest: components["schemas"]["ModelDigest"];
+            readonly preprocessing_digest: components["schemas"]["ModelDigest"];
+            readonly output_schema_digest: components["schemas"]["ModelDigest"];
+            readonly contract: components["schemas"]["ModelContractVersion"];
+        };
+        /** @description One stable evaluation capability declared by an evaluation model. */
+        readonly ModelCapability: {
+            /** @example idenqa.check.passive_pad */
+            readonly evaluation: string;
+            /**
+             * @example [
+             *       "idenqa.evidence.selfie_image"
+             *     ]
+             */
+            readonly accepted_evidence: readonly string[];
+            /** @example [] */
+            readonly required_assurances: readonly string[];
+            /**
+             * @example [
+             *       "idenqa.signal.passive_pad"
+             *     ]
+             */
+            readonly output_signals: readonly string[];
+        };
+        /** @description Exact resource bounds enforced for one evaluation execution. */
+        readonly ModelRestrictions: {
+            /** @example false */
+            readonly network_allowed: boolean;
+            /** @example 1 */
+            readonly maximum_grants: number;
+            /**
+             * Format: int64
+             * @example 1024
+             */
+            readonly maximum_input_bytes: number;
+            /**
+             * Format: int64
+             * @example 4096
+             */
+            readonly maximum_result_size: number;
+            /**
+             * Format: int64
+             * @description Maximum execution duration in nanoseconds.
+             * @example 30000000000
+             */
+            readonly maximum_duration: number;
+        };
+        /** @description Immutable evaluation model capability and resource advertisement. */
+        readonly ModelManifest: {
+            readonly provenance: components["schemas"]["ModelProvenance"];
+            readonly capabilities: readonly components["schemas"]["ModelCapability"][];
+            readonly restrictions: components["schemas"]["ModelRestrictions"];
+        };
+        /** @description Reference-only immutable runtime configuration. It is never an object location for raw evidence. */
+        readonly ModelConfigurationReference: {
+            /** @example mdl_01M11HEQG00000000000000000 */
+            readonly model_registration_id: string;
+            readonly configuration_digest: components["schemas"]["ModelDigest"];
+            /**
+             * @description Opaque immutable configuration locator.
+             * @example configuration://model/test
+             */
+            readonly configuration_reference: string;
+        };
+        /** @description Evaluation-only governance declarations with exact manifest and configuration pins. Registration is rejected unless evaluation_only is true. */
+        readonly ModelRegistration: {
+            readonly manifest: components["schemas"]["ModelManifest"];
+            readonly configuration: components["schemas"]["ModelConfigurationReference"];
+            /** @example fixture */
+            readonly owner: string;
+            /** @example synthetic-only */
+            readonly license: string;
+            /** @example synthetic */
+            readonly training_provenance: string;
+            /** @example evaluation */
+            readonly intended_use: string;
+            /** @example production */
+            readonly prohibited_use: string;
+            /**
+             * @example [
+             *       "ng"
+             *     ]
+             */
+            readonly regions: readonly string[];
+            /** @example cpu */
+            readonly hardware_class: string;
+            /**
+             * @description Production registration is rejected; only true is accepted.
+             * @example true
+             * @enum {boolean}
+             */
+            readonly evaluation_only: true;
+        };
+        /** @description Evaluation operating point pinned to the complete immutable execution provenance. A threshold value never establishes verification assurance and production thresholds are rejected. */
+        readonly ModelThresholdSet: {
+            readonly configuration: components["schemas"]["ModelConfigurationReference"];
+            readonly provenance: components["schemas"]["ModelProvenance"];
+            /** @example real_score */
+            readonly score_name: string;
+            /** @example 0 */
+            readonly minimum: number;
+            /** @example 1 */
+            readonly maximum: number;
+            /** @example 0.5 */
+            readonly cutoff: number;
+            /** @example true */
+            readonly higher_is_genuine: boolean;
+            readonly evaluation_report_digest: components["schemas"]["ModelDigest"];
+            /**
+             * @description Production thresholds are rejected; only true is accepted.
+             * @example true
+             * @enum {boolean}
+             */
+            readonly evaluation_only: true;
+        };
+        /** @description One evaluation-only model and threshold revision pair selected for a declared region. */
+        readonly ModelDeployment: {
+            /**
+             * Format: int64
+             * @example 1
+             */
+            readonly model_revision: number;
+            /**
+             * Format: int64
+             * @example 1
+             */
+            readonly threshold_revision: number;
+            /** @example ng */
+            readonly region: string;
+        };
+        /** @description Current optimistic-concurrency pointer for one evaluation-only registry. It is not mutable model meaning and never selects a production model. */
+        readonly ModelRegistryState: {
+            readonly name: components["schemas"]["ModelRegistryName"];
+            /**
+             * Format: int64
+             * @example 3
+             */
+            readonly version: number;
+            /**
+             * Format: int64
+             * @example 1
+             */
+            readonly latest_model_revision: number;
+            /**
+             * Format: int64
+             * @example 1
+             */
+            readonly latest_threshold_revision: number;
+            readonly active?: components["schemas"]["ModelDeployment"];
+            /**
+             * Format: date-time
+             * @example 2026-09-06T00:00:00Z
+             */
+            readonly updated_at: string;
+        };
+        /** @description Immutable evaluation revision. Model and threshold families are independently numbered. */
+        readonly ModelRegistryRevision: {
+            /**
+             * @example model
+             * @enum {string}
+             */
+            readonly kind: "model" | "threshold";
+            /**
+             * Format: int64
+             * @example 1
+             */
+            readonly revision: number;
+            readonly digest: components["schemas"]["ModelDigest"];
+            readonly registration?: components["schemas"]["ModelRegistration"];
+            readonly thresholds?: components["schemas"]["ModelThresholdSet"];
+            /**
+             * Format: date-time
+             * @example 2026-09-06T00:00:00Z
+             */
+            readonly created_at: string;
+        };
+        /** @description Original safe result of one evaluation-registry command with the original actor and replay marker. */
+        readonly ModelRegistryReceipt: {
+            readonly state: components["schemas"]["ModelRegistryState"];
+            readonly revision?: components["schemas"]["ModelRegistryRevision"];
+            /**
+             * @description Non-secret authenticating API-key record identifier.
+             * @example key_01M11HEQG00000000000000000
+             */
+            readonly actor_id: string;
+            /**
+             * @example register
+             * @enum {string}
+             */
+            readonly operation: "register" | "threshold" | "activate" | "rollback" | "retire";
+            /** @example evaluation */
+            readonly reason: string;
+            /** @example false */
+            readonly replayed: boolean;
+        };
+        /** @description Version-checked evaluation-only model registration command. */
+        readonly ModelRegistrationWrite: {
+            /**
+             * Format: int64
+             * @example 0
+             */
+            readonly expected_version: number;
+            /** @example evaluation */
+            readonly reason: string;
+            readonly registration: components["schemas"]["ModelRegistration"];
+        };
+        /** @description Version-checked evaluation threshold revision command. */
+        readonly ModelThresholdWrite: {
+            /**
+             * Format: int64
+             * @example 1
+             */
+            readonly expected_version: number;
+            /** @example evaluation */
+            readonly reason: string;
+            readonly thresholds: components["schemas"]["ModelThresholdSet"];
+        };
+        /** @description Version-checked evaluation deployment command for activate, rollback, or side-effect-free validation. */
+        readonly ModelDeploymentWrite: {
+            /**
+             * Format: int64
+             * @example 2
+             */
+            readonly expected_version: number;
+            /** @example evaluation */
+            readonly reason: string;
+            readonly deployment: components["schemas"]["ModelDeployment"];
+        };
+        /** @description Version-checked evaluation retirement command. Retirement clears the active evaluation deployment and fences new attempts. */
+        readonly ModelRetirementWrite: {
+            /**
+             * Format: int64
+             * @example 3
+             */
+            readonly expected_version: number;
+            /** @example evaluation */
+            readonly reason: string;
+        };
+        /**
+         * @description One closed evaluation-registry command document. Only the fields belonging to the
+         *     selected operation are accepted. Validation is side-effect-free: nothing is
+         *     persisted, no idempotency key is used, and no receipt, audit or outbox record is
+         *     created. The registry is evaluation-only and production activation is rejected.
+         */
+        readonly ModelValidationRequest: {
+            /**
+             * @example register
+             * @enum {string}
+             */
+            readonly operation: "register" | "threshold" | "activate" | "rollback" | "retire";
+            /**
+             * Format: int64
+             * @example 0
+             */
+            readonly expected_version: number;
+            /** @example evaluation */
+            readonly reason: string;
+            readonly registration?: components["schemas"]["ModelRegistration"];
+            readonly thresholds?: components["schemas"]["ModelThresholdSet"];
+            readonly deployment?: components["schemas"]["ModelDeployment"];
+        } & (unknown & unknown & unknown & unknown);
+        /**
+         * @description Bounded side-effect-free validation result. Accepted means the supplied command passes domain and current-state checks; it does not approve production use and persists nothing.
+         * @example {
+         *       "accepted": true,
+         *       "operation": "register",
+         *       "reason_codes": []
+         *     }
+         */
+        readonly ModelValidationReport: {
+            /** @example true */
+            readonly accepted: boolean;
+            /**
+             * @example register
+             * @enum {string}
+             */
+            readonly operation: "register" | "threshold" | "activate" | "rollback" | "retire";
+            /** @description Stable bounded reason codes; empty when accepted. */
+            readonly reason_codes: readonly ("command_invalid" | "registration_invalid" | "threshold_invalid" | "revision_not_found" | "deployment_invalid" | "version_conflict" | "registry_not_found" | "state_conflict")[];
+        };
+        /**
+         * @description Tenant provider registration identifier.
+         * @example pvr_01M11HEQG00000000000000000
+         */
+        readonly ProviderID: string;
+        /**
+         * @description Configured deployment adapter identifier.
+         * @example dojah
+         */
+        readonly ProviderAdapterID: string;
+        /**
+         * @description Bounded processing region token for the registered route.
+         * @example africa
+         */
+        readonly ProviderRegion: string;
+        /**
+         * @description Secret-free provider configuration reference. It names externally resolved
+         *     credentials and settings; credential values are not representable and Core
+         *     never stores them.
+         */
+        readonly ProviderConfigurationReference: {
+            /** @example pvd_01M11HEQG00000000000000000 */
+            readonly provider_id: string;
+            /** @example sha256:284a4418399974a7d1ce691f96ea534e1cd97ee1a9bc0d09de25d4a3b9d48969 */
+            readonly schema_digest: string;
+            /** @description External secret-manager reference resolved by the runner. */
+            readonly secret_reference: string;
+            /** @example v1 */
+            readonly credential_version: string;
+        };
+        /** @description One secret-free externally resolved structured input reference. */
+        readonly ProviderInputReference: {
+            /** @example idenqa.input.country */
+            readonly name: string;
+            /** @example secret://input/country */
+            readonly reference: string;
+        };
+        /**
+         * @description Optional execution restrictions for the registered route. They may only
+         *     tighten, never relax, the configured deployment adapter restrictions.
+         */
+        readonly ProviderRestrictions: {
+            /** @example true */
+            readonly network_required: boolean;
+            /** @example 16 */
+            readonly maximum_grants: number;
+            /** @example 32768 */
+            readonly maximum_result_size: number;
+            /** @description Maximum duration in nanoseconds. */
+            readonly maximum_duration: number;
+        };
+        /** @description One tenant-owned secret-free provider route registration. Version is the optimistic-concurrency pointer. */
+        readonly ProviderRegistration: {
+            readonly id: components["schemas"]["ProviderID"];
+            readonly adapter_id: components["schemas"]["ProviderAdapterID"];
+            readonly region: components["schemas"]["ProviderRegion"];
+            readonly configuration: components["schemas"]["ProviderConfigurationReference"];
+            /** @example [] */
+            readonly inputs?: readonly components["schemas"]["ProviderInputReference"][];
+            /** @example selfie */
+            readonly selfie_requirement?: string;
+            readonly restrictions?: components["schemas"]["ProviderRestrictions"];
+            /** @example false */
+            readonly enabled: boolean;
+            /**
+             * Format: int64
+             * @example 1
+             */
+            readonly version: number;
+            /**
+             * @description Non-secret authenticating API-key record identifier.
+             * @example key_01M11HEQG00000000000000000
+             */
+            readonly actor_id: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-20T00:00:00Z
+             */
+            readonly created_at: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-20T00:00:00Z
+             */
+            readonly updated_at: string;
+        };
+        /** @description Closed secret-free registration document. The adapter must match a configured deployment adapter manifest. */
+        readonly ProviderRegistrationWrite: {
+            readonly adapter_id: components["schemas"]["ProviderAdapterID"];
+            readonly region: components["schemas"]["ProviderRegion"];
+            readonly configuration: components["schemas"]["ProviderConfigurationReference"];
+            /** @example [] */
+            readonly inputs?: readonly components["schemas"]["ProviderInputReference"][];
+            /** @example selfie */
+            readonly selfie_requirement?: string;
+            readonly restrictions?: components["schemas"]["ProviderRestrictions"];
+        };
+        /** @description Secret-free create command. A repeated identical command returns the original receipt. */
+        readonly ProviderRegistrationCreate: {
+            /** @example onboarding */
+            readonly reason: string;
+            readonly registration: components["schemas"]["ProviderRegistrationWrite"];
+        };
+        /** @description Version-checked secret-free registration replacement. */
+        readonly ProviderRegistrationUpdate: {
+            /**
+             * Format: int64
+             * @example 1
+             */
+            readonly expected_version: number;
+            /** @example rotation */
+            readonly reason: string;
+            readonly registration: components["schemas"]["ProviderRegistrationWrite"];
+        };
+        /** @description Version-checked enable or disable command. */
+        readonly ProviderRegistrationToggle: {
+            /**
+             * Format: int64
+             * @example 2
+             */
+            readonly expected_version: number;
+            /** @example enable */
+            readonly reason: string;
+        };
+        /**
+         * @description Closed registration command operation.
+         * @example create
+         * @enum {string}
+         */
+        readonly ProviderRegistrationOperation: "create" | "update" | "enable" | "disable";
+        /** @description Original safe result of one registration command with the original actor and replay marker. */
+        readonly ProviderRegistrationReceipt: {
+            readonly registration: components["schemas"]["ProviderRegistration"];
+            readonly operation: components["schemas"]["ProviderRegistrationOperation"];
+            /** @example onboarding */
+            readonly reason: string;
+            /** @example false */
+            readonly replayed: boolean;
+        };
+        /** @description A bounded descending page of tenant provider registrations. */
+        readonly ProviderRegistrationList: {
+            /** @example [] */
+            readonly data: readonly components["schemas"]["ProviderRegistration"][];
+            readonly page: components["schemas"]["Page"];
+        };
+        /**
+         * @description Stable bounded registration-validation reason code.
+         * @example accepted
+         * @enum {string}
+         */
+        readonly ProviderValidationReasonCode: "accepted" | "secret_material" | "adapter_unknown" | "adapter_mismatch" | "region_invalid" | "configuration_invalid" | "schema_mismatch" | "inputs_invalid" | "selfie_invalid" | "restrictions_invalid";
+        /** @description Bounded side-effect-free validation result. Accepted persists nothing and approves nothing. */
+        readonly ProviderRegistrationValidationReport: {
+            /** @example true */
+            readonly accepted: boolean;
+            /**
+             * @example [
+             *       "accepted"
+             *     ]
+             */
+            readonly reason_codes: readonly components["schemas"]["ProviderValidationReasonCode"][];
+        };
+        /** @description Last bounded normalized operational failure for one registration. It says nothing about the subject. */
+        readonly ProviderRegistrationHealthFailure: {
+            /** @example unavailable */
+            readonly class: string;
+            /** @example provider_unavailable */
+            readonly code?: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-20T00:00:00Z
+             */
+            readonly recorded_at?: string;
+        };
+        /** @description Bounded read over the tenant's own persisted request and dispatch records. It is not an external provider probe. */
+        readonly ProviderRegistrationHealth: {
+            readonly registration_id: components["schemas"]["ProviderID"];
+            readonly adapter_id: components["schemas"]["ProviderAdapterID"];
+            /**
+             * Format: int64
+             * @example 0
+             */
+            readonly requests: number;
+            /**
+             * Format: int64
+             * @example 0
+             */
+            readonly pending_dispatches: number;
+            /**
+             * Format: int64
+             * @example 0
+             */
+            readonly completed_dispatches: number;
+            /**
+             * Format: int64
+             * @example 0
+             */
+            readonly failed_dispatches: number;
+            /**
+             * @example completed
+             * @enum {string}
+             */
+            readonly last_outcome?: "completed" | "failed";
+            readonly last_failure?: components["schemas"]["ProviderRegistrationHealthFailure"];
+            /**
+             * Format: date-time
+             * @example 2026-09-20T00:00:00Z
+             */
+            readonly last_activity_at?: string;
+        };
+        /**
+         * @description Stable provider failure classification.
+         * @example unavailable
+         * @enum {string}
+         */
+        readonly ProviderFailureClass: "invalid_request" | "unauthenticated" | "unauthorized" | "unsupported" | "unavailable" | "rate_limited" | "deadline_exceeded" | "cancelled" | "provider_rejected" | "internal";
+        /**
+         * @description Stable retry disposition for execution mechanics.
+         * @example backoff
+         * @enum {string}
+         */
+        readonly ProviderRetryDisposition: "never" | "backoff" | "reconcile";
+        /** @description One bounded provider failure classification to preview. */
+        readonly ProviderFailureSimulationRequest: {
+            readonly class: components["schemas"]["ProviderFailureClass"];
+            /** @example provider_unavailable */
+            readonly code: string;
+        };
+        /** @description Pure operational classification preview. A provider failure never produces an identity outcome. */
+        readonly ProviderFailureSimulation: {
+            readonly class: components["schemas"]["ProviderFailureClass"];
+            /** @example provider_unavailable */
+            readonly code: string;
+            readonly retry: components["schemas"]["ProviderRetryDisposition"];
+            /** @example 1 */
+            readonly retry_after_seconds: number;
+            /**
+             * @example failed
+             * @enum {string}
+             */
+            readonly attempt_state: "failed" | "timed_out" | "cancelled";
+            /**
+             * @example failed
+             * @enum {string}
+             */
+            readonly check_state: "failed" | "timed_out" | "cancelled";
+            /**
+             * @example false
+             * @enum {boolean}
+             */
+            readonly produces_identity_outcome: false;
+        };
         readonly evidence: string;
         readonly artefact: string;
         readonly method: string;
@@ -6229,6 +8310,10 @@ export interface components {
         readonly ContentDigest: string;
         /** @description Immutable notice-version identifier. */
         readonly NoticeID: components["schemas"]["NoticeVersionID"];
+        /** @description Tenant-owned evaluation-model registry name. */
+        readonly ModelName: components["schemas"]["ModelRegistryName"];
+        /** @description Tenant-owned provider registration identifier. */
+        readonly ProviderID: components["schemas"]["ProviderID"];
     };
     requestBodies: never;
     headers: {
@@ -6301,6 +8386,40 @@ export interface operations {
             readonly 401: components["responses"]["Unauthenticated"];
             readonly 403: components["responses"]["InsufficientScope"];
             readonly 404: components["responses"]["NotFound"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly exportTenant: {
+        readonly parameters: {
+            readonly query?: {
+                /** @description A comma-separated subset of known export collections; omitted streams every collection. */
+                readonly collections?: string;
+            };
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description A canonical NDJSON export stream. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    /** @description Always no-store. */
+                    readonly "Cache-Control"?: string;
+                    /** @description Attachment filename for a streamed export. */
+                    readonly "Content-Disposition"?: string;
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/x-ndjson": string;
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
             readonly 429: components["responses"]["RateLimited"];
             readonly 500: components["responses"]["InternalError"];
             readonly 503: components["responses"]["ServiceUnavailable"];
@@ -6774,6 +8893,86 @@ export interface operations {
                 };
                 content: {
                     readonly "application/json": components["schemas"]["VerificationCancellation"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly resumeVerification: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                /** @description Stable verification-session identifier. */
+                readonly verificationID: components["parameters"]["VerificationID"];
+            };
+            readonly cookie?: never;
+        };
+        /** @description Exact optimistic precondition for the awaiting-input session. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "expected_version": 4
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["VerificationResume"];
+            };
+        };
+        readonly responses: {
+            /** @description The original committed resume result. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "session": {
+                     *         "id": "ver_01M11HEQG00000000000000000",
+                     *         "state": "collecting",
+                     *         "version": 5,
+                     *         "profile_id": "prf_01M11HEQG00000000000000000",
+                     *         "profile_revision": 1,
+                     *         "profile_digest": "sha256:284a4418399974a7d1ce691f96ea534e1cd97ee1a9bc0d09de25d4a3b9d48969",
+                     *         "policy_id": "pol_01M11HEQG00000000000000000",
+                     *         "region": "ng-1",
+                     *         "requirements": {
+                     *           "schema_version": 1,
+                     *           "registry": {
+                     *             "schema_version": 1,
+                     *             "revision": 1,
+                     *             "digest": "sha256:71ef9df77044f9bf5eeb7ae448da3d98811ff4cb3f2541f459e60b4628a5364f"
+                     *           },
+                     *           "requirements": []
+                     *         },
+                     *         "created_at": "2026-09-19T10:00:00Z",
+                     *         "updated_at": "2026-09-19T10:05:00Z",
+                     *         "expires_at": "2026-09-20T10:00:00Z"
+                     *       },
+                     *       "capture_token_id": "ctk_01M11HEQG00000000000000000",
+                     *       "capture_token_expires_at": "2026-09-19T10:35:00Z",
+                     *       "replaced": false,
+                     *       "replayed": false
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["VerificationResumed"];
                 };
             };
             readonly 400: components["responses"]["InvalidRequest"];
@@ -8306,6 +10505,74 @@ export interface operations {
             readonly 503: components["responses"]["ServiceUnavailable"];
         };
     };
+    readonly listWebhookEvents: {
+        readonly parameters: {
+            readonly query?: {
+                /** @description Maximum collection items to return. The default is 25. */
+                readonly limit?: components["parameters"]["Limit"];
+                /** @description Opaque continuation cursor returned by the preceding page. */
+                readonly cursor?: components["parameters"]["Cursor"];
+                /** @description Comma-separated catalogue event names, or * for all catalogue events. */
+                readonly event_types?: string;
+            };
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The webhook event page completed. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["WebhookEventList"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly streamWebhookEvents: {
+        readonly parameters: {
+            readonly query?: {
+                /** @description Comma-separated catalogue event names, or * for all catalogue events. */
+                readonly event_types?: string;
+            };
+            readonly header?: {
+                /** @description The last delivered event sequence; the stream resumes after it. */
+                readonly "Last-Event-ID"?: string;
+            };
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description A live text/event-stream feed of canonical catalogue envelopes. */
+            readonly 200: {
+                headers: {
+                    /** @description Always no-store. */
+                    readonly "Cache-Control"?: string;
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "text/event-stream": string;
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     readonly listPolicies: {
         readonly parameters: {
             readonly query?: {
@@ -8690,6 +10957,109 @@ export interface operations {
             readonly 403: components["responses"]["InsufficientScope"];
             readonly 404: components["responses"]["NotFound"];
             readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly diffPolicyRevisions: {
+        readonly parameters: {
+            readonly query: {
+                /** @description Positive immutable source revision number. */
+                readonly from_revision: number;
+                /** @description Positive immutable target revision number. */
+                readonly to_revision: number;
+            };
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant-owned opaque policy identifier. */
+                readonly policyID: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The canonical policy revision diff was computed. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["PolicyRevisionDiff"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly simulatePolicy: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** @description Closed portable simulation input document. */
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["PolicySimulationInput"];
+            };
+        };
+        readonly responses: {
+            /** @description The synthetic policy simulation completed. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["PolicySimulationReport"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 413: components["responses"]["RequestTooLarge"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly runPolicyRegression: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** @description Closed portable scenario suite document. */
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["PolicyRegressionSuite"];
+            };
+        };
+        readonly responses: {
+            /** @description The policy scenario suite completed with its bounded report. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["PolicyRegressionReport"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 413: components["responses"]["RequestTooLarge"];
             readonly 429: components["responses"]["RateLimited"];
             readonly 500: components["responses"]["InternalError"];
             readonly 503: components["responses"]["ServiceUnavailable"];
@@ -12422,6 +14792,789 @@ export interface operations {
             readonly 403: components["responses"]["InsufficientScope"];
             readonly 404: components["responses"]["NotFound"];
             readonly 500: components["responses"]["InternalError"];
+        };
+    };
+    readonly listDeletions: {
+        readonly parameters: {
+            readonly query?: {
+                /** @description Restrict the page to deletion workflows of one exact aggregate. */
+                readonly aggregate_id?: string;
+                /** @description Opaque continuation cursor returned by the preceding page. */
+                readonly cursor?: components["parameters"]["Cursor"];
+                /** @description Maximum collection items to return. The default is 25. */
+                readonly limit?: components["parameters"]["Limit"];
+            };
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description A bounded ascending page of deletion workflows. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["PrivacyDeletionList"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly getDeletionStatus: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Stable deletion-workflow identifier. */
+                readonly deletionID: components["schemas"]["PrivacyDeletionID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The deletion-workflow status was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["PrivacyDeletionStatus"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly getRetentionResolution: {
+        readonly parameters: {
+            readonly query: {
+                /** @description Exact aggregate whose retained records are resolved. */
+                readonly aggregate_id: string;
+            };
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The recomputed retention resolution was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["PrivacyRetentionResolution"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly getModel: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant-owned evaluation-model registry name. */
+                readonly modelName: components["parameters"]["ModelName"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The evaluation-model registry state was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["ModelRegistryState"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly getModelRevision: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant-owned evaluation-model registry name. */
+                readonly modelName: components["parameters"]["ModelName"];
+                /** @description Immutable revision family. Model and threshold revisions are numbered independently. */
+                readonly kind: "model" | "threshold";
+                /** @description Positive immutable revision number inside the selected family. */
+                readonly revision: number;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The immutable evaluation revision was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["ModelRegistryRevision"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly listModelHistory: {
+        readonly parameters: {
+            readonly query?: {
+                /** @description Return receipts with a strictly lower registry version. Zero starts from the newest receipt. */
+                readonly before?: number;
+                /** @description Maximum receipts to return from 1 to 100. */
+                readonly limit?: number;
+            };
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant-owned evaluation-model registry name. */
+                readonly modelName: components["parameters"]["ModelName"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The bounded command-history page was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": readonly components["schemas"]["ModelRegistryReceipt"][];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly registerModel: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                /** @description Tenant-owned evaluation-model registry name. */
+                readonly modelName: components["parameters"]["ModelName"];
+            };
+            readonly cookie?: never;
+        };
+        /** @description Version-checked evaluation-only model registration. */
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["ModelRegistrationWrite"];
+            };
+        };
+        readonly responses: {
+            /** @description The original registration receipt was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["ModelRegistryReceipt"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly setModelThreshold: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                /** @description Tenant-owned evaluation-model registry name. */
+                readonly modelName: components["parameters"]["ModelName"];
+            };
+            readonly cookie?: never;
+        };
+        /** @description Version-checked evaluation threshold revision. */
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["ModelThresholdWrite"];
+            };
+        };
+        readonly responses: {
+            /** @description The original threshold receipt was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["ModelRegistryReceipt"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly activateModel: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                /** @description Tenant-owned evaluation-model registry name. */
+                readonly modelName: components["parameters"]["ModelName"];
+            };
+            readonly cookie?: never;
+        };
+        /** @description Version-checked evaluation deployment selection. */
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["ModelDeploymentWrite"];
+            };
+        };
+        readonly responses: {
+            /** @description The original activation receipt was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["ModelRegistryReceipt"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly rollbackModel: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                /** @description Tenant-owned evaluation-model registry name. */
+                readonly modelName: components["parameters"]["ModelName"];
+            };
+            readonly cookie?: never;
+        };
+        /** @description Version-checked evaluation rollback selection. */
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["ModelDeploymentWrite"];
+            };
+        };
+        readonly responses: {
+            /** @description The original rollback receipt was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["ModelRegistryReceipt"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly retireModel: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                /** @description Tenant-owned evaluation-model registry name. */
+                readonly modelName: components["parameters"]["ModelName"];
+            };
+            readonly cookie?: never;
+        };
+        /** @description Version-checked evaluation retirement. */
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["ModelRetirementWrite"];
+            };
+        };
+        readonly responses: {
+            /** @description The original retirement receipt was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["ModelRegistryReceipt"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly validateModel: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant-owned evaluation-model registry name. */
+                readonly modelName: components["parameters"]["ModelName"];
+            };
+            readonly cookie?: never;
+        };
+        /** @description One closed evaluation-registry command document. */
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["ModelValidationRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description The bounded validation report was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["ModelValidationReport"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly listProviderRegistrations: {
+        readonly parameters: {
+            readonly query?: {
+                /** @description Maximum registrations to return from 1 to 100. */
+                readonly limit?: number;
+                /** @description Opaque integrity-protected continuation cursor. */
+                readonly cursor?: components["schemas"]["Cursor"];
+            };
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The bounded registration page was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["ProviderRegistrationList"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly createProviderRegistration: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** @description Secret-free tenant provider registration. */
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["ProviderRegistrationCreate"];
+            };
+        };
+        readonly responses: {
+            /** @description The original registration receipt was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["ProviderRegistrationReceipt"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly getProviderRegistration: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant-owned provider registration identifier. */
+                readonly providerID: components["parameters"]["ProviderID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The tenant registration was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["ProviderRegistration"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly updateProviderRegistration: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant-owned provider registration identifier. */
+                readonly providerID: components["parameters"]["ProviderID"];
+            };
+            readonly cookie?: never;
+        };
+        /** @description Version-checked secret-free registration replacement. */
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["ProviderRegistrationUpdate"];
+            };
+        };
+        readonly responses: {
+            /** @description The updated registration receipt was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["ProviderRegistrationReceipt"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly validateProviderRegistration: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant-owned provider registration identifier. */
+                readonly providerID: components["parameters"]["ProviderID"];
+            };
+            readonly cookie?: never;
+        };
+        /** @description One closed secret-free registration document. */
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["ProviderRegistrationWrite"];
+            };
+        };
+        readonly responses: {
+            /** @description The bounded validation report was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["ProviderRegistrationValidationReport"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly enableProviderRegistration: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant-owned provider registration identifier. */
+                readonly providerID: components["parameters"]["ProviderID"];
+            };
+            readonly cookie?: never;
+        };
+        /** @description Version-checked enable command. */
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["ProviderRegistrationToggle"];
+            };
+        };
+        readonly responses: {
+            /** @description The enabled registration receipt was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["ProviderRegistrationReceipt"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly disableProviderRegistration: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant-owned provider registration identifier. */
+                readonly providerID: components["parameters"]["ProviderID"];
+            };
+            readonly cookie?: never;
+        };
+        /** @description Version-checked disable command. */
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["ProviderRegistrationToggle"];
+            };
+        };
+        readonly responses: {
+            /** @description The disabled registration receipt was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["ProviderRegistrationReceipt"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly getProviderRegistrationHealth: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant-owned provider registration identifier. */
+                readonly providerID: components["parameters"]["ProviderID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The bounded registration health snapshot was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["ProviderRegistrationHealth"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly simulateProviderFailure: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant-owned provider registration identifier. */
+                readonly providerID: components["parameters"]["ProviderID"];
+            };
+            readonly cookie?: never;
+        };
+        /** @description One bounded provider failure classification. */
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["ProviderFailureSimulationRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description The bounded classification preview was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["ProviderFailureSimulation"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
         };
     };
 }

@@ -916,6 +916,20 @@ type IdenqaProviderAsyncOperation struct {
 	NextPollAt     pgtype.Timestamptz
 }
 
+type IdenqaProviderCallbackReceipt struct {
+	TenantID            string
+	AttemptID           string
+	VerificationID      string
+	CheckID             string
+	ProviderJobID       *string
+	ProviderReplayID    string
+	ConfigurationDigest string
+	ProgressDigest      string
+	ResultDigest        *string
+	ProgressBody        []byte
+	ReceivedAt          pgtype.Timestamptz
+}
+
 type IdenqaProviderDispatch struct {
 	TenantID      string
 	AttemptID     string
@@ -925,12 +939,13 @@ type IdenqaProviderDispatch struct {
 }
 
 type IdenqaProviderRequest struct {
-	TenantID       string
-	AttemptID      string
-	VerificationID string
-	CheckID        string
-	RequestDigest  string
-	RequestBody    []byte
+	TenantID            string
+	AttemptID           string
+	VerificationID      string
+	CheckID             string
+	RequestDigest       string
+	RequestBody         []byte
+	CallbackTokenDigest *string
 }
 
 type IdenqaRealtimeAcknowledgement struct {
@@ -1283,6 +1298,17 @@ type IdenqaVerificationDecision struct {
 	Canonical        string
 }
 
+type IdenqaVerificationInputRequest struct {
+	ID             string
+	TenantID       string
+	VerificationID string
+	CaseID         *string
+	ReasonCodes    []string
+	ActorID        string
+	RequestedAt    pgtype.Timestamptz
+	SupersededAt   pgtype.Timestamptz
+}
+
 type IdenqaVerificationObservation struct {
 	ID                  string
 	TenantID            string
@@ -1349,6 +1375,8 @@ type IdenqaVerificationSession struct {
 	CaptureCompletedAt    pgtype.Timestamptz
 	CompletedDecisionID   *string
 	ExpiryDiscoveredAt    pgtype.Timestamptz
+	FailureClass          *string
+	FailureCode           *string
 }
 
 type IdenqaVerificationSessionAudit struct {
@@ -1395,6 +1423,9 @@ type IdenqaWebhookDelivery struct {
 	BodyReference    *string
 	BodyKeyVersion   *string
 	BodyAlgorithm    *string
+	PayloadExpiresAt pgtype.Timestamptz
+	PayloadExpiredAt pgtype.Timestamptz
+	RetainUntil      pgtype.Timestamptz
 }
 
 type IdenqaWebhookDeliveryAttempt struct {
@@ -1424,25 +1455,31 @@ type IdenqaWebhookEndpoint struct {
 	CreatedAt                pgtype.Timestamptz
 	UpdatedAt                pgtype.Timestamptz
 	EventTypes               []string
+	SchemaVersion            string
 }
 
 type IdenqaWebhookEvent struct {
-	TenantID       string
-	ID             string
-	EventType      string
-	SchemaVersion  string
-	DedupeKey      string
-	Body           []byte
-	BodyDigest     string
-	State          string
-	Cursor         string
-	DeliveredCount int32
-	CreatedAt      pgtype.Timestamptz
-	CompletedAt    pgtype.Timestamptz
-	BodyProvider   *string
-	BodyReference  *string
-	BodyKeyVersion *string
-	BodyAlgorithm  *string
+	TenantID         string
+	ID               string
+	EventType        string
+	SchemaVersion    string
+	DedupeKey        string
+	Body             []byte
+	BodyDigest       string
+	State            string
+	Cursor           string
+	DeliveredCount   int32
+	CreatedAt        pgtype.Timestamptz
+	CompletedAt      pgtype.Timestamptz
+	BodyProvider     *string
+	BodyReference    *string
+	BodyKeyVersion   *string
+	BodyAlgorithm    *string
+	StreamSequence   *int64
+	AggregateIds     []string
+	PayloadExpiresAt pgtype.Timestamptz
+	PayloadExpiredAt pgtype.Timestamptz
+	RetainUntil      pgtype.Timestamptz
 }
 
 type IdenqaWebhookSecret struct {

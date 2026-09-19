@@ -460,7 +460,7 @@ func (q *Queries) LockEvidenceUploadIntent(ctx context.Context, arg LockEvidence
 }
 
 const lockVerificationForUpload = `-- name: LockVerificationForUpload :one
-SELECT id, tenant_id, state, version, source_profile_id, source_profile_revision, source_profile_digest, requirements, created_at, updated_at, expires_at, subject_id, authority_id, notice_id, region, policy_id, decision_id, capture_completed_at, completed_decision_id, expiry_discovered_at FROM idenqa.verification_sessions
+SELECT id, tenant_id, state, version, source_profile_id, source_profile_revision, source_profile_digest, requirements, created_at, updated_at, expires_at, subject_id, authority_id, notice_id, region, policy_id, decision_id, capture_completed_at, completed_decision_id, expiry_discovered_at, failure_class, failure_code FROM idenqa.verification_sessions
 WHERE tenant_id = $1 AND id = $2
 FOR UPDATE
 `
@@ -494,6 +494,8 @@ func (q *Queries) LockVerificationForUpload(ctx context.Context, arg LockVerific
 		&i.CaptureCompletedAt,
 		&i.CompletedDecisionID,
 		&i.ExpiryDiscoveredAt,
+		&i.FailureClass,
+		&i.FailureCode,
 	)
 	return i, err
 }

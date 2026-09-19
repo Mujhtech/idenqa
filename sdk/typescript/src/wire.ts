@@ -58,6 +58,12 @@ export type WirePolicyDecisionBundle = components["schemas"]["PolicyDecisionBund
 export type WireProblem = components["schemas"]["Problem"];
 
 export type WireVerificationCancellation = components["schemas"]["VerificationCancellation"];
+export type WireVerificationResumed = Omit<
+  components["schemas"]["VerificationResumed"],
+  "session"
+> & {
+  readonly session: WireVerificationSession;
+};
 
 export type WireWebhookEndpoint = components["schemas"]["WebhookEndpoint"];
 export type WireWebhookDelivery = components["schemas"]["WebhookDelivery"];

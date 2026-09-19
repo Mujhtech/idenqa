@@ -313,6 +313,7 @@ export interface VerificationSession {
   readonly profileRevision: number;
   readonly profileDigest: string;
   readonly policyId: PolicyID;
+  readonly region: string;
   readonly requirements: CaptureProfileDocument;
   readonly createdAt: string;
   readonly updatedAt: string;
@@ -326,6 +327,16 @@ export interface VerificationCreated {
   /** Display-once, read-only bearer credential. Keep it separate from capture authority. */
   readonly outcomeToken: string;
   readonly outcomeTokenExpiresAt: string;
+}
+
+export interface VerificationResumed {
+  readonly session: VerificationSession;
+  readonly captureTokenId: string;
+  readonly captureTokenExpiresAt: string;
+  /** Display-once replacement bearer; absent for live-token reuse and exact replay. */
+  readonly captureToken?: string;
+  readonly replaced: boolean;
+  readonly replayed: boolean;
 }
 
 export interface NoticeCopy {
