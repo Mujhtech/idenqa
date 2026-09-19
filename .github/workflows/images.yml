@@ -1,0 +1,260 @@
+name: Images
+
+# Container publishing for the self-hosted Core images defined in
+# deploy/self-hosted/Dockerfile:
+#   ghcr.io/<owner>/idenqa-core          target core
+#   ghcr.io/<owner>/idenqa-capture-web   target capture-web
+#   ghcr.io/<owner>/idenqa-model-runner  target model-runner
+#
+# Trigger matrix:
+#   push to main     build only, never pushed
+#   pull_request     build only, never pushed
+#   push tags v*     build, push, Trivy scan, keyless cosign signature
+#   workflow_dispatch build only
+#
+# Tag scheme (docker/metadata-action):
+#   v1.2.3      -> 1.2.3, 1.2, sha-<commit>, latest (flavor: latest=auto)
+#   v1.2.3-rc.1 -> 1.2.3-rc.1, sha-<commit> (prereleases never get latest)
+# The `latest` tag therefore tracks stable `v*` releases only; default-branch
+# pushes do not publish, so `latest` can never point at an un-released commit.
+#
+# `docker/metadata-action` lowercases the image name, so a mixed-case owner
+# (for example `Mujhtech`) resolves to the lowercase GHCR namespace.
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: images-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build ${{ matrix.image }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: idenqa-core
+            target: core
+            platforms: linux/amd64,linux/arm64
+          - image: idenqa-capture-web
+            target: capture-web
+            platforms: linux/amd64,linux/arm64
+          # The Python and ONNX Runtime bases and the hash-locked wheel set
+          # advertise arm64, but the model-runner is an opt-in, evaluation-only
+          # profile with no arm64 hardware acceptance evidence, so publish only
+          # linux/amd64 until an arm64 consumer is accepted.
+          - image: idenqa-model-runner
+            target: model-runner
+            platforms: linux/amd64
+    env:
+      # Publish only from `v*` tag pushes. Default-branch and pull-request runs
+      # build the same targets without registry credentials or pushes.
+      PUBLISH: ${{ github.event_name == 'push' && github.ref_type == 'tag' }}
+      DOCKERHUB_ENABLED: ${{ vars.DOCKERHUB_ENABLED }}
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6.0.2
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4.4.0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4.4.1
+
+      - name: Resolve image names
+        id: config
+        env:
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          namespace="$(printf '%s' "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')"
+          names="ghcr.io/${namespace}/${{ matrix.image }}"
+          dockerhub="false"
+          if [[ "$DOCKERHUB_ENABLED" == "true" && -n "$DOCKERHUB_USERNAME" && -n "$DOCKERHUB_TOKEN" ]]; then
+            hub_user="$(printf '%s' "$DOCKERHUB_USERNAME" | tr '[:upper:]' '[:lower:]')"
+            names+=$'\n'"docker.io/${hub_user}/${{ matrix.image }}"
+            dockerhub="true"
+          fi
+          {
+            echo "names<<IMAGES"
+            echo "$names"
+            echo "IMAGES"
+            echo "dockerhub=$dockerhub"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GitHub Container Registry
+        if: env.PUBLISH == 'true'
+        uses: docker/login-action@v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to Docker Hub
+        # Optional mirror, disabled unless repository variable
+        # DOCKERHUB_ENABLED is 'true' and both Docker Hub secrets resolve.
+        # Secrets are passed through the step environment, never through `if`.
+        if: env.PUBLISH == 'true' && steps.config.outputs.dockerhub == 'true'
+        uses: docker/login-action@v4.6.0
+        env:
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        with:
+          registry: docker.io
+          username: ${{ env.DOCKERHUB_USERNAME }}
+          password: ${{ env.DOCKERHUB_TOKEN }}
+
+      - name: Extract image metadata
+        id: meta
+        uses: docker/metadata-action@v6.2.0
+        with:
+          images: ${{ steps.config.outputs.names }}
+          # Explicit default: `latest` is emitted only for stable semver tags.
+          flavor: |
+            latest=auto
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,format=long
+
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v7.4.0
+        with:
+          context: .
+          file: deploy/self-hosted/Dockerfile
+          target: ${{ matrix.target }}
+          platforms: ${{ matrix.platforms }}
+          push: ${{ env.PUBLISH == 'true' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          annotations: ${{ steps.meta.outputs.annotations }}
+          provenance: mode=max
+          sbom: true
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
+          build-args: |
+            VERSION=${{ steps.meta.outputs.version }}
+            COMMIT=${{ github.sha }}
+            BUILD_DATE=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.created'] }}
+
+      - name: Record pushed digest
+        if: env.PUBLISH == 'true'
+        run: |
+          mkdir -p digests
+          printf '%s' "${{ steps.build.outputs.digest }}" > "digests/${{ matrix.image }}.digest"
+
+      - name: Upload pushed digest
+        if: env.PUBLISH == 'true'
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: image-digest-${{ matrix.image }}
+          path: digests/${{ matrix.image }}.digest
+          retention-days: 1
+
+  scan:
+    name: Scan ${{ matrix.image }}
+    # Tag pushes are the only runs that publish, so scanning runs only there
+    # over the exact index digest buildx pushed. Trivy resolves the index and
+    # scans its linux/amd64 child on this runner.
+    if: github.event_name == 'push' && github.ref_type == 'tag'
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: read
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [idenqa-core, idenqa-capture-web, idenqa-model-runner]
+    steps:
+      - name: Download pushed digest
+        uses: actions/download-artifact@v8.0.1
+        with:
+          name: image-digest-${{ matrix.image }}
+          path: digests
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Resolve digest reference
+        id: reference
+        run: |
+          namespace="$(printf '%s' "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')"
+          digest="$(cat "digests/${{ matrix.image }}.digest")"
+          echo "image=ghcr.io/${namespace}/${{ matrix.image }}@${digest}" >> "$GITHUB_OUTPUT"
+
+      - name: Scan image for fixable HIGH and CRITICAL vulnerabilities
+        # `ignore-unfixed` keeps the gate reliable: fixable HIGH/CRITICAL
+        # findings fail the release, unfixable upstream findings are reported
+        # without blocking. No .trivyignore exists; any future exception must
+        # be added there with a documented reason.
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ${{ steps.reference.outputs.image }}
+          scanners: vuln
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: "1"
+          format: table
+
+  sign:
+    name: Sign ${{ matrix.image }}
+    # Keyless signing runs only for tag pushes and only after the scan gate,
+    # so a digest with fixable HIGH/CRITICAL findings is never signed.
+    if: github.event_name == 'push' && github.ref_type == 'tag'
+    needs: scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [idenqa-core, idenqa-capture-web, idenqa-model-runner]
+    steps:
+      - name: Download pushed digest
+        uses: actions/download-artifact@v8.0.1
+        with:
+          name: image-digest-${{ matrix.image }}
+          path: digests
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v4.1.2
+        with:
+          cosign-release: v3.0.6
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Sign the pushed digest
+        run: |
+          namespace="$(printf '%s' "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')"
+          digest="$(cat "digests/${{ matrix.image }}.digest")"
+          cosign sign --yes "ghcr.io/${namespace}/${{ matrix.image }}@${digest}"
