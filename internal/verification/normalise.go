@@ -54,6 +54,9 @@ func NormaliseProviderResult(
 		}
 		failure := Failure{Class: string(result.Failure.Class), Code: result.Failure.Code,
 			Retry: RetryDisposition(result.Failure.Retry), RetryAfter: result.Failure.RetryAfter}
+		if failure.Retry == RetryBackoff || failure.Retry == RetryReconcile {
+			failure.RetryAfter = min(max(failure.RetryAfter, time.Second), time.Hour)
+		}
 		return nil, &failure, nil
 	}
 	if result.Outcome != providerv1.ResultOutcomeCompleted || result.Failure != nil {

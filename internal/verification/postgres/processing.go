@@ -171,7 +171,7 @@ func (store *ProcessingStore) startWithin(ctx context.Context, tx platformpostgr
 	if err != nil {
 		return false, verification.ErrInvalidCheck
 	}
-	plan, err := store.planner.Plan(verification.PlanInput{TenantID: scope.ID(), VerificationID: verificationID, ProfileDigest: session.SourceProfileDigest, PolicyID: policyID})
+	plan, err := store.planner.Plan(ctx, verification.PlanInput{TenantID: scope.ID(), VerificationID: verificationID, ProfileDigest: session.SourceProfileDigest, PolicyID: policyID})
 	if err != nil {
 		return false, err
 	}
@@ -244,7 +244,7 @@ func (store *ProcessingStore) persistPlannedCheck(ctx context.Context, tx platfo
 	if err := queries.InsertVerificationCheck(ctx, checkInsertParams(check)); err != nil {
 		return platformtask.Intent{}, fmt.Errorf("insert planned check: %w", err)
 	}
-	if err := persistAttempts(ctx, queries, check, verification.CheckQueued); err != nil {
+	if err := persistAttempts(ctx, queries, check, verification.CheckQueued, ""); err != nil {
 		return platformtask.Intent{}, err
 	}
 	if savePrepared != nil {

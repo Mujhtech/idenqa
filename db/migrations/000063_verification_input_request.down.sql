@@ -1,0 +1,3 @@
+DROP TRIGGER verification_input_request_immutable ON idenqa.verification_input_requests;
+DROP FUNCTION idenqa.protect_verification_input_request();
+DROP TABLE idenqa.verification_input_requests;

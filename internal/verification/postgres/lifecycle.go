@@ -101,10 +101,10 @@ func (store *LifecycleStore) ApplyWithin(ctx context.Context, scope tenant.Scope
 
 func lockLifecycle(ctx context.Context, tx platformpostgres.Transaction, scope tenant.Scope, verificationID id.Verification) (verification.Lifecycle, error) {
 	var current verification.Lifecycle
-	var decision *string
-	err := tx.QueryRow(ctx, `SELECT state, version, created_at, updated_at, expires_at, completed_decision_id
+	var decision, failureClass, failureCode *string
+	err := tx.QueryRow(ctx, `SELECT state, version, created_at, updated_at, expires_at, completed_decision_id, failure_class, failure_code
 FROM idenqa.verification_sessions WHERE tenant_id=$1 AND id=$2 FOR UPDATE`, scope.ID().String(), verificationID.String()).Scan(
-		&current.State, &current.Version, &current.CreatedAt, &current.UpdatedAt, &current.ExpiresAt, &decision)
+		&current.State, &current.Version, &current.CreatedAt, &current.UpdatedAt, &current.ExpiresAt, &decision, &failureClass, &failureCode)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return verification.Lifecycle{}, verification.ErrSessionNotFound
 	}
@@ -117,6 +117,12 @@ FROM idenqa.verification_sessions WHERE tenant_id=$1 AND id=$2 FOR UPDATE`, scop
 		if err != nil {
 			return verification.Lifecycle{}, verification.ErrSessionConflict
 		}
+	}
+	if failureClass != nil || failureCode != nil {
+		if failureClass == nil || failureCode == nil {
+			return verification.Lifecycle{}, verification.ErrSessionConflict
+		}
+		current.Failure = verification.SessionFailure{Class: *failureClass, Code: *failureCode}
 	}
 	return current, nil
 }
@@ -157,13 +163,17 @@ AND decided_at <= $4 AND outcome IN ('verified', 'not_verified', 'inconclusive')
 }
 
 func persistLifecycle(ctx context.Context, tx platformpostgres.Transaction, wrapper platformcrypto.KeyWrapper, scope tenant.Scope, command verification.LifecycleCommand, current, next verification.Lifecycle, canonical []byte, digest string) error {
-	var decision *string
+	var decision, failureClass, failureCode *string
 	if !command.DecisionID.IsZero() {
 		value := command.DecisionID.String()
 		decision = &value
 	}
-	result, err := tx.Exec(ctx, `UPDATE idenqa.verification_sessions SET state=$3, version=$4, updated_at=$5, completed_decision_id=$6
-WHERE tenant_id=$1 AND id=$2 AND version=$7`, scope.ID().String(), command.VerificationID.String(), next.State, next.Version, next.UpdatedAt, decision, command.ExpectedVersion)
+	if command.Failure != (verification.SessionFailure{}) {
+		failureClass, failureCode = &command.Failure.Class, &command.Failure.Code
+	}
+	result, err := tx.Exec(ctx, `UPDATE idenqa.verification_sessions
+SET state=$3, version=$4, updated_at=$5, completed_decision_id=$6, failure_class=$7, failure_code=$8
+WHERE tenant_id=$1 AND id=$2 AND version=$9`, scope.ID().String(), command.VerificationID.String(), next.State, next.Version, next.UpdatedAt, decision, failureClass, failureCode, command.ExpectedVersion)
 	if err != nil {
 		return fmt.Errorf("update verification lifecycle: %w", err)
 	}
@@ -229,7 +239,16 @@ func emitLifecycleWebhook(ctx context.Context, tx platformpostgres.Transaction, 
 	return deliverypostgres.EmitCatalogueEvent(ctx, tx, wrapper, scope.ID().String(), region, eventType, seed, command.OccurredAt, fields)
 }
 
+type lifecycleFailureDigest struct {
+	Class string `json:"class"`
+	Code  string `json:"code"`
+}
+
 func lifecycleCommandDigest(command verification.LifecycleCommand) ([]byte, string, error) {
+	var failure *lifecycleFailureDigest
+	if command.Failure != (verification.SessionFailure{}) {
+		failure = &lifecycleFailureDigest{Class: command.Failure.Class, Code: command.Failure.Code}
+	}
 	encoded, err := json.Marshal(struct {
 		EventID         string                    `json:"event_id"`
 		VerificationID  string                    `json:"verification_id"`
@@ -238,8 +257,9 @@ func lifecycleCommandDigest(command verification.LifecycleCommand) ([]byte, stri
 		DecisionID      string                    `json:"decision_id,omitempty"`
 		ActorID         string                    `json:"actor_id"`
 		OccurredAt      time.Time                 `json:"occurred_at"`
+		Failure         *lifecycleFailureDigest   `json:"failure,omitempty"`
 	}{command.EventID.String(), command.VerificationID.String(), command.ExpectedVersion,
-		command.Target, command.DecisionID.String(), command.ActorID, command.OccurredAt})
+		command.Target, command.DecisionID.String(), command.ActorID, command.OccurredAt, failure})
 	if err != nil {
 		return nil, "", fmt.Errorf("encode lifecycle command: %w", err)
 	}

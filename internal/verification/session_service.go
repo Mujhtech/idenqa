@@ -28,6 +28,7 @@ type SessionIDGenerator interface {
 type SessionRepository interface {
 	Create(context.Context, tenant.Scope, SessionCreateMutation) (SessionCreation, error)
 	FindSession(context.Context, tenant.Scope, id.Verification) (Session, error)
+	Resume(context.Context, tenant.Scope, ResumeMutation) (ResumeResult, error)
 }
 
 // SessionCreateInput contains the tenant-selected profile and optional bounded
@@ -48,6 +49,16 @@ type CreatedSession struct {
 	CaptureToken      access.PresentedCaptureToken
 	OutcomeCredential access.OutcomeCredential
 	OutcomeToken      access.PresentedOutcomeToken
+}
+
+// ResumedSession returns a bearer only when this request freshly committed a
+// replacement. Live credentials are referenced for tenant-side reuse, and an
+// exact retry never receives bearer material.
+type ResumedSession struct {
+	Session            Session
+	Credential         access.CaptureCredential
+	CaptureToken       access.PresentedCaptureToken
+	Replaced, Replayed bool
 }
 
 // SessionLifetimes holds deployment defaults, maxima, and replay retention.
@@ -212,6 +223,54 @@ func (service *SessionService) Find(
 	}
 
 	return service.repository.FindSession(ctx, authority.TenantScope(), identifier)
+}
+
+// Resume returns an awaiting-input session to collecting after fresh subject
+// authorisation has been recorded. It never extends the session deadline.
+func (service *SessionService) Resume(ctx context.Context, authority access.Context, identifier id.Verification, expectedVersion int64, idempotencyKey string) (ResumedSession, error) {
+	if err := authority.Require(access.PermissionVerificationSessionsResume); err != nil {
+		return ResumedSession{}, err
+	}
+	if identifier.IsZero() || expectedVersion < 1 {
+		return ResumedSession{}, ErrSessionConflict
+	}
+	now := service.clock.Now().UTC().Truncate(time.Microsecond)
+	canonical, err := json.Marshal(struct {
+		VerificationID  string `json:"verification_id"`
+		ExpectedVersion int64  `json:"expected_version"`
+	}{identifier.String(), expectedVersion})
+	if err != nil {
+		return ResumedSession{}, err
+	}
+	retry, err := idempotency.NewRequest(authority.TenantScope().ID(), authority.Principal().KeyID(), OperationResumeVerification, idempotencyKey, canonical, now, service.lifetimes.IdempotencyRetention)
+	if err != nil {
+		return ResumedSession{}, err
+	}
+	replacement, err := service.identifiers.NewCaptureToken()
+	if err != nil {
+		return ResumedSession{}, fmt.Errorf("generate replacement capture-token id: %w", err)
+	}
+	eventID, err := service.identifiers.NewEvent()
+	if err != nil {
+		return ResumedSession{}, fmt.Errorf("generate resume event id: %w", err)
+	}
+	result, err := service.repository.Resume(ctx, authority.TenantScope(), ResumeMutation{
+		VerificationID: identifier, ExpectedVersion: expectedVersion,
+		ReplacementID: replacement, EventID: eventID, Actor: authority.Principal().KeyID(),
+		KeyVersion: service.captureSigner.ActiveVersion(), At: now,
+		TokenExpiresAt: now.Add(service.lifetimes.CaptureTokenDefault), Idempotency: retry,
+	})
+	if err != nil {
+		return ResumedSession{}, err
+	}
+	resumed := ResumedSession{Session: result.Session, Credential: result.Credential, Replaced: result.Replaced, Replayed: result.Replayed}
+	if result.Replaced && !result.Replayed {
+		resumed.CaptureToken, err = service.captureSigner.Sign(result.Credential)
+		if err != nil {
+			return ResumedSession{}, fmt.Errorf("sign replacement capture token: %w", err)
+		}
+	}
+	return resumed, nil
 }
 
 func (service *SessionService) resolveLifetimes(input SessionCreateInput) (time.Duration, time.Duration, time.Duration, error) {

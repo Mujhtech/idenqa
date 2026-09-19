@@ -11,10 +11,13 @@ import (
 	providerv1 "github.com/Mujhtech/idenqa/contracts/provider/v1"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	idenqapostgres "github.com/Mujhtech/idenqa/internal/platform/postgres"
+	platformtask "github.com/Mujhtech/idenqa/internal/platform/task"
+	taskheadgate "github.com/Mujhtech/idenqa/internal/platform/task/headgate"
 	"github.com/Mujhtech/idenqa/internal/tenant"
 	"github.com/Mujhtech/idenqa/internal/verification"
 	verificationpostgres "github.com/Mujhtech/idenqa/internal/verification/postgres"
 	"github.com/Mujhtech/idenqa/internal/verification/synthetic"
+	verificationtask "github.com/Mujhtech/idenqa/internal/verification/task"
 )
 
 func TestVerificationExecutionDurabilityIsolationInboxAndReconciliation(t *testing.T) {
@@ -28,6 +31,16 @@ func TestVerificationExecutionDurabilityIsolationInboxAndReconciliation(t *testi
 		t.Fatal(err)
 	}
 	if err := migrator.Close(); err != nil {
+		t.Fatal(err)
+	}
+	headgateMigrator, err := taskheadgate.OpenMigrator(ctx, database.url, "headgate", 5*time.Second, 30*time.Second)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := headgateMigrator.Up(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if err := headgateMigrator.Close(ctx); err != nil {
 		t.Fatal(err)
 	}
 
@@ -45,7 +58,9 @@ func TestVerificationExecutionDurabilityIsolationInboxAndReconciliation(t *testi
 	secondTenant, _ := seedExecutionVerification(t, adminPool, generator, now)
 
 	runtimeConfig := poolConfig(database.url)
-	runtimeConfig.Role = database.createRuntimeRole(t)
+	runtimeRole := database.createRuntimeRole(t)
+	database.grantHeadgateRuntime(t, runtimeRole)
+	runtimeConfig.Role = runtimeRole
 	runtimePool, err := idenqapostgres.Open(ctx, runtimeConfig)
 	if err != nil {
 		t.Fatal(err)
@@ -128,6 +143,62 @@ func TestVerificationExecutionDurabilityIsolationInboxAndReconciliation(t *testi
 	if len(reloaded.Attempts()) != 1 || len(reloaded.Attempts()[0].Observations) != 1 || len(reloaded.Diagnostics()) != 1 ||
 		reloaded.Diagnostics()[0].Code != "result_inbox_replay" {
 		t.Fatalf("restored history = attempts %d observations %d diagnostics %v", len(reloaded.Attempts()), len(reloaded.Attempts()[0].Observations), reloaded.Diagnostics())
+	}
+
+	retryCheckID, _ := generator.NewCheck()
+	retryCheck, _ := verification.NewCheck(retryCheckID, firstTenant, firstVerification, "document.semantic-retry", now)
+	retryCreateEvent, _ := generator.NewEvent()
+	if err := store.CreateCheck(ctx, firstScope, retryCheck, retryCreateEvent); err != nil {
+		t.Fatal(err)
+	}
+	retryAttempt := newExecutionAttempt(t, generator, 1, 21, now.Add(time.Second))
+	if err := retryCheck.BeginAttempt(retryAttempt); err != nil {
+		t.Fatal(err)
+	}
+	retryStartEvent, _ := generator.NewEvent()
+	if _, err := store.SaveCheck(ctx, firstScope, verification.CheckCommit{Check: retryCheck, ExpectedVersion: 1, EventID: retryStartEvent}); err != nil {
+		t.Fatal(err)
+	}
+	queue, err := taskheadgate.NewPostgres(runtimePool.Native(), taskheadgate.DefaultConfig("idenqa-semantic-retry"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	handler, err := verificationtask.NewExecuteHandler(store, generator,
+		synthetic.Provider{Scenario: synthetic.Unavailable, Now: func() time.Time { return now.Add(2 * time.Second) }},
+		synthetic.Model{Scenario: synthetic.Success, Now: time.Now})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := handler.WithSemanticRetries(generator, queue); err != nil {
+		t.Fatal(err)
+	}
+	executeIntent, err := verificationtask.NewExecuteIntent(generator, firstScope,
+		verificationtask.ExecutePayload{CheckID: retryCheckID, AttemptID: retryAttempt.ID},
+		verificationtask.IntentMetadata{ScheduledAt: retryAttempt.StartedAt, Deadline: retryAttempt.Deadline})
+	if err != nil {
+		t.Fatal(err)
+	}
+	work, prepared := handler.Prepare(ctx, platformtask.Delivery{Intent: executeIntent, Attempt: 1, Fence: 1})
+	if prepared.Outcome != platformtask.OutcomeComplete || work == nil {
+		t.Fatalf("semantic retry prepare = %+v", prepared)
+	}
+	if err := runtimePool.WithinTransaction(ctx, idenqapostgres.TransactionOptions{}, func(ctx context.Context, tx idenqapostgres.Transaction) error {
+		result := work(ctx, tx)
+		if result.Outcome != platformtask.OutcomeComplete {
+			return result.Err
+		}
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	retried, err := store.FindCheck(ctx, firstScope, retryCheckID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	retryAttempts := retried.Attempts()
+	if len(retryAttempts) != 2 || retryAttempts[0].State != verification.AttemptFailed ||
+		retryAttempts[1].State != verification.AttemptRunning || retryAttempts[1].Number != 2 || retryAttempts[1].Fence != 22 {
+		t.Fatalf("semantic retry attempts = %+v", retryAttempts)
 	}
 
 	rollbackCheckID, _ := generator.NewCheck()

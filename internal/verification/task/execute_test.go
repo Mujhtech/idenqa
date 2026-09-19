@@ -11,14 +11,16 @@ import (
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/platform/postgres"
 	platformtask "github.com/Mujhtech/idenqa/internal/platform/task"
+	"github.com/Mujhtech/idenqa/internal/provider"
 	"github.com/Mujhtech/idenqa/internal/tenant"
 	"github.com/Mujhtech/idenqa/internal/verification"
 	"github.com/Mujhtech/idenqa/internal/verification/synthetic"
 )
 
 type checkStore struct {
-	check verification.Check
-	saves int
+	check    verification.Check
+	saves    int
+	deadline time.Time
 }
 
 func (store *checkStore) FindCheck(context.Context, tenant.Scope, id.Check) (verification.Check, error) {
@@ -27,6 +29,10 @@ func (store *checkStore) FindCheck(context.Context, tenant.Scope, id.Check) (ver
 
 func (store *checkStore) FindCheckWithin(context.Context, tenant.Scope, postgres.Transaction, id.Check) (verification.Check, error) {
 	return store.check, nil
+}
+
+func (store *checkStore) VerificationDeadlineWithin(context.Context, tenant.Scope, postgres.Transaction, id.Verification) (time.Time, error) {
+	return store.deadline, nil
 }
 
 func (store *checkStore) SaveCheckWithin(
@@ -55,6 +61,22 @@ func (generator *resultIDs) NewObservation() (id.Observation, error) {
 	value, err := id.ParseObservation(values[generator.observation%len(values)])
 	generator.observation++
 	return value, err
+}
+
+type semanticRetryIDs struct {
+	resultIDs
+	attempt id.Attempt
+	task    id.Task
+}
+
+func (generator *semanticRetryIDs) NewAttempt() (id.Attempt, error) { return generator.attempt, nil }
+func (generator *semanticRetryIDs) NewTask() (id.Task, error)       { return generator.task, nil }
+
+type retryEnqueuer struct{ intents []platformtask.Intent }
+
+func (enqueuer *retryEnqueuer) EnqueueTx(_ context.Context, _ postgres.Transaction, intents ...platformtask.Intent) error {
+	enqueuer.intents = append(enqueuer.intents, intents...)
+	return nil
 }
 
 func TestExecuteHandlerCommitsProviderResultWithDomainAndTaskFencesSeparated(t *testing.T) {
@@ -116,6 +138,40 @@ func TestExecuteHandlerPreservesModelAndOperationalFailureMeaning(t *testing.T) 
 	}
 }
 
+func TestExecuteHandlerAtomicallySchedulesBoundedSemanticRetry(t *testing.T) {
+	t.Parallel()
+	check, attempt, now := taskRunningCheck(t, verification.RunnerProvider, 7)
+	store := &checkStore{check: check, deadline: now.Add(30 * time.Minute)}
+	handler := executeHandler(t, store,
+		synthetic.Provider{Scenario: synthetic.Unavailable, Now: func() time.Time { return now.Add(time.Second) }},
+		synthetic.Model{Scenario: synthetic.Success, Now: time.Now})
+	nextAttempt, _ := id.ParseAttempt("atm_01ARZ3NDEKTSV4RRFFQ69G5FAW")
+	nextTask, _ := id.ParseTask("tsk_01ARZ3NDEKTSV4RRFFQ69G5FAW")
+	identifiers := &semanticRetryIDs{attempt: nextAttempt, task: nextTask}
+	enqueuer := &retryEnqueuer{}
+	if err := handler.WithSemanticRetries(identifiers, enqueuer); err != nil {
+		t.Fatal(err)
+	}
+	work, result := handler.Prepare(t.Context(), executeDelivery(t, check, attempt, now, 8))
+	if result.Outcome != platformtask.OutcomeComplete || work == nil {
+		t.Fatalf("prepare = %+v", result)
+	}
+	if committed := work(t.Context(), nil); committed.Outcome != platformtask.OutcomeComplete {
+		t.Fatalf("commit = %+v", committed)
+	}
+	attempts := store.check.Attempts()
+	if len(attempts) != 2 || attempts[0].State != verification.AttemptFailed ||
+		attempts[1].State != verification.AttemptRunning || attempts[1].Number != 2 || attempts[1].Fence != 8 {
+		t.Fatalf("attempts = %+v", attempts)
+	}
+	if got := attempts[1].StartedAt; !got.Equal(now.Add(2 * time.Second)) {
+		t.Fatalf("retry scheduled at %s", got)
+	}
+	if len(enqueuer.intents) != 1 || enqueuer.intents[0].Key() != ExecuteKey {
+		t.Fatalf("retry intents = %+v", enqueuer.intents)
+	}
+}
+
 func TestExecuteHandlerQuarantinesMalformedResultWithoutWriting(t *testing.T) {
 	t.Parallel()
 	check, attempt, now := taskRunningCheck(t, verification.RunnerProvider, 5)
@@ -138,6 +194,31 @@ func (provider failingProvider) Execute(context.Context, providerv1.Request) (pr
 	return providerv1.Result{}, provider.err
 }
 
+type pendingProvider struct{}
+
+func (pendingProvider) Execute(context.Context, providerv1.Request) (providerv1.Result, error) {
+	return providerv1.Result{}, provider.ErrDispatchPending
+}
+
+type externalWaitSpy struct {
+	enters, leaves     int
+	enterErr, leaveErr error
+	enterActor         string
+	leaveActor         string
+}
+
+func (spy *externalWaitSpy) Enter(_ context.Context, _ tenant.Scope, _ id.Verification, _ id.Check, actor string) error {
+	spy.enters++
+	spy.enterActor = actor
+	return spy.enterErr
+}
+
+func (spy *externalWaitSpy) Leave(_ context.Context, _ postgres.Transaction, _ tenant.Scope, _ id.Verification, actor string) error {
+	spy.leaves++
+	spy.leaveActor = actor
+	return spy.leaveErr
+}
+
 func TestExecuteHandlerClassifiesExternalFailureBeforeTransaction(t *testing.T) {
 	t.Parallel()
 	check, attempt, now := taskRunningCheck(t, verification.RunnerProvider, 5)
@@ -147,6 +228,95 @@ func TestExecuteHandlerClassifiesExternalFailureBeforeTransaction(t *testing.T) 
 	work, result := handler.Prepare(t.Context(), executeDelivery(t, check, attempt, now, 6))
 	if work != nil || result.Outcome != platformtask.OutcomeRetry || result.Class != platformtask.RetryClassUnavailable || store.saves != 0 {
 		t.Fatalf("Prepare() = work %v, result %+v", work != nil, result)
+	}
+}
+
+func TestExecuteHandlerEntersExternalWaitForPendingProviderDispatch(t *testing.T) {
+	t.Parallel()
+	check, attempt, now := taskRunningCheck(t, verification.RunnerProvider, 9)
+	store := &checkStore{check: check}
+	handler := executeHandler(t, store, pendingProvider{},
+		synthetic.Model{Scenario: synthetic.Success, Now: time.Now})
+	wait := &externalWaitSpy{}
+	if err := handler.WithExternalWait(wait); err != nil {
+		t.Fatal(err)
+	}
+	work, result := handler.Prepare(t.Context(), executeDelivery(t, check, attempt, now, 10))
+	if work != nil || result.Outcome != platformtask.OutcomeRetry || result.Class != platformtask.RetryClassUnavailable {
+		t.Fatalf("Prepare() = work %v, result %+v", work != nil, result)
+	}
+	if wait.enters != 1 || wait.leaves != 0 || wait.enterActor != "tsk_"+taskTestULID {
+		t.Fatalf("external wait projection = enters %d, leaves %d, actor %q", wait.enters, wait.leaves, wait.enterActor)
+	}
+}
+
+func TestExecuteHandlerRetriesWhenExternalWaitEntryFails(t *testing.T) {
+	t.Parallel()
+	check, attempt, now := taskRunningCheck(t, verification.RunnerProvider, 11)
+	store := &checkStore{check: check}
+	handler := executeHandler(t, store, pendingProvider{},
+		synthetic.Model{Scenario: synthetic.Success, Now: time.Now})
+	wait := &externalWaitSpy{enterErr: errors.New("projection unavailable")}
+	if err := handler.WithExternalWait(wait); err != nil {
+		t.Fatal(err)
+	}
+	work, result := handler.Prepare(t.Context(), executeDelivery(t, check, attempt, now, 12))
+	if work != nil || result.Outcome != platformtask.OutcomeRetry || result.Class != platformtask.RetryClassUnavailable || wait.enters != 1 {
+		t.Fatalf("Prepare() = work %v, result %+v, enters %d", work != nil, result, wait.enters)
+	}
+}
+
+func TestExecuteHandlerPendingDispatchWithoutExternalWaitStaysProcessing(t *testing.T) {
+	t.Parallel()
+	check, attempt, now := taskRunningCheck(t, verification.RunnerProvider, 13)
+	store := &checkStore{check: check}
+	handler := executeHandler(t, store, pendingProvider{},
+		synthetic.Model{Scenario: synthetic.Success, Now: time.Now})
+	work, result := handler.Prepare(t.Context(), executeDelivery(t, check, attempt, now, 14))
+	if work != nil || result.Outcome != platformtask.OutcomeRetry || result.Class != platformtask.RetryClassUnavailable {
+		t.Fatalf("Prepare() = work %v, result %+v", work != nil, result)
+	}
+}
+
+func TestExecuteHandlerLeavesExternalWaitInsideAppliedCommit(t *testing.T) {
+	t.Parallel()
+	check, attempt, now := taskRunningCheck(t, verification.RunnerProvider, 15)
+	store := &checkStore{check: check}
+	handler := executeHandler(t, store,
+		synthetic.Provider{Scenario: synthetic.Success, Now: func() time.Time { return now.Add(time.Second) }},
+		synthetic.Model{Scenario: synthetic.Success, Now: time.Now})
+	wait := &externalWaitSpy{}
+	if err := handler.WithExternalWait(wait); err != nil {
+		t.Fatal(err)
+	}
+	work, result := handler.Prepare(t.Context(), executeDelivery(t, check, attempt, now, 16))
+	if work == nil || result.Outcome != platformtask.OutcomeComplete {
+		t.Fatalf("Prepare() = work %v, result %+v", work != nil, result)
+	}
+	committed := work(t.Context(), nil)
+	if committed.Outcome != platformtask.OutcomeComplete || wait.leaves != 1 || wait.leaveActor != "tsk_"+taskTestULID {
+		t.Fatalf("commit = %+v, leaves %d, actor %q", committed, wait.leaves, wait.leaveActor)
+	}
+}
+
+func TestExecuteHandlerRetriesWhenExternalWaitLeaveFails(t *testing.T) {
+	t.Parallel()
+	check, attempt, now := taskRunningCheck(t, verification.RunnerProvider, 17)
+	store := &checkStore{check: check}
+	handler := executeHandler(t, store,
+		synthetic.Provider{Scenario: synthetic.Success, Now: func() time.Time { return now.Add(time.Second) }},
+		synthetic.Model{Scenario: synthetic.Success, Now: time.Now})
+	wait := &externalWaitSpy{leaveErr: errors.New("projection unavailable")}
+	if err := handler.WithExternalWait(wait); err != nil {
+		t.Fatal(err)
+	}
+	work, result := handler.Prepare(t.Context(), executeDelivery(t, check, attempt, now, 18))
+	if work == nil || result.Outcome != platformtask.OutcomeComplete {
+		t.Fatalf("Prepare() = work %v, result %+v", work != nil, result)
+	}
+	committed := work(t.Context(), nil)
+	if committed.Outcome != platformtask.OutcomeRetry || committed.Class != platformtask.RetryClassUnavailable || wait.leaves != 1 {
+		t.Fatalf("commit = %+v, leaves %d", committed, wait.leaves)
 	}
 }
 

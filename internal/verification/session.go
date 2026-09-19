@@ -72,6 +72,8 @@ type Session struct {
 	profileDigest   string
 	region          string
 	requirements    Profile
+	failure         SessionFailure
+	inputRequest    *InputRequest
 	createdAt       time.Time
 	updatedAt       time.Time
 	expiresAt       time.Time
@@ -185,6 +187,18 @@ func RestoreSession(
 	}, nil
 }
 
+// WithFailure returns a restored failed session carrying its validated
+// operational failure. It is the additive read path that leaves RestoreSession
+// stable; it rejects any combination other than a failed session with a
+// bounded failure so a non-failed aggregate can never carry one.
+func (session Session) WithFailure(failure SessionFailure) (Session, error) {
+	if session.state != SessionStateFailed || failure.Validate() != nil {
+		return Session{}, errors.New("verification: session failure is invalid")
+	}
+	session.failure = failure
+	return session, nil
+}
+
 // ID returns the stable verification-session identifier.
 func (session Session) ID() id.Verification { return session.id }
 
@@ -214,6 +228,10 @@ func (session Session) PolicyID() id.Policy { return session.policyID }
 
 // Requirements returns a defensive copy of the immutable profile snapshot.
 func (session Session) Requirements() Profile { return cloneProfile(session.requirements) }
+
+// Failure returns the bounded operational failure class and code. It is the
+// zero value unless the session is in the terminal failed state.
+func (session Session) Failure() SessionFailure { return session.failure }
 
 // CreatedAt returns the session creation time.
 func (session Session) CreatedAt() time.Time { return session.createdAt }

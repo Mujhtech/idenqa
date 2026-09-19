@@ -61,6 +61,44 @@ func TestProviderScenariosPreserveMeaning(t *testing.T) {
 	}
 }
 
+func TestProviderRetryAfterIsClampedToOwnedBounds(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name       string
+		retryAfter time.Duration
+		want       time.Duration
+	}{
+		{name: "absent uses minimum", retryAfter: 0, want: time.Second},
+		{name: "sub-second uses minimum", retryAfter: 100 * time.Millisecond, want: time.Second},
+		{name: "within bounds is preserved", retryAfter: 45 * time.Second, want: 45 * time.Second},
+		{name: "excessive uses maximum", retryAfter: 2 * time.Hour, want: time.Hour},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			check, attempt, now := runningCheck(t, RunnerProvider, 7)
+			result := providerv1.Result{
+				Contract:  providerv1.CurrentVersion,
+				AttemptID: attempt.ID.String(),
+				Outcome:   providerv1.ResultOutcomeFailed,
+				Failure: &providerv1.Failure{
+					Class:      providerv1.FailureUnavailable,
+					Code:       "provider_unavailable",
+					Retry:      providerv1.RetryBackoff,
+					RetryAfter: test.retryAfter,
+				},
+				CompletedAt: now.Add(time.Second),
+			}
+			if _, err := ApplyProviderResult(&check, result, &observationIDs{}, attempt.Fence); err != nil {
+				t.Fatal(err)
+			}
+			got := check.Attempts()[0].Failure.RetryAfter
+			if got != test.want {
+				t.Fatalf("retry after = %s, want %s", got, test.want)
+			}
+		})
+	}
+}
+
 func TestDuplicateConflictRetryStaleAndCancellation(t *testing.T) {
 	t.Parallel()
 	check, first, now := runningCheck(t, RunnerProvider, 9)

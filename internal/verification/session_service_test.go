@@ -120,6 +120,10 @@ func (*sessionServiceRepositoryStub) FindSession(context.Context, tenant.Scope, 
 	return Session{}, ErrSessionNotFound
 }
 
+func (*sessionServiceRepositoryStub) Resume(context.Context, tenant.Scope, ResumeMutation) (ResumeResult, error) {
+	return ResumeResult{}, ErrSessionConflict
+}
+
 type sessionServiceIDGenerator struct {
 	verification id.Verification
 	token        id.CaptureToken

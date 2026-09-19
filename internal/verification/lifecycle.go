@@ -48,6 +48,7 @@ func (state SessionState) Terminal() bool {
 
 // Lifecycle is the reference-only state needed to validate a session transition.
 // It carries no identity outcome. Decision meaning remains owned by policy.
+// Failure is set only while State is failed.
 type Lifecycle struct {
 	State      SessionState
 	Version    int64
@@ -55,6 +56,7 @@ type Lifecycle struct {
 	UpdatedAt  time.Time
 	ExpiresAt  time.Time
 	DecisionID id.Decision
+	Failure    SessionFailure
 }
 
 // LifecycleCommand is one immutable transition request. EventID is its durable
@@ -62,6 +64,8 @@ type Lifecycle struct {
 // ActorID is a verified principal reference, not a free-form name or credential.
 // Supplying it does not replace authorisation by the owning application service.
 // OccurredAt must be UTC with microsecond precision, matching PostgreSQL storage.
+// Failure is required exactly when Target is failed and is part of replay
+// identity: repeating an event with a different reason is a different command.
 type LifecycleCommand struct {
 	EventID         id.Event
 	VerificationID  id.Verification
@@ -70,6 +74,7 @@ type LifecycleCommand struct {
 	DecisionID      id.Decision
 	ActorID         string
 	OccurredAt      time.Time
+	Failure         SessionFailure
 }
 
 // LifecycleReceipt is the original committed transition, not the latest session.
@@ -84,13 +89,16 @@ type LifecycleReceipt struct {
 	OccurredAt     time.Time
 }
 
-// Validate rejects unbounded attribution, invalid references, and decision
-// references attached to anything other than decision-authored completion.
+// Validate rejects unbounded attribution, invalid references, decision
+// references attached to anything other than decision-authored completion, and
+// a failure attached to anything other than the terminal failed state.
 func (command LifecycleCommand) Validate() error {
+	failureRequired := command.Target == SessionStateFailed
 	if command.EventID.IsZero() || command.VerificationID.IsZero() ||
 		command.ExpectedVersion < 1 || command.ExpectedVersion == math.MaxInt64 ||
 		!command.Target.Valid() || !utcNonZero(command.OccurredAt) || command.OccurredAt.Nanosecond()%1000 != 0 ||
 		(command.Target == SessionStateCompleted) == command.DecisionID.IsZero() ||
+		failureRequired != (command.Failure.Validate() == nil) ||
 		!lifecycleActor(command.ActorID) {
 		return ErrSessionConflict
 	}
@@ -106,7 +114,7 @@ func AdvanceLifecycle(current Lifecycle, command LifecycleCommand) (Lifecycle, e
 	if err := command.Validate(); err != nil {
 		return Lifecycle{}, err
 	}
-	if !current.State.Valid() || current.State.Terminal() ||
+	if !current.State.Valid() || current.State.Terminal() || current.Failure != (SessionFailure{}) ||
 		current.Version != command.ExpectedVersion || !current.DecisionID.IsZero() ||
 		!utcNonZero(current.CreatedAt) || !utcNonZero(current.UpdatedAt) || !utcNonZero(current.ExpiresAt) ||
 		current.UpdatedAt.Before(current.CreatedAt) || !current.ExpiresAt.After(current.CreatedAt) ||
@@ -124,6 +132,7 @@ func AdvanceLifecycle(current Lifecycle, command LifecycleCommand) (Lifecycle, e
 	current.Version++
 	current.UpdatedAt = command.OccurredAt
 	current.DecisionID = command.DecisionID
+	current.Failure = command.Failure
 	return current, nil
 }
 

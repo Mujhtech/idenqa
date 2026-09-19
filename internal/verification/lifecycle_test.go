@@ -3,6 +3,7 @@ package verification
 import (
 	"errors"
 	"math"
+	"strings"
 	"testing"
 	"time"
 
@@ -39,6 +40,9 @@ func TestAdvanceLifecycleGraph(t *testing.T) {
 				if to == SessionStateCompleted {
 					command.DecisionID = lifecycleDecision(t)
 				}
+				if to == SessionStateFailed {
+					command.Failure = SessionFailure{Class: "policy", Code: "workflow_prohibited"}
+				}
 				if to == SessionStateExpired {
 					command.OccurredAt = current.ExpiresAt
 				}
@@ -52,7 +56,8 @@ func TestAdvanceLifecycleGraph(t *testing.T) {
 				}
 				if err != nil || next.State != to || next.Version != before.Version+1 ||
 					next.UpdatedAt != command.OccurredAt || next.ExpiresAt != before.ExpiresAt ||
-					next.CreatedAt != before.CreatedAt || next.DecisionID != command.DecisionID || current != before {
+					next.CreatedAt != before.CreatedAt || next.DecisionID != command.DecisionID ||
+					next.Failure != command.Failure || current != before {
 					t.Fatalf("transition = %+v, %v; original = %+v", next, err, current)
 				}
 			})
@@ -78,7 +83,28 @@ func TestAdvanceLifecycleRejectsInvalidMeaning(t *testing.T) {
 		}},
 		{"failure with identity decision", func(_ *Lifecycle, c *LifecycleCommand) {
 			c.Target = SessionStateFailed
+			c.Failure = SessionFailure{Class: "policy", Code: "workflow_prohibited"}
 			c.DecisionID = lifecycleDecision(t)
+		}},
+		{"failed without failure", func(_ *Lifecycle, c *LifecycleCommand) { c.Target = SessionStateFailed }},
+		{"failure without failed target", func(_ *Lifecycle, c *LifecycleCommand) {
+			c.Failure = SessionFailure{Class: "policy", Code: "workflow_prohibited"}
+		}},
+		{"unbounded failure class", func(_ *Lifecycle, c *LifecycleCommand) {
+			c.Target = SessionStateFailed
+			c.Failure = SessionFailure{Class: "Policy", Code: "workflow_prohibited"}
+		}},
+		{"unbounded failure code", func(_ *Lifecycle, c *LifecycleCommand) {
+			c.Target = SessionStateFailed
+			c.Failure = SessionFailure{Class: "policy", Code: "workflow prohibited"}
+		}},
+		{"empty failure class", func(_ *Lifecycle, c *LifecycleCommand) {
+			c.Target = SessionStateFailed
+			c.Failure = SessionFailure{Class: "", Code: "workflow_prohibited"}
+		}},
+		{"overlong failure code", func(_ *Lifecycle, c *LifecycleCommand) {
+			c.Target = SessionStateFailed
+			c.Failure = SessionFailure{Class: "policy", Code: strings.Repeat("a", 65)}
 		}},
 		{"nonterminal with decision", func(s *Lifecycle, _ *LifecycleCommand) { s.DecisionID = lifecycleDecision(t) }},
 		{"missing event", func(_ *Lifecycle, c *LifecycleCommand) { c.EventID = id.Event{} }},
@@ -97,6 +123,24 @@ func TestAdvanceLifecycleRejectsInvalidMeaning(t *testing.T) {
 				t.Fatalf("AdvanceLifecycle() = %v, want conflict", err)
 			}
 		})
+	}
+}
+
+func TestAdvanceLifecycleCarriesFailure(t *testing.T) {
+	t.Parallel()
+	current, command := lifecycleFixture(t)
+	command.Target = SessionStateFailed
+	command.Failure = SessionFailure{Class: "policy", Code: "workflow_prohibited"}
+	next, err := AdvanceLifecycle(current, command)
+	if err != nil || next.State != SessionStateFailed || next.Failure != command.Failure {
+		t.Fatalf("failed transition = %+v, %v", next, err)
+	}
+	// Every non-failed target carries the zero failure.
+	other, otherCommand := lifecycleFixture(t)
+	otherCommand.Target = SessionStateProcessing
+	advanced, err := AdvanceLifecycle(other, otherCommand)
+	if err != nil || advanced.Failure != (SessionFailure{}) {
+		t.Fatalf("processing transition = %+v, %v", advanced, err)
 	}
 }
 

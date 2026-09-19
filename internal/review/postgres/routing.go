@@ -23,6 +23,7 @@ import (
 type routingIdentifiers interface {
 	NewReviewCase() (id.ReviewCase, error)
 	NewEvent() (id.Event, error)
+	NewInputRequest() (id.InputRequest, error)
 }
 
 // RoutingStore composes evaluation, case, lifecycle, outbox and audit effects.
@@ -30,6 +31,7 @@ type RoutingStore struct {
 	policy    *policypostgres.Store
 	cases     *Store
 	lifecycle *verificationpostgres.LifecycleStore
+	inputs    *verificationpostgres.InputRequestStore
 	ids       routingIdentifiers
 	clock     clock.Clock
 	rules     []review.RoutingRule
@@ -73,7 +75,11 @@ func NewRoutingStore(pool transactionRunner, wrapper platformcrypto.KeyWrapper, 
 	if err != nil {
 		return nil, err
 	}
-	return &RoutingStore{policy: policies, cases: cases, lifecycle: lifecycle, ids: ids, clock: source, rules: append([]review.RoutingRule(nil), rules...)}, nil
+	inputs, err := verificationpostgres.NewInputRequestStore(pool)
+	if err != nil {
+		return nil, err
+	}
+	return &RoutingStore{policy: policies, cases: cases, lifecycle: lifecycle, inputs: inputs, ids: ids, clock: source, rules: append([]review.RoutingRule(nil), rules...)}, nil
 }
 
 // FindRouting returns committed provenance before any current-policy evaluation.
@@ -166,7 +172,12 @@ func (store *RoutingStore) RouteWithin(ctx context.Context, scope tenant.Scope, 
 		return err
 	}
 	if target != verification.SessionStateManualReview {
-		_, err = store.lifecycle.ApplyWithin(ctx, scope, tx, verification.LifecycleCommand{EventID: eventID, VerificationID: request.VerificationID, ExpectedVersion: session.Version, Target: target, ActorID: actor.String(), OccurredAt: now})
+		if target == verification.SessionStateAwaitingInput {
+			if err := store.recordInputRequest(ctx, scope, tx, candidate, request, now, actor); err != nil {
+				return err
+			}
+		}
+		_, err = store.lifecycle.ApplyWithin(ctx, scope, tx, verification.LifecycleCommand{EventID: eventID, VerificationID: request.VerificationID, ExpectedVersion: session.Version, Target: target, Failure: workflowFailure(target), ActorID: actor.String(), OccurredAt: now})
 		return err
 	}
 	var rule *review.RoutingRule
@@ -209,6 +220,21 @@ func (store *RoutingStore) RouteWithin(ctx context.Context, scope tenant.Scope, 
 	return err
 }
 
+// recordInputRequest persists the bounded subject-input request implied by a
+// policy request_input directive in the same transaction as its transition.
+// Review-linked recapture remains a separate, case-owned flow.
+func (store *RoutingStore) recordInputRequest(ctx context.Context, scope tenant.Scope, tx platformpostgres.Transaction, routing policy.Routing, request policy.AuthorRequest, at time.Time, actor id.Task) error {
+	identifier, err := store.ids.NewInputRequest()
+	if err != nil {
+		return err
+	}
+	value, err := verification.NewInputRequest(identifier, request.VerificationID, id.ReviewCase{}, verification.BoundedInputRequestReasons(routing.Evaluation().ReasonCodes()), actor.String(), at)
+	if err != nil {
+		return err
+	}
+	return store.inputs.RecordWithin(ctx, scope, tx, value)
+}
+
 func workflowTarget(directive policy.Directive) (verification.SessionState, error) {
 	switch directive {
 	case policy.DirectiveRequestInput:
@@ -220,4 +246,16 @@ func workflowTarget(directive policy.Directive) (verification.SessionState, erro
 	default:
 		return "", policy.ErrInvalid
 	}
+}
+
+// workflowFailure projects a non-completion workflow directive into the bounded
+// failure carried by the terminal failed state. Policy reason codes may contain
+// separators outside the failure-code grammar and an evaluation may carry
+// several, so no single deterministic code is available without a new contract;
+// the class therefore names the writer and the code names the prohibited cause.
+func workflowFailure(target verification.SessionState) verification.SessionFailure {
+	if target == verification.SessionStateFailed {
+		return verification.SessionFailure{Class: "policy", Code: "workflow_prohibited"}
+	}
+	return verification.SessionFailure{}
 }

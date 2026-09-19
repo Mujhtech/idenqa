@@ -32,8 +32,10 @@ type PlanInput struct {
 
 // CheckPlanner is owned by verification. Production runner selection remains
 // an explicit composition decision; the synthetic implementation only tests plumbing.
+// The context bounds any tenant-scoped route-selection read; the plan itself
+// remains a pure value decided before any external call.
 type CheckPlanner interface {
-	Plan(PlanInput) ([]PlannedCheck, error)
+	Plan(context.Context, PlanInput) ([]PlannedCheck, error)
 }
 
 // CaptureTarget is an identifier-only durable discovery result.

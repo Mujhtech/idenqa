@@ -160,6 +160,8 @@ func (store *SessionStore) Create(
 }
 
 // FindSession retrieves a verification only within the explicit tenant scope.
+// An awaiting-input session additionally loads its active policy-authored input
+// request; no other read path loads or projects it.
 func (store *SessionStore) FindSession(
 	ctx context.Context,
 	scope tenant.Scope,
@@ -169,21 +171,40 @@ func (store *SessionStore) FindSession(
 		return verification.Session{}, verification.ErrSessionNotFound
 	}
 	var session verification.Session
-	err := store.read(ctx, scope, func(ctx context.Context, queries *sqlgen.Queries) error {
-		row, err := queries.FindVerificationSession(ctx, sqlgen.FindVerificationSessionParams{
-			TenantID: scope.ID().String(),
-			ID:       identifier.String(),
-		})
-		if errors.Is(err, pgx.ErrNoRows) {
-			return verification.ErrSessionNotFound
-		}
-		if err != nil {
-			return fmt.Errorf("find verification session: %w", err)
-		}
-		session, err = store.restoreSession(row)
+	err := store.pool.WithinTransaction(
+		ctx,
+		platformpostgres.TransactionOptions{ReadOnly: true},
+		func(ctx context.Context, tx platformpostgres.Transaction) error {
+			queries := sqlgen.New(tx)
+			if _, err := queries.SetTenantScope(ctx, scope.ID().String()); err != nil {
+				return fmt.Errorf("set verification session tenant scope: %w", err)
+			}
+			row, err := queries.FindVerificationSession(ctx, sqlgen.FindVerificationSessionParams{
+				TenantID: scope.ID().String(),
+				ID:       identifier.String(),
+			})
+			if errors.Is(err, pgx.ErrNoRows) {
+				return verification.ErrSessionNotFound
+			}
+			if err != nil {
+				return fmt.Errorf("find verification session: %w", err)
+			}
+			session, err = store.restoreSession(row)
+			if err != nil || session.State() != verification.SessionStateAwaitingInput {
+				return err
+			}
+			request, err := findCurrentInputRequest(ctx, tx, scope, identifier)
+			if errors.Is(err, verification.ErrInputRequestNotFound) {
+				return nil
+			}
+			if err != nil {
+				return err
+			}
+			session, err = session.WithInputRequest(request)
 
-		return err
-	})
+			return err
+		},
+	)
 
 	return session, err
 }
@@ -581,6 +602,8 @@ func (store *SessionStore) restoreReplay(
 	sessionRow.State = string(verification.SessionStateCollecting)
 	sessionRow.Version = 1
 	sessionRow.UpdatedAt = sessionRow.CreatedAt
+	sessionRow.FailureClass = nil
+	sessionRow.FailureCode = nil
 	session, err := store.restoreSession(sessionRow)
 	if err != nil {
 		return verification.SessionCreation{}, err
@@ -703,7 +726,7 @@ func (store *SessionStore) restoreSession(row sqlgen.IdenqaVerificationSession) 
 		return verification.Session{}, fmt.Errorf("parse stored verification policy id: %w", err)
 	}
 
-	return verification.RestoreSession(
+	session, err := verification.RestoreSession(
 		identifier,
 		tenantID,
 		verification.SessionState(row.State),
@@ -719,6 +742,17 @@ func (store *SessionStore) restoreSession(row sqlgen.IdenqaVerificationSession) 
 		row.ExpiresAt.Time,
 		registry,
 	)
+	if err != nil {
+		return verification.Session{}, err
+	}
+	if row.FailureClass == nil && row.FailureCode == nil {
+		return session, nil
+	}
+	if row.FailureClass == nil || row.FailureCode == nil {
+		return verification.Session{}, errors.New("restore verification session: failure projection is incomplete")
+	}
+
+	return session.WithFailure(verification.SessionFailure{Class: *row.FailureClass, Code: *row.FailureCode})
 }
 
 func restoreCredential(row sqlgen.IdenqaCaptureToken) (access.CaptureCredential, error) {

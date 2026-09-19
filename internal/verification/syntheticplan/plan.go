@@ -2,6 +2,7 @@
 package syntheticplan
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -14,7 +15,10 @@ import (
 type Plan struct{}
 
 // Plan pins the two synthetic success fixtures to one immutable session input.
-func (Plan) Plan(input verification.PlanInput) ([]verification.PlannedCheck, error) {
+func (Plan) Plan(ctx context.Context, input verification.PlanInput) ([]verification.PlannedCheck, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	if input.TenantID.IsZero() || input.VerificationID.IsZero() || input.PolicyID.IsZero() || input.ProfileDigest == "" {
 		return nil, verification.ErrInvalidCheck
 	}

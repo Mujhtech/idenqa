@@ -19,9 +19,10 @@ import (
 
 // ValidateProcessingWithin locks the parent session and verifies the current
 // authority for every accepted evidence binding. The planner uses collecting;
-// consequential check and policy commits use processing. The caller must keep
-// this lock until its effects commit, and roll back if validation fails.
-// Capture-token expiry is intentionally irrelevant after evidence acceptance.
+// consequential check, policy and review commits use processing. The caller
+// must keep this lock until its effects commit, and roll back if validation
+// fails. Capture-token expiry is intentionally irrelevant after evidence
+// acceptance.
 func ValidateProcessingWithin(
 	ctx context.Context,
 	transaction platformpostgres.Transaction,
@@ -31,7 +32,25 @@ func ValidateProcessingWithin(
 	source clock.Clock,
 	expectedState verification.SessionState,
 ) error {
-	return validateProcessingWithin(ctx, transaction, scope, verificationID, occurredAt, source, expectedState, false)
+	return validateProcessingWithin(ctx, transaction, scope, verificationID, occurredAt, source, expectedState, false, false)
+}
+
+// ValidateExecutionWithin permits the exact execution-owned effects that may
+// legitimately observe a session awaiting its authoritative external result:
+// the pending dispatch and its accepted result transaction. Policy authorship,
+// review routing, new planning and new capture-bound effects must continue to
+// use the strict processing validation so a pending external operation can
+// never be completed, rerouted or extended by a local effect.
+func ValidateExecutionWithin(
+	ctx context.Context,
+	transaction platformpostgres.Transaction,
+	scope tenant.Scope,
+	verificationID id.Verification,
+	occurredAt time.Time,
+	source clock.Clock,
+	expectedState verification.SessionState,
+) error {
+	return validateProcessingWithin(ctx, transaction, scope, verificationID, occurredAt, source, expectedState, false, true)
 }
 
 // ValidateReconsiderationWithin permits an explicitly authorized review of the latest
@@ -51,9 +70,9 @@ func ValidateReconsiderationWithin(ctx context.Context, transaction platformpost
 	if !latest {
 		return authority.ErrProcessingNotPermitted
 	}
-	return validateProcessingWithin(ctx, transaction, scope, verificationID, occurredAt, source, verification.SessionStateCompleted, true)
+	return validateProcessingWithin(ctx, transaction, scope, verificationID, occurredAt, source, verification.SessionStateCompleted, true, false)
 }
-func validateProcessingWithin(ctx context.Context, transaction platformpostgres.Transaction, scope tenant.Scope, verificationID id.Verification, occurredAt time.Time, source clock.Clock, expectedState verification.SessionState, reconsideration bool) error {
+func validateProcessingWithin(ctx context.Context, transaction platformpostgres.Transaction, scope tenant.Scope, verificationID id.Verification, occurredAt time.Time, source clock.Clock, expectedState verification.SessionState, reconsideration, allowExternalWait bool) error {
 
 	if transaction == nil || source == nil || scope.ID().IsZero() || verificationID.IsZero() || occurredAt.IsZero() ||
 		(expectedState != verification.SessionStateCollecting && expectedState != verification.SessionStateProcessing && expectedState != verification.SessionStateManualReview && (!reconsideration || expectedState != verification.SessionStateCompleted)) {
@@ -73,7 +92,7 @@ func validateProcessingWithin(ctx context.Context, transaction platformpostgres.
 		return fmt.Errorf("lock processing session: %w", err)
 	}
 	observedAt := source.Now().UTC()
-	if observedAt.IsZero() || occurredAt.After(observedAt) || session.State != string(expectedState) ||
+	if observedAt.IsZero() || occurredAt.After(observedAt) || !executionState(session.State, expectedState, allowExternalWait) ||
 		session.AuthorityID == nil || session.SubjectID == nil || session.NoticeID == nil ||
 		!session.ExpiresAt.Valid || (!reconsideration && !observedAt.Before(session.ExpiresAt.Time)) ||
 		!session.CaptureCompletedAt.Valid || session.CaptureCompletedAt.Time.After(occurredAt) {
@@ -130,6 +149,16 @@ func validateProcessingWithin(ctx context.Context, transaction platformpostgres.
 		return authority.ErrSubjectResponseRequired
 	}
 	return validateAcceptedProcessing(ctx, transaction, scope, verificationID, declaration, notice, response, occurredAt, observedAt)
+}
+
+// executionState reports whether a persisted lifecycle state satisfies the
+// expected state. Only execution-owned callers may observe awaiting_external
+// in place of processing; every other caller remains strict.
+func executionState(persisted string, expected verification.SessionState, allowExternalWait bool) bool {
+	if persisted == string(expected) {
+		return true
+	}
+	return allowExternalWait && expected == verification.SessionStateProcessing && persisted == string(verification.SessionStateAwaitingExternal)
 }
 
 func validateAcceptedProcessing(

@@ -120,7 +120,7 @@ func (store *CheckStore) FindCheck(ctx context.Context, scope tenant.Scope, chec
 			if err != nil {
 				return err
 			}
-			return authoritypostgres.ValidateProcessingWithin(ctx, tx, scope, check.VerificationID,
+			return authoritypostgres.ValidateExecutionWithin(ctx, tx, scope, check.VerificationID,
 				store.clock.Now().UTC(), store.clock, verification.SessionStateProcessing)
 		})
 		return check, err
@@ -131,6 +131,31 @@ func (store *CheckStore) FindCheck(ctx context.Context, scope tenant.Scope, chec
 		return err
 	})
 	return check, err
+}
+
+// VerificationDeadlineWithin returns the immutable parent-session deadline in
+// the caller's transaction for bounded semantic retry scheduling.
+func (store *CheckStore) VerificationDeadlineWithin(
+	ctx context.Context,
+	scope tenant.Scope,
+	transaction platformpostgres.Transaction,
+	verificationID id.Verification,
+) (time.Time, error) {
+	if scope.ID().IsZero() || transaction == nil || verificationID.IsZero() {
+		return time.Time{}, verification.ErrInvalidCheck
+	}
+	queries := sqlgen.New(transaction)
+	if _, err := queries.SetTenantScope(ctx, scope.ID().String()); err != nil {
+		return time.Time{}, fmt.Errorf("set verification deadline tenant scope: %w", err)
+	}
+	var deadline time.Time
+	if err := transaction.QueryRow(ctx, `SELECT expires_at FROM idenqa.verification_sessions WHERE tenant_id=$1 AND id=$2`,
+		scope.ID().String(), verificationID.String()).Scan(&deadline); errors.Is(err, pgx.ErrNoRows) {
+		return time.Time{}, verification.ErrCheckNotFound
+	} else if err != nil {
+		return time.Time{}, fmt.Errorf("load verification deadline: %w", err)
+	}
+	return deadline.UTC(), nil
 }
 
 // FindCheckWithin restores a check using a caller-owned transaction. It is used
@@ -185,7 +210,7 @@ func (store *CheckStore) SaveCheckWithin(
 		if err != nil || duplicate {
 			return duplicate, err
 		}
-		if err := authoritypostgres.ValidateProcessingWithin(ctx, transaction, scope, commit.Check.VerificationID,
+		if err := authoritypostgres.ValidateExecutionWithin(ctx, transaction, scope, commit.Check.VerificationID,
 			commit.Check.UpdatedAt, store.clock, verification.SessionStateProcessing); err != nil {
 			return false, err
 		}
@@ -262,6 +287,12 @@ func saveCheck(
 		if locked.Version != commit.ExpectedVersion {
 			return verification.ErrCheckVersion
 		}
+		var previousAttemptID string
+		if err := transaction.QueryRow(ctx, `SELECT id FROM idenqa.verification_attempts
+			WHERE tenant_id=$1 AND check_id=$2 ORDER BY attempt_number DESC LIMIT 1`,
+			scope.ID().String(), check.ID.String()).Scan(&previousAttemptID); err != nil && !errors.Is(err, pgx.ErrNoRows) {
+			return fmt.Errorf("load current verification attempt: %w", err)
+		}
 		rows, err := queries.UpdateVerificationCheck(ctx, checkUpdateParams(check, commit.ExpectedVersion))
 		if err != nil {
 			return fmt.Errorf("update verification check: %w", err)
@@ -269,7 +300,7 @@ func saveCheck(
 		if rows != 1 {
 			return verification.ErrCheckVersion
 		}
-		if err := persistAttempts(ctx, queries, check, verification.CheckState(locked.State)); err != nil {
+		if err := persistAttempts(ctx, queries, check, verification.CheckState(locked.State), previousAttemptID); err != nil {
 			return err
 		}
 		if err := persistDiagnostics(ctx, queries, check); err != nil {
@@ -462,7 +493,7 @@ func (store *CheckStore) write(ctx context.Context, scope tenant.Scope, work fun
 	})
 }
 
-func persistAttempts(ctx context.Context, queries *sqlgen.Queries, check verification.Check, previousState verification.CheckState) error {
+func persistAttempts(ctx context.Context, queries *sqlgen.Queries, check verification.Check, previousState verification.CheckState, previousAttemptID string) error {
 	attempts := check.Attempts()
 	for index, attempt := range attempts {
 		parameters, err := attemptInsertParams(check, attempt)
@@ -474,8 +505,9 @@ func persistAttempts(ctx context.Context, queries *sqlgen.Queries, check verific
 			return fmt.Errorf("insert verification attempt: %w", err)
 		}
 		isLatest := index == len(attempts)-1
+		wasCurrentBeforeAtomicSuccessor := attempt.ID.String() == previousAttemptID
 		persistObservations := rows == 1 && attempt.State == verification.AttemptCompleted
-		if rows == 0 && isLatest && attempt.State != verification.AttemptRunning &&
+		if rows == 0 && (isLatest || wasCurrentBeforeAtomicSuccessor) && attempt.State != verification.AttemptRunning &&
 			(previousState == verification.CheckRunning || previousState == verification.CheckAwaitingProvider) {
 			completeRows, err := queries.CompleteVerificationAttempt(ctx, attemptCompletionParams(check, attempt))
 			if err != nil {
