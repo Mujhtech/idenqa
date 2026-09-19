@@ -1,8 +1,9 @@
 # Idenqa Core Implementation Gap Audit v0.1 Draft
 
-**Status:** Draft for review  
-**Date:** 4 September 2026  
+**Status:** Draft for review
+**Date:** 4 September 2026
 **Re-baselined:** 14 September 2026 — reconciled with the current build-plan statuses, generated OpenAPI, public TypeScript SDK, CLI, migrations, runtime composition, and Capture Web evidence. Historical implementation records retain the evidence and limitations recorded when each increment was completed.
+**Updated:** 19 September 2026 — added the public verification-resume path, bounded semantic provider retries, exact webhook schema pins, replacement-worker fanout proof, developer event streaming/local forwarding, hold-aware webhook payload/attempt retention, the `idenqa webhook listen` forward-header/subscription-discovery/reference-only/backfill refinements, current decision and case projections on tenant verification reads, session `awaiting_external` wiring for pending asynchronous provider operations, authenticated provider callback intake through the isolated runner, operational-failure projection, structured subject-input request orchestration, callback/worker-loss recovery evidence, composed real-HTTP correction and appeal journeys, the fail-closed external certification adapter, the packaged `deploy/self-hosted` stack with its passing thirteen-step clean usability gate, and the §19 CLI/administration surface (review, subject/identity, assurance, fraud, privacy, provider, model, policy simulation/diff/regression, tenant export, synthetic journey, diagnostics).
 
 **Compared architecture:** [`global-identity-core-technical-architecture-v0.6-draft.md`](global-identity-core-technical-architecture-v0.6-draft.md)  
 **Repository decisions:** [`global-identity-core-repository-structure-and-packages-v0.1-draft.md`](global-identity-core-repository-structure-and-packages-v0.1-draft.md)  
@@ -69,17 +70,17 @@ The current repository cannot yet run that complete journey using real selected 
 
 | Audit area                      | Current implementation baseline                                                                                                                                                                                                                                                                                                | Principal remaining boundary                                                                                                                                                                         |
 | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Verification lifecycle          | L-01 through L-03 compose the full state vocabulary, synthetic capture-to-decision delivery, cancellation, expiry, and recovery guards; O-03 composes nonterminal review routing, findings, linked recapture, credential recovery, and explicit re-evaluation.                                                                 | General resumption, operational-failure handling, complete consequential review follow-up, and recovery proof across every state.                                                                    |
+| Verification lifecycle          | L-01 through L-03 compose the full state vocabulary, synthetic capture-to-decision delivery, cancellation, expiry, recovery guards, and a public expected-version/idempotent resume command; bounded provider semantic retries are scheduled atomically with the terminal attempt, the session enters `awaiting_external` while a durable asynchronous provider operation is pending, tenant reads project the current decision, review case, structured requested input and operational failure, and an authenticated provider callback route resolves an opaque attempt reference through the isolated runner for signature verification and a durable replay-identity receipt. O-03 composes nonterminal review routing, findings, linked recapture, credential recovery, explicit re-evaluation, behaviourally proven escalation arbitration, correction and appeal branches, composed real-HTTP journeys, and a fail-closed external certification adapter. | Live provider-account callback operation, third-party issuer trust integration, reviewer/subject visual acceptance, and production runner/provider acceptance. |
 | AI-native orchestration         | [`contracts/proposal/v1`](../contracts/proposal/v1) and [`internal/proposal`](../internal/proposal) implement proposal/command separation, deterministic guardrails, modes, registries, bounded products, public API, TypeScript SDK, and CLI. M-6 is **In review**.                                                           | Real generative-model adapter, external provenance, representative evaluation, deployment hardening, and independent guardrail review.                                                               |
 | Predictive model execution      | The ONNX evaluation runner, immutable evaluation registry, threshold revisions, dataset comparison/drift tooling, and durable PAD/face-comparison composition are implemented.                                                                                                                                                 | Accepted data and weights, calibrated production thresholds, temporal liveness evidence, production deployment, and production promotion/rollback evidence.                                          |
 | Tenant-local fraud              | [`internal/fraud`](../internal/fraud), migration 48, public API/SDK, and policy integration implement the selected tenant-local baseline.                                                                                                                                                                                      | Deployment-specific source acceptance and regional approval; cross-tenant intelligence remains explicitly deferred.                                                                                  |
 | Subject and identity projection | [`internal/identity`](../internal/identity), migration 49, public API/SDK, and privacy/policy integration implement the initial core subject and identity model.                                                                                                                                                               | Real structured-provider ingestion, richer country normalisation, and larger incremental deletion planning.                                                                                          |
-| Provider execution              | Dojah and Smile ID adapters are composed through bounded synchronous and asynchronous runtime paths with local-fixture recovery evidence.                                                                                                                                                                                      | Tenant-owned official-account runs, production secrets, provider health/callback/deletion operations, legal/regional approval, and equivalent fallback proof.                                        |
+| Provider execution              | Dojah and Smile ID adapters are composed through bounded synchronous and asynchronous runtime paths with local-fixture recovery evidence; tenant provider registration and selection with secret-free configuration references, dispatch-evidence health reads and a failure-classification preview are implemented.                                                                                                                                                                                      | Tenant-owned official-account runs, production secrets, live health-based routing, provider-side deletion, legal/regional approval, and equivalent fallback proof.                                        |
 | Biometrics and documents        | Acquisition orchestration, ONNX preparation, evaluation-only PAD/face comparison, and provider document-analysis paths exist and remain fail-closed or inconclusive without accepted assurance.                                                                                                                                | Production PAD/face models and evaluation, complete temporal capture, OCR/MRZ/barcode and document classification/authenticity, plus derived-data deletion.                                          |
-| Public API                      | The generated OpenAPI and TypeScript SDK include review, fraud, identity, assurance, proposal, cancellation, policy, and webhook administration in addition to the original capture/decision surfaces.                                                                                                                         | Resume, decision history/reconsideration, general evidence and consent administration, provider/model generated contracts, privacy/deletion status, policy simulation, and OAuth client credentials. |
-| Webhooks                        | L-02 composes atomic completion delivery; H-01 adds public endpoint administration, inspection, rotation, and replay through API, TypeScript, and CLI.                                                                                                                                                                         | General event catalogue, subscriptions, versioned schemas/compatibility, scalable fanout, and clean-deployment proof.                                                                                |
+| Public API                      | The generated OpenAPI and TypeScript SDK include review, fraud, identity, assurance, proposal, cancellation, resume, policy, and webhook administration in addition to the original capture/decision surfaces; tenant verification reads project the optional current decision and current review case.                                                                                                                 | Decision history/reconsideration, general evidence and consent administration, provider/model generated contracts, privacy/deletion status, policy simulation, and OAuth client credentials.         |
+| Webhooks                        | L-02 composes atomic completion delivery; H-01 adds public endpoint administration, inspection, rotation and replay; catalogue/subscriptions, exact `1.0` endpoint pins, resumable fanout with replacement-worker proof, list/SSE/local forwarding, hold-aware seven-day payload retention with 365-day tombstones, custom forward headers, endpoint-subscription discovery, a local reference-only projection, and `Last-Event-ID`-based durable history replay are implemented. | Clean packaged deployment proof remains under section 26.                                                                                                                                             |
 | Capture experience              | Capture Web supplies the D-026 compact guided journey, active-liveness orchestration, arbitrary namespaced adapters, D-027's separately authenticated subject-safe outcome projection, nine live-Core journeys including authoritative expiry, and an appearance-only CSS-variable surface. E-04 and M-2 remain **In review**. | Obtain explicit advanced-interaction acceptance, then add the portable signed/versioned experience contract.                                                                                         |
-| Self-hosted usability           | Individual binaries, migrations, runners, SDKs, Capture Web fixtures, and synthetic integration journeys exist.                                                                                                                                                                                                                | A clean packaged deployment still must compose the complete documented open-source operational contract; the development Compose file starts PostgreSQL only.                                        |
+| Self-hosted usability           | Individual binaries, migrations, runners, SDKs, Capture Web fixtures, and synthetic integration journeys exist; `deploy/self-hosted/` now packages the full stack (API, worker, runners, MinIO, Capture Web, webhook receiver, migrations, health) and `smoke.sh` passes the thirteen-step clean usability gate.                                                                                                                                                                                                                | Browser-driven Capture Web journey, real provider/model runner dialing, and the production object-storage deletion path remain external or section 4/9/20/24 gates.                                        |
 | External beta                   | X-03 and X-04 are **In review** with adapter, conformance, security/release workflow, SBOM, and provenance foundations.                                                                                                                                                                                                        | Provider/legal evidence, independent security review, load/soak, mixed-version and restore rehearsals, supported-device evidence, and a signed candidate.                                            |
 
 ---
@@ -234,23 +235,18 @@ The user selected the full persistent identity model as one workstream, approved
 
 ## 7. Verification lifecycle and orchestration
 
-**Classification:** Partial — primary deterministic, cancellation/expiry, and review/recapture paths are composed; remaining lifecycle branches are current-core gaps
+**Classification:** Implemented selected scope — every lifecycle mechanism is implemented and evidenced; linked live-account, third-party-issuer and human-acceptance gates remain in sections 9, 16, and 27
 
-L-01 through L-03 are complete for their recorded boundaries. They provide the complete state vocabulary, optimistic transition primitive, synthetic capture-to-processing-to-decision-to-signed-webhook journey, tenant and subject cancellation, automatic expiry, authority/session fencing, exact replay, and offline-deadline recovery. The create API deliberately returns an atomically activated `collecting` session; a separately persisted `created -> collecting` phase is not selected and is not counted as missing unless a future requirement introduces it.
+L-01 through L-03 are complete for their recorded boundaries. They provide the complete state vocabulary, optimistic transition primitive, synthetic capture-to-processing-to-decision-to-signed-webhook journey, tenant and subject cancellation, automatic expiry, authority/session fencing, exact replay, and offline-deadline recovery. The create API deliberately returns an atomically activated `collecting` session; a separately persisted `created -> collecting` phase is not selected and is not counted as missing unless a future requirement introduces it. The asynchronous provider route now projects the parent session into `awaiting_external` only while a durable external dispatch is pending and no local check remains runnable, and returns it to `processing` inside the fenced task transaction that accepts the authoritative result; execution-owned authority validation alone tolerates `awaiting_external`, while policy authorship, review routing and new capture effects remain strictly `processing`. Policy `request_input` routing now records a bounded structured input request and tenant reads project `requested_input` while the session is `awaiting_input`; a composed non-review proof drives request, action-required outcome, fresh-authorisation resume and completion. Authenticated callback intake resolves an opaque attempt reference through the isolated runner for signature verification and a replay-identity receipt, and operational failure projects a bounded class/code through the lifecycle record.
 
-O-03 has additionally composed automatic nonterminal routing to manual review, certified operator authority, findings and dual control, policy re-evaluation, linked recapture, progress-preserving credential replacement, child-outcome acknowledgement, explicit parent re-evaluation, correction successors, appeal lifecycle, queue/settings operations, controlled evidence display, public OpenAPI, and TypeScript SDK integration. One live-Core path now composes the original capture, queue claim, protected evidence display, linked child capture, child acknowledgement and terminal parent re-evaluation. O-03 is **In review** because recovery, correction and appeal branches, external certification and reviewer/subject acceptance are not finished.
+O-03 has composed automatic nonterminal routing to manual review, certified operator authority, findings and dual control, policy re-evaluation, linked recapture, progress-preserving credential replacement, child-outcome acknowledgement, explicit parent re-evaluation, correction successors, appeal lifecycle, queue/settings operations, controlled evidence display, public OpenAPI, and TypeScript SDK integration. Behavioural PostgreSQL proofs now cover escalation arbitration (including independence, certificate and non-escalated denials), correction intake with policy-authored successor lineage, immutable original decisions and the `decision.corrected` catalogue event, appeal assignment/resolution/withdrawal/expiry with successor receipts, review-evaluation and callback-runner replacement-worker consistency, external-success/local-failure reconciliation, and real-HTTP composed correction and appeal journeys. External certification is now an owned fail-closed Ed25519 assertion adapter over the existing authority configuration, keeping the tenant-attested path unchanged when no issuer is configured.
 
-Remaining lifecycle capabilities are:
+Remaining lifecycle-linked gates are external only:
 
-- General session resumption outside the implemented fresh-page capture progress and review-recapture credential recovery paths.
-- Explicit `awaiting_subject_input` orchestration outside linked review recapture.
-- General `awaiting_external_result` callback/reconciliation beyond the implemented Smile ID status-only polling route.
-- Operational-failure transition and recovery that cannot be represented as an identity outcome.
-- Complete composed recovery, correction, appeal and escalation outcomes, including accepted reviewer/subject interaction and external certification.
-- Current-decision and current-case projections on every applicable verification read, where required by the public lifecycle contract.
-- Worker-loss and dependency-recovery proofs across every supported lifecycle state and externally completed provider operation.
-
-Production runner selection, provider/model acceptance, and clean deployment remain separate from the lifecycle state-machine implementation.
+- Live provider-account callback operation and official sandbox evidence; the transport, runner verification, receipt deduplication and Core ingress are implemented and proven with local fixtures.
+- A real third-party certification issuer trust/status integration (remote key discovery, revocation checks); the deployment-key adapter and fail-closed boundary are implemented.
+- Composed reviewer/subject visual and interaction acceptance (O-03/M-4), which is human evidence rather than an unbuilt mechanism.
+- Production runner selection, provider/model acceptance, and clean deployment, which remain separate from the lifecycle state machine.
 
 ---
 
@@ -287,13 +283,12 @@ Dojah and Smile ID adapter source, manifests, normalisation, conformance tests, 
 **Remaining:**
 
 - Hardened provider-runner deployment and external acceptance evidence.
-- Tenant provider registration and configuration.
 - Production secret-manager resolver.
 - Dynamic credential rotation.
 - General purpose-bound subject-input resolution beyond the Smile ID deployment-bound country/document-type references.
 - Broader multi-operation grants and durable delivery recovery beyond the first document route.
 - Provider health cache and selection input.
-- Callback intake and broader provider reconciliation beyond the implemented Smile ID status-only polling.
+- Broader provider reconciliation beyond the implemented status-only polling and verified callback-receipt paths.
 - Provider-side deletion orchestration.
 
 ### 9.2 Missing resilience and cost controls
@@ -492,9 +487,8 @@ The Core now includes versioned operator administration, queue operations, contr
 
 Remaining work includes:
 
-- Composed progress-preserving recovery, correction, appeal and escalation outcome journeys.
-- Explicit reviewer/subject visual and interaction acceptance of the live recapture fixture.
-- External certification-issuer adapters; current certifications are explicitly tenant-attested.
+- Composed reviewer/subject visual and interaction acceptance of the live recapture and correction/appeal journeys; the real-HTTP composed journeys and replacement-worker recovery proofs are implemented.
+- A real third-party certification-issuer trust/status integration (remote key discovery and revocation checks); the fail-closed Ed25519 deployment-key adapter over the existing authority configuration is implemented, and the tenant-attested path is preserved when no issuer is configured.
 - Advanced assignment automation beyond filtered queues, certified regional claiming and versioned priority/SLA management.
 - Tenant subject notification and correction-request product surfaces; the Core API and capture handoff helper are available.
 - Production acceptance of the implemented evidence-linked, non-authoritative review-copilot proposal path with a real generative model.
@@ -521,16 +515,21 @@ SSO remains deferred. Historical increments below describe their state at the ti
 
 ## 17. Webhooks and general event contracts
 
-**Classification:** Implemented selected scope — catalogue, subscriptions and resumable fanout complete; clean-deployment proof remains under section 26
+**Classification:** Implemented selected scope — catalogue, subscriptions, resumable fanout, and the developer event list/stream complete; clean-deployment proof remains under section 26
 
-The repository includes durable webhook persistence, KMS-wrapped rotating secrets, retry exhaustion, replay lineage, SSRF-aware callback transport, and an independent Go verifier. L-02 now composes completion projection and signed delivery into the runnable worker. Its public API journey proves atomic decision/session/delivery effects, a durable 503 retry, worker restart, successful delivery, stable event identity, and independent signature verification. H-01 now exposes public endpoint administration, payload-free delivery/attempt inspection and exhausted-delivery replay through API, TypeScript and CLI. The broader event catalogue remains incomplete.
+The repository includes durable webhook persistence, KMS-wrapped rotating secrets, retry exhaustion, replay lineage, SSRF-aware callback transport, and an independent Go verifier. L-02 now composes completion projection and signed delivery into the runnable worker. Its public API journey proves atomic decision/session/delivery effects, a durable 503 retry, worker restart, successful delivery, stable event identity, and independent signature verification. H-01 now exposes public endpoint administration, payload-free delivery/attempt inspection and exhausted-delivery replay through API, TypeScript and CLI. The 19 September 2026 developer event feed adds an authorised read-only list and SSE stream over the same durable events, plus `idenqa webhook listen` local signed forwarding, without changing endpoint delivery or payload-free delivery/attempt inspection.
 
 Resolved on 18 September 2026: endpoint event-type subscriptions (exact names or `*`, bounded to 64, default `verification.completed`); the versioned public event catalogue with per-type JSON schemas and canonical fixtures in `contracts/webhook/v1`; outbox-first emission from every owning feature for the selected catalogue (verification lifecycle, checks, decisions, evidence, consent, processing authority, subjects, deletion, review cases and appeals); and a fenced, resumable `webhook.fanout` task that pages subscribed endpoints in bounded batches, dedupes per endpoint and event, and continues from a persisted cursor — replacing the fail-closed 1024-endpoint guard.
 
+**Developer event stream — implemented 19 September 2026:** Migration 58 adds the monotonic `stream_sequence` identity and unique `(tenant_id,stream_sequence)` index, and emission publishes a routing-only `idenqa_webhook_events_v1` notification that the API process multiplexes over one LISTEN connection. Catalogue bodies remain KMS-wrapped at emission and are unwrapped only at authorised boundaries. `GET /v1/webhook-events` pages decrypted canonical envelopes under `webhooks:read` with a signed opaque cursor; `GET /v1/webhook-events/stream` serves Server-Sent Events with `Last-Event-ID` sequence resume, heartbeat comments, an optional validated `event_types` filter, a 64-sequence commit-gap window, bounded duplicate suppression, and a durable polling fallback when the notification listener is unavailable. `idenqa webhook listen` consumes the stream, prints summaries or `--json` canonical envelopes, reconnects with bounded backoff and resume, and with `--forward-to` forwards exact bytes signed locally with the canonical v1 headers, using exactly one of `--secret-file` or a new owner-only `--secret-out`.
+
+Completed 19 September 2026: exact endpoint schema-version `1.0` pinning; a 257-endpoint multi-batch replacement-worker crash/resume exercise; and migration 60's elected, bounded, legal-hold-aware retention maintenance. Encrypted event/delivery payloads and attempt diagnostics expire after seven days, expired events disappear from list/SSE, replay returns `410 Gone`, minimal reference tombstones remain 365 days, released holds resume expiry, and final purge is bounded.
+
+**Local listener refinements — implemented 19 September 2026:** `idenqa webhook listen` adds validated repeatable `--forward-header` entries (reserved signature, content and transport headers rejected), `--load-from-webhooks-api` subscription discovery (pages `GET /v1/webhook-endpoints`, skips disabled endpoints, unions event types and collapses `*`), `--thin` local reference-only projection (canonical envelope metadata preserved; `data` reduced to `id`, `type` and `_id` reference keys; projected bytes signed with the canonical v1 headers), and `--backfill` (`Last-Event-ID: 0` replays retained durable history before live continuation, with reconnect and receiver deduplication unchanged).
+
 Remaining:
-- A multi-batch crash-resume fanout exercise at scale beyond one batch.
 - The complete clean-deployment decision-to-delivery demonstration once the section 26 packaging gate exists.
-- `verification.collecting` has no distinct persisted transition and `provider.degraded` has no provider-health owner yet; neither emits.
+- `verification.collecting` is now emitted on transitions into `collecting` (the resume path); creation still inserts the activated `collecting` session without a distinct transition. `provider.degraded` has no provider-health owner and remains outside the catalogue.
 
 V-04 completed the application, persistence, task, transport, verifier, and deterministic proof boundary. L-02 adds the runnable completion and delivery composition. H-01 adds separately permissioned, atomically audited administration and replay, display-once secret delivery, overlap-safe rotation and signed tenant-bound inspection cursors. Receivers continue deduplicating the unchanged signed event ID across manual replay.
 
@@ -540,24 +539,19 @@ V-04 completed the application, persistence, task, transport, verifier, and dete
 
 **Classification:** Current-core gap and Partial
 
-The public OpenAPI now includes tenant inspection; capture profiles; verification creation/read/cancellation; decisions and bundles; notices and processing authority; capture session/progress/bootstrap/connections; evidence upload; webhook and policy administration; review cases, queue/settings, operators, evidence display, recapture, correction and appeals; tenant-local fraud; persistent subjects and identity records; assurance capabilities/profiles; and AI proposals, modes, commands, and prompts. The dependency-free TypeScript SDK exposes the corresponding review, fraud, identity, assurance, and proposal clients.
+The public OpenAPI now includes tenant inspection; capture profiles; verification creation/read/cancellation; decisions and bundles; notices and processing authority; capture session/progress/bootstrap/connections; evidence upload; webhook and policy administration; webhook-event listing and streaming; review cases, queue/settings, operators, evidence display, recapture, correction and appeals; tenant-local fraud; persistent subjects and identity records; assurance capabilities/profiles; privacy deletion status/listing and retention resolutions under `deletions:read`; policy simulation, revision diff and scenario regression under `policies:read`; tenant provider registration and selection contracts under `providers:read`/`providers:write` (secret-free configuration references, health from owned dispatch evidence, failure-classification preview); evaluation-only model registry catalogue, validation and rollback contracts under `models:read`/`models:write`/`models:activate`; and AI proposals, modes, commands, and prompts. Tenant verification reads project the optional `current_decision` (decision leaf id, outcome, directive, decided_at) and `current_case` (case id, state, version) only when the caller holds `decisions:read`/`reviews:read`; capture-token reads remain subject-safe and exclude both. The dependency-free TypeScript SDK exposes the corresponding review, fraud, identity, assurance, and proposal clients.
 
 Missing or incomplete public resources include:
 
-- General verification resume outside capture-progress recovery and review-recapture credential replacement.
 - General decision history and reconsideration resources beyond review correction, appeal, and recapture operations.
 - Tenant-facing evidence metadata and lifecycle inspection.
 - General provider/model evidence-access grant creation, inspection, and revocation; review evidence grants are public and case-bound.
 - Consent receipt inspection and revocation.
-- Provider catalogue, capabilities, health, and configuration.
-- Generated model-registry catalogue, capability, health, configuration, and rollback contracts; evaluation-only Core routes exist but are not in generated OpenAPI/SDK contracts.
-- Public policy simulation, diff, and regression; P-01 implements listing, creation, validation, immutable versioning, source retrieval, activation, rollback, and activation-history inspection.
-- Deletion-status retrieval.
+- Generated model-registry health contracts; the evaluation-only catalogue, configuration, validation and rollback contracts are now generated, but no owned model-health read exists pending the section 4 runner-health supervision gap.
 - Direct privacy-request, restriction, objection, portability, and deletion administration.
-- General webhook subscription and event-catalogue administration.
 - OAuth client credentials as the alternative server-integration mode described by section 29.2.
 
-Review, fraud, identity, assurance, proposal, policy, webhook, and cancellation surfaces are represented in the authoritative OpenAPI. Internal privacy operations and evaluation-model registry routes remain outside generated public contracts and cannot yet be treated as stable public administration APIs.
+Review, fraud, identity, assurance, proposal, policy, webhook, webhook-event, policy-simulation, and cancellation surfaces are represented in the authoritative OpenAPI. Privacy read inspections are represented; privacy administration writes and evaluation-model registry routes remain outside generated public contracts and cannot yet be treated as stable public administration APIs.
 
 ---
 
@@ -565,24 +559,14 @@ Review, fraud, identity, assurance, proposal, policy, webhook, and cancellation 
 
 **Classification:** Current-core gap and Partial
 
-The Cobra CLI provides tenant, API-key, migration, Headgate migration, evidence-key, policy-decision reproduction/verification, audit verification, recovery, background-work inspection/retry, public webhook administration/inspection/replay, public policy administration, and AI proposal/mode/prompt operations.
+The Cobra CLI provides tenant, API-key, migration, Headgate migration, evidence-key, policy-decision reproduction/verification, audit verification, recovery, background-work inspection/retry, public webhook administration/inspection/replay and live webhook event listing/streaming with local signed forwarding, public policy administration with simulation, revision diff and scenario regression, AI proposal/mode/prompt operations and accepted-command execution, review case/appeal/correction/arbitration/recapture administration, subject/identity administration, assurance profile and verification-assurance operations, tenant-fraud configuration/proposal/receipt operations, privacy deletion-status/retry/retention inspection, tenant-owned streaming data export with digest verification, tenant provider registration and selection with secret-free configuration references, evaluation-only model registry administration (register/validate/threshold/activate/rollback/retire), a complete public-API synthetic verification journey with packaged example profile/policy fixtures and demo script, and clean-install preflight and diagnostics through `idenqa doctor`.
 
 Missing capabilities include:
 
-- Complete synthetic verification command.
-- A packaged example policy and complete demonstration; public creation and activation commands are implemented.
-- Policy simulation, diff and regression commands; P-01 implements create, validate, list/get, revision append/source/history, activate and rollback.
-- Provider registration, validation, health, and failure simulation.
-- Model registration, validation, health, and rollback.
-- Review/operator/recapture administration matching the generated public API.
-- Subject, identity, assurance-profile, and tenant-fraud administration matching the generated public API.
-- Country, document, jurisdiction, and assurance-pack inspection.
-- Retention-resolution inspection.
-- Deletion-status inspection and safe retry.
-- Tenant-owned data export.
-- Tenant HMAC and production-key lifecycle operations.
-- Accepted-command execution and complete generative-model/impact-assessment administration when AI is enabled.
-- Clean-install preflight and end-to-end diagnostics.
+- Model health inspection; registration, validation, activation, rollback and retirement commands are implemented against the evaluation-only registry.
+- Country, document, jurisdiction, and assurance-pack inspection; the pack records themselves are not yet implemented under section 13.
+- Tenant HMAC and production-key lifecycle operations; the production key-management provider remains unresolved under section 21.
+- Complete generative-model and impact-assessment administration when AI is enabled; accepted-command execution is implemented.
 
 ---
 
@@ -606,7 +590,6 @@ Missing capabilities include:
 - Webhook payload retention and deletion integration.
 - External-delivery retention semantics.
 - Production backup-store expiry enforcement.
-- Complete deletion-status public API.
 - Direct consent-receipt administration.
 - Full deletion demonstration after a real provider and model journey.
 
@@ -712,7 +695,7 @@ Missing capabilities and evidence include:
 
 **Classification:** Partial and External evidence gap
 
-Implemented foundations include API-key and capture-token authentication, application permission checks, forced PostgreSQL RLS, evidence encryption, security headers, bounded request handling, dependency/vulnerability automation, CodeQL, SBOM generation, artifact provenance configuration, a threat model, disclosure policy, and release/runbook foundations.
+Implemented foundations include API-key and capture-token authentication, application permission checks, forced PostgreSQL RLS, evidence encryption, security headers, bounded request handling, dependency/vulnerability automation, CodeQL, SBOM generation, artifact provenance configuration, a threat model, disclosure policy, release/runbook foundations, and a container publishing workflow that builds the self-hosted images, scans fixable HIGH/CRITICAL findings, attaches BuildKit provenance and SBOM attestations, and keyless-signs the pushed GHCR digests on release tags.
 
 Missing or incomplete capabilities include:
 
@@ -727,7 +710,6 @@ Missing or incomplete capabilities include:
 - Sandboxed document parsing.
 - Provider and model egress allow-lists.
 - Explicit secret-scanning gate.
-- Container scanning and signed container images when containers ship.
 - Fully enforced dependency-licence allow-list and review workflow.
 - Independent penetration test.
 - Production incident exercises.
@@ -737,40 +719,18 @@ Missing or incomplete capabilities include:
 
 ## 26. Self-hosted deployment and clean usability
 
-**Classification:** Current-core gap
+**Classification:** Implemented selected scope — the packaged stack and the thirteen-step gate pass with documented dev-mode fixture boundaries
 
-The development Compose file starts PostgreSQL only. A clean environment cannot yet execute the complete open-source operational contract.
+`deploy/self-hosted/` now packages the documented open-source operational contract: a digest-pinned Compose stack (PostgreSQL, MinIO bucket init, one-shot provisioning and application/Headgate migrations, API, worker, adapter runner, Capture Web host, webhook receiver; optional `model-runner` and `api-s3` profiles), a multi-stage non-root Dockerfile for the core binaries plus a Capture Web image, an explicit `.env.example` contract, runtime secret sourcing, healthchecks and readiness, and mounted fixture configs for the runners.
 
-The missing deployment path must compose:
+`deploy/self-hosted/smoke.sh` implements the clean usability gate end to end and currently passes all thirteen steps: start without Cloud or Console; run migrations; create a tenant and scoped credential; activate the packaged example policy; use the CLI; complete the synthetic capture journey; execute checks; produce and reproduce a decision; deliver and independently verify a signed webhook through the example `sdk/go` receiver; inspect the audit chain through the portable export verifier; interrupt the worker and observe fenced recovery to completion; run retention and deletion; and export tenant-owned data with an independently recomputed digest. `.github/workflows/images.yml` publishes the `idenqa-core`, `idenqa-capture-web` and `idenqa-model-runner` images to GHCR on release tags with provenance, SBOM and keyless signatures after a Trivy gate, and `deploy/self-hosted/compose.published.yaml` runs the same stack from those published images.
 
-- PostgreSQL.
-- API.
-- Worker.
-- Local or S3-compatible object storage.
-- Local development key provider.
-- Provider and model runners.
-- Mock provider and synthetic model.
-- Safe-default Capture Web hosting with a real Core-backed guided journey; development fixtures are insufficient.
-- Migrations and Headgate migrations.
-- Example tenant, capture profile, policy, and webhook receiver.
-- Health and readiness.
-- Failure and recovery demonstration.
+Remaining limitations are dev-mode boundaries, not missing deployment machinery:
 
-The clean usability gate must demonstrate:
-
-1. Start the core without Cloud or Console.
-2. Run migrations.
-3. Create a tenant and scoped credential.
-4. Activate an example policy.
-5. Install or use a supported SDK.
-6. Complete a synthetic capture journey.
-7. Execute checks.
-8. Produce and reproduce a decision.
-9. Deliver and independently verify a signed webhook.
-10. Inspect the audit chain.
-11. Simulate provider failure and recovery.
-12. Run retention and deletion.
-13. Export tenant-owned data.
+- The gate exercises the documented server-side Capture Web bootstrap rather than a browser-driven Playwright journey.
+- Provider and model runners run in fixture mode because the root worker rejects mixing synthetic processing with real provider/model runtime files; real runner dialing belongs to the provider and model acceptance gates in sections 9 and 4.
+- The gate uses mounted local evidence storage; the `api-s3` profile packages the S3 distribution, but the root worker has no S3 adapter, so the complete object-storage deletion path remains a production gap under sections 20 and 24.
+- Webhook delivery uses a documented dev-only internal network exception so the shipped SSRF-aware callback transport accepts the pinned local receiver; production delivery remains §27 evidence.
 
 ---
 
@@ -846,12 +806,12 @@ This table compares the broader v0.6 milestone outcomes with the current reposit
 
 | v0.6 milestone                                | Architecture-wide assessment | Principal remaining work                                                                                                                                                                                                                                                        |
 | --------------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Milestone 0 — Foundations                     | **Partial**                  | General event contracts, remaining public administration parity, and clean-deployment foundation acceptance.                                                                                                                                                                    |
-| Milestone 1 — Deterministic identity core     | **Partial**                  | General resumption/operational-failure branches, complete review/reconsideration acceptance, and the clean self-hosted journey. Persistent identity, assurance context, synthetic completion, cancellation/expiry, policy administration, and signed delivery are implemented.  |
+| Milestone 0 — Foundations                     | **Partial**                  | Remaining model/provider live health and platform-pack/production-key administration. Endpoint schema pinning, payload/attempt retention, multi-batch replacement-worker fanout, most public administration parity, and the packaged self-hosted stack with a passing thirteen-step usability gate are implemented.                                                                                                         |
+| Milestone 1 — Deterministic identity core     | **Partial**                  | Live provider-account callback operation, third-party certification-issuer trust integration, reviewer/subject acceptance, and the clean self-hosted journey. General resume, bounded semantic retries, `awaiting_external` execution projection, structured subject-input orchestration, callback intake with replay-identity deduplication, operational-failure projection, dependency/worker-loss recovery proofs, current decision/case reads, persistent identity, assurance context, synthetic completion, cancellation/expiry, policy administration, signed delivery, and composed review escalation/correction/appeal proofs are implemented. |
 | Milestone 2 — Evidence and capture            | **Partial / In review**      | D-026 interaction completion and acceptance, portable experience schema, complete native SDK lifecycle, and production document/biometric integration.                                                                                                                          |
 | Milestone 3 — Biometrics                      | **In progress / Partial**    | Production-accepted PAD and face models, representative datasets, calibrated thresholds, temporal liveness evidence, hardware/deployment acceptance, and production promotion/rollback. The evaluation runner, registry, dataset tooling, and composed engineering paths exist. |
 | Milestone 4 — Real providers and global packs | **In review / Partial**      | Immutable packs, tenant-owned official-account evidence, live health/callback/deletion operations, equivalent fallback, and regional/legal acceptance. Dojah and Smile ID runtime paths are composed with local fixtures.                                                       |
-| Milestone 5 — Operations and hardening        | **Partial / In review**      | External operator/certification trust, production KMS/egress/rate limiting, clean deployment, penetration test, load/soak, mixed-version and restoration rehearsals, SLO evidence, and signed candidate. Review queue and tenant-attested operator foundations exist.           |
+| Milestone 5 — Operations and hardening        | **Partial / In review**      | Third-party certification-issuer trust/status integration, production KMS/egress/rate limiting, clean deployment, penetration test, load/soak, mixed-version and restoration rehearsals, SLO evidence, and signed candidate. Review queue, fail-closed certification adapter and tenant-attested operator foundations exist.           |
 | Milestone 6 — AI-native orchestration         | **In review**                | Real generative-model adapter, external provenance, representative evaluation, hardened deployment, and independent guardrail review. Proposal, guardrail, mode, registry, public API/SDK/CLI, and bounded product foundations are implemented.                                 |
 | Milestone 7 — Reusable Verification Cloud     | **Later**                    | Entire commercial Pass and reusable-verification capability.                                                                                                                                                                                                                    |
 | Milestone 8 — Ecosystem                       | **Later**                    | Registry, additional adapters/regions/wrappers, enterprise deployment, and credential interoperability.                                                                                                                                                                         |
@@ -870,8 +830,8 @@ The following v0.6 version-one acceptance outcomes are not yet demonstrated end 
 - Provider replacement in the complete workflow without customer API or evidence-meaning changes.
 - Real model replacement without workflow-definition changes.
 - Production decision reproduction covering accepted real evidence, lineage, signals, models, providers, runtimes, preprocessing, thresholds, authority, assurance, and policy; AS-01 implements the general snapshot and replay contract.
-- Complete resumption, external-wait, and operational-failure lifecycle handling while preserving workflow-state separation from identity outcome.
-- Accepted end-to-end manual review, recovery, reconsideration, correction, and appeal journeys with least privilege and authenticated reviewer authority; one live recapture/re-evaluation path is demonstrated, but O-03 remains **In review**.
+- Authenticated callback intake, operational-failure projection, callback/poll first-terminal convergence, external-success/local-failure reconciliation and worker/runner-loss recovery are implemented and proven at the owned boundary; live provider-account callback operation and external-success reconciliation with a real provider remain undemonstrated.
+- Accepted end-to-end manual review, recovery, reconsideration, correction, and appeal journeys with least privilege and authenticated reviewer authority; real-HTTP composed correction and appeal journeys, behavioural escalation/worker-restart proofs, and the fail-closed certification adapter exist, but third-party issuer trust integration and composed reviewer/subject acceptance remain and O-03 remains **In review**.
 - Production provider/model evidence-grant processing with external systems; local composed routes already prove the owned mechanics.
 - Deletion of all selected derived assets and external/provider copies.
 - Automatic recovery across the complete workflow lifecycle.
@@ -883,7 +843,7 @@ The following v0.6 version-one acceptance outcomes are not yet demonstrated end 
 - Production model evaluation, calibrated promotion, monitoring, and rollback; evaluation-only registry and offline gates are implemented.
 - Full backup restoration covering evidence, keys, credentials, and audit.
 - Mixed-version and expand-migrate-contract evidence.
-- Clean open-source usability gate.
+- Clean open-source usability gate; the packaged stack and thirteen-step gate now pass with fixture runners, leaving browser-driven capture, real runner dialing and the production object-storage deletion path.
 - Independent penetration test with no unresolved critical findings.
 
 The AI acceptance criterion is conditional: every **enabled** AI action must be a recorded proposal approved by guardrails. AI may remain disabled for version one. The proposal and guardrail foundations are implemented, but M-6 cannot complete without the production and external gates recorded in section 3.
@@ -892,7 +852,7 @@ The AI acceptance criterion is conditional: every **enabled** AI action must be 
 
 ## 31. Recommended sequencing
 
-This sequence lists only unresolved work as of 15 September 2026. L-01 through L-03, H-01, P-01, I-01, AS-01, the selected tenant-local fraud baseline, and the repository-owned AI-01 through AI-05 slice are implementation baselines rather than future tasks. Their production or external gates remain listed in the owning sections.
+This sequence lists only unresolved work as of 19 September 2026. L-01 through L-03, H-01, P-01, I-01, AS-01, the selected tenant-local fraud baseline, and the repository-owned AI-01 through AI-05 slice are implementation baselines rather than future tasks. Their production or external gates remain listed in the owning sections.
 
 ### 31.1 Close active product and workflow review gates
 
@@ -901,10 +861,10 @@ This sequence lists only unresolved work as of 15 September 2026. L-01 through L
 
 ### 31.2 Close the deterministic self-hosted core
 
-3. Add general session resumption, external-wait and operational-failure orchestration, plus worker-loss recovery proofs across every supported lifecycle state.
-4. **Resolved 18 September 2026:** the general event catalogue, endpoint subscriptions, versioned schemas/fixtures and bounded resumable fanout are implemented; only the multi-batch crash-resume exercise and the section 26 clean-deployment proof remain.
+3. Every lifecycle mechanism is implemented and evidenced: resumption, bounded semantic retries, `awaiting_external`, structured `awaiting_input` requests, callback intake with replay-identity deduplication, operational-failure projection, decision/case reads, and dependency/worker-loss recovery proofs. Only external evidence remains — live provider-account callback operation and reviewer/subject acceptance.
+4. **Implemented selected runtime scope 19 September 2026:** the general event catalogue, endpoint subscriptions, exact schema pins, bounded resumable fanout with replacement-worker proof, authorised list/SSE, local signed forwarding, and hold-aware payload/attempt retention are complete. The section 26 packaged stack and thirteen-step gate now pass; only the production object-storage deletion and real-runner evidence remain.
 5. Close public contract and CLI parity for the still-internal or uncovered operations identified in sections 18 and 19, prioritising privacy/deletion status, evaluation-model registry, evidence/consent administration, and operational diagnostics.
-6. Package API, worker, object storage, runners, Capture Web, migrations, example tenant/profile/policy/webhook receiver, and failure recovery into the clean self-hosted usability gate in section 26.
+6. **Implemented 19 September 2026:** API, worker, adapter runner, Capture Web host, MinIO, migrations, provisioning, example tenant/profile/policy/webhook receiver, healthchecks and failure recovery are packaged under `deploy/self-hosted/` with a passing thirteen-step `smoke.sh` gate. Remaining: browser-driven capture evidence, real runner dialing and production object-storage deletion.
 
 ### 31.3 Complete the selected first-adopter identity path
 

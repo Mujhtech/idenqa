@@ -122,7 +122,7 @@ The runner uses these additional settings in place of the Dojah AppId file and o
 }
 ```
 
-The callback URL must be a tenant-approved endpoint; this slice consumes job status through polling and does not implement callback intake. Replace the example with the integrating tenant's endpoint. The mounted input file binds the same opaque references to non-personal country and document-type codes:
+The `callback_url` value is the base to which the adapter appends the per-attempt opaque callback reference; point it at the Core callback ingress (or another approved receiver) so providers return results through `POST /v1/provider-callbacks/{reference}`. Authenticated callback intake is implemented through the isolated runner, which verifies the provider signature before Core stores a replay-identity receipt; status-only polling remains the fallback when callbacks are unavailable or rejected. The mounted input file binds the same opaque references to non-personal country and document-type codes:
 
 ```json
 [
