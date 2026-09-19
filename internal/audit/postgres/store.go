@@ -54,6 +54,10 @@ func AppendInTransaction(ctx context.Context, tx platformpostgres.Transaction, s
 	if tx == nil {
 		return audit.Record{}, audit.ErrInvalid
 	}
+	// PostgreSQL timestamptz preserves microseconds while the record hash binds
+	// the exact occurrence instant. Truncate before hashing so a persisted
+	// record always reproduces its hash on read and export.
+	event.OccurredAt = event.OccurredAt.UTC().Truncate(time.Microsecond)
 	if err := setScope(ctx, tx, scope); err != nil {
 		return audit.Record{}, err
 	}
