@@ -75,6 +75,8 @@ cleanup() {
     tail -n 80 "$web_log" >&2 2>/dev/null || true
   fi
   rm -rf "$runtime_directory"
+  trap - EXIT INT TERM
+  exit "$status"
 }
 trap cleanup EXIT INT TERM
 

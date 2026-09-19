@@ -230,6 +230,7 @@ function session(
     profileRevision: 1,
     profileDigest: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     policyId: "pol_01M11HEQG00000000000000000",
+    region: "global",
     requirements: {
       schema_version: 1,
       registry: {

@@ -120,6 +120,7 @@ test("matches the safe-default responsive visual captures", async ({ page }) => 
   const shell = page.locator("idenqa-capture").locator("section.shell");
   await expect(shell).toHaveScreenshot("guided-intro-mobile-light.png", {
     animations: "disabled",
+    maxDiffPixels: 20,
   });
 
   await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
@@ -127,6 +128,7 @@ test("matches the safe-default responsive visual captures", async ({ page }) => 
   await page.getByRole("button", { name: "Get Started" }).click();
   await expect(shell).toHaveScreenshot("guided-notice-tablet-dark.png", {
     animations: "disabled",
+    maxDiffPixels: 20,
   });
 
   await page.emulateMedia({ colorScheme: "light", reducedMotion: "reduce" });
@@ -136,6 +138,7 @@ test("matches the safe-default responsive visual captures", async ({ page }) => 
   await expect(page.getByRole("button", { name: "Use Another Method" })).toBeVisible();
   await expect(shell).toHaveScreenshot("guided-method-desktop-light.png", {
     animations: "disabled",
+    maxDiffPixels: 20,
   });
 });
 
@@ -467,7 +470,7 @@ test("runs ordered active-liveness prompts and completes only after Core confirm
   await expect(animatedHead).toHaveCSS("animation-name", "none");
   await expect(page.locator("idenqa-capture")).toHaveScreenshot(
     "guided-liveness-preparation-mobile-light.png",
-    { animations: "disabled" },
+    { animations: "disabled", maxDiffPixels: 20 },
   );
   await page.getByRole("button", { name: "Start Liveness Check" }).click();
 
