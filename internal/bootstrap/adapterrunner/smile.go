@@ -13,6 +13,7 @@ import (
 	providerv1 "github.com/Mujhtech/idenqa/contracts/provider/v1"
 	"github.com/Mujhtech/idenqa/internal/config"
 	"github.com/Mujhtech/idenqa/internal/platform/egress"
+	"github.com/Mujhtech/idenqa/internal/platform/secret"
 )
 
 func runtimeManifest(name string) (providerv1.Manifest, error) {
@@ -33,17 +34,16 @@ type mountedInput struct {
 }
 type smileAdapter struct {
 	*scopedAdapter
-	configuration smileid.Config
-	inputs        []mountedInput
-	client        *smileHTTP
+	inputs []mountedInput
+	client *smileHTTP
 }
 
-func newSmileAdapter(base *scopedAdapter, partnerID, apiKey string) (*smileAdapter, *http.Client, error) {
+func newSmileAdapter(base *scopedAdapter) (*smileAdapter, *http.Client, error) {
 	settings := base.settings
 	if !settings.Fixture && settings.UploadOrigin != "https://smile-uploads-test.s3.us-west-2.amazonaws.com" {
 		return nil, nil, errors.New("unreviewed Smile ID upload origin")
 	}
-	if !regexp.MustCompile(`^[A-Za-z0-9_-]{1,128}$`).MatchString(partnerID) {
+	if base.credentials == nil && !partnerIDPattern.MatchString(base.appID.Load()) {
 		return nil, nil, smileid.ErrConfiguration
 	}
 	upload, err := egress.NewClient(settings.UploadOrigin, settings.UploadCAFile, settings.Fixture)
@@ -69,7 +69,7 @@ func newSmileAdapter(base *scopedAdapter, partnerID, apiKey string) (*smileAdapt
 		names[input.Name] = true
 		refs[input.Reference] = true
 	}
-	adapter := &smileAdapter{base, smileid.Config{BaseURL: settings.BaseURL, PartnerID: partnerID, APIKey: apiKey, CallbackURL: settings.CallbackURL, Mode: "sandbox", Region: "africa", PollInterval: 5 * time.Second}, inputs, &smileHTTP{base.providerHTTP, upload, settings.BaseURL, settings.UploadOrigin}}
+	adapter := &smileAdapter{base, inputs, &smileHTTP{base.providerHTTP, upload, settings.BaseURL, settings.UploadOrigin}}
 	implementation, err := smileid.New(adapter, adapter, &gatewayReader{adapter: base}, adapter.client, nil, time.Now)
 	if err != nil {
 		return nil, nil, err
@@ -82,11 +82,38 @@ func newSmileAdapter(base *scopedAdapter, partnerID, apiKey string) (*smileAdapt
 func (*smileAdapter) Manifest(context.Context) (providerv1.Manifest, error) {
 	return smileid.Description(), nil
 }
-func (adapter *smileAdapter) ResolveSmileID(_ context.Context, reference, version string) (smileid.Config, error) {
-	if reference != adapter.settings.Configuration.SecretReference || version != adapter.settings.Configuration.CredentialVersion {
+
+// smileConfiguration returns the requested credentials, including any value
+// published by a completed reload or resolved from the selected secret
+// provider. An invalid partner identifier fails closed.
+func (adapter *smileAdapter) smileConfiguration(ctx context.Context, reference, version string) (smileid.Config, error) {
+	if adapter.credentials != nil {
+		value, err := adapter.resolveConfiguration(ctx, reference, version)
+		if err != nil {
+			return smileid.Config{}, smileid.ErrConfiguration
+		}
+		return smileConfiguration(adapter.settings, value)
+	}
+	partnerID := adapter.appID.Load()
+	if !partnerIDPattern.MatchString(partnerID) {
 		return smileid.Config{}, smileid.ErrConfiguration
 	}
-	return adapter.configuration, nil
+	return smileid.Config{BaseURL: adapter.settings.BaseURL, PartnerID: partnerID, APIKey: adapter.apiKey.Load(), CallbackURL: adapter.settings.CallbackURL, Mode: "sandbox", Region: "africa", PollInterval: 5 * time.Second}, nil
+}
+
+func (adapter *smileAdapter) ResolveSmileID(ctx context.Context, reference, version string) (smileid.Config, error) {
+	return adapter.smileConfiguration(ctx, reference, version)
+}
+
+// smileConfiguration builds the runner-owned Smile ID configuration from one
+// resolved tenant credential bundle. The bundled values never leave the runner.
+func smileConfiguration(settings Settings, value secret.Value) (smileid.Config, error) {
+	credentials, err := parseTenantCredentials(value)
+	if err != nil {
+		return smileid.Config{}, err
+	}
+	return smileid.Config{BaseURL: settings.BaseURL, PartnerID: credentials.PartnerID, APIKey: credentials.APIKey,
+		CallbackURL: settings.CallbackURL, Mode: "sandbox", Region: "africa", PollInterval: 5 * time.Second}, nil
 }
 func (adapter *smileAdapter) ResolveProviderInput(_ context.Context, reference string) (string, error) {
 	for _, input := range adapter.inputs {
@@ -100,7 +127,7 @@ func (*smileAdapter) Execute(context.Context, providerv1.Request) (providerv1.Re
 	return providerv1.Result{}, errors.New("smileid requires asynchronous execution")
 }
 func (adapter *smileAdapter) Advance(ctx context.Context, request providerv1.Request, resume bool) (providerv1.Progress, error) {
-	if request.Validate() != nil || request.TenantID != adapter.settings.TenantID || request.Configuration != adapter.settings.Configuration || request.Check != "idenqa.check.document_biometric" || len(request.Inputs) != 2 {
+	if request.Validate() != nil || request.TenantID != adapter.settings.TenantID || !adapter.acceptsConfiguration(request.Configuration) || request.Check != "idenqa.check.document_biometric" || len(request.Inputs) != 2 {
 		return providerv1.Progress{}, smileid.ErrConfiguration
 	}
 	for _, reference := range request.Inputs {
@@ -120,8 +147,9 @@ func (adapter *smileAdapter) Advance(ctx context.Context, request providerv1.Req
 	}
 	return implementation.Advance(ctx, request, resume)
 }
+
 func (adapter *smileAdapter) VerifyCallback(ctx context.Context, request providerv1.Request, callback providerv1.CallbackEnvelope) (providerv1.Progress, error) {
-	if request.Validate() != nil || request.TenantID != adapter.settings.TenantID || request.Configuration != adapter.settings.Configuration {
+	if request.Validate() != nil || request.TenantID != adapter.settings.TenantID || !adapter.acceptsConfiguration(request.Configuration) {
 		return providerv1.Progress{}, smileid.ErrConfiguration
 	}
 	implementation, err := smileid.New(adapter, adapter, &gatewayReader{adapter: adapter.scopedAdapter, request: request}, adapter.client, nil, time.Now)
