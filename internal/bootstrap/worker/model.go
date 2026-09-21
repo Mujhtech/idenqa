@@ -30,8 +30,20 @@ type modelRuntime struct {
 	requests    *modelpostgres.RequestStore
 	preparation verificationpostgres.PlannedCheckPreparation
 	executor    modelv1.Executor
+	supervised  *model.SupervisedExecutor
 	connection  interface{ Close() error }
 	signals     []string
+}
+
+// withMetrics attaches bounded model dispatch and readiness metrics.
+func (runtime *modelRuntime) withMetrics(metrics model.Metrics) {
+	if runtime == nil {
+		return
+	}
+	runtime.supervised.WithMetrics(metrics)
+	if durable, ok := runtime.executor.(*model.DurableExecutor); ok {
+		durable.WithMetrics(metrics)
+	}
 }
 
 func configuredModel(ctx context.Context, configuration config.Worker, pool *pg.Pool, ids *id.Generator, wrapper platformcrypto.KeyWrapper) (*modelRuntime, error) {
@@ -140,7 +152,7 @@ func configuredModelSettings(ctx context.Context, settings config.ModelRuntime, 
 	}
 	preparation := &modelpostgres.Preparation{Plan: plan, Requests: requests, IDs: ids, Catalog: catalog, Clock: clock.System{}, Wrapper: wrapper}
 	accepted = true
-	return &modelRuntime{plan: plan, requests: requests, preparation: preparation, executor: executor, connection: connection, signals: plan.Capability.OutputSignals}, nil
+	return &modelRuntime{plan: plan, requests: requests, preparation: preparation, executor: executor, supervised: supervised, connection: connection, signals: plan.Capability.OutputSignals}, nil
 }
 
 // Fixture models require explicit opt-in and exact synthetic provenance.

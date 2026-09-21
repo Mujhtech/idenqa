@@ -1,0 +1,210 @@
+# Idenqa domain observability alert rules (v1).
+#
+# Metric and label names match the bounded vocabulary emitted by
+# internal/platform/telemetry (OTLP -> Prometheus naming: dots become
+# underscores, monotonic sums gain the _total suffix). Every expression is
+# tenant-free and uses only bounded labels.
+groups:
+  - name: idenqa-domain-instrumentation
+    rules:
+      - alert: IdenqaDomainMetricsMissing
+        expr: absent(idenqa_verification_sessions_started_total) or absent(idenqa_verification_completions_total)
+        for: 15m
+        labels:
+          severity: warning
+          component: observability
+        annotations:
+          summary: Idenqa domain metrics are not being exported
+          description: No verification session or completion samples were exported for 15 minutes. Check the OTLP exporter, collector, and scrape target before trusting domain dashboards.
+
+  - name: idenqa-verification
+    rules:
+      - alert: IdenqaVerificationOperationalFailureRate
+        expr: |
+          (
+            sum(rate(idenqa_verification_operational_failures_total[15m]))
+            /
+            clamp_min(sum(rate(idenqa_verification_transitions_total[15m])), 0.001)
+          ) > 0.1
+        for: 15m
+        labels:
+          severity: warning
+          component: verification
+        annotations:
+          summary: Operational verification failures exceed 10% of transitions
+          description: Check failure_class on idenqa_verification_operational_failures_total and the provider/model dispatch dashboards for the dominant class.
+
+      - alert: IdenqaVerificationWorkflowP95Slow
+        expr: histogram_quantile(0.95, sum by (le) (rate(idenqa_verification_workflow_duration_bucket[30m]))) > 1800
+        for: 30m
+        labels:
+          severity: warning
+          component: verification
+        annotations:
+          summary: p95 verification workflow duration exceeds 30 minutes
+          description: Domain workflow duration from session creation to terminal state is above the selected 30-minute objective.
+
+      - alert: IdenqaVerificationTimeToDecisionP95Slow
+        expr: histogram_quantile(0.95, sum by (le) (rate(idenqa_verification_time_to_decision_bucket[30m]))) > 300
+        for: 30m
+        labels:
+          severity: warning
+          component: verification
+        annotations:
+          summary: p95 time to decision exceeds 5 minutes
+          description: Decision latency is above the selected objective. Check provider callback delay and review queue duration.
+
+      - alert: IdenqaNotVerifiedShareHigh
+        expr: |
+          (
+            sum(rate(idenqa_verification_completions_total{outcome="not_verified"}[1h]))
+            /
+            clamp_min(sum(rate(idenqa_verification_completions_total[1h])), 0.001)
+          ) > 0.5
+        for: 2h
+        labels:
+          severity: info
+          component: verification
+        annotations:
+          summary: More than half of completed verifications are not verified
+          description: Confirm this matches tenant mix and policy changes before treating it as an incident.
+
+  - name: idenqa-capture
+    rules:
+      - alert: IdenqaRecaptureRateHigh
+        expr: |
+          (
+            sum(rate(idenqa_verification_recaptures_total[1h]))
+            /
+            clamp_min(sum(rate(idenqa_verification_sessions_started_total[1h])), 0.001)
+          ) > 0.25
+        for: 2h
+        labels:
+          severity: warning
+          component: capture
+        annotations:
+          summary: Recapture creations exceed 25% of session starts
+          description: Inspect capture step completion by step and the dominant recapture reason. True drop-off by step requires subject journey start events that are not persisted today.
+
+  - name: idenqa-delivery
+    rules:
+      - alert: IdenqaWebhookTerminalFailureRate
+        expr: |
+          (
+            sum(rate(idenqa_delivery_attempts_total{outcome=~"exhausted|rejected"}[15m]))
+            /
+            clamp_min(sum(rate(idenqa_delivery_attempts_total[15m])), 0.001)
+          ) > 0.2
+        for: 15m
+        labels:
+          severity: warning
+          component: delivery
+        annotations:
+          summary: Webhook delivery terminal failures exceed 20% of attempts
+          description: Inspect endpoint health for the tenant, then idenqa_delivery_attempt_duration for latency-sensitive receivers.
+
+      - alert: IdenqaWebhookDeliveryP95Slow
+        expr: histogram_quantile(0.95, sum by (le) (rate(idenqa_delivery_attempt_duration_bucket[15m]))) > 30
+        for: 15m
+        labels:
+          severity: warning
+          component: delivery
+        annotations:
+          summary: p95 webhook delivery attempt exceeds 30 seconds
+          description: Receiver latency or callback transport is degrading.
+
+  - name: idenqa-provider-model
+    rules:
+      - alert: IdenqaProviderDispatchFailures
+        expr: sum by (provider, failure_class) (rate(idenqa_provider_dispatches_total{outcome="failed"}[15m])) > 0.1
+        for: 15m
+        labels:
+          severity: warning
+          component: provider
+        annotations:
+          summary: Provider dispatch failures for {{ $labels.provider }}
+          description: Provider {{ $labels.provider }} fails with class {{ $labels.failure_class }}. Inspect adapter health and credentials.
+
+      - alert: IdenqaProviderCallbackDelayP95Slow
+        expr: histogram_quantile(0.95, sum by (le, provider) (rate(idenqa_provider_callback_delay_bucket[30m]))) > 600
+        for: 30m
+        labels:
+          severity: warning
+          component: provider
+        annotations:
+          summary: p95 provider callback delay exceeds 10 minutes for {{ $labels.provider }}
+          description: Asynchronous provider result adoption is slow; check provider job status and callback delivery.
+
+      - alert: IdenqaModelDispatchFailures
+        expr: sum by (model, failure_class) (rate(idenqa_model_dispatches_total{outcome=~"failed|uncertain"}[15m])) > 0.1
+        for: 15m
+        labels:
+          severity: warning
+          component: model
+        annotations:
+          summary: Model dispatch failures for {{ $labels.model }}
+          description: Model {{ $labels.model }} fails with class {{ $labels.failure_class }}. Score distribution, threshold, cohort, and drift alerts remain gated on accepted evaluation-data capture.
+
+      - alert: IdenqaModelNotReady
+        expr: max by (model) (idenqa_model_health{state="not_ready"}) > 0
+        for: 10m
+        labels:
+          severity: warning
+          component: model
+        annotations:
+          summary: Model {{ $labels.model }} is not ready
+          description: The supervised readiness probe reports not_ready. Saved durable results remain replayable; new dispatches fail over is not configured (live health routing is a separate gap).
+
+  - name: idenqa-privacy
+    rules:
+      - alert: IdenqaDeletionBacklogHigh
+        expr: max by (state) (idenqa_privacy_deletion_backlog{state=~"requested|failed|blocked_by_legal_hold"}) > 100
+        for: 1h
+        labels:
+          severity: warning
+          component: privacy
+        annotations:
+          summary: Deletion backlog is above 100 workflows in state {{ $labels.state }}
+          description: The scheduler pass reports a due-work sample above the selected threshold. The value is a lower bound when the batch limit truncates the queue.
+
+      - alert: IdenqaBackupExpiryAgeP95High
+        expr: histogram_quantile(0.95, sum by (le) (rate(idenqa_privacy_backup_expiry_age_bucket[6h]))) > 3024000
+        for: 6h
+        labels:
+          severity: warning
+          component: privacy
+        annotations:
+          summary: p95 backup-expiry age exceeds 35 days
+          description: Deletions waiting on backup expiry exceed the selected 35-day boundary, which means the recovery-copy boundary is already older than policy expects.
+
+      - alert: IdenqaPrivacyRequestOverdue
+        expr: max by (type, state) (idenqa_privacy_request_age{overdue="true"}) > 604800
+        for: 1h
+        labels:
+          severity: warning
+          component: privacy
+        annotations:
+          summary: Privacy request of type {{ $labels.type }} is overdue in state {{ $labels.state }}
+          description: An undecided privacy request has passed its expiry boundary by more than seven days. The scheduled expiry pass records the terminal expired state; a persistent overdue age means the scheduler is not advancing the tenant.
+
+      - alert: IdenqaPrivacyRequestExecutionFailures
+        expr: sum by (type) (increase(idenqa_privacy_request_transitions{to="failed"}[1h])) > 5
+        for: 30m
+        labels:
+          severity: warning
+          component: privacy
+        annotations:
+          summary: Privacy request execution repeatedly fails for type {{ $labels.type }}
+          description: More than five approved requests of one type entered the failed state in the last hour. Effects are retried with optimistic concurrency; inspect the owning deletion, export, or correction mechanism.
+
+  - name: idenqa-review
+    rules:
+      - alert: IdenqaReviewResolutionP95Slow
+        expr: histogram_quantile(0.95, sum by (le, oversight) (rate(idenqa_review_resolution_duration_bucket[1h]))) > 86400
+        for: 2h
+        labels:
+          severity: warning
+          component: review
+        annotations:
+          summary: p95 review resolution exceeds 24 hours for {{ $labels.oversight }} oversight
+          description: Review cases are aging beyond the selected objective. Inspect queue depth and reviewer assignment.

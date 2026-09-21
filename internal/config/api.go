@@ -193,6 +193,49 @@ func (OutcomeTokenKeys) GoString() string { return "[REDACTED]" }
 // MarshalJSON prevents diagnostics from serialising outcome-token keys.
 func (OutcomeTokenKeys) MarshalJSON() ([]byte, error) { return json.Marshal("[REDACTED]") }
 
+// ExperienceSigningKeys is redacting, versioned Ed25519 experience-signing key
+// configuration. Values are 32-byte seeds; the owned signing adapter derives
+// stable key ids from versions and never accepts caller-supplied key ids.
+type ExperienceSigningKeys struct {
+	values map[uint16][]byte
+}
+
+// Decode implements envconfig.Decoder.
+func (keys *ExperienceSigningKeys) Decode(value string) error {
+	if keys == nil {
+		return errors.New("experience signing key destination is required")
+	}
+	decoded, err := decodeVersionedSecrets(value, "experience signing keys")
+	if err != nil {
+		return err
+	}
+	keys.values = decoded
+
+	return nil
+}
+
+// Values returns a defensive copy for constructing the signing keyring.
+func (keys ExperienceSigningKeys) Values() map[uint16][]byte {
+	result := make(map[uint16][]byte, len(keys.values))
+	for version, material := range keys.values {
+		result[version] = append([]byte(nil), material...)
+	}
+
+	return result
+}
+
+// IsZero reports whether no experience signing keys were supplied.
+func (keys ExperienceSigningKeys) IsZero() bool { return len(keys.values) == 0 }
+
+// String redacts all experience signing key material.
+func (ExperienceSigningKeys) String() string { return "[REDACTED]" }
+
+// GoString redacts all experience signing key material in %#v formatting.
+func (ExperienceSigningKeys) GoString() string { return "[REDACTED]" }
+
+// MarshalJSON prevents diagnostics from serialising experience signing keys.
+func (ExperienceSigningKeys) MarshalJSON() ([]byte, error) { return json.Marshal("[REDACTED]") }
+
 func decodeVersionedSecrets(value, label string) (map[uint16][]byte, error) {
 	if value == "" || strings.TrimSpace(value) != value {
 		return nil, fmt.Errorf("%s must be non-empty and contain no surrounding whitespace", label)
@@ -320,69 +363,71 @@ type API struct {
 	ProviderRuntimeFile string `envconfig:"PROVIDER_RUNTIME_FILE"`
 	ModelRuntimeFile    string `envconfig:"MODEL_RUNTIME_FILE"`
 	EvidenceUploadConfiguration
-	EvidenceLocalDirectory     string           `envconfig:"EVIDENCE_LOCAL_DIRECTORY"`
-	EvidenceLocalKeyringFile   string           `envconfig:"EVIDENCE_LOCAL_KEYRING_FILE"`
-	EvidenceProtectionCleanup  time.Duration    `envconfig:"EVIDENCE_PROTECTION_CLEANUP_TIMEOUT" default:"5s"`
-	Environment                string           `envconfig:"ENVIRONMENT" default:"production"`
-	DatabaseURL                string           `envconfig:"DATABASE_URL"`
-	DatabaseAdminURL           string           `envconfig:"DATABASE_ADMIN_URL"`
-	DatabaseRole               string           `envconfig:"DATABASE_ROLE"`
-	DatabaseMaxConnections     int32            `envconfig:"DATABASE_MAX_CONNECTIONS" default:"20"`
-	DatabaseMinConnections     int32            `envconfig:"DATABASE_MIN_CONNECTIONS" default:"2"`
-	DatabaseMaxLifetime        time.Duration    `envconfig:"DATABASE_MAX_LIFETIME" default:"1h"`
-	DatabaseMaxIdleTime        time.Duration    `envconfig:"DATABASE_MAX_IDLE_TIME" default:"15m"`
-	DatabaseConnectTimeout     time.Duration    `envconfig:"DATABASE_CONNECT_TIMEOUT" default:"5s"`
-	DatabaseMigrationTimeout   time.Duration    `envconfig:"DATABASE_MIGRATION_TIMEOUT" default:"5m"`
-	DatabaseHealthInterval     time.Duration    `envconfig:"DATABASE_HEALTH_INTERVAL" default:"10s"`
-	DatabaseHealthTimeout      time.Duration    `envconfig:"DATABASE_HEALTH_TIMEOUT" default:"2s"`
-	HeadgateInstallationID     string           `envconfig:"HEADGATE_INSTALLATION_ID"`
-	HeadgateSchema             string           `envconfig:"HEADGATE_SCHEMA" default:"headgate"`
-	APIKeyActivePepperVersion  uint16           `envconfig:"API_KEY_ACTIVE_PEPPER_VERSION"`
-	APIKeyPeppers              Peppers          `envconfig:"API_KEY_PEPPERS"`
-	APIKeyAllowNoExpiry        bool             `envconfig:"API_KEY_ALLOW_NO_EXPIRY" default:"false"`
-	APIKeyMaximumLifetime      time.Duration    `envconfig:"API_KEY_MAXIMUM_LIFETIME"`
-	APIKeyMaximumOverlap       time.Duration    `envconfig:"API_KEY_MAXIMUM_ROTATION_OVERLAP"`
-	CursorActiveKeyVersion     uint16           `envconfig:"CURSOR_ACTIVE_KEY_VERSION"`
-	CursorKeys                 CursorKeys       `envconfig:"CURSOR_KEYS"`
-	CursorTTL                  time.Duration    `envconfig:"CURSOR_TTL" default:"15m"`
-	ProfileIdempotencyTTL      time.Duration    `envconfig:"PROFILE_IDEMPOTENCY_RETENTION" default:"24h"`
-	CaptureTokenActiveVersion  uint16           `envconfig:"CAPTURE_TOKEN_ACTIVE_KEY_VERSION"`
-	CaptureTokenKeys           CaptureTokenKeys `envconfig:"CAPTURE_TOKEN_KEYS"`
-	OutcomeTokenActiveVersion  uint16           `envconfig:"OUTCOME_TOKEN_ACTIVE_KEY_VERSION"`
-	OutcomeTokenKeys           OutcomeTokenKeys `envconfig:"OUTCOME_TOKEN_KEYS"`
-	VerificationDefaultTTL     time.Duration    `envconfig:"VERIFICATION_DEFAULT_TTL" default:"24h"`
-	VerificationMaximumTTL     time.Duration    `envconfig:"VERIFICATION_MAXIMUM_TTL" default:"168h"`
-	CaptureTokenDefaultTTL     time.Duration    `envconfig:"CAPTURE_TOKEN_DEFAULT_TTL" default:"30m"`
-	CaptureTokenMaximumTTL     time.Duration    `envconfig:"CAPTURE_TOKEN_MAXIMUM_TTL" default:"2h"`
-	OutcomeTokenDefaultPostTTL time.Duration    `envconfig:"OUTCOME_TOKEN_DEFAULT_POST_EXPIRY_TTL" default:"24h"`
-	OutcomeTokenMaximumPostTTL time.Duration    `envconfig:"OUTCOME_TOKEN_MAXIMUM_POST_EXPIRY_TTL" default:"168h"`
-	NativeApplicationIDs       []string         `envconfig:"NATIVE_APPLICATION_IDS"`
-	VerificationIdempotencyTTL time.Duration    `envconfig:"VERIFICATION_IDEMPOTENCY_RETENTION" default:"24h"`
-	Region                     string           `envconfig:"REGION"`
-	RealtimeWebSocketURL       string           `envconfig:"REALTIME_WEBSOCKET_URL"`
-	RealtimeTicketLifetime     time.Duration    `envconfig:"REALTIME_TICKET_LIFETIME" default:"30s"`
-	HTTPHost                   string           `envconfig:"HTTP_HOST" default:"127.0.0.1"`
-	HTTPPort                   uint16           `envconfig:"HTTP_PORT" default:"8080"`
-	HTTPTLSMode                string           `envconfig:"HTTP_TLS_MODE" default:"disabled"`
-	HTTPTLSCertFile            string           `envconfig:"HTTP_TLS_CERT_FILE"`
-	HTTPTLSKeyFile             string           `envconfig:"HTTP_TLS_KEY_FILE"`
-	HTTPMaxBodyBytes           int64            `envconfig:"HTTP_MAX_BODY_BYTES" default:"1048576"`
-	HTTPRequestTimeout         time.Duration    `envconfig:"HTTP_REQUEST_TIMEOUT" default:"10s"`
-	HTTPCORSAllowedOrigins     []string         `envconfig:"HTTP_CORS_ALLOWED_ORIGINS"`
-	ShutdownTimeout            time.Duration    `envconfig:"SHUTDOWN_TIMEOUT" default:"10s"`
-	LogLevel                   string           `envconfig:"LOG_LEVEL" default:"info"`
-	LogFormat                  string           `envconfig:"LOG_FORMAT" default:"json"`
-	TelemetryProtocol          string           `envconfig:"TELEMETRY_PROTOCOL" default:"disabled"`
-	TelemetryEndpoint          string           `envconfig:"TELEMETRY_ENDPOINT"`
-	TelemetryInsecure          bool             `envconfig:"TELEMETRY_INSECURE" default:"false"`
-	TelemetryHeaders           TelemetryHeaders `envconfig:"TELEMETRY_HEADERS"`
-	TelemetryTLSCAFile         string           `envconfig:"TELEMETRY_TLS_CA_FILE"`
-	TelemetryTLSCertFile       string           `envconfig:"TELEMETRY_TLS_CERT_FILE"`
-	TelemetryTLSKeyFile        string           `envconfig:"TELEMETRY_TLS_KEY_FILE"`
-	TelemetryTLSServerName     string           `envconfig:"TELEMETRY_TLS_SERVER_NAME"`
-	TelemetryTraceSampleRatio  float64          `envconfig:"TELEMETRY_TRACE_SAMPLE_RATIO" default:"0.10"`
-	TelemetryMetricInterval    time.Duration    `envconfig:"TELEMETRY_METRIC_INTERVAL" default:"1m"`
-	TelemetryExportTimeout     time.Duration    `envconfig:"TELEMETRY_EXPORT_TIMEOUT" default:"10s"`
+	EvidenceLocalDirectory     string                `envconfig:"EVIDENCE_LOCAL_DIRECTORY"`
+	EvidenceLocalKeyringFile   string                `envconfig:"EVIDENCE_LOCAL_KEYRING_FILE"`
+	EvidenceProtectionCleanup  time.Duration         `envconfig:"EVIDENCE_PROTECTION_CLEANUP_TIMEOUT" default:"5s"`
+	Environment                string                `envconfig:"ENVIRONMENT" default:"production"`
+	DatabaseURL                string                `envconfig:"DATABASE_URL"`
+	DatabaseAdminURL           string                `envconfig:"DATABASE_ADMIN_URL"`
+	DatabaseRole               string                `envconfig:"DATABASE_ROLE"`
+	DatabaseMaxConnections     int32                 `envconfig:"DATABASE_MAX_CONNECTIONS" default:"20"`
+	DatabaseMinConnections     int32                 `envconfig:"DATABASE_MIN_CONNECTIONS" default:"2"`
+	DatabaseMaxLifetime        time.Duration         `envconfig:"DATABASE_MAX_LIFETIME" default:"1h"`
+	DatabaseMaxIdleTime        time.Duration         `envconfig:"DATABASE_MAX_IDLE_TIME" default:"15m"`
+	DatabaseConnectTimeout     time.Duration         `envconfig:"DATABASE_CONNECT_TIMEOUT" default:"5s"`
+	DatabaseMigrationTimeout   time.Duration         `envconfig:"DATABASE_MIGRATION_TIMEOUT" default:"5m"`
+	DatabaseHealthInterval     time.Duration         `envconfig:"DATABASE_HEALTH_INTERVAL" default:"10s"`
+	DatabaseHealthTimeout      time.Duration         `envconfig:"DATABASE_HEALTH_TIMEOUT" default:"2s"`
+	HeadgateInstallationID     string                `envconfig:"HEADGATE_INSTALLATION_ID"`
+	HeadgateSchema             string                `envconfig:"HEADGATE_SCHEMA" default:"headgate"`
+	APIKeyActivePepperVersion  uint16                `envconfig:"API_KEY_ACTIVE_PEPPER_VERSION"`
+	APIKeyPeppers              Peppers               `envconfig:"API_KEY_PEPPERS"`
+	APIKeyAllowNoExpiry        bool                  `envconfig:"API_KEY_ALLOW_NO_EXPIRY" default:"false"`
+	APIKeyMaximumLifetime      time.Duration         `envconfig:"API_KEY_MAXIMUM_LIFETIME"`
+	APIKeyMaximumOverlap       time.Duration         `envconfig:"API_KEY_MAXIMUM_ROTATION_OVERLAP"`
+	CursorActiveKeyVersion     uint16                `envconfig:"CURSOR_ACTIVE_KEY_VERSION"`
+	CursorKeys                 CursorKeys            `envconfig:"CURSOR_KEYS"`
+	CursorTTL                  time.Duration         `envconfig:"CURSOR_TTL" default:"15m"`
+	ProfileIdempotencyTTL      time.Duration         `envconfig:"PROFILE_IDEMPOTENCY_RETENTION" default:"24h"`
+	CaptureTokenActiveVersion  uint16                `envconfig:"CAPTURE_TOKEN_ACTIVE_KEY_VERSION"`
+	CaptureTokenKeys           CaptureTokenKeys      `envconfig:"CAPTURE_TOKEN_KEYS"`
+	OutcomeTokenActiveVersion  uint16                `envconfig:"OUTCOME_TOKEN_ACTIVE_KEY_VERSION"`
+	OutcomeTokenKeys           OutcomeTokenKeys      `envconfig:"OUTCOME_TOKEN_KEYS"`
+	ExperienceSigningVersion   uint16                `envconfig:"EXPERIENCE_SIGNING_ACTIVE_KEY_VERSION"`
+	ExperienceSigningKeys      ExperienceSigningKeys `envconfig:"EXPERIENCE_SIGNING_KEYS"`
+	VerificationDefaultTTL     time.Duration         `envconfig:"VERIFICATION_DEFAULT_TTL" default:"24h"`
+	VerificationMaximumTTL     time.Duration         `envconfig:"VERIFICATION_MAXIMUM_TTL" default:"168h"`
+	CaptureTokenDefaultTTL     time.Duration         `envconfig:"CAPTURE_TOKEN_DEFAULT_TTL" default:"30m"`
+	CaptureTokenMaximumTTL     time.Duration         `envconfig:"CAPTURE_TOKEN_MAXIMUM_TTL" default:"2h"`
+	OutcomeTokenDefaultPostTTL time.Duration         `envconfig:"OUTCOME_TOKEN_DEFAULT_POST_EXPIRY_TTL" default:"24h"`
+	OutcomeTokenMaximumPostTTL time.Duration         `envconfig:"OUTCOME_TOKEN_MAXIMUM_POST_EXPIRY_TTL" default:"168h"`
+	NativeApplicationIDs       []string              `envconfig:"NATIVE_APPLICATION_IDS"`
+	VerificationIdempotencyTTL time.Duration         `envconfig:"VERIFICATION_IDEMPOTENCY_RETENTION" default:"24h"`
+	Region                     string                `envconfig:"REGION"`
+	RealtimeWebSocketURL       string                `envconfig:"REALTIME_WEBSOCKET_URL"`
+	RealtimeTicketLifetime     time.Duration         `envconfig:"REALTIME_TICKET_LIFETIME" default:"30s"`
+	HTTPHost                   string                `envconfig:"HTTP_HOST" default:"127.0.0.1"`
+	HTTPPort                   uint16                `envconfig:"HTTP_PORT" default:"8080"`
+	HTTPTLSMode                string                `envconfig:"HTTP_TLS_MODE" default:"disabled"`
+	HTTPTLSCertFile            string                `envconfig:"HTTP_TLS_CERT_FILE"`
+	HTTPTLSKeyFile             string                `envconfig:"HTTP_TLS_KEY_FILE"`
+	HTTPMaxBodyBytes           int64                 `envconfig:"HTTP_MAX_BODY_BYTES" default:"1048576"`
+	HTTPRequestTimeout         time.Duration         `envconfig:"HTTP_REQUEST_TIMEOUT" default:"10s"`
+	HTTPCORSAllowedOrigins     []string              `envconfig:"HTTP_CORS_ALLOWED_ORIGINS"`
+	ShutdownTimeout            time.Duration         `envconfig:"SHUTDOWN_TIMEOUT" default:"10s"`
+	LogLevel                   string                `envconfig:"LOG_LEVEL" default:"info"`
+	LogFormat                  string                `envconfig:"LOG_FORMAT" default:"json"`
+	TelemetryProtocol          string                `envconfig:"TELEMETRY_PROTOCOL" default:"disabled"`
+	TelemetryEndpoint          string                `envconfig:"TELEMETRY_ENDPOINT"`
+	TelemetryInsecure          bool                  `envconfig:"TELEMETRY_INSECURE" default:"false"`
+	TelemetryHeaders           TelemetryHeaders      `envconfig:"TELEMETRY_HEADERS"`
+	TelemetryTLSCAFile         string                `envconfig:"TELEMETRY_TLS_CA_FILE"`
+	TelemetryTLSCertFile       string                `envconfig:"TELEMETRY_TLS_CERT_FILE"`
+	TelemetryTLSKeyFile        string                `envconfig:"TELEMETRY_TLS_KEY_FILE"`
+	TelemetryTLSServerName     string                `envconfig:"TELEMETRY_TLS_SERVER_NAME"`
+	TelemetryTraceSampleRatio  float64               `envconfig:"TELEMETRY_TRACE_SAMPLE_RATIO" default:"0.10"`
+	TelemetryMetricInterval    time.Duration         `envconfig:"TELEMETRY_METRIC_INTERVAL" default:"1m"`
+	TelemetryExportTimeout     time.Duration         `envconfig:"TELEMETRY_EXPORT_TIMEOUT" default:"10s"`
 }
 
 // EvidenceUploadConfiguration is the reusable deployment configuration for
@@ -623,6 +668,14 @@ func (configuration API) validate(providerEvidence bool) error {
 	if configuration.OutcomeTokenActiveVersion != 0 {
 		if _, exists := configuration.OutcomeTokenKeys.values[configuration.OutcomeTokenActiveVersion]; !exists {
 			return errors.New("outcome-token active key version is not configured")
+		}
+	}
+	if (configuration.ExperienceSigningVersion == 0) != configuration.ExperienceSigningKeys.IsZero() {
+		return errors.New("experience signing active key version and keys must be configured together")
+	}
+	if configuration.ExperienceSigningVersion != 0 {
+		if _, exists := configuration.ExperienceSigningKeys.values[configuration.ExperienceSigningVersion]; !exists {
+			return errors.New("experience signing active key version is not configured")
 		}
 	}
 	if configuration.VerificationDefaultTTL <= 0 ||

@@ -15,6 +15,7 @@ import (
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
 	platformcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
 	platformpostgres "github.com/Mujhtech/idenqa/internal/platform/postgres"
 	"github.com/Mujhtech/idenqa/internal/tenant"
 	"github.com/Mujhtech/idenqa/internal/verification"
@@ -30,6 +31,7 @@ type LifecycleStore struct {
 	pool    transactionRunner
 	clock   clock.Clock
 	wrapper platformcrypto.KeyWrapper
+	metrics Metrics
 }
 
 // NewLifecycleStore constructs an adapter with an explicit observation clock.
@@ -38,6 +40,14 @@ func NewLifecycleStore(pool transactionRunner, wrapper platformcrypto.KeyWrapper
 		return nil, errors.New("verification postgres: lifecycle pool and clock are required")
 	}
 	return &LifecycleStore{pool: pool, clock: source, wrapper: wrapper}, nil
+}
+
+// WithMetrics attaches the bounded verification metric receiver.
+func (store *LifecycleStore) WithMetrics(metrics Metrics) *LifecycleStore {
+	if store != nil && metrics != nil {
+		store.metrics = metrics
+	}
+	return store
 }
 
 // Apply commits an already-authorised transition in a serializable transaction.
@@ -73,7 +83,7 @@ func (store *LifecycleStore) ApplyWithin(ctx context.Context, scope tenant.Scope
 	if err != nil {
 		return verification.LifecycleReceipt{}, err
 	}
-	current, err := lockLifecycle(ctx, tx, scope, command.VerificationID)
+	current, region, err := lockLifecycle(ctx, tx, scope, command.VerificationID)
 	if err != nil {
 		return verification.LifecycleReceipt{}, err
 	}
@@ -96,35 +106,72 @@ func (store *LifecycleStore) ApplyWithin(ctx context.Context, scope tenant.Scope
 	if err := persistLifecycle(ctx, tx, store.wrapper, scope, command, current, next, canonical, digest); err != nil {
 		return verification.LifecycleReceipt{}, err
 	}
+	store.observeLifecycle(command, current, next, region)
 	return lifecycleReceipt(command, current.State), nil
 }
 
-func lockLifecycle(ctx context.Context, tx platformpostgres.Transaction, scope tenant.Scope, verificationID id.Verification) (verification.Lifecycle, error) {
+// observeLifecycle records bounded domain metrics after the durable effect.
+// Failure codes, decision identifiers, and tenant identity are never labels.
+func (store *LifecycleStore) observeLifecycle(command verification.LifecycleCommand, current, next verification.Lifecycle, region string) {
+	if store.metrics == nil {
+		return
+	}
+	store.metrics.RecordVerificationTransition(observability.Transition{
+		From:         verificationState(current.State),
+		To:           verificationState(next.State),
+		FailureClass: sessionFailureClass(command.Failure.Class),
+		Region:       observability.Region(region),
+	})
+	if command.Failure.Class != "" {
+		store.metrics.RecordVerificationOperationalFailure(observability.OperationalFailure{
+			FailureClass: sessionFailureClass(command.Failure.Class),
+			Region:       observability.Region(region),
+		})
+	}
+	switch next.State {
+	case verification.SessionStateCancelled, verification.SessionStateExpired, verification.SessionStateFailed:
+		duration := command.OccurredAt.Sub(current.CreatedAt)
+		if duration < 0 {
+			duration = 0
+		}
+		store.metrics.RecordVerificationCompletion(observability.WorkflowCompletion{
+			Outcome:  terminalOutcome(next.State),
+			Duration: duration,
+			Region:   observability.Region(region),
+		})
+	}
+}
+
+func lockLifecycle(ctx context.Context, tx platformpostgres.Transaction, scope tenant.Scope, verificationID id.Verification) (verification.Lifecycle, string, error) {
 	var current verification.Lifecycle
+	var region *string
 	var decision, failureClass, failureCode *string
-	err := tx.QueryRow(ctx, `SELECT state, version, created_at, updated_at, expires_at, completed_decision_id, failure_class, failure_code
+	err := tx.QueryRow(ctx, `SELECT state, version, created_at, updated_at, expires_at, completed_decision_id, failure_class, failure_code, region
 FROM idenqa.verification_sessions WHERE tenant_id=$1 AND id=$2 FOR UPDATE`, scope.ID().String(), verificationID.String()).Scan(
-		&current.State, &current.Version, &current.CreatedAt, &current.UpdatedAt, &current.ExpiresAt, &decision, &failureClass, &failureCode)
+		&current.State, &current.Version, &current.CreatedAt, &current.UpdatedAt, &current.ExpiresAt, &decision, &failureClass, &failureCode, &region)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return verification.Lifecycle{}, verification.ErrSessionNotFound
+		return verification.Lifecycle{}, "", verification.ErrSessionNotFound
 	}
 	if err != nil {
-		return verification.Lifecycle{}, fmt.Errorf("lock verification lifecycle: %w", err)
+		return verification.Lifecycle{}, "", fmt.Errorf("lock verification lifecycle: %w", err)
 	}
 	current.CreatedAt, current.UpdatedAt, current.ExpiresAt = current.CreatedAt.UTC(), current.UpdatedAt.UTC(), current.ExpiresAt.UTC()
 	if decision != nil {
 		current.DecisionID, err = id.ParseDecision(*decision)
 		if err != nil {
-			return verification.Lifecycle{}, verification.ErrSessionConflict
+			return verification.Lifecycle{}, "", verification.ErrSessionConflict
 		}
 	}
 	if failureClass != nil || failureCode != nil {
 		if failureClass == nil || failureCode == nil {
-			return verification.Lifecycle{}, verification.ErrSessionConflict
+			return verification.Lifecycle{}, "", verification.ErrSessionConflict
 		}
 		current.Failure = verification.SessionFailure{Class: *failureClass, Code: *failureCode}
 	}
-	return current, nil
+	if region == nil {
+		return current, "", nil
+	}
+	return current, *region, nil
 }
 
 func replayLifecycle(ctx context.Context, tx platformpostgres.Transaction, scope tenant.Scope, command verification.LifecycleCommand, digest string) (verification.LifecycleReceipt, bool, error) {

@@ -13,6 +13,7 @@ import (
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
 	platformcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
 	platformpostgres "github.com/Mujhtech/idenqa/internal/platform/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/postgres/sqlgen"
 	"github.com/Mujhtech/idenqa/internal/policy"
@@ -33,6 +34,7 @@ type CompletionStore struct {
 	clock       clock.Clock
 	lifecycle   *LifecycleStore
 	wrapper     platformcrypto.KeyWrapper
+	metrics     Metrics
 }
 
 // NewCompletionStore constructs the internal machine-decision completion adapter.
@@ -45,6 +47,16 @@ func NewCompletionStore(pool transactionRunner, wrapper platformcrypto.KeyWrappe
 		return nil, err
 	}
 	return &CompletionStore{identifiers: identifiers, clock: source, lifecycle: lifecycle, wrapper: wrapper}, nil
+}
+
+// WithMetrics attaches the bounded verification metric receiver to completion
+// and to the lifecycle store it owns.
+func (store *CompletionStore) WithMetrics(metrics Metrics) *CompletionStore {
+	if store != nil && metrics != nil {
+		store.metrics = metrics
+		store.lifecycle.WithMetrics(metrics)
+	}
+	return store
 }
 
 // completionChecks builds the per-check snapshot for the completion event.
@@ -171,6 +183,23 @@ AND state NOT IN ('completed','skipped_by_policy','timed_out','cancelled','faile
 	}
 	if _, err := deliverypostgres.EmitEventWithin(ctx, tx, store.wrapper, event, seed); err != nil {
 		return fmt.Errorf("emit completion event: %w", err)
+	}
+	if store.metrics != nil {
+		createdAt := session.CreatedAt.Time.UTC()
+		duration := receipt.OccurredAt.Sub(createdAt)
+		if duration < 0 {
+			duration = 0
+		}
+		timeToDecision := decision.DecidedAt().Sub(createdAt)
+		if timeToDecision < 0 {
+			timeToDecision = 0
+		}
+		store.metrics.RecordVerificationCompletion(observability.WorkflowCompletion{
+			Outcome:        policyOutcome(decision.Evaluation().Outcome()),
+			Duration:       duration,
+			TimeToDecision: timeToDecision,
+			Region:         observability.Region(*session.Region),
+		})
 	}
 	return nil
 }

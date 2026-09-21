@@ -36,6 +36,15 @@ type Store struct {
 	catalog evidence.Catalog
 	clock   clock.Clock
 	wrapper platformcrypto.KeyWrapper
+	metrics Metrics
+}
+
+// WithMetrics attaches the bounded capture metric receiver.
+func (store *Store) WithMetrics(metrics Metrics) *Store {
+	if store != nil && metrics != nil {
+		store.metrics = metrics
+	}
+	return store
 }
 
 var _ evidence.IntegrityQuarantiner = (*Store)(nil)

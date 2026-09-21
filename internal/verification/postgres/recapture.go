@@ -7,6 +7,7 @@ import (
 	"github.com/Mujhtech/idenqa/internal/access"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/platform/idempotency"
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
 	pg "github.com/Mujhtech/idenqa/internal/platform/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/postgres/sqlgen"
 	policypg "github.com/Mujhtech/idenqa/internal/policy/postgres"
@@ -62,6 +63,12 @@ func (store *SessionStore) CreateRecaptureWithin(ctx context.Context, scope tena
 	}
 	if err := policypg.CopyAssuranceWithin(ctx, tx, scope, parentID.String(), child.ID().String()); err != nil {
 		return verification.SessionCreation{}, err
+	}
+	if store.metrics != nil {
+		store.metrics.RecordVerificationRecapture(observability.Recapture{
+			Reason: recaptureReason(mutation.Idempotency.Operation()),
+			Region: observability.Region(mutation.Region),
+		})
 	}
 	return result, nil
 }

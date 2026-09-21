@@ -75,7 +75,7 @@ func (store *StopStore) cancelWithin(ctx context.Context, tx platformpostgres.Tr
 	if _, err := queries.SetTenantScope(ctx, scope.ID().String()); err != nil {
 		return verification.CancellationResult{}, err
 	}
-	current, err := lockLifecycle(ctx, tx, scope, mutation.VerificationID)
+	current, _, err := lockLifecycle(ctx, tx, scope, mutation.VerificationID)
 	if err != nil {
 		return verification.CancellationResult{}, err
 	}
@@ -139,7 +139,7 @@ func (store *StopStore) ExpireWithin(ctx context.Context, scope tenant.Scope, tx
 	if _, err := sqlgen.New(tx).SetTenantScope(ctx, scope.ID().String()); err != nil {
 		return err
 	}
-	current, err := lockLifecycle(ctx, tx, scope, verificationID)
+	current, _, err := lockLifecycle(ctx, tx, scope, verificationID)
 	if errors.Is(err, verification.ErrSessionNotFound) {
 		return nil
 	}
@@ -164,7 +164,7 @@ func (store *StopStore) CancelForDeletionWithin(ctx context.Context, scope tenan
 	if tx == nil || scope.ID().IsZero() || verificationID.IsZero() || actor.IsZero() || requestedAt.IsZero() {
 		return verification.ErrSessionConflict
 	}
-	current, err := lockLifecycle(ctx, tx, scope, verificationID)
+	current, _, err := lockLifecycle(ctx, tx, scope, verificationID)
 	if err != nil {
 		return err
 	}

@@ -15,6 +15,7 @@ import (
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/platform/idempotency"
 	idempotencypostgres "github.com/Mujhtech/idenqa/internal/platform/idempotency/postgres"
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
 	"github.com/Mujhtech/idenqa/internal/platform/outbox"
 	platformpostgres "github.com/Mujhtech/idenqa/internal/platform/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/postgres/sqlgen"
@@ -453,6 +454,12 @@ func (store *Store) AcceptUpload(
 	})
 	if errors.Is(err, platformpostgres.ErrCommitOutcomeUnknown) {
 		return evidence.Upload{}, errors.Join(evidence.ErrUploadAcceptanceOutcomeUnknown, err)
+	}
+	if err == nil && store.metrics != nil {
+		store.metrics.RecordCaptureStep(observability.CaptureEvent{
+			Step:    observability.NewCaptureStep(string(accepted.Record().Artefact)),
+			Outcome: observability.CaptureAccepted,
+		})
 	}
 
 	return accepted, err

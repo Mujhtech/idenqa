@@ -11,6 +11,7 @@ import (
 	platformcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/platform/kms"
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
 	platformpostgres "github.com/Mujhtech/idenqa/internal/platform/postgres"
 	platformtask "github.com/Mujhtech/idenqa/internal/platform/task"
 	"github.com/Mujhtech/idenqa/internal/tenant"
@@ -42,6 +43,7 @@ type Handler struct {
 	identifiers IdentifierGenerator
 	enqueuer    TransactionalEnqueuer
 	now         func() time.Time
+	metrics     Metrics
 }
 
 // NewHandler constructs a durable webhook handler with atomic retry continuation.
@@ -57,6 +59,14 @@ func NewHandler(repository Repository, unwrapper platformcrypto.KeyUnwrapper, se
 		enqueuer:    enqueuer,
 		now:         now,
 	}, nil
+}
+
+// WithMetrics attaches the bounded delivery metric receiver.
+func (handler *Handler) WithMetrics(metrics Metrics) *Handler {
+	if handler != nil && metrics != nil {
+		handler.metrics = metrics
+	}
+	return handler
 }
 
 // Handle fails closed when the runner cannot provide a fenced transaction.
@@ -136,6 +146,7 @@ func (handler *Handler) Prepare(ctx context.Context, work platformtask.Delivery)
 	completedAt := handler.now().UTC().Truncate(time.Microsecond)
 	next := completedAt.Add(callbackBackoff(intent.ID, number, diagnostic.RetryAfter))
 	retry = retry && !succeeded && number < intent.MaxAttempts && next.Before(deadline)
+	handler.observeAttempt(number, intent.MaxAttempts, now, completedAt, succeeded, retry)
 	attempt := delivery.Attempt{
 		Number:             number,
 		SecretVersion:      endpoint.Active.Version,
@@ -161,6 +172,30 @@ func (handler *Handler) Prepare(ctx context.Context, work platformtask.Delivery)
 		}
 		return platformtask.Complete()
 	}, platformtask.Complete()
+}
+
+func (handler *Handler) observeAttempt(number, maximum int32, startedAt, completedAt time.Time, succeeded, retry bool) {
+	if handler.metrics == nil {
+		return
+	}
+	outcome := observability.DeliveryReject
+	switch {
+	case succeeded:
+		outcome = observability.Delivered
+	case retry:
+		outcome = observability.Retried
+	case number >= maximum:
+		outcome = observability.Exhausted
+	}
+	duration := completedAt.Sub(startedAt)
+	if duration < 0 {
+		duration = 0
+	}
+	handler.metrics.RecordDeliveryAttempt(observability.DeliveryAttempt{
+		Outcome:  outcome,
+		Attempt:  number,
+		Duration: duration,
+	})
 }
 
 func (handler *Handler) finish(scope tenant.Scope, intent delivery.Intent, state delivery.State, at time.Time) platformtask.TransactionWork {

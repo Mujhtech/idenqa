@@ -35,6 +35,21 @@ type providerRuntime struct {
 	connection    *grpc.ClientConn
 }
 
+// withMetrics attaches bounded provider dispatch metrics to the durable store
+// and to whichever executor concrete type is configured.
+func (runtime *providerRuntime) withMetrics(metrics provider.Metrics) {
+	if runtime == nil {
+		return
+	}
+	runtime.requests.WithMetrics(metrics)
+	switch executor := runtime.executor.(type) {
+	case *provider.DurableExecutor:
+		executor.WithMetrics(metrics)
+	case *provider.AsyncExecutor:
+		executor.WithMetrics(metrics)
+	}
+}
+
 func configuredProvider(ctx context.Context, configuration config.Worker, pool *pg.Pool, ids *id.Generator, wrapper platformcrypto.KeyWrapper) (*providerRuntime, error) {
 	if configuration.ProviderRuntimeFile == "" {
 		return nil, nil
