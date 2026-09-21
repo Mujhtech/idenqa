@@ -3,7 +3,7 @@
 **Status:** Draft for review
 **Date:** 4 September 2026
 **Re-baselined:** 14 September 2026 — reconciled with the current build-plan statuses, generated OpenAPI, public TypeScript SDK, CLI, migrations, runtime composition, and Capture Web evidence. Historical implementation records retain the evidence and limitations recorded when each increment was completed.
-**Updated:** 19 September 2026 — added the public verification-resume path, bounded semantic provider retries, exact webhook schema pins, replacement-worker fanout proof, developer event streaming/local forwarding, hold-aware webhook payload/attempt retention, the `idenqa webhook listen` forward-header/subscription-discovery/reference-only/backfill refinements, current decision and case projections on tenant verification reads, session `awaiting_external` wiring for pending asynchronous provider operations, authenticated provider callback intake through the isolated runner, operational-failure projection, structured subject-input request orchestration, callback/worker-loss recovery evidence, composed real-HTTP correction and appeal journeys, the fail-closed external certification adapter, the packaged `deploy/self-hosted` stack with its passing thirteen-step clean usability gate, and the §19 CLI/administration surface (review, subject/identity, assurance, fraud, privacy, provider, model, policy simulation/diff/regression, tenant export, synthetic journey, diagnostics).
+**Updated:** 20 September 2026 — reconciled current-status summaries with the 19 September implementation baseline: removed stale claims that correction/appeal/recovery, policy simulation/diff/regression, evaluation-model registry administration, webhook retention and the fixture-backed clean-usability gate remain unimplemented; preserved their production and external-evidence limitations.
 
 **Compared architecture:** [`global-identity-core-technical-architecture-v0.6-draft.md`](global-identity-core-technical-architecture-v0.6-draft.md)  
 **Repository decisions:** [`global-identity-core-repository-structure-and-packages-v0.1-draft.md`](global-identity-core-repository-structure-and-packages-v0.1-draft.md)  
@@ -76,10 +76,10 @@ The current repository cannot yet run that complete journey using real selected 
 | Tenant-local fraud              | [`internal/fraud`](../internal/fraud), migration 48, public API/SDK, and policy integration implement the selected tenant-local baseline.                                                                                                                                                                                      | Deployment-specific source acceptance and regional approval; cross-tenant intelligence remains explicitly deferred.                                                                                  |
 | Subject and identity projection | [`internal/identity`](../internal/identity), migration 49, public API/SDK, and privacy/policy integration implement the initial core subject and identity model.                                                                                                                                                               | Real structured-provider ingestion, richer country normalisation, and larger incremental deletion planning.                                                                                          |
 | Provider execution              | Dojah and Smile ID adapters are composed through bounded synchronous and asynchronous runtime paths with local-fixture recovery evidence; tenant provider registration and selection with secret-free configuration references, dispatch-evidence health reads and a failure-classification preview are implemented.                                                                                                                                                                                      | Tenant-owned official-account runs, production secrets, live health-based routing, provider-side deletion, legal/regional approval, and equivalent fallback proof.                                        |
-| Biometrics and documents        | Acquisition orchestration, ONNX preparation, evaluation-only PAD/face comparison, and provider document-analysis paths exist and remain fail-closed or inconclusive without accepted assurance.                                                                                                                                | Production PAD/face models and evaluation, complete temporal capture, OCR/MRZ/barcode and document classification/authenticity, plus derived-data deletion.                                          |
-| Public API                      | The generated OpenAPI and TypeScript SDK include review, fraud, identity, assurance, proposal, cancellation, resume, policy, and webhook administration in addition to the original capture/decision surfaces; tenant verification reads project the optional current decision and current review case.                                                                                                                 | Decision history/reconsideration, general evidence and consent administration, provider/model generated contracts, privacy/deletion status, policy simulation, and OAuth client credentials.         |
-| Webhooks                        | L-02 composes atomic completion delivery; H-01 adds public endpoint administration, inspection, rotation and replay; catalogue/subscriptions, exact `1.0` endpoint pins, resumable fanout with replacement-worker proof, list/SSE/local forwarding, hold-aware seven-day payload retention with 365-day tombstones, custom forward headers, endpoint-subscription discovery, a local reference-only projection, and `Last-Event-ID`-based durable history replay are implemented. | Clean packaged deployment proof remains under section 26.                                                                                                                                             |
-| Capture experience              | Capture Web supplies the D-026 compact guided journey, active-liveness orchestration, arbitrary namespaced adapters, D-027's separately authenticated subject-safe outcome projection, nine live-Core journeys including authoritative expiry, and an appearance-only CSS-variable surface. E-04 and M-2 remain **In review**. | Obtain explicit advanced-interaction acceptance, then add the portable signed/versioned experience contract.                                                                                         |
+| Biometrics and documents        | Acquisition orchestration, ONNX preparation, evaluation-only PAD/face comparison, provider document-analysis paths, Capture Web auto-capture with perspective correction, and Core MRZ/barcode/field-consistency/classification with documented provider extraction exist and remain fail-closed or inconclusive without accepted assurance.                                                                                                                                | Production PAD/face models and evaluation, complete temporal capture, template/security-feature and manipulation inspection, portrait extraction, full OCR coverage and derived-data deletion.                                          |
+| Public API                      | The generated OpenAPI and TypeScript SDK include review, fraud, identity, assurance, proposal, cancellation, resume, policy and webhook administration; privacy deletion inspection, policy simulation/diff/regression, tenant provider administration and evaluation-model registry administration are also public. Tenant verification reads project the optional current decision and current review case. | Decision history/reconsideration, general evidence and consent administration, model health, privacy administration writes and OAuth client credentials. |
+| Webhooks                        | L-02 composes atomic completion delivery; H-01 adds public endpoint administration, inspection, rotation and replay; catalogue/subscriptions, exact `1.0` endpoint pins, resumable fanout with replacement-worker proof, list/SSE/local forwarding, hold-aware seven-day payload retention with 365-day tombstones, custom forward headers, endpoint-subscription discovery, a local reference-only projection, and `Last-Event-ID`-based durable history replay are implemented. | The fixture-backed packaged delivery proof passes; production-safe webhook networking and external release evidence remain. |
+| Capture experience              | Capture Web supplies the D-026 compact guided journey, active-liveness orchestration, arbitrary namespaced adapters, D-027's separately authenticated subject-safe outcome projection, nine live-Core journeys including authoritative expiry, an appearance-only CSS-variable surface, and the implemented signed/versioned experience contract with session pins and safe-default fallback. E-04 and M-2 remain **In review**. | Obtain explicit advanced-interaction acceptance; managed editing, DNS-verified custom domains and native rendering remain gated.                                                                                         |
 | Self-hosted usability           | Individual binaries, migrations, runners, SDKs, Capture Web fixtures, and synthetic integration journeys exist; `deploy/self-hosted/` now packages the full stack (API, worker, runners, MinIO, Capture Web, webhook receiver, migrations, health) and `smoke.sh` passes the thirteen-step clean usability gate.                                                                                                                                                                                                                | Browser-driven Capture Web journey, real provider/model runner dialing, and the production object-storage deletion path remain external or section 4/9/20/24 gates.                                        |
 | External beta                   | X-03 and X-04 are **In review** with adapter, conformance, security/release workflow, SBOM, and provenance foundations.                                                                                                                                                                                                        | Provider/legal evidence, independent security review, load/soak, mixed-version and restore rehearsals, supported-device evidence, and a signed candidate.                                            |
 
@@ -365,26 +365,16 @@ One-to-many identification remains outside version-one scope.
 
 ## 12. Document subsystem and country coverage
 
-**Classification:** Current-core gap for selected D-014 capabilities
+**Classification:** Implemented selected scope — Core document understanding, capture and provider extraction are implemented; template/manipulation inspection, portrait extraction and the public support-level response remain provider, model and pack gates
 
-Capture Web already plans and independently completes required document front/back artefacts, supports upload or live-camera acquisition, and provides review/retake. The Dojah and Smile ID routes provide bounded provider document-analysis paths, and ML-03 composes document quality with evaluation-only biometric checks. This is capture and provider plumbing, not an implemented general document-understanding subsystem.
+Capture Web plans and independently completes required document front/back artefacts, supports upload or live-camera acquisition, and provides review/retake. Document capture now includes automatic quad detection with an N-frame stability and sharpness gate, a manual shutter override, and perspective correction/cropping before the existing upload boundary, with dependency-free fallback to the uncorrected frame when detection fails. Core owns a dependency-free document-knowledge layer: TD1/TD2/TD3 MRZ parsing with per-field and composite checksums and century inference, decoded barcode payload parsing (image decoding stays provider-supplied), bounded field merging across provider, MRZ and barcode sources, cross-field and front/back consistency with expiry and age calculation, and provisional type/country classification. Provider extraction is mapped from primary documentation — Dojah `text_data`/`document_type` and Smile ID document-verification `id_fields` on the documented `clear` callback — into a bounded transient `DocumentObservation`; Core consumes it into derived `document_*` signals and drops the raw data before fingerprinting or persistence, with integration proofs that no MRZ, barcode or field value reaches result bodies, receipts, observations, outbox or realtime paths. Dojah/Smile status and action signals continue to carry authenticity and liveness meaning.
 
-Missing capabilities include:
+Remaining capabilities are gated, not unbuilt machinery:
 
-- Automatic document capture.
-- Perspective correction and cropping.
-- Image-level front/back correspondence and authenticity checks beyond capture-plan completeness.
-- Document-type and issuing-country classification.
-- OCR and structured field extraction.
-- MRZ parsing and checksum validation.
-- Barcode parsing.
-- Expiry and age calculation.
-- Cross-field consistency.
-- Template and security-feature inspection.
-- Manipulation and screenshot risk.
-- Portrait extraction.
-- Unknown-document provisional classification and guarded validation.
-- Public document support-level response.
+- Template, security-feature and manipulation/screenshot inspection require provider or production model evidence beyond the documented status and action signals.
+- Portrait extraction requires the section 4 production face model and alignment acceptance.
+- Complete OCR and field coverage beyond the documented provider fields awaits official-account response acceptance.
+- The public document support-level response resolves from the active section 13 pack; national-ID/driver-licence levels await public structural sources.
 
 NFC and digital-credential trust-chain validation are explicitly deferred for the initial pack.
 
@@ -392,24 +382,19 @@ NFC and digital-credential trust-chain validation are explicitly deferred for th
 
 ## 13. Document, jurisdiction, and assurance packs
 
-**Classification:** Current-core gap and External evidence gap
+**Classification:** Implemented selected scope — the immutable pack registry and its public inspection surface are implemented; per-country provider, legal and evaluation acceptance remains external evidence
 
-Provider manifests are not a replacement for immutable country, document, jurisdiction, and assurance packs.
+The repository now owns an immutable, versioned pack registry (`internal/pack`) with embedded canonical NG/GH/KE/ZA records, full ISO 3166-1 pairs, expected-version activation/deprecation/retirement with append-only history (migration 65), and a public read surface under `packs:read`: `GET /v1/packs`, `GET /v1/packs/{country}`, `GET /v1/packs/{country}/revisions/{revision}`, and `GET /v1/document-support?country=&type=` plus `idenqa pack list|country|document|support`.
 
-Missing capabilities include:
+Pack documents carry: document type, known versions, required sides mapped to existing evidence artefacts, supported fields drawn from Core's canonical field vocabulary, declared security checks, barcode/MRZ/NFC support declarations, model and parser requirement references, evaluation coverage with limitations, the `fully_supported|structurally_supported|provider_only|best_effort|unsupported` classification, requirement slots for authority/controller/processor/recipient/region/transfer (tenant-policy keys, never legal assertions), assurance mappings to existing built-in profiles or `not_mapped`, and legal-review state (`not_reviewed` by default, `reviewed` requires an opaque reference).
 
-- Versioned Nigeria, Ghana, Kenya, and South Africa pack records.
-- Country, authority, document type, known version, and validity metadata.
-- Required sides and supported fields.
-- Security checks.
-- Barcode, MRZ, and future NFC support declarations.
-- Model and parser version requirements.
-- Evaluation coverage and known limitations.
-- `fully_supported`, `structurally_supported`, `provider_only`, `best_effort`, and `unsupported` classifications.
-- Authority, controller, processor, recipient, region, and transfer constraints.
-- Legal-review metadata.
-- Update, activation, deprecation, and retirement lifecycle.
-- Default assurance profiles and mappings.
+Only substantiated structure is claimed: passports are `structurally_supported` on ICAO 9303 TD3 MRZ (fields exactly match the implemented parser, required front side, parser reference and evidence codes), while national IDs and driver licences are `unsupported` with `public_structural_source_not_cited` rather than guessed. Security-feature inspection, portrait extraction, authenticity, NFC, barcode decoding and assurance mappings are declared unavailable or unmapped with reasons. The §12 support-level response resolves from the active pack and marks unsupported documents provisional/inconclusive without changing assurance semantics.
+
+Remaining work is external confirmation, not missing registry machinery:
+
+- Per-country provider/account confirmation and national-ID/driver-licence structural sources.
+- Legal/regional review that moves `legal_review` from `not_reviewed` and substantiates the requirement slots.
+- Evaluation and assurance mappings once representative document data and provider evidence exist.
 
 Every claimed country path still requires provider/account confirmation and legal/regional evidence.
 
@@ -417,63 +402,37 @@ Every claimed country path still requires provider/account confirmation and lega
 
 ## 14. Portable capture experience
 
-**Classification:** Partial — Capture Web acquisition implemented; portable configuration remains a gap
+**Classification:** Implemented selected scope — the portable experience contract, signed manifests, lifecycle, targeting, session pins and signed safe-default fallback are implemented; managed editing, custom-domain verification and native rendering remain gated
 
-Capture Web now provides the selected mobile-first guided Lit experience with one active task per screen, fixed built-in subject copy, exact notices, optional policy-bounded method choices, camera and upload paths, preview and retake or replacement, confirmation between multi-item steps, authority responses, realtime observation, recovery, processing, and authoritative outcome screens. The final accepted capture goes directly to processing instead of requiring a local finish action, and liveness follows the shorter preparation-to-guided-capture-to-processing branch. D-027's separately authenticated `GET /v1/capture/outcome` projection maps current workflow state and the immutable completed policy decision to a closed subject-safe vocabulary without exposing decision identifiers, policy reasons, assurance, provider/model details, evidence metadata, or subject data. The `idq_out_v1` bearer has its own `otk_` durable record, signing keyring, bounded post-session lifetime and revocation; it grants no capture authority and Capture Web keeps it in a dedicated public `OutcomeClient`. Its safe-default visual system covers responsive phone, tablet, and desktop layouts, light and dark modes, forced colours, visible keyboard focus, large text, reduced motion, right-to-left direction, and safe areas. A documented appearance-only `--idq-capture-*` custom-property surface supports host-local branding across the open Shadow DOM without changing notices, behaviour, evidence semantics, or assurance. Hosted and embedded pages use a server-side public-SDK bootstrap and complete real synthetic capture journeys against self-hosted Core while keeping the tenant API key outside the browser. Hosted upload, embedded upload, and active liveness progress through a real synthetic worker and immutable policy decision to the subject-safe verified screen. The same serial real-Core suite reaches action required through `request_input`, not verified and inconclusive through immutable completed decisions, subject cancellation through the public capture operation, operational failure through `fail_workflow`, and authoritative expiry through the worker before the still-live outcome credential reads the projection. The worker routing and expiry boundaries persist each exact lifecycle transition, audit event, outbox record and task effect atomically. D-026 is therefore proven across all nine selected outcome journeys without accepting an expired capture bearer or inferring expiry in the browser. Explicit advanced-interaction acceptance remains open. The public portable experience-configuration system described by v0.6 is also absent; CSS variables alone do not provide its immutable versioning, targeting, signing, revocation, or fallback contract.
+Capture Web now provides the selected mobile-first guided Lit experience with one active task per screen, fixed built-in subject copy, exact notices, optional policy-bounded method choices, camera and upload paths, preview and retake or replacement, confirmation between multi-item steps, authority responses, realtime observation, recovery, processing, and authoritative outcome screens. The final accepted capture goes directly to processing instead of requiring a local finish action, and liveness follows the shorter preparation-to-guided-capture-to-processing branch. D-027's separately authenticated `GET /v1/capture/outcome` projection maps current workflow state and the immutable completed policy decision to a closed subject-safe vocabulary without exposing decision identifiers, policy reasons, assurance, provider/model details, evidence metadata, or subject data. The `idq_out_v1` bearer has its own `otk_` durable record, signing keyring, bounded post-session lifetime and revocation; it grants no capture authority and Capture Web keeps it in a dedicated public `OutcomeClient`. Its safe-default visual system covers responsive phone, tablet, and desktop layouts, light and dark modes, forced colours, visible keyboard focus, large text, reduced motion, right-to-left direction, and safe areas. A documented appearance-only `--idq-capture-*` custom-property surface supports host-local branding across the open Shadow DOM without changing notices, behaviour, evidence semantics, or assurance. Hosted and embedded pages use a server-side public-SDK bootstrap and complete real synthetic capture journeys against self-hosted Core while keeping the tenant API key outside the browser. Hosted upload, embedded upload, and active liveness progress through a real synthetic worker and immutable policy decision to the subject-safe verified screen. The same serial real-Core suite reaches action required through `request_input`, not verified and inconclusive through immutable completed decisions, subject cancellation through the public capture operation, operational failure through `fail_workflow`, and authoritative expiry through the worker before the still-live outcome credential reads the projection. The worker routing and expiry boundaries persist each exact lifecycle transition, audit event, outbox record and task effect atomically. D-026 is therefore proven across all nine selected outcome journeys without accepting an expired capture bearer or inferring expiry in the browser. The portable experience-configuration system is now implemented: `contracts/experience/v1` defines the canonical schema with a Go/TS validator, signed Ed25519 manifests over a Core-managed keyring, draft/approved/published/superseded/revoked lifecycle with audited expected-version transitions and rollback, structured locale copy with non-overridable mandatory regulatory/consent/safety/accessibility keys, digest-verified vetted assets, validated HTTPS links and allowed origins, deterministic most-specific-wins targeting with fail-closed conflicts, versioned processor-free export/import, and a signed accessible safe-default fallback used on revocation, kill-switch or any resolution failure. Sessions pin experience, locale, tenant-copy and mandatory-copy versions at creation, preserve them across resume, and expose them through the capture experience and progress reads. See [portable experience v0.1](portable-experience-v0.1.md). Explicit advanced-interaction acceptance remains open.
 
 The implemented safe default keeps capture completion, verification processing, verification completion, and tenant action distinct. Its reproducible conformance harness migrates an isolated Core and Headgate database, provisions a synthetic tenant and scoped credential, creates the journey through public contracts, and proves hosted upload, embedded upload, and active-liveness capture pages. After the required notice response, the first policy-ordered method is recommended directly; active liveness uses one preparation page and one start action before running all ordered prompts automatically, while **Use Another Method** retains approved alternatives. The active-liveness coordinator validates the public plan, presents ordered challenges under deadlines, requires host-supplied measurements for requested quality gates, and owns cancellation and camera cleanup. The generic programmatic adapter boundary accepts arbitrary namespaced acquisition methods while missing or ambiguous adapters fail closed. Adapter return, local prompt completion, and capability advertisement prove no assurance and cannot self-complete a step: the component refreshes authoritative Core progress and requires the exact requirement, evidence type, artefact, method, and fallback binding. The live synthetic path persists one representative captured frame through the ordinary evidence boundary; Core v1 does not yet persist the complete temporal frame set and the demonstration does not claim production liveness or PAD assurance.
 
-Missing capabilities include:
 
-- Public portable experience schema.
-- Local schema validator.
-- Stable experience ID and immutable version.
-- Draft, approved, published, superseded, and revoked lifecycle.
-- Structured tenant copy and locale catalogues.
-- Mandatory regulatory, consent, safety, and accessibility copy.
-- Tenant-copy and mandatory-copy version separation.
-- Vetted asset storage and content digests.
-- Verified support, privacy, terms, and custom-domain links.
-- Workflow, country, application, origin, and SDK-version targeting.
-- Manifest signing and digest validation.
-- Tenant, environment, region, origin, bundle-ID, application-ID, and signing-identity binding.
-- Session-pinned experience, locale, tenant-copy, and mandatory-copy versions.
-- Signed accessible safe-default experience.
-- Revocation, rollback, fallback, and kill-switch behaviour.
-- Export and import without Console or Cloud.
+Missing capabilities are now gated or downstream work:
 
-The existing optional `rendered_experience_version` response field records only a caller-supplied version string; it does not implement the full experience contract.
+- Managed experience editor/publishing Console UI and DNS-verified custom domains; allowed origins and validated HTTPS links are implemented.
+- Tenant asset-upload authoring endpoint; vetted references with verified digests and MIME/size bounds are implemented.
+- Automated theme contrast checking and native SDK rendering of copy/locale beyond the resolved bootstrap document.
 
-E-04 and M-2 are **In review** in the build plan. The basic journey, responsive goldens, accessibility automation, streamlined one-start liveness flow, arbitrary-adapter fail-closed behaviour, three verified live Core-backed demonstrations, and real-Core action-required, not-verified, inconclusive, cancelled, failed, and expired demonstrations are implementation evidence. D-027 closes the post-expiry outcome-access contract; explicit acceptance of the advanced interaction is the remaining milestone gate. The separate portable experience-configuration gap remains open.
+The existing optional `rendered_experience_version` response field still records a caller-supplied version string; the authoritative contract is now `contracts/experience/v1` with signed manifests and `docs/portable-experience-v0.1.md` as its guide.
+
+E-04 and M-2 remain **In review**. The basic journey, responsive goldens, accessibility automation, streamlined one-start liveness flow, arbitrary-adapter fail-closed behaviour, three verified live Core-backed demonstrations, and real-Core action-required, not-verified, inconclusive, cancelled, failed, and expired demonstrations are implementation evidence. D-026's advanced-interaction acceptance remains the milestone gate; the portable experience contract itself is now implemented with session pinning and signed safe-default fallback.
 
 ---
 
 ## 15. Capture SDK lifecycle and platform assurance
 
-**Classification:** Current-core gap and Partial
+**Classification:** Implemented selected scope for the lifecycle and hardening contract — Swift and Kotlin are at parity with Capture Web for configure/start/resume/cancel/clear/getCapabilities, secure temp files and screen protection; native UI journeys, integrity signals, device evidence and platform adapters remain gated
 
-Swift and Kotlin provide native bootstrap, secure token storage, proof-key binding, direct upload, realtime observation, one-shot camera capture, local quality assessment, and acquisition coordination.
+Swift and Kotlin provide native bootstrap, secure token storage, proof-key binding, direct upload, realtime observation, one-shot camera capture, local quality assessment, and acquisition coordination. Both SDKs now implement the complete bounded `configure` contract, session-oriented `start` from the native bootstrap credential with Capture-Web-parity plan semantics, durable Keychain/Keystore-backed `resume` after process death with idempotent re-attachment, idempotent server-side `cancel` with expected-version and reused idempotency keys, complete verifiable `clearLocalData`, honest assurance-free `getCapabilities` with fail-closed unknown methods, bounded app-private temporary-file lifecycle with deterministic cleanup, and iOS/Android sensitive-screen protection adapters. Accessibility/interruption/permission/network/backgrounding guidance with an always-reachable cancel is tested on both platforms. Evidence: 27 Swift tests, 27 Kotlin tests, iOS device-target compile, and `native-sdk.yml` unchanged.
 
-Missing capabilities include:
+Remaining capabilities are gated, not missing contract work:
 
-- Complete `configure` contract.
-- Session-oriented `start`.
-- Durable `resume` after process death.
-- Idempotent server-side `cancel`.
-- Complete `clearLocalData`.
-- Complete `getCapabilities`.
-- Background transfer and recovery where allowed.
-- Full notice and consent presentation.
-- Complete document-front/back UI journey.
-- Native active-liveness challenge UI and production temporal or video persistence; the Web challenge journey and representative-frame Core proof now exist.
-- Actual PAD and face-match integration.
-- MRZ and barcode processing.
-- Secure temporary-file lifecycle.
-- Sensitive-screen and application-switcher protection.
-- Root, jailbreak, emulator, instrumentation, and integrity signals.
-- Supported-device compatibility matrix.
-- Platform-specific NFC, voice, video, and provider adapters conforming to the implemented Web boundary; unknown methods fail closed.
-- Accessibility, orientation, permission-change, network-loss, backgrounding, interruption, cleanup, and cancellation conformance.
+- Full notice and consent presentation, complete document front/back UI and native active-liveness challenge UI; native temporal/video persistence and PAD/face-match integration require the section 4 production models.
+- Background transfer and recovery where the platforms allow, MRZ/barcode surfacing from the implemented Core parsers, and full orientation/accessibility UI conformance (no native UI-test harness yet; UIKit/Android protection is compile/fake tested, so device evidence is still required).
+- Root, jailbreak, emulator, instrumentation and integrity signals plus the supported-device compatibility matrix need a decision on acceptable signals and device evidence.
+- Platform-specific NFC, voice, video and provider adapters conforming to the Web boundary; NFC remains deferred.
 
 Flutter and React Native are not current gaps until advertised. Once advertised, they must remain thin native wrappers and must not transfer raw evidence through Dart or JavaScript bridges.
 
@@ -509,13 +468,13 @@ SSO remains deferred. Historical increments below describe their state at the ti
 
 **Implemented explicit recapture follow-up — 8 September 2026:** A reviewer with current `reviews:resolve` authority may request parent policy re-evaluation after acknowledging the exact child decision. Migration 45 atomically records immutable acknowledgement-bound lineage, a new case version, audit, idempotency and durable evaluation intent. The existing fenced worker preserves the parent’s pinned policy and original fact timestamps and adds `review.recapture` from the child’s immutable outcome. Only policy may complete the parent; nonterminal results keep manual review. Child completion does not automatically schedule evaluation. Controlled evidence access, escalation/correction/supersession, generated public contracts and accepted subject-facing UI remain pending. See [manual review and linked recapture](manual-review-recapture-v0.1.md).
 
-**Composed recapture proof — 15 September 2026:** A tenant fixture using the public TypeScript SDK now creates the original journey and review configuration while keeping its API key server-side. Live Chromium automation completes original capture, automatic manual-review routing, certified claim, protected evidence grant redemption, `request_input`, linked-child credential handoff, fresh child authorization and evidence, child completion, acknowledgement and explicit parent re-evaluation to a verified terminal decision. Immutable recapture lineage contributes a context-only `review.recapture.requested` fact to the child's pinned snapshot; it establishes no assurance. The serial self-hosted-Core matrix passes ten journeys. Recovery, correction and appeal composition, external certification and explicit reviewer/subject acceptance remain open, so O-03 is **In review**.
+**Composed recapture proof — 15 September 2026; current status reconciled 20 September 2026:** A tenant fixture using the public TypeScript SDK creates the original journey and review configuration while keeping its API key server-side. Live Chromium automation completes original capture, automatic manual-review routing, certified claim, protected evidence grant redemption, `request_input`, linked-child credential handoff, fresh child authorization and evidence, child completion, acknowledgement and explicit parent re-evaluation to a verified terminal decision. Immutable recapture lineage contributes a context-only `review.recapture.requested` fact to the child's pinned snapshot; it establishes no assurance. Subsequent real-HTTP and replacement-worker proofs compose progress-preserving recovery, correction, appeal and escalation, and a fail-closed external-certification adapter is implemented. O-03 remains **In review** only for a real third-party issuer trust/status integration and reviewer/subject visual and interaction acceptance.
 
 ---
 
 ## 17. Webhooks and general event contracts
 
-**Classification:** Implemented selected scope — catalogue, subscriptions, resumable fanout, and the developer event list/stream complete; clean-deployment proof remains under section 26
+**Classification:** Implemented selected scope — catalogue, subscriptions, resumable fanout, developer event list/stream, retention and the fixture-backed clean-deployment proof are complete
 
 The repository includes durable webhook persistence, KMS-wrapped rotating secrets, retry exhaustion, replay lineage, SSRF-aware callback transport, and an independent Go verifier. L-02 now composes completion projection and signed delivery into the runnable worker. Its public API journey proves atomic decision/session/delivery effects, a durable 503 retry, worker restart, successful delivery, stable event identity, and independent signature verification. H-01 now exposes public endpoint administration, payload-free delivery/attempt inspection and exhausted-delivery replay through API, TypeScript and CLI. The 19 September 2026 developer event feed adds an authorised read-only list and SSE stream over the same durable events, plus `idenqa webhook listen` local signed forwarding, without changing endpoint delivery or payload-free delivery/attempt inspection.
 
@@ -527,9 +486,9 @@ Completed 19 September 2026: exact endpoint schema-version `1.0` pinning; a 257-
 
 **Local listener refinements — implemented 19 September 2026:** `idenqa webhook listen` adds validated repeatable `--forward-header` entries (reserved signature, content and transport headers rejected), `--load-from-webhooks-api` subscription discovery (pages `GET /v1/webhook-endpoints`, skips disabled endpoints, unions event types and collapses `*`), `--thin` local reference-only projection (canonical envelope metadata preserved; `data` reduced to `id`, `type` and `_id` reference keys; projected bytes signed with the canonical v1 headers), and `--backfill` (`Last-Event-ID: 0` replays retained durable history before live continuation, with reconnect and receiver deduplication unchanged).
 
-Remaining:
-- The complete clean-deployment decision-to-delivery demonstration once the section 26 packaging gate exists.
-- `verification.collecting` is now emitted on transitions into `collecting` (the resume path); creation still inserts the activated `collecting` session without a distinct transition. `provider.degraded` has no provider-health owner and remains outside the catalogue.
+Remaining limitations:
+- The packaged decision-to-delivery proof uses a documented development-only internal-network exception; production webhook networking remains external-beta evidence under section 27.
+- `verification.collecting` is emitted on transitions into `collecting` (the resume path); creation inserts the activated `collecting` session without a distinct transition. `provider.degraded` has no provider-health owner and remains outside the catalogue.
 
 V-04 completed the application, persistence, task, transport, verifier, and deterministic proof boundary. L-02 adds the runnable completion and delivery composition. H-01 adds separately permissioned, atomically audited administration and replay, display-once secret delivery, overlap-safe rotation and signed tenant-bound inspection cursors. Receivers continue deduplicating the unchanged signed event ID across manual replay.
 
@@ -548,10 +507,9 @@ Missing or incomplete public resources include:
 - General provider/model evidence-access grant creation, inspection, and revocation; review evidence grants are public and case-bound.
 - Consent receipt inspection and revocation.
 - Generated model-registry health contracts; the evaluation-only catalogue, configuration, validation and rollback contracts are now generated, but no owned model-health read exists pending the section 4 runner-health supervision gap.
-- Direct privacy-request, restriction, objection, portability, and deletion administration.
 - OAuth client credentials as the alternative server-integration mode described by section 29.2.
 
-Review, fraud, identity, assurance, proposal, policy, webhook, webhook-event, policy-simulation, and cancellation surfaces are represented in the authoritative OpenAPI. Privacy read inspections are represented; privacy administration writes and evaluation-model registry routes remain outside generated public contracts and cannot yet be treated as stable public administration APIs.
+Review, fraud, identity, assurance, proposal, policy, webhook, webhook-event, policy-simulation, cancellation, privacy read-inspection, tenant-provider administration and evaluation-model registry surfaces are represented in the authoritative OpenAPI. Privacy administration writes and model-health reads remain outside generated public contracts and cannot yet be treated as stable public administration APIs.
 
 ---
 
@@ -559,12 +517,11 @@ Review, fraud, identity, assurance, proposal, policy, webhook, webhook-event, po
 
 **Classification:** Current-core gap and Partial
 
-The Cobra CLI provides tenant, API-key, migration, Headgate migration, evidence-key, policy-decision reproduction/verification, audit verification, recovery, background-work inspection/retry, public webhook administration/inspection/replay and live webhook event listing/streaming with local signed forwarding, public policy administration with simulation, revision diff and scenario regression, AI proposal/mode/prompt operations and accepted-command execution, review case/appeal/correction/arbitration/recapture administration, subject/identity administration, assurance profile and verification-assurance operations, tenant-fraud configuration/proposal/receipt operations, privacy deletion-status/retry/retention inspection, tenant-owned streaming data export with digest verification, tenant provider registration and selection with secret-free configuration references, evaluation-only model registry administration (register/validate/threshold/activate/rollback/retire), a complete public-API synthetic verification journey with packaged example profile/policy fixtures and demo script, and clean-install preflight and diagnostics through `idenqa doctor`.
+The Cobra CLI provides tenant, API-key, migration, Headgate migration, evidence-key, policy-decision reproduction/verification, audit verification, recovery, background-work inspection/retry, public webhook administration/inspection/replay and live webhook event listing/streaming with local signed forwarding, public policy administration with simulation, revision diff and scenario regression, AI proposal/mode/prompt operations and accepted-command execution, review case/appeal/correction/arbitration/recapture administration, subject/identity administration, assurance profile and verification-assurance operations, tenant-fraud configuration/proposal/receipt operations, privacy deletion-status/retry/retention inspection, tenant-owned streaming data export with digest verification, tenant provider registration and selection with secret-free configuration references, evaluation-only model registry administration (register/validate/threshold/activate/rollback/retire), immutable jurisdiction/document pack inspection and support-level resolution, a complete public-API synthetic verification journey with packaged example profile/policy fixtures and demo script, and clean-install preflight and diagnostics through `idenqa doctor`.
 
 Missing capabilities include:
 
 - Model health inspection; registration, validation, activation, rollback and retirement commands are implemented against the evaluation-only registry.
-- Country, document, jurisdiction, and assurance-pack inspection; the pack records themselves are not yet implemented under section 13.
 - Tenant HMAC and production-key lifecycle operations; the production key-management provider remains unresolved under section 21.
 - Complete generative-model and impact-assessment administration when AI is enabled; accepted-command execution is implemented.
 
@@ -572,26 +529,17 @@ Missing capabilities include:
 
 ## 20. Privacy, retention, and deletion
 
-**Classification:** Partial
+**Classification:** Implemented selected scope — the privacy-request workflow, subject export, restrictions, disclosures and processor inventory are implemented; provider-side deletion and production backup-store enforcement remain external infrastructure gates
 
-Implemented foundations include typed retention resolution, legal holds, observable deletion state, evidence ciphertext removal, backup-expiry waiting, deletion work, tombstones, and restore-aware recovery foundations.
+Implemented foundations include typed retention resolution, legal holds, observable deletion state, evidence ciphertext removal, backup-expiry waiting, deletion work, tombstones, and restore-aware recovery foundations. Migration 66 and the [privacy request workflow](privacy-request-workflow-v0.1.md) now add the tenant-mediated request lifecycle (`access`, `portability`, `correction`, `restriction`, `objection`, `erasure`) with expected-version transitions, expiry, audited reason codes, subject-safe creation/status through the outcome credential, subject-scoped access/portability export with digest verification (extending the tenant export), identity correction successors and review correction routing, active restrictions that block new capture/processing/consent until lifted, purpose-scoped objections, erasure execution through the existing hold-aware deletion path, immutable disclosure records, a versioned processor/subprocessor inventory, public API and CLI surfaces, and request age/transition observability with alert rules.
 
-Missing capabilities include:
+Remaining capabilities are external or infrastructure gates:
 
-- Data-subject access request and export.
-- Portability.
-- Correction request workflow.
-- Processing restriction and objection handling.
-- Processor and subprocessor inventory.
-- Transfer and disclosure records.
-- Provider-side deletion.
-- Model cache and embedding deletion.
-- OCR, search, and derived-index deletion.
-- Webhook payload retention and deletion integration.
-- External-delivery retention semantics.
-- Production backup-store expiry enforcement.
-- Direct consent-receipt administration.
-- Full deletion demonstration after a real provider and model journey.
+- Provider-side deletion orchestration and the full live deletion demonstration after a real provider and model journey.
+- Model cache, embedding, and OCR/derived-index deletion; Core holds no such persisted data today beyond decision-derived records that immutable decision semantics retain.
+- Production backup-store expiry enforcement and complete restoration evidence.
+- External-delivery retention semantics and deletion treatment for webhook copies held by receivers; Core-owned event/delivery/attempt payload expiry with legal holds is implemented.
+- Direct consent-receipt administration beyond the authority response records and restriction/objection handling.
 
 ---
 
@@ -643,25 +591,16 @@ No implementation may infer region from IP address, locale, or device language o
 
 ## 23. Observability
 
-**Classification:** Partial
+**Classification:** Implemented selected scope — the bounded domain metric layer, dashboards and alerts are implemented; a few families remain gated on data that other sections must produce
 
-Vendor-neutral OpenTelemetry providers and selectable OTLP export over gRPC or HTTP/protobuf are implemented. Export is disabled by default and the selected TLS, mTLS, header, sampling, batching, retry, and metric-reader constraints are represented.
+Vendor-neutral OpenTelemetry providers and selectable OTLP export over gRPC or HTTP/protobuf are implemented. Export is disabled by default and the selected TLS, mTLS, header, sampling, batching, retry, and metric-reader constraints are represented. The repository now emits twenty bounded domain instruments through injected receivers at their owning application boundaries: verification transitions, starts, completions, operational failures, workflow duration and time to decision; capture step outcomes and recapture rate; review resolution outcomes and duration; webhook delivery attempts and latency; provider dispatch outcomes and callback adoption delay; model dispatch outcomes/duration and a readiness gauge; privacy deletion transitions, a bounded backlog sample and backup-expiry age. Every label is a named vocabulary with allow-list collapsing, and tests prove tenant/subject/evidence identifiers or raw values can never become labels. Versioned Prometheus alert rules and a Grafana dashboard whose queries match the emitted names ship in `deploy/observability/`.
 
-Missing end-to-end domain coverage includes:
+Remaining families are gated on data other sections must produce:
 
-- Workflow duration.
-- Verification start, completion, outcome, and operational-failure rates.
-- Capture drop-off by step.
-- Evidence recapture rate.
-- Time to decision.
-- Review duration.
-- Webhook delivery latency.
-- Provider availability, callback delay, cost, and normalised outcomes.
-- Model score distributions, thresholds, cohort performance, and drift.
-- Deletion backlog and backup-expiry age.
-- Regional capacity.
-- Provider and model degraded-mode visibility.
-- Production dashboards and alert rules.
+- Capture drop-off by step needs a subject-journey start event; completion and recapture counters are the available proxies.
+- Model score, threshold, cohort and drift metrics need the section 4 evaluation dataset and production calibration.
+- Provider cost attribution and live health routing depend on sections 9.2/9.3; dispatch-outcome metrics currently provide degraded-mode visibility for providers.
+- Regional pending-work capacity needs region on work payloads; per-region session starts are implemented.
 
 Metrics and traces must continue to exclude raw evidence, personal claims, credentials, and high-cardinality subject identifiers.
 
@@ -807,16 +746,16 @@ This table compares the broader v0.6 milestone outcomes with the current reposit
 | v0.6 milestone                                | Architecture-wide assessment | Principal remaining work                                                                                                                                                                                                                                                        |
 | --------------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Milestone 0 — Foundations                     | **Partial**                  | Remaining model/provider live health and platform-pack/production-key administration. Endpoint schema pinning, payload/attempt retention, multi-batch replacement-worker fanout, most public administration parity, and the packaged self-hosted stack with a passing thirteen-step usability gate are implemented.                                                                                                         |
-| Milestone 1 — Deterministic identity core     | **Partial**                  | Live provider-account callback operation, third-party certification-issuer trust integration, reviewer/subject acceptance, and the clean self-hosted journey. General resume, bounded semantic retries, `awaiting_external` execution projection, structured subject-input orchestration, callback intake with replay-identity deduplication, operational-failure projection, dependency/worker-loss recovery proofs, current decision/case reads, persistent identity, assurance context, synthetic completion, cancellation/expiry, policy administration, signed delivery, and composed review escalation/correction/appeal proofs are implemented. |
-| Milestone 2 — Evidence and capture            | **Partial / In review**      | D-026 interaction completion and acceptance, portable experience schema, complete native SDK lifecycle, and production document/biometric integration.                                                                                                                          |
+| Milestone 1 — Deterministic identity core     | **Partial**                  | Live provider-account callback operation, third-party certification-issuer trust integration, reviewer/subject acceptance and production-representative deployment remain. The fixture-backed self-hosted gate, general resume, bounded semantic retries, `awaiting_external` execution projection, structured subject-input orchestration, callback intake with replay-identity deduplication, operational-failure projection, dependency/worker-loss recovery proofs, current decision/case reads, persistent identity, assurance context, synthetic completion, cancellation/expiry, policy administration, signed delivery and composed review escalation/correction/appeal proofs are implemented. |
+| Milestone 2 — Evidence and capture            | **Partial / In review**      | D-026 advanced-interaction acceptance, native UI journeys and device evidence, and production document/biometric models. The portable experience contract, native SDK lifecycle and document-knowledge layers are implemented.                                                                                                                          |
 | Milestone 3 — Biometrics                      | **In progress / Partial**    | Production-accepted PAD and face models, representative datasets, calibrated thresholds, temporal liveness evidence, hardware/deployment acceptance, and production promotion/rollback. The evaluation runner, registry, dataset tooling, and composed engineering paths exist. |
-| Milestone 4 — Real providers and global packs | **In review / Partial**      | Immutable packs, tenant-owned official-account evidence, live health/callback/deletion operations, equivalent fallback, and regional/legal acceptance. Dojah and Smile ID runtime paths are composed with local fixtures.                                                       |
-| Milestone 5 — Operations and hardening        | **Partial / In review**      | Third-party certification-issuer trust/status integration, production KMS/egress/rate limiting, clean deployment, penetration test, load/soak, mixed-version and restoration rehearsals, SLO evidence, and signed candidate. Review queue, fail-closed certification adapter and tenant-attested operator foundations exist.           |
+| Milestone 4 — Real providers and global packs | **In review / Partial**      | Tenant-owned official-account evidence, live health/callback/deletion operations, equivalent fallback, regional/legal acceptance, and the national-ID/driver-licence structural sources and legal review for the implemented pack registry. Dojah and Smile ID runtime paths are composed with local fixtures.                                                       |
+| Milestone 5 — Operations and hardening        | **Partial / In review**      | Third-party certification-issuer trust/status integration, production KMS/egress/rate limiting, production-representative deployment, penetration test, load/soak, mixed-version and restoration rehearsals, SLO evidence, and signed candidate. The fixture-backed self-hosted gate, review queue, fail-closed certification adapter and tenant-attested operator foundations exist. |
 | Milestone 6 — AI-native orchestration         | **In review**                | Real generative-model adapter, external provenance, representative evaluation, hardened deployment, and independent guardrail review. Proposal, guardrail, mode, registry, public API/SDK/CLI, and bounded product foundations are implemented.                                 |
 | Milestone 7 — Reusable Verification Cloud     | **Later**                    | Entire commercial Pass and reusable-verification capability.                                                                                                                                                                                                                    |
 | Milestone 8 — Ecosystem                       | **Later**                    | Registry, additional adapters/regions/wrappers, enterprise deployment, and credential interoperability.                                                                                                                                                                         |
 
-The build plan's M-0, M-1, M-3, and M-4 completion records remain valid for their explicitly bounded bricks and proofs; M-2 remains **In review**. The architecture-wide assessment is broader and identifies capabilities those bricks intentionally did not include.
+The build plan's M-0, M-1 and M-3 completion records remain valid for their explicitly bounded bricks and proofs. M-2 and M-4 remain **In review**, and M-5 remains **In progress**. The architecture-wide assessment is broader and identifies capabilities those bricks intentionally did not include.
 
 ---
 
@@ -824,8 +763,8 @@ The build plan's M-0, M-1, M-3, and M-4 completion records remain valid for thei
 
 The following v0.6 version-one acceptance outcomes are not yet demonstrated end to end:
 
-- Complete Core operation from a clean deployment without managed Cloud.
-- Complete documented SDK, CLI, and capture operation without undocumented endpoints.
+- Production-representative Core operation from a clean deployment without managed Cloud, using browser-driven Capture Web, real provider/model runners, production object storage and production-safe webhook networking; the fixture-backed thirteen-step clean-usability gate passes.
+- Complete documented SDK, CLI and capture operation for the production provider/model and privacy-administration paths without undocumented endpoints; the packaged synthetic journey and current administration surfaces pass their recorded gate.
 - Two real provider adapters operating through the composed runtime with external evidence.
 - Provider replacement in the complete workflow without customer API or evidence-meaning changes.
 - Real model replacement without workflow-definition changes.
@@ -834,16 +773,15 @@ The following v0.6 version-one acceptance outcomes are not yet demonstrated end 
 - Accepted end-to-end manual review, recovery, reconsideration, correction, and appeal journeys with least privilege and authenticated reviewer authority; real-HTTP composed correction and appeal journeys, behavioural escalation/worker-restart proofs, and the fail-closed certification adapter exist, but third-party issuer trust integration and composed reviewer/subject acceptance remain and O-03 remains **In review**.
 - Production provider/model evidence-grant processing with external systems; local composed routes already prove the owned mechanics.
 - Deletion of all selected derived assets and external/provider copies.
-- Automatic recovery across the complete workflow lifecycle.
-- External-success reconciliation with a real provider.
+- Production recovery across the complete workflow lifecycle, including external-success reconciliation with a real provider; the owned callback/poll, worker-replacement and local-failure mechanics are already proven with fixtures.
 - Complete capture SDK interruption, resumption, cancellation, cleanup, compatibility, and security conformance.
-- Complete open-source subject journey through the portable experience schema and safe default theme.
+- Accepted advanced-interaction evidence for the open-source subject journey; the portable experience schema and signed accessible safe-default theme are implemented.
 - Experience, locale, tenant-copy, and mandatory-copy session pinning.
 - Signed accessible experience fallback.
 - Production model evaluation, calibrated promotion, monitoring, and rollback; evaluation-only registry and offline gates are implemented.
 - Full backup restoration covering evidence, keys, credentials, and audit.
 - Mixed-version and expand-migrate-contract evidence.
-- Clean open-source usability gate; the packaged stack and thirteen-step gate now pass with fixture runners, leaving browser-driven capture, real runner dialing and the production object-storage deletion path.
+- Production closure of the clean open-source usability gate beyond its passing fixture-backed baseline: browser-driven packaged capture, real runner dialing, production-safe webhook networking and the production object-storage deletion path.
 - Independent penetration test with no unresolved critical findings.
 
 The AI acceptance criterion is conditional: every **enabled** AI action must be a recorded proposal approved by guardrails. AI may remain disabled for version one. The proposal and guardrail foundations are implemented, but M-6 cannot complete without the production and external gates recorded in section 3.
@@ -852,28 +790,28 @@ The AI acceptance criterion is conditional: every **enabled** AI action must be 
 
 ## 31. Recommended sequencing
 
-This sequence lists only unresolved work as of 19 September 2026. L-01 through L-03, H-01, P-01, I-01, AS-01, the selected tenant-local fraud baseline, and the repository-owned AI-01 through AI-05 slice are implementation baselines rather than future tasks. Their production or external gates remain listed in the owning sections.
+This sequence lists only unresolved work as of 20 September 2026. L-01 through L-03, H-01, P-01, I-01, AS-01, the selected tenant-local fraud baseline, and the repository-owned AI-01 through AI-05 slice are implementation baselines rather than future tasks. Their production or external gates remain listed in the owning sections.
 
 ### 31.1 Close active product and workflow review gates
 
-1. Finish D-026 acceptance: retain the nine passing real-Core journeys, including authoritative expiry through D-027's separate outcome credential; record responsive browser evidence; and obtain explicit advanced-interaction acceptance. Continue rejecting expired capture bearers and browser-inferred lifecycle state. Optional choice screens remain bounded by the immutable session or future experience contract; any country choice that changes policy or profile must occur before session creation. Then close E-04 and M-2 if their exit proof passes.
-2. Complete O-03's remaining review gates: retain the passing review-to-recapture-to-explicit-follow-up path; add composed progress-preserving recovery, correction/appeal/escalation outcomes, consequential-action acceptance, and the external operator-certification boundary. Obtain reviewer/subject visual acceptance. Do not reopen already implemented routing, queue, evidence-display, arbitration, correction-successor, or public-contract work.
+1. Finish D-026 acceptance: retain the nine passing real-Core journeys and existing responsive/accessibility browser evidence, including authoritative expiry through D-027's separate outcome credential, and obtain explicit advanced-interaction acceptance. Continue rejecting expired capture bearers and browser-inferred lifecycle state. Optional choice screens remain bounded by the immutable session or future experience contract; any country choice that changes policy or profile must occur before session creation. Then close E-04 and M-2 if their exit proof passes.
+2. Complete O-03's remaining review gates: retain the passing review-to-recapture-to-explicit-follow-up, progress-preserving recovery, correction/appeal/escalation, consequential-action and fail-closed certification-adapter proofs. Integrate a real third-party certification issuer with key discovery and revocation/status checks, and obtain reviewer/subject visual and interaction acceptance. Do not reopen the implemented routing, queue, evidence-display, recovery, arbitration, correction-successor, appeal, certification-adapter or public-contract work.
 
 ### 31.2 Close the deterministic self-hosted core
 
-3. Every lifecycle mechanism is implemented and evidenced: resumption, bounded semantic retries, `awaiting_external`, structured `awaiting_input` requests, callback intake with replay-identity deduplication, operational-failure projection, decision/case reads, and dependency/worker-loss recovery proofs. Only external evidence remains — live provider-account callback operation and reviewer/subject acceptance.
+3. Every lifecycle mechanism is implemented and evidenced: resumption, bounded semantic retries, `awaiting_external`, structured `awaiting_input` requests, callback intake with replay-identity deduplication, operational-failure projection, decision/case reads, and dependency/worker-loss recovery proofs. Related external gates remain — live provider-account callback operation, real third-party certification-issuer trust/status integration and reviewer/subject acceptance.
 4. **Implemented selected runtime scope 19 September 2026:** the general event catalogue, endpoint subscriptions, exact schema pins, bounded resumable fanout with replacement-worker proof, authorised list/SSE, local signed forwarding, and hold-aware payload/attempt retention are complete. The section 26 packaged stack and thirteen-step gate now pass; only the production object-storage deletion and real-runner evidence remain.
-5. Close public contract and CLI parity for the still-internal or uncovered operations identified in sections 18 and 19, prioritising privacy/deletion status, evaluation-model registry, evidence/consent administration, and operational diagnostics.
+5. Close public contract and CLI parity for the still-internal or uncovered operations identified in sections 18 and 19, prioritising privacy administration writes, evidence/consent administration and model-health inspection. Privacy deletion inspection, evaluation-model registry administration and operational diagnostics are already implemented baselines.
 6. **Implemented 19 September 2026:** API, worker, adapter runner, Capture Web host, MinIO, migrations, provisioning, example tenant/profile/policy/webhook receiver, healthchecks and failure recovery are packaged under `deploy/self-hosted/` with a passing thirteen-step `smoke.sh` gate. Remaining: browser-driven capture evidence, real runner dialing and production object-storage deletion.
 
 ### 31.3 Complete the selected first-adopter identity path
 
 7. Implement immutable Nigeria, Ghana, Kenya, and South Africa country/document/jurisdiction packs and their assurance mappings before advertising country support.
-8. Implement the general document subsystem required by those packs, including classification, OCR, MRZ/barcode, image correction, field consistency, portrait extraction, manipulation risk, support-level projection, and derived-data deletion.
+8. The general document subsystem is implemented for Core-owned knowledge: automatic capture with perspective correction, MRZ/checksums, decoded-barcode parsing, documented provider extraction, field consistency, provisional classification, expiry/age, support-level resolution and the signed experience contract. Remaining are the provider/model-gated template/security-feature and manipulation inspection, portrait extraction, complete OCR coverage and derived-data deletion.
 9. Complete production PAD and face-comparison acceptance: reviewed genuine/attack and genuine/impostor data, licensed weights, preprocessing/capture provenance, calibrated thresholds, temporal active-liveness evidence, cohort/device analysis, and hardened deployment. Existing ONNX, registry, evaluation, and composed workflow mechanics remain the starting point.
 10. Run Dojah and Smile ID through tenant-owned official accounts with controlled evidence access, live health/callback or polling, retention/deletion exercises, legal/regional approval, and an exact-semantics outage/fallback demonstration. Existing local-fixture PR-01/PR-02 composition remains the starting point.
 11. Complete Swift and Kotlin session lifecycle, durable resume, cancellation, cleanup, native liveness/document UI, platform security, accessibility, interruption, and supported-device conformance.
-12. Implement the portable versioned capture-experience schema, validation, lifecycle, copy/asset separation, targeting, signing, session pins, revocation/rollback, accessible fallback, and export/import. CSS custom properties remain appearance-only.
+12. **Implemented 20 September 2026:** the portable versioned capture-experience schema, validation, lifecycle, copy/mandatory separation, targeting, signing, session pins, revocation/rollback, signed accessible fallback and export/import are implemented with the pack registry. Remaining: managed editing/publishing UI, DNS-verified custom domains and native rendering. CSS custom properties remain appearance-only.
 
 ### 31.4 Close production and release gates
 
