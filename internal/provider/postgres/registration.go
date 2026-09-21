@@ -288,7 +288,7 @@ func applyRegistration(ctx context.Context, tx pg.Transaction, scope tenant.Scop
 		return provider.Registration{ID: identifier.String(), TenantID: scope.ID().String(), AdapterID: command.Write.AdapterID, Region: command.Write.Region,
 			Configuration: command.Write.Configuration, Inputs: cloneRegistrationInputs(command.Write.Inputs), SelfieRequirement: command.Write.SelfieRequirement,
 			Restrictions: command.Write.Restrictions, Enabled: false, Version: 1, ActorID: "", CreatedAt: now, UpdatedAt: now}, nil, nil
-	case "update", "enable", "disable":
+	case "update", "enable", "disable", "rotate-credential":
 		current, err := lockRegistration(ctx, tx, scope, command.RegistrationID)
 		if err != nil {
 			return provider.Registration{}, nil, err
@@ -306,6 +306,17 @@ func applyRegistration(ctx context.Context, tx pg.Transaction, scope tenant.Scop
 			}
 			next.AdapterID, next.Region, next.Configuration = command.Write.AdapterID, command.Write.Region, command.Write.Configuration
 			next.Inputs, next.SelfieRequirement, next.Restrictions = cloneRegistrationInputs(command.Write.Inputs), command.Write.SelfieRequirement, command.Write.Restrictions
+		case "rotate-credential":
+			if command.Credential == nil {
+				return provider.Registration{}, nil, provider.ErrRegistrationInvalid
+			}
+			rotation := provider.CredentialRotation{SecretReference: command.Credential.SecretReference, CredentialVersion: command.Credential.CredentialVersion}
+			currentRotation := provider.CredentialRotation{SecretReference: current.Configuration.SecretReference, CredentialVersion: current.Configuration.CredentialVersion}
+			if !rotation.ChangedFrom(currentRotation) {
+				return provider.Registration{}, nil, provider.ErrRegistrationConflict
+			}
+			next.Configuration.SecretReference = rotation.SecretReference
+			next.Configuration.CredentialVersion = rotation.CredentialVersion
 		case "enable":
 			if current.Enabled {
 				return provider.Registration{}, nil, provider.ErrRegistrationConflict

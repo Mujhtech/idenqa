@@ -43,6 +43,7 @@ func (routes *ProviderRoutes) Register(router chi.Router) {
 	router.With(routes.access.Authenticate, routes.access.Require(access.PermissionProvidersWrite)).Post("/providers/{providerID}/validate", routes.validate)
 	router.With(routes.access.Authenticate, routes.access.Require(access.PermissionProvidersWrite)).Post("/providers/{providerID}/enable", routes.mutateEnabled(true))
 	router.With(routes.access.Authenticate, routes.access.Require(access.PermissionProvidersWrite)).Post("/providers/{providerID}/disable", routes.mutateEnabled(false))
+	router.With(routes.access.Authenticate, routes.access.Require(access.PermissionProvidersWrite)).Post("/providers/{providerID}/rotate-credential", routes.rotateCredential)
 	router.With(routes.access.Authenticate, routes.access.Require(access.PermissionProvidersRead)).Get("/providers/{providerID}/health", routes.health)
 	router.With(routes.access.Authenticate, routes.access.Require(access.PermissionProvidersRead)).Post("/providers/{providerID}/failure-simulations", routes.simulateFailure)
 }
@@ -61,6 +62,12 @@ type providerRegistrationUpdate struct {
 type providerRegistrationToggle struct {
 	ExpectedVersion int64  `json:"expected_version"`
 	Reason          string `json:"reason"`
+}
+
+type providerCredentialRotationRequest struct {
+	ExpectedVersion int64                       `json:"expected_version"`
+	Reason          string                      `json:"reason"`
+	Credential      provider.CredentialRotation `json:"credential"`
 }
 
 type providerFailureSimulationRequest struct {
@@ -110,6 +117,18 @@ func (routes *ProviderRoutes) mutateEnabled(enabled bool) http.HandlerFunc {
 		result, err := routes.service.Execute(r.Context(), actor, "", provider.RegistrationCommand{Operation: operation, RegistrationID: chi.URLParam(r, "providerID"), ExpectedVersion: body.ExpectedVersion, Reason: body.Reason})
 		routes.reply(w, r, result, err)
 	}
+}
+
+func (routes *ProviderRoutes) rotateCredential(w http.ResponseWriter, r *http.Request) {
+	body, err := decodeJSONBody[providerCredentialRotationRequest](r)
+	if err != nil {
+		routes.reply(w, r, nil, invalidRequest(err))
+		return
+	}
+	actor, _ := AccessContext(r.Context())
+	result, err := routes.service.Execute(r.Context(), actor, "", provider.RegistrationCommand{Operation: "rotate-credential",
+		RegistrationID: chi.URLParam(r, "providerID"), ExpectedVersion: body.ExpectedVersion, Credential: &body.Credential, Reason: body.Reason})
+	routes.reply(w, r, result, err)
 }
 
 func (routes *ProviderRoutes) list(w http.ResponseWriter, r *http.Request) {

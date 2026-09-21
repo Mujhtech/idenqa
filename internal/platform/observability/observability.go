@@ -475,6 +475,21 @@ type ModelHealth struct {
 	State HealthState
 }
 
+// ProviderHealth is one derived provider readiness snapshot. It carries only
+// the bounded deployment provider label, the bounded state and the deployment
+// region.
+type ProviderHealth struct {
+	Provider Provider
+	State    HealthState
+	Region   Region
+}
+
+// ProviderThrottle is one bounded provider admission refusal. It carries only
+// the bounded deployment provider label.
+type ProviderThrottle struct {
+	Provider Provider
+}
+
 // DeletionTransition is one privacy deletion workflow state change.
 type DeletionTransition struct {
 	From   DeletionState

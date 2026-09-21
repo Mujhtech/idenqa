@@ -150,6 +150,70 @@ func TestCompositionSelectsEnabledRegistrationThenFallsBack(t *testing.T) {
 	}
 }
 
+type registrationHealthFixture struct {
+	states map[string]provider.HealthState
+	err    error
+}
+
+func (source registrationHealthFixture) RegistrationHealth(_ context.Context, _ tenant.Scope, registration provider.Registration) (provider.HealthSnapshot, error) {
+	if source.err != nil {
+		return provider.HealthSnapshot{}, source.err
+	}
+	return provider.HealthSnapshot{State: source.states[registration.ID]}, nil
+}
+
+func TestCompositionHealthRoutesAroundNotReadyRegistration(t *testing.T) {
+	t.Parallel()
+	binding := registrationFixture("pvd_01K4AR9V8FQ2G7ZXCPNM5T6JWH")
+	manifest := dojah.Description()
+	deployment, err := provider.NewPlan(binding, manifest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	registration := provider.Registration{ID: "pvr_01K4AR9V8FQ2G7ZXCPNM5T6JWH", AdapterID: "dojah", Region: "africa", Enabled: true,
+		Configuration: providerv1.ConfigurationReference{ProviderID: "pvd_01K4AR9V8FQ2G7ZXCPNM5T6JWK", SchemaDigest: manifest.Configuration.Digest, SecretReference: "secret://provider/tenant/other", CredentialVersion: "v1"}}
+	registered, err := provider.NewRegisteredPlan(registration, binding, manifest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	input := verification.PlanInput{TenantID: mustTenant(t, binding.TenantID), PolicyID: mustPolicy(t, binding.PolicyID), ProfileDigest: binding.ProfileDigest}
+	compose := func(health RegistrationHealthSource) (*composedRoutes, error) {
+		route := &registrationRoute{source: registrationSourceFixture{registrations: []provider.Registration{registration}}, health: health,
+			manifest: manifest, template: binding, deployment: deployment, preparation: &providerpostgres.Preparation{Plan: deployment}}
+		return composeRoutes(t.Context(), []executionRoute{{planner: deployment, preparation: preparationFixture{}, signals: deployment.OutputSignals(), registration: route}})
+	}
+	for _, test := range []struct {
+		name      string
+		state     provider.HealthState
+		want      string
+		wantError bool
+	}{
+		{name: "ready selects the registration", state: provider.HealthReady, want: registered.ConfigurationDigest()},
+		{name: "degraded keeps the registration", state: provider.HealthDegraded, want: registered.ConfigurationDigest()},
+		{name: "not ready falls back to deployment", state: provider.HealthNotReady, want: deployment.ConfigurationDigest()},
+		{name: "unknown keeps the registration", state: provider.HealthUnknown, want: registered.ConfigurationDigest()},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			composed, err := compose(registrationHealthFixture{states: map[string]provider.HealthState{registration.ID: test.state}})
+			if err != nil {
+				t.Fatal(err)
+			}
+			checks, err := composed.Plan(t.Context(), input)
+			if err != nil || len(checks) != 1 || checks[0].Provenance.RequestDigest != test.want {
+				t.Fatalf("plan = %v, %v", checks, err)
+			}
+		})
+	}
+	failing, err := compose(registrationHealthFixture{err: errors.New("health unavailable")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := failing.Plan(t.Context(), input); err == nil {
+		t.Fatal("health failure did not fail closed")
+	}
+}
+
 func TestCompositionRegistrationPinnedDigestFailsClosed(t *testing.T) {
 	t.Parallel()
 	binding := registrationFixture("pvd_01K4AR9V8FQ2G7ZXCPNM5T6JWH")

@@ -23,6 +23,10 @@ var (
 	modelHealthStates = []observability.HealthState{
 		observability.HealthReady, observability.HealthDegraded, observability.HealthNotReady,
 	}
+	// providerHealthStates is the fixed gauge series set kept fresh per provider.
+	providerHealthStates = []observability.HealthState{
+		observability.HealthReady, observability.HealthDegraded, observability.HealthNotReady, observability.HealthUnknown,
+	}
 )
 
 // DomainMetrics implements every owning-boundary metric receiver using bounded
@@ -40,6 +44,8 @@ type DomainMetrics struct {
 	deliveryAttempts    otelmetric.Int64Counter
 	deliveryDuration    otelmetric.Float64Histogram
 	providerDispatches  otelmetric.Int64Counter
+	providerThrottled   otelmetric.Int64Counter
+	providerHealth      otelmetric.Int64Gauge
 	callbackDelay       otelmetric.Float64Histogram
 	modelDispatches     otelmetric.Int64Counter
 	modelDuration       otelmetric.Float64Histogram
@@ -51,6 +57,10 @@ type DomainMetrics struct {
 	requestAge          otelmetric.Float64Gauge
 	reviewResolutions   otelmetric.Int64Counter
 	reviewDuration      otelmetric.Float64Histogram
+	keyRewrapBatches    otelmetric.Int64Counter
+	keyRewrapRewrapped  otelmetric.Int64Counter
+	keyRewrapSkipped    otelmetric.Int64Counter
+	keyRewrapFailed     otelmetric.Int64Counter
 }
 
 // NewDomainMetrics creates the bounded domain metric instruments.
@@ -94,6 +104,12 @@ func NewDomainMetrics(provider otelmetric.MeterProvider) (*DomainMetrics, error)
 	if metrics.providerDispatches, err = meter.Int64Counter("idenqa.provider.dispatches"); err != nil {
 		return nil, err
 	}
+	if metrics.providerHealth, err = meter.Int64Gauge("idenqa.provider.health"); err != nil {
+		return nil, err
+	}
+	if metrics.providerThrottled, err = meter.Int64Counter("idenqa.provider.throttled"); err != nil {
+		return nil, err
+	}
 	if metrics.callbackDelay, err = meter.Float64Histogram("idenqa.provider.callback.delay", otelmetric.WithUnit("s"), otelmetric.WithExplicitBucketBoundaries(callbackBuckets...)); err != nil {
 		return nil, err
 	}
@@ -125,6 +141,18 @@ func NewDomainMetrics(provider otelmetric.MeterProvider) (*DomainMetrics, error)
 		return nil, err
 	}
 	if metrics.reviewDuration, err = meter.Float64Histogram("idenqa.review.resolution.duration", otelmetric.WithUnit("s"), otelmetric.WithExplicitBucketBoundaries(durationBuckets...)); err != nil {
+		return nil, err
+	}
+	if metrics.keyRewrapBatches, err = meter.Int64Counter("idenqa.key_rewrap.batches"); err != nil {
+		return nil, err
+	}
+	if metrics.keyRewrapRewrapped, err = meter.Int64Counter("idenqa.key_rewrap.rewrapped"); err != nil {
+		return nil, err
+	}
+	if metrics.keyRewrapSkipped, err = meter.Int64Counter("idenqa.key_rewrap.skipped"); err != nil {
+		return nil, err
+	}
+	if metrics.keyRewrapFailed, err = meter.Int64Counter("idenqa.key_rewrap.failed"); err != nil {
 		return nil, err
 	}
 	return metrics, nil
@@ -226,6 +254,36 @@ func (metrics *DomainMetrics) RecordProviderDispatch(dispatch observability.Prov
 		attribute.String("provider", dispatch.Provider.Safe()),
 		attribute.String("outcome", dispatch.Outcome.Safe()),
 		attribute.String("failure_class", dispatch.FailureClass.Safe()),
+	))
+}
+
+// RecordProviderHealth records one derived provider readiness snapshot as a
+// fixed series set so a stale process cannot leave an old state set.
+func (metrics *DomainMetrics) RecordProviderHealth(health observability.ProviderHealth) {
+	if metrics == nil {
+		return
+	}
+	observed := health.State.Safe()
+	for _, state := range providerHealthStates {
+		value := int64(0)
+		if string(state) == observed {
+			value = 1
+		}
+		metrics.providerHealth.Record(context.Background(), value, otelmetric.WithAttributes(
+			attribute.String("provider", health.Provider.Safe()),
+			attribute.String("state", string(state)),
+			attribute.String("region", health.Region.Safe()),
+		))
+	}
+}
+
+// RecordProviderThrottle records one bounded provider admission refusal.
+func (metrics *DomainMetrics) RecordProviderThrottle(throttle observability.ProviderThrottle) {
+	if metrics == nil {
+		return
+	}
+	metrics.providerThrottled.Add(context.Background(), 1, otelmetric.WithAttributes(
+		attribute.String("provider", throttle.Provider.Safe()),
 	))
 }
 
@@ -348,6 +406,47 @@ func (metrics *DomainMetrics) RecordReviewResolution(resolution observability.Re
 	metrics.reviewResolutions.Add(context.Background(), 1, otelmetric.WithAttributes(attributes...))
 	if resolution.Duration > 0 {
 		metrics.reviewDuration.Record(context.Background(), resolution.Duration.Seconds(), otelmetric.WithAttributes(attributes...))
+	}
+}
+
+// RecordKeyRewrapBatch records one bounded class sweep batch with an explicit
+// class allow-list so an unexpected value can never widen the metric series.
+func (metrics *DomainMetrics) RecordKeyRewrapBatch(class, status string, _, rewrapped, skipped, failed int64) {
+	if metrics == nil {
+		return
+	}
+	attributes := otelmetric.WithAttributes(
+		attribute.String("class", keyRewrapClass(class)),
+		attribute.String("status", keyRewrapStatus(status)),
+	)
+	metrics.keyRewrapBatches.Add(context.Background(), 1, attributes)
+	if rewrapped > 0 {
+		metrics.keyRewrapRewrapped.Add(context.Background(), rewrapped, otelmetric.WithAttributes(attribute.String("class", keyRewrapClass(class))))
+	}
+	if skipped > 0 {
+		metrics.keyRewrapSkipped.Add(context.Background(), skipped, otelmetric.WithAttributes(attribute.String("class", keyRewrapClass(class))))
+	}
+	if failed > 0 {
+		metrics.keyRewrapFailed.Add(context.Background(), failed, otelmetric.WithAttributes(attribute.String("class", keyRewrapClass(class))))
+	}
+}
+
+func keyRewrapClass(value string) string {
+	switch value {
+	case "evidence.content", "webhook.event", "webhook.delivery", "webhook.secret",
+		"keycustody.hmac", "identity.lookup", "identity.subject", "fraud.correlation":
+		return value
+	default:
+		return "other"
+	}
+}
+
+func keyRewrapStatus(value string) string {
+	switch value {
+	case "running", "failed", "completed":
+		return value
+	default:
+		return "unknown"
 	}
 }
 

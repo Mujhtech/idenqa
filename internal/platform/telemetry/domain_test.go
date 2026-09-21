@@ -119,6 +119,9 @@ func TestDomainMetricsEmitEveryBoundedFamily(t *testing.T) {
 	metrics.RecordProviderCallbackDelay(observability.ProviderCallbackDelay{
 		Provider: "smileid", Delay: 30 * time.Second,
 	})
+	metrics.RecordProviderHealth(observability.ProviderHealth{
+		Provider: "smileid", State: observability.HealthNotReady, Region: "sa-riyadh-1",
+	})
 	metrics.RecordModelDispatch(observability.ModelDispatch{
 		Model: "idenqa.model.liveness", Outcome: observability.DispatchFailed,
 		FailureClass: observability.FailureUnavailable, Duration: 2 * time.Second,
@@ -155,6 +158,7 @@ func TestDomainMetricsEmitEveryBoundedFamily(t *testing.T) {
 		{name: "idenqa.delivery.attempt.duration", labels: map[string]string{"outcome": "delivered", "attempt": "2"}, minimum: 0},
 		{name: "idenqa.provider.dispatches", labels: map[string]string{"provider": "smileid", "outcome": "completed", "failure_class": "none"}, minimum: 1},
 		{name: "idenqa.provider.callback.delay", labels: map[string]string{"provider": "smileid"}, minimum: 0},
+		{name: "idenqa.provider.health", labels: map[string]string{"provider": "smileid", "state": "not_ready", "region": "sa-riyadh-1"}, minimum: 1},
 		{name: "idenqa.model.dispatches", labels: map[string]string{"model": "idenqa.model.liveness", "outcome": "failed", "failure_class": "unavailable"}, minimum: 1},
 		{name: "idenqa.model.dispatch.duration", labels: map[string]string{"model": "idenqa.model.liveness", "outcome": "failed", "failure_class": "unavailable"}, minimum: 0},
 		{name: "idenqa.model.health", labels: map[string]string{"model": "idenqa.model.liveness", "state": "degraded"}, minimum: 1},

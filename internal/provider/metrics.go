@@ -9,6 +9,8 @@ import (
 type Metrics interface {
 	RecordProviderDispatch(observability.ProviderDispatch)
 	RecordProviderCallbackDelay(observability.ProviderCallbackDelay)
+	RecordProviderHealth(observability.ProviderHealth)
+	RecordProviderThrottle(observability.ProviderThrottle)
 }
 
 // providerLabel prefers the deployment adapter identity so the label set stays

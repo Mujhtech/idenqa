@@ -107,6 +107,15 @@ func TestProviderCLICommands(t *testing.T) {
 			response:  `{"registration":` + providerRegistrationJSON + `,"operation":"disable","reason":"disable","replayed":false}`,
 		},
 		{
+			name:      "provider rotate credential",
+			arguments: []string{"provider", "rotate-credential", "pvr_01M11HEQG00000000000000000", "--reason", "rotation", "--expected-version", "3", "--secret-reference", "secret://aws/prod/dojah/tenant", "--credential-version", "v2"},
+			wantBody:  `{"expected_version":3,"reason":"rotation","credential":{"secret_reference":"secret://aws/prod/dojah/tenant","credential_version":"v2"}}`,
+			method:    "POST",
+			path:      "/v1/providers/pvr_01M11HEQG00000000000000000/rotate-credential",
+			status:    200,
+			response:  `{"registration":` + providerRegistrationJSON + `,"operation":"rotate-credential","reason":"rotation","replayed":false}`,
+		},
+		{
 			name:      "provider health",
 			arguments: []string{"provider", "health", "pvr_01M11HEQG00000000000000000"},
 			method:    "GET",

@@ -27,8 +27,15 @@ func TestLoadAPI(t *testing.T) {
 		{
 			name: "defaults",
 			want: config.API{
+				ProviderHealthConfiguration: defaultProviderHealthConfiguration(),
+				ProviderLimitConfiguration:  defaultProviderLimitConfiguration(),
 				EvidenceUploadConfiguration: defaultEvidenceUploadConfiguration(),
 				EvidenceProtectionCleanup:   5 * time.Second,
+				KMSProvider:                 "local",
+				KMSAWSMaxPlaintextBytes:     4096,
+				SecretsProvider:             "file",
+				SecretsCacheTTL:             30 * time.Second,
+				SecretsReloadInterval:       5 * time.Minute,
 				Environment:                 "production",
 				DatabaseURL:                 testDatabaseURL,
 				DatabaseMaxConnections:      20,
@@ -90,6 +97,8 @@ func TestLoadAPI(t *testing.T) {
 				"IDENQA_REALTIME_TICKET_LIFETIME":            "45s",
 			},
 			want: config.API{
+				ProviderHealthConfiguration: defaultProviderHealthConfiguration(),
+				ProviderLimitConfiguration:  defaultProviderLimitConfiguration(),
 				EvidenceUploadConfiguration: config.EvidenceUploadConfiguration{
 					EvidenceUploadMaximumBytes: 8 << 20, EvidenceUploadIntentLifetime: 20 * time.Minute,
 					EvidenceUploadAttemptTimeout: 5 * time.Minute,
@@ -98,6 +107,11 @@ func TestLoadAPI(t *testing.T) {
 				EvidenceLocalDirectory:     "/var/lib/idenqa/evidence",
 				EvidenceLocalKeyringFile:   "/run/secrets/evidence-keyring.json",
 				EvidenceProtectionCleanup:  7 * time.Second,
+				KMSProvider:                "local",
+				KMSAWSMaxPlaintextBytes:    4096,
+				SecretsProvider:            "file",
+				SecretsCacheTTL:            30 * time.Second,
+				SecretsReloadInterval:      5 * time.Minute,
 				Environment:                "production",
 				DatabaseURL:                testDatabaseURL,
 				DatabaseMaxConnections:     20,
@@ -213,6 +227,13 @@ func TestLoadAPI(t *testing.T) {
 				"IDENQA_DATABASE_URL": "mysql://idenqa@localhost/idenqa",
 			},
 			wantError: "PostgreSQL database",
+		},
+		{
+			name: "invalid provider health thresholds",
+			environment: map[string]string{
+				"IDENQA_PROVIDER_HEALTH_NOT_READY_FAILURE_RATIO": "0.1",
+			},
+			wantError: "provider health policy",
 		},
 		{
 			name: "invalid database pool limits",
@@ -342,8 +363,15 @@ func TestLoadAPI(t *testing.T) {
 				"IDENQA_HTTP_TLS_KEY_FILE":  "server.key",
 			},
 			want: config.API{
+				ProviderHealthConfiguration: defaultProviderHealthConfiguration(),
+				ProviderLimitConfiguration:  defaultProviderLimitConfiguration(),
 				EvidenceUploadConfiguration: defaultEvidenceUploadConfiguration(),
 				EvidenceProtectionCleanup:   5 * time.Second,
+				KMSProvider:                 "local",
+				KMSAWSMaxPlaintextBytes:     4096,
+				SecretsProvider:             "file",
+				SecretsCacheTTL:             30 * time.Second,
+				SecretsReloadInterval:       5 * time.Minute,
 				Environment:                 "production",
 				DatabaseURL:                 testDatabaseURL,
 				DatabaseMaxConnections:      20,
@@ -544,6 +572,22 @@ func TestEvidenceUploadConfigurationPolicy(t *testing.T) {
 			policy.AttemptTimeout(),
 			policy.AllowedMediaTypes(),
 		)
+	}
+}
+
+func defaultProviderHealthConfiguration() config.ProviderHealthConfiguration {
+	return config.ProviderHealthConfiguration{
+		ProviderHealthWindow: 5 * time.Minute, ProviderHealthMinimumSamples: 5,
+		ProviderHealthDegradedRatio: 0.2, ProviderHealthNotReadyRatio: 0.5, ProviderHealthAsyncBacklog: 16,
+		ProviderHealthStaleAfter: 15 * time.Minute, ProviderHealthCacheTTL: 10 * time.Second, ProviderHealthProbeTimeout: 2 * time.Second,
+		ProviderBreakerWindow: time.Minute, ProviderBreakerMinimumSamples: 4, ProviderBreakerFailureRatio: 0.5,
+		ProviderBreakerOpenDuration: 30 * time.Second, ProviderBreakerHalfOpenProbes: 1,
+	}
+}
+
+func defaultProviderLimitConfiguration() config.ProviderLimitConfiguration {
+	return config.ProviderLimitConfiguration{
+		ProviderMaxConcurrent: 4, ProviderRateLimit: 60, ProviderRatePeriod: time.Minute, ProviderRateBurst: 10, ProviderLeaseTTL: 10 * time.Minute,
 	}
 }
 

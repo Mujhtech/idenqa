@@ -31,18 +31,28 @@ type providerRuntime struct {
 	requests      *providerpostgres.RequestStore
 	preparation   *providerpostgres.Preparation
 	executor      providerv1.Executor
+	breaker       *provider.BreakerExecutor
+	remote        providerv1.Executor
+	limited       *provider.LimitedExecutor
 	registrations *providerpostgres.RegistrationStore
+	health        *provider.HealthService
+	healthStore   *providerpostgres.HealthStore
+	breakers      *provider.BreakerRegistry
 	connection    *grpc.ClientConn
 }
 
-// withMetrics attaches bounded provider dispatch metrics to the durable store
-// and to whichever executor concrete type is configured.
+// withMetrics attaches bounded provider dispatch, throttle and health metrics
+// to the durable store, the health supervisor, the fail-fast wrapper, the
+// admission limiter and whichever inner executor concrete type is configured.
 func (runtime *providerRuntime) withMetrics(metrics provider.Metrics) {
 	if runtime == nil {
 		return
 	}
 	runtime.requests.WithMetrics(metrics)
-	switch executor := runtime.executor.(type) {
+	runtime.health.WithMetrics(metrics)
+	runtime.breaker.WithMetrics(metrics)
+	runtime.limited.WithMetrics(metrics)
+	switch executor := runtime.remote.(type) {
 	case *provider.DurableExecutor:
 		executor.WithMetrics(metrics)
 	case *provider.AsyncExecutor:
@@ -119,12 +129,47 @@ func configuredProvider(ctx context.Context, configuration config.Worker, pool *
 	if err != nil {
 		return nil, err
 	}
-	var executor providerv1.Executor
+	var remote providerv1.Executor
 	if settings.Adapter == "smileid" {
-		executor, err = provider.NewAsyncExecutor(requests, client, time.Now)
+		remote, err = provider.NewAsyncExecutor(requests, client, time.Now)
 	} else {
-		executor, err = provider.NewDurableExecutor(requests, client, time.Now)
+		remote, err = provider.NewDurableExecutor(requests, client, time.Now)
 	}
+	if err != nil {
+		return nil, err
+	}
+	healthPolicy, err := configuration.ProviderHealthPolicy()
+	if err != nil {
+		return nil, err
+	}
+	healthStore, err := providerpostgres.NewHealthStore(pool, clock.System{}, wrapper)
+	if err != nil {
+		return nil, err
+	}
+	breakers, err := provider.NewBreakerRegistry(healthPolicy.Breaker, time.Now, 4096)
+	if err != nil {
+		return nil, err
+	}
+	health, err := provider.NewHealthService(healthStore, healthStore, breakers, client, healthPolicy, time.Now)
+	if err != nil {
+		return nil, err
+	}
+	health.WithRegion(plan.Binding.Region).WithPersistence(true)
+	limit, err := configuration.DispatchLimit()
+	if err != nil {
+		return nil, err
+	}
+	limitStore, err := providerpostgres.NewLimitStore(pool, clock.System{})
+	if err != nil {
+		return nil, err
+	}
+	breaker, err := provider.NewBreakerExecutor(remote, breakers, health, time.Now)
+	if err != nil {
+		return nil, err
+	}
+	// Admission is the outermost boundary: a throttled request is retried
+	// unchanged and never consumes a circuit breaker probe.
+	limited, err := provider.NewLimitedExecutor(breaker, limitStore, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +179,7 @@ func configuredProvider(ctx context.Context, configuration config.Worker, pool *
 	}
 	preparation := &providerpostgres.Preparation{Plan: plan, Requests: requests, IDs: ids, Catalog: catalog, Clock: clock.System{}, Wrapper: wrapper}
 	accepted = true
-	return &providerRuntime{plan, requests, preparation, executor, registrations, connection}, nil
+	return &providerRuntime{plan, requests, preparation, limited, breaker, remote, limited, registrations, health, healthStore, breakers, connection}, nil
 }
 
 // Protobuf repeated fields do not distinguish nil and empty slices.

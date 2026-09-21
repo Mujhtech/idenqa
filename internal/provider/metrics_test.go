@@ -17,6 +17,8 @@ type recordingProviderMetrics struct {
 	mu         sync.Mutex
 	dispatches []observability.ProviderDispatch
 	delays     []observability.ProviderCallbackDelay
+	health     []observability.ProviderHealth
+	throttles  []observability.ProviderThrottle
 }
 
 func (metrics *recordingProviderMetrics) RecordProviderDispatch(dispatch observability.ProviderDispatch) {
@@ -29,6 +31,18 @@ func (metrics *recordingProviderMetrics) RecordProviderCallbackDelay(delay obser
 	metrics.mu.Lock()
 	defer metrics.mu.Unlock()
 	metrics.delays = append(metrics.delays, delay)
+}
+
+func (metrics *recordingProviderMetrics) RecordProviderHealth(health observability.ProviderHealth) {
+	metrics.mu.Lock()
+	defer metrics.mu.Unlock()
+	metrics.health = append(metrics.health, health)
+}
+
+func (metrics *recordingProviderMetrics) RecordProviderThrottle(throttle observability.ProviderThrottle) {
+	metrics.mu.Lock()
+	defer metrics.mu.Unlock()
+	metrics.throttles = append(metrics.throttles, throttle)
 }
 
 func TestDurableExecutorRecordsOnlyBoundedProviderLabels(t *testing.T) {

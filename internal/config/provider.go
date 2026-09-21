@@ -7,9 +7,84 @@ import (
 	"io"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/Mujhtech/idenqa/internal/provider"
 )
+
+// ProviderHealthConfiguration is the additive bounded provider health and
+// circuit breaker policy shared by the API and worker processes.
+type ProviderHealthConfiguration struct {
+	ProviderHealthWindow          time.Duration `envconfig:"PROVIDER_HEALTH_WINDOW" default:"5m"`
+	ProviderHealthMinimumSamples  int64         `envconfig:"PROVIDER_HEALTH_MINIMUM_SAMPLES" default:"5"`
+	ProviderHealthDegradedRatio   float64       `envconfig:"PROVIDER_HEALTH_DEGRADED_FAILURE_RATIO" default:"0.2"`
+	ProviderHealthNotReadyRatio   float64       `envconfig:"PROVIDER_HEALTH_NOT_READY_FAILURE_RATIO" default:"0.5"`
+	ProviderHealthAsyncBacklog    int64         `envconfig:"PROVIDER_HEALTH_ASYNC_BACKLOG" default:"16"`
+	ProviderHealthStaleAfter      time.Duration `envconfig:"PROVIDER_HEALTH_STALE_AFTER" default:"15m"`
+	ProviderHealthCacheTTL        time.Duration `envconfig:"PROVIDER_HEALTH_CACHE_TTL" default:"10s"`
+	ProviderHealthProbeTimeout    time.Duration `envconfig:"PROVIDER_HEALTH_PROBE_TIMEOUT" default:"2s"`
+	ProviderBreakerWindow         time.Duration `envconfig:"PROVIDER_BREAKER_WINDOW" default:"1m"`
+	ProviderBreakerMinimumSamples int64         `envconfig:"PROVIDER_BREAKER_MINIMUM_SAMPLES" default:"4"`
+	ProviderBreakerFailureRatio   float64       `envconfig:"PROVIDER_BREAKER_FAILURE_RATIO" default:"0.5"`
+	ProviderBreakerOpenDuration   time.Duration `envconfig:"PROVIDER_BREAKER_OPEN_DURATION" default:"30s"`
+	ProviderBreakerHalfOpenProbes int64         `envconfig:"PROVIDER_BREAKER_HALF_OPEN_PROBES" default:"1"`
+}
+
+// ProviderHealthPolicy validates and projects the configured additive policy.
+// An entirely unset configuration (programmatic construction without the
+// documented defaults) yields the selected baseline policy; a partially set
+// configuration is still validated strictly.
+func (configuration ProviderHealthConfiguration) ProviderHealthPolicy() (provider.HealthPolicy, error) {
+	if configuration == (ProviderHealthConfiguration{}) {
+		return provider.DefaultHealthPolicy(), nil
+	}
+	policy := provider.HealthPolicy{
+		Window: configuration.ProviderHealthWindow, MinimumSamples: configuration.ProviderHealthMinimumSamples,
+		DegradedFailureRatio: configuration.ProviderHealthDegradedRatio, NotReadyFailureRatio: configuration.ProviderHealthNotReadyRatio,
+		AsyncBacklog: configuration.ProviderHealthAsyncBacklog, StaleAfter: configuration.ProviderHealthStaleAfter,
+		CacheTTL: configuration.ProviderHealthCacheTTL, ProbeTimeout: configuration.ProviderHealthProbeTimeout,
+		Breaker: provider.BreakerPolicy{
+			Window: configuration.ProviderBreakerWindow, MinimumSamples: configuration.ProviderBreakerMinimumSamples,
+			FailureRatio: configuration.ProviderBreakerFailureRatio, OpenDuration: configuration.ProviderBreakerOpenDuration,
+			HalfOpenProbes: configuration.ProviderBreakerHalfOpenProbes,
+		},
+	}
+	if policy.Validate() != nil || policy.Breaker.Validate() != nil {
+		return provider.HealthPolicy{}, provider.ErrHealthInvalid
+	}
+	return policy, nil
+}
+
+// ProviderLimitConfiguration is the additive bounded per-provider dispatch
+// admission policy shared by the API and worker processes. Defaults are
+// conservative; registrations cannot widen them.
+type ProviderLimitConfiguration struct {
+	ProviderMaxConcurrent int           `envconfig:"PROVIDER_MAX_CONCURRENT" default:"4"`
+	ProviderRateLimit     int64         `envconfig:"PROVIDER_RATE_LIMIT" default:"60"`
+	ProviderRatePeriod    time.Duration `envconfig:"PROVIDER_RATE_PERIOD" default:"1m"`
+	ProviderRateBurst     int64         `envconfig:"PROVIDER_RATE_BURST" default:"10"`
+	ProviderLeaseTTL      time.Duration `envconfig:"PROVIDER_LEASE_TTL" default:"10m"`
+}
+
+// DispatchLimit validates and projects the configured admission limit. An
+// entirely unset configuration (programmatic construction without the
+// documented defaults) yields the selected baseline limit.
+func (configuration ProviderLimitConfiguration) DispatchLimit() (provider.Limit, error) {
+	if configuration == (ProviderLimitConfiguration{}) {
+		return provider.DefaultLimit(), nil
+	}
+	limit := provider.Limit{
+		MaximumConcurrent: configuration.ProviderMaxConcurrent,
+		RateLimit:         configuration.ProviderRateLimit,
+		RatePeriod:        configuration.ProviderRatePeriod,
+		RateBurst:         configuration.ProviderRateBurst,
+		LeaseTTL:          configuration.ProviderLeaseTTL,
+	}
+	if limit.Validate() != nil {
+		return provider.Limit{}, provider.ErrLimitInvalid
+	}
+	return limit, nil
+}
 
 // ProviderRuntime is an explicitly mounted first-provider route and private transport.
 type ProviderRuntime struct {

@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strings"
 	"time"
+	"unicode"
 
 	providerv1 "github.com/Mujhtech/idenqa/contracts/provider/v1"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
@@ -66,13 +67,58 @@ type Registration struct {
 	UpdatedAt         time.Time                         `json:"updated_at"`
 }
 
+// CredentialRotation is one closed credential-reference rotation for a tenant
+// provider registration. It carries a new versioned secret reference and never
+// credential material. In-flight requests keep their persisted pin; subsequent
+// dispatches use the rotated version.
+type CredentialRotation struct {
+	SecretReference   string `json:"secret_reference"`
+	CredentialVersion string `json:"credential_version"`
+}
+
 // RegistrationCommand is one closed action on a tenant provider registration.
 type RegistrationCommand struct {
-	Operation       string             `json:"operation"`
-	RegistrationID  string             `json:"registration_id,omitempty"`
-	ExpectedVersion int64              `json:"expected_version"`
-	Write           *RegistrationWrite `json:"write,omitempty"`
-	Reason          string             `json:"reason"`
+	Operation       string              `json:"operation"`
+	RegistrationID  string              `json:"registration_id,omitempty"`
+	ExpectedVersion int64               `json:"expected_version"`
+	Write           *RegistrationWrite  `json:"write,omitempty"`
+	Credential      *CredentialRotation `json:"credential,omitempty"`
+	Reason          string              `json:"reason"`
+}
+
+// Validate checks one rotation and rejects credential-bearing or malformed
+// replacement references. The caller compares the replacement against the
+// locked current version.
+func (rotation CredentialRotation) Validate() error {
+	if !validReference(rotation.SecretReference) || !validCredentialVersion(rotation.CredentialVersion) {
+		return ErrRegistrationInvalid
+	}
+	return nil
+}
+
+// ChangedFrom reports whether the rotation advances the current reference or
+// version. A rotation to the identical pair is a no-op conflict.
+func (rotation CredentialRotation) ChangedFrom(current CredentialRotation) bool {
+	return rotation != current
+}
+
+func validReference(value string) bool {
+	if !strings.HasPrefix(value, "secret://") || len(value) < 10 || len(value) > 512 || strings.TrimSpace(value) != value {
+		return false
+	}
+	return !strings.ContainsFunc(value, unicode.IsControl)
+}
+
+func validCredentialVersion(value string) bool {
+	if value == "" || len(value) > 128 || strings.TrimSpace(value) != value {
+		return false
+	}
+	for _, character := range value {
+		if unicode.IsSpace(character) || unicode.IsControl(character) {
+			return false
+		}
+	}
+	return true
 }
 
 // RegistrationReceipt preserves the exact safe result and original actor.
@@ -109,17 +155,57 @@ type RegistrationHealthFailure struct {
 }
 
 // RegistrationHealth is a bounded read over the tenant's own provider request
-// and dispatch records for one registration. It is not an invented probe.
+// and dispatch records for one registration plus the derived rolling-window
+// readiness snapshot. It is not an invented probe.
 type RegistrationHealth struct {
-	RegistrationID string                     `json:"registration_id"`
-	AdapterID      string                     `json:"adapter_id"`
-	Requests       int64                      `json:"requests"`
-	Pending        int64                      `json:"pending_dispatches"`
-	Completed      int64                      `json:"completed_dispatches"`
-	Failed         int64                      `json:"failed_dispatches"`
-	LastOutcome    string                     `json:"last_outcome,omitempty"`
-	LastFailure    *RegistrationHealthFailure `json:"last_failure,omitempty"`
-	LastActivityAt *time.Time                 `json:"last_activity_at,omitempty"`
+	RegistrationID   string                     `json:"registration_id"`
+	AdapterID        string                     `json:"adapter_id"`
+	Requests         int64                      `json:"requests"`
+	Pending          int64                      `json:"pending_dispatches"`
+	Completed        int64                      `json:"completed_dispatches"`
+	Failed           int64                      `json:"failed_dispatches"`
+	LastOutcome      string                     `json:"last_outcome,omitempty"`
+	LastFailure      *RegistrationHealthFailure `json:"last_failure,omitempty"`
+	LastActivityAt   *time.Time                 `json:"last_activity_at,omitempty"`
+	State            HealthState                `json:"state"`
+	ReasonCode       string                     `json:"reason_code"`
+	ObservedAt       *time.Time                 `json:"observed_at,omitempty"`
+	WindowSeconds    int64                      `json:"window_seconds,omitempty"`
+	WindowCompleted  int64                      `json:"window_completed_dispatches,omitempty"`
+	WindowFailed     int64                      `json:"window_failed_dispatches,omitempty"`
+	FailureRatio     float64                    `json:"failure_ratio,omitempty"`
+	FailureClasses   []FailureClassCount        `json:"failure_classes,omitempty"`
+	AsyncUnresolved  int64                      `json:"async_unresolved_dispatches,omitempty"`
+	AsyncExpired     int64                      `json:"async_expired_dispatches,omitempty"`
+	CallbacksAdopted int64                      `json:"callbacks_adopted,omitempty"`
+	BreakerState     BreakerState               `json:"breaker_state,omitempty"`
+	BreakerSince     *time.Time                 `json:"breaker_since,omitempty"`
+	Stale            bool                       `json:"stale,omitempty"`
+	Continuity       bool                       `json:"continuity,omitempty"`
+}
+
+// ApplySnapshot merges one derived bounded health snapshot into the legacy
+// bounded read without changing its evidence meaning.
+func (health *RegistrationHealth) ApplySnapshot(snapshot HealthSnapshot) {
+	if health == nil {
+		return
+	}
+	health.State = HealthState(snapshot.State.Safe())
+	health.ReasonCode = snapshot.ReasonCode
+	observed := snapshot.ObservedAt.UTC()
+	health.ObservedAt = &observed
+	health.WindowSeconds = int64(snapshot.Window / time.Second)
+	health.WindowCompleted = snapshot.Completed
+	health.WindowFailed = snapshot.Failed
+	health.FailureRatio = snapshot.FailureRatio
+	health.FailureClasses = slices.Clone(snapshot.FailureClasses)
+	health.AsyncUnresolved = snapshot.AsyncUnresolved
+	health.AsyncExpired = snapshot.AsyncExpired
+	health.CallbacksAdopted = snapshot.CallbacksAdopted
+	health.BreakerState = snapshot.Breaker
+	health.BreakerSince = snapshot.BreakerSince
+	health.Stale = snapshot.Stale
+	health.Continuity = snapshot.Continuity
 }
 
 // FailureSimulation is the pure operational classification preview for one
@@ -290,6 +376,47 @@ func Selected(registrations []Registration, adapter, region string) (Registratio
 		return Registration{}, false
 	}
 	return matched, true
+}
+
+// HealthLookup returns the bounded readiness state for one candidate
+// registration. Unknown states are permitted and are never silently excluded.
+type HealthLookup func(Registration) HealthState
+
+// SelectHealthy selects one enabled registration for the exact adapter and
+// region, excluding not_ready registrations and preferring ready over degraded
+// ones. An empty region defers to Selected so health never switches a route
+// across regions. Ambiguity still returns false instead of silently broadening
+// the route.
+func SelectHealthy(registrations []Registration, adapter, region string, health HealthLookup) (Registration, bool) {
+	if health == nil || region == "" {
+		return Selected(registrations, adapter, region)
+	}
+	candidates := make([]Registration, 0, len(registrations))
+	for _, registration := range registrations {
+		if !registration.Enabled || registration.AdapterID != adapter || registration.Region != region {
+			continue
+		}
+		if health(registration).Safe() == string(HealthNotReady) {
+			continue
+		}
+		candidates = append(candidates, registration)
+	}
+	if len(candidates) == 0 {
+		return Registration{}, false
+	}
+	ready := make([]Registration, 0, len(candidates))
+	for _, registration := range candidates {
+		if health(registration).Safe() == string(HealthReady) {
+			ready = append(ready, registration)
+		}
+	}
+	if len(ready) > 0 {
+		candidates = ready
+	}
+	if len(candidates) != 1 {
+		return Registration{}, false
+	}
+	return candidates[0], true
 }
 
 // SimulateFailurePreview maps one bounded provider failure class to the owned

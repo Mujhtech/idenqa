@@ -1,6 +1,7 @@
 package provider_test
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -95,6 +96,36 @@ func TestRegistrationWriteValidation(t *testing.T) {
 			}
 			if !test.accept && (len(report.ReasonCodes) == 0 || report.ReasonCodes[0] == provider.RegistrationAccepted) {
 				t.Fatalf("rejected report = %v", report.ReasonCodes)
+			}
+		})
+	}
+}
+
+func TestCredentialRotationValidationIsClosedAndBounded(t *testing.T) {
+	t.Parallel()
+	current := provider.CredentialRotation{SecretReference: "secret://aws/prod/tenant/account", CredentialVersion: "v1"} //nolint:gosec // reference text, not secret material.
+	for _, test := range []struct {
+		name     string
+		rotation provider.CredentialRotation
+		valid    bool
+		changed  bool
+	}{
+		{name: "new version", rotation: provider.CredentialRotation{SecretReference: "secret://aws/prod/tenant/account", CredentialVersion: "v2"}, valid: true, changed: true},     //nolint:gosec // reference text, not secret material.
+		{name: "new reference", rotation: provider.CredentialRotation{SecretReference: "secret://aws/prod/tenant/account-2", CredentialVersion: "v1"}, valid: true, changed: true}, //nolint:gosec // reference text, not secret material.
+		{name: "unchanged", rotation: current, valid: true, changed: false},
+		{name: "inline credential", rotation: provider.CredentialRotation{SecretReference: "live-api-key", CredentialVersion: "v2"}, valid: false},
+		{name: "missing version", rotation: provider.CredentialRotation{SecretReference: "secret://aws/prod/tenant/account"}, valid: false},                                                //nolint:gosec // reference text, not secret material.
+		{name: "spaced version", rotation: provider.CredentialRotation{SecretReference: "secret://aws/prod/tenant/account", CredentialVersion: "v 2"}, valid: false},                       //nolint:gosec // reference text, not secret material.
+		{name: "oversized version", rotation: provider.CredentialRotation{SecretReference: "secret://aws/prod/tenant/account", CredentialVersion: strings.Repeat("v", 129)}, valid: false}, //nolint:gosec // reference text, not secret material.
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			err := test.rotation.Validate()
+			if (err == nil) != test.valid {
+				t.Fatalf("Validate() error = %v, valid = %v", err, test.valid)
+			}
+			if test.valid && test.rotation.ChangedFrom(current) != test.changed {
+				t.Fatalf("ChangedFrom() = %v, want %v", !test.changed, test.changed)
 			}
 		})
 	}

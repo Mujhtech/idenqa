@@ -453,7 +453,7 @@ func TestProviderRegistrationStoreLifecycleIsolationAndHealth(t *testing.T) {
 	if _, err := checkStore.SaveCheck(ctx, scope, verification.CheckCommit{Check: check, ExpectedVersion: 1, EventID: event}); err != nil {
 		t.Fatal(err)
 	}
-	body, err := json.Marshal(map[string]any{"configuration": map[string]any{"provider_id": updated.Registration.Configuration.ProviderID}, "adapter": map[string]any{"adapter_id": "dojah"}})
+	body, err := json.Marshal(map[string]any{"configuration": map[string]any{"provider_id": updated.Registration.Configuration.ProviderID, "credential_version": updated.Registration.Configuration.CredentialVersion}, "adapter": map[string]any{"adapter_id": "dojah"}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -462,6 +462,33 @@ func TestProviderRegistrationStoreLifecycleIsolationAndHealth(t *testing.T) {
 	}
 	if _, err := admin.Native().Exec(ctx, `INSERT INTO idenqa.provider_dispatches(tenant_id,attempt_id,request_digest,claimed_at) VALUES($1,$2,$3,$4)`, tenantID.String(), attemptID.String(), digest, now); err != nil {
 		t.Fatal(err)
+	}
+	// Credential rotation advances only the secret reference version, is
+	// version-checked, attributed and replayed exactly. In-flight requests keep
+	// the persisted version pin: the stored request body is immutable while the
+	// registration advances.
+	rotation := provider.CredentialRotation{SecretReference: updated.Registration.Configuration.SecretReference, CredentialVersion: "v2"}
+	rotated, err := service.Execute(ctx, actor, "rotate-key", provider.RegistrationCommand{Operation: "rotate-credential", RegistrationID: created.Registration.ID, ExpectedVersion: 3, Reason: "credential_rotation", Credential: &rotation})
+	if err != nil || rotated.Registration.Version != 4 || rotated.Registration.Configuration.CredentialVersion != "v2" {
+		t.Fatalf("rotate-credential = %+v, %v", rotated.Registration, err)
+	}
+	replayed, err := service.Execute(ctx, actor, "rotate-key", provider.RegistrationCommand{Operation: "rotate-credential", RegistrationID: created.Registration.ID, ExpectedVersion: 3, Reason: "credential_rotation", Credential: &rotation})
+	if err != nil || !replayed.Replayed || replayed.Registration.Version != 4 {
+		t.Fatalf("rotate-credential replay = %+v, %v", replayed, err)
+	}
+	if _, err := service.Execute(ctx, actor, "", provider.RegistrationCommand{Operation: "rotate-credential", RegistrationID: created.Registration.ID, ExpectedVersion: 3, Reason: "credential_rotation", Credential: &rotation}); !errors.Is(err, provider.ErrRegistrationConflict) {
+		t.Fatalf("stale rotate-credential = %v", err)
+	}
+	same := provider.CredentialRotation{SecretReference: rotation.SecretReference, CredentialVersion: "v2"}
+	if _, err := service.Execute(ctx, actor, "", provider.RegistrationCommand{Operation: "rotate-credential", RegistrationID: created.Registration.ID, ExpectedVersion: 4, Reason: "credential_rotation", Credential: &same}); !errors.Is(err, provider.ErrRegistrationConflict) {
+		t.Fatalf("no-op rotate-credential = %v", err)
+	}
+	var persistedVersion string
+	if err := admin.Native().QueryRow(ctx, `SELECT request_body->'configuration'->>'credential_version' FROM idenqa.provider_requests WHERE tenant_id=$1 AND attempt_id=$2`, tenantID.String(), attemptID.String()).Scan(&persistedVersion); err != nil {
+		t.Fatal(err)
+	}
+	if persistedVersion != "v1" {
+		t.Fatalf("persisted request credential version = %q, want the in-flight v1 pin", persistedVersion)
 	}
 	health, err := service.Health(ctx, actor, created.Registration.ID)
 	if err != nil {

@@ -359,6 +359,8 @@ func (TelemetryHeaders) MarshalJSON() ([]byte, error) { return json.Marshal("[RE
 
 // API is the configuration required by the public API process.
 type API struct {
+	ProviderHealthConfiguration
+	ProviderLimitConfiguration
 	ReviewAuthorityFile string `envconfig:"REVIEW_AUTHORITY_FILE"`
 	ProviderRuntimeFile string `envconfig:"PROVIDER_RUNTIME_FILE"`
 	ModelRuntimeFile    string `envconfig:"MODEL_RUNTIME_FILE"`
@@ -366,6 +368,14 @@ type API struct {
 	EvidenceLocalDirectory     string                `envconfig:"EVIDENCE_LOCAL_DIRECTORY"`
 	EvidenceLocalKeyringFile   string                `envconfig:"EVIDENCE_LOCAL_KEYRING_FILE"`
 	EvidenceProtectionCleanup  time.Duration         `envconfig:"EVIDENCE_PROTECTION_CLEANUP_TIMEOUT" default:"5s"`
+	KMSProvider                string                `envconfig:"KMS_PROVIDER" default:"local"`
+	KMSAWSKeyID                string                `envconfig:"KMS_AWS_KEY_ID"`
+	KMSAWSRegion               string                `envconfig:"KMS_AWS_REGION"`
+	KMSAWSMaxPlaintextBytes    int                   `envconfig:"KMS_AWS_MAX_PLAINTEXT_BYTES" default:"4096"`
+	SecretsProvider            string                `envconfig:"SECRETS_PROVIDER" default:"file"`
+	SecretsAWSRegion           string                `envconfig:"SECRETS_AWS_REGION"`
+	SecretsCacheTTL            time.Duration         `envconfig:"SECRETS_CACHE_TTL" default:"30s"`
+	SecretsReloadInterval      time.Duration         `envconfig:"SECRETS_RELOAD_INTERVAL" default:"5m"`
 	Environment                string                `envconfig:"ENVIRONMENT" default:"production"`
 	DatabaseURL                string                `envconfig:"DATABASE_URL"`
 	DatabaseAdminURL           string                `envconfig:"DATABASE_ADMIN_URL"`
@@ -476,6 +486,13 @@ func (configuration EvidenceUploadConfiguration) EvidenceUploadPolicy() (evidenc
 // distributions inject the same owned ports without setting these paths.
 func (configuration API) LocalEvidenceEnabled() bool {
 	return configuration.EvidenceLocalDirectory != "" && configuration.EvidenceLocalKeyringFile != ""
+}
+
+// EvidenceLocalObjectsEnabled reports whether the configured filesystem
+// ciphertext store should be composed. It is independent of the selected KMS
+// provider, so an AWS KMS keyring can protect locally stored ciphertext.
+func (configuration API) EvidenceLocalObjectsEnabled() bool {
+	return configuration.EvidenceLocalDirectory != ""
 }
 
 // LoadAPI loads an optional, explicitly named dotenv file and then processes
@@ -602,6 +619,9 @@ func (configuration API) validate(providerEvidence bool) error {
 	case "production", "development", "test":
 	default:
 		return errors.New("environment must be production, development, or test")
+	}
+	if _, err := configuration.ProviderHealthPolicy(); err != nil {
+		return errors.New("provider health policy is invalid")
 	}
 	if err := validateDatabaseURL(configuration.DatabaseURL); err != nil {
 		return err
@@ -739,9 +759,12 @@ func (configuration API) validate(providerEvidence bool) error {
 	if _, err := configuration.EvidenceUploadPolicy(); err != nil {
 		return err
 	}
-	if !providerEvidence &&
+	if !providerEvidence && configuration.KMSProvider == "local" &&
 		(configuration.EvidenceLocalDirectory == "") != (configuration.EvidenceLocalKeyringFile == "") {
 		return errors.New("local evidence directory and keyring file must be configured together")
+	}
+	if configuration.KMSProvider == "aws" && configuration.EvidenceLocalKeyringFile != "" {
+		return errors.New("AWS KMS provider must not configure a local evidence keyring file")
 	}
 	if (configuration.EvidenceLocalDirectory != "" &&
 		strings.TrimSpace(configuration.EvidenceLocalDirectory) != configuration.EvidenceLocalDirectory) ||
@@ -751,6 +774,9 @@ func (configuration API) validate(providerEvidence bool) error {
 	}
 	if configuration.EvidenceProtectionCleanup <= 0 {
 		return errors.New("evidence protection cleanup timeout must be greater than zero")
+	}
+	if err := configuration.validateKeys(); err != nil {
+		return err
 	}
 	if err := configuration.validateTelemetry(); err != nil {
 		return err
@@ -767,6 +793,52 @@ func (configuration API) validate(providerEvidence bool) error {
 	default:
 		return fmt.Errorf("log format %q is not supported", configuration.LogFormat)
 	}
+}
+
+// validateKeys fails closed on unknown, contradictory, or incomplete KMS and
+// secret-provider selection. The mounted local/file providers remain the
+// defaults, and selecting them rejects AWS settings instead of silently
+// ignoring them.
+func (configuration API) validateKeys() error {
+	switch configuration.KMSProvider {
+	case "local":
+		if configuration.KMSAWSKeyID != "" || configuration.KMSAWSRegion != "" {
+			return errors.New("local KMS provider must not configure AWS KMS settings")
+		}
+	case "aws":
+		if configuration.KMSAWSKeyID == "" || strings.TrimSpace(configuration.KMSAWSKeyID) != configuration.KMSAWSKeyID ||
+			len(configuration.KMSAWSKeyID) > 2048 {
+			return errors.New("AWS KMS provider requires a valid key identifier")
+		}
+		if !validDeploymentRegion(configuration.KMSAWSRegion) {
+			return errors.New("AWS KMS provider requires a lowercase region")
+		}
+	default:
+		return fmt.Errorf("KMS provider %q is not supported", configuration.KMSProvider)
+	}
+	if configuration.KMSAWSMaxPlaintextBytes < 1 || configuration.KMSAWSMaxPlaintextBytes > 4096 {
+		return errors.New("AWS KMS maximum plaintext bytes must be between 1 and 4096")
+	}
+	switch configuration.SecretsProvider {
+	case "file":
+		if configuration.SecretsAWSRegion != "" {
+			return errors.New("mounted-file secret provider must not configure AWS Secrets Manager settings")
+		}
+	case "aws":
+		if !validDeploymentRegion(configuration.SecretsAWSRegion) {
+			return errors.New("AWS Secrets Manager provider requires a lowercase region")
+		}
+	default:
+		return fmt.Errorf("secret provider %q is not supported", configuration.SecretsProvider)
+	}
+	if configuration.SecretsCacheTTL < 100*time.Millisecond || configuration.SecretsCacheTTL > time.Hour {
+		return errors.New("secret cache TTL must be between 100 milliseconds and one hour")
+	}
+	if configuration.SecretsReloadInterval < time.Second || configuration.SecretsReloadInterval > time.Hour {
+		return errors.New("secret reload interval must be between one second and one hour")
+	}
+
+	return nil
 }
 
 func validateNativeApplicationIDs(values []string) error {

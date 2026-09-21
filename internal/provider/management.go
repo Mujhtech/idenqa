@@ -27,6 +27,13 @@ type registrationIDs interface {
 	NewProviderRegistration() (id.ProviderRegistration, error)
 }
 
+// HealthView derives the bounded readiness snapshot for one registration. It is
+// owned by the consuming administration boundary and cached by its
+// implementation.
+type HealthView interface {
+	RegistrationHealth(context.Context, tenant.Scope, Registration) (HealthSnapshot, error)
+}
+
 // RegistrationManagement authorizes every registration operation, including
 // idempotent replay. Manifests are the configured deployment adapter
 // advertisements; a registration may only target one of them.
@@ -36,6 +43,7 @@ type RegistrationManagement struct {
 	now        func() time.Time
 	retention  time.Duration
 	manifests  map[string]providerv1.Manifest
+	health     HealthView
 }
 
 var registrationReason = regexp.MustCompile(`^[a-z][a-z0-9._-]{0,63}$`)
@@ -55,7 +63,7 @@ func NewRegistrationManagement(repository RegistrationRepository, ids registrati
 		}
 		validated[adapter] = manifest
 	}
-	return &RegistrationManagement{repository, ids, now, retention, validated}, nil
+	return &RegistrationManagement{repository: repository, ids: ids, now: now, retention: retention, manifests: validated}, nil
 }
 
 // Execute commits one version-checked registration command. Create is
@@ -68,12 +76,13 @@ func (service *RegistrationManagement) Execute(ctx context.Context, actor access
 		return RegistrationReceipt{}, err
 	}
 	canonical := struct {
-		Operation       string             `json:"operation"`
-		RegistrationID  string             `json:"registration_id,omitempty"`
-		ExpectedVersion int64              `json:"expected_version"`
-		Write           *RegistrationWrite `json:"write,omitempty"`
-		Reason          string             `json:"reason"`
-	}{command.Operation, command.RegistrationID, command.ExpectedVersion, command.Write, command.Reason}
+		Operation       string              `json:"operation"`
+		RegistrationID  string              `json:"registration_id,omitempty"`
+		ExpectedVersion int64               `json:"expected_version"`
+		Write           *RegistrationWrite  `json:"write,omitempty"`
+		Credential      *CredentialRotation `json:"credential,omitempty"`
+		Reason          string              `json:"reason"`
+	}{command.Operation, command.RegistrationID, command.ExpectedVersion, command.Write, command.Credential, command.Reason}
 	raw, err := json.Marshal(canonical)
 	if err != nil {
 		return RegistrationReceipt{}, ErrRegistrationInvalid
@@ -101,6 +110,15 @@ func (service *RegistrationManagement) Execute(ctx context.Context, actor access
 		command.RegistrationID = generated.String()
 	}
 	return service.repository.Apply(ctx, actor.TenantScope(), request, event, command)
+}
+
+// WithHealth attaches the bounded derived health view. Without it reads remain
+// available with an explicit unknown state and no invented probe.
+func (service *RegistrationManagement) WithHealth(health HealthView) *RegistrationManagement {
+	if service != nil && health != nil {
+		service.health = health
+	}
+	return service
 }
 
 // Get reads one authorized tenant registration.
@@ -139,7 +157,8 @@ func (service *RegistrationManagement) Validate(ctx context.Context, actor acces
 }
 
 // Health reads a bounded snapshot of the tenant's own dispatch records for one
-// registration. It never performs an external probe.
+// registration plus the cached derived readiness snapshot. It never performs an
+// external probe beyond the existing bounded runner health surface.
 func (service *RegistrationManagement) Health(ctx context.Context, actor access.Context, registrationID string) (RegistrationHealth, error) {
 	if err := actor.Require(access.PermissionProvidersRead); err != nil {
 		return RegistrationHealth{}, err
@@ -148,7 +167,23 @@ func (service *RegistrationManagement) Health(ctx context.Context, actor access.
 	if err != nil {
 		return RegistrationHealth{}, err
 	}
-	return service.repository.Health(ctx, actor.TenantScope(), registration)
+	health, err := service.repository.Health(ctx, actor.TenantScope(), registration)
+	if err != nil {
+		return RegistrationHealth{}, err
+	}
+	if service.health == nil {
+		health.State = HealthUnknown
+		health.ReasonCode = HealthReasonNoEvidence
+		observed := service.now().UTC()
+		health.ObservedAt = &observed
+		return health, nil
+	}
+	snapshot, err := service.health.RegistrationHealth(ctx, actor.TenantScope(), registration)
+	if err != nil {
+		return RegistrationHealth{}, err
+	}
+	health.ApplySnapshot(snapshot)
+	return health, nil
 }
 
 // SimulateFailure returns the pure owned operational classification preview for
@@ -195,11 +230,21 @@ func (service *RegistrationManagement) validateCommand(command RegistrationComma
 		}
 		return command.Write.Validate(manifest)
 	case "enable", "disable":
-		if command.ExpectedVersion < 1 || command.Write != nil {
+		if command.ExpectedVersion < 1 || command.Write != nil || command.Credential != nil {
 			return ErrRegistrationInvalid
 		}
 		_, err := id.ParseProviderRegistration(command.RegistrationID)
 		return err
+	case "rotate-credential":
+		if command.ExpectedVersion < 1 || command.Write != nil || command.Credential == nil {
+			return ErrRegistrationInvalid
+		}
+		if _, err := id.ParseProviderRegistration(command.RegistrationID); err != nil {
+			return ErrRegistrationInvalid
+		}
+		// The current version is re-checked under the registration lock; this
+		// pass only proves the replacement reference is closed and bounded.
+		return command.Credential.Validate()
 	default:
 		return ErrRegistrationInvalid
 	}

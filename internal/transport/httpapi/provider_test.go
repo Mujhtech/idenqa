@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -61,7 +62,26 @@ func (probe *providerRegistrationProbe) Health(context.Context, tenant.Scope, pr
 	return provider.RegistrationHealth{RegistrationID: probe.registration.ID, AdapterID: probe.registration.AdapterID}, nil
 }
 
+type providerHealthFixture struct {
+	state  provider.HealthState
+	reason string
+	err    error
+}
+
+func (health providerHealthFixture) RegistrationHealth(context.Context, tenant.Scope, provider.Registration) (provider.HealthSnapshot, error) {
+	if health.err != nil {
+		return provider.HealthSnapshot{}, health.err
+	}
+	return provider.HealthSnapshot{State: health.state, ReasonCode: health.reason, ObservedAt: time.Now().UTC(), Window: time.Minute,
+		Completed: 8, Failed: 2, FailureRatio: 0.2, Breaker: provider.BreakerClosed}, nil
+}
+
 func providerHandlerFixture(t *testing.T, probe *providerRegistrationProbe, patterns ...access.Pattern) (*httpAccessFixture, *ProviderRoutes) {
+	t.Helper()
+	return providerHandlerFixtureWithHealth(t, probe, nil, patterns...)
+}
+
+func providerHandlerFixtureWithHealth(t *testing.T, probe *providerRegistrationProbe, health provider.HealthView, patterns ...access.Pattern) (*httpAccessFixture, *ProviderRoutes) {
 	t.Helper()
 	fixture := newHTTPAccessFixture(t, nil, patterns...)
 	identifiers, err := id.NewSystemGenerator()
@@ -73,6 +93,7 @@ func providerHandlerFixture(t *testing.T, probe *providerRegistrationProbe, patt
 	if err != nil {
 		t.Fatal(err)
 	}
+	service.WithHealth(health)
 	keyring, err := cursor.NewKeyring(1, map[cursor.KeyVersion][]byte{1: bytes.Repeat([]byte{0x71}, 32)})
 	if err != nil {
 		t.Fatal(err)
@@ -139,6 +160,10 @@ func TestProviderRoutesRequireScopesAndClosedBodies(t *testing.T) {
 		{"update accepted", "providers:write", "PUT", "/v1/providers/pvr_01K4AR9V8FQ2G7ZXCPNM5T6JWH", `{"expected_version":1,"reason":"rotation","registration":` + string(writeBody) + `}`, "", 200, 1},
 		{"enable accepted", "providers:write", "POST", "/v1/providers/pvr_01K4AR9V8FQ2G7ZXCPNM5T6JWH/enable", `{"expected_version":1,"reason":"enable"}`, "", 200, 1},
 		{"disable accepted", "providers:write", "POST", "/v1/providers/pvr_01K4AR9V8FQ2G7ZXCPNM5T6JWH/disable", `{"expected_version":2,"reason":"disable"}`, "", 200, 1},
+		{"rotate requires write scope", "providers:read", "POST", "/v1/providers/pvr_01K4AR9V8FQ2G7ZXCPNM5T6JWH/rotate-credential", `{"expected_version":3,"reason":"rotation","credential":{"secret_reference":"secret://aws/prod/dojah/tenant","credential_version":"v2"}}`, "", 403, 0},
+		{"rotate accepted", "providers:write", "POST", "/v1/providers/pvr_01K4AR9V8FQ2G7ZXCPNM5T6JWH/rotate-credential", `{"expected_version":3,"reason":"rotation","credential":{"secret_reference":"secret://aws/prod/dojah/tenant","credential_version":"v2"}}`, "", 200, 1},
+		{"rotate rejects inline credential", "providers:write", "POST", "/v1/providers/pvr_01K4AR9V8FQ2G7ZXCPNM5T6JWH/rotate-credential", `{"expected_version":3,"reason":"rotation","credential":{"secret_reference":"live-api-key","credential_version":"v2"}}`, "", 400, 0},
+		{"rotate rejects unknown field", "providers:write", "POST", "/v1/providers/pvr_01K4AR9V8FQ2G7ZXCPNM5T6JWH/rotate-credential", `{"expected_version":3,"reason":"rotation","credential":{"secret_reference":"secret://aws/prod/dojah/tenant","credential_version":"v2"},"extra":true}`, "", 400, 0},
 		{"validate is write-scoped", "providers:read", "POST", "/v1/providers/pvr_01K4AR9V8FQ2G7ZXCPNM5T6JWH/validate", string(writeBody), "", 403, 0},
 		{"validate accepted", "providers:write", "POST", "/v1/providers/pvr_01K4AR9V8FQ2G7ZXCPNM5T6JWH/validate", string(writeBody), "", 200, 0},
 		{"validate rejects secret material", "providers:write", "POST", "/v1/providers/pvr_01K4AR9V8FQ2G7ZXCPNM5T6JWH/validate", strings.Replace(string(writeBody), `"v1"`, `"my_api_key"`, 1), "", 200, 0},
@@ -185,6 +210,30 @@ func TestProviderRoutesNotFoundAndConflict(t *testing.T) {
 				t.Fatalf("status=%d body=%s", response.Code, response.Body.String())
 			}
 		})
+	}
+}
+
+func TestProviderHealthRouteReturnsDerivedState(t *testing.T) {
+	probe := &providerRegistrationProbe{registration: provider.Registration{ID: "pvr_01K4AR9V8FQ2G7ZXCPNM5T6JWH", AdapterID: "dojah", Region: "africa", Version: 1}}
+	fixture, routes := providerHandlerFixtureWithHealth(t, probe, providerHealthFixture{state: provider.HealthDegraded, reason: provider.HealthReasonElevatedFailures}, "providers:read")
+	router := versionedRouter(t, routes)
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, providerRequest(t, fixture, "GET", "/v1/providers/pvr_01K4AR9V8FQ2G7ZXCPNM5T6JWH/health", "", ""))
+	if response.Code != 200 {
+		t.Fatalf("status=%d body=%s", response.Code, response.Body.String())
+	}
+	for _, want := range []string{`"state":"degraded"`, `"reason_code":"elevated_failure_ratio"`, `"completed_dispatches":0`,
+		`"window_completed_dispatches":8`, `"window_failed_dispatches":2`, `"failure_ratio":0.2`, `"breaker_state":"closed"`, `"adapter_id":"dojah"`} {
+		if !strings.Contains(response.Body.String(), want) {
+			t.Fatalf("health response missing %s: %s", want, response.Body.String())
+		}
+	}
+	failing, failingRoutes := providerHandlerFixtureWithHealth(t, probe, providerHealthFixture{err: errors.New("health storage unavailable")}, "providers:read")
+	failingRouter := versionedRouter(t, failingRoutes)
+	failingResponse := httptest.NewRecorder()
+	failingRouter.ServeHTTP(failingResponse, providerRequest(t, failing, "GET", "/v1/providers/pvr_01K4AR9V8FQ2G7ZXCPNM5T6JWH/health", "", ""))
+	if failingResponse.Code != 500 {
+		t.Fatalf("failing health status=%d body=%s", failingResponse.Code, failingResponse.Body.String())
 	}
 }
 

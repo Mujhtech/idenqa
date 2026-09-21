@@ -24,12 +24,20 @@ type RegistrationSource interface {
 	Enabled(context.Context, id.Tenant, string, string) ([]provider.Registration, error)
 }
 
+// RegistrationHealthSource derives the bounded readiness snapshot for one
+// registration. It is owned by the consuming composition boundary and
+// implemented by the cached provider health service.
+type RegistrationHealthSource interface {
+	RegistrationHealth(context.Context, tenant.Scope, provider.Registration) (provider.HealthSnapshot, error)
+}
+
 // registrationRoute carries everything needed to re-derive the exact
 // tenant-selected provider plan without mutating shared composition state.
 // The registration list yields zero or one enabled row per (tenant, adapter,
 // region); no evidence or credential value ever enters this decision.
 type registrationRoute struct {
 	source      RegistrationSource
+	health      RegistrationHealthSource
 	manifest    providerv1.Manifest
 	template    provider.Binding
 	deployment  *provider.Plan
@@ -39,16 +47,17 @@ type registrationRoute struct {
 // plan selects the tenant registration for the exact adapter and deployment
 // region. PlanInput carries tenant, policy and immutable profile only; the
 // adapter and region come from the candidate deployment route, which is the
-// strongest context the input proves. When no enabled registration matches,
-// the deployment route remains the fallback.
+// strongest context the input proves. A not_ready registration is excluded so
+// the deployment route remains the fallback; a registration that cannot compose
+// an exact plan still fails closed instead of being silently bypassed.
 func (route *registrationRoute) plan(ctx context.Context, input verification.PlanInput) (*provider.Plan, error) {
 	registrations, err := route.source.Enabled(ctx, input.TenantID, route.manifest.Package.AdapterID, route.template.Region)
 	if err != nil {
 		return nil, err
 	}
-	registration, ok := provider.Selected(registrations, route.manifest.Package.AdapterID, route.template.Region)
-	if !ok {
-		return nil, nil
+	registration, ok, err := route.selectRegistration(ctx, input, registrations)
+	if err != nil || !ok {
+		return nil, err
 	}
 	plan, err := provider.NewRegisteredPlan(registration, route.template, route.manifest)
 	if err != nil {
@@ -57,6 +66,36 @@ func (route *registrationRoute) plan(ctx context.Context, input verification.Pla
 		return nil, verification.ErrPlanUnavailable
 	}
 	return plan, nil
+}
+
+// selectRegistration applies the bounded readiness states for the exact adapter
+// and region. Without a health source it preserves the single-enabled
+// registration rule; with one it excludes not_ready candidates and prefers
+// ready over degraded ones. Health never broadens the route to another region.
+func (route *registrationRoute) selectRegistration(ctx context.Context, input verification.PlanInput, registrations []provider.Registration) (provider.Registration, bool, error) {
+	if route.health == nil {
+		registration, ok := provider.Selected(registrations, route.manifest.Package.AdapterID, route.template.Region)
+		return registration, ok, nil
+	}
+	scope, err := tenant.NewScope(input.TenantID)
+	if err != nil {
+		return provider.Registration{}, false, err
+	}
+	states := map[string]provider.HealthState{}
+	for _, registration := range registrations {
+		if !registration.Enabled || registration.AdapterID != route.manifest.Package.AdapterID || registration.Region != route.template.Region {
+			continue
+		}
+		snapshot, err := route.health.RegistrationHealth(ctx, scope, registration)
+		if err != nil {
+			return provider.Registration{}, false, err
+		}
+		states[registration.ID] = snapshot.State
+	}
+	registration, ok := provider.SelectHealthy(registrations, route.manifest.Package.AdapterID, route.template.Region, func(registration provider.Registration) provider.HealthState {
+		return states[registration.ID]
+	})
+	return registration, ok, nil
 }
 
 // selectPlan re-derives the plan that produced one already-pinned check

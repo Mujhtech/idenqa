@@ -17,6 +17,7 @@ var providerReason = regexp.MustCompile(`^[a-z][a-z0-9._-]{0,63}$`)
 
 type providerOptions struct {
 	apiURL, keyFile, bodyFile, idempotencyKey, reason, cursor string
+	secretReference, credentialVersion                        string
 	expectedVersion                                           int64
 	limit                                                     int
 }
@@ -37,6 +38,7 @@ func newProviderCommand() *cobra.Command {
 	for _, operation := range []string{"enable", "disable"} {
 		root.AddCommand(newProviderToggleCommand(operation))
 	}
+	root.AddCommand(newProviderRotateCredentialCommand())
 	root.AddCommand(newProviderSimulateCommand())
 	return root
 }
@@ -152,6 +154,47 @@ func newProviderUpdateCommand() *cobra.Command {
 	command.Flags().StringVar(&options.bodyFile, "body-file", "", "bounded secret-free registration body file, or - for stdin")
 	command.Flags().StringVar(&options.reason, "reason", "", "bounded attribution reason token")
 	command.Flags().Int64Var(&options.expectedVersion, "expected-version", 0, "current registration version")
+	return command
+}
+
+func newProviderRotateCredentialCommand() *cobra.Command {
+	options := &providerOptions{}
+	command := &cobra.Command{
+		Use:   "rotate-credential <providerID>",
+		Short: "Rotate a provider registration credential reference version",
+		Args:  cli.UsageArgs(cobra.ExactArgs(1)),
+		RunE: func(command *cobra.Command, args []string) error {
+			if _, err := id.ParseProviderRegistration(args[0]); err != nil {
+				return cli.UsageError(errors.New("a valid provider registration id is required"))
+			}
+			if options.expectedVersion < 1 {
+				return cli.UsageError(errors.New("expected-version must be positive"))
+			}
+			if !providerReason.MatchString(options.reason) {
+				return cli.UsageError(errors.New("reason must be a bounded lowercase token"))
+			}
+			if options.secretReference == "" || options.credentialVersion == "" {
+				return cli.UsageError(errors.New("secret-reference and credential-version are required"))
+			}
+			body := struct {
+				ExpectedVersion int64  `json:"expected_version"`
+				Reason          string `json:"reason"`
+				Credential      struct {
+					SecretReference   string `json:"secret_reference"`
+					CredentialVersion string `json:"credential_version"`
+				} `json:"credential"`
+			}{options.expectedVersion, options.reason, struct {
+				SecretReference   string `json:"secret_reference"`
+				CredentialVersion string `json:"credential_version"`
+			}{options.secretReference, options.credentialVersion}}
+			return runProviderHTTP(command, options, reviewRequest{method: http.MethodPost, path: "/v1/providers/" + args[0] + "/rotate-credential", body: body})
+		},
+	}
+	addProviderCommonFlags(command, options)
+	command.Flags().Int64Var(&options.expectedVersion, "expected-version", 0, "current registration version")
+	command.Flags().StringVar(&options.reason, "reason", "", "bounded attribution reason token")
+	command.Flags().StringVar(&options.secretReference, "secret-reference", "", "new secret:// credential reference")
+	command.Flags().StringVar(&options.credentialVersion, "credential-version", "", "new opaque credential version")
 	return command
 }
 
