@@ -11,6 +11,12 @@ public enum IdenqaError: Error, Equatable, Sendable {
     case cameraUnavailable
     case captureQuality
     case captureTimeout
+    case notStarted
+    case notFound
+    case unauthenticated
+    case networkUnavailable
+    case temporaryStorage
+    case noCompatibleMethod
 }
 
 public protocol CaptureTokenStore: Sendable {
@@ -29,6 +35,15 @@ public struct CapturedArtifact: Sendable {
         self.contentType = contentType
         self.acquisitionMethod = acquisitionMethod
     }
+}
+
+extension CapturedArtifact: CustomStringConvertible, CustomDebugStringConvertible {
+    /// Evidence bytes never appear in descriptions, logs, or crash reports.
+    public var description: String {
+        "CapturedArtifact(contentType: \(contentType), acquisitionMethod: \(acquisitionMethod), bytes: <redacted>)"
+    }
+
+    public var debugDescription: String { description }
 }
 
 public enum CaptureCamera: String, Codable, Sendable {

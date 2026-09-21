@@ -19,7 +19,15 @@ import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 
 data class TransportRequest(val method: String, val uri: URI, val headers: Map<String, String>, val body: ByteArray?)
-data class TransportResponse(val status: Int, val body: ByteArray)
+
+data class TransportResponse(
+    val status: Int,
+    val body: ByteArray,
+    val headers: Map<String, String> = emptyMap(),
+) {
+    /** Case-insensitive header lookup. Stored names are lowercased. */
+    fun header(name: String): String? = headers[name.lowercase()]
+}
 
 interface HttpTransport { suspend fun send(request: TransportRequest): TransportResponse }
 
@@ -37,7 +45,8 @@ class OkHttpTransport(private val client: OkHttpClient = OkHttpClient()) : HttpT
             }
             override fun onResponse(call: Call, response: Response) {
                 response.use {
-                    if (continuation.isActive) continuation.resume(TransportResponse(it.code, it.body.bytes()))
+                    val headers = it.headers.names().associate { name -> name.lowercase() to (it.header(name) ?: "") }
+                    if (continuation.isActive) continuation.resume(TransportResponse(it.code, it.body.bytes(), headers))
                 }
             }
         })

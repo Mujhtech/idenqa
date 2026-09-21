@@ -7,6 +7,16 @@ import Security
 public protocol NativeProofKey: Sendable {
     func publicKey() async throws -> Data
     func sign(_ message: Data) async throws -> Data
+    /// Destroys the hardware-backed proof key. The default is a no-op for
+    /// non-exportable keys the SDK cannot delete.
+    func clear() async
+    /// Reports whether the proof key no longer exists. The default is `true`.
+    func isCleared() async -> Bool
+}
+
+extension NativeProofKey {
+    public func clear() async {}
+    public func isCleared() async -> Bool { true }
 }
 
 public protocol NativeAttestationProvider: Sendable {
@@ -90,6 +100,26 @@ public actor SecureEnclaveP256ProofKey: NativeProofKey {
 
     public func sign(_ message: Data) throws -> Data {
         try load().signature(for: message).derRepresentation
+    }
+
+    public func clear() {
+        key = nil
+        SecItemDelete([
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: tag,
+            kSecAttrAccount as String: "p256-signing-key",
+        ] as CFDictionary)
+    }
+
+    public func isCleared() -> Bool {
+        let status = SecItemCopyMatching([
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: tag,
+            kSecAttrAccount as String: "p256-signing-key",
+            kSecReturnData as String: false,
+            kSecMatchLimit as String: kSecMatchLimitOne,
+        ] as CFDictionary, nil)
+        return status == errSecItemNotFound
     }
 
     private func load() throws -> SecureEnclave.P256.Signing.PrivateKey {

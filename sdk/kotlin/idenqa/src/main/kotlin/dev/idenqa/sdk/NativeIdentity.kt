@@ -17,6 +17,12 @@ import java.util.Base64
 interface NativeProofKey {
     suspend fun publicKey(): ByteArray
     suspend fun sign(message: ByteArray): ByteArray
+
+    /** Destroys the hardware-backed proof key. No-op for keys the SDK cannot delete. */
+    suspend fun clear() {}
+
+    /** Reports whether the proof key no longer exists. */
+    suspend fun isCleared(): Boolean = true
 }
 
 fun interface NativeAttestationProvider { suspend fun attestation(): String? }
@@ -31,6 +37,20 @@ class AndroidP256ProofKey(private val alias: String = "dev.idenqa.native-proof.v
         signature.initSign(pair().privateKey)
         signature.update(message)
         return signature.sign()
+    }
+
+    override suspend fun clear() {
+        try {
+            KeyStore.getInstance("AndroidKeyStore").apply { load(null) }.deleteEntry(alias)
+        } catch (_: Exception) {
+            // An absent key is already cleared.
+        }
+    }
+
+    override suspend fun isCleared(): Boolean = try {
+        !KeyStore.getInstance("AndroidKeyStore").apply { load(null) }.containsAlias(alias)
+    } catch (_: Exception) {
+        true
     }
 
     private fun pair(): KeyStore.PrivateKeyEntry {

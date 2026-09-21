@@ -12,7 +12,19 @@ public struct TransportRequest: Sendable {
 
 public struct TransportResponse: Sendable {
     public let status: Int
+    public let headers: [String: String]
     public let body: Data
+
+    public init(status: Int, headers: [String: String] = [:], body: Data) {
+        self.status = status
+        self.headers = headers
+        self.body = body
+    }
+
+    /// Case-insensitive header lookup. Stored names are lowercased.
+    public func header(_ name: String) -> String? {
+        headers[name.lowercased()]
+    }
 }
 
 public protocol HTTPTransport: Sendable {
@@ -32,7 +44,13 @@ public struct URLSessionTransport: HTTPTransport {
         for (name, header) in request.headers { value.setValue(header, forHTTPHeaderField: name) }
         let (body, response) = try await session.data(for: value)
         guard let http = response as? HTTPURLResponse else { throw IdenqaError.invalidResponse }
-        return TransportResponse(status: http.statusCode, body: body)
+        var headers: [String: String] = [:]
+        for (name, header) in http.allHeaderFields {
+            if let name = name as? String, let value = header as? String {
+                headers[name.lowercased()] = value
+            }
+        }
+        return TransportResponse(status: http.statusCode, headers: headers, body: body)
     }
 }
 

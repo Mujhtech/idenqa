@@ -10,11 +10,12 @@ import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
-class AndroidKeyStoreCaptureTokenStore(
+/** Android Keystore AES-GCM encrypted preference item shared by the SDK stores. */
+internal class AndroidEncryptedStringStore(
     context: Context,
-    private val alias: String = "dev.idenqa.capture-token.v1",
-    preferencesName: String = "dev.idenqa.capture.secure",
-) : CaptureTokenStore {
+    private val preferencesName: String,
+    private val alias: String,
+) {
     private val preferences = context.applicationContext.getSharedPreferences(preferencesName, Context.MODE_PRIVATE)
     private val lock = Any()
 
@@ -22,7 +23,7 @@ class AndroidKeyStoreCaptureTokenStore(
         if (alias.isBlank() || preferencesName.isBlank()) throw IdenqaException.InvalidConfiguration
     }
 
-    override suspend fun read(): String? = synchronized(lock) {
+    fun read(): String? = synchronized(lock) {
         val encoded = preferences.getString(alias, null) ?: return@synchronized null
         try {
             val value = Base64.decode(encoded, Base64.NO_WRAP)
@@ -37,7 +38,7 @@ class AndroidKeyStoreCaptureTokenStore(
         }
     }
 
-    override suspend fun write(token: String) = synchronized(lock) {
+    fun write(token: String) = synchronized(lock) {
         if (token.isBlank()) throw IdenqaException.InvalidConfiguration
         try {
             val cipher = Cipher.getInstance("AES/GCM/NoPadding")
@@ -53,9 +54,11 @@ class AndroidKeyStoreCaptureTokenStore(
         }
     }
 
-    override suspend fun clear() = synchronized(lock) {
+    fun clear() = synchronized(lock) {
         if (!preferences.edit().remove(alias).commit()) throw IdenqaException.SecureStorage
     }
+
+    fun exists(): Boolean = synchronized(lock) { preferences.contains(alias) }
 
     private fun key(): SecretKey {
         val store = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
@@ -71,4 +74,44 @@ class AndroidKeyStoreCaptureTokenStore(
         )
         return generator.generateKey()
     }
+}
+
+class AndroidKeyStoreCaptureTokenStore(
+    context: Context,
+    private val alias: String = "dev.idenqa.capture-token.v1",
+    preferencesName: String = "dev.idenqa.capture.secure",
+) : CaptureTokenStore {
+    private val item = AndroidEncryptedStringStore(context, preferencesName, alias)
+
+    override suspend fun read(): String? = item.read()
+    override suspend fun write(token: String) = item.write(token)
+    override suspend fun clear() = item.clear()
+}
+
+/** Keystore-backed minimum-reference journey store. Never stores evidence bytes, notice copy, or subject data. */
+class AndroidKeyStoreCaptureJourneyStore(
+    context: Context,
+    alias: String = "dev.idenqa.capture-journey.v1",
+    preferencesName: String = "dev.idenqa.capture.secure",
+) : CaptureJourneyStore {
+    private val item = AndroidEncryptedStringStore(context, preferencesName, alias)
+
+    init {
+        if (alias == "dev.idenqa.capture-token.v1") throw IdenqaException.InvalidConfiguration
+    }
+
+    override suspend fun read(): CaptureJourneyReference? {
+        val encoded = item.read() ?: return null
+        return try {
+            JourneyJson.decodeJourneyReference(encoded)
+        } catch (_: Exception) {
+            throw IdenqaException.SecureStorage
+        }
+    }
+
+    override suspend fun write(reference: CaptureJourneyReference) {
+        item.write(JourneyJson.encodeJourneyReference(reference))
+    }
+
+    override suspend fun clear() = item.clear()
 }

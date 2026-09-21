@@ -12,6 +12,12 @@ sealed class IdenqaException(message: String) : Exception(message) {
     data object CameraUnavailable : IdenqaException("camera unavailable")
     data object CaptureQuality : IdenqaException("capture quality rejected")
     data object CaptureTimeout : IdenqaException("capture timed out")
+    data object NotStarted : IdenqaException("capture journey has not been started")
+    data object NotFound : IdenqaException("resource not found")
+    data object Unauthenticated : IdenqaException("capture credential rejected")
+    data object NetworkUnavailable : IdenqaException("network unavailable")
+    data object TemporaryStorage : IdenqaException("temporary storage failure")
+    data object NoCompatibleMethod : IdenqaException("no compatible capture method")
 }
 
 interface CaptureTokenStore {
@@ -23,6 +29,10 @@ interface CaptureTokenStore {
 class CapturedArtifact(bytes: ByteArray, val contentType: String, val acquisitionMethod: String) {
     private val content = bytes.copyOf()
     fun bytes(): ByteArray = content.copyOf()
+
+    /** Evidence bytes never appear in descriptions, logs, or crash reports. */
+    override fun toString(): String =
+        "CapturedArtifact(contentType=$contentType, acquisitionMethod=$acquisitionMethod, bytes=<redacted>)"
 }
 
 enum class CaptureCamera { FRONT, BACK }

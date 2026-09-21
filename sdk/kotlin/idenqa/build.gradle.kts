@@ -17,7 +17,7 @@ dependencies {
     api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
     implementation("com.squareup.okhttp3:okhttp:5.5.0")
     implementation("com.squareup.moshi:moshi:1.15.2")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:2.4.20")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:2.3.21")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
 }
 
