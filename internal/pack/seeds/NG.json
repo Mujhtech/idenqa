@@ -1,0 +1,114 @@
+{
+  "schema_major": 1,
+  "schema_minor": 0,
+  "country": "NG",
+  "country_alpha3": "NGA",
+  "authority": "idenqa.requirement.authority",
+  "revision": 1,
+  "published_at": "2026-09-20T00:00:00Z",
+  "digest": "d1d3314aea43c77d1f1a66e9e73451138ac1e73c227e0ae6ce9d2652b4f87c7e",
+  "lifecycle_state": "active",
+  "legal_review": { "state": "not_reviewed" },
+  "requirement_slots": [
+    { "name": "authority", "key": "idenqa.requirement.authority" },
+    { "name": "controller", "key": "idenqa.requirement.controller" },
+    { "name": "processor", "key": "idenqa.requirement.processor" },
+    { "name": "recipient", "key": "idenqa.requirement.recipient" },
+    { "name": "region", "key": "idenqa.requirement.region" },
+    { "name": "transfer", "key": "idenqa.requirement.transfer" }
+  ],
+  "documents": [
+    {
+      "type": "driver_licence",
+      "known_versions": [],
+      "required_sides": [],
+      "supported_fields": [],
+      "security_checks": [],
+      "barcode": {
+        "state": "unknown",
+        "formats": [],
+        "reason": "public_structural_source_not_cited"
+      },
+      "mrz": { "state": "unknown", "formats": [], "reason": "public_structural_source_not_cited" },
+      "nfc": { "state": "unknown", "formats": [], "reason": "public_structural_source_not_cited" },
+      "model_and_parser_requirements": [],
+      "evaluation_coverage": { "state": "not_evaluated", "references": [] },
+      "support_level": "unsupported",
+      "known_limitations": [
+        "no_legal_review",
+        "no_provider_evaluation",
+        "pending_public_structural_source"
+      ],
+      "evidence": [],
+      "assurance_mappings": [
+        { "state": "not_mapped", "reason": "no_pack_specific_assurance_profile" }
+      ]
+    },
+    {
+      "type": "national_id",
+      "known_versions": [],
+      "required_sides": [],
+      "supported_fields": [],
+      "security_checks": [],
+      "barcode": {
+        "state": "unknown",
+        "formats": [],
+        "reason": "public_structural_source_not_cited"
+      },
+      "mrz": { "state": "unknown", "formats": [], "reason": "public_structural_source_not_cited" },
+      "nfc": { "state": "unknown", "formats": [], "reason": "public_structural_source_not_cited" },
+      "model_and_parser_requirements": [],
+      "evaluation_coverage": { "state": "not_evaluated", "references": [] },
+      "support_level": "unsupported",
+      "known_limitations": [
+        "no_legal_review",
+        "no_provider_evaluation",
+        "pending_public_structural_source"
+      ],
+      "evidence": [],
+      "assurance_mappings": [
+        { "state": "not_mapped", "reason": "no_pack_specific_assurance_profile" }
+      ]
+    },
+    {
+      "type": "passport",
+      "known_versions": [
+        { "version": "icao-9303-td3", "reference": "ICAO Doc 9303 Part 4, seventh edition (2015)" }
+      ],
+      "required_sides": ["front"],
+      "supported_fields": [
+        "date_of_birth",
+        "date_of_expiry",
+        "document_number",
+        "document_type",
+        "first_name",
+        "issuing_state",
+        "last_name",
+        "nationality",
+        "personal_number",
+        "sex"
+      ],
+      "security_checks": [],
+      "barcode": { "state": "unknown", "formats": [], "reason": "no_public_structural_source" },
+      "mrz": { "state": "supported", "formats": ["td3"], "reference": "ICAO Doc 9303 Part 4" },
+      "nfc": { "state": "unknown", "formats": [], "reason": "nfc_not_implemented" },
+      "model_and_parser_requirements": [
+        { "kind": "parser", "reference": "idenqa.document.mrz", "version": "v1" }
+      ],
+      "evaluation_coverage": { "state": "not_evaluated", "references": [] },
+      "support_level": "structurally_supported",
+      "known_limitations": [
+        "document_authenticity_provider_gated",
+        "no_legal_review",
+        "no_provider_evaluation",
+        "portrait_extraction_unavailable",
+        "security_features_not_inspected",
+        "template_inspection_unavailable"
+      ],
+      "evidence": ["core_mrz_parser_v1", "icao_9303_td3_structure"],
+      "assurance_mappings": [
+        { "state": "not_mapped", "reason": "no_pack_specific_assurance_profile" }
+      ]
+    }
+  ]
+}
