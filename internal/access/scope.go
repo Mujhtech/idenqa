@@ -43,6 +43,15 @@ const (
 	PermissionModelsActivate Permission = "models:activate"
 	// PermissionPoliciesRead permits policy catalog and source inspection.
 	PermissionPoliciesRead Permission = "policies:read"
+	// PermissionPacksRead permits reading immutable country, document, and
+	// support-level pack projections.
+	PermissionPacksRead Permission = "packs:read"
+	// PermissionExperiencesRead permits reading portable capture experiences.
+	PermissionExperiencesRead Permission = "experiences:read"
+	// PermissionExperiencesWrite permits creating and editing experience drafts.
+	PermissionExperiencesWrite Permission = "experiences:write"
+	// PermissionExperiencesPublish permits approval, publication, revocation, and rollback.
+	PermissionExperiencesPublish Permission = "experiences:publish"
 	// PermissionPoliciesWrite permits immutable revision creation and validation.
 	PermissionPoliciesWrite Permission = "policies:write"
 	// PermissionPoliciesActivate permits version-checked activation and rollback.
@@ -89,6 +98,12 @@ const (
 	PermissionReviewsAdmin Permission = "reviews:admin"
 	// PermissionAppealsWrite permits attributed appeal actions.
 	PermissionAppealsWrite Permission = "appeals:write"
+	// PermissionPrivacyRequestsRead permits reading tenant privacy requests, restrictions, disclosures, and processor inventory.
+	PermissionPrivacyRequestsRead Permission = "privacy_requests:read"
+	// PermissionPrivacyRequestsWrite permits creating requests, disclosures, and processor inventory entries.
+	PermissionPrivacyRequestsWrite Permission = "privacy_requests:write"
+	// PermissionPrivacyRequestsApprove permits deciding, executing, and lifting requests.
+	PermissionPrivacyRequestsApprove Permission = "privacy_requests:approve"
 	// PermissionDeletionsRead permits reading tenant deletion workflows and retention resolutions.
 	PermissionDeletionsRead Permission = "deletions:read"
 	// PermissionDeletionsWrite permits observable tenant deletion workflows.
@@ -189,12 +204,19 @@ func TenantRegistry() Registry {
 		PermissionCaptureProfilesWrite,
 		PermissionDecisionsExport,
 		PermissionDecisionsRead,
+		PermissionPrivacyRequestsRead,
+		PermissionPrivacyRequestsWrite,
+		PermissionPrivacyRequestsApprove,
 		PermissionDeletionsRead,
 		PermissionDeletionsWrite,
 		PermissionLegalHoldsWrite,
 		PermissionAppealsWrite,
 		PermissionNoticesRead,
 		PermissionNoticesWrite,
+		PermissionPacksRead,
+		PermissionExperiencesRead,
+		PermissionExperiencesWrite,
+		PermissionExperiencesPublish,
 		PermissionReviewsRead,
 		PermissionReviewsWrite,
 		PermissionReviewsAdmin,

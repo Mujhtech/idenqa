@@ -197,3 +197,36 @@ export type {
   ModeConfig,
   Prompt,
 } from "./proposals.js";
+
+export {
+  ExperienceContractError,
+  EXPERIENCE_LIMITS,
+  EXPERIENCE_SCHEMA_VERSION,
+  EXPERIENCE_SIGNATURE_ALGORITHM,
+  canonicalExperienceBytes,
+  experienceDigest,
+  isExperienceDocument,
+  validateExperienceDocument,
+  validateExperienceManifest,
+  validateExperienceResolution,
+  verifyExperienceManifest,
+} from "./experience.js";
+export type {
+  ExperienceAsset,
+  ExperienceAssetMIME,
+  ExperienceCopy,
+  ExperienceCopyEntry,
+  ExperienceCustomLink,
+  ExperienceDocument,
+  ExperienceID,
+  ExperienceLinks,
+  ExperienceLocaleCopy,
+  ExperienceManifest,
+  ExperienceMandatoryCopy,
+  ExperiencePinned,
+  ExperiencePinSource,
+  ExperienceRequestOptions,
+  ExperienceResolution,
+  ExperienceTarget,
+  ExperienceTheme,
+} from "./experience.js";

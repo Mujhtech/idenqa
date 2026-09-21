@@ -308,6 +308,27 @@ func (e CaptureProfileValidationValid) Valid() bool {
 	}
 }
 
+// Defines values for CaptureProgressExperienceSource.
+const (
+	CaptureProgressExperienceSourceDefault   CaptureProgressExperienceSource = "default"
+	CaptureProgressExperienceSourcePinned    CaptureProgressExperienceSource = "pinned"
+	CaptureProgressExperienceSourcePublished CaptureProgressExperienceSource = "published"
+)
+
+// Valid indicates whether the value is a known member of the CaptureProgressExperienceSource enum.
+func (e CaptureProgressExperienceSource) Valid() bool {
+	switch e {
+	case CaptureProgressExperienceSourceDefault:
+		return true
+	case CaptureProgressExperienceSourcePinned:
+		return true
+	case CaptureProgressExperienceSourcePublished:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for DecisionContextVersion.
 const (
 	DecisionContextVersionN1 DecisionContextVersion = 1
@@ -491,6 +512,78 @@ func (e EvidenceUploadCreateMediaType) Valid() bool {
 	case EvidenceUploadCreateMediaTypeImageJpeg:
 		return true
 	case EvidenceUploadCreateMediaTypeImagePng:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ExperiencePinnedSource.
+const (
+	ExperiencePinnedSourceDefault   ExperiencePinnedSource = "default"
+	ExperiencePinnedSourcePinned    ExperiencePinnedSource = "pinned"
+	ExperiencePinnedSourcePublished ExperiencePinnedSource = "published"
+)
+
+// Valid indicates whether the value is a known member of the ExperiencePinnedSource enum.
+func (e ExperiencePinnedSource) Valid() bool {
+	switch e {
+	case ExperiencePinnedSourceDefault:
+		return true
+	case ExperiencePinnedSourcePinned:
+		return true
+	case ExperiencePinnedSourcePublished:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ExperienceRevisionState.
+const (
+	ExperienceRevisionStateApproved   ExperienceRevisionState = "approved"
+	ExperienceRevisionStateDraft      ExperienceRevisionState = "draft"
+	ExperienceRevisionStatePublished  ExperienceRevisionState = "published"
+	ExperienceRevisionStateRevoked    ExperienceRevisionState = "revoked"
+	ExperienceRevisionStateSuperseded ExperienceRevisionState = "superseded"
+)
+
+// Valid indicates whether the value is a known member of the ExperienceRevisionState enum.
+func (e ExperienceRevisionState) Valid() bool {
+	switch e {
+	case ExperienceRevisionStateApproved:
+		return true
+	case ExperienceRevisionStateDraft:
+		return true
+	case ExperienceRevisionStatePublished:
+		return true
+	case ExperienceRevisionStateRevoked:
+		return true
+	case ExperienceRevisionStateSuperseded:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ExperienceState.
+const (
+	ExperienceStateApproved  ExperienceState = "approved"
+	ExperienceStateDraft     ExperienceState = "draft"
+	ExperienceStatePublished ExperienceState = "published"
+	ExperienceStateRevoked   ExperienceState = "revoked"
+)
+
+// Valid indicates whether the value is a known member of the ExperienceState enum.
+func (e ExperienceState) Valid() bool {
+	switch e {
+	case ExperienceStateApproved:
+		return true
+	case ExperienceStateDraft:
+		return true
+	case ExperienceStatePublished:
+		return true
+	case ExperienceStateRevoked:
 		return true
 	default:
 		return false
@@ -1337,6 +1430,297 @@ func (e NativeCapabilitiesPlatform) Valid() bool {
 	}
 }
 
+// Defines values for PackAssuranceMappingState.
+const (
+	Mapped    PackAssuranceMappingState = "mapped"
+	NotMapped PackAssuranceMappingState = "not_mapped"
+)
+
+// Valid indicates whether the value is a known member of the PackAssuranceMappingState enum.
+func (e PackAssuranceMappingState) Valid() bool {
+	switch e {
+	case Mapped:
+		return true
+	case NotMapped:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PackDeclarationState.
+const (
+	PackDeclarationStateSupported   PackDeclarationState = "supported"
+	PackDeclarationStateUnknown     PackDeclarationState = "unknown"
+	PackDeclarationStateUnsupported PackDeclarationState = "unsupported"
+)
+
+// Valid indicates whether the value is a known member of the PackDeclarationState enum.
+func (e PackDeclarationState) Valid() bool {
+	switch e {
+	case PackDeclarationStateSupported:
+		return true
+	case PackDeclarationStateUnknown:
+		return true
+	case PackDeclarationStateUnsupported:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PackDocumentType.
+const (
+	DriverLicence PackDocumentType = "driver_licence"
+	NationalID    PackDocumentType = "national_id"
+	Passport      PackDocumentType = "passport"
+)
+
+// Valid indicates whether the value is a known member of the PackDocumentType enum.
+func (e PackDocumentType) Valid() bool {
+	switch e {
+	case DriverLicence:
+		return true
+	case NationalID:
+		return true
+	case Passport:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PackEvaluationState.
+const (
+	Evaluated          PackEvaluationState = "evaluated"
+	NotEvaluated       PackEvaluationState = "not_evaluated"
+	PartiallyEvaluated PackEvaluationState = "partially_evaluated"
+)
+
+// Valid indicates whether the value is a known member of the PackEvaluationState enum.
+func (e PackEvaluationState) Valid() bool {
+	switch e {
+	case Evaluated:
+		return true
+	case NotEvaluated:
+		return true
+	case PartiallyEvaluated:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PackFieldName.
+const (
+	DateOfBirth    PackFieldName = "date_of_birth"
+	DateOfExpiry   PackFieldName = "date_of_expiry"
+	DateOfIssue    PackFieldName = "date_of_issue"
+	DocumentNumber PackFieldName = "document_number"
+	DocumentType   PackFieldName = "document_type"
+	FirstName      PackFieldName = "first_name"
+	IssuingState   PackFieldName = "issuing_state"
+	LastName       PackFieldName = "last_name"
+	Nationality    PackFieldName = "nationality"
+	OtherNames     PackFieldName = "other_names"
+	PersonalNumber PackFieldName = "personal_number"
+	Sex            PackFieldName = "sex"
+)
+
+// Valid indicates whether the value is a known member of the PackFieldName enum.
+func (e PackFieldName) Valid() bool {
+	switch e {
+	case DateOfBirth:
+		return true
+	case DateOfExpiry:
+		return true
+	case DateOfIssue:
+		return true
+	case DocumentNumber:
+		return true
+	case DocumentType:
+		return true
+	case FirstName:
+		return true
+	case IssuingState:
+		return true
+	case LastName:
+		return true
+	case Nationality:
+		return true
+	case OtherNames:
+		return true
+	case PersonalNumber:
+		return true
+	case Sex:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PackLegalReviewState.
+const (
+	PackLegalReviewStateNotReviewed PackLegalReviewState = "not_reviewed"
+	PackLegalReviewStatePending     PackLegalReviewState = "pending"
+	PackLegalReviewStateReviewed    PackLegalReviewState = "reviewed"
+)
+
+// Valid indicates whether the value is a known member of the PackLegalReviewState enum.
+func (e PackLegalReviewState) Valid() bool {
+	switch e {
+	case PackLegalReviewStateNotReviewed:
+		return true
+	case PackLegalReviewStatePending:
+		return true
+	case PackLegalReviewStateReviewed:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PackLifecycleState.
+const (
+	PackLifecycleStateActive     PackLifecycleState = "active"
+	PackLifecycleStateDeprecated PackLifecycleState = "deprecated"
+	PackLifecycleStateDraft      PackLifecycleState = "draft"
+	PackLifecycleStateRetired    PackLifecycleState = "retired"
+)
+
+// Valid indicates whether the value is a known member of the PackLifecycleState enum.
+func (e PackLifecycleState) Valid() bool {
+	switch e {
+	case PackLifecycleStateActive:
+		return true
+	case PackLifecycleStateDeprecated:
+		return true
+	case PackLifecycleStateDraft:
+		return true
+	case PackLifecycleStateRetired:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PackRequirementReferenceKind.
+const (
+	PackRequirementReferenceKindModel  PackRequirementReferenceKind = "model"
+	PackRequirementReferenceKindParser PackRequirementReferenceKind = "parser"
+)
+
+// Valid indicates whether the value is a known member of the PackRequirementReferenceKind enum.
+func (e PackRequirementReferenceKind) Valid() bool {
+	switch e {
+	case PackRequirementReferenceKindModel:
+		return true
+	case PackRequirementReferenceKindParser:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PackRequirementSlotName.
+const (
+	PackRequirementSlotNameAuthority  PackRequirementSlotName = "authority"
+	PackRequirementSlotNameController PackRequirementSlotName = "controller"
+	PackRequirementSlotNameProcessor  PackRequirementSlotName = "processor"
+	PackRequirementSlotNameRecipient  PackRequirementSlotName = "recipient"
+	PackRequirementSlotNameRegion     PackRequirementSlotName = "region"
+	PackRequirementSlotNameTransfer   PackRequirementSlotName = "transfer"
+)
+
+// Valid indicates whether the value is a known member of the PackRequirementSlotName enum.
+func (e PackRequirementSlotName) Valid() bool {
+	switch e {
+	case PackRequirementSlotNameAuthority:
+		return true
+	case PackRequirementSlotNameController:
+		return true
+	case PackRequirementSlotNameProcessor:
+		return true
+	case PackRequirementSlotNameRecipient:
+		return true
+	case PackRequirementSlotNameRegion:
+		return true
+	case PackRequirementSlotNameTransfer:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PackSecurityCheck.
+const (
+	CoreBarcodeStructure      PackSecurityCheck = "core.barcode_structure"
+	CoreCrossFieldConsistency PackSecurityCheck = "core.cross_field_consistency"
+	CoreFrontBackConsistency  PackSecurityCheck = "core.front_back_consistency"
+	CoreMrzCheckDigits        PackSecurityCheck = "core.mrz_check_digits"
+)
+
+// Valid indicates whether the value is a known member of the PackSecurityCheck enum.
+func (e PackSecurityCheck) Valid() bool {
+	switch e {
+	case CoreBarcodeStructure:
+		return true
+	case CoreCrossFieldConsistency:
+		return true
+	case CoreFrontBackConsistency:
+		return true
+	case CoreMrzCheckDigits:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PackSide.
+const (
+	Back  PackSide = "back"
+	Front PackSide = "front"
+)
+
+// Valid indicates whether the value is a known member of the PackSide enum.
+func (e PackSide) Valid() bool {
+	switch e {
+	case Back:
+		return true
+	case Front:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PackSupportLevel.
+const (
+	PackSupportLevelBestEffort            PackSupportLevel = "best_effort"
+	PackSupportLevelFullySupported        PackSupportLevel = "fully_supported"
+	PackSupportLevelProviderOnly          PackSupportLevel = "provider_only"
+	PackSupportLevelStructurallySupported PackSupportLevel = "structurally_supported"
+	PackSupportLevelUnsupported           PackSupportLevel = "unsupported"
+)
+
+// Valid indicates whether the value is a known member of the PackSupportLevel enum.
+func (e PackSupportLevel) Valid() bool {
+	switch e {
+	case PackSupportLevelBestEffort:
+		return true
+	case PackSupportLevelFullySupported:
+		return true
+	case PackSupportLevelProviderOnly:
+		return true
+	case PackSupportLevelStructurallySupported:
+		return true
+	case PackSupportLevelUnsupported:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for PolicyActor.
 const (
 	Human   PolicyActor = "human"
@@ -1889,6 +2273,27 @@ func (e PolicyValidationValid) Valid() bool {
 	}
 }
 
+// Defines values for PrivacyDecisionOutcome.
+const (
+	PrivacyDecisionOutcomeApproved          PrivacyDecisionOutcome = "approved"
+	PrivacyDecisionOutcomeDenied            PrivacyDecisionOutcome = "denied"
+	PrivacyDecisionOutcomePartiallyApproved PrivacyDecisionOutcome = "partially_approved"
+)
+
+// Valid indicates whether the value is a known member of the PrivacyDecisionOutcome enum.
+func (e PrivacyDecisionOutcome) Valid() bool {
+	switch e {
+	case PrivacyDecisionOutcomeApproved:
+		return true
+	case PrivacyDecisionOutcomeDenied:
+		return true
+	case PrivacyDecisionOutcomePartiallyApproved:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for PrivacyDeletionState.
 const (
 	PrivacyDeletionStateAwaitingBackupExpiry PrivacyDeletionState = "awaiting_backup_expiry"
@@ -1919,18 +2324,321 @@ func (e PrivacyDeletionState) Valid() bool {
 	}
 }
 
+// Defines values for PrivacyDisclosureClass.
+const (
+	PrivacyDisclosureClassDeletionRequest   PrivacyDisclosureClass = "deletion_request"
+	PrivacyDisclosureClassIdentitySuccessor PrivacyDisclosureClass = "identity_successor"
+	PrivacyDisclosureClassObjection         PrivacyDisclosureClass = "objection"
+	PrivacyDisclosureClassRestriction       PrivacyDisclosureClass = "restriction"
+	PrivacyDisclosureClassSubjectExport     PrivacyDisclosureClass = "subject_export"
+)
+
+// Valid indicates whether the value is a known member of the PrivacyDisclosureClass enum.
+func (e PrivacyDisclosureClass) Valid() bool {
+	switch e {
+	case PrivacyDisclosureClassDeletionRequest:
+		return true
+	case PrivacyDisclosureClassIdentitySuccessor:
+		return true
+	case PrivacyDisclosureClassObjection:
+		return true
+	case PrivacyDisclosureClassRestriction:
+		return true
+	case PrivacyDisclosureClassSubjectExport:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PrivacyProcessorDataClasses.
+const (
+	PrivacyProcessorDataClassesAuditRecord      PrivacyProcessorDataClasses = "audit_record"
+	PrivacyProcessorDataClassesBackup           PrivacyProcessorDataClasses = "backup"
+	PrivacyProcessorDataClassesDeletionProof    PrivacyProcessorDataClasses = "deletion_proof"
+	PrivacyProcessorDataClassesDerivedEvidence  PrivacyProcessorDataClasses = "derived_evidence"
+	PrivacyProcessorDataClassesRawEvidence      PrivacyProcessorDataClasses = "raw_evidence"
+	PrivacyProcessorDataClassesWebhookPayload   PrivacyProcessorDataClasses = "webhook_payload"
+	PrivacyProcessorDataClassesWorkflowMetadata PrivacyProcessorDataClasses = "workflow_metadata"
+)
+
+// Valid indicates whether the value is a known member of the PrivacyProcessorDataClasses enum.
+func (e PrivacyProcessorDataClasses) Valid() bool {
+	switch e {
+	case PrivacyProcessorDataClassesAuditRecord:
+		return true
+	case PrivacyProcessorDataClassesBackup:
+		return true
+	case PrivacyProcessorDataClassesDeletionProof:
+		return true
+	case PrivacyProcessorDataClassesDerivedEvidence:
+		return true
+	case PrivacyProcessorDataClassesRawEvidence:
+		return true
+	case PrivacyProcessorDataClassesWebhookPayload:
+		return true
+	case PrivacyProcessorDataClassesWorkflowMetadata:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PrivacyProcessorPutDataClasses.
+const (
+	PrivacyProcessorPutDataClassesAuditRecord      PrivacyProcessorPutDataClasses = "audit_record"
+	PrivacyProcessorPutDataClassesBackup           PrivacyProcessorPutDataClasses = "backup"
+	PrivacyProcessorPutDataClassesDeletionProof    PrivacyProcessorPutDataClasses = "deletion_proof"
+	PrivacyProcessorPutDataClassesDerivedEvidence  PrivacyProcessorPutDataClasses = "derived_evidence"
+	PrivacyProcessorPutDataClassesRawEvidence      PrivacyProcessorPutDataClasses = "raw_evidence"
+	PrivacyProcessorPutDataClassesWebhookPayload   PrivacyProcessorPutDataClasses = "webhook_payload"
+	PrivacyProcessorPutDataClassesWorkflowMetadata PrivacyProcessorPutDataClasses = "workflow_metadata"
+)
+
+// Valid indicates whether the value is a known member of the PrivacyProcessorPutDataClasses enum.
+func (e PrivacyProcessorPutDataClasses) Valid() bool {
+	switch e {
+	case PrivacyProcessorPutDataClassesAuditRecord:
+		return true
+	case PrivacyProcessorPutDataClassesBackup:
+		return true
+	case PrivacyProcessorPutDataClassesDeletionProof:
+		return true
+	case PrivacyProcessorPutDataClassesDerivedEvidence:
+		return true
+	case PrivacyProcessorPutDataClassesRawEvidence:
+		return true
+	case PrivacyProcessorPutDataClassesWebhookPayload:
+		return true
+	case PrivacyProcessorPutDataClassesWorkflowMetadata:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PrivacyProcessorRole.
+const (
+	PrivacyProcessorRoleProcessor    PrivacyProcessorRole = "processor"
+	PrivacyProcessorRoleRecipient    PrivacyProcessorRole = "recipient"
+	PrivacyProcessorRoleSubprocessor PrivacyProcessorRole = "subprocessor"
+)
+
+// Valid indicates whether the value is a known member of the PrivacyProcessorRole enum.
+func (e PrivacyProcessorRole) Valid() bool {
+	switch e {
+	case PrivacyProcessorRoleProcessor:
+		return true
+	case PrivacyProcessorRoleRecipient:
+		return true
+	case PrivacyProcessorRoleSubprocessor:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PrivacyRequestChannel.
+const (
+	SubjectOutcome PrivacyRequestChannel = "subject_outcome"
+	TenantAPI      PrivacyRequestChannel = "tenant_api"
+)
+
+// Valid indicates whether the value is a known member of the PrivacyRequestChannel enum.
+func (e PrivacyRequestChannel) Valid() bool {
+	switch e {
+	case SubjectOutcome:
+		return true
+	case TenantAPI:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PrivacyRequestCreateKind.
+const (
+	PrivacyRequestCreateKindClaim       PrivacyRequestCreateKind = "claim"
+	PrivacyRequestCreateKindFact        PrivacyRequestCreateKind = "fact"
+	PrivacyRequestCreateKindObservation PrivacyRequestCreateKind = "observation"
+)
+
+// Valid indicates whether the value is a known member of the PrivacyRequestCreateKind enum.
+func (e PrivacyRequestCreateKind) Valid() bool {
+	switch e {
+	case PrivacyRequestCreateKindClaim:
+		return true
+	case PrivacyRequestCreateKindFact:
+		return true
+	case PrivacyRequestCreateKindObservation:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PrivacyRequestCreateNormalization.
+const (
+	PrivacyRequestCreateNormalizationIdentityASCIIUpperV1 PrivacyRequestCreateNormalization = "identity.ascii_upper.v1"
+	PrivacyRequestCreateNormalizationIdentityExactV1      PrivacyRequestCreateNormalization = "identity.exact.v1"
+	PrivacyRequestCreateNormalizationIdentityTrimV1       PrivacyRequestCreateNormalization = "identity.trim.v1"
+)
+
+// Valid indicates whether the value is a known member of the PrivacyRequestCreateNormalization enum.
+func (e PrivacyRequestCreateNormalization) Valid() bool {
+	switch e {
+	case PrivacyRequestCreateNormalizationIdentityASCIIUpperV1:
+		return true
+	case PrivacyRequestCreateNormalizationIdentityExactV1:
+		return true
+	case PrivacyRequestCreateNormalizationIdentityTrimV1:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PrivacyRequestState.
+const (
+	PrivacyRequestStateApproved          PrivacyRequestState = "approved"
+	PrivacyRequestStateCompleted         PrivacyRequestState = "completed"
+	PrivacyRequestStateDenied            PrivacyRequestState = "denied"
+	PrivacyRequestStateExecuting         PrivacyRequestState = "executing"
+	PrivacyRequestStateExpired           PrivacyRequestState = "expired"
+	PrivacyRequestStateFailed            PrivacyRequestState = "failed"
+	PrivacyRequestStateInReview          PrivacyRequestState = "in_review"
+	PrivacyRequestStatePartiallyApproved PrivacyRequestState = "partially_approved"
+	PrivacyRequestStateRequested         PrivacyRequestState = "requested"
+	PrivacyRequestStateWithdrawn         PrivacyRequestState = "withdrawn"
+)
+
+// Valid indicates whether the value is a known member of the PrivacyRequestState enum.
+func (e PrivacyRequestState) Valid() bool {
+	switch e {
+	case PrivacyRequestStateApproved:
+		return true
+	case PrivacyRequestStateCompleted:
+		return true
+	case PrivacyRequestStateDenied:
+		return true
+	case PrivacyRequestStateExecuting:
+		return true
+	case PrivacyRequestStateExpired:
+		return true
+	case PrivacyRequestStateFailed:
+		return true
+	case PrivacyRequestStateInReview:
+		return true
+	case PrivacyRequestStatePartiallyApproved:
+		return true
+	case PrivacyRequestStateRequested:
+		return true
+	case PrivacyRequestStateWithdrawn:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PrivacyRequestType.
+const (
+	PrivacyRequestTypeAccess      PrivacyRequestType = "access"
+	PrivacyRequestTypeCorrection  PrivacyRequestType = "correction"
+	PrivacyRequestTypeErasure     PrivacyRequestType = "erasure"
+	PrivacyRequestTypeObjection   PrivacyRequestType = "objection"
+	PrivacyRequestTypePortability PrivacyRequestType = "portability"
+	PrivacyRequestTypeRestriction PrivacyRequestType = "restriction"
+)
+
+// Valid indicates whether the value is a known member of the PrivacyRequestType enum.
+func (e PrivacyRequestType) Valid() bool {
+	switch e {
+	case PrivacyRequestTypeAccess:
+		return true
+	case PrivacyRequestTypeCorrection:
+		return true
+	case PrivacyRequestTypeErasure:
+		return true
+	case PrivacyRequestTypeObjection:
+		return true
+	case PrivacyRequestTypePortability:
+		return true
+	case PrivacyRequestTypeRestriction:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PrivacyRestrictionLiftReasonCode.
+const (
+	LiftedBySubject    PrivacyRestrictionLiftReasonCode = "lifted_by_subject"
+	LiftedByTenant     PrivacyRestrictionLiftReasonCode = "lifted_by_tenant"
+	RestrictionExpired PrivacyRestrictionLiftReasonCode = "restriction_expired"
+)
+
+// Valid indicates whether the value is a known member of the PrivacyRestrictionLiftReasonCode enum.
+func (e PrivacyRestrictionLiftReasonCode) Valid() bool {
+	switch e {
+	case LiftedBySubject:
+		return true
+	case LiftedByTenant:
+		return true
+	case RestrictionExpired:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PrivacyRestrictionScope.
+const (
+	PrivacyRestrictionScopePurpose PrivacyRestrictionScope = "purpose"
+	PrivacyRestrictionScopeSubject PrivacyRestrictionScope = "subject"
+)
+
+// Valid indicates whether the value is a known member of the PrivacyRestrictionScope enum.
+func (e PrivacyRestrictionScope) Valid() bool {
+	switch e {
+	case PrivacyRestrictionScopePurpose:
+		return true
+	case PrivacyRestrictionScopeSubject:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PrivacyRestrictionState.
+const (
+	PrivacyRestrictionStateActive PrivacyRestrictionState = "active"
+	PrivacyRestrictionStateLifted PrivacyRestrictionState = "lifted"
+)
+
+// Valid indicates whether the value is a known member of the PrivacyRestrictionState enum.
+func (e PrivacyRestrictionState) Valid() bool {
+	switch e {
+	case PrivacyRestrictionStateActive:
+		return true
+	case PrivacyRestrictionStateLifted:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for PrivacyRetentionRecordDataClass.
 const (
-	DerivedEvidence PrivacyRetentionRecordDataClass = "derived_evidence"
-	RawEvidence     PrivacyRetentionRecordDataClass = "raw_evidence"
+	PrivacyRetentionRecordDataClassDerivedEvidence PrivacyRetentionRecordDataClass = "derived_evidence"
+	PrivacyRetentionRecordDataClassRawEvidence     PrivacyRetentionRecordDataClass = "raw_evidence"
 )
 
 // Valid indicates whether the value is a known member of the PrivacyRetentionRecordDataClass enum.
 func (e PrivacyRetentionRecordDataClass) Valid() bool {
 	switch e {
-	case DerivedEvidence:
+	case PrivacyRetentionRecordDataClassDerivedEvidence:
 		return true
-	case RawEvidence:
+	case PrivacyRetentionRecordDataClassRawEvidence:
 		return true
 	default:
 		return false
@@ -2432,6 +3140,81 @@ func (e ReviewFindingRequestResolution) Valid() bool {
 	}
 }
 
+// Defines values for SubjectPrivacyRequestCreateKind.
+const (
+	SubjectPrivacyRequestCreateKindClaim       SubjectPrivacyRequestCreateKind = "claim"
+	SubjectPrivacyRequestCreateKindFact        SubjectPrivacyRequestCreateKind = "fact"
+	SubjectPrivacyRequestCreateKindObservation SubjectPrivacyRequestCreateKind = "observation"
+)
+
+// Valid indicates whether the value is a known member of the SubjectPrivacyRequestCreateKind enum.
+func (e SubjectPrivacyRequestCreateKind) Valid() bool {
+	switch e {
+	case SubjectPrivacyRequestCreateKindClaim:
+		return true
+	case SubjectPrivacyRequestCreateKindFact:
+		return true
+	case SubjectPrivacyRequestCreateKindObservation:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SubjectPrivacyRequestCreateNormalization.
+const (
+	SubjectPrivacyRequestCreateNormalizationIdentityASCIIUpperV1 SubjectPrivacyRequestCreateNormalization = "identity.ascii_upper.v1"
+	SubjectPrivacyRequestCreateNormalizationIdentityExactV1      SubjectPrivacyRequestCreateNormalization = "identity.exact.v1"
+	SubjectPrivacyRequestCreateNormalizationIdentityTrimV1       SubjectPrivacyRequestCreateNormalization = "identity.trim.v1"
+)
+
+// Valid indicates whether the value is a known member of the SubjectPrivacyRequestCreateNormalization enum.
+func (e SubjectPrivacyRequestCreateNormalization) Valid() bool {
+	switch e {
+	case SubjectPrivacyRequestCreateNormalizationIdentityASCIIUpperV1:
+		return true
+	case SubjectPrivacyRequestCreateNormalizationIdentityExactV1:
+		return true
+	case SubjectPrivacyRequestCreateNormalizationIdentityTrimV1:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SubjectPrivacyStatus.
+const (
+	SubjectPrivacyStatusClosed     SubjectPrivacyStatus = "closed"
+	SubjectPrivacyStatusCompleted  SubjectPrivacyStatus = "completed"
+	SubjectPrivacyStatusExpired    SubjectPrivacyStatus = "expired"
+	SubjectPrivacyStatusInProgress SubjectPrivacyStatus = "in_progress"
+	SubjectPrivacyStatusInReview   SubjectPrivacyStatus = "in_review"
+	SubjectPrivacyStatusReceived   SubjectPrivacyStatus = "received"
+	SubjectPrivacyStatusWithdrawn  SubjectPrivacyStatus = "withdrawn"
+)
+
+// Valid indicates whether the value is a known member of the SubjectPrivacyStatus enum.
+func (e SubjectPrivacyStatus) Valid() bool {
+	switch e {
+	case SubjectPrivacyStatusClosed:
+		return true
+	case SubjectPrivacyStatusCompleted:
+		return true
+	case SubjectPrivacyStatusExpired:
+		return true
+	case SubjectPrivacyStatusInProgress:
+		return true
+	case SubjectPrivacyStatusInReview:
+		return true
+	case SubjectPrivacyStatusReceived:
+		return true
+	case SubjectPrivacyStatusWithdrawn:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for SubjectResponseAction.
 const (
 	SubjectResponseActionAcknowledge SubjectResponseAction = "acknowledge"
@@ -2612,6 +3395,78 @@ const (
 func (e WebhookSubscriptionsSchemaVersion) Valid() bool {
 	switch e {
 	case WebhookSubscriptionsSchemaVersionN10:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListPrivacyRequestsParamsState.
+const (
+	ListPrivacyRequestsParamsStateApproved          ListPrivacyRequestsParamsState = "approved"
+	ListPrivacyRequestsParamsStateCompleted         ListPrivacyRequestsParamsState = "completed"
+	ListPrivacyRequestsParamsStateDenied            ListPrivacyRequestsParamsState = "denied"
+	ListPrivacyRequestsParamsStateExecuting         ListPrivacyRequestsParamsState = "executing"
+	ListPrivacyRequestsParamsStateExpired           ListPrivacyRequestsParamsState = "expired"
+	ListPrivacyRequestsParamsStateFailed            ListPrivacyRequestsParamsState = "failed"
+	ListPrivacyRequestsParamsStateInReview          ListPrivacyRequestsParamsState = "in_review"
+	ListPrivacyRequestsParamsStatePartiallyApproved ListPrivacyRequestsParamsState = "partially_approved"
+	ListPrivacyRequestsParamsStateRequested         ListPrivacyRequestsParamsState = "requested"
+	ListPrivacyRequestsParamsStateWithdrawn         ListPrivacyRequestsParamsState = "withdrawn"
+)
+
+// Valid indicates whether the value is a known member of the ListPrivacyRequestsParamsState enum.
+func (e ListPrivacyRequestsParamsState) Valid() bool {
+	switch e {
+	case ListPrivacyRequestsParamsStateApproved:
+		return true
+	case ListPrivacyRequestsParamsStateCompleted:
+		return true
+	case ListPrivacyRequestsParamsStateDenied:
+		return true
+	case ListPrivacyRequestsParamsStateExecuting:
+		return true
+	case ListPrivacyRequestsParamsStateExpired:
+		return true
+	case ListPrivacyRequestsParamsStateFailed:
+		return true
+	case ListPrivacyRequestsParamsStateInReview:
+		return true
+	case ListPrivacyRequestsParamsStatePartiallyApproved:
+		return true
+	case ListPrivacyRequestsParamsStateRequested:
+		return true
+	case ListPrivacyRequestsParamsStateWithdrawn:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListPrivacyRequestsParamsType.
+const (
+	ListPrivacyRequestsParamsTypeAccess      ListPrivacyRequestsParamsType = "access"
+	ListPrivacyRequestsParamsTypeCorrection  ListPrivacyRequestsParamsType = "correction"
+	ListPrivacyRequestsParamsTypeErasure     ListPrivacyRequestsParamsType = "erasure"
+	ListPrivacyRequestsParamsTypeObjection   ListPrivacyRequestsParamsType = "objection"
+	ListPrivacyRequestsParamsTypePortability ListPrivacyRequestsParamsType = "portability"
+	ListPrivacyRequestsParamsTypeRestriction ListPrivacyRequestsParamsType = "restriction"
+)
+
+// Valid indicates whether the value is a known member of the ListPrivacyRequestsParamsType enum.
+func (e ListPrivacyRequestsParamsType) Valid() bool {
+	switch e {
+	case ListPrivacyRequestsParamsTypeAccess:
+		return true
+	case ListPrivacyRequestsParamsTypeCorrection:
+		return true
+	case ListPrivacyRequestsParamsTypeErasure:
+		return true
+	case ListPrivacyRequestsParamsTypeObjection:
+		return true
+	case ListPrivacyRequestsParamsTypePortability:
+		return true
+	case ListPrivacyRequestsParamsTypeRestriction:
 		return true
 	default:
 		return false
@@ -2969,13 +3824,31 @@ type CaptureProfileWrite struct {
 	Name     string                 `json:"name"`
 }
 
-// CaptureProgress Capture-token-scoped accepted completion snapshot.
+// CaptureProgress Capture-token-scoped accepted completion snapshot with the session's pinned portable-experience versions when available.
 type CaptureProgress struct {
 	Completions []CaptureCompletion `json:"completions"`
+
+	// Experience The exact experience, locale, and copy versions pinned to this session.
+	Experience *struct {
+		Digest string `json:"digest"`
+
+		// ExperienceID Stable portable capture-experience identifier.
+		ExperienceID         ExperienceID                    `json:"experience_id"`
+		KeyID                string                          `json:"key_id"`
+		Locale               string                          `json:"locale"`
+		MandatoryCopyVersion string                          `json:"mandatory_copy_version"`
+		PinnedAt             time.Time                       `json:"pinned_at"`
+		Source               CaptureProgressExperienceSource `json:"source"`
+		TenantCopyVersion    string                          `json:"tenant_copy_version"`
+		Version              int                             `json:"version"`
+	} `json:"experience,omitempty"`
 
 	// VerificationID Stable Idenqa verification-session identifier.
 	VerificationID VerificationSessionID `json:"verification_id"`
 }
+
+// CaptureProgressExperienceSource defines model for CaptureProgress.Experience.Source.
+type CaptureProgressExperienceSource string
 
 // CaptureToken Display-once bearer credential bound to one verification session.
 type CaptureToken = string
@@ -3010,6 +3883,50 @@ type DecisionReference struct {
 
 // DecisionReferenceKind defines model for DecisionReference.Kind.
 type DecisionReferenceKind string
+
+// DocumentSupport Honest support-level projection for one active pack document. It contains no legal conclusion, provider approval, or security-feature finding.
+type DocumentSupport struct {
+	AssuranceMappings []PackAssuranceMapping `json:"assurance_mappings"`
+	Authority         string                 `json:"authority"`
+
+	// Barcode One barcode, MRZ, or NFC support declaration without provider or legal approval.
+	Barcode PackDeclaration `json:"barcode"`
+
+	// Country ISO 3166-1 alpha-2 country code assigned to a registered pack.
+	Country       PackCountry `json:"country"`
+	CountryAlpha3 string      `json:"country_alpha3"`
+
+	// DocumentType Closed pack document-type vocabulary. The canonical drivers_license spelling is accepted on query input only.
+	DocumentType PackDocumentType `json:"document_type"`
+
+	// EvaluationCoverage Bounded evaluation coverage with opaque references. not_evaluated carries no references.
+	EvaluationCoverage PackEvaluationCoverage `json:"evaluation_coverage"`
+	Evidence           []string               `json:"evidence"`
+	KnownLimitations   []string               `json:"known_limitations"`
+	KnownVersions      []PackKnownVersion     `json:"known_versions"`
+
+	// LegalReview Honest legal-review status with an optional opaque reference. A reviewed state requires one; no pack asserts review without a reference.
+	LegalReview PackLegalReview `json:"legal_review"`
+
+	// LifecycleState Registry lifecycle of one immutable pack revision.
+	LifecycleState             PackLifecycleState         `json:"lifecycle_state"`
+	ModelAndParserRequirements []PackRequirementReference `json:"model_and_parser_requirements"`
+
+	// Mrz One barcode, MRZ, or NFC support declaration without provider or legal approval.
+	Mrz PackDeclaration `json:"mrz"`
+
+	// Nfc One barcode, MRZ, or NFC support declaration without provider or legal approval.
+	Nfc              PackDeclaration       `json:"nfc"`
+	PackDigest       string                `json:"pack_digest"`
+	PackRevision     int                   `json:"pack_revision"`
+	RequiredSides    []PackSide            `json:"required_sides"`
+	RequirementSlots []PackRequirementSlot `json:"requirement_slots"`
+	SecurityChecks   []PackSecurityCheck   `json:"security_checks"`
+
+	// SupportLevel Honest capability classification. It is not a legal or provider approval.
+	SupportLevel    PackSupportLevel `json:"support_level"`
+	SupportedFields []PackFieldName  `json:"supported_fields"`
+}
 
 // EvidenceID Stable opaque identifier preallocated for the accepted evidence artefact.
 type EvidenceID = string
@@ -3072,6 +3989,228 @@ type EvidenceUploadCreateMediaType string
 
 // EvidenceUploadID Stable opaque identifier for one requirement-bound upload intent.
 type EvidenceUploadID = string
+
+// Experience One tenant-owned portable capture experience aggregate and its latest immutable signed revision.
+type Experience struct {
+	ApprovedVersion int       `json:"approved_version"`
+	CreatedAt       time.Time `json:"created_at"`
+
+	// Document One immutable signed experience revision.
+	Document ExperienceDocument `json:"document"`
+
+	// ID Stable portable capture-experience identifier.
+	ID               ExperienceID `json:"id"`
+	LatestVersion    int          `json:"latest_version"`
+	PublishedVersion int          `json:"published_version"`
+
+	// Revision Optimistic aggregate revision for expected_version preconditions.
+	Revision int64 `json:"revision"`
+
+	// State Aggregate lifecycle state. The live published revision stays live while a new draft is prepared.
+	State     ExperienceState `json:"state"`
+	UpdatedAt time.Time       `json:"updated_at"`
+}
+
+// ExperienceAsset Vetted image asset reference. Executable and script-capable content is rejected.
+type ExperienceAsset struct {
+	Digest        string      `json:"digest"`
+	Key           string      `json:"key"`
+	Kind          interface{} `json:"kind"`
+	Mime          interface{} `json:"mime"`
+	ObjectKey     string      `json:"object_key"`
+	ObjectVersion string      `json:"object_version"`
+	Size          int64       `json:"size"`
+}
+
+// ExperienceCopy Structured tenant copy keyed by locale with an independent copy version.
+type ExperienceCopy struct {
+	Locales []ExperienceLocaleCopy `json:"locales"`
+	Version string                 `json:"version"`
+}
+
+// ExperienceCopyEntry One bounded tenant copy value. Core-owned mandatory namespaces are rejected.
+type ExperienceCopyEntry struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
+// ExperienceCustomLink One optional validated HTTPS link with bounded tenant-facing text.
+type ExperienceCustomLink struct {
+	Label string `json:"label"`
+	URL   string `json:"url"`
+}
+
+// ExperienceDocument One immutable signed experience revision.
+type ExperienceDocument struct {
+	AllowedOrigins *[]string          `json:"allowed_origins,omitempty"`
+	Assets         *[]ExperienceAsset `json:"assets,omitempty"`
+
+	// Copy Structured tenant copy keyed by locale with an independent copy version.
+	Copy          ExperienceCopy `json:"copy"`
+	DefaultLocale string         `json:"default_locale"`
+
+	// ExperienceID Stable portable capture-experience identifier.
+	ExperienceID ExperienceID `json:"experience_id"`
+
+	// Links Validated HTTPS support, privacy, and terms destinations plus optional custom links.
+	Links                ExperienceLinks    `json:"links"`
+	MandatoryCopyVersion string             `json:"mandatory_copy_version"`
+	Name                 string             `json:"name"`
+	SchemaVersion        interface{}        `json:"schema_version"`
+	Targeting            []ExperienceTarget `json:"targeting"`
+
+	// Theme Safe portable theme tokens. Host appearance-only CSS variables remain authoritative for host-local branding.
+	Theme   ExperienceTheme `json:"theme"`
+	Version int             `json:"version"`
+}
+
+// ExperienceDraft Optimistic precondition and one bounded draft document for a new immutable revision.
+type ExperienceDraft struct {
+	// Document Bounded tenant draft input. Identifier and version are Core-assigned.
+	Document ExperienceMutation `json:"document"`
+
+	// ExpectedVersion Current aggregate revision returned by the last read.
+	ExpectedVersion int64 `json:"expected_version"`
+}
+
+// ExperienceID Stable portable capture-experience identifier.
+type ExperienceID = string
+
+// ExperienceLinks Validated HTTPS support, privacy, and terms destinations plus optional custom links.
+type ExperienceLinks struct {
+	Custom  *[]ExperienceCustomLink `json:"custom,omitempty"`
+	Privacy string                  `json:"privacy"`
+	Support string                  `json:"support"`
+	Terms   string                  `json:"terms"`
+}
+
+// ExperienceList One bounded ascending page of tenant-owned portable capture experiences.
+type ExperienceList struct {
+	Data []Experience `json:"data"`
+
+	// Page Opaque cursor pagination metadata.
+	Page Page `json:"page"`
+}
+
+// ExperienceLocaleCopy One locale catalogue of bounded tenant copy.
+type ExperienceLocaleCopy struct {
+	Entries []ExperienceCopyEntry `json:"entries"`
+	Locale  string                `json:"locale"`
+}
+
+// ExperienceMandatoryCopy Core-owned, non-overridable regulatory, consent, safety, and accessibility copy.
+type ExperienceMandatoryCopy struct {
+	Digest  string                `json:"digest"`
+	Entries []ExperienceCopyEntry `json:"entries"`
+	Version string                `json:"version"`
+}
+
+// ExperienceManifest Signed envelope. Digest and signature cover the canonical document bytes only.
+type ExperienceManifest struct {
+	Algorithm interface{} `json:"algorithm"`
+	Digest    string      `json:"digest"`
+
+	// Document One immutable signed experience revision.
+	Document  ExperienceDocument `json:"document"`
+	KeyID     string             `json:"key_id"`
+	Signature string             `json:"signature"`
+}
+
+// ExperienceMutation Bounded tenant draft input. Identifier and version are Core-assigned.
+type ExperienceMutation struct {
+	AllowedOrigins *[]string          `json:"allowed_origins,omitempty"`
+	Assets         *[]ExperienceAsset `json:"assets,omitempty"`
+
+	// Copy Structured tenant copy keyed by locale with an independent copy version.
+	Copy          ExperienceCopy `json:"copy"`
+	DefaultLocale string         `json:"default_locale"`
+
+	// Links Validated HTTPS support, privacy, and terms destinations plus optional custom links.
+	Links                ExperienceLinks    `json:"links"`
+	MandatoryCopyVersion string             `json:"mandatory_copy_version"`
+	Name                 string             `json:"name"`
+	Targeting            []ExperienceTarget `json:"targeting"`
+
+	// Theme Safe portable theme tokens. Host appearance-only CSS variables remain authoritative for host-local branding.
+	Theme ExperienceTheme `json:"theme"`
+}
+
+// ExperiencePinned Exact experience, locale, tenant-copy, and mandatory-copy versions pinned to one session.
+type ExperiencePinned struct {
+	Digest string `json:"digest"`
+
+	// ExperienceID Stable portable capture-experience identifier.
+	ExperienceID         ExperienceID           `json:"experience_id"`
+	KeyID                string                 `json:"key_id"`
+	Locale               string                 `json:"locale"`
+	MandatoryCopyVersion string                 `json:"mandatory_copy_version"`
+	PinnedAt             time.Time              `json:"pinned_at"`
+	Source               ExperiencePinnedSource `json:"source"`
+	TenantCopyVersion    string                 `json:"tenant_copy_version"`
+	Version              int                    `json:"version"`
+}
+
+// ExperiencePinnedSource defines model for ExperiencePinned.Source.
+type ExperiencePinnedSource string
+
+// ExperienceResolution Signed experience document plus Core-owned mandatory copy and exact pinned versions.
+type ExperienceResolution struct {
+	// Fallback True when the signed accessible safe default was substituted.
+	Fallback bool `json:"fallback"`
+
+	// MandatoryCopy Core-owned, non-overridable regulatory, consent, safety, and accessibility copy.
+	MandatoryCopy ExperienceMandatoryCopy `json:"mandatory_copy"`
+
+	// Manifest Signed envelope. Digest and signature cover the canonical document bytes only.
+	Manifest ExperienceManifest `json:"manifest"`
+
+	// Pinned Exact experience, locale, tenant-copy, and mandatory-copy versions pinned to one session.
+	Pinned ExperiencePinned `json:"pinned"`
+}
+
+// ExperienceRevisionState Immutable per-version lifecycle state.
+type ExperienceRevisionState string
+
+// ExperienceRevocation Expected-version precondition and required bounded reason for the kill switch.
+type ExperienceRevocation struct {
+	ExpectedVersion int64  `json:"expected_version"`
+	Reason          string `json:"reason"`
+}
+
+// ExperienceRollback Expected-version precondition and previously approved target version to republish.
+type ExperienceRollback struct {
+	ExpectedVersion int64   `json:"expected_version"`
+	Reason          *string `json:"reason,omitempty"`
+	TargetVersion   int     `json:"target_version"`
+}
+
+// ExperienceState Aggregate lifecycle state. The live published revision stays live while a new draft is prepared.
+type ExperienceState string
+
+// ExperienceTarget One ordered targeting rule. Empty dimensions are unconstrained; an empty rule is a catch-all.
+type ExperienceTarget struct {
+	ApplicationIds *[]string `json:"application_ids,omitempty"`
+	Countries      *[]string `json:"countries,omitempty"`
+	Origins        *[]string `json:"origins,omitempty"`
+	SdkVersionMax  *string   `json:"sdk_version_max,omitempty"`
+	SdkVersionMin  *string   `json:"sdk_version_min,omitempty"`
+	Workflow       *string   `json:"workflow,omitempty"`
+}
+
+// ExperienceTheme Safe portable theme tokens. Host appearance-only CSS variables remain authoritative for host-local branding.
+type ExperienceTheme struct {
+	AccentColor     string  `json:"accent_color"`
+	BackgroundColor string  `json:"background_color"`
+	LogoAssetKey    *string `json:"logo_asset_key,omitempty"`
+	PrimaryColor    string  `json:"primary_color"`
+	TextColor       string  `json:"text_color"`
+}
+
+// ExperienceTransition Expected-version precondition and optional bounded reason for approve and publish commands.
+type ExperienceTransition struct {
+	ExpectedVersion int64   `json:"expected_version"`
+	Reason          *string `json:"reason,omitempty"`
+}
 
 // FraudConfiguration Immutable tenant fraud rule revision covering window, thresholds and sources.
 type FraudConfiguration struct {
@@ -3848,6 +4987,195 @@ type NoticeVersionID = string
 // OutcomeToken Display-once read-only bearer credential bound to one verification session.
 type OutcomeToken = string
 
+// Pack Immutable canonical country pack document. Digest covers exact content; lifecycle transitions never rewrite it.
+type Pack struct {
+	Authority string `json:"authority"`
+
+	// Country ISO 3166-1 alpha-2 country code assigned to a registered pack.
+	Country       PackCountry    `json:"country"`
+	CountryAlpha3 string         `json:"country_alpha3"`
+	Digest        string         `json:"digest"`
+	Documents     []PackDocument `json:"documents"`
+
+	// LegalReview Honest legal-review status with an optional opaque reference. A reviewed state requires one; no pack asserts review without a reference.
+	LegalReview PackLegalReview `json:"legal_review"`
+
+	// LifecycleState Registry lifecycle of one immutable pack revision.
+	LifecycleState   PackLifecycleState    `json:"lifecycle_state"`
+	PublishedAt      time.Time             `json:"published_at"`
+	RequirementSlots []PackRequirementSlot `json:"requirement_slots"`
+	Revision         int                   `json:"revision"`
+	SchemaMajor      int                   `json:"schema_major"`
+	SchemaMinor      int                   `json:"schema_minor"`
+}
+
+// PackAssuranceMapping One reference to an existing platform assurance capability, or an explicit unmapped state with a reason.
+type PackAssuranceMapping struct {
+	// Capability Platform capability meaning; declarations do not prove successful execution.
+	Capability *AssuranceCapabilityName  `json:"capability,omitempty"`
+	Reason     *string                   `json:"reason,omitempty"`
+	State      PackAssuranceMappingState `json:"state"`
+}
+
+// PackAssuranceMappingState defines model for PackAssuranceMapping.State.
+type PackAssuranceMappingState string
+
+// PackCountry ISO 3166-1 alpha-2 country code assigned to a registered pack.
+type PackCountry = string
+
+// PackDeclaration One barcode, MRZ, or NFC support declaration without provider or legal approval.
+type PackDeclaration struct {
+	Formats   []string `json:"formats"`
+	Reason    *string  `json:"reason,omitempty"`
+	Reference *string  `json:"reference,omitempty"`
+
+	// State Bounded support declaration for one acquisition path.
+	State PackDeclarationState `json:"state"`
+}
+
+// PackDeclarationState Bounded support declaration for one acquisition path.
+type PackDeclarationState string
+
+// PackDocument One immutable document entry. Supported content is present only when the evidence list justifies it; unsupported entries carry no support claims.
+type PackDocument struct {
+	AssuranceMappings []PackAssuranceMapping `json:"assurance_mappings"`
+
+	// Barcode One barcode, MRZ, or NFC support declaration without provider or legal approval.
+	Barcode PackDeclaration `json:"barcode"`
+
+	// EvaluationCoverage Bounded evaluation coverage with opaque references. not_evaluated carries no references.
+	EvaluationCoverage         PackEvaluationCoverage     `json:"evaluation_coverage"`
+	Evidence                   []string                   `json:"evidence"`
+	KnownLimitations           []string                   `json:"known_limitations"`
+	KnownVersions              []PackKnownVersion         `json:"known_versions"`
+	ModelAndParserRequirements []PackRequirementReference `json:"model_and_parser_requirements"`
+
+	// Mrz One barcode, MRZ, or NFC support declaration without provider or legal approval.
+	Mrz PackDeclaration `json:"mrz"`
+
+	// Nfc One barcode, MRZ, or NFC support declaration without provider or legal approval.
+	Nfc            PackDeclaration     `json:"nfc"`
+	RequiredSides  []PackSide          `json:"required_sides"`
+	SecurityChecks []PackSecurityCheck `json:"security_checks"`
+
+	// SupportLevel Honest capability classification. It is not a legal or provider approval.
+	SupportLevel    PackSupportLevel `json:"support_level"`
+	SupportedFields []PackFieldName  `json:"supported_fields"`
+
+	// Type Closed pack document-type vocabulary. The canonical drivers_license spelling is accepted on query input only.
+	Type PackDocumentType `json:"type"`
+}
+
+// PackDocumentSummary Bounded document entry in a pack list projection.
+type PackDocumentSummary struct {
+	// SupportLevel Honest capability classification. It is not a legal or provider approval.
+	SupportLevel PackSupportLevel `json:"support_level"`
+
+	// Type Closed pack document-type vocabulary. The canonical drivers_license spelling is accepted on query input only.
+	Type PackDocumentType `json:"type"`
+}
+
+// PackDocumentType Closed pack document-type vocabulary. The canonical drivers_license spelling is accepted on query input only.
+type PackDocumentType string
+
+// PackEvaluationCoverage Bounded evaluation coverage with opaque references. not_evaluated carries no references.
+type PackEvaluationCoverage struct {
+	References []string `json:"references"`
+
+	// State Bounded evaluation-coverage state.
+	State PackEvaluationState `json:"state"`
+}
+
+// PackEvaluationState Bounded evaluation-coverage state.
+type PackEvaluationState string
+
+// PackFieldName Canonical document field vocabulary already owned by the document package.
+type PackFieldName string
+
+// PackKnownVersion One publicly referenced document version or format edition.
+type PackKnownVersion struct {
+	Reference string `json:"reference"`
+	Version   string `json:"version"`
+}
+
+// PackLegalReview Honest legal-review status with an optional opaque reference. A reviewed state requires one; no pack asserts review without a reference.
+type PackLegalReview struct {
+	Reference *string `json:"reference,omitempty"`
+
+	// State Bounded legal-review status; not_reviewed is the fail-closed default.
+	State PackLegalReviewState `json:"state"`
+}
+
+// PackLegalReviewState Bounded legal-review status; not_reviewed is the fail-closed default.
+type PackLegalReviewState string
+
+// PackLifecycleState Registry lifecycle of one immutable pack revision.
+type PackLifecycleState string
+
+// PackPage Bounded list of registered pack revisions. The embedded registry is reviewed and bounded, so has_more is always false.
+type PackPage struct {
+	Data []PackSummary `json:"data"`
+
+	// Page Opaque cursor pagination metadata.
+	Page Page `json:"page"`
+}
+
+// PackRequirementReference One parser or model requirement reference. It never claims that the referenced implementation was accepted.
+type PackRequirementReference struct {
+	Kind      PackRequirementReferenceKind `json:"kind"`
+	Reference string                       `json:"reference"`
+	Version   string                       `json:"version"`
+}
+
+// PackRequirementReferenceKind defines model for PackRequirementReference.Kind.
+type PackRequirementReferenceKind string
+
+// PackRequirementSlot One configurable country or jurisdiction requirement slot. The pack supplies a tenant-policy key, never a legal value.
+type PackRequirementSlot struct {
+	Key  string                  `json:"key"`
+	Name PackRequirementSlotName `json:"name"`
+}
+
+// PackRequirementSlotName defines model for PackRequirementSlot.Name.
+type PackRequirementSlotName string
+
+// PackResource One exact pack revision with its current registry lifecycle state and expected-version counter.
+type PackResource struct {
+	// LifecycleState Registry lifecycle of one immutable pack revision.
+	LifecycleState PackLifecycleState `json:"lifecycle_state"`
+
+	// Pack Immutable canonical country pack document. Digest covers exact content; lifecycle transitions never rewrite it.
+	Pack      Pack       `json:"pack"`
+	UpdatedAt *time.Time `json:"updated_at,omitempty"`
+	Version   int        `json:"version"`
+}
+
+// PackSecurityCheck Closed deterministic Core capability vocabulary. Anti-tamper and template inspection remain provider or model gated.
+type PackSecurityCheck string
+
+// PackSide One physical document side mapped to an evidence artefact.
+type PackSide string
+
+// PackSummary Safe list projection of one registered pack revision with current lifecycle state.
+type PackSummary struct {
+	// Country ISO 3166-1 alpha-2 country code assigned to a registered pack.
+	Country       PackCountry           `json:"country"`
+	CountryAlpha3 string                `json:"country_alpha3"`
+	Digest        string                `json:"digest"`
+	Documents     []PackDocumentSummary `json:"documents"`
+
+	// LegalReview Honest legal-review status with an optional opaque reference. A reviewed state requires one; no pack asserts review without a reference.
+	LegalReview PackLegalReview `json:"legal_review"`
+
+	// LifecycleState Registry lifecycle of one immutable pack revision.
+	LifecycleState PackLifecycleState `json:"lifecycle_state"`
+	PublishedAt    time.Time          `json:"published_at"`
+	Revision       int                `json:"revision"`
+}
+
+// PackSupportLevel Honest capability classification. It is not a legal or provider approval.
+type PackSupportLevel string
+
 // Page Opaque cursor pagination metadata.
 type Page struct {
 	HasMore bool `json:"has_more"`
@@ -4581,6 +5909,9 @@ type PolicyWrite struct {
 	Definition PolicyDefinition `json:"definition"`
 }
 
+// PrivacyDecisionOutcome Immutable decision outcome.
+type PrivacyDecisionOutcome string
+
 // PrivacyDeletionID Stable Idenqa deletion-workflow identifier.
 type PrivacyDeletionID = string
 
@@ -4635,6 +5966,53 @@ type PrivacyDeletionSummary struct {
 	Version     int64                `json:"version"`
 }
 
+// PrivacyDisclosure One immutable reference-only transfer or disclosure record. The reference is a bounded digest, never a document body.
+type PrivacyDisclosure struct {
+	// DataClass Closed transferred-data class.
+	DataClass   PrivacyDisclosureClass `json:"data_class"`
+	DisclosedAt time.Time              `json:"disclosed_at"`
+
+	// ID Stable Idenqa disclosure identifier.
+	ID         PrivacyDisclosureID `json:"id"`
+	LegalBasis string              `json:"legal_basis"`
+	Purpose    string              `json:"purpose"`
+	Recipient  string              `json:"recipient"`
+	Reference  string              `json:"reference"`
+	Region     string              `json:"region"`
+
+	// RequestID Stable Idenqa privacy-request identifier.
+	RequestID PrivacyRequestID `json:"request_id"`
+	Version   int64            `json:"version"`
+}
+
+// PrivacyDisclosureClass Closed transferred-data class.
+type PrivacyDisclosureClass string
+
+// PrivacyDisclosureCreate One immutable disclosure command.
+type PrivacyDisclosureCreate struct {
+	// DataClass Closed transferred-data class.
+	DataClass  PrivacyDisclosureClass `json:"data_class"`
+	LegalBasis string                 `json:"legal_basis"`
+	Purpose    string                 `json:"purpose"`
+	Recipient  string                 `json:"recipient"`
+	Reference  string                 `json:"reference"`
+	Region     string                 `json:"region"`
+
+	// RequestID Stable Idenqa privacy-request identifier.
+	RequestID PrivacyRequestID `json:"request_id"`
+}
+
+// PrivacyDisclosureID Stable Idenqa disclosure identifier.
+type PrivacyDisclosureID = string
+
+// PrivacyDisclosureList Bounded ascending disclosure page with a signed tenant-, filter- and limit-bound cursor.
+type PrivacyDisclosureList struct {
+	Data []PrivacyDisclosure `json:"data"`
+
+	// Page Opaque cursor pagination metadata.
+	Page Page `json:"page"`
+}
+
 // PrivacyHold One legal hold covering the aggregate. Hold documents and evidence are never returned.
 type PrivacyHold struct {
 	AggregateID string `json:"aggregate_id"`
@@ -4647,6 +6025,234 @@ type PrivacyHold struct {
 	ReviewAt   time.Time  `json:"review_at"`
 	StartsAt   time.Time  `json:"starts_at"`
 }
+
+// PrivacyProcessor One versioned processor, subprocessor, or recipient inventory entry.
+type PrivacyProcessor struct {
+	CreatedAt   time.Time                     `json:"created_at"`
+	DataClasses []PrivacyProcessorDataClasses `json:"data_classes"`
+
+	// ID Stable Idenqa processor-inventory identifier.
+	ID      PrivacyProcessorID `json:"id"`
+	Name    string             `json:"name"`
+	Purpose string             `json:"purpose"`
+	Regions []string           `json:"regions"`
+
+	// Role Closed processor-inventory role.
+	Role              PrivacyProcessorRole `json:"role"`
+	TransferMechanism string               `json:"transfer_mechanism"`
+	UpdatedAt         time.Time            `json:"updated_at"`
+	Version           int64                `json:"version"`
+}
+
+// PrivacyProcessorDataClasses defines model for PrivacyProcessor.DataClasses.
+type PrivacyProcessorDataClasses string
+
+// PrivacyProcessorID Stable Idenqa processor-inventory identifier.
+type PrivacyProcessorID = string
+
+// PrivacyProcessorList Bounded ascending processor inventory page.
+type PrivacyProcessorList struct {
+	Data []PrivacyProcessor `json:"data"`
+
+	// Page Opaque cursor pagination metadata.
+	Page Page `json:"page"`
+}
+
+// PrivacyProcessorPut One create or expected-version processor inventory command.
+type PrivacyProcessorPut struct {
+	DataClasses []PrivacyProcessorPutDataClasses `json:"data_classes"`
+
+	// ExpectedVersion Zero creates version one; a positive value applies one expected-version update.
+	ExpectedVersion int64    `json:"expected_version"`
+	Name            string   `json:"name"`
+	Purpose         string   `json:"purpose"`
+	Regions         []string `json:"regions"`
+
+	// Role Closed processor-inventory role.
+	Role              PrivacyProcessorRole `json:"role"`
+	TransferMechanism string               `json:"transfer_mechanism"`
+}
+
+// PrivacyProcessorPutDataClasses defines model for PrivacyProcessorPut.DataClasses.
+type PrivacyProcessorPutDataClasses string
+
+// PrivacyProcessorRole Closed processor-inventory role.
+type PrivacyProcessorRole string
+
+// PrivacyRequestChannel Submission channel. The tenant API key is always the controller.
+type PrivacyRequestChannel string
+
+// PrivacyRequestCreate One bounded privacy-request instruction. Exactly one correction target is required for correction requests; purpose is required for objections.
+type PrivacyRequestCreate struct {
+	DecisionID *string `json:"decision_id,omitempty"`
+
+	// ExpiresAt Optional bounded expiry within the deployment maximum.
+	ExpiresAt     *time.Time                         `json:"expires_at,omitempty"`
+	Kind          *PrivacyRequestCreateKind          `json:"kind,omitempty"`
+	Name          *string                            `json:"name,omitempty"`
+	Normalization *PrivacyRequestCreateNormalization `json:"normalization,omitempty"`
+	Purpose       *string                            `json:"purpose,omitempty"`
+	RecordID      *string                            `json:"record_id,omitempty"`
+	Region        string                             `json:"region"`
+	SubjectID     *string                            `json:"subject_id,omitempty"`
+
+	// Type Selected data-subject privacy-request type.
+	Type           PrivacyRequestType `json:"type"`
+	Value          *string            `json:"value,omitempty"`
+	VerificationID *string            `json:"verification_id,omitempty"`
+}
+
+// PrivacyRequestCreateKind defines model for PrivacyRequestCreate.Kind.
+type PrivacyRequestCreateKind string
+
+// PrivacyRequestCreateNormalization defines model for PrivacyRequestCreate.Normalization.
+type PrivacyRequestCreateNormalization string
+
+// PrivacyRequestDecision One bounded decision command.
+type PrivacyRequestDecision struct {
+	ExpectedVersion int64 `json:"expected_version"`
+
+	// Outcome Immutable decision outcome.
+	Outcome    *PrivacyDecisionOutcome `json:"outcome,omitempty"`
+	ReasonCode string                  `json:"reason_code"`
+}
+
+// PrivacyRequestDecisionSummary One immutable decision statement without the actor credential.
+type PrivacyRequestDecisionSummary struct {
+	DecidedAt time.Time `json:"decided_at"`
+	ID        string    `json:"id"`
+
+	// Outcome Immutable decision outcome.
+	Outcome    PrivacyDecisionOutcome `json:"outcome"`
+	ReasonCode string                 `json:"reason_code"`
+	Version    int64                  `json:"version"`
+}
+
+// PrivacyRequestExpectedVersion One expected-version command for a privacy-request transition.
+type PrivacyRequestExpectedVersion struct {
+	ExpectedVersion int64 `json:"expected_version"`
+}
+
+// PrivacyRequestID Stable Idenqa privacy-request identifier.
+type PrivacyRequestID = string
+
+// PrivacyRequestList Bounded ascending privacy-request page with a signed tenant-, filter- and limit-bound cursor.
+type PrivacyRequestList struct {
+	Data []PrivacyRequestSummary `json:"data"`
+
+	// Page Opaque cursor pagination metadata.
+	Page Page `json:"page"`
+}
+
+// PrivacyRequestState Observable privacy-request workflow state. Terminal states are immutable.
+type PrivacyRequestState string
+
+// PrivacyRequestStatus Full safe privacy-request status with its immutable decision statements.
+type PrivacyRequestStatus struct {
+	// Channel Submission channel. The tenant API key is always the controller.
+	Channel         PrivacyRequestChannel           `json:"channel"`
+	Decisions       []PrivacyRequestDecisionSummary `json:"decisions"`
+	EffectDigest    *string                         `json:"effect_digest,omitempty"`
+	EffectKind      *string                         `json:"effect_kind,omitempty"`
+	EffectReference *string                         `json:"effect_reference,omitempty"`
+	ExpiresAt       time.Time                       `json:"expires_at"`
+	FailureClass    *string                         `json:"failure_class,omitempty"`
+
+	// ID Stable Idenqa privacy-request identifier.
+	ID          PrivacyRequestID `json:"id"`
+	ReasonCode  *string          `json:"reason_code,omitempty"`
+	Region      string           `json:"region"`
+	RequestedAt time.Time        `json:"requested_at"`
+
+	// State Observable privacy-request workflow state. Terminal states are immutable.
+	State     PrivacyRequestState `json:"state"`
+	SubjectID *string             `json:"subject_id,omitempty"`
+
+	// Type Selected data-subject privacy-request type.
+	Type           PrivacyRequestType `json:"type"`
+	UpdatedAt      time.Time          `json:"updated_at"`
+	VerificationID *string            `json:"verification_id,omitempty"`
+	Version        int64              `json:"version"`
+}
+
+// PrivacyRequestSummary Safe privacy-request summary without actor credentials, internal events, or effect payloads.
+type PrivacyRequestSummary struct {
+	// Channel Submission channel. The tenant API key is always the controller.
+	Channel         PrivacyRequestChannel `json:"channel"`
+	EffectDigest    *string               `json:"effect_digest,omitempty"`
+	EffectKind      *string               `json:"effect_kind,omitempty"`
+	EffectReference *string               `json:"effect_reference,omitempty"`
+	ExpiresAt       time.Time             `json:"expires_at"`
+	FailureClass    *string               `json:"failure_class,omitempty"`
+
+	// ID Stable Idenqa privacy-request identifier.
+	ID          PrivacyRequestID `json:"id"`
+	ReasonCode  *string          `json:"reason_code,omitempty"`
+	Region      string           `json:"region"`
+	RequestedAt time.Time        `json:"requested_at"`
+
+	// State Observable privacy-request workflow state. Terminal states are immutable.
+	State     PrivacyRequestState `json:"state"`
+	SubjectID *string             `json:"subject_id,omitempty"`
+
+	// Type Selected data-subject privacy-request type.
+	Type           PrivacyRequestType `json:"type"`
+	UpdatedAt      time.Time          `json:"updated_at"`
+	VerificationID *string            `json:"verification_id,omitempty"`
+	Version        int64              `json:"version"`
+}
+
+// PrivacyRequestType Selected data-subject privacy-request type.
+type PrivacyRequestType string
+
+// PrivacyRestriction One processing restriction or purpose-scoped objection record.
+type PrivacyRestriction struct {
+	// ID Stable Idenqa processing-restriction identifier.
+	ID             PrivacyRestrictionID `json:"id"`
+	LiftReasonCode *string              `json:"lift_reason_code,omitempty"`
+	LiftedAt       *time.Time           `json:"lifted_at,omitempty"`
+	Purpose        *string              `json:"purpose,omitempty"`
+	ReasonCode     string               `json:"reason_code"`
+	Region         string               `json:"region"`
+
+	// RequestID Stable Idenqa privacy-request identifier.
+	RequestID PrivacyRequestID `json:"request_id"`
+
+	// Scope Subject-blocking restriction or purpose-scoped objection record.
+	Scope    PrivacyRestrictionScope `json:"scope"`
+	StartsAt time.Time               `json:"starts_at"`
+
+	// State Observable restriction state.
+	State     PrivacyRestrictionState `json:"state"`
+	SubjectID string                  `json:"subject_id"`
+	Version   int64                   `json:"version"`
+}
+
+// PrivacyRestrictionID Stable Idenqa processing-restriction identifier.
+type PrivacyRestrictionID = string
+
+// PrivacyRestrictionLift One expected-version lift command with an audited reason.
+type PrivacyRestrictionLift struct {
+	ExpectedVersion int64                            `json:"expected_version"`
+	ReasonCode      PrivacyRestrictionLiftReasonCode `json:"reason_code"`
+}
+
+// PrivacyRestrictionLiftReasonCode defines model for PrivacyRestrictionLift.ReasonCode.
+type PrivacyRestrictionLiftReasonCode string
+
+// PrivacyRestrictionList Bounded ascending restriction page with a signed tenant-, filter- and limit-bound cursor.
+type PrivacyRestrictionList struct {
+	Data []PrivacyRestriction `json:"data"`
+
+	// Page Opaque cursor pagination metadata.
+	Page Page `json:"page"`
+}
+
+// PrivacyRestrictionScope Subject-blocking restriction or purpose-scoped objection record.
+type PrivacyRestrictionScope string
+
+// PrivacyRestrictionState Observable restriction state.
+type PrivacyRestrictionState string
 
 // PrivacyRetentionRecord One retained evidence record with its recomputed typed retention resolution. Content and object locations are never returned.
 type PrivacyRetentionRecord struct {
@@ -5380,6 +6986,51 @@ type ReviewVersionRequest struct {
 // SubjectID Verification-local PII-free subject identifier.
 type SubjectID = string
 
+// SubjectPrivacyRequest Closed subject-safe privacy-request projection. No identifiers, reasons, actors, or tenant state are present.
+type SubjectPrivacyRequest struct {
+	RequestedAt time.Time `json:"requested_at"`
+
+	// Status Closed subject-safe request status. Internal states are collapsed and reasons are never disclosed.
+	Status SubjectPrivacyStatus `json:"status"`
+
+	// Type Selected data-subject privacy-request type.
+	Type      PrivacyRequestType `json:"type"`
+	UpdatedAt time.Time          `json:"updated_at"`
+}
+
+// SubjectPrivacyRequestCreate One subject-channel request instruction. The verification scope comes only from the outcome credential.
+type SubjectPrivacyRequestCreate struct {
+	DecisionID    *string                                   `json:"decision_id,omitempty"`
+	Kind          *SubjectPrivacyRequestCreateKind          `json:"kind,omitempty"`
+	Name          *string                                   `json:"name,omitempty"`
+	Normalization *SubjectPrivacyRequestCreateNormalization `json:"normalization,omitempty"`
+	Purpose       *string                                   `json:"purpose,omitempty"`
+	RecordID      *string                                   `json:"record_id,omitempty"`
+	Region        string                                    `json:"region"`
+	SubjectID     *string                                   `json:"subject_id,omitempty"`
+
+	// Type Selected data-subject privacy-request type.
+	Type  PrivacyRequestType `json:"type"`
+	Value *string            `json:"value,omitempty"`
+}
+
+// SubjectPrivacyRequestCreateKind defines model for SubjectPrivacyRequestCreate.Kind.
+type SubjectPrivacyRequestCreateKind string
+
+// SubjectPrivacyRequestCreateNormalization defines model for SubjectPrivacyRequestCreate.Normalization.
+type SubjectPrivacyRequestCreateNormalization string
+
+// SubjectPrivacyRequestList Bounded subject-safe privacy-request page.
+type SubjectPrivacyRequestList struct {
+	Data []SubjectPrivacyRequest `json:"data"`
+
+	// Page Opaque cursor pagination metadata.
+	Page Page `json:"page"`
+}
+
+// SubjectPrivacyStatus Closed subject-safe request status. Internal states are collapsed and reasons are never disclosed.
+type SubjectPrivacyStatus string
+
 // SubjectResponse Append-only receipt of an interaction, not proof of civil identity or understanding.
 type SubjectResponse struct {
 	Action SubjectResponseAction `json:"action"`
@@ -5481,6 +7132,18 @@ type VerificationCreate struct {
 
 	// CaptureTokenTTLSeconds Optional initial capture-token lifetime subject to deployment bounds.
 	CaptureTokenTTLSeconds *int64 `json:"capture_token_ttl_seconds,omitempty"`
+
+	// Experience Optional capture-experience targeting context resolved and pinned at creation. Unproven dimensions fail closed to the signed safe default.
+	Experience *struct {
+		ApplicationID *string `json:"application_id,omitempty"`
+		Country       *string `json:"country,omitempty"`
+		Origin        *string `json:"origin,omitempty"`
+		SdkVersion    *string `json:"sdk_version,omitempty"`
+		Workflow      *string `json:"workflow,omitempty"`
+	} `json:"experience,omitempty"`
+
+	// Locale Optional BCP 47 locale resolved and pinned with the portable experience.
+	Locale *string `json:"locale,omitempty"`
 
 	// OutcomeTokenPostExpiryTTLSeconds Optional outcome-token lifetime after verification expiry, subject to deployment bounds.
 	OutcomeTokenPostExpiryTTLSeconds *int64 `json:"outcome_token_post_expiry_ttl_seconds,omitempty"`
@@ -5964,6 +7627,27 @@ type CancelCaptureVerificationParams struct {
 	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
 }
 
+// ResolveCaptureExperienceParams defines parameters for ResolveCaptureExperience.
+type ResolveCaptureExperienceParams struct {
+	// Workflow Bounded workflow identifier used only when no pin exists yet.
+	Workflow *string `form:"workflow,omitempty" json:"workflow,omitempty"`
+
+	// Country ISO 3166-1 alpha-2 country used only when no pin exists yet.
+	Country *string `form:"country,omitempty" json:"country,omitempty"`
+
+	// ApplicationID Application identity used only when no pin exists yet.
+	ApplicationID *string `form:"application_id,omitempty" json:"application_id,omitempty"`
+
+	// Origin Exact HTTPS origin used only when no pin exists yet and never inferred from a header.
+	Origin *string `form:"origin,omitempty" json:"origin,omitempty"`
+
+	// SdkVersion SDK semantic version used only when no pin exists yet.
+	SdkVersion *string `form:"sdk_version,omitempty" json:"sdk_version,omitempty"`
+
+	// Locale Requested BCP 47 locale; unknown locales fall back to the document default.
+	Locale *string `form:"locale,omitempty" json:"locale,omitempty"`
+}
+
 // GetCaptureProgressParams defines parameters for GetCaptureProgress.
 type GetCaptureProgressParams struct {
 	// IfNoneMatch Strong opaque ETag returned by a previous capture-progress response.
@@ -6003,6 +7687,15 @@ type ListDeletionsParams struct {
 	Limit *Limit `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
+// GetDocumentSupportParams defines parameters for GetDocumentSupport.
+type GetDocumentSupportParams struct {
+	// Country ISO 3166-1 alpha-2 or alpha-3 country code.
+	Country string `form:"country" json:"country"`
+
+	// Type Pack document type; the canonical drivers_license spelling is also accepted.
+	Type PackDocumentType `form:"type" json:"type"`
+}
+
 // CreateEvidenceUploadParams defines parameters for CreateEvidenceUpload.
 type CreateEvidenceUploadParams struct {
 	// IdempotencyKey An RFC 9651 String used to deduplicate a consequential request. It is
@@ -6019,6 +7712,15 @@ type UploadEvidenceParams struct {
 
 	// ContentDigest Canonical RFC 9530 SHA-256 digest of the complete plaintext body.
 	ContentDigest ContentDigest `json:"Content-Digest"`
+}
+
+// ListExperiencesParams defines parameters for ListExperiences.
+type ListExperiencesParams struct {
+	// Cursor Opaque continuation cursor returned by the preceding page.
+	Cursor *Cursor `form:"cursor,omitempty" json:"cursor,omitempty"`
+
+	// Limit Maximum collection items to return. The default is 25.
+	Limit *Limit `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
 // ConfigureFraudParams defines parameters for ConfigureFraud.
@@ -6215,6 +7917,63 @@ type RollbackPolicyParams struct {
 	// different canonical request fingerprint is a conflict. Keys are not
 	// credentials and clients must not place secrets or identity data in them.
 	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
+}
+
+// ListPrivacyDisclosuresParams defines parameters for ListPrivacyDisclosures.
+type ListPrivacyDisclosuresParams struct {
+	// RequestID Restrict the page to one exact privacy request.
+	RequestID *PrivacyRequestID `form:"request_id,omitempty" json:"request_id,omitempty"`
+
+	// Cursor Opaque continuation cursor returned by the preceding page.
+	Cursor *Cursor `form:"cursor,omitempty" json:"cursor,omitempty"`
+
+	// Limit Maximum collection items to return. The default is 25.
+	Limit *Limit `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListPrivacyProcessorsParams defines parameters for ListPrivacyProcessors.
+type ListPrivacyProcessorsParams struct {
+	// Cursor Opaque continuation cursor returned by the preceding page.
+	Cursor *Cursor `form:"cursor,omitempty" json:"cursor,omitempty"`
+
+	// Limit Maximum collection items to return. The default is 25.
+	Limit *Limit `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListPrivacyRequestsParams defines parameters for ListPrivacyRequests.
+type ListPrivacyRequestsParams struct {
+	// State Restrict the page to one exact request state.
+	State *ListPrivacyRequestsParamsState `form:"state,omitempty" json:"state,omitempty"`
+
+	// Type Restrict the page to one exact request type.
+	Type *ListPrivacyRequestsParamsType `form:"type,omitempty" json:"type,omitempty"`
+
+	// SubjectID Restrict the page to one exact subject scope.
+	SubjectID *string `form:"subject_id,omitempty" json:"subject_id,omitempty"`
+
+	// Cursor Opaque continuation cursor returned by the preceding page.
+	Cursor *Cursor `form:"cursor,omitempty" json:"cursor,omitempty"`
+
+	// Limit Maximum collection items to return. The default is 25.
+	Limit *Limit `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListPrivacyRequestsParamsState defines parameters for ListPrivacyRequests.
+type ListPrivacyRequestsParamsState string
+
+// ListPrivacyRequestsParamsType defines parameters for ListPrivacyRequests.
+type ListPrivacyRequestsParamsType string
+
+// ListPrivacyRestrictionsParams defines parameters for ListPrivacyRestrictions.
+type ListPrivacyRestrictionsParams struct {
+	// SubjectID Restrict the page to one exact subject scope.
+	SubjectID *string `form:"subject_id,omitempty" json:"subject_id,omitempty"`
+
+	// Cursor Opaque continuation cursor returned by the preceding page.
+	Cursor *Cursor `form:"cursor,omitempty" json:"cursor,omitempty"`
+
+	// Limit Maximum collection items to return. The default is 25.
+	Limit *Limit `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
 // ListProposalsParams defines parameters for ListProposals.
@@ -6764,8 +8523,32 @@ type CancelCaptureVerificationJSONRequestBody = VerificationCancel
 // BootstrapNativeCaptureJSONRequestBody defines body for BootstrapNativeCapture for application/json ContentType.
 type BootstrapNativeCaptureJSONRequestBody = NativeBootstrapRequest
 
+// CreateSubjectPrivacyRequestJSONRequestBody defines body for CreateSubjectPrivacyRequest for application/json ContentType.
+type CreateSubjectPrivacyRequestJSONRequestBody = SubjectPrivacyRequestCreate
+
 // CreateEvidenceUploadJSONRequestBody defines body for CreateEvidenceUpload for application/json ContentType.
 type CreateEvidenceUploadJSONRequestBody = EvidenceUploadCreate
+
+// CreateExperienceJSONRequestBody defines body for CreateExperience for application/json ContentType.
+type CreateExperienceJSONRequestBody = ExperienceMutation
+
+// ImportExperienceJSONRequestBody defines body for ImportExperience for application/json ContentType.
+type ImportExperienceJSONRequestBody = ExperienceManifest
+
+// UpdateExperienceDraftJSONRequestBody defines body for UpdateExperienceDraft for application/json ContentType.
+type UpdateExperienceDraftJSONRequestBody = ExperienceDraft
+
+// ApproveExperienceJSONRequestBody defines body for ApproveExperience for application/json ContentType.
+type ApproveExperienceJSONRequestBody = ExperienceTransition
+
+// PublishExperienceJSONRequestBody defines body for PublishExperience for application/json ContentType.
+type PublishExperienceJSONRequestBody = ExperienceTransition
+
+// RevokeExperienceJSONRequestBody defines body for RevokeExperience for application/json ContentType.
+type RevokeExperienceJSONRequestBody = ExperienceRevocation
+
+// RollbackExperienceJSONRequestBody defines body for RollbackExperience for application/json ContentType.
+type RollbackExperienceJSONRequestBody = ExperienceRollback
 
 // ConfigureFraudJSONRequestBody defines body for ConfigureFraud for application/json ContentType.
 type ConfigureFraudJSONRequestBody = FraudConfigurationRequest
@@ -6826,6 +8609,33 @@ type RunPolicyRegressionJSONRequestBody = PolicyRegressionSuite
 
 // SimulatePolicyJSONRequestBody defines body for SimulatePolicy for application/json ContentType.
 type SimulatePolicyJSONRequestBody = PolicySimulationInput
+
+// CreatePrivacyDisclosureJSONRequestBody defines body for CreatePrivacyDisclosure for application/json ContentType.
+type CreatePrivacyDisclosureJSONRequestBody = PrivacyDisclosureCreate
+
+// CreatePrivacyProcessorJSONRequestBody defines body for CreatePrivacyProcessor for application/json ContentType.
+type CreatePrivacyProcessorJSONRequestBody = PrivacyProcessorPut
+
+// UpdatePrivacyProcessorJSONRequestBody defines body for UpdatePrivacyProcessor for application/json ContentType.
+type UpdatePrivacyProcessorJSONRequestBody = PrivacyProcessorPut
+
+// CreatePrivacyRequestJSONRequestBody defines body for CreatePrivacyRequest for application/json ContentType.
+type CreatePrivacyRequestJSONRequestBody = PrivacyRequestCreate
+
+// ApprovePrivacyRequestJSONRequestBody defines body for ApprovePrivacyRequest for application/json ContentType.
+type ApprovePrivacyRequestJSONRequestBody = PrivacyRequestDecision
+
+// DenyPrivacyRequestJSONRequestBody defines body for DenyPrivacyRequest for application/json ContentType.
+type DenyPrivacyRequestJSONRequestBody = PrivacyRequestDecision
+
+// ExecutePrivacyRequestJSONRequestBody defines body for ExecutePrivacyRequest for application/json ContentType.
+type ExecutePrivacyRequestJSONRequestBody = PrivacyRequestExpectedVersion
+
+// WithdrawPrivacyRequestJSONRequestBody defines body for WithdrawPrivacyRequest for application/json ContentType.
+type WithdrawPrivacyRequestJSONRequestBody = PrivacyRequestExpectedVersion
+
+// LiftPrivacyRestrictionJSONRequestBody defines body for LiftPrivacyRestriction for application/json ContentType.
+type LiftPrivacyRestrictionJSONRequestBody = PrivacyRestrictionLift
 
 // CreatePromptJSONRequestBody defines body for CreatePrompt for application/json ContentType.
 type CreatePromptJSONRequestBody = PromptCreate
@@ -7557,6 +9367,19 @@ type ClientInterface interface {
 	// Corresponds with POST /v1/capture/connections (the `CreateCaptureConnection` operationId).
 	CreateCaptureConnection(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ResolveCaptureExperience Resolve the session's pinned capture experience
+	//
+	// Returns the immutable signed experience document pinned to the
+	// authenticated capture session, the Core-owned mandatory copy, and the
+	// exact pinned experience, locale, tenant-copy, and mandatory-copy
+	// versions. The first call resolves and pins; later calls preserve the
+	// pin across resume. If the pinned experience is revoked or resolution
+	// fails, the signed accessible safe default is returned instead. Raw
+	// evidence, subject data, and credentials are never returned.
+	//
+	// Corresponds with GET /v1/capture/experience (the `ResolveCaptureExperience` operationId).
+	ResolveCaptureExperience(ctx context.Context, params *ResolveCaptureExperienceParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// BootstrapNativeCaptureWithBody Bind a native application proof key and recover the capture session
 	//
 	// Redeems the tenant-backend-issued capture token once, verifies an ES256
@@ -7596,6 +9419,31 @@ type ClientInterface interface {
 	//
 	// Corresponds with GET /v1/capture/outcome (the `GetCaptureOutcome` operationId).
 	GetCaptureOutcome(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListSubjectPrivacyRequests List subject-safe privacy request status
+	//
+	// Authenticated only by the D-027 outcome credential. Returns the closed subject-safe projection for requests created through this verification - request type, subject-safe status, and timestamps. Reasons, identifiers, tenant state, and effect references are intentionally absent. The credential cannot approve, deny, withdraw, or execute.
+	//
+	// Corresponds with GET /v1/capture/privacy-requests (the `ListSubjectPrivacyRequests` operationId).
+	ListSubjectPrivacyRequests(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateSubjectPrivacyRequestWithBody Create one subject privacy request
+	//
+	// Authenticated only by the D-027 outcome credential. Creates one subject-channel request scoped to the credential's verification. The tenant remains the controller and no effect executes without tenant approval. The credential cannot approve, deny, withdraw, or execute.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/capture/privacy-requests (the `CreateSubjectPrivacyRequest` operationId).
+	CreateSubjectPrivacyRequestWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateSubjectPrivacyRequest Create one subject privacy request
+	//
+	// Authenticated only by the D-027 outcome credential. Creates one subject-channel request scoped to the credential's verification. The tenant remains the controller and no effect executes without tenant approval. The credential cannot approve, deny, withdraw, or execute.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/capture/privacy-requests (the `CreateSubjectPrivacyRequest` operationId).
+	CreateSubjectPrivacyRequest(ctx context.Context, body CreateSubjectPrivacyRequestJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetCaptureProgress Recover accepted capture-step completion
 	//
@@ -7652,6 +9500,18 @@ type ClientInterface interface {
 	// Corresponds with GET /v1/deletions/{deletionID} (the `GetDeletionStatus` operationId).
 	GetDeletionStatus(ctx context.Context, deletionID PrivacyDeletionID, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetDocumentSupport Get the honest document support-level projection
+	//
+	// Get the active pack's support-level projection for one country and
+	// document type. Requires packs:read. The projection reports the declared
+	// support level, required evidence sides, supported canonical fields,
+	// declarations, evaluation coverage, limitations, and legal-review state.
+	// It contains no legal conclusion, provider approval, or security-feature
+	// finding; an unreviewed legal state is returned honestly.
+	//
+	// Corresponds with GET /v1/document-support (the `GetDocumentSupport` operationId).
+	GetDocumentSupport(ctx context.Context, params *GetDocumentSupportParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// CreateEvidenceUploadWithBody Issue a requirement-bound evidence-upload intent
 	//
 	// Takes any type of body and a specified content type.
@@ -7686,6 +9546,195 @@ type ClientInterface interface {
 	//
 	// Corresponds with PUT /v1/evidence-uploads/{uploadID} (the `UploadEvidence` operationId).
 	UploadEvidenceWithBody(ctx context.Context, uploadID UploadID, params *UploadEvidenceParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetExperienceDefault Get the signed accessible safe default
+	//
+	// Returns the Core-shipped, signed, accessible safe default experience and
+	// its Core-owned mandatory copy. Requires experiences:read. The safe
+	// default is never tenant-owned, never editable, and is the only fallback
+	// when a pinned experience is revoked or resolution fails.
+	//
+	// Corresponds with GET /v1/experience-default (the `GetExperienceDefault` operationId).
+	GetExperienceDefault(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListExperiences List tenant capture experiences
+	//
+	// Requires experiences:read. Returns a bounded ascending page of tenant-owned portable capture experiences with their lifecycle state and latest immutable revision.
+	//
+	// Corresponds with GET /v1/experiences (the `ListExperiences` operationId).
+	ListExperiences(ctx context.Context, params *ListExperiencesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateExperienceWithBody Create one experience draft
+	//
+	// Requires experiences:write. Creates one tenant-owned draft with a
+	// stable exp_ identifier and immutable revision 1. The stored revision is
+	// signed by Core over its canonical bytes. Repeating the same draft
+	// command with the same Idempotency-Key returns the original result.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/experiences (the `CreateExperience` operationId).
+	CreateExperienceWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateExperience Create one experience draft
+	//
+	// Requires experiences:write. Creates one tenant-owned draft with a
+	// stable exp_ identifier and immutable revision 1. The stored revision is
+	// signed by Core over its canonical bytes. Repeating the same draft
+	// command with the same Idempotency-Key returns the original result.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/experiences (the `CreateExperience` operationId).
+	CreateExperience(ctx context.Context, body CreateExperienceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ImportExperienceWithBody Import a signed experience manifest as a draft
+	//
+	// Requires experiences:write. Validates the closed manifest, recomputes
+	// the canonical digest, verifies the Ed25519 signature against a trusted
+	// Core key, checks mandatory-copy and asset references, and creates or
+	// advances a draft revision. Console and Cloud are not required.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/experiences/import (the `ImportExperience` operationId).
+	ImportExperienceWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ImportExperience Import a signed experience manifest as a draft
+	//
+	// Requires experiences:write. Validates the closed manifest, recomputes
+	// the canonical digest, verifies the Ed25519 signature against a trusted
+	// Core key, checks mandatory-copy and asset references, and creates or
+	// advances a draft revision. Console and Cloud are not required.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/experiences/import (the `ImportExperience` operationId).
+	ImportExperience(ctx context.Context, body ImportExperienceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetExperience Get one experience
+	//
+	// Requires experiences:read. Returns the aggregate state, optimistic revision, and latest immutable signed revision document.
+	//
+	// Corresponds with GET /v1/experiences/{experienceID} (the `GetExperience` operationId).
+	GetExperience(ctx context.Context, experienceID ExperienceID, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateExperienceDraftWithBody Save a new experience draft revision
+	//
+	// Requires experiences:write. Saves one new immutable revision and resets
+	// approval, because approval binds to one exact version. The
+	// expected_version must equal the current aggregate revision or the
+	// command fails with a conflict. A revoked experience refuses edits and
+	// requires an explicit rollback first.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with PUT /v1/experiences/{experienceID} (the `UpdateExperienceDraft` operationId).
+	UpdateExperienceDraftWithBody(ctx context.Context, experienceID ExperienceID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdateExperienceDraft Save a new experience draft revision
+	//
+	// Requires experiences:write. Saves one new immutable revision and resets
+	// approval, because approval binds to one exact version. The
+	// expected_version must equal the current aggregate revision or the
+	// command fails with a conflict. A revoked experience refuses edits and
+	// requires an explicit rollback first.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with PUT /v1/experiences/{experienceID} (the `UpdateExperienceDraft` operationId).
+	UpdateExperienceDraft(ctx context.Context, experienceID ExperienceID, body UpdateExperienceDraftJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ApproveExperienceWithBody Approve the latest experience revision
+	//
+	// Requires experiences:publish. Records the explicit approval publication requires. Repeating the approval of the same version is idempotent and does not append history.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/experiences/{experienceID}/approve (the `ApproveExperience` operationId).
+	ApproveExperienceWithBody(ctx context.Context, experienceID ExperienceID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ApproveExperience Approve the latest experience revision
+	//
+	// Requires experiences:publish. Records the explicit approval publication requires. Repeating the approval of the same version is idempotent and does not append history.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/experiences/{experienceID}/approve (the `ApproveExperience` operationId).
+	ApproveExperience(ctx context.Context, experienceID ExperienceID, body ApproveExperienceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ExportExperience Export one signed experience manifest
+	//
+	// Requires experiences:read. Returns the signed canonical manifest of the live published revision, or the latest revision when nothing is published, so another Core installation can import it without Console or Cloud.
+	//
+	// Corresponds with GET /v1/experiences/{experienceID}/export (the `ExportExperience` operationId).
+	ExportExperience(ctx context.Context, experienceID ExperienceID, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PublishExperienceWithBody Publish the approved experience revision
+	//
+	// Requires experiences:publish. Publication requires a prior explicit
+	// approval of the exact latest version, verifies every asset digest, and
+	// supersedes the previous live revision without deleting it. Repeating
+	// publication of the live version is idempotent.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/experiences/{experienceID}/publish (the `PublishExperience` operationId).
+	PublishExperienceWithBody(ctx context.Context, experienceID ExperienceID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PublishExperience Publish the approved experience revision
+	//
+	// Requires experiences:publish. Publication requires a prior explicit
+	// approval of the exact latest version, verifies every asset digest, and
+	// supersedes the previous live revision without deleting it. Repeating
+	// publication of the live version is idempotent.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/experiences/{experienceID}/publish (the `PublishExperience` operationId).
+	PublishExperience(ctx context.Context, experienceID ExperienceID, body PublishExperienceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RevokeExperienceWithBody Revoke the live experience (kill switch)
+	//
+	// Requires experiences:publish. Clears the live revision so capture
+	// sessions fall back to the signed accessible safe default. Revocation is
+	// idempotent, preserves immutable history, and refuses new edits until an
+	// explicit rollback republishes a prior approved revision.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/experiences/{experienceID}/revoke (the `RevokeExperience` operationId).
+	RevokeExperienceWithBody(ctx context.Context, experienceID ExperienceID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RevokeExperience Revoke the live experience (kill switch)
+	//
+	// Requires experiences:publish. Clears the live revision so capture
+	// sessions fall back to the signed accessible safe default. Revocation is
+	// idempotent, preserves immutable history, and refuses new edits until an
+	// explicit rollback republishes a prior approved revision.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/experiences/{experienceID}/revoke (the `RevokeExperience` operationId).
+	RevokeExperience(ctx context.Context, experienceID ExperienceID, body RevokeExperienceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RollbackExperienceWithBody Roll back to a prior immutable revision
+	//
+	// Requires experiences:publish. Republishes one previously approved immutable revision without editing it. The rollback target must have been approved; the replaced live revision is marked superseded. Repeating the same rollback is idempotent.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/experiences/{experienceID}/rollback (the `RollbackExperience` operationId).
+	RollbackExperienceWithBody(ctx context.Context, experienceID ExperienceID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RollbackExperience Roll back to a prior immutable revision
+	//
+	// Requires experiences:publish. Republishes one previously approved immutable revision without editing it. The rollback target must have been approved; the replaced live revision is marked superseded. Repeating the same rollback is idempotent.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/experiences/{experienceID}/rollback (the `RollbackExperience` operationId).
+	RollbackExperience(ctx context.Context, experienceID ExperienceID, body RollbackExperienceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetFraudConfiguration Read active fraud rules
 	//
@@ -8041,6 +10090,27 @@ type ClientInterface interface {
 	// Corresponds with GET /v1/notices/{noticeID} (the `GetNoticeVersion` operationId).
 	GetNoticeVersion(ctx context.Context, noticeID NoticeID, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ListPacks List registered country pack revisions
+	//
+	// List every registered immutable country pack revision with its current lifecycle state. Requires packs:read. Pack content is embedded and reviewed at build time; this route never activates, deprecates, or retires a pack.
+	//
+	// Corresponds with GET /v1/packs (the `ListPacks` operationId).
+	ListPacks(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetActiveCountryPack Get the active pack for a country
+	//
+	// Get the active immutable pack revision for an ISO 3166-1 alpha-2 or alpha-3 country code. Requires packs:read. The projection never asserts legal, provider, or security-feature approval.
+	//
+	// Corresponds with GET /v1/packs/{country} (the `GetActiveCountryPack` operationId).
+	GetActiveCountryPack(ctx context.Context, country string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetCountryPackRevision Get an exact pack revision
+	//
+	// Get one exact immutable pack revision. Requires packs:read. Deprecated and retired revisions remain readable so an old decision or policy reference stays inspectable.
+	//
+	// Corresponds with GET /v1/packs/{country}/revisions/{revision} (the `GetCountryPackRevision` operationId).
+	GetCountryPackRevision(ctx context.Context, country string, revision int, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListPolicies List policies
 	//
 	// Requires policies:read. Bounded newest-first metadata page with a signed tenant-, policy-, collection- and limit-bound cursor.
@@ -8233,6 +10303,210 @@ type ClientInterface interface {
 	//
 	// Corresponds with POST /v1/policy-simulations (the `SimulatePolicy` operationId).
 	SimulatePolicy(ctx context.Context, body SimulatePolicyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListPrivacyDisclosures List tenant transfer and disclosure records
+	//
+	// Requires privacy_requests:read. Returns immutable reference-only disclosure records filtered by exact request or by the whole tenant.
+	//
+	// Corresponds with GET /v1/privacy-disclosures (the `ListPrivacyDisclosures` operationId).
+	ListPrivacyDisclosures(ctx context.Context, params *ListPrivacyDisclosuresParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreatePrivacyDisclosureWithBody Record one transfer or disclosure
+	//
+	// Requires privacy_requests:write. Records an immutable reference-only disclosure. The reference is a bounded digest; document contents and recipient secrets are never accepted.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/privacy-disclosures (the `CreatePrivacyDisclosure` operationId).
+	CreatePrivacyDisclosureWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreatePrivacyDisclosure Record one transfer or disclosure
+	//
+	// Requires privacy_requests:write. Records an immutable reference-only disclosure. The reference is a bounded digest; document contents and recipient secrets are never accepted.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/privacy-disclosures (the `CreatePrivacyDisclosure` operationId).
+	CreatePrivacyDisclosure(ctx context.Context, body CreatePrivacyDisclosureJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListPrivacyProcessors List tenant processor inventory
+	//
+	// Requires privacy_requests:read. Returns a bounded ascending page of versioned processors, subprocessors, and recipients with bounded data classes, regions, and transfer mechanisms.
+	//
+	// Corresponds with GET /v1/privacy-processors (the `ListPrivacyProcessors` operationId).
+	ListPrivacyProcessors(ctx context.Context, params *ListPrivacyProcessorsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreatePrivacyProcessorWithBody Create one processor inventory entry
+	//
+	// Requires privacy_requests:write. Creates version one of a processor inventory entry and its append-only revision.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/privacy-processors (the `CreatePrivacyProcessor` operationId).
+	CreatePrivacyProcessorWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreatePrivacyProcessor Create one processor inventory entry
+	//
+	// Requires privacy_requests:write. Creates version one of a processor inventory entry and its append-only revision.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/privacy-processors (the `CreatePrivacyProcessor` operationId).
+	CreatePrivacyProcessor(ctx context.Context, body CreatePrivacyProcessorJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetPrivacyProcessor Get one processor inventory entry
+	//
+	// Requires privacy_requests:read. Returns the current version of one processor inventory entry.
+	//
+	// Corresponds with GET /v1/privacy-processors/{processorID} (the `GetPrivacyProcessor` operationId).
+	GetPrivacyProcessor(ctx context.Context, processorID PrivacyProcessorID, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdatePrivacyProcessorWithBody Update one processor inventory entry
+	//
+	// Requires privacy_requests:write. Applies one expected-version update and appends an immutable revision. A stale expected version is rejected.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with PUT /v1/privacy-processors/{processorID} (the `UpdatePrivacyProcessor` operationId).
+	UpdatePrivacyProcessorWithBody(ctx context.Context, processorID PrivacyProcessorID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UpdatePrivacyProcessor Update one processor inventory entry
+	//
+	// Requires privacy_requests:write. Applies one expected-version update and appends an immutable revision. A stale expected version is rejected.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with PUT /v1/privacy-processors/{processorID} (the `UpdatePrivacyProcessor` operationId).
+	UpdatePrivacyProcessor(ctx context.Context, processorID PrivacyProcessorID, body UpdatePrivacyProcessorJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListPrivacyRequests List tenant privacy requests
+	//
+	// Requires privacy_requests:read. Returns a bounded ascending page of data-subject privacy requests with their state, version, and bounded effect references. Reasons, actor identifiers, and internal events are never returned.
+	//
+	// Corresponds with GET /v1/privacy-requests (the `ListPrivacyRequests` operationId).
+	ListPrivacyRequests(ctx context.Context, params *ListPrivacyRequestsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreatePrivacyRequestWithBody Create one tenant privacy request
+	//
+	// Requires privacy_requests:write. Creates one tenant-channel data-subject request. The tenant is the controller and no effect executes before an explicit approval. Subject-scoped effects require a subject; corrrection instructions carry exactly one record or decision target.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/privacy-requests (the `CreatePrivacyRequest` operationId).
+	CreatePrivacyRequestWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreatePrivacyRequest Create one tenant privacy request
+	//
+	// Requires privacy_requests:write. Creates one tenant-channel data-subject request. The tenant is the controller and no effect executes before an explicit approval. Subject-scoped effects require a subject; corrrection instructions carry exactly one record or decision target.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/privacy-requests (the `CreatePrivacyRequest` operationId).
+	CreatePrivacyRequest(ctx context.Context, body CreatePrivacyRequestJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetPrivacyRequest Get one privacy request
+	//
+	// Requires privacy_requests:read. Returns the request state, immutable decision statements, and bounded effect references. It never returns subject credentials, raw evidence, or object locations.
+	//
+	// Corresponds with GET /v1/privacy-requests/{requestID} (the `GetPrivacyRequest` operationId).
+	GetPrivacyRequest(ctx context.Context, requestID PrivacyRequestID, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ApprovePrivacyRequestWithBody Approve or partially approve a privacy request
+	//
+	// Requires privacy_requests:approve. Records one immutable decision with a bounded reason code. Replay with the same outcome and reason is idempotent; a conflicting replay is rejected.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/privacy-requests/{requestID}/approve (the `ApprovePrivacyRequest` operationId).
+	ApprovePrivacyRequestWithBody(ctx context.Context, requestID PrivacyRequestID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ApprovePrivacyRequest Approve or partially approve a privacy request
+	//
+	// Requires privacy_requests:approve. Records one immutable decision with a bounded reason code. Replay with the same outcome and reason is idempotent; a conflicting replay is rejected.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/privacy-requests/{requestID}/approve (the `ApprovePrivacyRequest` operationId).
+	ApprovePrivacyRequest(ctx context.Context, requestID PrivacyRequestID, body ApprovePrivacyRequestJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DenyPrivacyRequestWithBody Deny a privacy request
+	//
+	// Requires privacy_requests:approve. Records one immutable denial with a bounded reason code. Denial is terminal and immutable; replay with the same reason is idempotent.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/privacy-requests/{requestID}/deny (the `DenyPrivacyRequest` operationId).
+	DenyPrivacyRequestWithBody(ctx context.Context, requestID PrivacyRequestID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DenyPrivacyRequest Deny a privacy request
+	//
+	// Requires privacy_requests:approve. Records one immutable denial with a bounded reason code. Denial is terminal and immutable; replay with the same reason is idempotent.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/privacy-requests/{requestID}/deny (the `DenyPrivacyRequest` operationId).
+	DenyPrivacyRequest(ctx context.Context, requestID PrivacyRequestID, body DenyPrivacyRequestJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ExecutePrivacyRequestWithBody Execute an approved privacy request
+	//
+	// Requires privacy_requests:approve. Dispatches the approved effect through the existing deletion, subject-export, identity-correction, or review-correction mechanism. Completed requests are returned unchanged, so replay adds nothing.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/privacy-requests/{requestID}/execute (the `ExecutePrivacyRequest` operationId).
+	ExecutePrivacyRequestWithBody(ctx context.Context, requestID PrivacyRequestID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ExecutePrivacyRequest Execute an approved privacy request
+	//
+	// Requires privacy_requests:approve. Dispatches the approved effect through the existing deletion, subject-export, identity-correction, or review-correction mechanism. Completed requests are returned unchanged, so replay adds nothing.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/privacy-requests/{requestID}/execute (the `ExecutePrivacyRequest` operationId).
+	ExecutePrivacyRequest(ctx context.Context, requestID PrivacyRequestID, body ExecutePrivacyRequestJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// WithdrawPrivacyRequestWithBody Withdraw an undecided privacy request
+	//
+	// Requires privacy_requests:write. Ends a requested or in-review request without a decision. Withdrawal is terminal and immutable; a decided request can no longer be withdrawn.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/privacy-requests/{requestID}/withdraw (the `WithdrawPrivacyRequest` operationId).
+	WithdrawPrivacyRequestWithBody(ctx context.Context, requestID PrivacyRequestID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// WithdrawPrivacyRequest Withdraw an undecided privacy request
+	//
+	// Requires privacy_requests:write. Ends a requested or in-review request without a decision. Withdrawal is terminal and immutable; a decided request can no longer be withdrawn.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/privacy-requests/{requestID}/withdraw (the `WithdrawPrivacyRequest` operationId).
+	WithdrawPrivacyRequest(ctx context.Context, requestID PrivacyRequestID, body WithdrawPrivacyRequestJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListPrivacyRestrictions List tenant processing restrictions
+	//
+	// Requires privacy_requests:read. Returns a bounded ascending page of subject-blocking and purpose-scoped records. Purpose-scoped objection records are consulted as policy input for new processing only.
+	//
+	// Corresponds with GET /v1/privacy-restrictions (the `ListPrivacyRestrictions` operationId).
+	ListPrivacyRestrictions(ctx context.Context, params *ListPrivacyRestrictionsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// LiftPrivacyRestrictionWithBody Lift one processing restriction
+	//
+	// Requires privacy_requests:approve. Ends a subject-blocking restriction with an audited reason. In-flight external operations and completed decisions were never affected by the restriction.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/privacy-restrictions/{restrictionID}/lift (the `LiftPrivacyRestriction` operationId).
+	LiftPrivacyRestrictionWithBody(ctx context.Context, restrictionID PrivacyRestrictionID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// LiftPrivacyRestriction Lift one processing restriction
+	//
+	// Requires privacy_requests:approve. Ends a subject-blocking restriction with an audited reason. In-flight external operations and completed decisions were never affected by the restriction.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/privacy-restrictions/{restrictionID}/lift (the `LiftPrivacyRestriction` operationId).
+	LiftPrivacyRestriction(ctx context.Context, restrictionID PrivacyRestrictionID, body LiftPrivacyRestrictionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// CreatePromptWithBody Create immutable prompt version
 	//
@@ -9875,6 +12149,29 @@ func (c *Client) CreateCaptureConnection(ctx context.Context, reqEditors ...Requ
 	return c.Client.Do(req)
 }
 
+// ResolveCaptureExperience Resolve the session's pinned capture experience
+//
+// Returns the immutable signed experience document pinned to the
+// authenticated capture session, the Core-owned mandatory copy, and the
+// exact pinned experience, locale, tenant-copy, and mandatory-copy
+// versions. The first call resolves and pins; later calls preserve the
+// pin across resume. If the pinned experience is revoked or resolution
+// fails, the signed accessible safe default is returned instead. Raw
+// evidence, subject data, and credentials are never returned.
+//
+// Corresponds with GET /v1/capture/experience (the `ResolveCaptureExperience` operationId).
+func (c *Client) ResolveCaptureExperience(ctx context.Context, params *ResolveCaptureExperienceParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewResolveCaptureExperienceRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // BootstrapNativeCaptureWithBody Bind a native application proof key and recover the capture session
 //
 // Redeems the tenant-backend-issued capture token once, verifies an ES256
@@ -9935,6 +12232,61 @@ func (c *Client) BootstrapNativeCapture(ctx context.Context, body BootstrapNativ
 // Corresponds with GET /v1/capture/outcome (the `GetCaptureOutcome` operationId).
 func (c *Client) GetCaptureOutcome(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetCaptureOutcomeRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListSubjectPrivacyRequests List subject-safe privacy request status
+//
+// Authenticated only by the D-027 outcome credential. Returns the closed subject-safe projection for requests created through this verification - request type, subject-safe status, and timestamps. Reasons, identifiers, tenant state, and effect references are intentionally absent. The credential cannot approve, deny, withdraw, or execute.
+//
+// Corresponds with GET /v1/capture/privacy-requests (the `ListSubjectPrivacyRequests` operationId).
+func (c *Client) ListSubjectPrivacyRequests(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListSubjectPrivacyRequestsRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateSubjectPrivacyRequestWithBody Create one subject privacy request
+//
+// Authenticated only by the D-027 outcome credential. Creates one subject-channel request scoped to the credential's verification. The tenant remains the controller and no effect executes without tenant approval. The credential cannot approve, deny, withdraw, or execute.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/capture/privacy-requests (the `CreateSubjectPrivacyRequest` operationId).
+func (c *Client) CreateSubjectPrivacyRequestWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateSubjectPrivacyRequestRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateSubjectPrivacyRequest Create one subject privacy request
+//
+// Authenticated only by the D-027 outcome credential. Creates one subject-channel request scoped to the credential's verification. The tenant remains the controller and no effect executes without tenant approval. The credential cannot approve, deny, withdraw, or execute.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/capture/privacy-requests (the `CreateSubjectPrivacyRequest` operationId).
+func (c *Client) CreateSubjectPrivacyRequest(ctx context.Context, body CreateSubjectPrivacyRequestJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateSubjectPrivacyRequestRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -10070,6 +12422,28 @@ func (c *Client) GetDeletionStatus(ctx context.Context, deletionID PrivacyDeleti
 	return c.Client.Do(req)
 }
 
+// GetDocumentSupport Get the honest document support-level projection
+//
+// Get the active pack's support-level projection for one country and
+// document type. Requires packs:read. The projection reports the declared
+// support level, required evidence sides, supported canonical fields,
+// declarations, evaluation coverage, limitations, and legal-review state.
+// It contains no legal conclusion, provider approval, or security-feature
+// finding; an unreviewed legal state is returned honestly.
+//
+// Corresponds with GET /v1/document-support (the `GetDocumentSupport` operationId).
+func (c *Client) GetDocumentSupport(ctx context.Context, params *GetDocumentSupportParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetDocumentSupportRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // CreateEvidenceUploadWithBody Issue a requirement-bound evidence-upload intent
 //
 // Takes any type of body and a specified content type.
@@ -10135,6 +12509,375 @@ func (c *Client) GetEvidenceUpload(ctx context.Context, uploadID UploadID, reqEd
 // Corresponds with PUT /v1/evidence-uploads/{uploadID} (the `UploadEvidence` operationId).
 func (c *Client) UploadEvidenceWithBody(ctx context.Context, uploadID UploadID, params *UploadEvidenceParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUploadEvidenceRequestWithBody(c.Server, uploadID, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetExperienceDefault Get the signed accessible safe default
+//
+// Returns the Core-shipped, signed, accessible safe default experience and
+// its Core-owned mandatory copy. Requires experiences:read. The safe
+// default is never tenant-owned, never editable, and is the only fallback
+// when a pinned experience is revoked or resolution fails.
+//
+// Corresponds with GET /v1/experience-default (the `GetExperienceDefault` operationId).
+func (c *Client) GetExperienceDefault(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetExperienceDefaultRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListExperiences List tenant capture experiences
+//
+// Requires experiences:read. Returns a bounded ascending page of tenant-owned portable capture experiences with their lifecycle state and latest immutable revision.
+//
+// Corresponds with GET /v1/experiences (the `ListExperiences` operationId).
+func (c *Client) ListExperiences(ctx context.Context, params *ListExperiencesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListExperiencesRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateExperienceWithBody Create one experience draft
+//
+// Requires experiences:write. Creates one tenant-owned draft with a
+// stable exp_ identifier and immutable revision 1. The stored revision is
+// signed by Core over its canonical bytes. Repeating the same draft
+// command with the same Idempotency-Key returns the original result.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/experiences (the `CreateExperience` operationId).
+func (c *Client) CreateExperienceWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateExperienceRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateExperience Create one experience draft
+//
+// Requires experiences:write. Creates one tenant-owned draft with a
+// stable exp_ identifier and immutable revision 1. The stored revision is
+// signed by Core over its canonical bytes. Repeating the same draft
+// command with the same Idempotency-Key returns the original result.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/experiences (the `CreateExperience` operationId).
+func (c *Client) CreateExperience(ctx context.Context, body CreateExperienceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateExperienceRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ImportExperienceWithBody Import a signed experience manifest as a draft
+//
+// Requires experiences:write. Validates the closed manifest, recomputes
+// the canonical digest, verifies the Ed25519 signature against a trusted
+// Core key, checks mandatory-copy and asset references, and creates or
+// advances a draft revision. Console and Cloud are not required.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/experiences/import (the `ImportExperience` operationId).
+func (c *Client) ImportExperienceWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewImportExperienceRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ImportExperience Import a signed experience manifest as a draft
+//
+// Requires experiences:write. Validates the closed manifest, recomputes
+// the canonical digest, verifies the Ed25519 signature against a trusted
+// Core key, checks mandatory-copy and asset references, and creates or
+// advances a draft revision. Console and Cloud are not required.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/experiences/import (the `ImportExperience` operationId).
+func (c *Client) ImportExperience(ctx context.Context, body ImportExperienceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewImportExperienceRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetExperience Get one experience
+//
+// Requires experiences:read. Returns the aggregate state, optimistic revision, and latest immutable signed revision document.
+//
+// Corresponds with GET /v1/experiences/{experienceID} (the `GetExperience` operationId).
+func (c *Client) GetExperience(ctx context.Context, experienceID ExperienceID, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetExperienceRequest(c.Server, experienceID)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// UpdateExperienceDraftWithBody Save a new experience draft revision
+//
+// Requires experiences:write. Saves one new immutable revision and resets
+// approval, because approval binds to one exact version. The
+// expected_version must equal the current aggregate revision or the
+// command fails with a conflict. A revoked experience refuses edits and
+// requires an explicit rollback first.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with PUT /v1/experiences/{experienceID} (the `UpdateExperienceDraft` operationId).
+func (c *Client) UpdateExperienceDraftWithBody(ctx context.Context, experienceID ExperienceID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateExperienceDraftRequestWithBody(c.Server, experienceID, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// UpdateExperienceDraft Save a new experience draft revision
+//
+// Requires experiences:write. Saves one new immutable revision and resets
+// approval, because approval binds to one exact version. The
+// expected_version must equal the current aggregate revision or the
+// command fails with a conflict. A revoked experience refuses edits and
+// requires an explicit rollback first.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with PUT /v1/experiences/{experienceID} (the `UpdateExperienceDraft` operationId).
+func (c *Client) UpdateExperienceDraft(ctx context.Context, experienceID ExperienceID, body UpdateExperienceDraftJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdateExperienceDraftRequest(c.Server, experienceID, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ApproveExperienceWithBody Approve the latest experience revision
+//
+// Requires experiences:publish. Records the explicit approval publication requires. Repeating the approval of the same version is idempotent and does not append history.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/experiences/{experienceID}/approve (the `ApproveExperience` operationId).
+func (c *Client) ApproveExperienceWithBody(ctx context.Context, experienceID ExperienceID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewApproveExperienceRequestWithBody(c.Server, experienceID, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ApproveExperience Approve the latest experience revision
+//
+// Requires experiences:publish. Records the explicit approval publication requires. Repeating the approval of the same version is idempotent and does not append history.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/experiences/{experienceID}/approve (the `ApproveExperience` operationId).
+func (c *Client) ApproveExperience(ctx context.Context, experienceID ExperienceID, body ApproveExperienceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewApproveExperienceRequest(c.Server, experienceID, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ExportExperience Export one signed experience manifest
+//
+// Requires experiences:read. Returns the signed canonical manifest of the live published revision, or the latest revision when nothing is published, so another Core installation can import it without Console or Cloud.
+//
+// Corresponds with GET /v1/experiences/{experienceID}/export (the `ExportExperience` operationId).
+func (c *Client) ExportExperience(ctx context.Context, experienceID ExperienceID, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewExportExperienceRequest(c.Server, experienceID)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// PublishExperienceWithBody Publish the approved experience revision
+//
+// Requires experiences:publish. Publication requires a prior explicit
+// approval of the exact latest version, verifies every asset digest, and
+// supersedes the previous live revision without deleting it. Repeating
+// publication of the live version is idempotent.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/experiences/{experienceID}/publish (the `PublishExperience` operationId).
+func (c *Client) PublishExperienceWithBody(ctx context.Context, experienceID ExperienceID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPublishExperienceRequestWithBody(c.Server, experienceID, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// PublishExperience Publish the approved experience revision
+//
+// Requires experiences:publish. Publication requires a prior explicit
+// approval of the exact latest version, verifies every asset digest, and
+// supersedes the previous live revision without deleting it. Repeating
+// publication of the live version is idempotent.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/experiences/{experienceID}/publish (the `PublishExperience` operationId).
+func (c *Client) PublishExperience(ctx context.Context, experienceID ExperienceID, body PublishExperienceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPublishExperienceRequest(c.Server, experienceID, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// RevokeExperienceWithBody Revoke the live experience (kill switch)
+//
+// Requires experiences:publish. Clears the live revision so capture
+// sessions fall back to the signed accessible safe default. Revocation is
+// idempotent, preserves immutable history, and refuses new edits until an
+// explicit rollback republishes a prior approved revision.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/experiences/{experienceID}/revoke (the `RevokeExperience` operationId).
+func (c *Client) RevokeExperienceWithBody(ctx context.Context, experienceID ExperienceID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRevokeExperienceRequestWithBody(c.Server, experienceID, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// RevokeExperience Revoke the live experience (kill switch)
+//
+// Requires experiences:publish. Clears the live revision so capture
+// sessions fall back to the signed accessible safe default. Revocation is
+// idempotent, preserves immutable history, and refuses new edits until an
+// explicit rollback republishes a prior approved revision.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/experiences/{experienceID}/revoke (the `RevokeExperience` operationId).
+func (c *Client) RevokeExperience(ctx context.Context, experienceID ExperienceID, body RevokeExperienceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRevokeExperienceRequest(c.Server, experienceID, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// RollbackExperienceWithBody Roll back to a prior immutable revision
+//
+// Requires experiences:publish. Republishes one previously approved immutable revision without editing it. The rollback target must have been approved; the replaced live revision is marked superseded. Repeating the same rollback is idempotent.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/experiences/{experienceID}/rollback (the `RollbackExperience` operationId).
+func (c *Client) RollbackExperienceWithBody(ctx context.Context, experienceID ExperienceID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRollbackExperienceRequestWithBody(c.Server, experienceID, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// RollbackExperience Roll back to a prior immutable revision
+//
+// Requires experiences:publish. Republishes one previously approved immutable revision without editing it. The rollback target must have been approved; the replaced live revision is marked superseded. Repeating the same rollback is idempotent.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/experiences/{experienceID}/rollback (the `RollbackExperience` operationId).
+func (c *Client) RollbackExperience(ctx context.Context, experienceID ExperienceID, body RollbackExperienceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRollbackExperienceRequest(c.Server, experienceID, body)
 	if err != nil {
 		return nil, err
 	}
@@ -10849,6 +13592,57 @@ func (c *Client) GetNoticeVersion(ctx context.Context, noticeID NoticeID, reqEdi
 	return c.Client.Do(req)
 }
 
+// ListPacks List registered country pack revisions
+//
+// List every registered immutable country pack revision with its current lifecycle state. Requires packs:read. Pack content is embedded and reviewed at build time; this route never activates, deprecates, or retires a pack.
+//
+// Corresponds with GET /v1/packs (the `ListPacks` operationId).
+func (c *Client) ListPacks(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListPacksRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetActiveCountryPack Get the active pack for a country
+//
+// Get the active immutable pack revision for an ISO 3166-1 alpha-2 or alpha-3 country code. Requires packs:read. The projection never asserts legal, provider, or security-feature approval.
+//
+// Corresponds with GET /v1/packs/{country} (the `GetActiveCountryPack` operationId).
+func (c *Client) GetActiveCountryPack(ctx context.Context, country string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetActiveCountryPackRequest(c.Server, country)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetCountryPackRevision Get an exact pack revision
+//
+// Get one exact immutable pack revision. Requires packs:read. Deprecated and retired revisions remain readable so an old decision or policy reference stays inspectable.
+//
+// Corresponds with GET /v1/packs/{country}/revisions/{revision} (the `GetCountryPackRevision` operationId).
+func (c *Client) GetCountryPackRevision(ctx context.Context, country string, revision int, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetCountryPackRevisionRequest(c.Server, country, revision)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // ListPolicies List policies
 //
 // Requires policies:read. Bounded newest-first metadata page with a signed tenant-, policy-, collection- and limit-bound cursor.
@@ -11262,6 +14056,450 @@ func (c *Client) SimulatePolicyWithBody(ctx context.Context, contentType string,
 // Corresponds with POST /v1/policy-simulations (the `SimulatePolicy` operationId).
 func (c *Client) SimulatePolicy(ctx context.Context, body SimulatePolicyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewSimulatePolicyRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListPrivacyDisclosures List tenant transfer and disclosure records
+//
+// Requires privacy_requests:read. Returns immutable reference-only disclosure records filtered by exact request or by the whole tenant.
+//
+// Corresponds with GET /v1/privacy-disclosures (the `ListPrivacyDisclosures` operationId).
+func (c *Client) ListPrivacyDisclosures(ctx context.Context, params *ListPrivacyDisclosuresParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListPrivacyDisclosuresRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreatePrivacyDisclosureWithBody Record one transfer or disclosure
+//
+// Requires privacy_requests:write. Records an immutable reference-only disclosure. The reference is a bounded digest; document contents and recipient secrets are never accepted.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/privacy-disclosures (the `CreatePrivacyDisclosure` operationId).
+func (c *Client) CreatePrivacyDisclosureWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreatePrivacyDisclosureRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreatePrivacyDisclosure Record one transfer or disclosure
+//
+// Requires privacy_requests:write. Records an immutable reference-only disclosure. The reference is a bounded digest; document contents and recipient secrets are never accepted.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/privacy-disclosures (the `CreatePrivacyDisclosure` operationId).
+func (c *Client) CreatePrivacyDisclosure(ctx context.Context, body CreatePrivacyDisclosureJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreatePrivacyDisclosureRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListPrivacyProcessors List tenant processor inventory
+//
+// Requires privacy_requests:read. Returns a bounded ascending page of versioned processors, subprocessors, and recipients with bounded data classes, regions, and transfer mechanisms.
+//
+// Corresponds with GET /v1/privacy-processors (the `ListPrivacyProcessors` operationId).
+func (c *Client) ListPrivacyProcessors(ctx context.Context, params *ListPrivacyProcessorsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListPrivacyProcessorsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreatePrivacyProcessorWithBody Create one processor inventory entry
+//
+// Requires privacy_requests:write. Creates version one of a processor inventory entry and its append-only revision.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/privacy-processors (the `CreatePrivacyProcessor` operationId).
+func (c *Client) CreatePrivacyProcessorWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreatePrivacyProcessorRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreatePrivacyProcessor Create one processor inventory entry
+//
+// Requires privacy_requests:write. Creates version one of a processor inventory entry and its append-only revision.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/privacy-processors (the `CreatePrivacyProcessor` operationId).
+func (c *Client) CreatePrivacyProcessor(ctx context.Context, body CreatePrivacyProcessorJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreatePrivacyProcessorRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetPrivacyProcessor Get one processor inventory entry
+//
+// Requires privacy_requests:read. Returns the current version of one processor inventory entry.
+//
+// Corresponds with GET /v1/privacy-processors/{processorID} (the `GetPrivacyProcessor` operationId).
+func (c *Client) GetPrivacyProcessor(ctx context.Context, processorID PrivacyProcessorID, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetPrivacyProcessorRequest(c.Server, processorID)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// UpdatePrivacyProcessorWithBody Update one processor inventory entry
+//
+// Requires privacy_requests:write. Applies one expected-version update and appends an immutable revision. A stale expected version is rejected.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with PUT /v1/privacy-processors/{processorID} (the `UpdatePrivacyProcessor` operationId).
+func (c *Client) UpdatePrivacyProcessorWithBody(ctx context.Context, processorID PrivacyProcessorID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdatePrivacyProcessorRequestWithBody(c.Server, processorID, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// UpdatePrivacyProcessor Update one processor inventory entry
+//
+// Requires privacy_requests:write. Applies one expected-version update and appends an immutable revision. A stale expected version is rejected.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with PUT /v1/privacy-processors/{processorID} (the `UpdatePrivacyProcessor` operationId).
+func (c *Client) UpdatePrivacyProcessor(ctx context.Context, processorID PrivacyProcessorID, body UpdatePrivacyProcessorJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUpdatePrivacyProcessorRequest(c.Server, processorID, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListPrivacyRequests List tenant privacy requests
+//
+// Requires privacy_requests:read. Returns a bounded ascending page of data-subject privacy requests with their state, version, and bounded effect references. Reasons, actor identifiers, and internal events are never returned.
+//
+// Corresponds with GET /v1/privacy-requests (the `ListPrivacyRequests` operationId).
+func (c *Client) ListPrivacyRequests(ctx context.Context, params *ListPrivacyRequestsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListPrivacyRequestsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreatePrivacyRequestWithBody Create one tenant privacy request
+//
+// Requires privacy_requests:write. Creates one tenant-channel data-subject request. The tenant is the controller and no effect executes before an explicit approval. Subject-scoped effects require a subject; corrrection instructions carry exactly one record or decision target.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/privacy-requests (the `CreatePrivacyRequest` operationId).
+func (c *Client) CreatePrivacyRequestWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreatePrivacyRequestRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreatePrivacyRequest Create one tenant privacy request
+//
+// Requires privacy_requests:write. Creates one tenant-channel data-subject request. The tenant is the controller and no effect executes before an explicit approval. Subject-scoped effects require a subject; corrrection instructions carry exactly one record or decision target.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/privacy-requests (the `CreatePrivacyRequest` operationId).
+func (c *Client) CreatePrivacyRequest(ctx context.Context, body CreatePrivacyRequestJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreatePrivacyRequestRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetPrivacyRequest Get one privacy request
+//
+// Requires privacy_requests:read. Returns the request state, immutable decision statements, and bounded effect references. It never returns subject credentials, raw evidence, or object locations.
+//
+// Corresponds with GET /v1/privacy-requests/{requestID} (the `GetPrivacyRequest` operationId).
+func (c *Client) GetPrivacyRequest(ctx context.Context, requestID PrivacyRequestID, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetPrivacyRequestRequest(c.Server, requestID)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ApprovePrivacyRequestWithBody Approve or partially approve a privacy request
+//
+// Requires privacy_requests:approve. Records one immutable decision with a bounded reason code. Replay with the same outcome and reason is idempotent; a conflicting replay is rejected.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/privacy-requests/{requestID}/approve (the `ApprovePrivacyRequest` operationId).
+func (c *Client) ApprovePrivacyRequestWithBody(ctx context.Context, requestID PrivacyRequestID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewApprovePrivacyRequestRequestWithBody(c.Server, requestID, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ApprovePrivacyRequest Approve or partially approve a privacy request
+//
+// Requires privacy_requests:approve. Records one immutable decision with a bounded reason code. Replay with the same outcome and reason is idempotent; a conflicting replay is rejected.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/privacy-requests/{requestID}/approve (the `ApprovePrivacyRequest` operationId).
+func (c *Client) ApprovePrivacyRequest(ctx context.Context, requestID PrivacyRequestID, body ApprovePrivacyRequestJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewApprovePrivacyRequestRequest(c.Server, requestID, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// DenyPrivacyRequestWithBody Deny a privacy request
+//
+// Requires privacy_requests:approve. Records one immutable denial with a bounded reason code. Denial is terminal and immutable; replay with the same reason is idempotent.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/privacy-requests/{requestID}/deny (the `DenyPrivacyRequest` operationId).
+func (c *Client) DenyPrivacyRequestWithBody(ctx context.Context, requestID PrivacyRequestID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDenyPrivacyRequestRequestWithBody(c.Server, requestID, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// DenyPrivacyRequest Deny a privacy request
+//
+// Requires privacy_requests:approve. Records one immutable denial with a bounded reason code. Denial is terminal and immutable; replay with the same reason is idempotent.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/privacy-requests/{requestID}/deny (the `DenyPrivacyRequest` operationId).
+func (c *Client) DenyPrivacyRequest(ctx context.Context, requestID PrivacyRequestID, body DenyPrivacyRequestJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDenyPrivacyRequestRequest(c.Server, requestID, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ExecutePrivacyRequestWithBody Execute an approved privacy request
+//
+// Requires privacy_requests:approve. Dispatches the approved effect through the existing deletion, subject-export, identity-correction, or review-correction mechanism. Completed requests are returned unchanged, so replay adds nothing.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/privacy-requests/{requestID}/execute (the `ExecutePrivacyRequest` operationId).
+func (c *Client) ExecutePrivacyRequestWithBody(ctx context.Context, requestID PrivacyRequestID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewExecutePrivacyRequestRequestWithBody(c.Server, requestID, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ExecutePrivacyRequest Execute an approved privacy request
+//
+// Requires privacy_requests:approve. Dispatches the approved effect through the existing deletion, subject-export, identity-correction, or review-correction mechanism. Completed requests are returned unchanged, so replay adds nothing.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/privacy-requests/{requestID}/execute (the `ExecutePrivacyRequest` operationId).
+func (c *Client) ExecutePrivacyRequest(ctx context.Context, requestID PrivacyRequestID, body ExecutePrivacyRequestJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewExecutePrivacyRequestRequest(c.Server, requestID, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// WithdrawPrivacyRequestWithBody Withdraw an undecided privacy request
+//
+// Requires privacy_requests:write. Ends a requested or in-review request without a decision. Withdrawal is terminal and immutable; a decided request can no longer be withdrawn.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/privacy-requests/{requestID}/withdraw (the `WithdrawPrivacyRequest` operationId).
+func (c *Client) WithdrawPrivacyRequestWithBody(ctx context.Context, requestID PrivacyRequestID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewWithdrawPrivacyRequestRequestWithBody(c.Server, requestID, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// WithdrawPrivacyRequest Withdraw an undecided privacy request
+//
+// Requires privacy_requests:write. Ends a requested or in-review request without a decision. Withdrawal is terminal and immutable; a decided request can no longer be withdrawn.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/privacy-requests/{requestID}/withdraw (the `WithdrawPrivacyRequest` operationId).
+func (c *Client) WithdrawPrivacyRequest(ctx context.Context, requestID PrivacyRequestID, body WithdrawPrivacyRequestJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewWithdrawPrivacyRequestRequest(c.Server, requestID, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListPrivacyRestrictions List tenant processing restrictions
+//
+// Requires privacy_requests:read. Returns a bounded ascending page of subject-blocking and purpose-scoped records. Purpose-scoped objection records are consulted as policy input for new processing only.
+//
+// Corresponds with GET /v1/privacy-restrictions (the `ListPrivacyRestrictions` operationId).
+func (c *Client) ListPrivacyRestrictions(ctx context.Context, params *ListPrivacyRestrictionsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListPrivacyRestrictionsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// LiftPrivacyRestrictionWithBody Lift one processing restriction
+//
+// Requires privacy_requests:approve. Ends a subject-blocking restriction with an audited reason. In-flight external operations and completed decisions were never affected by the restriction.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/privacy-restrictions/{restrictionID}/lift (the `LiftPrivacyRestriction` operationId).
+func (c *Client) LiftPrivacyRestrictionWithBody(ctx context.Context, restrictionID PrivacyRestrictionID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewLiftPrivacyRestrictionRequestWithBody(c.Server, restrictionID, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// LiftPrivacyRestriction Lift one processing restriction
+//
+// Requires privacy_requests:approve. Ends a subject-blocking restriction with an audited reason. In-flight external operations and completed decisions were never affected by the restriction.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/privacy-restrictions/{restrictionID}/lift (the `LiftPrivacyRestriction` operationId).
+func (c *Client) LiftPrivacyRestriction(ctx context.Context, restrictionID PrivacyRestrictionID, body LiftPrivacyRestrictionJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewLiftPrivacyRestrictionRequest(c.Server, restrictionID, body)
 	if err != nil {
 		return nil, err
 	}
@@ -14607,6 +17845,120 @@ func NewCreateCaptureConnectionRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
+// NewResolveCaptureExperienceRequest constructs an http.Request for the ResolveCaptureExperience method
+func NewResolveCaptureExperienceRequest(server string, params *ResolveCaptureExperienceParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/capture/experience")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Workflow != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "workflow", *params.Workflow, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Country != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "country", *params.Country, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.ApplicationID != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "application_id", *params.ApplicationID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Origin != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "origin", *params.Origin, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.SdkVersion != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "sdk_version", *params.SdkVersion, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Locale != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "locale", *params.Locale, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewBootstrapNativeCaptureRequest calls the generic BootstrapNativeCapture builder with application/json body
 func NewBootstrapNativeCaptureRequest(server string, body BootstrapNativeCaptureJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -14670,6 +18022,73 @@ func NewGetCaptureOutcomeRequest(server string) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	return req, nil
+}
+
+// NewListSubjectPrivacyRequestsRequest constructs an http.Request for the ListSubjectPrivacyRequests method
+func NewListSubjectPrivacyRequestsRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/capture/privacy-requests")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreateSubjectPrivacyRequestRequest calls the generic CreateSubjectPrivacyRequest builder with application/json body
+func NewCreateSubjectPrivacyRequestRequest(server string, body CreateSubjectPrivacyRequestJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateSubjectPrivacyRequestRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewCreateSubjectPrivacyRequestRequestWithBody constructs an http.Request for the CreateSubjectPrivacyRequest method, with any body, and a specified content type
+func NewCreateSubjectPrivacyRequestRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/capture/privacy-requests")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
 }
@@ -15000,6 +18419,64 @@ func NewGetDeletionStatusRequest(server string, deletionID PrivacyDeletionID) (*
 	return req, nil
 }
 
+// NewGetDocumentSupportRequest constructs an http.Request for the GetDocumentSupport method
+func NewGetDocumentSupportRequest(server string, params *GetDocumentSupportParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/document-support")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if queryFrag, err := runtime.StyleParamWithOptions("form", true, "country", params.Country, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			return nil, err
+		} else {
+			for _, qp := range strings.Split(queryFrag, "&") {
+				rawQueryFragments = append(rawQueryFragments, qp)
+			}
+		}
+
+		if queryFrag, err := runtime.StyleParamWithOptions("form", true, "type", params.Type, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			return nil, err
+		} else {
+			for _, qp := range strings.Split(queryFrag, "&") {
+				rawQueryFragments = append(rawQueryFragments, qp)
+			}
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewCreateEvidenceUploadRequest calls the generic CreateEvidenceUpload builder with application/json body
 func NewCreateEvidenceUploadRequest(server string, params *CreateEvidenceUploadParams, body CreateEvidenceUploadJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -15141,6 +18618,482 @@ func NewUploadEvidenceRequestWithBody(server string, uploadID UploadID, params *
 		req.Header.Set("Content-Digest", headerParam1)
 
 	}
+
+	return req, nil
+}
+
+// NewGetExperienceDefaultRequest constructs an http.Request for the GetExperienceDefault method
+func NewGetExperienceDefaultRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/experience-default")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewListExperiencesRequest constructs an http.Request for the ListExperiences method
+func NewListExperiencesRequest(server string, params *ListExperiencesParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/experiences")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Cursor != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "cursor", *params.Cursor, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreateExperienceRequest calls the generic CreateExperience builder with application/json body
+func NewCreateExperienceRequest(server string, body CreateExperienceJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateExperienceRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewCreateExperienceRequestWithBody constructs an http.Request for the CreateExperience method, with any body, and a specified content type
+func NewCreateExperienceRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/experiences")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewImportExperienceRequest calls the generic ImportExperience builder with application/json body
+func NewImportExperienceRequest(server string, body ImportExperienceJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewImportExperienceRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewImportExperienceRequestWithBody constructs an http.Request for the ImportExperience method, with any body, and a specified content type
+func NewImportExperienceRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/experiences/import")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetExperienceRequest constructs an http.Request for the GetExperience method
+func NewGetExperienceRequest(server string, experienceID ExperienceID) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "experienceID", experienceID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/experiences/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdateExperienceDraftRequest calls the generic UpdateExperienceDraft builder with application/json body
+func NewUpdateExperienceDraftRequest(server string, experienceID ExperienceID, body UpdateExperienceDraftJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdateExperienceDraftRequestWithBody(server, experienceID, "application/json", bodyReader)
+}
+
+// NewUpdateExperienceDraftRequestWithBody constructs an http.Request for the UpdateExperienceDraft method, with any body, and a specified content type
+func NewUpdateExperienceDraftRequestWithBody(server string, experienceID ExperienceID, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "experienceID", experienceID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/experiences/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPut, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewApproveExperienceRequest calls the generic ApproveExperience builder with application/json body
+func NewApproveExperienceRequest(server string, experienceID ExperienceID, body ApproveExperienceJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewApproveExperienceRequestWithBody(server, experienceID, "application/json", bodyReader)
+}
+
+// NewApproveExperienceRequestWithBody constructs an http.Request for the ApproveExperience method, with any body, and a specified content type
+func NewApproveExperienceRequestWithBody(server string, experienceID ExperienceID, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "experienceID", experienceID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/experiences/%s/approve", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewExportExperienceRequest constructs an http.Request for the ExportExperience method
+func NewExportExperienceRequest(server string, experienceID ExperienceID) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "experienceID", experienceID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/experiences/%s/export", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewPublishExperienceRequest calls the generic PublishExperience builder with application/json body
+func NewPublishExperienceRequest(server string, experienceID ExperienceID, body PublishExperienceJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPublishExperienceRequestWithBody(server, experienceID, "application/json", bodyReader)
+}
+
+// NewPublishExperienceRequestWithBody constructs an http.Request for the PublishExperience method, with any body, and a specified content type
+func NewPublishExperienceRequestWithBody(server string, experienceID ExperienceID, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "experienceID", experienceID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/experiences/%s/publish", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewRevokeExperienceRequest calls the generic RevokeExperience builder with application/json body
+func NewRevokeExperienceRequest(server string, experienceID ExperienceID, body RevokeExperienceJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewRevokeExperienceRequestWithBody(server, experienceID, "application/json", bodyReader)
+}
+
+// NewRevokeExperienceRequestWithBody constructs an http.Request for the RevokeExperience method, with any body, and a specified content type
+func NewRevokeExperienceRequestWithBody(server string, experienceID ExperienceID, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "experienceID", experienceID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/experiences/%s/revoke", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewRollbackExperienceRequest calls the generic RollbackExperience builder with application/json body
+func NewRollbackExperienceRequest(server string, experienceID ExperienceID, body RollbackExperienceJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewRollbackExperienceRequestWithBody(server, experienceID, "application/json", bodyReader)
+}
+
+// NewRollbackExperienceRequestWithBody constructs an http.Request for the RollbackExperience method, with any body, and a specified content type
+func NewRollbackExperienceRequestWithBody(server string, experienceID ExperienceID, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "experienceID", experienceID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/experiences/%s/rollback", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
 }
@@ -16210,6 +20163,108 @@ func NewGetNoticeVersionRequest(server string, noticeID NoticeID) (*http.Request
 	return req, nil
 }
 
+// NewListPacksRequest constructs an http.Request for the ListPacks method
+func NewListPacksRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/packs")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetActiveCountryPackRequest constructs an http.Request for the GetActiveCountryPack method
+func NewGetActiveCountryPackRequest(server string, country string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "country", country, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/packs/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetCountryPackRevisionRequest constructs an http.Request for the GetCountryPackRevision method
+func NewGetCountryPackRevisionRequest(server string, country string, revision int) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "country", country, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "revision", revision, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "integer", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/packs/%s/revisions/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewListPoliciesRequest constructs an http.Request for the ListPolicies method
 func NewListPoliciesRequest(server string, params *ListPoliciesParams) (*http.Request, error) {
 	var err error
@@ -16990,6 +21045,800 @@ func NewSimulatePolicyRequestWithBody(server string, contentType string, body io
 	}
 
 	operationPath := fmt.Sprintf("/v1/policy-simulations")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewListPrivacyDisclosuresRequest constructs an http.Request for the ListPrivacyDisclosures method
+func NewListPrivacyDisclosuresRequest(server string, params *ListPrivacyDisclosuresParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/privacy-disclosures")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.RequestID != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "request_id", *params.RequestID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Cursor != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "cursor", *params.Cursor, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreatePrivacyDisclosureRequest calls the generic CreatePrivacyDisclosure builder with application/json body
+func NewCreatePrivacyDisclosureRequest(server string, body CreatePrivacyDisclosureJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreatePrivacyDisclosureRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewCreatePrivacyDisclosureRequestWithBody constructs an http.Request for the CreatePrivacyDisclosure method, with any body, and a specified content type
+func NewCreatePrivacyDisclosureRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/privacy-disclosures")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewListPrivacyProcessorsRequest constructs an http.Request for the ListPrivacyProcessors method
+func NewListPrivacyProcessorsRequest(server string, params *ListPrivacyProcessorsParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/privacy-processors")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Cursor != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "cursor", *params.Cursor, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreatePrivacyProcessorRequest calls the generic CreatePrivacyProcessor builder with application/json body
+func NewCreatePrivacyProcessorRequest(server string, body CreatePrivacyProcessorJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreatePrivacyProcessorRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewCreatePrivacyProcessorRequestWithBody constructs an http.Request for the CreatePrivacyProcessor method, with any body, and a specified content type
+func NewCreatePrivacyProcessorRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/privacy-processors")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetPrivacyProcessorRequest constructs an http.Request for the GetPrivacyProcessor method
+func NewGetPrivacyProcessorRequest(server string, processorID PrivacyProcessorID) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "processorID", processorID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/privacy-processors/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewUpdatePrivacyProcessorRequest calls the generic UpdatePrivacyProcessor builder with application/json body
+func NewUpdatePrivacyProcessorRequest(server string, processorID PrivacyProcessorID, body UpdatePrivacyProcessorJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdatePrivacyProcessorRequestWithBody(server, processorID, "application/json", bodyReader)
+}
+
+// NewUpdatePrivacyProcessorRequestWithBody constructs an http.Request for the UpdatePrivacyProcessor method, with any body, and a specified content type
+func NewUpdatePrivacyProcessorRequestWithBody(server string, processorID PrivacyProcessorID, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "processorID", processorID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/privacy-processors/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPut, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewListPrivacyRequestsRequest constructs an http.Request for the ListPrivacyRequests method
+func NewListPrivacyRequestsRequest(server string, params *ListPrivacyRequestsParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/privacy-requests")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.State != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "state", *params.State, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Type != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "type", *params.Type, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.SubjectID != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "subject_id", *params.SubjectID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Cursor != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "cursor", *params.Cursor, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreatePrivacyRequestRequest calls the generic CreatePrivacyRequest builder with application/json body
+func NewCreatePrivacyRequestRequest(server string, body CreatePrivacyRequestJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreatePrivacyRequestRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewCreatePrivacyRequestRequestWithBody constructs an http.Request for the CreatePrivacyRequest method, with any body, and a specified content type
+func NewCreatePrivacyRequestRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/privacy-requests")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetPrivacyRequestRequest constructs an http.Request for the GetPrivacyRequest method
+func NewGetPrivacyRequestRequest(server string, requestID PrivacyRequestID) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "requestID", requestID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/privacy-requests/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewApprovePrivacyRequestRequest calls the generic ApprovePrivacyRequest builder with application/json body
+func NewApprovePrivacyRequestRequest(server string, requestID PrivacyRequestID, body ApprovePrivacyRequestJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewApprovePrivacyRequestRequestWithBody(server, requestID, "application/json", bodyReader)
+}
+
+// NewApprovePrivacyRequestRequestWithBody constructs an http.Request for the ApprovePrivacyRequest method, with any body, and a specified content type
+func NewApprovePrivacyRequestRequestWithBody(server string, requestID PrivacyRequestID, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "requestID", requestID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/privacy-requests/%s/approve", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewDenyPrivacyRequestRequest calls the generic DenyPrivacyRequest builder with application/json body
+func NewDenyPrivacyRequestRequest(server string, requestID PrivacyRequestID, body DenyPrivacyRequestJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewDenyPrivacyRequestRequestWithBody(server, requestID, "application/json", bodyReader)
+}
+
+// NewDenyPrivacyRequestRequestWithBody constructs an http.Request for the DenyPrivacyRequest method, with any body, and a specified content type
+func NewDenyPrivacyRequestRequestWithBody(server string, requestID PrivacyRequestID, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "requestID", requestID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/privacy-requests/%s/deny", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewExecutePrivacyRequestRequest calls the generic ExecutePrivacyRequest builder with application/json body
+func NewExecutePrivacyRequestRequest(server string, requestID PrivacyRequestID, body ExecutePrivacyRequestJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewExecutePrivacyRequestRequestWithBody(server, requestID, "application/json", bodyReader)
+}
+
+// NewExecutePrivacyRequestRequestWithBody constructs an http.Request for the ExecutePrivacyRequest method, with any body, and a specified content type
+func NewExecutePrivacyRequestRequestWithBody(server string, requestID PrivacyRequestID, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "requestID", requestID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/privacy-requests/%s/execute", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewWithdrawPrivacyRequestRequest calls the generic WithdrawPrivacyRequest builder with application/json body
+func NewWithdrawPrivacyRequestRequest(server string, requestID PrivacyRequestID, body WithdrawPrivacyRequestJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewWithdrawPrivacyRequestRequestWithBody(server, requestID, "application/json", bodyReader)
+}
+
+// NewWithdrawPrivacyRequestRequestWithBody constructs an http.Request for the WithdrawPrivacyRequest method, with any body, and a specified content type
+func NewWithdrawPrivacyRequestRequestWithBody(server string, requestID PrivacyRequestID, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "requestID", requestID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/privacy-requests/%s/withdraw", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewListPrivacyRestrictionsRequest constructs an http.Request for the ListPrivacyRestrictions method
+func NewListPrivacyRestrictionsRequest(server string, params *ListPrivacyRestrictionsParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/privacy-restrictions")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.SubjectID != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "subject_id", *params.SubjectID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Cursor != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "cursor", *params.Cursor, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewLiftPrivacyRestrictionRequest calls the generic LiftPrivacyRestriction builder with application/json body
+func NewLiftPrivacyRestrictionRequest(server string, restrictionID PrivacyRestrictionID, body LiftPrivacyRestrictionJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewLiftPrivacyRestrictionRequestWithBody(server, restrictionID, "application/json", bodyReader)
+}
+
+// NewLiftPrivacyRestrictionRequestWithBody constructs an http.Request for the LiftPrivacyRestriction method, with any body, and a specified content type
+func NewLiftPrivacyRestrictionRequestWithBody(server string, restrictionID PrivacyRestrictionID, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "restrictionID", restrictionID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/privacy-restrictions/%s/lift", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -21658,6 +26507,21 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with POST /v1/capture/connections (the `CreateCaptureConnection` operationId).
 	CreateCaptureConnectionWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*CreateCaptureConnectionResponse, error)
 
+	// ResolveCaptureExperienceWithResponse Resolve the session's pinned capture experience
+	//
+	// Returns the immutable signed experience document pinned to the
+	// authenticated capture session, the Core-owned mandatory copy, and the
+	// exact pinned experience, locale, tenant-copy, and mandatory-copy
+	// versions. The first call resolves and pins; later calls preserve the
+	// pin across resume. If the pinned experience is revoked or resolution
+	// fails, the signed accessible safe default is returned instead. Raw
+	// evidence, subject data, and credentials are never returned.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/capture/experience (the `ResolveCaptureExperience` operationId).
+	ResolveCaptureExperienceWithResponse(ctx context.Context, params *ResolveCaptureExperienceParams, reqEditors ...RequestEditorFn) (*ResolveCaptureExperienceResponse, error)
+
 	// BootstrapNativeCaptureWithBodyWithResponse Bind a native application proof key and recover the capture session
 	//
 	// Redeems the tenant-backend-issued capture token once, verifies an ES256
@@ -21699,6 +26563,33 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with GET /v1/capture/outcome (the `GetCaptureOutcome` operationId).
 	GetCaptureOutcomeWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetCaptureOutcomeResponse, error)
+
+	// ListSubjectPrivacyRequestsWithResponse List subject-safe privacy request status
+	//
+	// Authenticated only by the D-027 outcome credential. Returns the closed subject-safe projection for requests created through this verification - request type, subject-safe status, and timestamps. Reasons, identifiers, tenant state, and effect references are intentionally absent. The credential cannot approve, deny, withdraw, or execute.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/capture/privacy-requests (the `ListSubjectPrivacyRequests` operationId).
+	ListSubjectPrivacyRequestsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListSubjectPrivacyRequestsResponse, error)
+
+	// CreateSubjectPrivacyRequestWithBodyWithResponse Create one subject privacy request
+	//
+	// Authenticated only by the D-027 outcome credential. Creates one subject-channel request scoped to the credential's verification. The tenant remains the controller and no effect executes without tenant approval. The credential cannot approve, deny, withdraw, or execute.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/capture/privacy-requests (the `CreateSubjectPrivacyRequest` operationId).
+	CreateSubjectPrivacyRequestWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateSubjectPrivacyRequestResponse, error)
+
+	// CreateSubjectPrivacyRequestWithResponse Create one subject privacy request
+	//
+	// Authenticated only by the D-027 outcome credential. Creates one subject-channel request scoped to the credential's verification. The tenant remains the controller and no effect executes without tenant approval. The credential cannot approve, deny, withdraw, or execute.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/capture/privacy-requests (the `CreateSubjectPrivacyRequest` operationId).
+	CreateSubjectPrivacyRequestWithResponse(ctx context.Context, body CreateSubjectPrivacyRequestJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateSubjectPrivacyRequestResponse, error)
 
 	// GetCaptureProgressWithResponse Recover accepted capture-step completion
 	//
@@ -21769,6 +26660,20 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with GET /v1/deletions/{deletionID} (the `GetDeletionStatus` operationId).
 	GetDeletionStatusWithResponse(ctx context.Context, deletionID PrivacyDeletionID, reqEditors ...RequestEditorFn) (*GetDeletionStatusResponse, error)
 
+	// GetDocumentSupportWithResponse Get the honest document support-level projection
+	//
+	// Get the active pack's support-level projection for one country and
+	// document type. Requires packs:read. The projection reports the declared
+	// support level, required evidence sides, supported canonical fields,
+	// declarations, evaluation coverage, limitations, and legal-review state.
+	// It contains no legal conclusion, provider approval, or security-feature
+	// finding; an unreviewed legal state is returned honestly.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/document-support (the `GetDocumentSupport` operationId).
+	GetDocumentSupportWithResponse(ctx context.Context, params *GetDocumentSupportParams, reqEditors ...RequestEditorFn) (*GetDocumentSupportResponse, error)
+
 	// CreateEvidenceUploadWithBodyWithResponse Issue a requirement-bound evidence-upload intent
 	//
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
@@ -21805,6 +26710,203 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with PUT /v1/evidence-uploads/{uploadID} (the `UploadEvidence` operationId).
 	UploadEvidenceWithBodyWithResponse(ctx context.Context, uploadID UploadID, params *UploadEvidenceParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UploadEvidenceResponse, error)
+
+	// GetExperienceDefaultWithResponse Get the signed accessible safe default
+	//
+	// Returns the Core-shipped, signed, accessible safe default experience and
+	// its Core-owned mandatory copy. Requires experiences:read. The safe
+	// default is never tenant-owned, never editable, and is the only fallback
+	// when a pinned experience is revoked or resolution fails.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/experience-default (the `GetExperienceDefault` operationId).
+	GetExperienceDefaultWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetExperienceDefaultResponse, error)
+
+	// ListExperiencesWithResponse List tenant capture experiences
+	//
+	// Requires experiences:read. Returns a bounded ascending page of tenant-owned portable capture experiences with their lifecycle state and latest immutable revision.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/experiences (the `ListExperiences` operationId).
+	ListExperiencesWithResponse(ctx context.Context, params *ListExperiencesParams, reqEditors ...RequestEditorFn) (*ListExperiencesResponse, error)
+
+	// CreateExperienceWithBodyWithResponse Create one experience draft
+	//
+	// Requires experiences:write. Creates one tenant-owned draft with a
+	// stable exp_ identifier and immutable revision 1. The stored revision is
+	// signed by Core over its canonical bytes. Repeating the same draft
+	// command with the same Idempotency-Key returns the original result.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/experiences (the `CreateExperience` operationId).
+	CreateExperienceWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateExperienceResponse, error)
+
+	// CreateExperienceWithResponse Create one experience draft
+	//
+	// Requires experiences:write. Creates one tenant-owned draft with a
+	// stable exp_ identifier and immutable revision 1. The stored revision is
+	// signed by Core over its canonical bytes. Repeating the same draft
+	// command with the same Idempotency-Key returns the original result.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/experiences (the `CreateExperience` operationId).
+	CreateExperienceWithResponse(ctx context.Context, body CreateExperienceJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateExperienceResponse, error)
+
+	// ImportExperienceWithBodyWithResponse Import a signed experience manifest as a draft
+	//
+	// Requires experiences:write. Validates the closed manifest, recomputes
+	// the canonical digest, verifies the Ed25519 signature against a trusted
+	// Core key, checks mandatory-copy and asset references, and creates or
+	// advances a draft revision. Console and Cloud are not required.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/experiences/import (the `ImportExperience` operationId).
+	ImportExperienceWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ImportExperienceResponse, error)
+
+	// ImportExperienceWithResponse Import a signed experience manifest as a draft
+	//
+	// Requires experiences:write. Validates the closed manifest, recomputes
+	// the canonical digest, verifies the Ed25519 signature against a trusted
+	// Core key, checks mandatory-copy and asset references, and creates or
+	// advances a draft revision. Console and Cloud are not required.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/experiences/import (the `ImportExperience` operationId).
+	ImportExperienceWithResponse(ctx context.Context, body ImportExperienceJSONRequestBody, reqEditors ...RequestEditorFn) (*ImportExperienceResponse, error)
+
+	// GetExperienceWithResponse Get one experience
+	//
+	// Requires experiences:read. Returns the aggregate state, optimistic revision, and latest immutable signed revision document.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/experiences/{experienceID} (the `GetExperience` operationId).
+	GetExperienceWithResponse(ctx context.Context, experienceID ExperienceID, reqEditors ...RequestEditorFn) (*GetExperienceResponse, error)
+
+	// UpdateExperienceDraftWithBodyWithResponse Save a new experience draft revision
+	//
+	// Requires experiences:write. Saves one new immutable revision and resets
+	// approval, because approval binds to one exact version. The
+	// expected_version must equal the current aggregate revision or the
+	// command fails with a conflict. A revoked experience refuses edits and
+	// requires an explicit rollback first.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PUT /v1/experiences/{experienceID} (the `UpdateExperienceDraft` operationId).
+	UpdateExperienceDraftWithBodyWithResponse(ctx context.Context, experienceID ExperienceID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateExperienceDraftResponse, error)
+
+	// UpdateExperienceDraftWithResponse Save a new experience draft revision
+	//
+	// Requires experiences:write. Saves one new immutable revision and resets
+	// approval, because approval binds to one exact version. The
+	// expected_version must equal the current aggregate revision or the
+	// command fails with a conflict. A revoked experience refuses edits and
+	// requires an explicit rollback first.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PUT /v1/experiences/{experienceID} (the `UpdateExperienceDraft` operationId).
+	UpdateExperienceDraftWithResponse(ctx context.Context, experienceID ExperienceID, body UpdateExperienceDraftJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateExperienceDraftResponse, error)
+
+	// ApproveExperienceWithBodyWithResponse Approve the latest experience revision
+	//
+	// Requires experiences:publish. Records the explicit approval publication requires. Repeating the approval of the same version is idempotent and does not append history.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/experiences/{experienceID}/approve (the `ApproveExperience` operationId).
+	ApproveExperienceWithBodyWithResponse(ctx context.Context, experienceID ExperienceID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ApproveExperienceResponse, error)
+
+	// ApproveExperienceWithResponse Approve the latest experience revision
+	//
+	// Requires experiences:publish. Records the explicit approval publication requires. Repeating the approval of the same version is idempotent and does not append history.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/experiences/{experienceID}/approve (the `ApproveExperience` operationId).
+	ApproveExperienceWithResponse(ctx context.Context, experienceID ExperienceID, body ApproveExperienceJSONRequestBody, reqEditors ...RequestEditorFn) (*ApproveExperienceResponse, error)
+
+	// ExportExperienceWithResponse Export one signed experience manifest
+	//
+	// Requires experiences:read. Returns the signed canonical manifest of the live published revision, or the latest revision when nothing is published, so another Core installation can import it without Console or Cloud.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/experiences/{experienceID}/export (the `ExportExperience` operationId).
+	ExportExperienceWithResponse(ctx context.Context, experienceID ExperienceID, reqEditors ...RequestEditorFn) (*ExportExperienceResponse, error)
+
+	// PublishExperienceWithBodyWithResponse Publish the approved experience revision
+	//
+	// Requires experiences:publish. Publication requires a prior explicit
+	// approval of the exact latest version, verifies every asset digest, and
+	// supersedes the previous live revision without deleting it. Repeating
+	// publication of the live version is idempotent.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/experiences/{experienceID}/publish (the `PublishExperience` operationId).
+	PublishExperienceWithBodyWithResponse(ctx context.Context, experienceID ExperienceID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PublishExperienceResponse, error)
+
+	// PublishExperienceWithResponse Publish the approved experience revision
+	//
+	// Requires experiences:publish. Publication requires a prior explicit
+	// approval of the exact latest version, verifies every asset digest, and
+	// supersedes the previous live revision without deleting it. Repeating
+	// publication of the live version is idempotent.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/experiences/{experienceID}/publish (the `PublishExperience` operationId).
+	PublishExperienceWithResponse(ctx context.Context, experienceID ExperienceID, body PublishExperienceJSONRequestBody, reqEditors ...RequestEditorFn) (*PublishExperienceResponse, error)
+
+	// RevokeExperienceWithBodyWithResponse Revoke the live experience (kill switch)
+	//
+	// Requires experiences:publish. Clears the live revision so capture
+	// sessions fall back to the signed accessible safe default. Revocation is
+	// idempotent, preserves immutable history, and refuses new edits until an
+	// explicit rollback republishes a prior approved revision.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/experiences/{experienceID}/revoke (the `RevokeExperience` operationId).
+	RevokeExperienceWithBodyWithResponse(ctx context.Context, experienceID ExperienceID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RevokeExperienceResponse, error)
+
+	// RevokeExperienceWithResponse Revoke the live experience (kill switch)
+	//
+	// Requires experiences:publish. Clears the live revision so capture
+	// sessions fall back to the signed accessible safe default. Revocation is
+	// idempotent, preserves immutable history, and refuses new edits until an
+	// explicit rollback republishes a prior approved revision.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/experiences/{experienceID}/revoke (the `RevokeExperience` operationId).
+	RevokeExperienceWithResponse(ctx context.Context, experienceID ExperienceID, body RevokeExperienceJSONRequestBody, reqEditors ...RequestEditorFn) (*RevokeExperienceResponse, error)
+
+	// RollbackExperienceWithBodyWithResponse Roll back to a prior immutable revision
+	//
+	// Requires experiences:publish. Republishes one previously approved immutable revision without editing it. The rollback target must have been approved; the replaced live revision is marked superseded. Repeating the same rollback is idempotent.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/experiences/{experienceID}/rollback (the `RollbackExperience` operationId).
+	RollbackExperienceWithBodyWithResponse(ctx context.Context, experienceID ExperienceID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RollbackExperienceResponse, error)
+
+	// RollbackExperienceWithResponse Roll back to a prior immutable revision
+	//
+	// Requires experiences:publish. Republishes one previously approved immutable revision without editing it. The rollback target must have been approved; the replaced live revision is marked superseded. Repeating the same rollback is idempotent.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/experiences/{experienceID}/rollback (the `RollbackExperience` operationId).
+	RollbackExperienceWithResponse(ctx context.Context, experienceID ExperienceID, body RollbackExperienceJSONRequestBody, reqEditors ...RequestEditorFn) (*RollbackExperienceResponse, error)
 
 	// GetFraudConfigurationWithResponse Read active fraud rules
 	//
@@ -22182,6 +27284,33 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with GET /v1/notices/{noticeID} (the `GetNoticeVersion` operationId).
 	GetNoticeVersionWithResponse(ctx context.Context, noticeID NoticeID, reqEditors ...RequestEditorFn) (*GetNoticeVersionResponse, error)
 
+	// ListPacksWithResponse List registered country pack revisions
+	//
+	// List every registered immutable country pack revision with its current lifecycle state. Requires packs:read. Pack content is embedded and reviewed at build time; this route never activates, deprecates, or retires a pack.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/packs (the `ListPacks` operationId).
+	ListPacksWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListPacksResponse, error)
+
+	// GetActiveCountryPackWithResponse Get the active pack for a country
+	//
+	// Get the active immutable pack revision for an ISO 3166-1 alpha-2 or alpha-3 country code. Requires packs:read. The projection never asserts legal, provider, or security-feature approval.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/packs/{country} (the `GetActiveCountryPack` operationId).
+	GetActiveCountryPackWithResponse(ctx context.Context, country string, reqEditors ...RequestEditorFn) (*GetActiveCountryPackResponse, error)
+
+	// GetCountryPackRevisionWithResponse Get an exact pack revision
+	//
+	// Get one exact immutable pack revision. Requires packs:read. Deprecated and retired revisions remain readable so an old decision or policy reference stays inspectable.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/packs/{country}/revisions/{revision} (the `GetCountryPackRevision` operationId).
+	GetCountryPackRevisionWithResponse(ctx context.Context, country string, revision int, reqEditors ...RequestEditorFn) (*GetCountryPackRevisionResponse, error)
+
 	// ListPoliciesWithResponse List policies
 	//
 	// Requires policies:read. Bounded newest-first metadata page with a signed tenant-, policy-, collection- and limit-bound cursor.
@@ -22388,6 +27517,222 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with POST /v1/policy-simulations (the `SimulatePolicy` operationId).
 	SimulatePolicyWithResponse(ctx context.Context, body SimulatePolicyJSONRequestBody, reqEditors ...RequestEditorFn) (*SimulatePolicyResponse, error)
+
+	// ListPrivacyDisclosuresWithResponse List tenant transfer and disclosure records
+	//
+	// Requires privacy_requests:read. Returns immutable reference-only disclosure records filtered by exact request or by the whole tenant.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/privacy-disclosures (the `ListPrivacyDisclosures` operationId).
+	ListPrivacyDisclosuresWithResponse(ctx context.Context, params *ListPrivacyDisclosuresParams, reqEditors ...RequestEditorFn) (*ListPrivacyDisclosuresResponse, error)
+
+	// CreatePrivacyDisclosureWithBodyWithResponse Record one transfer or disclosure
+	//
+	// Requires privacy_requests:write. Records an immutable reference-only disclosure. The reference is a bounded digest; document contents and recipient secrets are never accepted.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/privacy-disclosures (the `CreatePrivacyDisclosure` operationId).
+	CreatePrivacyDisclosureWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreatePrivacyDisclosureResponse, error)
+
+	// CreatePrivacyDisclosureWithResponse Record one transfer or disclosure
+	//
+	// Requires privacy_requests:write. Records an immutable reference-only disclosure. The reference is a bounded digest; document contents and recipient secrets are never accepted.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/privacy-disclosures (the `CreatePrivacyDisclosure` operationId).
+	CreatePrivacyDisclosureWithResponse(ctx context.Context, body CreatePrivacyDisclosureJSONRequestBody, reqEditors ...RequestEditorFn) (*CreatePrivacyDisclosureResponse, error)
+
+	// ListPrivacyProcessorsWithResponse List tenant processor inventory
+	//
+	// Requires privacy_requests:read. Returns a bounded ascending page of versioned processors, subprocessors, and recipients with bounded data classes, regions, and transfer mechanisms.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/privacy-processors (the `ListPrivacyProcessors` operationId).
+	ListPrivacyProcessorsWithResponse(ctx context.Context, params *ListPrivacyProcessorsParams, reqEditors ...RequestEditorFn) (*ListPrivacyProcessorsResponse, error)
+
+	// CreatePrivacyProcessorWithBodyWithResponse Create one processor inventory entry
+	//
+	// Requires privacy_requests:write. Creates version one of a processor inventory entry and its append-only revision.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/privacy-processors (the `CreatePrivacyProcessor` operationId).
+	CreatePrivacyProcessorWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreatePrivacyProcessorResponse, error)
+
+	// CreatePrivacyProcessorWithResponse Create one processor inventory entry
+	//
+	// Requires privacy_requests:write. Creates version one of a processor inventory entry and its append-only revision.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/privacy-processors (the `CreatePrivacyProcessor` operationId).
+	CreatePrivacyProcessorWithResponse(ctx context.Context, body CreatePrivacyProcessorJSONRequestBody, reqEditors ...RequestEditorFn) (*CreatePrivacyProcessorResponse, error)
+
+	// GetPrivacyProcessorWithResponse Get one processor inventory entry
+	//
+	// Requires privacy_requests:read. Returns the current version of one processor inventory entry.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/privacy-processors/{processorID} (the `GetPrivacyProcessor` operationId).
+	GetPrivacyProcessorWithResponse(ctx context.Context, processorID PrivacyProcessorID, reqEditors ...RequestEditorFn) (*GetPrivacyProcessorResponse, error)
+
+	// UpdatePrivacyProcessorWithBodyWithResponse Update one processor inventory entry
+	//
+	// Requires privacy_requests:write. Applies one expected-version update and appends an immutable revision. A stale expected version is rejected.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PUT /v1/privacy-processors/{processorID} (the `UpdatePrivacyProcessor` operationId).
+	UpdatePrivacyProcessorWithBodyWithResponse(ctx context.Context, processorID PrivacyProcessorID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdatePrivacyProcessorResponse, error)
+
+	// UpdatePrivacyProcessorWithResponse Update one processor inventory entry
+	//
+	// Requires privacy_requests:write. Applies one expected-version update and appends an immutable revision. A stale expected version is rejected.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PUT /v1/privacy-processors/{processorID} (the `UpdatePrivacyProcessor` operationId).
+	UpdatePrivacyProcessorWithResponse(ctx context.Context, processorID PrivacyProcessorID, body UpdatePrivacyProcessorJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdatePrivacyProcessorResponse, error)
+
+	// ListPrivacyRequestsWithResponse List tenant privacy requests
+	//
+	// Requires privacy_requests:read. Returns a bounded ascending page of data-subject privacy requests with their state, version, and bounded effect references. Reasons, actor identifiers, and internal events are never returned.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/privacy-requests (the `ListPrivacyRequests` operationId).
+	ListPrivacyRequestsWithResponse(ctx context.Context, params *ListPrivacyRequestsParams, reqEditors ...RequestEditorFn) (*ListPrivacyRequestsResponse, error)
+
+	// CreatePrivacyRequestWithBodyWithResponse Create one tenant privacy request
+	//
+	// Requires privacy_requests:write. Creates one tenant-channel data-subject request. The tenant is the controller and no effect executes before an explicit approval. Subject-scoped effects require a subject; corrrection instructions carry exactly one record or decision target.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/privacy-requests (the `CreatePrivacyRequest` operationId).
+	CreatePrivacyRequestWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreatePrivacyRequestResponse, error)
+
+	// CreatePrivacyRequestWithResponse Create one tenant privacy request
+	//
+	// Requires privacy_requests:write. Creates one tenant-channel data-subject request. The tenant is the controller and no effect executes before an explicit approval. Subject-scoped effects require a subject; corrrection instructions carry exactly one record or decision target.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/privacy-requests (the `CreatePrivacyRequest` operationId).
+	CreatePrivacyRequestWithResponse(ctx context.Context, body CreatePrivacyRequestJSONRequestBody, reqEditors ...RequestEditorFn) (*CreatePrivacyRequestResponse, error)
+
+	// GetPrivacyRequestWithResponse Get one privacy request
+	//
+	// Requires privacy_requests:read. Returns the request state, immutable decision statements, and bounded effect references. It never returns subject credentials, raw evidence, or object locations.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/privacy-requests/{requestID} (the `GetPrivacyRequest` operationId).
+	GetPrivacyRequestWithResponse(ctx context.Context, requestID PrivacyRequestID, reqEditors ...RequestEditorFn) (*GetPrivacyRequestResponse, error)
+
+	// ApprovePrivacyRequestWithBodyWithResponse Approve or partially approve a privacy request
+	//
+	// Requires privacy_requests:approve. Records one immutable decision with a bounded reason code. Replay with the same outcome and reason is idempotent; a conflicting replay is rejected.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/privacy-requests/{requestID}/approve (the `ApprovePrivacyRequest` operationId).
+	ApprovePrivacyRequestWithBodyWithResponse(ctx context.Context, requestID PrivacyRequestID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ApprovePrivacyRequestResponse, error)
+
+	// ApprovePrivacyRequestWithResponse Approve or partially approve a privacy request
+	//
+	// Requires privacy_requests:approve. Records one immutable decision with a bounded reason code. Replay with the same outcome and reason is idempotent; a conflicting replay is rejected.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/privacy-requests/{requestID}/approve (the `ApprovePrivacyRequest` operationId).
+	ApprovePrivacyRequestWithResponse(ctx context.Context, requestID PrivacyRequestID, body ApprovePrivacyRequestJSONRequestBody, reqEditors ...RequestEditorFn) (*ApprovePrivacyRequestResponse, error)
+
+	// DenyPrivacyRequestWithBodyWithResponse Deny a privacy request
+	//
+	// Requires privacy_requests:approve. Records one immutable denial with a bounded reason code. Denial is terminal and immutable; replay with the same reason is idempotent.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/privacy-requests/{requestID}/deny (the `DenyPrivacyRequest` operationId).
+	DenyPrivacyRequestWithBodyWithResponse(ctx context.Context, requestID PrivacyRequestID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*DenyPrivacyRequestResponse, error)
+
+	// DenyPrivacyRequestWithResponse Deny a privacy request
+	//
+	// Requires privacy_requests:approve. Records one immutable denial with a bounded reason code. Denial is terminal and immutable; replay with the same reason is idempotent.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/privacy-requests/{requestID}/deny (the `DenyPrivacyRequest` operationId).
+	DenyPrivacyRequestWithResponse(ctx context.Context, requestID PrivacyRequestID, body DenyPrivacyRequestJSONRequestBody, reqEditors ...RequestEditorFn) (*DenyPrivacyRequestResponse, error)
+
+	// ExecutePrivacyRequestWithBodyWithResponse Execute an approved privacy request
+	//
+	// Requires privacy_requests:approve. Dispatches the approved effect through the existing deletion, subject-export, identity-correction, or review-correction mechanism. Completed requests are returned unchanged, so replay adds nothing.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/privacy-requests/{requestID}/execute (the `ExecutePrivacyRequest` operationId).
+	ExecutePrivacyRequestWithBodyWithResponse(ctx context.Context, requestID PrivacyRequestID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ExecutePrivacyRequestResponse, error)
+
+	// ExecutePrivacyRequestWithResponse Execute an approved privacy request
+	//
+	// Requires privacy_requests:approve. Dispatches the approved effect through the existing deletion, subject-export, identity-correction, or review-correction mechanism. Completed requests are returned unchanged, so replay adds nothing.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/privacy-requests/{requestID}/execute (the `ExecutePrivacyRequest` operationId).
+	ExecutePrivacyRequestWithResponse(ctx context.Context, requestID PrivacyRequestID, body ExecutePrivacyRequestJSONRequestBody, reqEditors ...RequestEditorFn) (*ExecutePrivacyRequestResponse, error)
+
+	// WithdrawPrivacyRequestWithBodyWithResponse Withdraw an undecided privacy request
+	//
+	// Requires privacy_requests:write. Ends a requested or in-review request without a decision. Withdrawal is terminal and immutable; a decided request can no longer be withdrawn.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/privacy-requests/{requestID}/withdraw (the `WithdrawPrivacyRequest` operationId).
+	WithdrawPrivacyRequestWithBodyWithResponse(ctx context.Context, requestID PrivacyRequestID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*WithdrawPrivacyRequestResponse, error)
+
+	// WithdrawPrivacyRequestWithResponse Withdraw an undecided privacy request
+	//
+	// Requires privacy_requests:write. Ends a requested or in-review request without a decision. Withdrawal is terminal and immutable; a decided request can no longer be withdrawn.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/privacy-requests/{requestID}/withdraw (the `WithdrawPrivacyRequest` operationId).
+	WithdrawPrivacyRequestWithResponse(ctx context.Context, requestID PrivacyRequestID, body WithdrawPrivacyRequestJSONRequestBody, reqEditors ...RequestEditorFn) (*WithdrawPrivacyRequestResponse, error)
+
+	// ListPrivacyRestrictionsWithResponse List tenant processing restrictions
+	//
+	// Requires privacy_requests:read. Returns a bounded ascending page of subject-blocking and purpose-scoped records. Purpose-scoped objection records are consulted as policy input for new processing only.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/privacy-restrictions (the `ListPrivacyRestrictions` operationId).
+	ListPrivacyRestrictionsWithResponse(ctx context.Context, params *ListPrivacyRestrictionsParams, reqEditors ...RequestEditorFn) (*ListPrivacyRestrictionsResponse, error)
+
+	// LiftPrivacyRestrictionWithBodyWithResponse Lift one processing restriction
+	//
+	// Requires privacy_requests:approve. Ends a subject-blocking restriction with an audited reason. In-flight external operations and completed decisions were never affected by the restriction.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/privacy-restrictions/{restrictionID}/lift (the `LiftPrivacyRestriction` operationId).
+	LiftPrivacyRestrictionWithBodyWithResponse(ctx context.Context, restrictionID PrivacyRestrictionID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*LiftPrivacyRestrictionResponse, error)
+
+	// LiftPrivacyRestrictionWithResponse Lift one processing restriction
+	//
+	// Requires privacy_requests:approve. Ends a subject-blocking restriction with an audited reason. In-flight external operations and completed decisions were never affected by the restriction.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/privacy-restrictions/{restrictionID}/lift (the `LiftPrivacyRestriction` operationId).
+	LiftPrivacyRestrictionWithResponse(ctx context.Context, restrictionID PrivacyRestrictionID, body LiftPrivacyRestrictionJSONRequestBody, reqEditors ...RequestEditorFn) (*LiftPrivacyRestrictionResponse, error)
 
 	// CreatePromptWithBodyWithResponse Create immutable prompt version
 	//
@@ -26912,6 +32257,99 @@ func (r CreateCaptureConnectionResponse) ContentType() string {
 	return ""
 }
 
+// ResolveCaptureExperienceResponse200Headers the declared response headers of an HTTP 200 response for ResolveCaptureExperience
+type ResolveCaptureExperienceResponse200Headers struct {
+	CacheControl *string
+	XRequestID   RequestID
+}
+
+// ResolveCaptureExperienceResponse401Headers the declared response headers of an HTTP 401 response for ResolveCaptureExperience
+type ResolveCaptureExperienceResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// ResolveCaptureExperienceResponse500Headers the declared response headers of an HTTP 500 response for ResolveCaptureExperience
+type ResolveCaptureExperienceResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// ResolveCaptureExperienceResponse503Headers the declared response headers of an HTTP 503 response for ResolveCaptureExperience
+type ResolveCaptureExperienceResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type ResolveCaptureExperienceResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ExperienceResolution
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ResolveCaptureExperienceResponse200Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ResolveCaptureExperienceResponse401Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ResolveCaptureExperienceResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ResolveCaptureExperienceResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ResolveCaptureExperienceResponse) GetJSON200() *ExperienceResolution {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ResolveCaptureExperienceResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ResolveCaptureExperienceResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ResolveCaptureExperienceResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ResolveCaptureExperienceResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ResolveCaptureExperienceResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ResolveCaptureExperienceResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ResolveCaptureExperienceResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // BootstrapNativeCaptureResponse200Headers the declared response headers of an HTTP 200 response for BootstrapNativeCapture
 type BootstrapNativeCaptureResponse200Headers struct {
 	CacheControl *string
@@ -27091,6 +32529,281 @@ func (r GetCaptureOutcomeResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r GetCaptureOutcomeResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ListSubjectPrivacyRequestsResponse200Headers the declared response headers of an HTTP 200 response for ListSubjectPrivacyRequests
+type ListSubjectPrivacyRequestsResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// ListSubjectPrivacyRequestsResponse401Headers the declared response headers of an HTTP 401 response for ListSubjectPrivacyRequests
+type ListSubjectPrivacyRequestsResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// ListSubjectPrivacyRequestsResponse403Headers the declared response headers of an HTTP 403 response for ListSubjectPrivacyRequests
+type ListSubjectPrivacyRequestsResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// ListSubjectPrivacyRequestsResponse429Headers the declared response headers of an HTTP 429 response for ListSubjectPrivacyRequests
+type ListSubjectPrivacyRequestsResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// ListSubjectPrivacyRequestsResponse500Headers the declared response headers of an HTTP 500 response for ListSubjectPrivacyRequests
+type ListSubjectPrivacyRequestsResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// ListSubjectPrivacyRequestsResponse503Headers the declared response headers of an HTTP 503 response for ListSubjectPrivacyRequests
+type ListSubjectPrivacyRequestsResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type ListSubjectPrivacyRequestsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *SubjectPrivacyRequestList
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ListSubjectPrivacyRequestsResponse200Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ListSubjectPrivacyRequestsResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListSubjectPrivacyRequestsResponse403Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *ListSubjectPrivacyRequestsResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListSubjectPrivacyRequestsResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ListSubjectPrivacyRequestsResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListSubjectPrivacyRequestsResponse) GetJSON200() *SubjectPrivacyRequestList {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListSubjectPrivacyRequestsResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListSubjectPrivacyRequestsResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r ListSubjectPrivacyRequestsResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListSubjectPrivacyRequestsResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ListSubjectPrivacyRequestsResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListSubjectPrivacyRequestsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListSubjectPrivacyRequestsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListSubjectPrivacyRequestsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListSubjectPrivacyRequestsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// CreateSubjectPrivacyRequestResponse202Headers the declared response headers of an HTTP 202 response for CreateSubjectPrivacyRequest
+type CreateSubjectPrivacyRequestResponse202Headers struct {
+	XRequestID RequestID
+}
+
+// CreateSubjectPrivacyRequestResponse400Headers the declared response headers of an HTTP 400 response for CreateSubjectPrivacyRequest
+type CreateSubjectPrivacyRequestResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// CreateSubjectPrivacyRequestResponse401Headers the declared response headers of an HTTP 401 response for CreateSubjectPrivacyRequest
+type CreateSubjectPrivacyRequestResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// CreateSubjectPrivacyRequestResponse403Headers the declared response headers of an HTTP 403 response for CreateSubjectPrivacyRequest
+type CreateSubjectPrivacyRequestResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// CreateSubjectPrivacyRequestResponse409Headers the declared response headers of an HTTP 409 response for CreateSubjectPrivacyRequest
+type CreateSubjectPrivacyRequestResponse409Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+// CreateSubjectPrivacyRequestResponse429Headers the declared response headers of an HTTP 429 response for CreateSubjectPrivacyRequest
+type CreateSubjectPrivacyRequestResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// CreateSubjectPrivacyRequestResponse500Headers the declared response headers of an HTTP 500 response for CreateSubjectPrivacyRequest
+type CreateSubjectPrivacyRequestResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// CreateSubjectPrivacyRequestResponse503Headers the declared response headers of an HTTP 503 response for CreateSubjectPrivacyRequest
+type CreateSubjectPrivacyRequestResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type CreateSubjectPrivacyRequestResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON202 the response for an HTTP 202 `application/json` response
+	JSON202 *SubjectPrivacyRequest
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationProblemJSON409 *Conflict
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers202 the parsed response headers for an HTTP 202 response
+	Headers202 *CreateSubjectPrivacyRequestResponse202Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *CreateSubjectPrivacyRequestResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *CreateSubjectPrivacyRequestResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *CreateSubjectPrivacyRequestResponse403Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *CreateSubjectPrivacyRequestResponse409Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *CreateSubjectPrivacyRequestResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *CreateSubjectPrivacyRequestResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *CreateSubjectPrivacyRequestResponse503Headers
+}
+
+// GetJSON202 returns the response for an HTTP 202 `application/json` response
+func (r CreateSubjectPrivacyRequestResponse) GetJSON202() *SubjectPrivacyRequest {
+	return r.JSON202
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r CreateSubjectPrivacyRequestResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r CreateSubjectPrivacyRequestResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r CreateSubjectPrivacyRequestResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r CreateSubjectPrivacyRequestResponse) GetApplicationProblemJSON409() *Conflict {
+	return r.ApplicationProblemJSON409
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r CreateSubjectPrivacyRequestResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r CreateSubjectPrivacyRequestResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r CreateSubjectPrivacyRequestResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r CreateSubjectPrivacyRequestResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateSubjectPrivacyRequestResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateSubjectPrivacyRequestResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CreateSubjectPrivacyRequestResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -28036,6 +33749,157 @@ func (r GetDeletionStatusResponse) ContentType() string {
 	return ""
 }
 
+// GetDocumentSupportResponse200Headers the declared response headers of an HTTP 200 response for GetDocumentSupport
+type GetDocumentSupportResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// GetDocumentSupportResponse400Headers the declared response headers of an HTTP 400 response for GetDocumentSupport
+type GetDocumentSupportResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// GetDocumentSupportResponse401Headers the declared response headers of an HTTP 401 response for GetDocumentSupport
+type GetDocumentSupportResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// GetDocumentSupportResponse403Headers the declared response headers of an HTTP 403 response for GetDocumentSupport
+type GetDocumentSupportResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// GetDocumentSupportResponse404Headers the declared response headers of an HTTP 404 response for GetDocumentSupport
+type GetDocumentSupportResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// GetDocumentSupportResponse429Headers the declared response headers of an HTTP 429 response for GetDocumentSupport
+type GetDocumentSupportResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// GetDocumentSupportResponse500Headers the declared response headers of an HTTP 500 response for GetDocumentSupport
+type GetDocumentSupportResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// GetDocumentSupportResponse503Headers the declared response headers of an HTTP 503 response for GetDocumentSupport
+type GetDocumentSupportResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type GetDocumentSupportResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *DocumentSupport
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetDocumentSupportResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *GetDocumentSupportResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *GetDocumentSupportResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetDocumentSupportResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetDocumentSupportResponse404Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *GetDocumentSupportResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *GetDocumentSupportResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *GetDocumentSupportResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetDocumentSupportResponse) GetJSON200() *DocumentSupport {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r GetDocumentSupportResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetDocumentSupportResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetDocumentSupportResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetDocumentSupportResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r GetDocumentSupportResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r GetDocumentSupportResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r GetDocumentSupportResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r GetDocumentSupportResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetDocumentSupportResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetDocumentSupportResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetDocumentSupportResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // CreateEvidenceUploadResponse201Headers the declared response headers of an HTTP 201 response for CreateEvidenceUpload
 type CreateEvidenceUploadResponse201Headers struct {
 	ETag       *string
@@ -28422,6 +34286,1683 @@ func (r UploadEvidenceResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r UploadEvidenceResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetExperienceDefaultResponse200Headers the declared response headers of an HTTP 200 response for GetExperienceDefault
+type GetExperienceDefaultResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// GetExperienceDefaultResponse401Headers the declared response headers of an HTTP 401 response for GetExperienceDefault
+type GetExperienceDefaultResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// GetExperienceDefaultResponse403Headers the declared response headers of an HTTP 403 response for GetExperienceDefault
+type GetExperienceDefaultResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// GetExperienceDefaultResponse429Headers the declared response headers of an HTTP 429 response for GetExperienceDefault
+type GetExperienceDefaultResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// GetExperienceDefaultResponse500Headers the declared response headers of an HTTP 500 response for GetExperienceDefault
+type GetExperienceDefaultResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// GetExperienceDefaultResponse503Headers the declared response headers of an HTTP 503 response for GetExperienceDefault
+type GetExperienceDefaultResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type GetExperienceDefaultResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ExperienceResolution
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetExperienceDefaultResponse200Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *GetExperienceDefaultResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetExperienceDefaultResponse403Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *GetExperienceDefaultResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *GetExperienceDefaultResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *GetExperienceDefaultResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetExperienceDefaultResponse) GetJSON200() *ExperienceResolution {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetExperienceDefaultResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetExperienceDefaultResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r GetExperienceDefaultResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r GetExperienceDefaultResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r GetExperienceDefaultResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r GetExperienceDefaultResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetExperienceDefaultResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetExperienceDefaultResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetExperienceDefaultResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ListExperiencesResponse200Headers the declared response headers of an HTTP 200 response for ListExperiences
+type ListExperiencesResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// ListExperiencesResponse400Headers the declared response headers of an HTTP 400 response for ListExperiences
+type ListExperiencesResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// ListExperiencesResponse401Headers the declared response headers of an HTTP 401 response for ListExperiences
+type ListExperiencesResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// ListExperiencesResponse403Headers the declared response headers of an HTTP 403 response for ListExperiences
+type ListExperiencesResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// ListExperiencesResponse429Headers the declared response headers of an HTTP 429 response for ListExperiences
+type ListExperiencesResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// ListExperiencesResponse500Headers the declared response headers of an HTTP 500 response for ListExperiences
+type ListExperiencesResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// ListExperiencesResponse503Headers the declared response headers of an HTTP 503 response for ListExperiences
+type ListExperiencesResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type ListExperiencesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ExperienceList
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ListExperiencesResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ListExperiencesResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ListExperiencesResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListExperiencesResponse403Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *ListExperiencesResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListExperiencesResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ListExperiencesResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListExperiencesResponse) GetJSON200() *ExperienceList {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ListExperiencesResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListExperiencesResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListExperiencesResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r ListExperiencesResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListExperiencesResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ListExperiencesResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListExperiencesResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListExperiencesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListExperiencesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListExperiencesResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// CreateExperienceResponse201Headers the declared response headers of an HTTP 201 response for CreateExperience
+type CreateExperienceResponse201Headers struct {
+	ETag       *string
+	Location   *string
+	XRequestID RequestID
+}
+
+// CreateExperienceResponse400Headers the declared response headers of an HTTP 400 response for CreateExperience
+type CreateExperienceResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// CreateExperienceResponse401Headers the declared response headers of an HTTP 401 response for CreateExperience
+type CreateExperienceResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// CreateExperienceResponse403Headers the declared response headers of an HTTP 403 response for CreateExperience
+type CreateExperienceResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// CreateExperienceResponse409Headers the declared response headers of an HTTP 409 response for CreateExperience
+type CreateExperienceResponse409Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+// CreateExperienceResponse429Headers the declared response headers of an HTTP 429 response for CreateExperience
+type CreateExperienceResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// CreateExperienceResponse500Headers the declared response headers of an HTTP 500 response for CreateExperience
+type CreateExperienceResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// CreateExperienceResponse503Headers the declared response headers of an HTTP 503 response for CreateExperience
+type CreateExperienceResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type CreateExperienceResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON201 the response for an HTTP 201 `application/json` response
+	JSON201 *Experience
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationProblemJSON409 *Conflict
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers201 the parsed response headers for an HTTP 201 response
+	Headers201 *CreateExperienceResponse201Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *CreateExperienceResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *CreateExperienceResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *CreateExperienceResponse403Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *CreateExperienceResponse409Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *CreateExperienceResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *CreateExperienceResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *CreateExperienceResponse503Headers
+}
+
+// GetJSON201 returns the response for an HTTP 201 `application/json` response
+func (r CreateExperienceResponse) GetJSON201() *Experience {
+	return r.JSON201
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r CreateExperienceResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r CreateExperienceResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r CreateExperienceResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r CreateExperienceResponse) GetApplicationProblemJSON409() *Conflict {
+	return r.ApplicationProblemJSON409
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r CreateExperienceResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r CreateExperienceResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r CreateExperienceResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r CreateExperienceResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateExperienceResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateExperienceResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CreateExperienceResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ImportExperienceResponse201Headers the declared response headers of an HTTP 201 response for ImportExperience
+type ImportExperienceResponse201Headers struct {
+	ETag       *string
+	XRequestID RequestID
+}
+
+// ImportExperienceResponse400Headers the declared response headers of an HTTP 400 response for ImportExperience
+type ImportExperienceResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// ImportExperienceResponse401Headers the declared response headers of an HTTP 401 response for ImportExperience
+type ImportExperienceResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// ImportExperienceResponse403Headers the declared response headers of an HTTP 403 response for ImportExperience
+type ImportExperienceResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// ImportExperienceResponse409Headers the declared response headers of an HTTP 409 response for ImportExperience
+type ImportExperienceResponse409Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+// ImportExperienceResponse429Headers the declared response headers of an HTTP 429 response for ImportExperience
+type ImportExperienceResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// ImportExperienceResponse500Headers the declared response headers of an HTTP 500 response for ImportExperience
+type ImportExperienceResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// ImportExperienceResponse503Headers the declared response headers of an HTTP 503 response for ImportExperience
+type ImportExperienceResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type ImportExperienceResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON201 the response for an HTTP 201 `application/json` response
+	JSON201 *Experience
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationProblemJSON409 *Conflict
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers201 the parsed response headers for an HTTP 201 response
+	Headers201 *ImportExperienceResponse201Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ImportExperienceResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ImportExperienceResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ImportExperienceResponse403Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *ImportExperienceResponse409Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *ImportExperienceResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ImportExperienceResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ImportExperienceResponse503Headers
+}
+
+// GetJSON201 returns the response for an HTTP 201 `application/json` response
+func (r ImportExperienceResponse) GetJSON201() *Experience {
+	return r.JSON201
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ImportExperienceResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ImportExperienceResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ImportExperienceResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r ImportExperienceResponse) GetApplicationProblemJSON409() *Conflict {
+	return r.ApplicationProblemJSON409
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r ImportExperienceResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ImportExperienceResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ImportExperienceResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ImportExperienceResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ImportExperienceResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ImportExperienceResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ImportExperienceResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetExperienceResponse200Headers the declared response headers of an HTTP 200 response for GetExperience
+type GetExperienceResponse200Headers struct {
+	ETag       *string
+	XRequestID RequestID
+}
+
+// GetExperienceResponse401Headers the declared response headers of an HTTP 401 response for GetExperience
+type GetExperienceResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// GetExperienceResponse403Headers the declared response headers of an HTTP 403 response for GetExperience
+type GetExperienceResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// GetExperienceResponse404Headers the declared response headers of an HTTP 404 response for GetExperience
+type GetExperienceResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// GetExperienceResponse429Headers the declared response headers of an HTTP 429 response for GetExperience
+type GetExperienceResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// GetExperienceResponse500Headers the declared response headers of an HTTP 500 response for GetExperience
+type GetExperienceResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// GetExperienceResponse503Headers the declared response headers of an HTTP 503 response for GetExperience
+type GetExperienceResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type GetExperienceResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *Experience
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetExperienceResponse200Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *GetExperienceResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetExperienceResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetExperienceResponse404Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *GetExperienceResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *GetExperienceResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *GetExperienceResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetExperienceResponse) GetJSON200() *Experience {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetExperienceResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetExperienceResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetExperienceResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r GetExperienceResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r GetExperienceResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r GetExperienceResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r GetExperienceResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetExperienceResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetExperienceResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetExperienceResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// UpdateExperienceDraftResponse200Headers the declared response headers of an HTTP 200 response for UpdateExperienceDraft
+type UpdateExperienceDraftResponse200Headers struct {
+	ETag       *string
+	XRequestID RequestID
+}
+
+// UpdateExperienceDraftResponse400Headers the declared response headers of an HTTP 400 response for UpdateExperienceDraft
+type UpdateExperienceDraftResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// UpdateExperienceDraftResponse401Headers the declared response headers of an HTTP 401 response for UpdateExperienceDraft
+type UpdateExperienceDraftResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// UpdateExperienceDraftResponse403Headers the declared response headers of an HTTP 403 response for UpdateExperienceDraft
+type UpdateExperienceDraftResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// UpdateExperienceDraftResponse404Headers the declared response headers of an HTTP 404 response for UpdateExperienceDraft
+type UpdateExperienceDraftResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// UpdateExperienceDraftResponse409Headers the declared response headers of an HTTP 409 response for UpdateExperienceDraft
+type UpdateExperienceDraftResponse409Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+// UpdateExperienceDraftResponse429Headers the declared response headers of an HTTP 429 response for UpdateExperienceDraft
+type UpdateExperienceDraftResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// UpdateExperienceDraftResponse500Headers the declared response headers of an HTTP 500 response for UpdateExperienceDraft
+type UpdateExperienceDraftResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// UpdateExperienceDraftResponse503Headers the declared response headers of an HTTP 503 response for UpdateExperienceDraft
+type UpdateExperienceDraftResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type UpdateExperienceDraftResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *Experience
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationProblemJSON409 *Conflict
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *UpdateExperienceDraftResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *UpdateExperienceDraftResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *UpdateExperienceDraftResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *UpdateExperienceDraftResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *UpdateExperienceDraftResponse404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *UpdateExperienceDraftResponse409Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *UpdateExperienceDraftResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *UpdateExperienceDraftResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *UpdateExperienceDraftResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r UpdateExperienceDraftResponse) GetJSON200() *Experience {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r UpdateExperienceDraftResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r UpdateExperienceDraftResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r UpdateExperienceDraftResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r UpdateExperienceDraftResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r UpdateExperienceDraftResponse) GetApplicationProblemJSON409() *Conflict {
+	return r.ApplicationProblemJSON409
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r UpdateExperienceDraftResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r UpdateExperienceDraftResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r UpdateExperienceDraftResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r UpdateExperienceDraftResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdateExperienceDraftResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdateExperienceDraftResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r UpdateExperienceDraftResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ApproveExperienceResponse200Headers the declared response headers of an HTTP 200 response for ApproveExperience
+type ApproveExperienceResponse200Headers struct {
+	ETag       *string
+	XRequestID RequestID
+}
+
+// ApproveExperienceResponse400Headers the declared response headers of an HTTP 400 response for ApproveExperience
+type ApproveExperienceResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// ApproveExperienceResponse401Headers the declared response headers of an HTTP 401 response for ApproveExperience
+type ApproveExperienceResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// ApproveExperienceResponse403Headers the declared response headers of an HTTP 403 response for ApproveExperience
+type ApproveExperienceResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// ApproveExperienceResponse404Headers the declared response headers of an HTTP 404 response for ApproveExperience
+type ApproveExperienceResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// ApproveExperienceResponse409Headers the declared response headers of an HTTP 409 response for ApproveExperience
+type ApproveExperienceResponse409Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+// ApproveExperienceResponse429Headers the declared response headers of an HTTP 429 response for ApproveExperience
+type ApproveExperienceResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// ApproveExperienceResponse500Headers the declared response headers of an HTTP 500 response for ApproveExperience
+type ApproveExperienceResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// ApproveExperienceResponse503Headers the declared response headers of an HTTP 503 response for ApproveExperience
+type ApproveExperienceResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type ApproveExperienceResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *Experience
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationProblemJSON409 *Conflict
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ApproveExperienceResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ApproveExperienceResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ApproveExperienceResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ApproveExperienceResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *ApproveExperienceResponse404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *ApproveExperienceResponse409Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *ApproveExperienceResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ApproveExperienceResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ApproveExperienceResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ApproveExperienceResponse) GetJSON200() *Experience {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ApproveExperienceResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ApproveExperienceResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ApproveExperienceResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r ApproveExperienceResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r ApproveExperienceResponse) GetApplicationProblemJSON409() *Conflict {
+	return r.ApplicationProblemJSON409
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r ApproveExperienceResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ApproveExperienceResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ApproveExperienceResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ApproveExperienceResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ApproveExperienceResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ApproveExperienceResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ApproveExperienceResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ExportExperienceResponse200Headers the declared response headers of an HTTP 200 response for ExportExperience
+type ExportExperienceResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// ExportExperienceResponse401Headers the declared response headers of an HTTP 401 response for ExportExperience
+type ExportExperienceResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// ExportExperienceResponse403Headers the declared response headers of an HTTP 403 response for ExportExperience
+type ExportExperienceResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// ExportExperienceResponse404Headers the declared response headers of an HTTP 404 response for ExportExperience
+type ExportExperienceResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// ExportExperienceResponse429Headers the declared response headers of an HTTP 429 response for ExportExperience
+type ExportExperienceResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// ExportExperienceResponse500Headers the declared response headers of an HTTP 500 response for ExportExperience
+type ExportExperienceResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// ExportExperienceResponse503Headers the declared response headers of an HTTP 503 response for ExportExperience
+type ExportExperienceResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type ExportExperienceResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ExperienceManifest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ExportExperienceResponse200Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ExportExperienceResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ExportExperienceResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *ExportExperienceResponse404Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *ExportExperienceResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ExportExperienceResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ExportExperienceResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ExportExperienceResponse) GetJSON200() *ExperienceManifest {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ExportExperienceResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ExportExperienceResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r ExportExperienceResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r ExportExperienceResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ExportExperienceResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ExportExperienceResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ExportExperienceResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ExportExperienceResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ExportExperienceResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ExportExperienceResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// PublishExperienceResponse200Headers the declared response headers of an HTTP 200 response for PublishExperience
+type PublishExperienceResponse200Headers struct {
+	ETag       *string
+	XRequestID RequestID
+}
+
+// PublishExperienceResponse400Headers the declared response headers of an HTTP 400 response for PublishExperience
+type PublishExperienceResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// PublishExperienceResponse401Headers the declared response headers of an HTTP 401 response for PublishExperience
+type PublishExperienceResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// PublishExperienceResponse403Headers the declared response headers of an HTTP 403 response for PublishExperience
+type PublishExperienceResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// PublishExperienceResponse404Headers the declared response headers of an HTTP 404 response for PublishExperience
+type PublishExperienceResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// PublishExperienceResponse409Headers the declared response headers of an HTTP 409 response for PublishExperience
+type PublishExperienceResponse409Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+// PublishExperienceResponse429Headers the declared response headers of an HTTP 429 response for PublishExperience
+type PublishExperienceResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// PublishExperienceResponse500Headers the declared response headers of an HTTP 500 response for PublishExperience
+type PublishExperienceResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// PublishExperienceResponse503Headers the declared response headers of an HTTP 503 response for PublishExperience
+type PublishExperienceResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type PublishExperienceResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *Experience
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationProblemJSON409 *Conflict
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *PublishExperienceResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *PublishExperienceResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *PublishExperienceResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *PublishExperienceResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *PublishExperienceResponse404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *PublishExperienceResponse409Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *PublishExperienceResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *PublishExperienceResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *PublishExperienceResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r PublishExperienceResponse) GetJSON200() *Experience {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r PublishExperienceResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r PublishExperienceResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r PublishExperienceResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r PublishExperienceResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r PublishExperienceResponse) GetApplicationProblemJSON409() *Conflict {
+	return r.ApplicationProblemJSON409
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r PublishExperienceResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r PublishExperienceResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r PublishExperienceResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r PublishExperienceResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r PublishExperienceResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PublishExperienceResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r PublishExperienceResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// RevokeExperienceResponse200Headers the declared response headers of an HTTP 200 response for RevokeExperience
+type RevokeExperienceResponse200Headers struct {
+	ETag       *string
+	XRequestID RequestID
+}
+
+// RevokeExperienceResponse400Headers the declared response headers of an HTTP 400 response for RevokeExperience
+type RevokeExperienceResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// RevokeExperienceResponse401Headers the declared response headers of an HTTP 401 response for RevokeExperience
+type RevokeExperienceResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// RevokeExperienceResponse403Headers the declared response headers of an HTTP 403 response for RevokeExperience
+type RevokeExperienceResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// RevokeExperienceResponse404Headers the declared response headers of an HTTP 404 response for RevokeExperience
+type RevokeExperienceResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// RevokeExperienceResponse409Headers the declared response headers of an HTTP 409 response for RevokeExperience
+type RevokeExperienceResponse409Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+// RevokeExperienceResponse429Headers the declared response headers of an HTTP 429 response for RevokeExperience
+type RevokeExperienceResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// RevokeExperienceResponse500Headers the declared response headers of an HTTP 500 response for RevokeExperience
+type RevokeExperienceResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// RevokeExperienceResponse503Headers the declared response headers of an HTTP 503 response for RevokeExperience
+type RevokeExperienceResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type RevokeExperienceResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *Experience
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationProblemJSON409 *Conflict
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *RevokeExperienceResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *RevokeExperienceResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *RevokeExperienceResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *RevokeExperienceResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *RevokeExperienceResponse404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *RevokeExperienceResponse409Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *RevokeExperienceResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *RevokeExperienceResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *RevokeExperienceResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r RevokeExperienceResponse) GetJSON200() *Experience {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r RevokeExperienceResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r RevokeExperienceResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r RevokeExperienceResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r RevokeExperienceResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r RevokeExperienceResponse) GetApplicationProblemJSON409() *Conflict {
+	return r.ApplicationProblemJSON409
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r RevokeExperienceResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r RevokeExperienceResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r RevokeExperienceResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r RevokeExperienceResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r RevokeExperienceResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r RevokeExperienceResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r RevokeExperienceResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// RollbackExperienceResponse200Headers the declared response headers of an HTTP 200 response for RollbackExperience
+type RollbackExperienceResponse200Headers struct {
+	ETag       *string
+	XRequestID RequestID
+}
+
+// RollbackExperienceResponse400Headers the declared response headers of an HTTP 400 response for RollbackExperience
+type RollbackExperienceResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// RollbackExperienceResponse401Headers the declared response headers of an HTTP 401 response for RollbackExperience
+type RollbackExperienceResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// RollbackExperienceResponse403Headers the declared response headers of an HTTP 403 response for RollbackExperience
+type RollbackExperienceResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// RollbackExperienceResponse404Headers the declared response headers of an HTTP 404 response for RollbackExperience
+type RollbackExperienceResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// RollbackExperienceResponse409Headers the declared response headers of an HTTP 409 response for RollbackExperience
+type RollbackExperienceResponse409Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+// RollbackExperienceResponse429Headers the declared response headers of an HTTP 429 response for RollbackExperience
+type RollbackExperienceResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// RollbackExperienceResponse500Headers the declared response headers of an HTTP 500 response for RollbackExperience
+type RollbackExperienceResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// RollbackExperienceResponse503Headers the declared response headers of an HTTP 503 response for RollbackExperience
+type RollbackExperienceResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type RollbackExperienceResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *Experience
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationProblemJSON409 *Conflict
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *RollbackExperienceResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *RollbackExperienceResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *RollbackExperienceResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *RollbackExperienceResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *RollbackExperienceResponse404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *RollbackExperienceResponse409Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *RollbackExperienceResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *RollbackExperienceResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *RollbackExperienceResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r RollbackExperienceResponse) GetJSON200() *Experience {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r RollbackExperienceResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r RollbackExperienceResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r RollbackExperienceResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r RollbackExperienceResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r RollbackExperienceResponse) GetApplicationProblemJSON409() *Conflict {
+	return r.ApplicationProblemJSON409
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r RollbackExperienceResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r RollbackExperienceResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r RollbackExperienceResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r RollbackExperienceResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r RollbackExperienceResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r RollbackExperienceResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r RollbackExperienceResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -31388,6 +38929,459 @@ func (r GetNoticeVersionResponse) ContentType() string {
 	return ""
 }
 
+// ListPacksResponse200Headers the declared response headers of an HTTP 200 response for ListPacks
+type ListPacksResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// ListPacksResponse400Headers the declared response headers of an HTTP 400 response for ListPacks
+type ListPacksResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// ListPacksResponse401Headers the declared response headers of an HTTP 401 response for ListPacks
+type ListPacksResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// ListPacksResponse403Headers the declared response headers of an HTTP 403 response for ListPacks
+type ListPacksResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// ListPacksResponse404Headers the declared response headers of an HTTP 404 response for ListPacks
+type ListPacksResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// ListPacksResponse429Headers the declared response headers of an HTTP 429 response for ListPacks
+type ListPacksResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// ListPacksResponse500Headers the declared response headers of an HTTP 500 response for ListPacks
+type ListPacksResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// ListPacksResponse503Headers the declared response headers of an HTTP 503 response for ListPacks
+type ListPacksResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type ListPacksResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *PackPage
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ListPacksResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ListPacksResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ListPacksResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListPacksResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *ListPacksResponse404Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *ListPacksResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListPacksResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ListPacksResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListPacksResponse) GetJSON200() *PackPage {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ListPacksResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListPacksResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListPacksResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r ListPacksResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r ListPacksResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListPacksResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ListPacksResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListPacksResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListPacksResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListPacksResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListPacksResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetActiveCountryPackResponse200Headers the declared response headers of an HTTP 200 response for GetActiveCountryPack
+type GetActiveCountryPackResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// GetActiveCountryPackResponse400Headers the declared response headers of an HTTP 400 response for GetActiveCountryPack
+type GetActiveCountryPackResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// GetActiveCountryPackResponse401Headers the declared response headers of an HTTP 401 response for GetActiveCountryPack
+type GetActiveCountryPackResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// GetActiveCountryPackResponse403Headers the declared response headers of an HTTP 403 response for GetActiveCountryPack
+type GetActiveCountryPackResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// GetActiveCountryPackResponse404Headers the declared response headers of an HTTP 404 response for GetActiveCountryPack
+type GetActiveCountryPackResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// GetActiveCountryPackResponse429Headers the declared response headers of an HTTP 429 response for GetActiveCountryPack
+type GetActiveCountryPackResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// GetActiveCountryPackResponse500Headers the declared response headers of an HTTP 500 response for GetActiveCountryPack
+type GetActiveCountryPackResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// GetActiveCountryPackResponse503Headers the declared response headers of an HTTP 503 response for GetActiveCountryPack
+type GetActiveCountryPackResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type GetActiveCountryPackResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *PackResource
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetActiveCountryPackResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *GetActiveCountryPackResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *GetActiveCountryPackResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetActiveCountryPackResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetActiveCountryPackResponse404Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *GetActiveCountryPackResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *GetActiveCountryPackResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *GetActiveCountryPackResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetActiveCountryPackResponse) GetJSON200() *PackResource {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r GetActiveCountryPackResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetActiveCountryPackResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetActiveCountryPackResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetActiveCountryPackResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r GetActiveCountryPackResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r GetActiveCountryPackResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r GetActiveCountryPackResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r GetActiveCountryPackResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetActiveCountryPackResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetActiveCountryPackResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetActiveCountryPackResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetCountryPackRevisionResponse200Headers the declared response headers of an HTTP 200 response for GetCountryPackRevision
+type GetCountryPackRevisionResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// GetCountryPackRevisionResponse400Headers the declared response headers of an HTTP 400 response for GetCountryPackRevision
+type GetCountryPackRevisionResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// GetCountryPackRevisionResponse401Headers the declared response headers of an HTTP 401 response for GetCountryPackRevision
+type GetCountryPackRevisionResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// GetCountryPackRevisionResponse403Headers the declared response headers of an HTTP 403 response for GetCountryPackRevision
+type GetCountryPackRevisionResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// GetCountryPackRevisionResponse404Headers the declared response headers of an HTTP 404 response for GetCountryPackRevision
+type GetCountryPackRevisionResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// GetCountryPackRevisionResponse429Headers the declared response headers of an HTTP 429 response for GetCountryPackRevision
+type GetCountryPackRevisionResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// GetCountryPackRevisionResponse500Headers the declared response headers of an HTTP 500 response for GetCountryPackRevision
+type GetCountryPackRevisionResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// GetCountryPackRevisionResponse503Headers the declared response headers of an HTTP 503 response for GetCountryPackRevision
+type GetCountryPackRevisionResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type GetCountryPackRevisionResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *PackResource
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetCountryPackRevisionResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *GetCountryPackRevisionResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *GetCountryPackRevisionResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetCountryPackRevisionResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetCountryPackRevisionResponse404Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *GetCountryPackRevisionResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *GetCountryPackRevisionResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *GetCountryPackRevisionResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetCountryPackRevisionResponse) GetJSON200() *PackResource {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r GetCountryPackRevisionResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetCountryPackRevisionResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetCountryPackRevisionResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetCountryPackRevisionResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r GetCountryPackRevisionResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r GetCountryPackRevisionResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r GetCountryPackRevisionResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r GetCountryPackRevisionResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetCountryPackRevisionResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetCountryPackRevisionResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetCountryPackRevisionResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // ListPoliciesResponse200Headers the declared response headers of an HTTP 200 response for ListPolicies
 type ListPoliciesResponse200Headers struct {
 	XRequestID RequestID
@@ -33870,6 +41864,2319 @@ func (r SimulatePolicyResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r SimulatePolicyResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ListPrivacyDisclosuresResponse200Headers the declared response headers of an HTTP 200 response for ListPrivacyDisclosures
+type ListPrivacyDisclosuresResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// ListPrivacyDisclosuresResponse400Headers the declared response headers of an HTTP 400 response for ListPrivacyDisclosures
+type ListPrivacyDisclosuresResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// ListPrivacyDisclosuresResponse401Headers the declared response headers of an HTTP 401 response for ListPrivacyDisclosures
+type ListPrivacyDisclosuresResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// ListPrivacyDisclosuresResponse403Headers the declared response headers of an HTTP 403 response for ListPrivacyDisclosures
+type ListPrivacyDisclosuresResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// ListPrivacyDisclosuresResponse429Headers the declared response headers of an HTTP 429 response for ListPrivacyDisclosures
+type ListPrivacyDisclosuresResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// ListPrivacyDisclosuresResponse500Headers the declared response headers of an HTTP 500 response for ListPrivacyDisclosures
+type ListPrivacyDisclosuresResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// ListPrivacyDisclosuresResponse503Headers the declared response headers of an HTTP 503 response for ListPrivacyDisclosures
+type ListPrivacyDisclosuresResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type ListPrivacyDisclosuresResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *PrivacyDisclosureList
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ListPrivacyDisclosuresResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ListPrivacyDisclosuresResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ListPrivacyDisclosuresResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListPrivacyDisclosuresResponse403Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *ListPrivacyDisclosuresResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListPrivacyDisclosuresResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ListPrivacyDisclosuresResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListPrivacyDisclosuresResponse) GetJSON200() *PrivacyDisclosureList {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ListPrivacyDisclosuresResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListPrivacyDisclosuresResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListPrivacyDisclosuresResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r ListPrivacyDisclosuresResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListPrivacyDisclosuresResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ListPrivacyDisclosuresResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListPrivacyDisclosuresResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListPrivacyDisclosuresResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListPrivacyDisclosuresResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListPrivacyDisclosuresResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// CreatePrivacyDisclosureResponse201Headers the declared response headers of an HTTP 201 response for CreatePrivacyDisclosure
+type CreatePrivacyDisclosureResponse201Headers struct {
+	Location   *string
+	XRequestID RequestID
+}
+
+// CreatePrivacyDisclosureResponse400Headers the declared response headers of an HTTP 400 response for CreatePrivacyDisclosure
+type CreatePrivacyDisclosureResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// CreatePrivacyDisclosureResponse401Headers the declared response headers of an HTTP 401 response for CreatePrivacyDisclosure
+type CreatePrivacyDisclosureResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// CreatePrivacyDisclosureResponse403Headers the declared response headers of an HTTP 403 response for CreatePrivacyDisclosure
+type CreatePrivacyDisclosureResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// CreatePrivacyDisclosureResponse409Headers the declared response headers of an HTTP 409 response for CreatePrivacyDisclosure
+type CreatePrivacyDisclosureResponse409Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+// CreatePrivacyDisclosureResponse429Headers the declared response headers of an HTTP 429 response for CreatePrivacyDisclosure
+type CreatePrivacyDisclosureResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// CreatePrivacyDisclosureResponse500Headers the declared response headers of an HTTP 500 response for CreatePrivacyDisclosure
+type CreatePrivacyDisclosureResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// CreatePrivacyDisclosureResponse503Headers the declared response headers of an HTTP 503 response for CreatePrivacyDisclosure
+type CreatePrivacyDisclosureResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type CreatePrivacyDisclosureResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON201 the response for an HTTP 201 `application/json` response
+	JSON201 *PrivacyDisclosure
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationProblemJSON409 *Conflict
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers201 the parsed response headers for an HTTP 201 response
+	Headers201 *CreatePrivacyDisclosureResponse201Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *CreatePrivacyDisclosureResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *CreatePrivacyDisclosureResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *CreatePrivacyDisclosureResponse403Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *CreatePrivacyDisclosureResponse409Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *CreatePrivacyDisclosureResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *CreatePrivacyDisclosureResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *CreatePrivacyDisclosureResponse503Headers
+}
+
+// GetJSON201 returns the response for an HTTP 201 `application/json` response
+func (r CreatePrivacyDisclosureResponse) GetJSON201() *PrivacyDisclosure {
+	return r.JSON201
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r CreatePrivacyDisclosureResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r CreatePrivacyDisclosureResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r CreatePrivacyDisclosureResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r CreatePrivacyDisclosureResponse) GetApplicationProblemJSON409() *Conflict {
+	return r.ApplicationProblemJSON409
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r CreatePrivacyDisclosureResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r CreatePrivacyDisclosureResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r CreatePrivacyDisclosureResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r CreatePrivacyDisclosureResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r CreatePrivacyDisclosureResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreatePrivacyDisclosureResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CreatePrivacyDisclosureResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ListPrivacyProcessorsResponse200Headers the declared response headers of an HTTP 200 response for ListPrivacyProcessors
+type ListPrivacyProcessorsResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// ListPrivacyProcessorsResponse400Headers the declared response headers of an HTTP 400 response for ListPrivacyProcessors
+type ListPrivacyProcessorsResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// ListPrivacyProcessorsResponse401Headers the declared response headers of an HTTP 401 response for ListPrivacyProcessors
+type ListPrivacyProcessorsResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// ListPrivacyProcessorsResponse403Headers the declared response headers of an HTTP 403 response for ListPrivacyProcessors
+type ListPrivacyProcessorsResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// ListPrivacyProcessorsResponse429Headers the declared response headers of an HTTP 429 response for ListPrivacyProcessors
+type ListPrivacyProcessorsResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// ListPrivacyProcessorsResponse500Headers the declared response headers of an HTTP 500 response for ListPrivacyProcessors
+type ListPrivacyProcessorsResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// ListPrivacyProcessorsResponse503Headers the declared response headers of an HTTP 503 response for ListPrivacyProcessors
+type ListPrivacyProcessorsResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type ListPrivacyProcessorsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *PrivacyProcessorList
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ListPrivacyProcessorsResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ListPrivacyProcessorsResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ListPrivacyProcessorsResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListPrivacyProcessorsResponse403Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *ListPrivacyProcessorsResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListPrivacyProcessorsResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ListPrivacyProcessorsResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListPrivacyProcessorsResponse) GetJSON200() *PrivacyProcessorList {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ListPrivacyProcessorsResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListPrivacyProcessorsResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListPrivacyProcessorsResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r ListPrivacyProcessorsResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListPrivacyProcessorsResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ListPrivacyProcessorsResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListPrivacyProcessorsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListPrivacyProcessorsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListPrivacyProcessorsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListPrivacyProcessorsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// CreatePrivacyProcessorResponse201Headers the declared response headers of an HTTP 201 response for CreatePrivacyProcessor
+type CreatePrivacyProcessorResponse201Headers struct {
+	Location   *string
+	XRequestID RequestID
+}
+
+// CreatePrivacyProcessorResponse400Headers the declared response headers of an HTTP 400 response for CreatePrivacyProcessor
+type CreatePrivacyProcessorResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// CreatePrivacyProcessorResponse401Headers the declared response headers of an HTTP 401 response for CreatePrivacyProcessor
+type CreatePrivacyProcessorResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// CreatePrivacyProcessorResponse403Headers the declared response headers of an HTTP 403 response for CreatePrivacyProcessor
+type CreatePrivacyProcessorResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// CreatePrivacyProcessorResponse409Headers the declared response headers of an HTTP 409 response for CreatePrivacyProcessor
+type CreatePrivacyProcessorResponse409Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+// CreatePrivacyProcessorResponse429Headers the declared response headers of an HTTP 429 response for CreatePrivacyProcessor
+type CreatePrivacyProcessorResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// CreatePrivacyProcessorResponse500Headers the declared response headers of an HTTP 500 response for CreatePrivacyProcessor
+type CreatePrivacyProcessorResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// CreatePrivacyProcessorResponse503Headers the declared response headers of an HTTP 503 response for CreatePrivacyProcessor
+type CreatePrivacyProcessorResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type CreatePrivacyProcessorResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON201 the response for an HTTP 201 `application/json` response
+	JSON201 *PrivacyProcessor
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationProblemJSON409 *Conflict
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers201 the parsed response headers for an HTTP 201 response
+	Headers201 *CreatePrivacyProcessorResponse201Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *CreatePrivacyProcessorResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *CreatePrivacyProcessorResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *CreatePrivacyProcessorResponse403Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *CreatePrivacyProcessorResponse409Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *CreatePrivacyProcessorResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *CreatePrivacyProcessorResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *CreatePrivacyProcessorResponse503Headers
+}
+
+// GetJSON201 returns the response for an HTTP 201 `application/json` response
+func (r CreatePrivacyProcessorResponse) GetJSON201() *PrivacyProcessor {
+	return r.JSON201
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r CreatePrivacyProcessorResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r CreatePrivacyProcessorResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r CreatePrivacyProcessorResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r CreatePrivacyProcessorResponse) GetApplicationProblemJSON409() *Conflict {
+	return r.ApplicationProblemJSON409
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r CreatePrivacyProcessorResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r CreatePrivacyProcessorResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r CreatePrivacyProcessorResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r CreatePrivacyProcessorResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r CreatePrivacyProcessorResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreatePrivacyProcessorResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CreatePrivacyProcessorResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetPrivacyProcessorResponse200Headers the declared response headers of an HTTP 200 response for GetPrivacyProcessor
+type GetPrivacyProcessorResponse200Headers struct {
+	ETag       *string
+	XRequestID RequestID
+}
+
+// GetPrivacyProcessorResponse400Headers the declared response headers of an HTTP 400 response for GetPrivacyProcessor
+type GetPrivacyProcessorResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// GetPrivacyProcessorResponse401Headers the declared response headers of an HTTP 401 response for GetPrivacyProcessor
+type GetPrivacyProcessorResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// GetPrivacyProcessorResponse403Headers the declared response headers of an HTTP 403 response for GetPrivacyProcessor
+type GetPrivacyProcessorResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// GetPrivacyProcessorResponse404Headers the declared response headers of an HTTP 404 response for GetPrivacyProcessor
+type GetPrivacyProcessorResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// GetPrivacyProcessorResponse429Headers the declared response headers of an HTTP 429 response for GetPrivacyProcessor
+type GetPrivacyProcessorResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// GetPrivacyProcessorResponse500Headers the declared response headers of an HTTP 500 response for GetPrivacyProcessor
+type GetPrivacyProcessorResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// GetPrivacyProcessorResponse503Headers the declared response headers of an HTTP 503 response for GetPrivacyProcessor
+type GetPrivacyProcessorResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type GetPrivacyProcessorResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *PrivacyProcessor
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetPrivacyProcessorResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *GetPrivacyProcessorResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *GetPrivacyProcessorResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetPrivacyProcessorResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetPrivacyProcessorResponse404Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *GetPrivacyProcessorResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *GetPrivacyProcessorResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *GetPrivacyProcessorResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetPrivacyProcessorResponse) GetJSON200() *PrivacyProcessor {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r GetPrivacyProcessorResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetPrivacyProcessorResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetPrivacyProcessorResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetPrivacyProcessorResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r GetPrivacyProcessorResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r GetPrivacyProcessorResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r GetPrivacyProcessorResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r GetPrivacyProcessorResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetPrivacyProcessorResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetPrivacyProcessorResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetPrivacyProcessorResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// UpdatePrivacyProcessorResponse200Headers the declared response headers of an HTTP 200 response for UpdatePrivacyProcessor
+type UpdatePrivacyProcessorResponse200Headers struct {
+	ETag       *string
+	XRequestID RequestID
+}
+
+// UpdatePrivacyProcessorResponse400Headers the declared response headers of an HTTP 400 response for UpdatePrivacyProcessor
+type UpdatePrivacyProcessorResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// UpdatePrivacyProcessorResponse401Headers the declared response headers of an HTTP 401 response for UpdatePrivacyProcessor
+type UpdatePrivacyProcessorResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// UpdatePrivacyProcessorResponse403Headers the declared response headers of an HTTP 403 response for UpdatePrivacyProcessor
+type UpdatePrivacyProcessorResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// UpdatePrivacyProcessorResponse404Headers the declared response headers of an HTTP 404 response for UpdatePrivacyProcessor
+type UpdatePrivacyProcessorResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// UpdatePrivacyProcessorResponse409Headers the declared response headers of an HTTP 409 response for UpdatePrivacyProcessor
+type UpdatePrivacyProcessorResponse409Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+// UpdatePrivacyProcessorResponse429Headers the declared response headers of an HTTP 429 response for UpdatePrivacyProcessor
+type UpdatePrivacyProcessorResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// UpdatePrivacyProcessorResponse500Headers the declared response headers of an HTTP 500 response for UpdatePrivacyProcessor
+type UpdatePrivacyProcessorResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// UpdatePrivacyProcessorResponse503Headers the declared response headers of an HTTP 503 response for UpdatePrivacyProcessor
+type UpdatePrivacyProcessorResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type UpdatePrivacyProcessorResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *PrivacyProcessor
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationProblemJSON409 *Conflict
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *UpdatePrivacyProcessorResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *UpdatePrivacyProcessorResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *UpdatePrivacyProcessorResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *UpdatePrivacyProcessorResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *UpdatePrivacyProcessorResponse404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *UpdatePrivacyProcessorResponse409Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *UpdatePrivacyProcessorResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *UpdatePrivacyProcessorResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *UpdatePrivacyProcessorResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r UpdatePrivacyProcessorResponse) GetJSON200() *PrivacyProcessor {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r UpdatePrivacyProcessorResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r UpdatePrivacyProcessorResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r UpdatePrivacyProcessorResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r UpdatePrivacyProcessorResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r UpdatePrivacyProcessorResponse) GetApplicationProblemJSON409() *Conflict {
+	return r.ApplicationProblemJSON409
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r UpdatePrivacyProcessorResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r UpdatePrivacyProcessorResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r UpdatePrivacyProcessorResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r UpdatePrivacyProcessorResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r UpdatePrivacyProcessorResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UpdatePrivacyProcessorResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r UpdatePrivacyProcessorResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ListPrivacyRequestsResponse200Headers the declared response headers of an HTTP 200 response for ListPrivacyRequests
+type ListPrivacyRequestsResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// ListPrivacyRequestsResponse400Headers the declared response headers of an HTTP 400 response for ListPrivacyRequests
+type ListPrivacyRequestsResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// ListPrivacyRequestsResponse401Headers the declared response headers of an HTTP 401 response for ListPrivacyRequests
+type ListPrivacyRequestsResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// ListPrivacyRequestsResponse403Headers the declared response headers of an HTTP 403 response for ListPrivacyRequests
+type ListPrivacyRequestsResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// ListPrivacyRequestsResponse429Headers the declared response headers of an HTTP 429 response for ListPrivacyRequests
+type ListPrivacyRequestsResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// ListPrivacyRequestsResponse500Headers the declared response headers of an HTTP 500 response for ListPrivacyRequests
+type ListPrivacyRequestsResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// ListPrivacyRequestsResponse503Headers the declared response headers of an HTTP 503 response for ListPrivacyRequests
+type ListPrivacyRequestsResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type ListPrivacyRequestsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *PrivacyRequestList
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ListPrivacyRequestsResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ListPrivacyRequestsResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ListPrivacyRequestsResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListPrivacyRequestsResponse403Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *ListPrivacyRequestsResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListPrivacyRequestsResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ListPrivacyRequestsResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListPrivacyRequestsResponse) GetJSON200() *PrivacyRequestList {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ListPrivacyRequestsResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListPrivacyRequestsResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListPrivacyRequestsResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r ListPrivacyRequestsResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListPrivacyRequestsResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ListPrivacyRequestsResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListPrivacyRequestsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListPrivacyRequestsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListPrivacyRequestsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListPrivacyRequestsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// CreatePrivacyRequestResponse202Headers the declared response headers of an HTTP 202 response for CreatePrivacyRequest
+type CreatePrivacyRequestResponse202Headers struct {
+	Location   *string
+	XRequestID RequestID
+}
+
+// CreatePrivacyRequestResponse400Headers the declared response headers of an HTTP 400 response for CreatePrivacyRequest
+type CreatePrivacyRequestResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// CreatePrivacyRequestResponse401Headers the declared response headers of an HTTP 401 response for CreatePrivacyRequest
+type CreatePrivacyRequestResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// CreatePrivacyRequestResponse403Headers the declared response headers of an HTTP 403 response for CreatePrivacyRequest
+type CreatePrivacyRequestResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// CreatePrivacyRequestResponse409Headers the declared response headers of an HTTP 409 response for CreatePrivacyRequest
+type CreatePrivacyRequestResponse409Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+// CreatePrivacyRequestResponse429Headers the declared response headers of an HTTP 429 response for CreatePrivacyRequest
+type CreatePrivacyRequestResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// CreatePrivacyRequestResponse500Headers the declared response headers of an HTTP 500 response for CreatePrivacyRequest
+type CreatePrivacyRequestResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// CreatePrivacyRequestResponse503Headers the declared response headers of an HTTP 503 response for CreatePrivacyRequest
+type CreatePrivacyRequestResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type CreatePrivacyRequestResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON202 the response for an HTTP 202 `application/json` response
+	JSON202 *PrivacyRequestSummary
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationProblemJSON409 *Conflict
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers202 the parsed response headers for an HTTP 202 response
+	Headers202 *CreatePrivacyRequestResponse202Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *CreatePrivacyRequestResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *CreatePrivacyRequestResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *CreatePrivacyRequestResponse403Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *CreatePrivacyRequestResponse409Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *CreatePrivacyRequestResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *CreatePrivacyRequestResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *CreatePrivacyRequestResponse503Headers
+}
+
+// GetJSON202 returns the response for an HTTP 202 `application/json` response
+func (r CreatePrivacyRequestResponse) GetJSON202() *PrivacyRequestSummary {
+	return r.JSON202
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r CreatePrivacyRequestResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r CreatePrivacyRequestResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r CreatePrivacyRequestResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r CreatePrivacyRequestResponse) GetApplicationProblemJSON409() *Conflict {
+	return r.ApplicationProblemJSON409
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r CreatePrivacyRequestResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r CreatePrivacyRequestResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r CreatePrivacyRequestResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r CreatePrivacyRequestResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r CreatePrivacyRequestResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreatePrivacyRequestResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CreatePrivacyRequestResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetPrivacyRequestResponse200Headers the declared response headers of an HTTP 200 response for GetPrivacyRequest
+type GetPrivacyRequestResponse200Headers struct {
+	ETag       *string
+	XRequestID RequestID
+}
+
+// GetPrivacyRequestResponse400Headers the declared response headers of an HTTP 400 response for GetPrivacyRequest
+type GetPrivacyRequestResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// GetPrivacyRequestResponse401Headers the declared response headers of an HTTP 401 response for GetPrivacyRequest
+type GetPrivacyRequestResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// GetPrivacyRequestResponse403Headers the declared response headers of an HTTP 403 response for GetPrivacyRequest
+type GetPrivacyRequestResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// GetPrivacyRequestResponse404Headers the declared response headers of an HTTP 404 response for GetPrivacyRequest
+type GetPrivacyRequestResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// GetPrivacyRequestResponse429Headers the declared response headers of an HTTP 429 response for GetPrivacyRequest
+type GetPrivacyRequestResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// GetPrivacyRequestResponse500Headers the declared response headers of an HTTP 500 response for GetPrivacyRequest
+type GetPrivacyRequestResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// GetPrivacyRequestResponse503Headers the declared response headers of an HTTP 503 response for GetPrivacyRequest
+type GetPrivacyRequestResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type GetPrivacyRequestResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *PrivacyRequestStatus
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetPrivacyRequestResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *GetPrivacyRequestResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *GetPrivacyRequestResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetPrivacyRequestResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetPrivacyRequestResponse404Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *GetPrivacyRequestResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *GetPrivacyRequestResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *GetPrivacyRequestResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetPrivacyRequestResponse) GetJSON200() *PrivacyRequestStatus {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r GetPrivacyRequestResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetPrivacyRequestResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetPrivacyRequestResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetPrivacyRequestResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r GetPrivacyRequestResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r GetPrivacyRequestResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r GetPrivacyRequestResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r GetPrivacyRequestResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetPrivacyRequestResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetPrivacyRequestResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetPrivacyRequestResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ApprovePrivacyRequestResponse200Headers the declared response headers of an HTTP 200 response for ApprovePrivacyRequest
+type ApprovePrivacyRequestResponse200Headers struct {
+	ETag       *string
+	XRequestID RequestID
+}
+
+// ApprovePrivacyRequestResponse400Headers the declared response headers of an HTTP 400 response for ApprovePrivacyRequest
+type ApprovePrivacyRequestResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// ApprovePrivacyRequestResponse401Headers the declared response headers of an HTTP 401 response for ApprovePrivacyRequest
+type ApprovePrivacyRequestResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// ApprovePrivacyRequestResponse403Headers the declared response headers of an HTTP 403 response for ApprovePrivacyRequest
+type ApprovePrivacyRequestResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// ApprovePrivacyRequestResponse404Headers the declared response headers of an HTTP 404 response for ApprovePrivacyRequest
+type ApprovePrivacyRequestResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// ApprovePrivacyRequestResponse409Headers the declared response headers of an HTTP 409 response for ApprovePrivacyRequest
+type ApprovePrivacyRequestResponse409Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+// ApprovePrivacyRequestResponse429Headers the declared response headers of an HTTP 429 response for ApprovePrivacyRequest
+type ApprovePrivacyRequestResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// ApprovePrivacyRequestResponse500Headers the declared response headers of an HTTP 500 response for ApprovePrivacyRequest
+type ApprovePrivacyRequestResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// ApprovePrivacyRequestResponse503Headers the declared response headers of an HTTP 503 response for ApprovePrivacyRequest
+type ApprovePrivacyRequestResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type ApprovePrivacyRequestResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *PrivacyRequestStatus
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationProblemJSON409 *Conflict
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ApprovePrivacyRequestResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ApprovePrivacyRequestResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ApprovePrivacyRequestResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ApprovePrivacyRequestResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *ApprovePrivacyRequestResponse404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *ApprovePrivacyRequestResponse409Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *ApprovePrivacyRequestResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ApprovePrivacyRequestResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ApprovePrivacyRequestResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ApprovePrivacyRequestResponse) GetJSON200() *PrivacyRequestStatus {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ApprovePrivacyRequestResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ApprovePrivacyRequestResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ApprovePrivacyRequestResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r ApprovePrivacyRequestResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r ApprovePrivacyRequestResponse) GetApplicationProblemJSON409() *Conflict {
+	return r.ApplicationProblemJSON409
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r ApprovePrivacyRequestResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ApprovePrivacyRequestResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ApprovePrivacyRequestResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ApprovePrivacyRequestResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ApprovePrivacyRequestResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ApprovePrivacyRequestResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ApprovePrivacyRequestResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// DenyPrivacyRequestResponse200Headers the declared response headers of an HTTP 200 response for DenyPrivacyRequest
+type DenyPrivacyRequestResponse200Headers struct {
+	ETag       *string
+	XRequestID RequestID
+}
+
+// DenyPrivacyRequestResponse400Headers the declared response headers of an HTTP 400 response for DenyPrivacyRequest
+type DenyPrivacyRequestResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// DenyPrivacyRequestResponse401Headers the declared response headers of an HTTP 401 response for DenyPrivacyRequest
+type DenyPrivacyRequestResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// DenyPrivacyRequestResponse403Headers the declared response headers of an HTTP 403 response for DenyPrivacyRequest
+type DenyPrivacyRequestResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// DenyPrivacyRequestResponse404Headers the declared response headers of an HTTP 404 response for DenyPrivacyRequest
+type DenyPrivacyRequestResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// DenyPrivacyRequestResponse409Headers the declared response headers of an HTTP 409 response for DenyPrivacyRequest
+type DenyPrivacyRequestResponse409Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+// DenyPrivacyRequestResponse429Headers the declared response headers of an HTTP 429 response for DenyPrivacyRequest
+type DenyPrivacyRequestResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// DenyPrivacyRequestResponse500Headers the declared response headers of an HTTP 500 response for DenyPrivacyRequest
+type DenyPrivacyRequestResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// DenyPrivacyRequestResponse503Headers the declared response headers of an HTTP 503 response for DenyPrivacyRequest
+type DenyPrivacyRequestResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type DenyPrivacyRequestResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *PrivacyRequestStatus
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationProblemJSON409 *Conflict
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *DenyPrivacyRequestResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *DenyPrivacyRequestResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *DenyPrivacyRequestResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *DenyPrivacyRequestResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *DenyPrivacyRequestResponse404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *DenyPrivacyRequestResponse409Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *DenyPrivacyRequestResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *DenyPrivacyRequestResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *DenyPrivacyRequestResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r DenyPrivacyRequestResponse) GetJSON200() *PrivacyRequestStatus {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r DenyPrivacyRequestResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r DenyPrivacyRequestResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r DenyPrivacyRequestResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r DenyPrivacyRequestResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r DenyPrivacyRequestResponse) GetApplicationProblemJSON409() *Conflict {
+	return r.ApplicationProblemJSON409
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r DenyPrivacyRequestResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r DenyPrivacyRequestResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r DenyPrivacyRequestResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r DenyPrivacyRequestResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r DenyPrivacyRequestResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DenyPrivacyRequestResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r DenyPrivacyRequestResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ExecutePrivacyRequestResponse200Headers the declared response headers of an HTTP 200 response for ExecutePrivacyRequest
+type ExecutePrivacyRequestResponse200Headers struct {
+	ETag       *string
+	XRequestID RequestID
+}
+
+// ExecutePrivacyRequestResponse400Headers the declared response headers of an HTTP 400 response for ExecutePrivacyRequest
+type ExecutePrivacyRequestResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// ExecutePrivacyRequestResponse401Headers the declared response headers of an HTTP 401 response for ExecutePrivacyRequest
+type ExecutePrivacyRequestResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// ExecutePrivacyRequestResponse403Headers the declared response headers of an HTTP 403 response for ExecutePrivacyRequest
+type ExecutePrivacyRequestResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// ExecutePrivacyRequestResponse404Headers the declared response headers of an HTTP 404 response for ExecutePrivacyRequest
+type ExecutePrivacyRequestResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// ExecutePrivacyRequestResponse409Headers the declared response headers of an HTTP 409 response for ExecutePrivacyRequest
+type ExecutePrivacyRequestResponse409Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+// ExecutePrivacyRequestResponse429Headers the declared response headers of an HTTP 429 response for ExecutePrivacyRequest
+type ExecutePrivacyRequestResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// ExecutePrivacyRequestResponse500Headers the declared response headers of an HTTP 500 response for ExecutePrivacyRequest
+type ExecutePrivacyRequestResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// ExecutePrivacyRequestResponse503Headers the declared response headers of an HTTP 503 response for ExecutePrivacyRequest
+type ExecutePrivacyRequestResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type ExecutePrivacyRequestResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *PrivacyRequestStatus
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationProblemJSON409 *Conflict
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ExecutePrivacyRequestResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ExecutePrivacyRequestResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ExecutePrivacyRequestResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ExecutePrivacyRequestResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *ExecutePrivacyRequestResponse404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *ExecutePrivacyRequestResponse409Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *ExecutePrivacyRequestResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ExecutePrivacyRequestResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ExecutePrivacyRequestResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ExecutePrivacyRequestResponse) GetJSON200() *PrivacyRequestStatus {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ExecutePrivacyRequestResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ExecutePrivacyRequestResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ExecutePrivacyRequestResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r ExecutePrivacyRequestResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r ExecutePrivacyRequestResponse) GetApplicationProblemJSON409() *Conflict {
+	return r.ApplicationProblemJSON409
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r ExecutePrivacyRequestResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ExecutePrivacyRequestResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ExecutePrivacyRequestResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ExecutePrivacyRequestResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ExecutePrivacyRequestResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ExecutePrivacyRequestResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ExecutePrivacyRequestResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// WithdrawPrivacyRequestResponse200Headers the declared response headers of an HTTP 200 response for WithdrawPrivacyRequest
+type WithdrawPrivacyRequestResponse200Headers struct {
+	ETag       *string
+	XRequestID RequestID
+}
+
+// WithdrawPrivacyRequestResponse400Headers the declared response headers of an HTTP 400 response for WithdrawPrivacyRequest
+type WithdrawPrivacyRequestResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// WithdrawPrivacyRequestResponse401Headers the declared response headers of an HTTP 401 response for WithdrawPrivacyRequest
+type WithdrawPrivacyRequestResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// WithdrawPrivacyRequestResponse403Headers the declared response headers of an HTTP 403 response for WithdrawPrivacyRequest
+type WithdrawPrivacyRequestResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// WithdrawPrivacyRequestResponse404Headers the declared response headers of an HTTP 404 response for WithdrawPrivacyRequest
+type WithdrawPrivacyRequestResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// WithdrawPrivacyRequestResponse409Headers the declared response headers of an HTTP 409 response for WithdrawPrivacyRequest
+type WithdrawPrivacyRequestResponse409Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+// WithdrawPrivacyRequestResponse429Headers the declared response headers of an HTTP 429 response for WithdrawPrivacyRequest
+type WithdrawPrivacyRequestResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// WithdrawPrivacyRequestResponse500Headers the declared response headers of an HTTP 500 response for WithdrawPrivacyRequest
+type WithdrawPrivacyRequestResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// WithdrawPrivacyRequestResponse503Headers the declared response headers of an HTTP 503 response for WithdrawPrivacyRequest
+type WithdrawPrivacyRequestResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type WithdrawPrivacyRequestResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *PrivacyRequestStatus
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationProblemJSON409 *Conflict
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *WithdrawPrivacyRequestResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *WithdrawPrivacyRequestResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *WithdrawPrivacyRequestResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *WithdrawPrivacyRequestResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *WithdrawPrivacyRequestResponse404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *WithdrawPrivacyRequestResponse409Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *WithdrawPrivacyRequestResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *WithdrawPrivacyRequestResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *WithdrawPrivacyRequestResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r WithdrawPrivacyRequestResponse) GetJSON200() *PrivacyRequestStatus {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r WithdrawPrivacyRequestResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r WithdrawPrivacyRequestResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r WithdrawPrivacyRequestResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r WithdrawPrivacyRequestResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r WithdrawPrivacyRequestResponse) GetApplicationProblemJSON409() *Conflict {
+	return r.ApplicationProblemJSON409
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r WithdrawPrivacyRequestResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r WithdrawPrivacyRequestResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r WithdrawPrivacyRequestResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r WithdrawPrivacyRequestResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r WithdrawPrivacyRequestResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r WithdrawPrivacyRequestResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r WithdrawPrivacyRequestResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ListPrivacyRestrictionsResponse200Headers the declared response headers of an HTTP 200 response for ListPrivacyRestrictions
+type ListPrivacyRestrictionsResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// ListPrivacyRestrictionsResponse400Headers the declared response headers of an HTTP 400 response for ListPrivacyRestrictions
+type ListPrivacyRestrictionsResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// ListPrivacyRestrictionsResponse401Headers the declared response headers of an HTTP 401 response for ListPrivacyRestrictions
+type ListPrivacyRestrictionsResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// ListPrivacyRestrictionsResponse403Headers the declared response headers of an HTTP 403 response for ListPrivacyRestrictions
+type ListPrivacyRestrictionsResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// ListPrivacyRestrictionsResponse429Headers the declared response headers of an HTTP 429 response for ListPrivacyRestrictions
+type ListPrivacyRestrictionsResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// ListPrivacyRestrictionsResponse500Headers the declared response headers of an HTTP 500 response for ListPrivacyRestrictions
+type ListPrivacyRestrictionsResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// ListPrivacyRestrictionsResponse503Headers the declared response headers of an HTTP 503 response for ListPrivacyRestrictions
+type ListPrivacyRestrictionsResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type ListPrivacyRestrictionsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *PrivacyRestrictionList
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ListPrivacyRestrictionsResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ListPrivacyRestrictionsResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ListPrivacyRestrictionsResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListPrivacyRestrictionsResponse403Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *ListPrivacyRestrictionsResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListPrivacyRestrictionsResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ListPrivacyRestrictionsResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListPrivacyRestrictionsResponse) GetJSON200() *PrivacyRestrictionList {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ListPrivacyRestrictionsResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListPrivacyRestrictionsResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListPrivacyRestrictionsResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r ListPrivacyRestrictionsResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListPrivacyRestrictionsResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ListPrivacyRestrictionsResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListPrivacyRestrictionsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListPrivacyRestrictionsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListPrivacyRestrictionsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListPrivacyRestrictionsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// LiftPrivacyRestrictionResponse200Headers the declared response headers of an HTTP 200 response for LiftPrivacyRestriction
+type LiftPrivacyRestrictionResponse200Headers struct {
+	ETag       *string
+	XRequestID RequestID
+}
+
+// LiftPrivacyRestrictionResponse400Headers the declared response headers of an HTTP 400 response for LiftPrivacyRestriction
+type LiftPrivacyRestrictionResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// LiftPrivacyRestrictionResponse401Headers the declared response headers of an HTTP 401 response for LiftPrivacyRestriction
+type LiftPrivacyRestrictionResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// LiftPrivacyRestrictionResponse403Headers the declared response headers of an HTTP 403 response for LiftPrivacyRestriction
+type LiftPrivacyRestrictionResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// LiftPrivacyRestrictionResponse404Headers the declared response headers of an HTTP 404 response for LiftPrivacyRestriction
+type LiftPrivacyRestrictionResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// LiftPrivacyRestrictionResponse409Headers the declared response headers of an HTTP 409 response for LiftPrivacyRestriction
+type LiftPrivacyRestrictionResponse409Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+// LiftPrivacyRestrictionResponse429Headers the declared response headers of an HTTP 429 response for LiftPrivacyRestriction
+type LiftPrivacyRestrictionResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// LiftPrivacyRestrictionResponse500Headers the declared response headers of an HTTP 500 response for LiftPrivacyRestriction
+type LiftPrivacyRestrictionResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// LiftPrivacyRestrictionResponse503Headers the declared response headers of an HTTP 503 response for LiftPrivacyRestriction
+type LiftPrivacyRestrictionResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type LiftPrivacyRestrictionResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *PrivacyRestriction
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationProblemJSON409 *Conflict
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *LiftPrivacyRestrictionResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *LiftPrivacyRestrictionResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *LiftPrivacyRestrictionResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *LiftPrivacyRestrictionResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *LiftPrivacyRestrictionResponse404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *LiftPrivacyRestrictionResponse409Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *LiftPrivacyRestrictionResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *LiftPrivacyRestrictionResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *LiftPrivacyRestrictionResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r LiftPrivacyRestrictionResponse) GetJSON200() *PrivacyRestriction {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r LiftPrivacyRestrictionResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r LiftPrivacyRestrictionResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r LiftPrivacyRestrictionResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r LiftPrivacyRestrictionResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r LiftPrivacyRestrictionResponse) GetApplicationProblemJSON409() *Conflict {
+	return r.ApplicationProblemJSON409
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r LiftPrivacyRestrictionResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r LiftPrivacyRestrictionResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r LiftPrivacyRestrictionResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r LiftPrivacyRestrictionResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r LiftPrivacyRestrictionResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r LiftPrivacyRestrictionResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r LiftPrivacyRestrictionResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -46682,6 +56989,27 @@ func (c *ClientWithResponses) CreateCaptureConnectionWithResponse(ctx context.Co
 	return ParseCreateCaptureConnectionResponse(rsp)
 }
 
+// ResolveCaptureExperienceWithResponse Resolve the session's pinned capture experience
+//
+// Returns the immutable signed experience document pinned to the
+// authenticated capture session, the Core-owned mandatory copy, and the
+// exact pinned experience, locale, tenant-copy, and mandatory-copy
+// versions. The first call resolves and pins; later calls preserve the
+// pin across resume. If the pinned experience is revoked or resolution
+// fails, the signed accessible safe default is returned instead. Raw
+// evidence, subject data, and credentials are never returned.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/capture/experience (the `ResolveCaptureExperience` operationId).
+func (c *ClientWithResponses) ResolveCaptureExperienceWithResponse(ctx context.Context, params *ResolveCaptureExperienceParams, reqEditors ...RequestEditorFn) (*ResolveCaptureExperienceResponse, error) {
+	rsp, err := c.ResolveCaptureExperience(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseResolveCaptureExperienceResponse(rsp)
+}
+
 // BootstrapNativeCaptureWithBodyWithResponse Bind a native application proof key and recover the capture session
 //
 // Redeems the tenant-backend-issued capture token once, verifies an ES256
@@ -46740,6 +57068,51 @@ func (c *ClientWithResponses) GetCaptureOutcomeWithResponse(ctx context.Context,
 		return nil, err
 	}
 	return ParseGetCaptureOutcomeResponse(rsp)
+}
+
+// ListSubjectPrivacyRequestsWithResponse List subject-safe privacy request status
+//
+// Authenticated only by the D-027 outcome credential. Returns the closed subject-safe projection for requests created through this verification - request type, subject-safe status, and timestamps. Reasons, identifiers, tenant state, and effect references are intentionally absent. The credential cannot approve, deny, withdraw, or execute.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/capture/privacy-requests (the `ListSubjectPrivacyRequests` operationId).
+func (c *ClientWithResponses) ListSubjectPrivacyRequestsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListSubjectPrivacyRequestsResponse, error) {
+	rsp, err := c.ListSubjectPrivacyRequests(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListSubjectPrivacyRequestsResponse(rsp)
+}
+
+// CreateSubjectPrivacyRequestWithBodyWithResponse Create one subject privacy request
+//
+// Authenticated only by the D-027 outcome credential. Creates one subject-channel request scoped to the credential's verification. The tenant remains the controller and no effect executes without tenant approval. The credential cannot approve, deny, withdraw, or execute.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/capture/privacy-requests (the `CreateSubjectPrivacyRequest` operationId).
+func (c *ClientWithResponses) CreateSubjectPrivacyRequestWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateSubjectPrivacyRequestResponse, error) {
+	rsp, err := c.CreateSubjectPrivacyRequestWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateSubjectPrivacyRequestResponse(rsp)
+}
+
+// CreateSubjectPrivacyRequestWithResponse Create one subject privacy request
+//
+// Authenticated only by the D-027 outcome credential. Creates one subject-channel request scoped to the credential's verification. The tenant remains the controller and no effect executes without tenant approval. The credential cannot approve, deny, withdraw, or execute.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/capture/privacy-requests (the `CreateSubjectPrivacyRequest` operationId).
+func (c *ClientWithResponses) CreateSubjectPrivacyRequestWithResponse(ctx context.Context, body CreateSubjectPrivacyRequestJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateSubjectPrivacyRequestResponse, error) {
+	rsp, err := c.CreateSubjectPrivacyRequest(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateSubjectPrivacyRequestResponse(rsp)
 }
 
 // GetCaptureProgressWithResponse Recover accepted capture-step completion
@@ -46853,6 +57226,26 @@ func (c *ClientWithResponses) GetDeletionStatusWithResponse(ctx context.Context,
 	return ParseGetDeletionStatusResponse(rsp)
 }
 
+// GetDocumentSupportWithResponse Get the honest document support-level projection
+//
+// Get the active pack's support-level projection for one country and
+// document type. Requires packs:read. The projection reports the declared
+// support level, required evidence sides, supported canonical fields,
+// declarations, evaluation coverage, limitations, and legal-review state.
+// It contains no legal conclusion, provider approval, or security-feature
+// finding; an unreviewed legal state is returned honestly.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/document-support (the `GetDocumentSupport` operationId).
+func (c *ClientWithResponses) GetDocumentSupportWithResponse(ctx context.Context, params *GetDocumentSupportParams, reqEditors ...RequestEditorFn) (*GetDocumentSupportResponse, error) {
+	rsp, err := c.GetDocumentSupport(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetDocumentSupportResponse(rsp)
+}
+
 // CreateEvidenceUploadWithBodyWithResponse Issue a requirement-bound evidence-upload intent
 //
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
@@ -46912,6 +57305,311 @@ func (c *ClientWithResponses) UploadEvidenceWithBodyWithResponse(ctx context.Con
 		return nil, err
 	}
 	return ParseUploadEvidenceResponse(rsp)
+}
+
+// GetExperienceDefaultWithResponse Get the signed accessible safe default
+//
+// Returns the Core-shipped, signed, accessible safe default experience and
+// its Core-owned mandatory copy. Requires experiences:read. The safe
+// default is never tenant-owned, never editable, and is the only fallback
+// when a pinned experience is revoked or resolution fails.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/experience-default (the `GetExperienceDefault` operationId).
+func (c *ClientWithResponses) GetExperienceDefaultWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetExperienceDefaultResponse, error) {
+	rsp, err := c.GetExperienceDefault(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetExperienceDefaultResponse(rsp)
+}
+
+// ListExperiencesWithResponse List tenant capture experiences
+//
+// Requires experiences:read. Returns a bounded ascending page of tenant-owned portable capture experiences with their lifecycle state and latest immutable revision.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/experiences (the `ListExperiences` operationId).
+func (c *ClientWithResponses) ListExperiencesWithResponse(ctx context.Context, params *ListExperiencesParams, reqEditors ...RequestEditorFn) (*ListExperiencesResponse, error) {
+	rsp, err := c.ListExperiences(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListExperiencesResponse(rsp)
+}
+
+// CreateExperienceWithBodyWithResponse Create one experience draft
+//
+// Requires experiences:write. Creates one tenant-owned draft with a
+// stable exp_ identifier and immutable revision 1. The stored revision is
+// signed by Core over its canonical bytes. Repeating the same draft
+// command with the same Idempotency-Key returns the original result.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/experiences (the `CreateExperience` operationId).
+func (c *ClientWithResponses) CreateExperienceWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateExperienceResponse, error) {
+	rsp, err := c.CreateExperienceWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateExperienceResponse(rsp)
+}
+
+// CreateExperienceWithResponse Create one experience draft
+//
+// Requires experiences:write. Creates one tenant-owned draft with a
+// stable exp_ identifier and immutable revision 1. The stored revision is
+// signed by Core over its canonical bytes. Repeating the same draft
+// command with the same Idempotency-Key returns the original result.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/experiences (the `CreateExperience` operationId).
+func (c *ClientWithResponses) CreateExperienceWithResponse(ctx context.Context, body CreateExperienceJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateExperienceResponse, error) {
+	rsp, err := c.CreateExperience(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateExperienceResponse(rsp)
+}
+
+// ImportExperienceWithBodyWithResponse Import a signed experience manifest as a draft
+//
+// Requires experiences:write. Validates the closed manifest, recomputes
+// the canonical digest, verifies the Ed25519 signature against a trusted
+// Core key, checks mandatory-copy and asset references, and creates or
+// advances a draft revision. Console and Cloud are not required.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/experiences/import (the `ImportExperience` operationId).
+func (c *ClientWithResponses) ImportExperienceWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ImportExperienceResponse, error) {
+	rsp, err := c.ImportExperienceWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseImportExperienceResponse(rsp)
+}
+
+// ImportExperienceWithResponse Import a signed experience manifest as a draft
+//
+// Requires experiences:write. Validates the closed manifest, recomputes
+// the canonical digest, verifies the Ed25519 signature against a trusted
+// Core key, checks mandatory-copy and asset references, and creates or
+// advances a draft revision. Console and Cloud are not required.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/experiences/import (the `ImportExperience` operationId).
+func (c *ClientWithResponses) ImportExperienceWithResponse(ctx context.Context, body ImportExperienceJSONRequestBody, reqEditors ...RequestEditorFn) (*ImportExperienceResponse, error) {
+	rsp, err := c.ImportExperience(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseImportExperienceResponse(rsp)
+}
+
+// GetExperienceWithResponse Get one experience
+//
+// Requires experiences:read. Returns the aggregate state, optimistic revision, and latest immutable signed revision document.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/experiences/{experienceID} (the `GetExperience` operationId).
+func (c *ClientWithResponses) GetExperienceWithResponse(ctx context.Context, experienceID ExperienceID, reqEditors ...RequestEditorFn) (*GetExperienceResponse, error) {
+	rsp, err := c.GetExperience(ctx, experienceID, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetExperienceResponse(rsp)
+}
+
+// UpdateExperienceDraftWithBodyWithResponse Save a new experience draft revision
+//
+// Requires experiences:write. Saves one new immutable revision and resets
+// approval, because approval binds to one exact version. The
+// expected_version must equal the current aggregate revision or the
+// command fails with a conflict. A revoked experience refuses edits and
+// requires an explicit rollback first.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PUT /v1/experiences/{experienceID} (the `UpdateExperienceDraft` operationId).
+func (c *ClientWithResponses) UpdateExperienceDraftWithBodyWithResponse(ctx context.Context, experienceID ExperienceID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdateExperienceDraftResponse, error) {
+	rsp, err := c.UpdateExperienceDraftWithBody(ctx, experienceID, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateExperienceDraftResponse(rsp)
+}
+
+// UpdateExperienceDraftWithResponse Save a new experience draft revision
+//
+// Requires experiences:write. Saves one new immutable revision and resets
+// approval, because approval binds to one exact version. The
+// expected_version must equal the current aggregate revision or the
+// command fails with a conflict. A revoked experience refuses edits and
+// requires an explicit rollback first.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PUT /v1/experiences/{experienceID} (the `UpdateExperienceDraft` operationId).
+func (c *ClientWithResponses) UpdateExperienceDraftWithResponse(ctx context.Context, experienceID ExperienceID, body UpdateExperienceDraftJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateExperienceDraftResponse, error) {
+	rsp, err := c.UpdateExperienceDraft(ctx, experienceID, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdateExperienceDraftResponse(rsp)
+}
+
+// ApproveExperienceWithBodyWithResponse Approve the latest experience revision
+//
+// Requires experiences:publish. Records the explicit approval publication requires. Repeating the approval of the same version is idempotent and does not append history.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/experiences/{experienceID}/approve (the `ApproveExperience` operationId).
+func (c *ClientWithResponses) ApproveExperienceWithBodyWithResponse(ctx context.Context, experienceID ExperienceID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ApproveExperienceResponse, error) {
+	rsp, err := c.ApproveExperienceWithBody(ctx, experienceID, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseApproveExperienceResponse(rsp)
+}
+
+// ApproveExperienceWithResponse Approve the latest experience revision
+//
+// Requires experiences:publish. Records the explicit approval publication requires. Repeating the approval of the same version is idempotent and does not append history.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/experiences/{experienceID}/approve (the `ApproveExperience` operationId).
+func (c *ClientWithResponses) ApproveExperienceWithResponse(ctx context.Context, experienceID ExperienceID, body ApproveExperienceJSONRequestBody, reqEditors ...RequestEditorFn) (*ApproveExperienceResponse, error) {
+	rsp, err := c.ApproveExperience(ctx, experienceID, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseApproveExperienceResponse(rsp)
+}
+
+// ExportExperienceWithResponse Export one signed experience manifest
+//
+// Requires experiences:read. Returns the signed canonical manifest of the live published revision, or the latest revision when nothing is published, so another Core installation can import it without Console or Cloud.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/experiences/{experienceID}/export (the `ExportExperience` operationId).
+func (c *ClientWithResponses) ExportExperienceWithResponse(ctx context.Context, experienceID ExperienceID, reqEditors ...RequestEditorFn) (*ExportExperienceResponse, error) {
+	rsp, err := c.ExportExperience(ctx, experienceID, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseExportExperienceResponse(rsp)
+}
+
+// PublishExperienceWithBodyWithResponse Publish the approved experience revision
+//
+// Requires experiences:publish. Publication requires a prior explicit
+// approval of the exact latest version, verifies every asset digest, and
+// supersedes the previous live revision without deleting it. Repeating
+// publication of the live version is idempotent.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/experiences/{experienceID}/publish (the `PublishExperience` operationId).
+func (c *ClientWithResponses) PublishExperienceWithBodyWithResponse(ctx context.Context, experienceID ExperienceID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PublishExperienceResponse, error) {
+	rsp, err := c.PublishExperienceWithBody(ctx, experienceID, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePublishExperienceResponse(rsp)
+}
+
+// PublishExperienceWithResponse Publish the approved experience revision
+//
+// Requires experiences:publish. Publication requires a prior explicit
+// approval of the exact latest version, verifies every asset digest, and
+// supersedes the previous live revision without deleting it. Repeating
+// publication of the live version is idempotent.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/experiences/{experienceID}/publish (the `PublishExperience` operationId).
+func (c *ClientWithResponses) PublishExperienceWithResponse(ctx context.Context, experienceID ExperienceID, body PublishExperienceJSONRequestBody, reqEditors ...RequestEditorFn) (*PublishExperienceResponse, error) {
+	rsp, err := c.PublishExperience(ctx, experienceID, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePublishExperienceResponse(rsp)
+}
+
+// RevokeExperienceWithBodyWithResponse Revoke the live experience (kill switch)
+//
+// Requires experiences:publish. Clears the live revision so capture
+// sessions fall back to the signed accessible safe default. Revocation is
+// idempotent, preserves immutable history, and refuses new edits until an
+// explicit rollback republishes a prior approved revision.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/experiences/{experienceID}/revoke (the `RevokeExperience` operationId).
+func (c *ClientWithResponses) RevokeExperienceWithBodyWithResponse(ctx context.Context, experienceID ExperienceID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RevokeExperienceResponse, error) {
+	rsp, err := c.RevokeExperienceWithBody(ctx, experienceID, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRevokeExperienceResponse(rsp)
+}
+
+// RevokeExperienceWithResponse Revoke the live experience (kill switch)
+//
+// Requires experiences:publish. Clears the live revision so capture
+// sessions fall back to the signed accessible safe default. Revocation is
+// idempotent, preserves immutable history, and refuses new edits until an
+// explicit rollback republishes a prior approved revision.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/experiences/{experienceID}/revoke (the `RevokeExperience` operationId).
+func (c *ClientWithResponses) RevokeExperienceWithResponse(ctx context.Context, experienceID ExperienceID, body RevokeExperienceJSONRequestBody, reqEditors ...RequestEditorFn) (*RevokeExperienceResponse, error) {
+	rsp, err := c.RevokeExperience(ctx, experienceID, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRevokeExperienceResponse(rsp)
+}
+
+// RollbackExperienceWithBodyWithResponse Roll back to a prior immutable revision
+//
+// Requires experiences:publish. Republishes one previously approved immutable revision without editing it. The rollback target must have been approved; the replaced live revision is marked superseded. Repeating the same rollback is idempotent.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/experiences/{experienceID}/rollback (the `RollbackExperience` operationId).
+func (c *ClientWithResponses) RollbackExperienceWithBodyWithResponse(ctx context.Context, experienceID ExperienceID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RollbackExperienceResponse, error) {
+	rsp, err := c.RollbackExperienceWithBody(ctx, experienceID, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRollbackExperienceResponse(rsp)
+}
+
+// RollbackExperienceWithResponse Roll back to a prior immutable revision
+//
+// Requires experiences:publish. Republishes one previously approved immutable revision without editing it. The rollback target must have been approved; the replaced live revision is marked superseded. Repeating the same rollback is idempotent.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/experiences/{experienceID}/rollback (the `RollbackExperience` operationId).
+func (c *ClientWithResponses) RollbackExperienceWithResponse(ctx context.Context, experienceID ExperienceID, body RollbackExperienceJSONRequestBody, reqEditors ...RequestEditorFn) (*RollbackExperienceResponse, error) {
+	rsp, err := c.RollbackExperience(ctx, experienceID, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRollbackExperienceResponse(rsp)
 }
 
 // GetFraudConfigurationWithResponse Read active fraud rules
@@ -47500,6 +58198,51 @@ func (c *ClientWithResponses) GetNoticeVersionWithResponse(ctx context.Context, 
 	return ParseGetNoticeVersionResponse(rsp)
 }
 
+// ListPacksWithResponse List registered country pack revisions
+//
+// List every registered immutable country pack revision with its current lifecycle state. Requires packs:read. Pack content is embedded and reviewed at build time; this route never activates, deprecates, or retires a pack.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/packs (the `ListPacks` operationId).
+func (c *ClientWithResponses) ListPacksWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListPacksResponse, error) {
+	rsp, err := c.ListPacks(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListPacksResponse(rsp)
+}
+
+// GetActiveCountryPackWithResponse Get the active pack for a country
+//
+// Get the active immutable pack revision for an ISO 3166-1 alpha-2 or alpha-3 country code. Requires packs:read. The projection never asserts legal, provider, or security-feature approval.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/packs/{country} (the `GetActiveCountryPack` operationId).
+func (c *ClientWithResponses) GetActiveCountryPackWithResponse(ctx context.Context, country string, reqEditors ...RequestEditorFn) (*GetActiveCountryPackResponse, error) {
+	rsp, err := c.GetActiveCountryPack(ctx, country, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetActiveCountryPackResponse(rsp)
+}
+
+// GetCountryPackRevisionWithResponse Get an exact pack revision
+//
+// Get one exact immutable pack revision. Requires packs:read. Deprecated and retired revisions remain readable so an old decision or policy reference stays inspectable.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/packs/{country}/revisions/{revision} (the `GetCountryPackRevision` operationId).
+func (c *ClientWithResponses) GetCountryPackRevisionWithResponse(ctx context.Context, country string, revision int, reqEditors ...RequestEditorFn) (*GetCountryPackRevisionResponse, error) {
+	rsp, err := c.GetCountryPackRevision(ctx, country, revision, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetCountryPackRevisionResponse(rsp)
+}
+
 // ListPoliciesWithResponse List policies
 //
 // Requires policies:read. Bounded newest-first metadata page with a signed tenant-, policy-, collection- and limit-bound cursor.
@@ -47843,6 +58586,366 @@ func (c *ClientWithResponses) SimulatePolicyWithResponse(ctx context.Context, bo
 		return nil, err
 	}
 	return ParseSimulatePolicyResponse(rsp)
+}
+
+// ListPrivacyDisclosuresWithResponse List tenant transfer and disclosure records
+//
+// Requires privacy_requests:read. Returns immutable reference-only disclosure records filtered by exact request or by the whole tenant.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/privacy-disclosures (the `ListPrivacyDisclosures` operationId).
+func (c *ClientWithResponses) ListPrivacyDisclosuresWithResponse(ctx context.Context, params *ListPrivacyDisclosuresParams, reqEditors ...RequestEditorFn) (*ListPrivacyDisclosuresResponse, error) {
+	rsp, err := c.ListPrivacyDisclosures(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListPrivacyDisclosuresResponse(rsp)
+}
+
+// CreatePrivacyDisclosureWithBodyWithResponse Record one transfer or disclosure
+//
+// Requires privacy_requests:write. Records an immutable reference-only disclosure. The reference is a bounded digest; document contents and recipient secrets are never accepted.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/privacy-disclosures (the `CreatePrivacyDisclosure` operationId).
+func (c *ClientWithResponses) CreatePrivacyDisclosureWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreatePrivacyDisclosureResponse, error) {
+	rsp, err := c.CreatePrivacyDisclosureWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreatePrivacyDisclosureResponse(rsp)
+}
+
+// CreatePrivacyDisclosureWithResponse Record one transfer or disclosure
+//
+// Requires privacy_requests:write. Records an immutable reference-only disclosure. The reference is a bounded digest; document contents and recipient secrets are never accepted.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/privacy-disclosures (the `CreatePrivacyDisclosure` operationId).
+func (c *ClientWithResponses) CreatePrivacyDisclosureWithResponse(ctx context.Context, body CreatePrivacyDisclosureJSONRequestBody, reqEditors ...RequestEditorFn) (*CreatePrivacyDisclosureResponse, error) {
+	rsp, err := c.CreatePrivacyDisclosure(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreatePrivacyDisclosureResponse(rsp)
+}
+
+// ListPrivacyProcessorsWithResponse List tenant processor inventory
+//
+// Requires privacy_requests:read. Returns a bounded ascending page of versioned processors, subprocessors, and recipients with bounded data classes, regions, and transfer mechanisms.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/privacy-processors (the `ListPrivacyProcessors` operationId).
+func (c *ClientWithResponses) ListPrivacyProcessorsWithResponse(ctx context.Context, params *ListPrivacyProcessorsParams, reqEditors ...RequestEditorFn) (*ListPrivacyProcessorsResponse, error) {
+	rsp, err := c.ListPrivacyProcessors(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListPrivacyProcessorsResponse(rsp)
+}
+
+// CreatePrivacyProcessorWithBodyWithResponse Create one processor inventory entry
+//
+// Requires privacy_requests:write. Creates version one of a processor inventory entry and its append-only revision.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/privacy-processors (the `CreatePrivacyProcessor` operationId).
+func (c *ClientWithResponses) CreatePrivacyProcessorWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreatePrivacyProcessorResponse, error) {
+	rsp, err := c.CreatePrivacyProcessorWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreatePrivacyProcessorResponse(rsp)
+}
+
+// CreatePrivacyProcessorWithResponse Create one processor inventory entry
+//
+// Requires privacy_requests:write. Creates version one of a processor inventory entry and its append-only revision.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/privacy-processors (the `CreatePrivacyProcessor` operationId).
+func (c *ClientWithResponses) CreatePrivacyProcessorWithResponse(ctx context.Context, body CreatePrivacyProcessorJSONRequestBody, reqEditors ...RequestEditorFn) (*CreatePrivacyProcessorResponse, error) {
+	rsp, err := c.CreatePrivacyProcessor(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreatePrivacyProcessorResponse(rsp)
+}
+
+// GetPrivacyProcessorWithResponse Get one processor inventory entry
+//
+// Requires privacy_requests:read. Returns the current version of one processor inventory entry.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/privacy-processors/{processorID} (the `GetPrivacyProcessor` operationId).
+func (c *ClientWithResponses) GetPrivacyProcessorWithResponse(ctx context.Context, processorID PrivacyProcessorID, reqEditors ...RequestEditorFn) (*GetPrivacyProcessorResponse, error) {
+	rsp, err := c.GetPrivacyProcessor(ctx, processorID, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetPrivacyProcessorResponse(rsp)
+}
+
+// UpdatePrivacyProcessorWithBodyWithResponse Update one processor inventory entry
+//
+// Requires privacy_requests:write. Applies one expected-version update and appends an immutable revision. A stale expected version is rejected.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PUT /v1/privacy-processors/{processorID} (the `UpdatePrivacyProcessor` operationId).
+func (c *ClientWithResponses) UpdatePrivacyProcessorWithBodyWithResponse(ctx context.Context, processorID PrivacyProcessorID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UpdatePrivacyProcessorResponse, error) {
+	rsp, err := c.UpdatePrivacyProcessorWithBody(ctx, processorID, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdatePrivacyProcessorResponse(rsp)
+}
+
+// UpdatePrivacyProcessorWithResponse Update one processor inventory entry
+//
+// Requires privacy_requests:write. Applies one expected-version update and appends an immutable revision. A stale expected version is rejected.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PUT /v1/privacy-processors/{processorID} (the `UpdatePrivacyProcessor` operationId).
+func (c *ClientWithResponses) UpdatePrivacyProcessorWithResponse(ctx context.Context, processorID PrivacyProcessorID, body UpdatePrivacyProcessorJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdatePrivacyProcessorResponse, error) {
+	rsp, err := c.UpdatePrivacyProcessor(ctx, processorID, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUpdatePrivacyProcessorResponse(rsp)
+}
+
+// ListPrivacyRequestsWithResponse List tenant privacy requests
+//
+// Requires privacy_requests:read. Returns a bounded ascending page of data-subject privacy requests with their state, version, and bounded effect references. Reasons, actor identifiers, and internal events are never returned.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/privacy-requests (the `ListPrivacyRequests` operationId).
+func (c *ClientWithResponses) ListPrivacyRequestsWithResponse(ctx context.Context, params *ListPrivacyRequestsParams, reqEditors ...RequestEditorFn) (*ListPrivacyRequestsResponse, error) {
+	rsp, err := c.ListPrivacyRequests(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListPrivacyRequestsResponse(rsp)
+}
+
+// CreatePrivacyRequestWithBodyWithResponse Create one tenant privacy request
+//
+// Requires privacy_requests:write. Creates one tenant-channel data-subject request. The tenant is the controller and no effect executes before an explicit approval. Subject-scoped effects require a subject; corrrection instructions carry exactly one record or decision target.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/privacy-requests (the `CreatePrivacyRequest` operationId).
+func (c *ClientWithResponses) CreatePrivacyRequestWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreatePrivacyRequestResponse, error) {
+	rsp, err := c.CreatePrivacyRequestWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreatePrivacyRequestResponse(rsp)
+}
+
+// CreatePrivacyRequestWithResponse Create one tenant privacy request
+//
+// Requires privacy_requests:write. Creates one tenant-channel data-subject request. The tenant is the controller and no effect executes before an explicit approval. Subject-scoped effects require a subject; corrrection instructions carry exactly one record or decision target.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/privacy-requests (the `CreatePrivacyRequest` operationId).
+func (c *ClientWithResponses) CreatePrivacyRequestWithResponse(ctx context.Context, body CreatePrivacyRequestJSONRequestBody, reqEditors ...RequestEditorFn) (*CreatePrivacyRequestResponse, error) {
+	rsp, err := c.CreatePrivacyRequest(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreatePrivacyRequestResponse(rsp)
+}
+
+// GetPrivacyRequestWithResponse Get one privacy request
+//
+// Requires privacy_requests:read. Returns the request state, immutable decision statements, and bounded effect references. It never returns subject credentials, raw evidence, or object locations.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/privacy-requests/{requestID} (the `GetPrivacyRequest` operationId).
+func (c *ClientWithResponses) GetPrivacyRequestWithResponse(ctx context.Context, requestID PrivacyRequestID, reqEditors ...RequestEditorFn) (*GetPrivacyRequestResponse, error) {
+	rsp, err := c.GetPrivacyRequest(ctx, requestID, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetPrivacyRequestResponse(rsp)
+}
+
+// ApprovePrivacyRequestWithBodyWithResponse Approve or partially approve a privacy request
+//
+// Requires privacy_requests:approve. Records one immutable decision with a bounded reason code. Replay with the same outcome and reason is idempotent; a conflicting replay is rejected.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/privacy-requests/{requestID}/approve (the `ApprovePrivacyRequest` operationId).
+func (c *ClientWithResponses) ApprovePrivacyRequestWithBodyWithResponse(ctx context.Context, requestID PrivacyRequestID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ApprovePrivacyRequestResponse, error) {
+	rsp, err := c.ApprovePrivacyRequestWithBody(ctx, requestID, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseApprovePrivacyRequestResponse(rsp)
+}
+
+// ApprovePrivacyRequestWithResponse Approve or partially approve a privacy request
+//
+// Requires privacy_requests:approve. Records one immutable decision with a bounded reason code. Replay with the same outcome and reason is idempotent; a conflicting replay is rejected.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/privacy-requests/{requestID}/approve (the `ApprovePrivacyRequest` operationId).
+func (c *ClientWithResponses) ApprovePrivacyRequestWithResponse(ctx context.Context, requestID PrivacyRequestID, body ApprovePrivacyRequestJSONRequestBody, reqEditors ...RequestEditorFn) (*ApprovePrivacyRequestResponse, error) {
+	rsp, err := c.ApprovePrivacyRequest(ctx, requestID, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseApprovePrivacyRequestResponse(rsp)
+}
+
+// DenyPrivacyRequestWithBodyWithResponse Deny a privacy request
+//
+// Requires privacy_requests:approve. Records one immutable denial with a bounded reason code. Denial is terminal and immutable; replay with the same reason is idempotent.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/privacy-requests/{requestID}/deny (the `DenyPrivacyRequest` operationId).
+func (c *ClientWithResponses) DenyPrivacyRequestWithBodyWithResponse(ctx context.Context, requestID PrivacyRequestID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*DenyPrivacyRequestResponse, error) {
+	rsp, err := c.DenyPrivacyRequestWithBody(ctx, requestID, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDenyPrivacyRequestResponse(rsp)
+}
+
+// DenyPrivacyRequestWithResponse Deny a privacy request
+//
+// Requires privacy_requests:approve. Records one immutable denial with a bounded reason code. Denial is terminal and immutable; replay with the same reason is idempotent.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/privacy-requests/{requestID}/deny (the `DenyPrivacyRequest` operationId).
+func (c *ClientWithResponses) DenyPrivacyRequestWithResponse(ctx context.Context, requestID PrivacyRequestID, body DenyPrivacyRequestJSONRequestBody, reqEditors ...RequestEditorFn) (*DenyPrivacyRequestResponse, error) {
+	rsp, err := c.DenyPrivacyRequest(ctx, requestID, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDenyPrivacyRequestResponse(rsp)
+}
+
+// ExecutePrivacyRequestWithBodyWithResponse Execute an approved privacy request
+//
+// Requires privacy_requests:approve. Dispatches the approved effect through the existing deletion, subject-export, identity-correction, or review-correction mechanism. Completed requests are returned unchanged, so replay adds nothing.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/privacy-requests/{requestID}/execute (the `ExecutePrivacyRequest` operationId).
+func (c *ClientWithResponses) ExecutePrivacyRequestWithBodyWithResponse(ctx context.Context, requestID PrivacyRequestID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ExecutePrivacyRequestResponse, error) {
+	rsp, err := c.ExecutePrivacyRequestWithBody(ctx, requestID, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseExecutePrivacyRequestResponse(rsp)
+}
+
+// ExecutePrivacyRequestWithResponse Execute an approved privacy request
+//
+// Requires privacy_requests:approve. Dispatches the approved effect through the existing deletion, subject-export, identity-correction, or review-correction mechanism. Completed requests are returned unchanged, so replay adds nothing.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/privacy-requests/{requestID}/execute (the `ExecutePrivacyRequest` operationId).
+func (c *ClientWithResponses) ExecutePrivacyRequestWithResponse(ctx context.Context, requestID PrivacyRequestID, body ExecutePrivacyRequestJSONRequestBody, reqEditors ...RequestEditorFn) (*ExecutePrivacyRequestResponse, error) {
+	rsp, err := c.ExecutePrivacyRequest(ctx, requestID, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseExecutePrivacyRequestResponse(rsp)
+}
+
+// WithdrawPrivacyRequestWithBodyWithResponse Withdraw an undecided privacy request
+//
+// Requires privacy_requests:write. Ends a requested or in-review request without a decision. Withdrawal is terminal and immutable; a decided request can no longer be withdrawn.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/privacy-requests/{requestID}/withdraw (the `WithdrawPrivacyRequest` operationId).
+func (c *ClientWithResponses) WithdrawPrivacyRequestWithBodyWithResponse(ctx context.Context, requestID PrivacyRequestID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*WithdrawPrivacyRequestResponse, error) {
+	rsp, err := c.WithdrawPrivacyRequestWithBody(ctx, requestID, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseWithdrawPrivacyRequestResponse(rsp)
+}
+
+// WithdrawPrivacyRequestWithResponse Withdraw an undecided privacy request
+//
+// Requires privacy_requests:write. Ends a requested or in-review request without a decision. Withdrawal is terminal and immutable; a decided request can no longer be withdrawn.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/privacy-requests/{requestID}/withdraw (the `WithdrawPrivacyRequest` operationId).
+func (c *ClientWithResponses) WithdrawPrivacyRequestWithResponse(ctx context.Context, requestID PrivacyRequestID, body WithdrawPrivacyRequestJSONRequestBody, reqEditors ...RequestEditorFn) (*WithdrawPrivacyRequestResponse, error) {
+	rsp, err := c.WithdrawPrivacyRequest(ctx, requestID, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseWithdrawPrivacyRequestResponse(rsp)
+}
+
+// ListPrivacyRestrictionsWithResponse List tenant processing restrictions
+//
+// Requires privacy_requests:read. Returns a bounded ascending page of subject-blocking and purpose-scoped records. Purpose-scoped objection records are consulted as policy input for new processing only.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/privacy-restrictions (the `ListPrivacyRestrictions` operationId).
+func (c *ClientWithResponses) ListPrivacyRestrictionsWithResponse(ctx context.Context, params *ListPrivacyRestrictionsParams, reqEditors ...RequestEditorFn) (*ListPrivacyRestrictionsResponse, error) {
+	rsp, err := c.ListPrivacyRestrictions(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListPrivacyRestrictionsResponse(rsp)
+}
+
+// LiftPrivacyRestrictionWithBodyWithResponse Lift one processing restriction
+//
+// Requires privacy_requests:approve. Ends a subject-blocking restriction with an audited reason. In-flight external operations and completed decisions were never affected by the restriction.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/privacy-restrictions/{restrictionID}/lift (the `LiftPrivacyRestriction` operationId).
+func (c *ClientWithResponses) LiftPrivacyRestrictionWithBodyWithResponse(ctx context.Context, restrictionID PrivacyRestrictionID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*LiftPrivacyRestrictionResponse, error) {
+	rsp, err := c.LiftPrivacyRestrictionWithBody(ctx, restrictionID, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseLiftPrivacyRestrictionResponse(rsp)
+}
+
+// LiftPrivacyRestrictionWithResponse Lift one processing restriction
+//
+// Requires privacy_requests:approve. Ends a subject-blocking restriction with an audited reason. In-flight external operations and completed decisions were never affected by the restriction.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/privacy-restrictions/{restrictionID}/lift (the `LiftPrivacyRestriction` operationId).
+func (c *ClientWithResponses) LiftPrivacyRestrictionWithResponse(ctx context.Context, restrictionID PrivacyRestrictionID, body LiftPrivacyRestrictionJSONRequestBody, reqEditors ...RequestEditorFn) (*LiftPrivacyRestrictionResponse, error) {
+	rsp, err := c.LiftPrivacyRestriction(ctx, restrictionID, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseLiftPrivacyRestrictionResponse(rsp)
 }
 
 // CreatePromptWithBodyWithResponse Create immutable prompt version
@@ -53918,6 +65021,117 @@ func ParseCreateCaptureConnectionResponse(rsp *http.Response) (*CreateCaptureCon
 	return response, nil
 }
 
+// ParseResolveCaptureExperienceResponse parses an HTTP response from a ResolveCaptureExperienceWithResponse call
+func ParseResolveCaptureExperienceResponse(rsp *http.Response) (*ResolveCaptureExperienceResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ResolveCaptureExperienceResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ExperienceResolution
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ResolveCaptureExperienceResponse200Headers
+		if values := rsp.Header.Values("Cache-Control"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Cache-Control", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.CacheControl = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 401:
+		var headers ResolveCaptureExperienceResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 500:
+		var headers ResolveCaptureExperienceResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ResolveCaptureExperienceResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
 // ParseBootstrapNativeCaptureResponse parses an HTTP response from a BootstrapNativeCaptureWithResponse call
 func ParseBootstrapNativeCaptureResponse(rsp *http.Response) (*BootstrapNativeCaptureResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -54113,6 +65327,365 @@ func ParseGetCaptureOutcomeResponse(rsp *http.Response) (*GetCaptureOutcomeRespo
 		response.Headers500 = &headers
 	case rsp.StatusCode == 503:
 		var headers GetCaptureOutcomeResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseListSubjectPrivacyRequestsResponse parses an HTTP response from a ListSubjectPrivacyRequestsWithResponse call
+func ParseListSubjectPrivacyRequestsResponse(rsp *http.Response) (*ListSubjectPrivacyRequestsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListSubjectPrivacyRequestsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest SubjectPrivacyRequestList
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ListSubjectPrivacyRequestsResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 401:
+		var headers ListSubjectPrivacyRequestsResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListSubjectPrivacyRequestsResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 429:
+		var headers ListSubjectPrivacyRequestsResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListSubjectPrivacyRequestsResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ListSubjectPrivacyRequestsResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseCreateSubjectPrivacyRequestResponse parses an HTTP response from a CreateSubjectPrivacyRequestWithResponse call
+func ParseCreateSubjectPrivacyRequestResponse(rsp *http.Response) (*CreateSubjectPrivacyRequestResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateSubjectPrivacyRequestResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 202:
+		var dest SubjectPrivacyRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON202 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 202:
+		var headers CreateSubjectPrivacyRequestResponse202Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers202 = &headers
+	case rsp.StatusCode == 400:
+		var headers CreateSubjectPrivacyRequestResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers CreateSubjectPrivacyRequestResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers CreateSubjectPrivacyRequestResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 409:
+		var headers CreateSubjectPrivacyRequestResponse409Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 429:
+		var headers CreateSubjectPrivacyRequestResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers CreateSubjectPrivacyRequestResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers CreateSubjectPrivacyRequestResponse503Headers
 		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
 			var value int
 			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
@@ -55360,6 +66933,199 @@ func ParseGetDeletionStatusResponse(rsp *http.Response) (*GetDeletionStatusRespo
 	return response, nil
 }
 
+// ParseGetDocumentSupportResponse parses an HTTP response from a GetDocumentSupportWithResponse call
+func ParseGetDocumentSupportResponse(rsp *http.Response) (*GetDocumentSupportResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetDocumentSupportResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest DocumentSupport
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetDocumentSupportResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers GetDocumentSupportResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers GetDocumentSupportResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetDocumentSupportResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetDocumentSupportResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 429:
+		var headers GetDocumentSupportResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers GetDocumentSupportResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers GetDocumentSupportResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
 // ParseCreateEvidenceUploadResponse parses an HTTP response from a CreateEvidenceUploadWithResponse call
 func ParseCreateEvidenceUploadResponse(rsp *http.Response) (*CreateEvidenceUploadResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -55831,6 +67597,2241 @@ func ParseUploadEvidenceResponse(rsp *http.Response) (*UploadEvidenceResponse, e
 			headers.XRequestID = value
 		}
 		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetExperienceDefaultResponse parses an HTTP response from a GetExperienceDefaultWithResponse call
+func ParseGetExperienceDefaultResponse(rsp *http.Response) (*GetExperienceDefaultResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetExperienceDefaultResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ExperienceResolution
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetExperienceDefaultResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 401:
+		var headers GetExperienceDefaultResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetExperienceDefaultResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 429:
+		var headers GetExperienceDefaultResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers GetExperienceDefaultResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers GetExperienceDefaultResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseListExperiencesResponse parses an HTTP response from a ListExperiencesWithResponse call
+func ParseListExperiencesResponse(rsp *http.Response) (*ListExperiencesResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListExperiencesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ExperienceList
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ListExperiencesResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers ListExperiencesResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ListExperiencesResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListExperiencesResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 429:
+		var headers ListExperiencesResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListExperiencesResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ListExperiencesResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseCreateExperienceResponse parses an HTTP response from a CreateExperienceWithResponse call
+func ParseCreateExperienceResponse(rsp *http.Response) (*CreateExperienceResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateExperienceResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest Experience
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 201:
+		var headers CreateExperienceResponse201Headers
+		if values := rsp.Header.Values("ETag"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "ETag", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ETag = &value
+		}
+		if values := rsp.Header.Values("Location"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Location", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.Location = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers201 = &headers
+	case rsp.StatusCode == 400:
+		var headers CreateExperienceResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers CreateExperienceResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers CreateExperienceResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 409:
+		var headers CreateExperienceResponse409Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 429:
+		var headers CreateExperienceResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers CreateExperienceResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers CreateExperienceResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseImportExperienceResponse parses an HTTP response from a ImportExperienceWithResponse call
+func ParseImportExperienceResponse(rsp *http.Response) (*ImportExperienceResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ImportExperienceResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest Experience
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 201:
+		var headers ImportExperienceResponse201Headers
+		if values := rsp.Header.Values("ETag"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "ETag", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ETag = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers201 = &headers
+	case rsp.StatusCode == 400:
+		var headers ImportExperienceResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ImportExperienceResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ImportExperienceResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 409:
+		var headers ImportExperienceResponse409Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 429:
+		var headers ImportExperienceResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers ImportExperienceResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ImportExperienceResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetExperienceResponse parses an HTTP response from a GetExperienceWithResponse call
+func ParseGetExperienceResponse(rsp *http.Response) (*GetExperienceResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetExperienceResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Experience
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetExperienceResponse200Headers
+		if values := rsp.Header.Values("ETag"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "ETag", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ETag = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 401:
+		var headers GetExperienceResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetExperienceResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetExperienceResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 429:
+		var headers GetExperienceResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers GetExperienceResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers GetExperienceResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseUpdateExperienceDraftResponse parses an HTTP response from a UpdateExperienceDraftWithResponse call
+func ParseUpdateExperienceDraftResponse(rsp *http.Response) (*UpdateExperienceDraftResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdateExperienceDraftResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Experience
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers UpdateExperienceDraftResponse200Headers
+		if values := rsp.Header.Values("ETag"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "ETag", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ETag = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers UpdateExperienceDraftResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers UpdateExperienceDraftResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers UpdateExperienceDraftResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers UpdateExperienceDraftResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers UpdateExperienceDraftResponse409Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 429:
+		var headers UpdateExperienceDraftResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers UpdateExperienceDraftResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers UpdateExperienceDraftResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseApproveExperienceResponse parses an HTTP response from a ApproveExperienceWithResponse call
+func ParseApproveExperienceResponse(rsp *http.Response) (*ApproveExperienceResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ApproveExperienceResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Experience
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ApproveExperienceResponse200Headers
+		if values := rsp.Header.Values("ETag"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "ETag", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ETag = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers ApproveExperienceResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ApproveExperienceResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ApproveExperienceResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers ApproveExperienceResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers ApproveExperienceResponse409Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 429:
+		var headers ApproveExperienceResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers ApproveExperienceResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ApproveExperienceResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseExportExperienceResponse parses an HTTP response from a ExportExperienceWithResponse call
+func ParseExportExperienceResponse(rsp *http.Response) (*ExportExperienceResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ExportExperienceResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ExperienceManifest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ExportExperienceResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 401:
+		var headers ExportExperienceResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ExportExperienceResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers ExportExperienceResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 429:
+		var headers ExportExperienceResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers ExportExperienceResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ExportExperienceResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParsePublishExperienceResponse parses an HTTP response from a PublishExperienceWithResponse call
+func ParsePublishExperienceResponse(rsp *http.Response) (*PublishExperienceResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PublishExperienceResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Experience
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers PublishExperienceResponse200Headers
+		if values := rsp.Header.Values("ETag"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "ETag", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ETag = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers PublishExperienceResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers PublishExperienceResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers PublishExperienceResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers PublishExperienceResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers PublishExperienceResponse409Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 429:
+		var headers PublishExperienceResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers PublishExperienceResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers PublishExperienceResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseRevokeExperienceResponse parses an HTTP response from a RevokeExperienceWithResponse call
+func ParseRevokeExperienceResponse(rsp *http.Response) (*RevokeExperienceResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &RevokeExperienceResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Experience
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers RevokeExperienceResponse200Headers
+		if values := rsp.Header.Values("ETag"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "ETag", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ETag = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers RevokeExperienceResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers RevokeExperienceResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers RevokeExperienceResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers RevokeExperienceResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers RevokeExperienceResponse409Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 429:
+		var headers RevokeExperienceResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers RevokeExperienceResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers RevokeExperienceResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseRollbackExperienceResponse parses an HTTP response from a RollbackExperienceWithResponse call
+func ParseRollbackExperienceResponse(rsp *http.Response) (*RollbackExperienceResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &RollbackExperienceResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Experience
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers RollbackExperienceResponse200Headers
+		if values := rsp.Header.Values("ETag"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "ETag", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ETag = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers RollbackExperienceResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers RollbackExperienceResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers RollbackExperienceResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers RollbackExperienceResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers RollbackExperienceResponse409Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 429:
+		var headers RollbackExperienceResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers RollbackExperienceResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers RollbackExperienceResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
 	}
 
 	return response, nil
@@ -59468,6 +73469,585 @@ func ParseGetNoticeVersionResponse(rsp *http.Response) (*GetNoticeVersionRespons
 	return response, nil
 }
 
+// ParseListPacksResponse parses an HTTP response from a ListPacksWithResponse call
+func ParseListPacksResponse(rsp *http.Response) (*ListPacksResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListPacksResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest PackPage
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ListPacksResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers ListPacksResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ListPacksResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListPacksResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers ListPacksResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 429:
+		var headers ListPacksResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListPacksResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ListPacksResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetActiveCountryPackResponse parses an HTTP response from a GetActiveCountryPackWithResponse call
+func ParseGetActiveCountryPackResponse(rsp *http.Response) (*GetActiveCountryPackResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetActiveCountryPackResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest PackResource
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetActiveCountryPackResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers GetActiveCountryPackResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers GetActiveCountryPackResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetActiveCountryPackResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetActiveCountryPackResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 429:
+		var headers GetActiveCountryPackResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers GetActiveCountryPackResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers GetActiveCountryPackResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetCountryPackRevisionResponse parses an HTTP response from a GetCountryPackRevisionWithResponse call
+func ParseGetCountryPackRevisionResponse(rsp *http.Response) (*GetCountryPackRevisionResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetCountryPackRevisionResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest PackResource
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetCountryPackRevisionResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers GetCountryPackRevisionResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers GetCountryPackRevisionResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetCountryPackRevisionResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetCountryPackRevisionResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 429:
+		var headers GetCountryPackRevisionResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers GetCountryPackRevisionResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers GetCountryPackRevisionResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
 // ParseListPoliciesResponse parses an HTTP response from a ListPoliciesWithResponse call
 func ParseListPoliciesResponse(rsp *http.Response) (*ListPoliciesResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -62689,6 +77269,3075 @@ func ParseSimulatePolicyResponse(rsp *http.Response) (*SimulatePolicyResponse, e
 		response.Headers500 = &headers
 	case rsp.StatusCode == 503:
 		var headers SimulatePolicyResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseListPrivacyDisclosuresResponse parses an HTTP response from a ListPrivacyDisclosuresWithResponse call
+func ParseListPrivacyDisclosuresResponse(rsp *http.Response) (*ListPrivacyDisclosuresResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListPrivacyDisclosuresResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest PrivacyDisclosureList
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ListPrivacyDisclosuresResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers ListPrivacyDisclosuresResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ListPrivacyDisclosuresResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListPrivacyDisclosuresResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 429:
+		var headers ListPrivacyDisclosuresResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListPrivacyDisclosuresResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ListPrivacyDisclosuresResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseCreatePrivacyDisclosureResponse parses an HTTP response from a CreatePrivacyDisclosureWithResponse call
+func ParseCreatePrivacyDisclosureResponse(rsp *http.Response) (*CreatePrivacyDisclosureResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreatePrivacyDisclosureResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest PrivacyDisclosure
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 201:
+		var headers CreatePrivacyDisclosureResponse201Headers
+		if values := rsp.Header.Values("Location"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Location", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.Location = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers201 = &headers
+	case rsp.StatusCode == 400:
+		var headers CreatePrivacyDisclosureResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers CreatePrivacyDisclosureResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers CreatePrivacyDisclosureResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 409:
+		var headers CreatePrivacyDisclosureResponse409Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 429:
+		var headers CreatePrivacyDisclosureResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers CreatePrivacyDisclosureResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers CreatePrivacyDisclosureResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseListPrivacyProcessorsResponse parses an HTTP response from a ListPrivacyProcessorsWithResponse call
+func ParseListPrivacyProcessorsResponse(rsp *http.Response) (*ListPrivacyProcessorsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListPrivacyProcessorsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest PrivacyProcessorList
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ListPrivacyProcessorsResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers ListPrivacyProcessorsResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ListPrivacyProcessorsResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListPrivacyProcessorsResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 429:
+		var headers ListPrivacyProcessorsResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListPrivacyProcessorsResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ListPrivacyProcessorsResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseCreatePrivacyProcessorResponse parses an HTTP response from a CreatePrivacyProcessorWithResponse call
+func ParseCreatePrivacyProcessorResponse(rsp *http.Response) (*CreatePrivacyProcessorResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreatePrivacyProcessorResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest PrivacyProcessor
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 201:
+		var headers CreatePrivacyProcessorResponse201Headers
+		if values := rsp.Header.Values("Location"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Location", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.Location = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers201 = &headers
+	case rsp.StatusCode == 400:
+		var headers CreatePrivacyProcessorResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers CreatePrivacyProcessorResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers CreatePrivacyProcessorResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 409:
+		var headers CreatePrivacyProcessorResponse409Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 429:
+		var headers CreatePrivacyProcessorResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers CreatePrivacyProcessorResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers CreatePrivacyProcessorResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetPrivacyProcessorResponse parses an HTTP response from a GetPrivacyProcessorWithResponse call
+func ParseGetPrivacyProcessorResponse(rsp *http.Response) (*GetPrivacyProcessorResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetPrivacyProcessorResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest PrivacyProcessor
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetPrivacyProcessorResponse200Headers
+		if values := rsp.Header.Values("ETag"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "ETag", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ETag = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers GetPrivacyProcessorResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers GetPrivacyProcessorResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetPrivacyProcessorResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetPrivacyProcessorResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 429:
+		var headers GetPrivacyProcessorResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers GetPrivacyProcessorResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers GetPrivacyProcessorResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseUpdatePrivacyProcessorResponse parses an HTTP response from a UpdatePrivacyProcessorWithResponse call
+func ParseUpdatePrivacyProcessorResponse(rsp *http.Response) (*UpdatePrivacyProcessorResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UpdatePrivacyProcessorResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest PrivacyProcessor
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers UpdatePrivacyProcessorResponse200Headers
+		if values := rsp.Header.Values("ETag"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "ETag", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ETag = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers UpdatePrivacyProcessorResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers UpdatePrivacyProcessorResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers UpdatePrivacyProcessorResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers UpdatePrivacyProcessorResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers UpdatePrivacyProcessorResponse409Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 429:
+		var headers UpdatePrivacyProcessorResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers UpdatePrivacyProcessorResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers UpdatePrivacyProcessorResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseListPrivacyRequestsResponse parses an HTTP response from a ListPrivacyRequestsWithResponse call
+func ParseListPrivacyRequestsResponse(rsp *http.Response) (*ListPrivacyRequestsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListPrivacyRequestsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest PrivacyRequestList
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ListPrivacyRequestsResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers ListPrivacyRequestsResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ListPrivacyRequestsResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListPrivacyRequestsResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 429:
+		var headers ListPrivacyRequestsResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListPrivacyRequestsResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ListPrivacyRequestsResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseCreatePrivacyRequestResponse parses an HTTP response from a CreatePrivacyRequestWithResponse call
+func ParseCreatePrivacyRequestResponse(rsp *http.Response) (*CreatePrivacyRequestResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreatePrivacyRequestResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 202:
+		var dest PrivacyRequestSummary
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON202 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 202:
+		var headers CreatePrivacyRequestResponse202Headers
+		if values := rsp.Header.Values("Location"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Location", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.Location = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers202 = &headers
+	case rsp.StatusCode == 400:
+		var headers CreatePrivacyRequestResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers CreatePrivacyRequestResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers CreatePrivacyRequestResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 409:
+		var headers CreatePrivacyRequestResponse409Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 429:
+		var headers CreatePrivacyRequestResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers CreatePrivacyRequestResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers CreatePrivacyRequestResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetPrivacyRequestResponse parses an HTTP response from a GetPrivacyRequestWithResponse call
+func ParseGetPrivacyRequestResponse(rsp *http.Response) (*GetPrivacyRequestResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetPrivacyRequestResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest PrivacyRequestStatus
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetPrivacyRequestResponse200Headers
+		if values := rsp.Header.Values("ETag"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "ETag", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ETag = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers GetPrivacyRequestResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers GetPrivacyRequestResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetPrivacyRequestResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetPrivacyRequestResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 429:
+		var headers GetPrivacyRequestResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers GetPrivacyRequestResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers GetPrivacyRequestResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseApprovePrivacyRequestResponse parses an HTTP response from a ApprovePrivacyRequestWithResponse call
+func ParseApprovePrivacyRequestResponse(rsp *http.Response) (*ApprovePrivacyRequestResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ApprovePrivacyRequestResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest PrivacyRequestStatus
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ApprovePrivacyRequestResponse200Headers
+		if values := rsp.Header.Values("ETag"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "ETag", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ETag = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers ApprovePrivacyRequestResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ApprovePrivacyRequestResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ApprovePrivacyRequestResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers ApprovePrivacyRequestResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers ApprovePrivacyRequestResponse409Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 429:
+		var headers ApprovePrivacyRequestResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers ApprovePrivacyRequestResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ApprovePrivacyRequestResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseDenyPrivacyRequestResponse parses an HTTP response from a DenyPrivacyRequestWithResponse call
+func ParseDenyPrivacyRequestResponse(rsp *http.Response) (*DenyPrivacyRequestResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DenyPrivacyRequestResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest PrivacyRequestStatus
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers DenyPrivacyRequestResponse200Headers
+		if values := rsp.Header.Values("ETag"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "ETag", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ETag = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers DenyPrivacyRequestResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers DenyPrivacyRequestResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers DenyPrivacyRequestResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers DenyPrivacyRequestResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers DenyPrivacyRequestResponse409Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 429:
+		var headers DenyPrivacyRequestResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers DenyPrivacyRequestResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers DenyPrivacyRequestResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseExecutePrivacyRequestResponse parses an HTTP response from a ExecutePrivacyRequestWithResponse call
+func ParseExecutePrivacyRequestResponse(rsp *http.Response) (*ExecutePrivacyRequestResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ExecutePrivacyRequestResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest PrivacyRequestStatus
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ExecutePrivacyRequestResponse200Headers
+		if values := rsp.Header.Values("ETag"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "ETag", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ETag = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers ExecutePrivacyRequestResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ExecutePrivacyRequestResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ExecutePrivacyRequestResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers ExecutePrivacyRequestResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers ExecutePrivacyRequestResponse409Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 429:
+		var headers ExecutePrivacyRequestResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers ExecutePrivacyRequestResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ExecutePrivacyRequestResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseWithdrawPrivacyRequestResponse parses an HTTP response from a WithdrawPrivacyRequestWithResponse call
+func ParseWithdrawPrivacyRequestResponse(rsp *http.Response) (*WithdrawPrivacyRequestResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &WithdrawPrivacyRequestResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest PrivacyRequestStatus
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers WithdrawPrivacyRequestResponse200Headers
+		if values := rsp.Header.Values("ETag"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "ETag", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ETag = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers WithdrawPrivacyRequestResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers WithdrawPrivacyRequestResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers WithdrawPrivacyRequestResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers WithdrawPrivacyRequestResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers WithdrawPrivacyRequestResponse409Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 429:
+		var headers WithdrawPrivacyRequestResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers WithdrawPrivacyRequestResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers WithdrawPrivacyRequestResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseListPrivacyRestrictionsResponse parses an HTTP response from a ListPrivacyRestrictionsWithResponse call
+func ParseListPrivacyRestrictionsResponse(rsp *http.Response) (*ListPrivacyRestrictionsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListPrivacyRestrictionsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest PrivacyRestrictionList
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ListPrivacyRestrictionsResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers ListPrivacyRestrictionsResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ListPrivacyRestrictionsResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListPrivacyRestrictionsResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 429:
+		var headers ListPrivacyRestrictionsResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListPrivacyRestrictionsResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ListPrivacyRestrictionsResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseLiftPrivacyRestrictionResponse parses an HTTP response from a LiftPrivacyRestrictionWithResponse call
+func ParseLiftPrivacyRestrictionResponse(rsp *http.Response) (*LiftPrivacyRestrictionResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &LiftPrivacyRestrictionResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest PrivacyRestriction
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers LiftPrivacyRestrictionResponse200Headers
+		if values := rsp.Header.Values("ETag"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "ETag", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ETag = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers LiftPrivacyRestrictionResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers LiftPrivacyRestrictionResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers LiftPrivacyRestrictionResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers LiftPrivacyRestrictionResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers LiftPrivacyRestrictionResponse409Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 429:
+		var headers LiftPrivacyRestrictionResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers LiftPrivacyRestrictionResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers LiftPrivacyRestrictionResponse503Headers
 		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
 			var value int
 			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {

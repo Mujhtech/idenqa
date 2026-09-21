@@ -1236,3 +1236,147 @@ func (appeal Appeal) String() string { return appeal.value.String() }
 
 // IsZero reports whether the appeal identifier is uninitialised.
 func (appeal Appeal) IsZero() bool { return appeal.value.IsZero() }
+
+// PrivacyRequestPrefix is the public prefix for data-subject privacy requests.
+const PrivacyRequestPrefix Prefix = "prq"
+
+// PrivacyRequest identifies one durable privacy-request workflow.
+type PrivacyRequest struct{ value Value }
+
+// NewPrivacyRequest generates a privacy-request identifier.
+func (generator *Generator) NewPrivacyRequest() (PrivacyRequest, error) {
+	value, err := generator.New(PrivacyRequestPrefix)
+	return PrivacyRequest{value: value}, err
+}
+
+// ParsePrivacyRequest parses a privacy-request identifier.
+func ParsePrivacyRequest(encoded string) (PrivacyRequest, error) {
+	value, err := Parse(PrivacyRequestPrefix, encoded)
+	return PrivacyRequest{value: value}, err
+}
+
+// String returns the stable privacy-request identifier.
+func (request PrivacyRequest) String() string { return request.value.String() }
+
+// IsZero reports whether the privacy-request identifier is uninitialised.
+func (request PrivacyRequest) IsZero() bool { return request.value.IsZero() }
+
+// PrivacyDecisionPrefix is the public prefix for privacy-request decisions.
+const PrivacyDecisionPrefix Prefix = "prd"
+
+// PrivacyDecision identifies one immutable privacy-request decision.
+type PrivacyDecision struct{ value Value }
+
+// NewPrivacyDecision generates a privacy-request decision identifier.
+func (generator *Generator) NewPrivacyDecision() (PrivacyDecision, error) {
+	value, err := generator.New(PrivacyDecisionPrefix)
+	return PrivacyDecision{value: value}, err
+}
+
+// ParsePrivacyDecision parses a privacy-request decision identifier.
+func ParsePrivacyDecision(encoded string) (PrivacyDecision, error) {
+	value, err := Parse(PrivacyDecisionPrefix, encoded)
+	return PrivacyDecision{value: value}, err
+}
+
+// String returns the stable privacy-request decision identifier.
+func (decision PrivacyDecision) String() string { return decision.value.String() }
+
+// IsZero reports whether the privacy-request decision identifier is uninitialised.
+func (decision PrivacyDecision) IsZero() bool { return decision.value.IsZero() }
+
+// PrivacyRestrictionPrefix is the public prefix for processing restrictions.
+const PrivacyRestrictionPrefix Prefix = "prs"
+
+// PrivacyRestriction identifies one durable processing restriction.
+type PrivacyRestriction struct{ value Value }
+
+// NewPrivacyRestriction generates a processing-restriction identifier.
+func (generator *Generator) NewPrivacyRestriction() (PrivacyRestriction, error) {
+	value, err := generator.New(PrivacyRestrictionPrefix)
+	return PrivacyRestriction{value: value}, err
+}
+
+// ParsePrivacyRestriction parses a processing-restriction identifier.
+func ParsePrivacyRestriction(encoded string) (PrivacyRestriction, error) {
+	value, err := Parse(PrivacyRestrictionPrefix, encoded)
+	return PrivacyRestriction{value: value}, err
+}
+
+// String returns the stable processing-restriction identifier.
+func (restriction PrivacyRestriction) String() string { return restriction.value.String() }
+
+// IsZero reports whether the processing-restriction identifier is uninitialised.
+func (restriction PrivacyRestriction) IsZero() bool { return restriction.value.IsZero() }
+
+// PrivacyDisclosurePrefix is the public prefix for transfer and disclosure records.
+const PrivacyDisclosurePrefix Prefix = "pdc"
+
+// PrivacyDisclosure identifies one durable transfer or disclosure record.
+type PrivacyDisclosure struct{ value Value }
+
+// NewPrivacyDisclosure generates a disclosure identifier.
+func (generator *Generator) NewPrivacyDisclosure() (PrivacyDisclosure, error) {
+	value, err := generator.New(PrivacyDisclosurePrefix)
+	return PrivacyDisclosure{value: value}, err
+}
+
+// ParsePrivacyDisclosure parses a disclosure identifier.
+func ParsePrivacyDisclosure(encoded string) (PrivacyDisclosure, error) {
+	value, err := Parse(PrivacyDisclosurePrefix, encoded)
+	return PrivacyDisclosure{value: value}, err
+}
+
+// String returns the stable disclosure identifier.
+func (disclosure PrivacyDisclosure) String() string { return disclosure.value.String() }
+
+// IsZero reports whether the disclosure identifier is uninitialised.
+func (disclosure PrivacyDisclosure) IsZero() bool { return disclosure.value.IsZero() }
+
+// ProcessorPrefix is the public prefix for processor and subprocessor inventory entries.
+const ProcessorPrefix Prefix = "prc"
+
+// Processor identifies one versioned processor-inventory entry.
+type Processor struct{ value Value }
+
+// NewProcessor generates a processor-inventory identifier.
+func (generator *Generator) NewProcessor() (Processor, error) {
+	value, err := generator.New(ProcessorPrefix)
+	return Processor{value: value}, err
+}
+
+// ParseProcessor parses a processor-inventory identifier.
+func ParseProcessor(encoded string) (Processor, error) {
+	value, err := Parse(ProcessorPrefix, encoded)
+	return Processor{value: value}, err
+}
+
+// String returns the stable processor-inventory identifier.
+func (processor Processor) String() string { return processor.value.String() }
+
+// IsZero reports whether the processor-inventory identifier is uninitialised.
+func (processor Processor) IsZero() bool { return processor.value.IsZero() }
+
+// ExperiencePrefix is the public prefix for portable capture-experience identifiers.
+const ExperiencePrefix Prefix = "exp"
+
+// Experience identifies one tenant-owned portable capture-experience aggregate.
+type Experience struct{ value Value }
+
+// NewExperience generates a portable capture-experience identifier.
+func (generator *Generator) NewExperience() (Experience, error) {
+	value, err := generator.New(ExperiencePrefix)
+	return Experience{value: value}, err
+}
+
+// ParseExperience parses a portable capture-experience identifier.
+func ParseExperience(encoded string) (Experience, error) {
+	value, err := Parse(ExperiencePrefix, encoded)
+	return Experience{value: value}, err
+}
+
+// String returns the stable capture-experience identifier.
+func (experience Experience) String() string { return experience.value.String() }
+
+// IsZero reports whether the capture-experience identifier is uninitialised.
+func (experience Experience) IsZero() bool { return experience.value.IsZero() }

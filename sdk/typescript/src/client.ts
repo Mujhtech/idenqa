@@ -1,4 +1,9 @@
 import { AssuranceClient } from "./assurance.js";
+import {
+  validateExperienceResolution,
+  type ExperienceRequestOptions,
+  type ExperienceResolution,
+} from "./experience.js";
 import { IdentityClient } from "./identity.js";
 import { FraudClient } from "./fraud.js";
 import { ProposalsClient } from "./proposals.js";
@@ -355,6 +360,36 @@ export class CaptureClient {
       ...signal(options),
     });
     return mapResponse(response, captureAuthoritySnapshot);
+  }
+
+  /**
+   * Resolves the session's pinned portable capture experience. The first call
+   * pins the exact experience, locale, tenant-copy, and mandatory-copy
+   * versions; later calls preserve them across resume and fall back to the
+   * signed accessible safe default after revocation or resolution failure.
+   */
+  async getExperience(
+    options: ExperienceRequestOptions = {},
+  ): Promise<SDKResponse<ExperienceResolution>> {
+    const query = new URLSearchParams();
+    for (const [name, value] of [
+      ["workflow", options.workflow],
+      ["country", options.country],
+      ["application_id", options.applicationId],
+      ["origin", options.origin],
+      ["sdk_version", options.sdkVersion],
+      ["locale", options.locale],
+    ] as const) {
+      if (value !== undefined) query.set(name, value);
+    }
+    const suffix = query.size > 0 ? `?${query.toString()}` : "";
+    const response = await this.#transport.request<unknown>({
+      method: "GET",
+      path: `v1/capture/experience${suffix}`,
+      bearerToken: this.#token,
+      ...signal(options),
+    });
+    return mapResponse(response, validateExperienceResolution);
   }
 
   async getProgress(options: RequestOptions = {}): Promise<SDKResponse<CaptureProgress>> {

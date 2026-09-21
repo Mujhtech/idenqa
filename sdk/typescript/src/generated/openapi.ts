@@ -2882,6 +2882,623 @@ export interface paths {
         readonly patch?: never;
         readonly trace?: never;
     };
+    readonly "/v1/packs": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * List registered country pack revisions
+         * @description List every registered immutable country pack revision with its current lifecycle state. Requires packs:read. Pack content is embedded and reviewed at build time; this route never activates, deprecates, or retires a pack.
+         */
+        readonly get: operations["listPacks"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/packs/{country}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Get the active pack for a country
+         * @description Get the active immutable pack revision for an ISO 3166-1 alpha-2 or alpha-3 country code. Requires packs:read. The projection never asserts legal, provider, or security-feature approval.
+         */
+        readonly get: operations["getActiveCountryPack"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/packs/{country}/revisions/{revision}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Get an exact pack revision
+         * @description Get one exact immutable pack revision. Requires packs:read. Deprecated and retired revisions remain readable so an old decision or policy reference stays inspectable.
+         */
+        readonly get: operations["getCountryPackRevision"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/document-support": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Get the honest document support-level projection
+         * @description Get the active pack's support-level projection for one country and
+         *     document type. Requires packs:read. The projection reports the declared
+         *     support level, required evidence sides, supported canonical fields,
+         *     declarations, evaluation coverage, limitations, and legal-review state.
+         *     It contains no legal conclusion, provider approval, or security-feature
+         *     finding; an unreviewed legal state is returned honestly.
+         */
+        readonly get: operations["getDocumentSupport"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/privacy-requests": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * List tenant privacy requests
+         * @description Requires privacy_requests:read. Returns a bounded ascending page of data-subject privacy requests with their state, version, and bounded effect references. Reasons, actor identifiers, and internal events are never returned.
+         */
+        readonly get: operations["listPrivacyRequests"];
+        readonly put?: never;
+        /**
+         * Create one tenant privacy request
+         * @description Requires privacy_requests:write. Creates one tenant-channel data-subject request. The tenant is the controller and no effect executes before an explicit approval. Subject-scoped effects require a subject; corrrection instructions carry exactly one record or decision target.
+         */
+        readonly post: operations["createPrivacyRequest"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/privacy-requests/{requestID}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Stable privacy-request identifier. */
+                readonly requestID: components["schemas"]["PrivacyRequestID"];
+            };
+            readonly cookie?: never;
+        };
+        /**
+         * Get one privacy request
+         * @description Requires privacy_requests:read. Returns the request state, immutable decision statements, and bounded effect references. It never returns subject credentials, raw evidence, or object locations.
+         */
+        readonly get: operations["getPrivacyRequest"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/privacy-requests/{requestID}/approve": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Stable privacy-request identifier. */
+                readonly requestID: components["schemas"]["PrivacyRequestID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Approve or partially approve a privacy request
+         * @description Requires privacy_requests:approve. Records one immutable decision with a bounded reason code. Replay with the same outcome and reason is idempotent; a conflicting replay is rejected.
+         */
+        readonly post: operations["approvePrivacyRequest"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/privacy-requests/{requestID}/deny": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Stable privacy-request identifier. */
+                readonly requestID: components["schemas"]["PrivacyRequestID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Deny a privacy request
+         * @description Requires privacy_requests:approve. Records one immutable denial with a bounded reason code. Denial is terminal and immutable; replay with the same reason is idempotent.
+         */
+        readonly post: operations["denyPrivacyRequest"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/privacy-requests/{requestID}/withdraw": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Stable privacy-request identifier. */
+                readonly requestID: components["schemas"]["PrivacyRequestID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Withdraw an undecided privacy request
+         * @description Requires privacy_requests:write. Ends a requested or in-review request without a decision. Withdrawal is terminal and immutable; a decided request can no longer be withdrawn.
+         */
+        readonly post: operations["withdrawPrivacyRequest"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/privacy-requests/{requestID}/execute": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Stable privacy-request identifier. */
+                readonly requestID: components["schemas"]["PrivacyRequestID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Execute an approved privacy request
+         * @description Requires privacy_requests:approve. Dispatches the approved effect through the existing deletion, subject-export, identity-correction, or review-correction mechanism. Completed requests are returned unchanged, so replay adds nothing.
+         */
+        readonly post: operations["executePrivacyRequest"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/privacy-restrictions": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * List tenant processing restrictions
+         * @description Requires privacy_requests:read. Returns a bounded ascending page of subject-blocking and purpose-scoped records. Purpose-scoped objection records are consulted as policy input for new processing only.
+         */
+        readonly get: operations["listPrivacyRestrictions"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/privacy-restrictions/{restrictionID}/lift": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Stable processing-restriction identifier. */
+                readonly restrictionID: components["schemas"]["PrivacyRestrictionID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Lift one processing restriction
+         * @description Requires privacy_requests:approve. Ends a subject-blocking restriction with an audited reason. In-flight external operations and completed decisions were never affected by the restriction.
+         */
+        readonly post: operations["liftPrivacyRestriction"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/privacy-disclosures": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * List tenant transfer and disclosure records
+         * @description Requires privacy_requests:read. Returns immutable reference-only disclosure records filtered by exact request or by the whole tenant.
+         */
+        readonly get: operations["listPrivacyDisclosures"];
+        readonly put?: never;
+        /**
+         * Record one transfer or disclosure
+         * @description Requires privacy_requests:write. Records an immutable reference-only disclosure. The reference is a bounded digest; document contents and recipient secrets are never accepted.
+         */
+        readonly post: operations["createPrivacyDisclosure"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/privacy-processors": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * List tenant processor inventory
+         * @description Requires privacy_requests:read. Returns a bounded ascending page of versioned processors, subprocessors, and recipients with bounded data classes, regions, and transfer mechanisms.
+         */
+        readonly get: operations["listPrivacyProcessors"];
+        readonly put?: never;
+        /**
+         * Create one processor inventory entry
+         * @description Requires privacy_requests:write. Creates version one of a processor inventory entry and its append-only revision.
+         */
+        readonly post: operations["createPrivacyProcessor"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/privacy-processors/{processorID}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Stable processor inventory identifier. */
+                readonly processorID: components["schemas"]["PrivacyProcessorID"];
+            };
+            readonly cookie?: never;
+        };
+        /**
+         * Get one processor inventory entry
+         * @description Requires privacy_requests:read. Returns the current version of one processor inventory entry.
+         */
+        readonly get: operations["getPrivacyProcessor"];
+        /**
+         * Update one processor inventory entry
+         * @description Requires privacy_requests:write. Applies one expected-version update and appends an immutable revision. A stale expected version is rejected.
+         */
+        readonly put: operations["updatePrivacyProcessor"];
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/capture/privacy-requests": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * List subject-safe privacy request status
+         * @description Authenticated only by the D-027 outcome credential. Returns the closed subject-safe projection for requests created through this verification - request type, subject-safe status, and timestamps. Reasons, identifiers, tenant state, and effect references are intentionally absent. The credential cannot approve, deny, withdraw, or execute.
+         */
+        readonly get: operations["listSubjectPrivacyRequests"];
+        readonly put?: never;
+        /**
+         * Create one subject privacy request
+         * @description Authenticated only by the D-027 outcome credential. Creates one subject-channel request scoped to the credential's verification. The tenant remains the controller and no effect executes without tenant approval. The credential cannot approve, deny, withdraw, or execute.
+         */
+        readonly post: operations["createSubjectPrivacyRequest"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/experience-default": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Get the signed accessible safe default
+         * @description Returns the Core-shipped, signed, accessible safe default experience and
+         *     its Core-owned mandatory copy. Requires experiences:read. The safe
+         *     default is never tenant-owned, never editable, and is the only fallback
+         *     when a pinned experience is revoked or resolution fails.
+         */
+        readonly get: operations["getExperienceDefault"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/capture/experience": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Resolve the session's pinned capture experience
+         * @description Returns the immutable signed experience document pinned to the
+         *     authenticated capture session, the Core-owned mandatory copy, and the
+         *     exact pinned experience, locale, tenant-copy, and mandatory-copy
+         *     versions. The first call resolves and pins; later calls preserve the
+         *     pin across resume. If the pinned experience is revoked or resolution
+         *     fails, the signed accessible safe default is returned instead. Raw
+         *     evidence, subject data, and credentials are never returned.
+         */
+        readonly get: operations["resolveCaptureExperience"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/experiences": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * List tenant capture experiences
+         * @description Requires experiences:read. Returns a bounded ascending page of tenant-owned portable capture experiences with their lifecycle state and latest immutable revision.
+         */
+        readonly get: operations["listExperiences"];
+        readonly put?: never;
+        /**
+         * Create one experience draft
+         * @description Requires experiences:write. Creates one tenant-owned draft with a
+         *     stable exp_ identifier and immutable revision 1. The stored revision is
+         *     signed by Core over its canonical bytes. Repeating the same draft
+         *     command with the same Idempotency-Key returns the original result.
+         */
+        readonly post: operations["createExperience"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/experiences/import": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Import a signed experience manifest as a draft
+         * @description Requires experiences:write. Validates the closed manifest, recomputes
+         *     the canonical digest, verifies the Ed25519 signature against a trusted
+         *     Core key, checks mandatory-copy and asset references, and creates or
+         *     advances a draft revision. Console and Cloud are not required.
+         */
+        readonly post: operations["importExperience"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/experiences/{experienceID}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Stable portable-experience identifier. */
+                readonly experienceID: components["schemas"]["ExperienceID"];
+            };
+            readonly cookie?: never;
+        };
+        /**
+         * Get one experience
+         * @description Requires experiences:read. Returns the aggregate state, optimistic revision, and latest immutable signed revision document.
+         */
+        readonly get: operations["getExperience"];
+        /**
+         * Save a new experience draft revision
+         * @description Requires experiences:write. Saves one new immutable revision and resets
+         *     approval, because approval binds to one exact version. The
+         *     expected_version must equal the current aggregate revision or the
+         *     command fails with a conflict. A revoked experience refuses edits and
+         *     requires an explicit rollback first.
+         */
+        readonly put: operations["updateExperienceDraft"];
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/experiences/{experienceID}/approve": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Stable portable-experience identifier. */
+                readonly experienceID: components["schemas"]["ExperienceID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Approve the latest experience revision
+         * @description Requires experiences:publish. Records the explicit approval publication requires. Repeating the approval of the same version is idempotent and does not append history.
+         */
+        readonly post: operations["approveExperience"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/experiences/{experienceID}/publish": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Stable portable-experience identifier. */
+                readonly experienceID: components["schemas"]["ExperienceID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Publish the approved experience revision
+         * @description Requires experiences:publish. Publication requires a prior explicit
+         *     approval of the exact latest version, verifies every asset digest, and
+         *     supersedes the previous live revision without deleting it. Repeating
+         *     publication of the live version is idempotent.
+         */
+        readonly post: operations["publishExperience"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/experiences/{experienceID}/revoke": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Stable portable-experience identifier. */
+                readonly experienceID: components["schemas"]["ExperienceID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Revoke the live experience (kill switch)
+         * @description Requires experiences:publish. Clears the live revision so capture
+         *     sessions fall back to the signed accessible safe default. Revocation is
+         *     idempotent, preserves immutable history, and refuses new edits until an
+         *     explicit rollback republishes a prior approved revision.
+         */
+        readonly post: operations["revokeExperience"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/experiences/{experienceID}/rollback": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Stable portable-experience identifier. */
+                readonly experienceID: components["schemas"]["ExperienceID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Roll back to a prior immutable revision
+         * @description Requires experiences:publish. Republishes one previously approved immutable revision without editing it. The rollback target must have been approved; the replaced live revision is marked superseded. Repeating the same rollback is idempotent.
+         */
+        readonly post: operations["rollbackExperience"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/experiences/{experienceID}/export": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Stable portable-experience identifier. */
+                readonly experienceID: components["schemas"]["ExperienceID"];
+            };
+            readonly cookie?: never;
+        };
+        /**
+         * Export one signed experience manifest
+         * @description Requires experiences:read. Returns the signed canonical manifest of the live published revision, or the latest revision when nothing is published, so another Core installation can import it without Console or Cloud.
+         */
+        readonly get: operations["exportExperience"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -5921,6 +6538,24 @@ export interface components {
              * @example 86400
              */
             readonly outcome_token_post_expiry_ttl_seconds?: number;
+            /**
+             * @description Optional BCP 47 locale resolved and pinned with the portable experience.
+             * @example en-NG
+             */
+            readonly locale?: string;
+            /** @description Optional capture-experience targeting context resolved and pinned at creation. Unproven dimensions fail closed to the signed safe default. */
+            readonly experience?: {
+                /** @example capture.identity */
+                readonly workflow?: string;
+                /** @example NG */
+                readonly country?: string;
+                /** @example dev.acme.app */
+                readonly application_id?: string;
+                /** @example https://capture.acme.example */
+                readonly origin?: string;
+                /** @example 1.4.0 */
+                readonly sdk_version?: string;
+            };
         };
         /** @description Immutable capture requirements and current lifecycle metadata for one verification. */
         readonly VerificationSession: {
@@ -6149,11 +6784,37 @@ export interface components {
             /** @example capture_failed */
             readonly fallback_condition?: components["schemas"]["CaptureFallbackCondition"];
         };
-        /** @description Capture-token-scoped accepted completion snapshot. */
+        /** @description Capture-token-scoped accepted completion snapshot with the session's pinned portable-experience versions when available. */
         readonly CaptureProgress: {
             readonly verification_id: components["schemas"]["VerificationSessionID"];
             /** @example [] */
             readonly completions: readonly components["schemas"]["CaptureCompletion"][];
+            /** @description The exact experience, locale, and copy versions pinned to this session. */
+            readonly experience?: {
+                readonly experience_id: components["schemas"]["ExperienceID"];
+                /** @example 1 */
+                readonly version: number;
+                /** @example en */
+                readonly locale: string;
+                /** @example tc_acme_v1 */
+                readonly tenant_copy_version: string;
+                /** @example mc-2026-09-01 */
+                readonly mandatory_copy_version: string;
+                /**
+                 * @example pinned
+                 * @enum {string}
+                 */
+                readonly source: "pinned" | "published" | "default";
+                /** @example aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa */
+                readonly digest: string;
+                /** @example expkey_core_1 */
+                readonly key_id: string;
+                /**
+                 * Format: date-time
+                 * @example 2026-09-20T12:00:00Z
+                 */
+                readonly pinned_at: string;
+            };
         };
         /**
          * @description Display-once browser connection material. Treat websocket_url as a secret.
@@ -7322,6 +7983,466 @@ export interface components {
             readonly holds: readonly components["schemas"]["PrivacyHold"][];
         };
         /**
+         * @description Stable Idenqa privacy-request identifier.
+         * @example prq_01M11HEQG00000000000000000
+         */
+        readonly PrivacyRequestID: string;
+        /**
+         * @description Stable Idenqa processing-restriction identifier.
+         * @example prs_01M11HEQG00000000000000000
+         */
+        readonly PrivacyRestrictionID: string;
+        /**
+         * @description Stable Idenqa disclosure identifier.
+         * @example pdc_01M11HEQG00000000000000000
+         */
+        readonly PrivacyDisclosureID: string;
+        /**
+         * @description Stable Idenqa processor-inventory identifier.
+         * @example prc_01M11HEQG00000000000000000
+         */
+        readonly PrivacyProcessorID: string;
+        /**
+         * @description Selected data-subject privacy-request type.
+         * @example access
+         * @enum {string}
+         */
+        readonly PrivacyRequestType: "access" | "portability" | "correction" | "restriction" | "objection" | "erasure";
+        /**
+         * @description Observable privacy-request workflow state. Terminal states are immutable.
+         * @example in_review
+         * @enum {string}
+         */
+        readonly PrivacyRequestState: "requested" | "in_review" | "approved" | "partially_approved" | "denied" | "executing" | "completed" | "failed" | "withdrawn" | "expired";
+        /**
+         * @description Submission channel. The tenant API key is always the controller.
+         * @example tenant_api
+         * @enum {string}
+         */
+        readonly PrivacyRequestChannel: "tenant_api" | "subject_outcome";
+        /**
+         * @description Immutable decision outcome.
+         * @example approved
+         * @enum {string}
+         */
+        readonly PrivacyDecisionOutcome: "approved" | "partially_approved" | "denied";
+        /** @description One bounded decision command. */
+        readonly PrivacyRequestDecision: {
+            /**
+             * Format: int64
+             * @example 2
+             */
+            readonly expected_version: number;
+            readonly outcome?: components["schemas"]["PrivacyDecisionOutcome"];
+            /** @example access_approved */
+            readonly reason_code: string;
+        };
+        /** @description One expected-version command for a privacy-request transition. */
+        readonly PrivacyRequestExpectedVersion: {
+            /**
+             * Format: int64
+             * @example 3
+             */
+            readonly expected_version: number;
+        };
+        /** @description One bounded privacy-request instruction. Exactly one correction target is required for correction requests; purpose is required for objections. */
+        readonly PrivacyRequestCreate: {
+            readonly type: components["schemas"]["PrivacyRequestType"];
+            /** @example sub_01M11HEQG00000000000000000 */
+            readonly subject_id?: string;
+            /** @example ver_01M11HEQG00000000000000000 */
+            readonly verification_id?: string;
+            /** @example ng-1 */
+            readonly region: string;
+            /**
+             * Format: date-time
+             * @description Optional bounded expiry within the deployment maximum.
+             * @example 2026-10-20T12:00:00Z
+             */
+            readonly expires_at?: string;
+            /** @example liveness-check */
+            readonly purpose?: string;
+            /** @example obs_01M11HEQG00000000000000000 */
+            readonly record_id?: string;
+            /** @example dec_01M11HEQG00000000000000000 */
+            readonly decision_id?: string;
+            /** @example identity.name.full */
+            readonly name?: string;
+            /** @example Ada */
+            readonly value?: string;
+            /**
+             * @example observation
+             * @enum {string}
+             */
+            readonly kind?: "observation" | "claim" | "fact";
+            /**
+             * @example identity.trim.v1
+             * @enum {string}
+             */
+            readonly normalization?: "identity.exact.v1" | "identity.trim.v1" | "identity.ascii_upper.v1";
+        };
+        /** @description One immutable decision statement without the actor credential. */
+        readonly PrivacyRequestDecisionSummary: {
+            /** @example prd_01M11HEQG00000000000000000 */
+            readonly id: string;
+            readonly outcome: components["schemas"]["PrivacyDecisionOutcome"];
+            /** @example access_approved */
+            readonly reason_code: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-20T12:05:00Z
+             */
+            readonly decided_at: string;
+            /**
+             * Format: int64
+             * @example 3
+             */
+            readonly version: number;
+        };
+        /** @description Safe privacy-request summary without actor credentials, internal events, or effect payloads. */
+        readonly PrivacyRequestSummary: {
+            readonly id: components["schemas"]["PrivacyRequestID"];
+            readonly type: components["schemas"]["PrivacyRequestType"];
+            readonly state: components["schemas"]["PrivacyRequestState"];
+            readonly channel: components["schemas"]["PrivacyRequestChannel"];
+            /** @example sub_01M11HEQG00000000000000000 */
+            readonly subject_id?: string;
+            /** @example ver_01M11HEQG00000000000000000 */
+            readonly verification_id?: string;
+            /** @example ng-1 */
+            readonly region: string;
+            /** @example access_approved */
+            readonly reason_code?: string;
+            /** @example effect_failed */
+            readonly failure_class?: string;
+            /** @example subject_export */
+            readonly effect_kind?: string;
+            /** @example subject:sub_01M11HEQG00000000000000000 */
+            readonly effect_reference?: string;
+            /** @example sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef */
+            readonly effect_digest?: string;
+            /**
+             * Format: date-time
+             * @example 2026-10-20T12:00:00Z
+             */
+            readonly expires_at: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-20T12:00:00Z
+             */
+            readonly requested_at: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-20T12:05:00Z
+             */
+            readonly updated_at: string;
+            /**
+             * Format: int64
+             * @example 3
+             */
+            readonly version: number;
+        };
+        /** @description Full safe privacy-request status with its immutable decision statements. */
+        readonly PrivacyRequestStatus: {
+            readonly id: components["schemas"]["PrivacyRequestID"];
+            readonly type: components["schemas"]["PrivacyRequestType"];
+            readonly state: components["schemas"]["PrivacyRequestState"];
+            readonly channel: components["schemas"]["PrivacyRequestChannel"];
+            /** @example sub_01M11HEQG00000000000000000 */
+            readonly subject_id?: string;
+            /** @example ver_01M11HEQG00000000000000000 */
+            readonly verification_id?: string;
+            /** @example ng-1 */
+            readonly region: string;
+            /** @example access_approved */
+            readonly reason_code?: string;
+            /** @example effect_failed */
+            readonly failure_class?: string;
+            /** @example subject_export */
+            readonly effect_kind?: string;
+            /** @example subject:sub_01M11HEQG00000000000000000 */
+            readonly effect_reference?: string;
+            /** @example sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef */
+            readonly effect_digest?: string;
+            /**
+             * Format: date-time
+             * @example 2026-10-20T12:00:00Z
+             */
+            readonly expires_at: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-20T12:00:00Z
+             */
+            readonly requested_at: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-20T12:05:00Z
+             */
+            readonly updated_at: string;
+            /**
+             * Format: int64
+             * @example 3
+             */
+            readonly version: number;
+            /** @example [] */
+            readonly decisions: readonly components["schemas"]["PrivacyRequestDecisionSummary"][];
+        };
+        /** @description Bounded ascending privacy-request page with a signed tenant-, filter- and limit-bound cursor. */
+        readonly PrivacyRequestList: {
+            /** @example [] */
+            readonly data: readonly components["schemas"]["PrivacyRequestSummary"][];
+            readonly page: components["schemas"]["Page"];
+        };
+        /**
+         * @description Subject-blocking restriction or purpose-scoped objection record.
+         * @example subject
+         * @enum {string}
+         */
+        readonly PrivacyRestrictionScope: "subject" | "purpose";
+        /**
+         * @description Observable restriction state.
+         * @example active
+         * @enum {string}
+         */
+        readonly PrivacyRestrictionState: "active" | "lifted";
+        /** @description One processing restriction or purpose-scoped objection record. */
+        readonly PrivacyRestriction: {
+            readonly id: components["schemas"]["PrivacyRestrictionID"];
+            readonly request_id: components["schemas"]["PrivacyRequestID"];
+            /** @example sub_01M11HEQG00000000000000000 */
+            readonly subject_id: string;
+            readonly scope: components["schemas"]["PrivacyRestrictionScope"];
+            /** @example liveness-check */
+            readonly purpose?: string;
+            /** @example subject_request */
+            readonly reason_code: string;
+            /** @example ng-1 */
+            readonly region: string;
+            readonly state: components["schemas"]["PrivacyRestrictionState"];
+            /**
+             * Format: date-time
+             * @example 2026-09-20T12:05:00Z
+             */
+            readonly starts_at: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-21T09:00:00Z
+             */
+            readonly lifted_at?: string;
+            /** @example lifted_by_tenant */
+            readonly lift_reason_code?: string;
+            /**
+             * Format: int64
+             * @example 1
+             */
+            readonly version: number;
+        };
+        /** @description One expected-version lift command with an audited reason. */
+        readonly PrivacyRestrictionLift: {
+            /**
+             * Format: int64
+             * @example 1
+             */
+            readonly expected_version: number;
+            /**
+             * @example lifted_by_tenant
+             * @enum {string}
+             */
+            readonly reason_code: "lifted_by_tenant" | "lifted_by_subject" | "restriction_expired";
+        };
+        /** @description Bounded ascending restriction page with a signed tenant-, filter- and limit-bound cursor. */
+        readonly PrivacyRestrictionList: {
+            /** @example [] */
+            readonly data: readonly components["schemas"]["PrivacyRestriction"][];
+            readonly page: components["schemas"]["Page"];
+        };
+        /**
+         * @description Closed transferred-data class.
+         * @example subject_export
+         * @enum {string}
+         */
+        readonly PrivacyDisclosureClass: "subject_export" | "identity_successor" | "deletion_request" | "restriction" | "objection";
+        /** @description One immutable reference-only transfer or disclosure record. The reference is a bounded digest, never a document body. */
+        readonly PrivacyDisclosure: {
+            readonly id: components["schemas"]["PrivacyDisclosureID"];
+            readonly request_id: components["schemas"]["PrivacyRequestID"];
+            /** @example legal.counsel */
+            readonly recipient: string;
+            /** @example access.request */
+            readonly purpose: string;
+            readonly data_class: components["schemas"]["PrivacyDisclosureClass"];
+            /** @example controller.contract */
+            readonly legal_basis: string;
+            /** @example ng-1 */
+            readonly region: string;
+            /** @example sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef */
+            readonly reference: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-20T12:05:00Z
+             */
+            readonly disclosed_at: string;
+            /**
+             * Format: int64
+             * @example 1
+             */
+            readonly version: number;
+        };
+        /** @description One immutable disclosure command. */
+        readonly PrivacyDisclosureCreate: {
+            readonly request_id: components["schemas"]["PrivacyRequestID"];
+            /** @example legal.counsel */
+            readonly recipient: string;
+            /** @example access.request */
+            readonly purpose: string;
+            readonly data_class: components["schemas"]["PrivacyDisclosureClass"];
+            /** @example controller.contract */
+            readonly legal_basis: string;
+            /** @example ng-1 */
+            readonly region: string;
+            /** @example sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef */
+            readonly reference: string;
+        };
+        /** @description Bounded ascending disclosure page with a signed tenant-, filter- and limit-bound cursor. */
+        readonly PrivacyDisclosureList: {
+            /** @example [] */
+            readonly data: readonly components["schemas"]["PrivacyDisclosure"][];
+            readonly page: components["schemas"]["Page"];
+        };
+        /**
+         * @description Closed processor-inventory role.
+         * @example processor
+         * @enum {string}
+         */
+        readonly PrivacyProcessorRole: "processor" | "subprocessor" | "recipient";
+        /** @description One versioned processor, subprocessor, or recipient inventory entry. */
+        readonly PrivacyProcessor: {
+            readonly id: components["schemas"]["PrivacyProcessorID"];
+            /** @example Example KYC */
+            readonly name: string;
+            readonly role: components["schemas"]["PrivacyProcessorRole"];
+            /** @example identity.verification */
+            readonly purpose: string;
+            /**
+             * @example [
+             *       "raw_evidence"
+             *     ]
+             */
+            readonly data_classes: readonly ("raw_evidence" | "derived_evidence" | "webhook_payload" | "workflow_metadata" | "audit_record" | "deletion_proof" | "backup")[];
+            /**
+             * @example [
+             *       "ng-1"
+             *     ]
+             */
+            readonly regions: readonly string[];
+            /** @example standard.contractual_clauses */
+            readonly transfer_mechanism: string;
+            /**
+             * Format: int64
+             * @example 1
+             */
+            readonly version: number;
+            /**
+             * Format: date-time
+             * @example 2026-09-20T12:00:00Z
+             */
+            readonly created_at: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-20T12:00:00Z
+             */
+            readonly updated_at: string;
+        };
+        /** @description One create or expected-version processor inventory command. */
+        readonly PrivacyProcessorPut: {
+            /** @example Example KYC */
+            readonly name: string;
+            readonly role: components["schemas"]["PrivacyProcessorRole"];
+            /** @example identity.verification */
+            readonly purpose: string;
+            /**
+             * @example [
+             *       "raw_evidence"
+             *     ]
+             */
+            readonly data_classes: readonly ("raw_evidence" | "derived_evidence" | "webhook_payload" | "workflow_metadata" | "audit_record" | "deletion_proof" | "backup")[];
+            /**
+             * @example [
+             *       "ng-1"
+             *     ]
+             */
+            readonly regions: readonly string[];
+            /** @example standard.contractual_clauses */
+            readonly transfer_mechanism: string;
+            /**
+             * Format: int64
+             * @description Zero creates version one; a positive value applies one expected-version update.
+             * @example 0
+             */
+            readonly expected_version: number;
+        };
+        /** @description Bounded ascending processor inventory page. */
+        readonly PrivacyProcessorList: {
+            /** @example [] */
+            readonly data: readonly components["schemas"]["PrivacyProcessor"][];
+            readonly page: components["schemas"]["Page"];
+        };
+        /**
+         * @description Closed subject-safe request status. Internal states are collapsed and reasons are never disclosed.
+         * @example in_review
+         * @enum {string}
+         */
+        readonly SubjectPrivacyStatus: "received" | "in_review" | "in_progress" | "completed" | "closed" | "withdrawn" | "expired";
+        /** @description Closed subject-safe privacy-request projection. No identifiers, reasons, actors, or tenant state are present. */
+        readonly SubjectPrivacyRequest: {
+            readonly type: components["schemas"]["PrivacyRequestType"];
+            readonly status: components["schemas"]["SubjectPrivacyStatus"];
+            /**
+             * Format: date-time
+             * @example 2026-09-20T12:00:00Z
+             */
+            readonly requested_at: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-20T12:05:00Z
+             */
+            readonly updated_at: string;
+        };
+        /** @description One subject-channel request instruction. The verification scope comes only from the outcome credential. */
+        readonly SubjectPrivacyRequestCreate: {
+            readonly type: components["schemas"]["PrivacyRequestType"];
+            /** @example sub_01M11HEQG00000000000000000 */
+            readonly subject_id?: string;
+            /** @example ng-1 */
+            readonly region: string;
+            /** @example liveness-check */
+            readonly purpose?: string;
+            /** @example obs_01M11HEQG00000000000000000 */
+            readonly record_id?: string;
+            /** @example dec_01M11HEQG00000000000000000 */
+            readonly decision_id?: string;
+            /** @example identity.name.full */
+            readonly name?: string;
+            /** @example Ada */
+            readonly value?: string;
+            /**
+             * @example observation
+             * @enum {string}
+             */
+            readonly kind?: "observation" | "claim" | "fact";
+            /**
+             * @example identity.trim.v1
+             * @enum {string}
+             */
+            readonly normalization?: "identity.exact.v1" | "identity.trim.v1" | "identity.ascii_upper.v1";
+        };
+        /** @description Bounded subject-safe privacy-request page. */
+        readonly SubjectPrivacyRequestList: {
+            /** @example [] */
+            readonly data: readonly components["schemas"]["SubjectPrivacyRequest"][];
+            readonly page: components["schemas"]["Page"];
+        };
+        /**
          * @description Tenant-owned evaluation-model registry name.
          * @example pad
          */
@@ -7881,6 +9002,766 @@ export interface components {
              * @enum {boolean}
              */
             readonly produces_identity_outcome: false;
+        };
+        /**
+         * @description ISO 3166-1 alpha-2 country code assigned to a registered pack.
+         * @example NG
+         */
+        readonly PackCountry: string;
+        /**
+         * @description Closed pack document-type vocabulary. The canonical drivers_license spelling is accepted on query input only.
+         * @example passport
+         * @enum {string}
+         */
+        readonly PackDocumentType: "passport" | "national_id" | "driver_licence";
+        /**
+         * @description Honest capability classification. It is not a legal or provider approval.
+         * @example structurally_supported
+         * @enum {string}
+         */
+        readonly PackSupportLevel: "fully_supported" | "structurally_supported" | "provider_only" | "best_effort" | "unsupported";
+        /**
+         * @description Registry lifecycle of one immutable pack revision.
+         * @example active
+         * @enum {string}
+         */
+        readonly PackLifecycleState: "draft" | "active" | "deprecated" | "retired";
+        /**
+         * @description Bounded legal-review status; not_reviewed is the fail-closed default.
+         * @example not_reviewed
+         * @enum {string}
+         */
+        readonly PackLegalReviewState: "not_reviewed" | "pending" | "reviewed";
+        /**
+         * @description Bounded evaluation-coverage state.
+         * @example not_evaluated
+         * @enum {string}
+         */
+        readonly PackEvaluationState: "not_evaluated" | "partially_evaluated" | "evaluated";
+        /**
+         * @description Bounded support declaration for one acquisition path.
+         * @example unknown
+         * @enum {string}
+         */
+        readonly PackDeclarationState: "supported" | "unsupported" | "unknown";
+        /**
+         * @description One physical document side mapped to an evidence artefact.
+         * @example front
+         * @enum {string}
+         */
+        readonly PackSide: "front" | "back";
+        /**
+         * @description Canonical document field vocabulary already owned by the document package.
+         * @example document_number
+         * @enum {string}
+         */
+        readonly PackFieldName: "document_number" | "document_type" | "issuing_state" | "nationality" | "first_name" | "last_name" | "other_names" | "date_of_birth" | "date_of_expiry" | "date_of_issue" | "sex" | "personal_number";
+        /**
+         * @description Closed deterministic Core capability vocabulary. Anti-tamper and template inspection remain provider or model gated.
+         * @example core.mrz_check_digits
+         * @enum {string}
+         */
+        readonly PackSecurityCheck: "core.barcode_structure" | "core.cross_field_consistency" | "core.front_back_consistency" | "core.mrz_check_digits";
+        /** @description One reference to an existing platform assurance capability, or an explicit unmapped state with a reason. */
+        readonly PackAssuranceMapping: {
+            readonly capability?: components["schemas"]["AssuranceCapabilityName"];
+            /**
+             * @example not_mapped
+             * @enum {string}
+             */
+            readonly state: "mapped" | "not_mapped";
+            /** @example no_pack_specific_assurance_profile */
+            readonly reason?: string;
+        };
+        /**
+         * @description One barcode, MRZ, or NFC support declaration without provider or legal approval.
+         * @example {
+         *       "state": "supported",
+         *       "formats": [
+         *         "td3"
+         *       ],
+         *       "reference": "ICAO Doc 9303 Part 4"
+         *     }
+         */
+        readonly PackDeclaration: {
+            readonly state: components["schemas"]["PackDeclarationState"];
+            /**
+             * @example [
+             *       "td3"
+             *     ]
+             */
+            readonly formats: readonly string[];
+            /** @example ICAO Doc 9303 Part 4 */
+            readonly reference?: string;
+            /** @example nfc_not_implemented */
+            readonly reason?: string;
+        };
+        /** @description One publicly referenced document version or format edition. */
+        readonly PackKnownVersion: {
+            /** @example icao-9303-td3 */
+            readonly version: string;
+            /** @example ICAO Doc 9303 Part 4 */
+            readonly reference: string;
+        };
+        /** @description One parser or model requirement reference. It never claims that the referenced implementation was accepted. */
+        readonly PackRequirementReference: {
+            /**
+             * @example parser
+             * @enum {string}
+             */
+            readonly kind: "model" | "parser";
+            /** @example idenqa.document.mrz */
+            readonly reference: string;
+            /** @example v1 */
+            readonly version: string;
+        };
+        /** @description One configurable country or jurisdiction requirement slot. The pack supplies a tenant-policy key, never a legal value. */
+        readonly PackRequirementSlot: {
+            /**
+             * @example authority
+             * @enum {string}
+             */
+            readonly name: "authority" | "controller" | "processor" | "recipient" | "region" | "transfer";
+            /** @example idenqa.requirement.authority */
+            readonly key: string;
+        };
+        /** @description Bounded evaluation coverage with opaque references. not_evaluated carries no references. */
+        readonly PackEvaluationCoverage: {
+            readonly state: components["schemas"]["PackEvaluationState"];
+            /** @example [] */
+            readonly references: readonly string[];
+        };
+        /** @description Honest legal-review status with an optional opaque reference. A reviewed state requires one; no pack asserts review without a reference. */
+        readonly PackLegalReview: {
+            readonly state: components["schemas"]["PackLegalReviewState"];
+            /** @example legal-review-pending-2026-09 */
+            readonly reference?: string;
+        };
+        /** @description Bounded document entry in a pack list projection. */
+        readonly PackDocumentSummary: {
+            readonly type: components["schemas"]["PackDocumentType"];
+            readonly support_level: components["schemas"]["PackSupportLevel"];
+        };
+        /** @description One immutable document entry. Supported content is present only when the evidence list justifies it; unsupported entries carry no support claims. */
+        readonly PackDocument: {
+            readonly type: components["schemas"]["PackDocumentType"];
+            /** @example [] */
+            readonly known_versions: readonly components["schemas"]["PackKnownVersion"][];
+            /**
+             * @example [
+             *       "front"
+             *     ]
+             */
+            readonly required_sides: readonly components["schemas"]["PackSide"][];
+            /**
+             * @example [
+             *       "document_number",
+             *       "date_of_birth"
+             *     ]
+             */
+            readonly supported_fields: readonly components["schemas"]["PackFieldName"][];
+            /** @example [] */
+            readonly security_checks: readonly components["schemas"]["PackSecurityCheck"][];
+            readonly barcode: components["schemas"]["PackDeclaration"];
+            readonly mrz: components["schemas"]["PackDeclaration"];
+            readonly nfc: components["schemas"]["PackDeclaration"];
+            /** @example [] */
+            readonly model_and_parser_requirements: readonly components["schemas"]["PackRequirementReference"][];
+            readonly evaluation_coverage: components["schemas"]["PackEvaluationCoverage"];
+            readonly support_level: components["schemas"]["PackSupportLevel"];
+            /**
+             * @example [
+             *       "no_legal_review",
+             *       "no_provider_evaluation"
+             *     ]
+             */
+            readonly known_limitations: readonly string[];
+            /**
+             * @example [
+             *       "core_mrz_parser_v1",
+             *       "icao_9303_td3_structure"
+             *     ]
+             */
+            readonly evidence: readonly string[];
+            /**
+             * @example [
+             *       {
+             *         "state": "not_mapped",
+             *         "reason": "no_pack_specific_assurance_profile"
+             *       }
+             *     ]
+             */
+            readonly assurance_mappings: readonly components["schemas"]["PackAssuranceMapping"][];
+        };
+        /** @description Immutable canonical country pack document. Digest covers exact content; lifecycle transitions never rewrite it. */
+        readonly Pack: {
+            /** @example 1 */
+            readonly schema_major: number;
+            /** @example 0 */
+            readonly schema_minor: number;
+            readonly country: components["schemas"]["PackCountry"];
+            /** @example NGA */
+            readonly country_alpha3: string;
+            /** @example idenqa.requirement.authority */
+            readonly authority: string;
+            /** @example 1 */
+            readonly revision: number;
+            /**
+             * Format: date-time
+             * @example 2026-09-20T00:00:00Z
+             */
+            readonly published_at: string;
+            /** @example aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa */
+            readonly digest: string;
+            readonly lifecycle_state: components["schemas"]["PackLifecycleState"];
+            readonly legal_review: components["schemas"]["PackLegalReview"];
+            /**
+             * @example [
+             *       {
+             *         "name": "authority",
+             *         "key": "idenqa.requirement.authority"
+             *       }
+             *     ]
+             */
+            readonly requirement_slots: readonly components["schemas"]["PackRequirementSlot"][];
+            readonly documents: readonly components["schemas"]["PackDocument"][];
+        };
+        /** @description Safe list projection of one registered pack revision with current lifecycle state. */
+        readonly PackSummary: {
+            readonly country: components["schemas"]["PackCountry"];
+            /** @example NGA */
+            readonly country_alpha3: string;
+            /** @example 1 */
+            readonly revision: number;
+            /** @example aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa */
+            readonly digest: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-20T00:00:00Z
+             */
+            readonly published_at: string;
+            readonly lifecycle_state: components["schemas"]["PackLifecycleState"];
+            readonly legal_review: components["schemas"]["PackLegalReview"];
+            /**
+             * @example [
+             *       {
+             *         "type": "passport",
+             *         "support_level": "structurally_supported"
+             *       }
+             *     ]
+             */
+            readonly documents: readonly components["schemas"]["PackDocumentSummary"][];
+        };
+        /** @description One exact pack revision with its current registry lifecycle state and expected-version counter. */
+        readonly PackResource: {
+            readonly pack: components["schemas"]["Pack"];
+            readonly lifecycle_state: components["schemas"]["PackLifecycleState"];
+            /** @example 0 */
+            readonly version: number;
+            /**
+             * Format: date-time
+             * @example 2026-09-20T00:00:00Z
+             */
+            readonly updated_at?: string;
+        };
+        /** @description Bounded list of registered pack revisions. The embedded registry is reviewed and bounded, so has_more is always false. */
+        readonly PackPage: {
+            /** @example [] */
+            readonly data: readonly components["schemas"]["PackSummary"][];
+            readonly page: components["schemas"]["Page"];
+        };
+        /** @description Honest support-level projection for one active pack document. It contains no legal conclusion, provider approval, or security-feature finding. */
+        readonly DocumentSupport: {
+            readonly country: components["schemas"]["PackCountry"];
+            /** @example NGA */
+            readonly country_alpha3: string;
+            readonly document_type: components["schemas"]["PackDocumentType"];
+            /** @example 1 */
+            readonly pack_revision: number;
+            /** @example aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa */
+            readonly pack_digest: string;
+            readonly lifecycle_state: components["schemas"]["PackLifecycleState"];
+            readonly legal_review: components["schemas"]["PackLegalReview"];
+            readonly support_level: components["schemas"]["PackSupportLevel"];
+            /** @example [] */
+            readonly known_versions: readonly components["schemas"]["PackKnownVersion"][];
+            /**
+             * @example [
+             *       "front"
+             *     ]
+             */
+            readonly required_sides: readonly components["schemas"]["PackSide"][];
+            /**
+             * @example [
+             *       "document_number"
+             *     ]
+             */
+            readonly supported_fields: readonly components["schemas"]["PackFieldName"][];
+            /** @example [] */
+            readonly security_checks: readonly components["schemas"]["PackSecurityCheck"][];
+            readonly barcode: components["schemas"]["PackDeclaration"];
+            readonly mrz: components["schemas"]["PackDeclaration"];
+            readonly nfc: components["schemas"]["PackDeclaration"];
+            /** @example [] */
+            readonly model_and_parser_requirements: readonly components["schemas"]["PackRequirementReference"][];
+            readonly evaluation_coverage: components["schemas"]["PackEvaluationCoverage"];
+            /**
+             * @example [
+             *       "no_legal_review"
+             *     ]
+             */
+            readonly known_limitations: readonly string[];
+            /**
+             * @example [
+             *       "core_mrz_parser_v1"
+             *     ]
+             */
+            readonly evidence: readonly string[];
+            /**
+             * @example [
+             *       {
+             *         "state": "not_mapped",
+             *         "reason": "no_pack_specific_assurance_profile"
+             *       }
+             *     ]
+             */
+            readonly assurance_mappings: readonly components["schemas"]["PackAssuranceMapping"][];
+            /**
+             * @example [
+             *       {
+             *         "name": "authority",
+             *         "key": "idenqa.requirement.authority"
+             *       }
+             *     ]
+             */
+            readonly requirement_slots: readonly components["schemas"]["PackRequirementSlot"][];
+            /** @example idenqa.requirement.authority */
+            readonly authority: string;
+        };
+        /**
+         * @description Stable portable capture-experience identifier.
+         * @example exp_01J00000000000000000000000
+         */
+        readonly ExperienceID: string;
+        /**
+         * @description Aggregate lifecycle state. The live published revision stays live while a new draft is prepared.
+         * @example published
+         * @enum {string}
+         */
+        readonly ExperienceState: "draft" | "approved" | "published" | "revoked";
+        /**
+         * @description Immutable per-version lifecycle state.
+         * @example published
+         * @enum {string}
+         */
+        readonly ExperienceRevisionState: "draft" | "approved" | "published" | "superseded" | "revoked";
+        /** @description One bounded tenant copy value. Core-owned mandatory namespaces are rejected. */
+        readonly ExperienceCopyEntry: {
+            /** @example capture.title */
+            readonly key: string;
+            /** @example Verify your identity */
+            readonly value: string;
+        };
+        /** @description One locale catalogue of bounded tenant copy. */
+        readonly ExperienceLocaleCopy: {
+            /** @example en */
+            readonly locale: string;
+            /**
+             * @example [
+             *       {
+             *         "key": "capture.title",
+             *         "value": "Verify your identity"
+             *       }
+             *     ]
+             */
+            readonly entries: readonly components["schemas"]["ExperienceCopyEntry"][];
+        };
+        /**
+         * @description Structured tenant copy keyed by locale with an independent copy version.
+         * @example {
+         *       "version": "tc_acme_v1",
+         *       "locales": [
+         *         {
+         *           "locale": "en",
+         *           "entries": [
+         *             {
+         *               "key": "capture.title",
+         *               "value": "Verify your identity"
+         *             }
+         *           ]
+         *         }
+         *       ]
+         *     }
+         */
+        readonly ExperienceCopy: {
+            /** @example tc_acme_v1 */
+            readonly version: string;
+            /**
+             * @example [
+             *       {
+             *         "locale": "en",
+             *         "entries": [
+             *           {
+             *             "key": "capture.title",
+             *             "value": "Verify your identity"
+             *           }
+             *         ]
+             *       }
+             *     ]
+             */
+            readonly locales: readonly components["schemas"]["ExperienceLocaleCopy"][];
+        };
+        /** @description One ordered targeting rule. Empty dimensions are unconstrained; an empty rule is a catch-all. */
+        readonly ExperienceTarget: {
+            /** @example capture.identity */
+            readonly workflow?: string;
+            /**
+             * @example [
+             *       "NG"
+             *     ]
+             */
+            readonly countries?: readonly string[];
+            /**
+             * @example [
+             *       "dev.acme.app"
+             *     ]
+             */
+            readonly application_ids?: readonly string[];
+            /**
+             * @example [
+             *       "https://capture.acme.example"
+             *     ]
+             */
+            readonly origins?: readonly string[];
+            /** @example 1.0.0 */
+            readonly sdk_version_min?: string;
+            /** @example 2.9.9 */
+            readonly sdk_version_max?: string;
+        };
+        /** @description Vetted image asset reference. Executable and script-capable content is rejected. */
+        readonly ExperienceAsset: {
+            /** @example logo */
+            readonly key: string;
+            /** @constant */
+            readonly kind: "image";
+            /**
+             * @example image/png
+             * @enum {unknown}
+             */
+            readonly mime: "image/png" | "image/jpeg" | "image/webp" | "image/avif";
+            /**
+             * Format: int64
+             * @example 4096
+             */
+            readonly size: number;
+            /** @example aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa */
+            readonly digest: string;
+            /** @example experiences/acme/logo.png */
+            readonly object_key: string;
+            /** @example v1 */
+            readonly object_version: string;
+        };
+        /** @description One optional validated HTTPS link with bounded tenant-facing text. */
+        readonly ExperienceCustomLink: {
+            /** @example Accessibility */
+            readonly label: string;
+            /** @example https://acme.example/accessibility */
+            readonly url: string;
+        };
+        /** @description Validated HTTPS support, privacy, and terms destinations plus optional custom links. */
+        readonly ExperienceLinks: {
+            /** @example https://support.acme.example/help */
+            readonly support: string;
+            /** @example https://acme.example/privacy */
+            readonly privacy: string;
+            /** @example https://acme.example/terms */
+            readonly terms: string;
+            readonly custom?: readonly components["schemas"]["ExperienceCustomLink"][];
+        };
+        /** @description Safe portable theme tokens. Host appearance-only CSS variables remain authoritative for host-local branding. */
+        readonly ExperienceTheme: {
+            /** @example #1f6feb */
+            readonly primary_color: string;
+            /** @example #0b3d91 */
+            readonly accent_color: string;
+            /** @example #ffffff */
+            readonly background_color: string;
+            /** @example #1b1f23 */
+            readonly text_color: string;
+            /** @example logo */
+            readonly logo_asset_key?: string;
+        };
+        /**
+         * @description One immutable signed experience revision.
+         * @example {
+         *       "schema_version": "1.0",
+         *       "experience_id": "exp_01J00000000000000000000000",
+         *       "version": 1,
+         *       "name": "Acme selfie capture",
+         *       "copy": {
+         *         "version": "tc_acme_v1",
+         *         "locales": [
+         *           {
+         *             "locale": "en",
+         *             "entries": [
+         *               {
+         *                 "key": "capture.title",
+         *                 "value": "Verify your identity"
+         *               }
+         *             ]
+         *           }
+         *         ]
+         *       },
+         *       "mandatory_copy_version": "mc-2026-09-01",
+         *       "default_locale": "en",
+         *       "targeting": [],
+         *       "links": {
+         *         "support": "https://acme.example/support",
+         *         "privacy": "https://acme.example/privacy",
+         *         "terms": "https://acme.example/terms"
+         *       },
+         *       "theme": {
+         *         "primary_color": "#1f6feb",
+         *         "accent_color": "#0b3d91",
+         *         "background_color": "#ffffff",
+         *         "text_color": "#1b1f23"
+         *       }
+         *     }
+         */
+        readonly ExperienceDocument: {
+            /** @constant */
+            readonly schema_version: "1.0";
+            readonly experience_id: components["schemas"]["ExperienceID"];
+            /** @example 1 */
+            readonly version: number;
+            /** @example Acme selfie capture */
+            readonly name: string;
+            readonly copy: components["schemas"]["ExperienceCopy"];
+            /** @example mc-2026-09-01 */
+            readonly mandatory_copy_version: string;
+            /** @example en */
+            readonly default_locale: string;
+            /**
+             * @example [
+             *       {
+             *         "workflow": "capture.identity",
+             *         "countries": [
+             *           "NG"
+             *         ]
+             *       }
+             *     ]
+             */
+            readonly targeting: readonly components["schemas"]["ExperienceTarget"][];
+            /** @example [] */
+            readonly assets?: readonly components["schemas"]["ExperienceAsset"][];
+            readonly links: components["schemas"]["ExperienceLinks"];
+            readonly theme: components["schemas"]["ExperienceTheme"];
+            /**
+             * @example [
+             *       "https://capture.acme.example"
+             *     ]
+             */
+            readonly allowed_origins?: readonly string[];
+        };
+        /** @description Signed envelope. Digest and signature cover the canonical document bytes only. */
+        readonly ExperienceManifest: {
+            readonly document: components["schemas"]["ExperienceDocument"];
+            /** @example aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa */
+            readonly digest: string;
+            /** @example expkey_core_1 */
+            readonly key_id: string;
+            /** @constant */
+            readonly algorithm: "ed25519";
+            /** @example 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 */
+            readonly signature: string;
+        };
+        /**
+         * @description Core-owned, non-overridable regulatory, consent, safety, and accessibility copy.
+         * @example {
+         *       "version": "mc-2026-09-01",
+         *       "digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+         *       "entries": [
+         *         {
+         *           "key": "regulatory.processing_notice",
+         *           "value": "Your identity information is processed to verify your identity."
+         *         }
+         *       ]
+         *     }
+         */
+        readonly ExperienceMandatoryCopy: {
+            /** @example mc-2026-09-01 */
+            readonly version: string;
+            /** @example aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa */
+            readonly digest: string;
+            /**
+             * @example [
+             *       {
+             *         "key": "capture.title",
+             *         "value": "Verify your identity"
+             *       }
+             *     ]
+             */
+            readonly entries: readonly components["schemas"]["ExperienceCopyEntry"][];
+        };
+        /** @description Exact experience, locale, tenant-copy, and mandatory-copy versions pinned to one session. */
+        readonly ExperiencePinned: {
+            readonly experience_id: components["schemas"]["ExperienceID"];
+            /** @example 1 */
+            readonly version: number;
+            /** @example en */
+            readonly locale: string;
+            /** @example tc_acme_v1 */
+            readonly tenant_copy_version: string;
+            /** @example mc-2026-09-01 */
+            readonly mandatory_copy_version: string;
+            /**
+             * @example published
+             * @enum {string}
+             */
+            readonly source: "pinned" | "published" | "default";
+            /** @example aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa */
+            readonly digest: string;
+            /** @example expkey_core_1 */
+            readonly key_id: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-20T12:00:00Z
+             */
+            readonly pinned_at: string;
+        };
+        /** @description Signed experience document plus Core-owned mandatory copy and exact pinned versions. */
+        readonly ExperienceResolution: {
+            readonly manifest: components["schemas"]["ExperienceManifest"];
+            readonly mandatory_copy: components["schemas"]["ExperienceMandatoryCopy"];
+            readonly pinned: components["schemas"]["ExperiencePinned"];
+            /**
+             * @description True when the signed accessible safe default was substituted.
+             * @example false
+             */
+            readonly fallback: boolean;
+        };
+        /**
+         * @description Bounded tenant draft input. Identifier and version are Core-assigned.
+         * @example {
+         *       "version": "tc_acme_v1",
+         *       "locales": [
+         *         {
+         *           "locale": "en",
+         *           "entries": [
+         *             {
+         *               "key": "capture.title",
+         *               "value": "Verify your identity"
+         *             }
+         *           ]
+         *         }
+         *       ]
+         *     }
+         */
+        readonly ExperienceMutation: {
+            /** @example Acme selfie capture */
+            readonly name: string;
+            readonly copy: components["schemas"]["ExperienceCopy"];
+            /** @example mc-2026-09-01 */
+            readonly mandatory_copy_version: string;
+            /** @example en */
+            readonly default_locale: string;
+            /**
+             * @example [
+             *       {
+             *         "workflow": "capture.identity",
+             *         "countries": [
+             *           "NG"
+             *         ]
+             *       }
+             *     ]
+             */
+            readonly targeting: readonly components["schemas"]["ExperienceTarget"][];
+            /** @example [] */
+            readonly assets?: readonly components["schemas"]["ExperienceAsset"][];
+            readonly links: components["schemas"]["ExperienceLinks"];
+            readonly theme: components["schemas"]["ExperienceTheme"];
+            /**
+             * @example [
+             *       "https://capture.acme.example"
+             *     ]
+             */
+            readonly allowed_origins?: readonly string[];
+        };
+        /** @description Optimistic precondition and one bounded draft document for a new immutable revision. */
+        readonly ExperienceDraft: {
+            /**
+             * Format: int64
+             * @description Current aggregate revision returned by the last read.
+             * @example 1
+             */
+            readonly expected_version: number;
+            readonly document: components["schemas"]["ExperienceMutation"];
+        };
+        /** @description Expected-version precondition and optional bounded reason for approve and publish commands. */
+        readonly ExperienceTransition: {
+            /**
+             * Format: int64
+             * @example 2
+             */
+            readonly expected_version: number;
+            /** @example Approved by compliance */
+            readonly reason?: string;
+        };
+        /** @description Expected-version precondition and required bounded reason for the kill switch. */
+        readonly ExperienceRevocation: {
+            /**
+             * Format: int64
+             * @example 3
+             */
+            readonly expected_version: number;
+            /** @example Brand copy incident */
+            readonly reason: string;
+        };
+        /** @description Expected-version precondition and previously approved target version to republish. */
+        readonly ExperienceRollback: {
+            /**
+             * Format: int64
+             * @example 4
+             */
+            readonly expected_version: number;
+            /** @example 1 */
+            readonly target_version: number;
+            /** @example Restore prior approved revision */
+            readonly reason?: string;
+        };
+        /** @description One tenant-owned portable capture experience aggregate and its latest immutable signed revision. */
+        readonly Experience: {
+            readonly id: components["schemas"]["ExperienceID"];
+            readonly state: components["schemas"]["ExperienceState"];
+            /**
+             * Format: int64
+             * @description Optimistic aggregate revision for expected_version preconditions.
+             * @example 3
+             */
+            readonly revision: number;
+            /** @example 2 */
+            readonly latest_version: number;
+            /** @example 2 */
+            readonly approved_version: number;
+            /** @example 2 */
+            readonly published_version: number;
+            readonly document: components["schemas"]["ExperienceDocument"];
+            /**
+             * Format: date-time
+             * @example 2026-09-20T12:00:00Z
+             */
+            readonly created_at: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-20T12:05:00Z
+             */
+            readonly updated_at: string;
+        };
+        /** @description One bounded ascending page of tenant-owned portable capture experiences. */
+        readonly ExperienceList: {
+            /** @example [] */
+            readonly data: readonly components["schemas"]["Experience"][];
+            readonly page: components["schemas"]["Page"];
         };
         readonly evidence: string;
         readonly artefact: string;
@@ -15569,6 +17450,1979 @@ export interface operations {
                 };
             };
             readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly listPacks: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description List registered country pack revisions result. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["PackPage"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly getActiveCountryPack: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description ISO 3166-1 alpha-2 or alpha-3 country code. */
+                readonly country: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The active pack revision was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["PackResource"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly getCountryPackRevision: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description ISO 3166-1 alpha-2 or alpha-3 country code. */
+                readonly country: string;
+                /** @description Positive pack revision number. */
+                readonly revision: number;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The exact pack revision was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["PackResource"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly getDocumentSupport: {
+        readonly parameters: {
+            readonly query: {
+                /** @description ISO 3166-1 alpha-2 or alpha-3 country code. */
+                readonly country: string;
+                /** @description Pack document type; the canonical drivers_license spelling is also accepted. */
+                readonly type: components["schemas"]["PackDocumentType"];
+            };
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The active document support projection was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["DocumentSupport"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly listPrivacyRequests: {
+        readonly parameters: {
+            readonly query?: {
+                /** @description Restrict the page to one exact request state. */
+                readonly state?: "requested" | "in_review" | "approved" | "partially_approved" | "denied" | "executing" | "completed" | "failed" | "withdrawn" | "expired";
+                /** @description Restrict the page to one exact request type. */
+                readonly type?: "access" | "portability" | "correction" | "restriction" | "objection" | "erasure";
+                /** @description Restrict the page to one exact subject scope. */
+                readonly subject_id?: string;
+                /** @description Opaque continuation cursor returned by the preceding page. */
+                readonly cursor?: components["parameters"]["Cursor"];
+                /** @description Maximum collection items to return. The default is 25. */
+                readonly limit?: components["parameters"]["Limit"];
+            };
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description A bounded ascending page of privacy requests was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["PrivacyRequestList"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly createPrivacyRequest: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** @description One bounded privacy-request instruction for the selected type. */
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["PrivacyRequestCreate"];
+            };
+        };
+        readonly responses: {
+            /** @description The privacy request was created and awaits review. */
+            readonly 202: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    /** @description URL of the created resource. */
+                    readonly Location?: string;
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["PrivacyRequestSummary"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly getPrivacyRequest: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Stable privacy-request identifier. */
+                readonly requestID: components["schemas"]["PrivacyRequestID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The privacy request was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly ETag: components["headers"]["ETag"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["PrivacyRequestStatus"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly approvePrivacyRequest: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Stable privacy-request identifier. */
+                readonly requestID: components["schemas"]["PrivacyRequestID"];
+            };
+            readonly cookie?: never;
+        };
+        /** @description One bounded decision command for this request. */
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["PrivacyRequestDecision"];
+            };
+        };
+        readonly responses: {
+            /** @description The decision was recorded. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly ETag: components["headers"]["ETag"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["PrivacyRequestStatus"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly denyPrivacyRequest: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Stable privacy-request identifier. */
+                readonly requestID: components["schemas"]["PrivacyRequestID"];
+            };
+            readonly cookie?: never;
+        };
+        /** @description One bounded decision command for this request. */
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["PrivacyRequestDecision"];
+            };
+        };
+        readonly responses: {
+            /** @description The denial was recorded. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly ETag: components["headers"]["ETag"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["PrivacyRequestStatus"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly withdrawPrivacyRequest: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Stable privacy-request identifier. */
+                readonly requestID: components["schemas"]["PrivacyRequestID"];
+            };
+            readonly cookie?: never;
+        };
+        /** @description One expected-version command for this request. */
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["PrivacyRequestExpectedVersion"];
+            };
+        };
+        readonly responses: {
+            /** @description The request was withdrawn. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly ETag: components["headers"]["ETag"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["PrivacyRequestStatus"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly executePrivacyRequest: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Stable privacy-request identifier. */
+                readonly requestID: components["schemas"]["PrivacyRequestID"];
+            };
+            readonly cookie?: never;
+        };
+        /** @description One expected-version command for this request. */
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["PrivacyRequestExpectedVersion"];
+            };
+        };
+        readonly responses: {
+            /** @description The execution result was recorded. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly ETag: components["headers"]["ETag"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["PrivacyRequestStatus"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly listPrivacyRestrictions: {
+        readonly parameters: {
+            readonly query?: {
+                /** @description Restrict the page to one exact subject scope. */
+                readonly subject_id?: string;
+                /** @description Opaque continuation cursor returned by the preceding page. */
+                readonly cursor?: components["parameters"]["Cursor"];
+                /** @description Maximum collection items to return. The default is 25. */
+                readonly limit?: components["parameters"]["Limit"];
+            };
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description A bounded ascending page of restrictions was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["PrivacyRestrictionList"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly liftPrivacyRestriction: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Stable processing-restriction identifier. */
+                readonly restrictionID: components["schemas"]["PrivacyRestrictionID"];
+            };
+            readonly cookie?: never;
+        };
+        /** @description One expected-version lift command with an audited reason. */
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["PrivacyRestrictionLift"];
+            };
+        };
+        readonly responses: {
+            /** @description The restriction was lifted. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly ETag: components["headers"]["ETag"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["PrivacyRestriction"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly listPrivacyDisclosures: {
+        readonly parameters: {
+            readonly query?: {
+                /** @description Restrict the page to one exact privacy request. */
+                readonly request_id?: components["schemas"]["PrivacyRequestID"];
+                /** @description Opaque continuation cursor returned by the preceding page. */
+                readonly cursor?: components["parameters"]["Cursor"];
+                /** @description Maximum collection items to return. The default is 25. */
+                readonly limit?: components["parameters"]["Limit"];
+            };
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description A bounded ascending page of disclosures was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["PrivacyDisclosureList"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly createPrivacyDisclosure: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** @description One immutable reference-only disclosure command. */
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["PrivacyDisclosureCreate"];
+            };
+        };
+        readonly responses: {
+            /** @description The disclosure record was created. */
+            readonly 201: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    /** @description URL of the created resource. */
+                    readonly Location?: string;
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["PrivacyDisclosure"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly listPrivacyProcessors: {
+        readonly parameters: {
+            readonly query?: {
+                /** @description Opaque continuation cursor returned by the preceding page. */
+                readonly cursor?: components["parameters"]["Cursor"];
+                /** @description Maximum collection items to return. The default is 25. */
+                readonly limit?: components["parameters"]["Limit"];
+            };
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description A bounded ascending page of processor inventory entries was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["PrivacyProcessorList"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly createPrivacyProcessor: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** @description One create or expected-version processor inventory command. */
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["PrivacyProcessorPut"];
+            };
+        };
+        readonly responses: {
+            /** @description The processor inventory entry was created. */
+            readonly 201: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    /** @description URL of the created resource. */
+                    readonly Location?: string;
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["PrivacyProcessor"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly getPrivacyProcessor: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Stable processor inventory identifier. */
+                readonly processorID: components["schemas"]["PrivacyProcessorID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The processor inventory entry was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly ETag: components["headers"]["ETag"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["PrivacyProcessor"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly updatePrivacyProcessor: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Stable processor inventory identifier. */
+                readonly processorID: components["schemas"]["PrivacyProcessorID"];
+            };
+            readonly cookie?: never;
+        };
+        /** @description One create or expected-version processor inventory command. */
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["PrivacyProcessorPut"];
+            };
+        };
+        readonly responses: {
+            /** @description The processor inventory entry was updated. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly ETag: components["headers"]["ETag"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["PrivacyProcessor"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly listSubjectPrivacyRequests: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The closed subject-safe page was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["SubjectPrivacyRequestList"];
+                };
+            };
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly createSubjectPrivacyRequest: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** @description One subject-channel request instruction scoped by the outcome credential. */
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["SubjectPrivacyRequestCreate"];
+            };
+        };
+        readonly responses: {
+            /** @description The subject privacy request was created. */
+            readonly 202: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["SubjectPrivacyRequest"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly getExperienceDefault: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The signed safe default and its mandatory copy were returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "manifest": {
+                     *         "document": {
+                     *           "schema_version": "1.0",
+                     *           "experience_id": "exp_01J00000000000000000000000",
+                     *           "version": 1,
+                     *           "name": "Acme selfie capture",
+                     *           "copy": {
+                     *             "version": "tc_acme_v1",
+                     *             "locales": [
+                     *               {
+                     *                 "locale": "en",
+                     *                 "entries": [
+                     *                   {
+                     *                     "key": "capture.title",
+                     *                     "value": "Verify your identity"
+                     *                   }
+                     *                 ]
+                     *               }
+                     *             ]
+                     *           },
+                     *           "mandatory_copy_version": "mc-2026-09-01",
+                     *           "default_locale": "en",
+                     *           "targeting": [
+                     *             {
+                     *               "workflow": "capture.identity",
+                     *               "countries": [
+                     *                 "NG"
+                     *               ]
+                     *             }
+                     *           ],
+                     *           "links": {
+                     *             "support": "https://acme.example/support",
+                     *             "privacy": "https://acme.example/privacy",
+                     *             "terms": "https://acme.example/terms"
+                     *           },
+                     *           "theme": {
+                     *             "primary_color": "#1f6feb",
+                     *             "accent_color": "#0b3d91",
+                     *             "background_color": "#ffffff",
+                     *             "text_color": "#1b1f23"
+                     *           }
+                     *         },
+                     *         "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                     *         "key_id": "expkey_core_1",
+                     *         "algorithm": "ed25519",
+                     *         "signature": "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                     *       },
+                     *       "mandatory_copy": {
+                     *         "version": "mc-2026-09-01",
+                     *         "digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                     *         "entries": [
+                     *           {
+                     *             "key": "regulatory.processing_notice",
+                     *             "value": "Your identity information is processed to verify your identity."
+                     *           }
+                     *         ]
+                     *       },
+                     *       "pinned": {
+                     *         "experience_id": "exp_01J00000000000000000000000",
+                     *         "version": 1,
+                     *         "locale": "en",
+                     *         "tenant_copy_version": "tc_acme_v1",
+                     *         "mandatory_copy_version": "mc-2026-09-01",
+                     *         "source": "published",
+                     *         "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                     *         "key_id": "expkey_core_1",
+                     *         "pinned_at": "2026-09-20T12:00:00Z"
+                     *       },
+                     *       "fallback": false
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["ExperienceResolution"];
+                };
+            };
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly resolveCaptureExperience: {
+        readonly parameters: {
+            readonly query?: {
+                /** @description Bounded workflow identifier used only when no pin exists yet. */
+                readonly workflow?: string;
+                /** @description ISO 3166-1 alpha-2 country used only when no pin exists yet. */
+                readonly country?: string;
+                /** @description Application identity used only when no pin exists yet. */
+                readonly application_id?: string;
+                /** @description Exact HTTPS origin used only when no pin exists yet and never inferred from a header. */
+                readonly origin?: string;
+                /** @description SDK semantic version used only when no pin exists yet. */
+                readonly sdk_version?: string;
+                /** @description Requested BCP 47 locale; unknown locales fall back to the document default. */
+                readonly locale?: string;
+            };
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The pinned or safe-default signed resolution was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    /** @description Always no-store. */
+                    readonly "Cache-Control"?: string;
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "manifest": {
+                     *         "document": {
+                     *           "schema_version": "1.0",
+                     *           "experience_id": "exp_01J00000000000000000000000",
+                     *           "version": 1,
+                     *           "name": "Acme selfie capture",
+                     *           "copy": {
+                     *             "version": "tc_acme_v1",
+                     *             "locales": [
+                     *               {
+                     *                 "locale": "en",
+                     *                 "entries": [
+                     *                   {
+                     *                     "key": "capture.title",
+                     *                     "value": "Verify your identity"
+                     *                   }
+                     *                 ]
+                     *               }
+                     *             ]
+                     *           },
+                     *           "mandatory_copy_version": "mc-2026-09-01",
+                     *           "default_locale": "en",
+                     *           "targeting": [
+                     *             {
+                     *               "workflow": "capture.identity",
+                     *               "countries": [
+                     *                 "NG"
+                     *               ]
+                     *             }
+                     *           ],
+                     *           "links": {
+                     *             "support": "https://acme.example/support",
+                     *             "privacy": "https://acme.example/privacy",
+                     *             "terms": "https://acme.example/terms"
+                     *           },
+                     *           "theme": {
+                     *             "primary_color": "#1f6feb",
+                     *             "accent_color": "#0b3d91",
+                     *             "background_color": "#ffffff",
+                     *             "text_color": "#1b1f23"
+                     *           }
+                     *         },
+                     *         "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                     *         "key_id": "expkey_core_1",
+                     *         "algorithm": "ed25519",
+                     *         "signature": "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                     *       },
+                     *       "mandatory_copy": {
+                     *         "version": "mc-2026-09-01",
+                     *         "digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                     *         "entries": [
+                     *           {
+                     *             "key": "regulatory.processing_notice",
+                     *             "value": "Your identity information is processed to verify your identity."
+                     *           }
+                     *         ]
+                     *       },
+                     *       "pinned": {
+                     *         "experience_id": "exp_01J00000000000000000000000",
+                     *         "version": 1,
+                     *         "locale": "en",
+                     *         "tenant_copy_version": "tc_acme_v1",
+                     *         "mandatory_copy_version": "mc-2026-09-01",
+                     *         "source": "published",
+                     *         "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                     *         "key_id": "expkey_core_1",
+                     *         "pinned_at": "2026-09-20T12:00:00Z"
+                     *       },
+                     *       "fallback": false
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["ExperienceResolution"];
+                };
+            };
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly listExperiences: {
+        readonly parameters: {
+            readonly query?: {
+                /** @description Opaque continuation cursor returned by the preceding page. */
+                readonly cursor?: components["parameters"]["Cursor"];
+                /** @description Maximum collection items to return. The default is 25. */
+                readonly limit?: components["parameters"]["Limit"];
+            };
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description A bounded page of experiences was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "id": "exp_01J00000000000000000000000",
+                     *           "state": "published",
+                     *           "revision": 3,
+                     *           "latest_version": 2,
+                     *           "approved_version": 2,
+                     *           "published_version": 2,
+                     *           "document": {
+                     *             "schema_version": "1.0",
+                     *             "experience_id": "exp_01J00000000000000000000000",
+                     *             "version": 1,
+                     *             "name": "Acme selfie capture",
+                     *             "copy": {
+                     *               "version": "tc_acme_v1",
+                     *               "locales": [
+                     *                 {
+                     *                   "locale": "en",
+                     *                   "entries": [
+                     *                     {
+                     *                       "key": "capture.title",
+                     *                       "value": "Verify your identity"
+                     *                     }
+                     *                   ]
+                     *                 }
+                     *               ]
+                     *             },
+                     *             "mandatory_copy_version": "mc-2026-09-01",
+                     *             "default_locale": "en",
+                     *             "targeting": [
+                     *               {
+                     *                 "workflow": "capture.identity",
+                     *                 "countries": [
+                     *                   "NG"
+                     *                 ]
+                     *               }
+                     *             ],
+                     *             "links": {
+                     *               "support": "https://acme.example/support",
+                     *               "privacy": "https://acme.example/privacy",
+                     *               "terms": "https://acme.example/terms"
+                     *             },
+                     *             "theme": {
+                     *               "primary_color": "#1f6feb",
+                     *               "accent_color": "#0b3d91",
+                     *               "background_color": "#ffffff",
+                     *               "text_color": "#1b1f23"
+                     *             }
+                     *           },
+                     *           "created_at": "2026-09-20T12:00:00Z",
+                     *           "updated_at": "2026-09-20T12:05:00Z"
+                     *         }
+                     *       ],
+                     *       "page": {
+                     *         "has_more": false
+                     *       }
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["ExperienceList"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly createExperience: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** @description One bounded draft document without identifier or version. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "name": "Acme selfie capture",
+                 *       "copy": {
+                 *         "version": "tc_acme_v1",
+                 *         "locales": [
+                 *           {
+                 *             "locale": "en",
+                 *             "entries": [
+                 *               {
+                 *                 "key": "capture.title",
+                 *                 "value": "Verify your identity"
+                 *               }
+                 *             ]
+                 *           }
+                 *         ]
+                 *       },
+                 *       "mandatory_copy_version": "mc-2026-09-01",
+                 *       "default_locale": "en",
+                 *       "targeting": [
+                 *         {
+                 *           "workflow": "capture.identity",
+                 *           "countries": [
+                 *             "NG"
+                 *           ]
+                 *         }
+                 *       ],
+                 *       "links": {
+                 *         "support": "https://acme.example/support",
+                 *         "privacy": "https://acme.example/privacy",
+                 *         "terms": "https://acme.example/terms"
+                 *       },
+                 *       "theme": {
+                 *         "primary_color": "#1f6feb",
+                 *         "accent_color": "#0b3d91",
+                 *         "background_color": "#ffffff",
+                 *         "text_color": "#1b1f23"
+                 *       }
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["ExperienceMutation"];
+            };
+        };
+        readonly responses: {
+            /** @description The draft experience was created. */
+            readonly 201: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly ETag: components["headers"]["ETag"];
+                    /** @description URL of the created resource. */
+                    readonly Location?: string;
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "exp_01J00000000000000000000000",
+                     *       "state": "published",
+                     *       "revision": 3,
+                     *       "latest_version": 2,
+                     *       "approved_version": 2,
+                     *       "published_version": 2,
+                     *       "document": {
+                     *         "schema_version": "1.0",
+                     *         "experience_id": "exp_01J00000000000000000000000",
+                     *         "version": 1,
+                     *         "name": "Acme selfie capture",
+                     *         "copy": {
+                     *           "version": "tc_acme_v1",
+                     *           "locales": [
+                     *             {
+                     *               "locale": "en",
+                     *               "entries": [
+                     *                 {
+                     *                   "key": "capture.title",
+                     *                   "value": "Verify your identity"
+                     *                 }
+                     *               ]
+                     *             }
+                     *           ]
+                     *         },
+                     *         "mandatory_copy_version": "mc-2026-09-01",
+                     *         "default_locale": "en",
+                     *         "targeting": [
+                     *           {
+                     *             "workflow": "capture.identity",
+                     *             "countries": [
+                     *               "NG"
+                     *             ]
+                     *           }
+                     *         ],
+                     *         "links": {
+                     *           "support": "https://acme.example/support",
+                     *           "privacy": "https://acme.example/privacy",
+                     *           "terms": "https://acme.example/terms"
+                     *         },
+                     *         "theme": {
+                     *           "primary_color": "#1f6feb",
+                     *           "accent_color": "#0b3d91",
+                     *           "background_color": "#ffffff",
+                     *           "text_color": "#1b1f23"
+                     *         }
+                     *       },
+                     *       "created_at": "2026-09-20T12:00:00Z",
+                     *       "updated_at": "2026-09-20T12:05:00Z"
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["Experience"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly importExperience: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** @description One exported signed experience manifest. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "document": {
+                 *         "schema_version": "1.0",
+                 *         "experience_id": "exp_01J00000000000000000000000",
+                 *         "version": 1,
+                 *         "name": "Acme selfie capture",
+                 *         "copy": {
+                 *           "version": "tc_acme_v1",
+                 *           "locales": [
+                 *             {
+                 *               "locale": "en",
+                 *               "entries": [
+                 *                 {
+                 *                   "key": "capture.title",
+                 *                   "value": "Verify your identity"
+                 *                 }
+                 *               ]
+                 *             }
+                 *           ]
+                 *         },
+                 *         "mandatory_copy_version": "mc-2026-09-01",
+                 *         "default_locale": "en",
+                 *         "targeting": [
+                 *           {
+                 *             "workflow": "capture.identity",
+                 *             "countries": [
+                 *               "NG"
+                 *             ]
+                 *           }
+                 *         ],
+                 *         "links": {
+                 *           "support": "https://acme.example/support",
+                 *           "privacy": "https://acme.example/privacy",
+                 *           "terms": "https://acme.example/terms"
+                 *         },
+                 *         "theme": {
+                 *           "primary_color": "#1f6feb",
+                 *           "accent_color": "#0b3d91",
+                 *           "background_color": "#ffffff",
+                 *           "text_color": "#1b1f23"
+                 *         }
+                 *       },
+                 *       "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                 *       "key_id": "expkey_core_1",
+                 *       "algorithm": "ed25519",
+                 *       "signature": "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["ExperienceManifest"];
+            };
+        };
+        readonly responses: {
+            /** @description The imported draft experience was created or advanced. */
+            readonly 201: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly ETag: components["headers"]["ETag"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "exp_01J00000000000000000000000",
+                     *       "state": "published",
+                     *       "revision": 3,
+                     *       "latest_version": 2,
+                     *       "approved_version": 2,
+                     *       "published_version": 2,
+                     *       "document": {
+                     *         "schema_version": "1.0",
+                     *         "experience_id": "exp_01J00000000000000000000000",
+                     *         "version": 1,
+                     *         "name": "Acme selfie capture",
+                     *         "copy": {
+                     *           "version": "tc_acme_v1",
+                     *           "locales": [
+                     *             {
+                     *               "locale": "en",
+                     *               "entries": [
+                     *                 {
+                     *                   "key": "capture.title",
+                     *                   "value": "Verify your identity"
+                     *                 }
+                     *               ]
+                     *             }
+                     *           ]
+                     *         },
+                     *         "mandatory_copy_version": "mc-2026-09-01",
+                     *         "default_locale": "en",
+                     *         "targeting": [
+                     *           {
+                     *             "workflow": "capture.identity",
+                     *             "countries": [
+                     *               "NG"
+                     *             ]
+                     *           }
+                     *         ],
+                     *         "links": {
+                     *           "support": "https://acme.example/support",
+                     *           "privacy": "https://acme.example/privacy",
+                     *           "terms": "https://acme.example/terms"
+                     *         },
+                     *         "theme": {
+                     *           "primary_color": "#1f6feb",
+                     *           "accent_color": "#0b3d91",
+                     *           "background_color": "#ffffff",
+                     *           "text_color": "#1b1f23"
+                     *         }
+                     *       },
+                     *       "created_at": "2026-09-20T12:00:00Z",
+                     *       "updated_at": "2026-09-20T12:05:00Z"
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["Experience"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly getExperience: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Stable portable-experience identifier. */
+                readonly experienceID: components["schemas"]["ExperienceID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The experience was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly ETag: components["headers"]["ETag"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "exp_01J00000000000000000000000",
+                     *       "state": "published",
+                     *       "revision": 3,
+                     *       "latest_version": 2,
+                     *       "approved_version": 2,
+                     *       "published_version": 2,
+                     *       "document": {
+                     *         "schema_version": "1.0",
+                     *         "experience_id": "exp_01J00000000000000000000000",
+                     *         "version": 1,
+                     *         "name": "Acme selfie capture",
+                     *         "copy": {
+                     *           "version": "tc_acme_v1",
+                     *           "locales": [
+                     *             {
+                     *               "locale": "en",
+                     *               "entries": [
+                     *                 {
+                     *                   "key": "capture.title",
+                     *                   "value": "Verify your identity"
+                     *                 }
+                     *               ]
+                     *             }
+                     *           ]
+                     *         },
+                     *         "mandatory_copy_version": "mc-2026-09-01",
+                     *         "default_locale": "en",
+                     *         "targeting": [
+                     *           {
+                     *             "workflow": "capture.identity",
+                     *             "countries": [
+                     *               "NG"
+                     *             ]
+                     *           }
+                     *         ],
+                     *         "links": {
+                     *           "support": "https://acme.example/support",
+                     *           "privacy": "https://acme.example/privacy",
+                     *           "terms": "https://acme.example/terms"
+                     *         },
+                     *         "theme": {
+                     *           "primary_color": "#1f6feb",
+                     *           "accent_color": "#0b3d91",
+                     *           "background_color": "#ffffff",
+                     *           "text_color": "#1b1f23"
+                     *         }
+                     *       },
+                     *       "created_at": "2026-09-20T12:00:00Z",
+                     *       "updated_at": "2026-09-20T12:05:00Z"
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["Experience"];
+                };
+            };
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly updateExperienceDraft: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Stable portable-experience identifier. */
+                readonly experienceID: components["schemas"]["ExperienceID"];
+            };
+            readonly cookie?: never;
+        };
+        /** @description One bounded draft document and optimistic precondition. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "expected_version": 1,
+                 *       "document": {
+                 *         "name": "Acme selfie capture",
+                 *         "copy": {
+                 *           "version": "tc_acme_v1",
+                 *           "locales": [
+                 *             {
+                 *               "locale": "en",
+                 *               "entries": [
+                 *                 {
+                 *                   "key": "capture.title",
+                 *                   "value": "Verify your identity"
+                 *                 }
+                 *               ]
+                 *             }
+                 *           ]
+                 *         },
+                 *         "mandatory_copy_version": "mc-2026-09-01",
+                 *         "default_locale": "en",
+                 *         "targeting": [
+                 *           {
+                 *             "workflow": "capture.identity",
+                 *             "countries": [
+                 *               "NG"
+                 *             ]
+                 *           }
+                 *         ],
+                 *         "links": {
+                 *           "support": "https://acme.example/support",
+                 *           "privacy": "https://acme.example/privacy",
+                 *           "terms": "https://acme.example/terms"
+                 *         },
+                 *         "theme": {
+                 *           "primary_color": "#1f6feb",
+                 *           "accent_color": "#0b3d91",
+                 *           "background_color": "#ffffff",
+                 *           "text_color": "#1b1f23"
+                 *         }
+                 *       }
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["ExperienceDraft"];
+            };
+        };
+        readonly responses: {
+            /** @description The new draft revision was saved. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly ETag: components["headers"]["ETag"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "exp_01J00000000000000000000000",
+                     *       "state": "published",
+                     *       "revision": 3,
+                     *       "latest_version": 2,
+                     *       "approved_version": 2,
+                     *       "published_version": 2,
+                     *       "document": {
+                     *         "schema_version": "1.0",
+                     *         "experience_id": "exp_01J00000000000000000000000",
+                     *         "version": 1,
+                     *         "name": "Acme selfie capture",
+                     *         "copy": {
+                     *           "version": "tc_acme_v1",
+                     *           "locales": [
+                     *             {
+                     *               "locale": "en",
+                     *               "entries": [
+                     *                 {
+                     *                   "key": "capture.title",
+                     *                   "value": "Verify your identity"
+                     *                 }
+                     *               ]
+                     *             }
+                     *           ]
+                     *         },
+                     *         "mandatory_copy_version": "mc-2026-09-01",
+                     *         "default_locale": "en",
+                     *         "targeting": [
+                     *           {
+                     *             "workflow": "capture.identity",
+                     *             "countries": [
+                     *               "NG"
+                     *             ]
+                     *           }
+                     *         ],
+                     *         "links": {
+                     *           "support": "https://acme.example/support",
+                     *           "privacy": "https://acme.example/privacy",
+                     *           "terms": "https://acme.example/terms"
+                     *         },
+                     *         "theme": {
+                     *           "primary_color": "#1f6feb",
+                     *           "accent_color": "#0b3d91",
+                     *           "background_color": "#ffffff",
+                     *           "text_color": "#1b1f23"
+                     *         }
+                     *       },
+                     *       "created_at": "2026-09-20T12:00:00Z",
+                     *       "updated_at": "2026-09-20T12:05:00Z"
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["Experience"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly approveExperience: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Stable portable-experience identifier. */
+                readonly experienceID: components["schemas"]["ExperienceID"];
+            };
+            readonly cookie?: never;
+        };
+        /** @description Optimistic precondition and optional bounded reason. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "expected_version": 2,
+                 *       "reason": "Approved by compliance"
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["ExperienceTransition"];
+            };
+        };
+        readonly responses: {
+            /** @description The latest revision is approved. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly ETag: components["headers"]["ETag"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "exp_01J00000000000000000000000",
+                     *       "state": "published",
+                     *       "revision": 3,
+                     *       "latest_version": 2,
+                     *       "approved_version": 2,
+                     *       "published_version": 2,
+                     *       "document": {
+                     *         "schema_version": "1.0",
+                     *         "experience_id": "exp_01J00000000000000000000000",
+                     *         "version": 1,
+                     *         "name": "Acme selfie capture",
+                     *         "copy": {
+                     *           "version": "tc_acme_v1",
+                     *           "locales": [
+                     *             {
+                     *               "locale": "en",
+                     *               "entries": [
+                     *                 {
+                     *                   "key": "capture.title",
+                     *                   "value": "Verify your identity"
+                     *                 }
+                     *               ]
+                     *             }
+                     *           ]
+                     *         },
+                     *         "mandatory_copy_version": "mc-2026-09-01",
+                     *         "default_locale": "en",
+                     *         "targeting": [
+                     *           {
+                     *             "workflow": "capture.identity",
+                     *             "countries": [
+                     *               "NG"
+                     *             ]
+                     *           }
+                     *         ],
+                     *         "links": {
+                     *           "support": "https://acme.example/support",
+                     *           "privacy": "https://acme.example/privacy",
+                     *           "terms": "https://acme.example/terms"
+                     *         },
+                     *         "theme": {
+                     *           "primary_color": "#1f6feb",
+                     *           "accent_color": "#0b3d91",
+                     *           "background_color": "#ffffff",
+                     *           "text_color": "#1b1f23"
+                     *         }
+                     *       },
+                     *       "created_at": "2026-09-20T12:00:00Z",
+                     *       "updated_at": "2026-09-20T12:05:00Z"
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["Experience"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly publishExperience: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Stable portable-experience identifier. */
+                readonly experienceID: components["schemas"]["ExperienceID"];
+            };
+            readonly cookie?: never;
+        };
+        /** @description Optimistic precondition and optional bounded reason. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "expected_version": 2,
+                 *       "reason": "Approved by compliance"
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["ExperienceTransition"];
+            };
+        };
+        readonly responses: {
+            /** @description The approved revision is live. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly ETag: components["headers"]["ETag"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "exp_01J00000000000000000000000",
+                     *       "state": "published",
+                     *       "revision": 3,
+                     *       "latest_version": 2,
+                     *       "approved_version": 2,
+                     *       "published_version": 2,
+                     *       "document": {
+                     *         "schema_version": "1.0",
+                     *         "experience_id": "exp_01J00000000000000000000000",
+                     *         "version": 1,
+                     *         "name": "Acme selfie capture",
+                     *         "copy": {
+                     *           "version": "tc_acme_v1",
+                     *           "locales": [
+                     *             {
+                     *               "locale": "en",
+                     *               "entries": [
+                     *                 {
+                     *                   "key": "capture.title",
+                     *                   "value": "Verify your identity"
+                     *                 }
+                     *               ]
+                     *             }
+                     *           ]
+                     *         },
+                     *         "mandatory_copy_version": "mc-2026-09-01",
+                     *         "default_locale": "en",
+                     *         "targeting": [
+                     *           {
+                     *             "workflow": "capture.identity",
+                     *             "countries": [
+                     *               "NG"
+                     *             ]
+                     *           }
+                     *         ],
+                     *         "links": {
+                     *           "support": "https://acme.example/support",
+                     *           "privacy": "https://acme.example/privacy",
+                     *           "terms": "https://acme.example/terms"
+                     *         },
+                     *         "theme": {
+                     *           "primary_color": "#1f6feb",
+                     *           "accent_color": "#0b3d91",
+                     *           "background_color": "#ffffff",
+                     *           "text_color": "#1b1f23"
+                     *         }
+                     *       },
+                     *       "created_at": "2026-09-20T12:00:00Z",
+                     *       "updated_at": "2026-09-20T12:05:00Z"
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["Experience"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly revokeExperience: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Stable portable-experience identifier. */
+                readonly experienceID: components["schemas"]["ExperienceID"];
+            };
+            readonly cookie?: never;
+        };
+        /** @description Optimistic precondition and required bounded reason. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "expected_version": 3,
+                 *       "reason": "Brand copy incident"
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["ExperienceRevocation"];
+            };
+        };
+        readonly responses: {
+            /** @description The live revision is revoked. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly ETag: components["headers"]["ETag"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "exp_01J00000000000000000000000",
+                     *       "state": "published",
+                     *       "revision": 3,
+                     *       "latest_version": 2,
+                     *       "approved_version": 2,
+                     *       "published_version": 2,
+                     *       "document": {
+                     *         "schema_version": "1.0",
+                     *         "experience_id": "exp_01J00000000000000000000000",
+                     *         "version": 1,
+                     *         "name": "Acme selfie capture",
+                     *         "copy": {
+                     *           "version": "tc_acme_v1",
+                     *           "locales": [
+                     *             {
+                     *               "locale": "en",
+                     *               "entries": [
+                     *                 {
+                     *                   "key": "capture.title",
+                     *                   "value": "Verify your identity"
+                     *                 }
+                     *               ]
+                     *             }
+                     *           ]
+                     *         },
+                     *         "mandatory_copy_version": "mc-2026-09-01",
+                     *         "default_locale": "en",
+                     *         "targeting": [
+                     *           {
+                     *             "workflow": "capture.identity",
+                     *             "countries": [
+                     *               "NG"
+                     *             ]
+                     *           }
+                     *         ],
+                     *         "links": {
+                     *           "support": "https://acme.example/support",
+                     *           "privacy": "https://acme.example/privacy",
+                     *           "terms": "https://acme.example/terms"
+                     *         },
+                     *         "theme": {
+                     *           "primary_color": "#1f6feb",
+                     *           "accent_color": "#0b3d91",
+                     *           "background_color": "#ffffff",
+                     *           "text_color": "#1b1f23"
+                     *         }
+                     *       },
+                     *       "created_at": "2026-09-20T12:00:00Z",
+                     *       "updated_at": "2026-09-20T12:05:00Z"
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["Experience"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly rollbackExperience: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Stable portable-experience identifier. */
+                readonly experienceID: components["schemas"]["ExperienceID"];
+            };
+            readonly cookie?: never;
+        };
+        /** @description Optimistic precondition, rollback target version, and optional reason. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "expected_version": 4,
+                 *       "target_version": 1,
+                 *       "reason": "Restore prior approved revision"
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["ExperienceRollback"];
+            };
+        };
+        readonly responses: {
+            /** @description The prior revision is live again. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly ETag: components["headers"]["ETag"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "exp_01J00000000000000000000000",
+                     *       "state": "published",
+                     *       "revision": 3,
+                     *       "latest_version": 2,
+                     *       "approved_version": 2,
+                     *       "published_version": 2,
+                     *       "document": {
+                     *         "schema_version": "1.0",
+                     *         "experience_id": "exp_01J00000000000000000000000",
+                     *         "version": 1,
+                     *         "name": "Acme selfie capture",
+                     *         "copy": {
+                     *           "version": "tc_acme_v1",
+                     *           "locales": [
+                     *             {
+                     *               "locale": "en",
+                     *               "entries": [
+                     *                 {
+                     *                   "key": "capture.title",
+                     *                   "value": "Verify your identity"
+                     *                 }
+                     *               ]
+                     *             }
+                     *           ]
+                     *         },
+                     *         "mandatory_copy_version": "mc-2026-09-01",
+                     *         "default_locale": "en",
+                     *         "targeting": [
+                     *           {
+                     *             "workflow": "capture.identity",
+                     *             "countries": [
+                     *               "NG"
+                     *             ]
+                     *           }
+                     *         ],
+                     *         "links": {
+                     *           "support": "https://acme.example/support",
+                     *           "privacy": "https://acme.example/privacy",
+                     *           "terms": "https://acme.example/terms"
+                     *         },
+                     *         "theme": {
+                     *           "primary_color": "#1f6feb",
+                     *           "accent_color": "#0b3d91",
+                     *           "background_color": "#ffffff",
+                     *           "text_color": "#1b1f23"
+                     *         }
+                     *       },
+                     *       "created_at": "2026-09-20T12:00:00Z",
+                     *       "updated_at": "2026-09-20T12:05:00Z"
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["Experience"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly exportExperience: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Stable portable-experience identifier. */
+                readonly experienceID: components["schemas"]["ExperienceID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The portable signed manifest was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "document": {
+                     *         "schema_version": "1.0",
+                     *         "experience_id": "exp_01J00000000000000000000000",
+                     *         "version": 1,
+                     *         "name": "Acme selfie capture",
+                     *         "copy": {
+                     *           "version": "tc_acme_v1",
+                     *           "locales": [
+                     *             {
+                     *               "locale": "en",
+                     *               "entries": [
+                     *                 {
+                     *                   "key": "capture.title",
+                     *                   "value": "Verify your identity"
+                     *                 }
+                     *               ]
+                     *             }
+                     *           ]
+                     *         },
+                     *         "mandatory_copy_version": "mc-2026-09-01",
+                     *         "default_locale": "en",
+                     *         "targeting": [
+                     *           {
+                     *             "workflow": "capture.identity",
+                     *             "countries": [
+                     *               "NG"
+                     *             ]
+                     *           }
+                     *         ],
+                     *         "links": {
+                     *           "support": "https://acme.example/support",
+                     *           "privacy": "https://acme.example/privacy",
+                     *           "terms": "https://acme.example/terms"
+                     *         },
+                     *         "theme": {
+                     *           "primary_color": "#1f6feb",
+                     *           "accent_color": "#0b3d91",
+                     *           "background_color": "#ffffff",
+                     *           "text_color": "#1b1f23"
+                     *         }
+                     *       },
+                     *       "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                     *       "key_id": "expkey_core_1",
+                     *       "algorithm": "ed25519",
+                     *       "signature": "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["ExperienceManifest"];
+                };
+            };
             readonly 401: components["responses"]["Unauthenticated"];
             readonly 403: components["responses"]["InsufficientScope"];
             readonly 404: components["responses"]["NotFound"];

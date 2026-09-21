@@ -50,6 +50,10 @@ tags:
     description: Evaluation-only model registry administration. Production activation is rejected and these routes never select a production model.
   - name: Providers
     description: Tenant-owned secret-free provider route registration and bounded operational health.
+  - name: Packs
+    description: Immutable country, document, and support-level pack inspection. Pack content is embedded and reviewed at build time; legal, provider, and security-feature approval is never asserted.
+  - name: Experiences
+    description: Portable tenant-owned capture experiences with immutable signed revisions, approval-gated publication, kill switch, rollback, export and import, and the Core-shipped signed safe default.
 paths:
   /v1/tenant:
     get:
@@ -7706,6 +7710,1101 @@ paths:
         '429': { $ref: '#/components/responses/RateLimited' }
         '500': { $ref: '#/components/responses/InternalError' }
         '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v1/packs:
+    get:
+      tags:
+      - Packs
+      operationId: listPacks
+      summary: List registered country pack revisions
+      description: List every registered immutable country pack revision with its current lifecycle state. Requires packs:read. Pack content is embedded and reviewed at build time; this route never activates, deprecates, or retires a pack.
+      security:
+      - TenantAPIKey: []
+      x-required-scopes:
+      - packs:read
+      responses:
+        '200':
+          description: List registered country pack revisions result.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/XRequestID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PackPage'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/InsufficientScope'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /v1/packs/{country}:
+    get:
+      tags:
+      - Packs
+      operationId: getActiveCountryPack
+      summary: Get the active pack for a country
+      description: Get the active immutable pack revision for an ISO 3166-1 alpha-2 or alpha-3 country code. Requires packs:read. The projection never asserts legal, provider, or security-feature approval.
+      security:
+      - TenantAPIKey: []
+      x-required-scopes:
+      - packs:read
+      parameters:
+      - name: country
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: '^[A-Za-z]{2}$|^[A-Za-z]{3}$'
+        description: ISO 3166-1 alpha-2 or alpha-3 country code.
+      responses:
+        '200':
+          description: The active pack revision was returned.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/XRequestID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PackResource'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/InsufficientScope'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /v1/packs/{country}/revisions/{revision}:
+    get:
+      tags:
+      - Packs
+      operationId: getCountryPackRevision
+      summary: Get an exact pack revision
+      description: Get one exact immutable pack revision. Requires packs:read. Deprecated and retired revisions remain readable so an old decision or policy reference stays inspectable.
+      security:
+      - TenantAPIKey: []
+      x-required-scopes:
+      - packs:read
+      parameters:
+      - name: country
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: '^[A-Za-z]{2}$|^[A-Za-z]{3}$'
+        description: ISO 3166-1 alpha-2 or alpha-3 country code.
+      - name: revision
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 4294967295
+        description: Positive pack revision number.
+      responses:
+        '200':
+          description: The exact pack revision was returned.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/XRequestID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PackResource'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/InsufficientScope'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /v1/document-support:
+    get:
+      tags:
+      - Packs
+      operationId: getDocumentSupport
+      summary: Get the honest document support-level projection
+      description: |
+        Get the active pack's support-level projection for one country and
+        document type. Requires packs:read. The projection reports the declared
+        support level, required evidence sides, supported canonical fields,
+        declarations, evaluation coverage, limitations, and legal-review state.
+        It contains no legal conclusion, provider approval, or security-feature
+        finding; an unreviewed legal state is returned honestly.
+      security:
+      - TenantAPIKey: []
+      x-required-scopes:
+      - packs:read
+      parameters:
+      - name: country
+        in: query
+        required: true
+        schema:
+          type: string
+          pattern: '^[A-Za-z]{2}$|^[A-Za-z]{3}$'
+        description: ISO 3166-1 alpha-2 or alpha-3 country code.
+      - name: type
+        in: query
+        required: true
+        schema:
+          $ref: '#/components/schemas/PackDocumentType'
+        description: Pack document type; the canonical drivers_license spelling is also accepted.
+      responses:
+        '200':
+          description: The active document support projection was returned.
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/XRequestID'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentSupport'
+        '400':
+          $ref: '#/components/responses/InvalidRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/InsufficientScope'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+  /v1/privacy-requests:
+    get:
+      tags: [Privacy]
+      operationId: listPrivacyRequests
+      summary: List tenant privacy requests
+      description: Requires privacy_requests:read. Returns a bounded ascending page of data-subject privacy requests with their state, version, and bounded effect references. Reasons, actor identifiers, and internal events are never returned.
+      security: [TenantAPIKey: []]
+      x-required-scopes: [privacy_requests:read]
+      parameters:
+        - name: state
+          in: query
+          required: false
+          description: Restrict the page to one exact request state.
+          schema: { type: string, enum: [requested, in_review, approved, partially_approved, denied, executing, completed, failed, withdrawn, expired] }
+        - name: type
+          in: query
+          required: false
+          description: Restrict the page to one exact request type.
+          schema: { type: string, enum: [access, portability, correction, restriction, objection, erasure] }
+        - name: subject_id
+          in: query
+          required: false
+          description: Restrict the page to one exact subject scope.
+          schema: { type: string, minLength: 1, maxLength: 200, example: sub_01M11HEQG00000000000000000 }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: A bounded ascending page of privacy requests was returned.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PrivacyRequestList' }
+              examples:
+                page:
+                  value: { data: [], page: { has_more: false } }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+    post:
+      tags: [Privacy]
+      operationId: createPrivacyRequest
+      summary: Create one tenant privacy request
+      description: Requires privacy_requests:write. Creates one tenant-channel data-subject request. The tenant is the controller and no effect executes before an explicit approval. Subject-scoped effects require a subject; corrrection instructions carry exactly one record or decision target.
+      security: [TenantAPIKey: []]
+      x-required-scopes: [privacy_requests:write]
+      requestBody:
+        required: true
+        description: One bounded privacy-request instruction for the selected type.
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PrivacyRequestCreate' }
+            examples:
+              access:
+                value: { type: access, subject_id: sub_01M11HEQG00000000000000000, region: ng-1 }
+      responses:
+        '202':
+          description: The privacy request was created and awaits review.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' }, Location: { description: URL of the created resource., schema: { type: string, minLength: 1 } } }
+          content: { application/json: { schema: { $ref: '#/components/schemas/PrivacyRequestSummary' } } }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v1/privacy-requests/{requestID}:
+    parameters:
+      - name: requestID
+        in: path
+        required: true
+        description: Stable privacy-request identifier.
+        schema: { $ref: '#/components/schemas/PrivacyRequestID' }
+    get:
+      tags: [Privacy]
+      operationId: getPrivacyRequest
+      summary: Get one privacy request
+      description: Requires privacy_requests:read. Returns the request state, immutable decision statements, and bounded effect references. It never returns subject credentials, raw evidence, or object locations.
+      security: [TenantAPIKey: []]
+      x-required-scopes: [privacy_requests:read]
+      responses:
+        '200':
+          description: The privacy request was returned.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' }, ETag: { $ref: '#/components/headers/ETag' } }
+          content: { application/json: { schema: { $ref: '#/components/schemas/PrivacyRequestStatus' } } }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v1/privacy-requests/{requestID}/approve:
+    parameters:
+      - name: requestID
+        in: path
+        required: true
+        description: Stable privacy-request identifier.
+        schema: { $ref: '#/components/schemas/PrivacyRequestID' }
+    post:
+      tags: [Privacy]
+      operationId: approvePrivacyRequest
+      summary: Approve or partially approve a privacy request
+      description: Requires privacy_requests:approve. Records one immutable decision with a bounded reason code. Replay with the same outcome and reason is idempotent; a conflicting replay is rejected.
+      security: [TenantAPIKey: []]
+      x-required-scopes: [privacy_requests:approve]
+      requestBody:
+        required: true
+        description: One bounded decision command for this request.
+        content: { application/json: { schema: { $ref: '#/components/schemas/PrivacyRequestDecision' } } }
+      responses:
+        '200':
+          description: The decision was recorded.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' }, ETag: { $ref: '#/components/headers/ETag' } }
+          content: { application/json: { schema: { $ref: '#/components/schemas/PrivacyRequestStatus' } } }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v1/privacy-requests/{requestID}/deny:
+    parameters:
+      - name: requestID
+        in: path
+        required: true
+        description: Stable privacy-request identifier.
+        schema: { $ref: '#/components/schemas/PrivacyRequestID' }
+    post:
+      tags: [Privacy]
+      operationId: denyPrivacyRequest
+      summary: Deny a privacy request
+      description: Requires privacy_requests:approve. Records one immutable denial with a bounded reason code. Denial is terminal and immutable; replay with the same reason is idempotent.
+      security: [TenantAPIKey: []]
+      x-required-scopes: [privacy_requests:approve]
+      requestBody:
+        required: true
+        description: One bounded decision command for this request.
+        content: { application/json: { schema: { $ref: '#/components/schemas/PrivacyRequestDecision' } } }
+      responses:
+        '200':
+          description: The denial was recorded.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' }, ETag: { $ref: '#/components/headers/ETag' } }
+          content: { application/json: { schema: { $ref: '#/components/schemas/PrivacyRequestStatus' } } }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v1/privacy-requests/{requestID}/withdraw:
+    parameters:
+      - name: requestID
+        in: path
+        required: true
+        description: Stable privacy-request identifier.
+        schema: { $ref: '#/components/schemas/PrivacyRequestID' }
+    post:
+      tags: [Privacy]
+      operationId: withdrawPrivacyRequest
+      summary: Withdraw an undecided privacy request
+      description: Requires privacy_requests:write. Ends a requested or in-review request without a decision. Withdrawal is terminal and immutable; a decided request can no longer be withdrawn.
+      security: [TenantAPIKey: []]
+      x-required-scopes: [privacy_requests:write]
+      requestBody:
+        required: true
+        description: One expected-version command for this request.
+        content: { application/json: { schema: { $ref: '#/components/schemas/PrivacyRequestExpectedVersion' } } }
+      responses:
+        '200':
+          description: The request was withdrawn.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' }, ETag: { $ref: '#/components/headers/ETag' } }
+          content: { application/json: { schema: { $ref: '#/components/schemas/PrivacyRequestStatus' } } }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v1/privacy-requests/{requestID}/execute:
+    parameters:
+      - name: requestID
+        in: path
+        required: true
+        description: Stable privacy-request identifier.
+        schema: { $ref: '#/components/schemas/PrivacyRequestID' }
+    post:
+      tags: [Privacy]
+      operationId: executePrivacyRequest
+      summary: Execute an approved privacy request
+      description: Requires privacy_requests:approve. Dispatches the approved effect through the existing deletion, subject-export, identity-correction, or review-correction mechanism. Completed requests are returned unchanged, so replay adds nothing.
+      security: [TenantAPIKey: []]
+      x-required-scopes: [privacy_requests:approve]
+      requestBody:
+        required: true
+        description: One expected-version command for this request.
+        content: { application/json: { schema: { $ref: '#/components/schemas/PrivacyRequestExpectedVersion' } } }
+      responses:
+        '200':
+          description: The execution result was recorded.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' }, ETag: { $ref: '#/components/headers/ETag' } }
+          content: { application/json: { schema: { $ref: '#/components/schemas/PrivacyRequestStatus' } } }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v1/privacy-restrictions:
+    get:
+      tags: [Privacy]
+      operationId: listPrivacyRestrictions
+      summary: List tenant processing restrictions
+      description: Requires privacy_requests:read. Returns a bounded ascending page of subject-blocking and purpose-scoped records. Purpose-scoped objection records are consulted as policy input for new processing only.
+      security: [TenantAPIKey: []]
+      x-required-scopes: [privacy_requests:read]
+      parameters:
+        - name: subject_id
+          in: query
+          required: false
+          description: Restrict the page to one exact subject scope.
+          schema: { type: string, minLength: 1, maxLength: 200, example: sub_01M11HEQG00000000000000000 }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: A bounded ascending page of restrictions was returned.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PrivacyRestrictionList' }
+              examples:
+                page:
+                  value: { data: [], page: { has_more: false } }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v1/privacy-restrictions/{restrictionID}/lift:
+    parameters:
+      - name: restrictionID
+        in: path
+        required: true
+        description: Stable processing-restriction identifier.
+        schema: { $ref: '#/components/schemas/PrivacyRestrictionID' }
+    post:
+      tags: [Privacy]
+      operationId: liftPrivacyRestriction
+      summary: Lift one processing restriction
+      description: Requires privacy_requests:approve. Ends a subject-blocking restriction with an audited reason. In-flight external operations and completed decisions were never affected by the restriction.
+      security: [TenantAPIKey: []]
+      x-required-scopes: [privacy_requests:approve]
+      requestBody:
+        required: true
+        description: One expected-version lift command with an audited reason.
+        content: { application/json: { schema: { $ref: '#/components/schemas/PrivacyRestrictionLift' } } }
+      responses:
+        '200':
+          description: The restriction was lifted.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' }, ETag: { $ref: '#/components/headers/ETag' } }
+          content: { application/json: { schema: { $ref: '#/components/schemas/PrivacyRestriction' } } }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v1/privacy-disclosures:
+    get:
+      tags: [Privacy]
+      operationId: listPrivacyDisclosures
+      summary: List tenant transfer and disclosure records
+      description: Requires privacy_requests:read. Returns immutable reference-only disclosure records filtered by exact request or by the whole tenant.
+      security: [TenantAPIKey: []]
+      x-required-scopes: [privacy_requests:read]
+      parameters:
+        - name: request_id
+          in: query
+          required: false
+          description: Restrict the page to one exact privacy request.
+          schema: { $ref: '#/components/schemas/PrivacyRequestID' }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: A bounded ascending page of disclosures was returned.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PrivacyDisclosureList' }
+              examples:
+                page:
+                  value: { data: [], page: { has_more: false } }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+    post:
+      tags: [Privacy]
+      operationId: createPrivacyDisclosure
+      summary: Record one transfer or disclosure
+      description: Requires privacy_requests:write. Records an immutable reference-only disclosure. The reference is a bounded digest; document contents and recipient secrets are never accepted.
+      security: [TenantAPIKey: []]
+      x-required-scopes: [privacy_requests:write]
+      requestBody:
+        required: true
+        description: One immutable reference-only disclosure command.
+        content: { application/json: { schema: { $ref: '#/components/schemas/PrivacyDisclosureCreate' } } }
+      responses:
+        '201':
+          description: The disclosure record was created.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' }, Location: { description: URL of the created resource., schema: { type: string, minLength: 1 } } }
+          content: { application/json: { schema: { $ref: '#/components/schemas/PrivacyDisclosure' } } }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v1/privacy-processors:
+    get:
+      tags: [Privacy]
+      operationId: listPrivacyProcessors
+      summary: List tenant processor inventory
+      description: Requires privacy_requests:read. Returns a bounded ascending page of versioned processors, subprocessors, and recipients with bounded data classes, regions, and transfer mechanisms.
+      security: [TenantAPIKey: []]
+      x-required-scopes: [privacy_requests:read]
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: A bounded ascending page of processor inventory entries was returned.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PrivacyProcessorList' }
+              examples:
+                page:
+                  value: { data: [], page: { has_more: false } }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+    post:
+      tags: [Privacy]
+      operationId: createPrivacyProcessor
+      summary: Create one processor inventory entry
+      description: Requires privacy_requests:write. Creates version one of a processor inventory entry and its append-only revision.
+      security: [TenantAPIKey: []]
+      x-required-scopes: [privacy_requests:write]
+      requestBody:
+        required: true
+        description: One create or expected-version processor inventory command.
+        content: { application/json: { schema: { $ref: '#/components/schemas/PrivacyProcessorPut' } } }
+      responses:
+        '201':
+          description: The processor inventory entry was created.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' }, Location: { description: URL of the created resource., schema: { type: string, minLength: 1 } } }
+          content: { application/json: { schema: { $ref: '#/components/schemas/PrivacyProcessor' } } }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v1/privacy-processors/{processorID}:
+    parameters:
+      - name: processorID
+        in: path
+        required: true
+        description: Stable processor inventory identifier.
+        schema: { $ref: '#/components/schemas/PrivacyProcessorID' }
+    get:
+      tags: [Privacy]
+      operationId: getPrivacyProcessor
+      summary: Get one processor inventory entry
+      description: Requires privacy_requests:read. Returns the current version of one processor inventory entry.
+      security: [TenantAPIKey: []]
+      x-required-scopes: [privacy_requests:read]
+      responses:
+        '200':
+          description: The processor inventory entry was returned.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' }, ETag: { $ref: '#/components/headers/ETag' } }
+          content: { application/json: { schema: { $ref: '#/components/schemas/PrivacyProcessor' } } }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+    put:
+      tags: [Privacy]
+      operationId: updatePrivacyProcessor
+      summary: Update one processor inventory entry
+      description: Requires privacy_requests:write. Applies one expected-version update and appends an immutable revision. A stale expected version is rejected.
+      security: [TenantAPIKey: []]
+      x-required-scopes: [privacy_requests:write]
+      requestBody:
+        required: true
+        description: One create or expected-version processor inventory command.
+        content: { application/json: { schema: { $ref: '#/components/schemas/PrivacyProcessorPut' } } }
+      responses:
+        '200':
+          description: The processor inventory entry was updated.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' }, ETag: { $ref: '#/components/headers/ETag' } }
+          content: { application/json: { schema: { $ref: '#/components/schemas/PrivacyProcessor' } } }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v1/capture/privacy-requests:
+    get:
+      tags: [Privacy]
+      operationId: listSubjectPrivacyRequests
+      summary: List subject-safe privacy request status
+      description: Authenticated only by the D-027 outcome credential. Returns the closed subject-safe projection for requests created through this verification - request type, subject-safe status, and timestamps. Reasons, identifiers, tenant state, and effect references are intentionally absent. The credential cannot approve, deny, withdraw, or execute.
+      security: [OutcomeToken: []]
+      responses:
+        '200':
+          description: The closed subject-safe page was returned.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SubjectPrivacyRequestList' }
+              examples:
+                page:
+                  value: { data: [], page: { has_more: false } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+    post:
+      tags: [Privacy]
+      operationId: createSubjectPrivacyRequest
+      summary: Create one subject privacy request
+      description: Authenticated only by the D-027 outcome credential. Creates one subject-channel request scoped to the credential's verification. The tenant remains the controller and no effect executes without tenant approval. The credential cannot approve, deny, withdraw, or execute.
+      security: [OutcomeToken: []]
+      requestBody:
+        required: true
+        description: One subject-channel request instruction scoped by the outcome credential.
+        content: { application/json: { schema: { $ref: '#/components/schemas/SubjectPrivacyRequestCreate' } } }
+      responses:
+        '202':
+          description: The subject privacy request was created.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' } }
+          content: { application/json: { schema: { $ref: '#/components/schemas/SubjectPrivacyRequest' } } }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /v1/experience-default:
+    get:
+      operationId: getExperienceDefault
+      summary: Get the signed accessible safe default
+      description: |
+        Returns the Core-shipped, signed, accessible safe default experience and
+        its Core-owned mandatory copy. Requires experiences:read. The safe
+        default is never tenant-owned, never editable, and is the only fallback
+        when a pinned experience is revoked or resolution fails.
+      tags: [Experiences]
+      security: [TenantAPIKey: []]
+      x-required-scopes: [experiences:read]
+      responses:
+        '200':
+          description: The signed safe default and its mandatory copy were returned.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ExperienceResolution' }
+              example: { manifest: { document: { schema_version: '1.0', experience_id: exp_01J00000000000000000000000, version: 1, name: Acme selfie capture, copy: { version: tc_acme_v1, locales: [{ locale: en, entries: [{ key: capture.title, value: Verify your identity }] }] }, mandatory_copy_version: mc-2026-09-01, default_locale: en, targeting: [{ workflow: capture.identity, countries: [NG] }], links: { support: https://acme.example/support, privacy: https://acme.example/privacy, terms: https://acme.example/terms }, theme: { primary_color: '#1f6feb', accent_color: '#0b3d91', background_color: '#ffffff', text_color: '#1b1f23' } }, digest: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, key_id: expkey_core_1, algorithm: ed25519, signature: '00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000' }, mandatory_copy: { version: mc-2026-09-01, digest: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, entries: [{ key: regulatory.processing_notice, value: Your identity information is processed to verify your identity. }] }, pinned: { experience_id: exp_01J00000000000000000000000, version: 1, locale: en, tenant_copy_version: tc_acme_v1, mandatory_copy_version: mc-2026-09-01, source: published, digest: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, key_id: expkey_core_1, pinned_at: '2026-09-20T12:00:00Z' }, fallback: false }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v1/capture/experience:
+    get:
+      operationId: resolveCaptureExperience
+      summary: Resolve the session's pinned capture experience
+      description: |
+        Returns the immutable signed experience document pinned to the
+        authenticated capture session, the Core-owned mandatory copy, and the
+        exact pinned experience, locale, tenant-copy, and mandatory-copy
+        versions. The first call resolves and pins; later calls preserve the
+        pin across resume. If the pinned experience is revoked or resolution
+        fails, the signed accessible safe default is returned instead. Raw
+        evidence, subject data, and credentials are never returned.
+      tags: [Capture]
+      security: [CaptureToken: []]
+      parameters:
+        - name: workflow
+          in: query
+          required: false
+          description: Bounded workflow identifier used only when no pin exists yet.
+          schema: { type: string, minLength: 1, maxLength: 128, pattern: '^[a-z][a-z0-9._-]{0,127}$' }
+        - name: country
+          in: query
+          required: false
+          description: ISO 3166-1 alpha-2 country used only when no pin exists yet.
+          schema: { type: string, pattern: '^[A-Z]{2}$' }
+        - name: application_id
+          in: query
+          required: false
+          description: Application identity used only when no pin exists yet.
+          schema: { type: string, minLength: 1, maxLength: 200 }
+        - name: origin
+          in: query
+          required: false
+          description: Exact HTTPS origin used only when no pin exists yet and never inferred from a header.
+          schema: { type: string, minLength: 1, maxLength: 2048 }
+        - name: sdk_version
+          in: query
+          required: false
+          description: SDK semantic version used only when no pin exists yet.
+          schema: { type: string, pattern: '^[0-9]+\.[0-9]+\.[0-9]+$' }
+        - name: locale
+          in: query
+          required: false
+          description: Requested BCP 47 locale; unknown locales fall back to the document default.
+          schema: { type: string, minLength: 2, maxLength: 35, pattern: '^[A-Za-z]{2,8}(-[A-Za-z0-9]{1,8})*$' }
+      responses:
+        '200':
+          description: The pinned or safe-default signed resolution was returned.
+          headers:
+            X-Request-ID: { $ref: '#/components/headers/XRequestID' }
+            Cache-Control: { description: Always no-store., schema: { type: string } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ExperienceResolution' }
+              example: { manifest: { document: { schema_version: '1.0', experience_id: exp_01J00000000000000000000000, version: 1, name: Acme selfie capture, copy: { version: tc_acme_v1, locales: [{ locale: en, entries: [{ key: capture.title, value: Verify your identity }] }] }, mandatory_copy_version: mc-2026-09-01, default_locale: en, targeting: [{ workflow: capture.identity, countries: [NG] }], links: { support: https://acme.example/support, privacy: https://acme.example/privacy, terms: https://acme.example/terms }, theme: { primary_color: '#1f6feb', accent_color: '#0b3d91', background_color: '#ffffff', text_color: '#1b1f23' } }, digest: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, key_id: expkey_core_1, algorithm: ed25519, signature: '00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000' }, mandatory_copy: { version: mc-2026-09-01, digest: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, entries: [{ key: regulatory.processing_notice, value: Your identity information is processed to verify your identity. }] }, pinned: { experience_id: exp_01J00000000000000000000000, version: 1, locale: en, tenant_copy_version: tc_acme_v1, mandatory_copy_version: mc-2026-09-01, source: published, digest: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, key_id: expkey_core_1, pinned_at: '2026-09-20T12:00:00Z' }, fallback: false }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v1/experiences:
+    get:
+      operationId: listExperiences
+      summary: List tenant capture experiences
+      description: Requires experiences:read. Returns a bounded ascending page of tenant-owned portable capture experiences with their lifecycle state and latest immutable revision.
+      tags: [Experiences]
+      security: [TenantAPIKey: []]
+      x-required-scopes: [experiences:read]
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: A bounded page of experiences was returned.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ExperienceList' }
+              example: { data: [{ id: exp_01J00000000000000000000000, state: published, revision: 3, latest_version: 2, approved_version: 2, published_version: 2, document: { schema_version: '1.0', experience_id: exp_01J00000000000000000000000, version: 1, name: Acme selfie capture, copy: { version: tc_acme_v1, locales: [{ locale: en, entries: [{ key: capture.title, value: Verify your identity }] }] }, mandatory_copy_version: mc-2026-09-01, default_locale: en, targeting: [{ workflow: capture.identity, countries: [NG] }], links: { support: https://acme.example/support, privacy: https://acme.example/privacy, terms: https://acme.example/terms }, theme: { primary_color: '#1f6feb', accent_color: '#0b3d91', background_color: '#ffffff', text_color: '#1b1f23' } }, created_at: '2026-09-20T12:00:00Z', updated_at: '2026-09-20T12:05:00Z' }], page: { has_more: false } }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+    post:
+      operationId: createExperience
+      summary: Create one experience draft
+      description: |
+        Requires experiences:write. Creates one tenant-owned draft with a
+        stable exp_ identifier and immutable revision 1. The stored revision is
+        signed by Core over its canonical bytes. Repeating the same draft
+        command with the same Idempotency-Key returns the original result.
+      tags: [Experiences]
+      security: [TenantAPIKey: []]
+      x-required-scopes: [experiences:write]
+      requestBody:
+        required: true
+        description: One bounded draft document without identifier or version.
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ExperienceMutation' }
+            example: { name: Acme selfie capture, copy: { version: tc_acme_v1, locales: [{ locale: en, entries: [{ key: capture.title, value: Verify your identity }] }] }, mandatory_copy_version: mc-2026-09-01, default_locale: en, targeting: [{ workflow: capture.identity, countries: [NG] }], links: { support: https://acme.example/support, privacy: https://acme.example/privacy, terms: https://acme.example/terms }, theme: { primary_color: '#1f6feb', accent_color: '#0b3d91', background_color: '#ffffff', text_color: '#1b1f23' } }
+      responses:
+        '201':
+          description: The draft experience was created.
+          headers:
+            X-Request-ID: { $ref: '#/components/headers/XRequestID' }
+            ETag: { $ref: '#/components/headers/ETag' }
+            Location: { description: URL of the created resource., schema: { type: string, minLength: 1 } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Experience' }
+              example: { id: exp_01J00000000000000000000000, state: published, revision: 3, latest_version: 2, approved_version: 2, published_version: 2, document: { schema_version: '1.0', experience_id: exp_01J00000000000000000000000, version: 1, name: Acme selfie capture, copy: { version: tc_acme_v1, locales: [{ locale: en, entries: [{ key: capture.title, value: Verify your identity }] }] }, mandatory_copy_version: mc-2026-09-01, default_locale: en, targeting: [{ workflow: capture.identity, countries: [NG] }], links: { support: https://acme.example/support, privacy: https://acme.example/privacy, terms: https://acme.example/terms }, theme: { primary_color: '#1f6feb', accent_color: '#0b3d91', background_color: '#ffffff', text_color: '#1b1f23' } }, created_at: '2026-09-20T12:00:00Z', updated_at: '2026-09-20T12:05:00Z' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v1/experiences/import:
+    post:
+      operationId: importExperience
+      summary: Import a signed experience manifest as a draft
+      description: |
+        Requires experiences:write. Validates the closed manifest, recomputes
+        the canonical digest, verifies the Ed25519 signature against a trusted
+        Core key, checks mandatory-copy and asset references, and creates or
+        advances a draft revision. Console and Cloud are not required.
+      tags: [Experiences]
+      security: [TenantAPIKey: []]
+      x-required-scopes: [experiences:write]
+      requestBody:
+        required: true
+        description: One exported signed experience manifest.
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ExperienceManifest' }
+            example: { document: { schema_version: '1.0', experience_id: exp_01J00000000000000000000000, version: 1, name: Acme selfie capture, copy: { version: tc_acme_v1, locales: [{ locale: en, entries: [{ key: capture.title, value: Verify your identity }] }] }, mandatory_copy_version: mc-2026-09-01, default_locale: en, targeting: [{ workflow: capture.identity, countries: [NG] }], links: { support: https://acme.example/support, privacy: https://acme.example/privacy, terms: https://acme.example/terms }, theme: { primary_color: '#1f6feb', accent_color: '#0b3d91', background_color: '#ffffff', text_color: '#1b1f23' } }, digest: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, key_id: expkey_core_1, algorithm: ed25519, signature: '00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000' }
+      responses:
+        '201':
+          description: The imported draft experience was created or advanced.
+          headers:
+            X-Request-ID: { $ref: '#/components/headers/XRequestID' }
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Experience' }
+              example: { id: exp_01J00000000000000000000000, state: published, revision: 3, latest_version: 2, approved_version: 2, published_version: 2, document: { schema_version: '1.0', experience_id: exp_01J00000000000000000000000, version: 1, name: Acme selfie capture, copy: { version: tc_acme_v1, locales: [{ locale: en, entries: [{ key: capture.title, value: Verify your identity }] }] }, mandatory_copy_version: mc-2026-09-01, default_locale: en, targeting: [{ workflow: capture.identity, countries: [NG] }], links: { support: https://acme.example/support, privacy: https://acme.example/privacy, terms: https://acme.example/terms }, theme: { primary_color: '#1f6feb', accent_color: '#0b3d91', background_color: '#ffffff', text_color: '#1b1f23' } }, created_at: '2026-09-20T12:00:00Z', updated_at: '2026-09-20T12:05:00Z' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v1/experiences/{experienceID}:
+    parameters:
+      - name: experienceID
+        in: path
+        required: true
+        description: Stable portable-experience identifier.
+        schema: { $ref: '#/components/schemas/ExperienceID' }
+    get:
+      operationId: getExperience
+      summary: Get one experience
+      description: Requires experiences:read. Returns the aggregate state, optimistic revision, and latest immutable signed revision document.
+      tags: [Experiences]
+      security: [TenantAPIKey: []]
+      x-required-scopes: [experiences:read]
+      responses:
+        '200':
+          description: The experience was returned.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' }, ETag: { $ref: '#/components/headers/ETag' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Experience' }
+              example: { id: exp_01J00000000000000000000000, state: published, revision: 3, latest_version: 2, approved_version: 2, published_version: 2, document: { schema_version: '1.0', experience_id: exp_01J00000000000000000000000, version: 1, name: Acme selfie capture, copy: { version: tc_acme_v1, locales: [{ locale: en, entries: [{ key: capture.title, value: Verify your identity }] }] }, mandatory_copy_version: mc-2026-09-01, default_locale: en, targeting: [{ workflow: capture.identity, countries: [NG] }], links: { support: https://acme.example/support, privacy: https://acme.example/privacy, terms: https://acme.example/terms }, theme: { primary_color: '#1f6feb', accent_color: '#0b3d91', background_color: '#ffffff', text_color: '#1b1f23' } }, created_at: '2026-09-20T12:00:00Z', updated_at: '2026-09-20T12:05:00Z' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+    put:
+      operationId: updateExperienceDraft
+      summary: Save a new experience draft revision
+      description: |
+        Requires experiences:write. Saves one new immutable revision and resets
+        approval, because approval binds to one exact version. The
+        expected_version must equal the current aggregate revision or the
+        command fails with a conflict. A revoked experience refuses edits and
+        requires an explicit rollback first.
+      tags: [Experiences]
+      security: [TenantAPIKey: []]
+      x-required-scopes: [experiences:write]
+      requestBody:
+        required: true
+        description: One bounded draft document and optimistic precondition.
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ExperienceDraft' }
+            example: { expected_version: 1, document: { name: Acme selfie capture, copy: { version: tc_acme_v1, locales: [{ locale: en, entries: [{ key: capture.title, value: Verify your identity }] }] }, mandatory_copy_version: mc-2026-09-01, default_locale: en, targeting: [{ workflow: capture.identity, countries: [NG] }], links: { support: https://acme.example/support, privacy: https://acme.example/privacy, terms: https://acme.example/terms }, theme: { primary_color: '#1f6feb', accent_color: '#0b3d91', background_color: '#ffffff', text_color: '#1b1f23' } } }
+      responses:
+        '200':
+          description: The new draft revision was saved.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' }, ETag: { $ref: '#/components/headers/ETag' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Experience' }
+              example: { id: exp_01J00000000000000000000000, state: published, revision: 3, latest_version: 2, approved_version: 2, published_version: 2, document: { schema_version: '1.0', experience_id: exp_01J00000000000000000000000, version: 1, name: Acme selfie capture, copy: { version: tc_acme_v1, locales: [{ locale: en, entries: [{ key: capture.title, value: Verify your identity }] }] }, mandatory_copy_version: mc-2026-09-01, default_locale: en, targeting: [{ workflow: capture.identity, countries: [NG] }], links: { support: https://acme.example/support, privacy: https://acme.example/privacy, terms: https://acme.example/terms }, theme: { primary_color: '#1f6feb', accent_color: '#0b3d91', background_color: '#ffffff', text_color: '#1b1f23' } }, created_at: '2026-09-20T12:00:00Z', updated_at: '2026-09-20T12:05:00Z' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v1/experiences/{experienceID}/approve:
+    parameters:
+      - name: experienceID
+        in: path
+        required: true
+        description: Stable portable-experience identifier.
+        schema: { $ref: '#/components/schemas/ExperienceID' }
+    post:
+      operationId: approveExperience
+      summary: Approve the latest experience revision
+      description: Requires experiences:publish. Records the explicit approval publication requires. Repeating the approval of the same version is idempotent and does not append history.
+      tags: [Experiences]
+      security: [TenantAPIKey: []]
+      x-required-scopes: [experiences:publish]
+      requestBody:
+        required: true
+        description: Optimistic precondition and optional bounded reason.
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ExperienceTransition' }
+            example: { expected_version: 2, reason: Approved by compliance }
+      responses:
+        '200':
+          description: The latest revision is approved.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' }, ETag: { $ref: '#/components/headers/ETag' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Experience' }
+              example: { id: exp_01J00000000000000000000000, state: published, revision: 3, latest_version: 2, approved_version: 2, published_version: 2, document: { schema_version: '1.0', experience_id: exp_01J00000000000000000000000, version: 1, name: Acme selfie capture, copy: { version: tc_acme_v1, locales: [{ locale: en, entries: [{ key: capture.title, value: Verify your identity }] }] }, mandatory_copy_version: mc-2026-09-01, default_locale: en, targeting: [{ workflow: capture.identity, countries: [NG] }], links: { support: https://acme.example/support, privacy: https://acme.example/privacy, terms: https://acme.example/terms }, theme: { primary_color: '#1f6feb', accent_color: '#0b3d91', background_color: '#ffffff', text_color: '#1b1f23' } }, created_at: '2026-09-20T12:00:00Z', updated_at: '2026-09-20T12:05:00Z' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v1/experiences/{experienceID}/publish:
+    parameters:
+      - name: experienceID
+        in: path
+        required: true
+        description: Stable portable-experience identifier.
+        schema: { $ref: '#/components/schemas/ExperienceID' }
+    post:
+      operationId: publishExperience
+      summary: Publish the approved experience revision
+      description: |
+        Requires experiences:publish. Publication requires a prior explicit
+        approval of the exact latest version, verifies every asset digest, and
+        supersedes the previous live revision without deleting it. Repeating
+        publication of the live version is idempotent.
+      tags: [Experiences]
+      security: [TenantAPIKey: []]
+      x-required-scopes: [experiences:publish]
+      requestBody:
+        required: true
+        description: Optimistic precondition and optional bounded reason.
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ExperienceTransition' }
+            example: { expected_version: 2, reason: Approved by compliance }
+      responses:
+        '200':
+          description: The approved revision is live.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' }, ETag: { $ref: '#/components/headers/ETag' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Experience' }
+              example: { id: exp_01J00000000000000000000000, state: published, revision: 3, latest_version: 2, approved_version: 2, published_version: 2, document: { schema_version: '1.0', experience_id: exp_01J00000000000000000000000, version: 1, name: Acme selfie capture, copy: { version: tc_acme_v1, locales: [{ locale: en, entries: [{ key: capture.title, value: Verify your identity }] }] }, mandatory_copy_version: mc-2026-09-01, default_locale: en, targeting: [{ workflow: capture.identity, countries: [NG] }], links: { support: https://acme.example/support, privacy: https://acme.example/privacy, terms: https://acme.example/terms }, theme: { primary_color: '#1f6feb', accent_color: '#0b3d91', background_color: '#ffffff', text_color: '#1b1f23' } }, created_at: '2026-09-20T12:00:00Z', updated_at: '2026-09-20T12:05:00Z' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v1/experiences/{experienceID}/revoke:
+    parameters:
+      - name: experienceID
+        in: path
+        required: true
+        description: Stable portable-experience identifier.
+        schema: { $ref: '#/components/schemas/ExperienceID' }
+    post:
+      operationId: revokeExperience
+      summary: Revoke the live experience (kill switch)
+      description: |
+        Requires experiences:publish. Clears the live revision so capture
+        sessions fall back to the signed accessible safe default. Revocation is
+        idempotent, preserves immutable history, and refuses new edits until an
+        explicit rollback republishes a prior approved revision.
+      tags: [Experiences]
+      security: [TenantAPIKey: []]
+      x-required-scopes: [experiences:publish]
+      requestBody:
+        required: true
+        description: Optimistic precondition and required bounded reason.
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ExperienceRevocation' }
+            example: { expected_version: 3, reason: Brand copy incident }
+      responses:
+        '200':
+          description: The live revision is revoked.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' }, ETag: { $ref: '#/components/headers/ETag' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Experience' }
+              example: { id: exp_01J00000000000000000000000, state: published, revision: 3, latest_version: 2, approved_version: 2, published_version: 2, document: { schema_version: '1.0', experience_id: exp_01J00000000000000000000000, version: 1, name: Acme selfie capture, copy: { version: tc_acme_v1, locales: [{ locale: en, entries: [{ key: capture.title, value: Verify your identity }] }] }, mandatory_copy_version: mc-2026-09-01, default_locale: en, targeting: [{ workflow: capture.identity, countries: [NG] }], links: { support: https://acme.example/support, privacy: https://acme.example/privacy, terms: https://acme.example/terms }, theme: { primary_color: '#1f6feb', accent_color: '#0b3d91', background_color: '#ffffff', text_color: '#1b1f23' } }, created_at: '2026-09-20T12:00:00Z', updated_at: '2026-09-20T12:05:00Z' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v1/experiences/{experienceID}/rollback:
+    parameters:
+      - name: experienceID
+        in: path
+        required: true
+        description: Stable portable-experience identifier.
+        schema: { $ref: '#/components/schemas/ExperienceID' }
+    post:
+      operationId: rollbackExperience
+      summary: Roll back to a prior immutable revision
+      description: Requires experiences:publish. Republishes one previously approved immutable revision without editing it. The rollback target must have been approved; the replaced live revision is marked superseded. Repeating the same rollback is idempotent.
+      tags: [Experiences]
+      security: [TenantAPIKey: []]
+      x-required-scopes: [experiences:publish]
+      requestBody:
+        required: true
+        description: Optimistic precondition, rollback target version, and optional reason.
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ExperienceRollback' }
+            example: { expected_version: 4, target_version: 1, reason: Restore prior approved revision }
+      responses:
+        '200':
+          description: The prior revision is live again.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' }, ETag: { $ref: '#/components/headers/ETag' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Experience' }
+              example: { id: exp_01J00000000000000000000000, state: published, revision: 3, latest_version: 2, approved_version: 2, published_version: 2, document: { schema_version: '1.0', experience_id: exp_01J00000000000000000000000, version: 1, name: Acme selfie capture, copy: { version: tc_acme_v1, locales: [{ locale: en, entries: [{ key: capture.title, value: Verify your identity }] }] }, mandatory_copy_version: mc-2026-09-01, default_locale: en, targeting: [{ workflow: capture.identity, countries: [NG] }], links: { support: https://acme.example/support, privacy: https://acme.example/privacy, terms: https://acme.example/terms }, theme: { primary_color: '#1f6feb', accent_color: '#0b3d91', background_color: '#ffffff', text_color: '#1b1f23' } }, created_at: '2026-09-20T12:00:00Z', updated_at: '2026-09-20T12:05:00Z' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v1/experiences/{experienceID}/export:
+    parameters:
+      - name: experienceID
+        in: path
+        required: true
+        description: Stable portable-experience identifier.
+        schema: { $ref: '#/components/schemas/ExperienceID' }
+    get:
+      operationId: exportExperience
+      summary: Export one signed experience manifest
+      description: Requires experiences:read. Returns the signed canonical manifest of the live published revision, or the latest revision when nothing is published, so another Core installation can import it without Console or Cloud.
+      tags: [Experiences]
+      security: [TenantAPIKey: []]
+      x-required-scopes: [experiences:read]
+      responses:
+        '200':
+          description: The portable signed manifest was returned.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ExperienceManifest' }
+              example: { document: { schema_version: '1.0', experience_id: exp_01J00000000000000000000000, version: 1, name: Acme selfie capture, copy: { version: tc_acme_v1, locales: [{ locale: en, entries: [{ key: capture.title, value: Verify your identity }] }] }, mandatory_copy_version: mc-2026-09-01, default_locale: en, targeting: [{ workflow: capture.identity, countries: [NG] }], links: { support: https://acme.example/support, privacy: https://acme.example/privacy, terms: https://acme.example/terms }, theme: { primary_color: '#1f6feb', accent_color: '#0b3d91', background_color: '#ffffff', text_color: '#1b1f23' } }, digest: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, key_id: expkey_core_1, algorithm: ed25519, signature: '00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
 components:
   securitySchemes:
     TenantAPIKey:
@@ -12771,6 +13870,42 @@ components:
           minimum: 1
           description: Optional outcome-token lifetime after verification expiry, subject to deployment bounds.
           example: 86400
+        locale:
+          type: string
+          minLength: 2
+          maxLength: 35
+          pattern: ^[A-Za-z]{2,8}(-[A-Za-z0-9]{1,8})*$
+          description: Optional BCP 47 locale resolved and pinned with the portable experience.
+          example: en-NG
+        experience:
+          type: object
+          additionalProperties: false
+          description: Optional capture-experience targeting context resolved and pinned at creation. Unproven dimensions fail closed to the signed safe default.
+          properties:
+            workflow:
+              type: string
+              maxLength: 128
+              pattern: ^[a-z][a-z0-9._-]{0,127}$
+              example: capture.identity
+            country:
+              type: string
+              pattern: ^[A-Z]{2}$
+              example: NG
+            application_id:
+              type: string
+              minLength: 1
+              maxLength: 200
+              example: dev.acme.app
+            origin:
+              type: string
+              minLength: 1
+              maxLength: 2048
+              pattern: ^https://
+              example: https://capture.acme.example
+            sdk_version:
+              type: string
+              pattern: ^[0-9]+\.[0-9]+\.[0-9]+$
+              example: 1.4.0
     VerificationSession:
       description: Immutable capture requirements and current lifecycle metadata for one verification.
       type: object
@@ -13092,7 +14227,7 @@ components:
           example: capture_failed
     CaptureProgress:
       type: object
-      description: Capture-token-scoped accepted completion snapshot.
+      description: Capture-token-scoped accepted completion snapshot with the session's pinned portable-experience versions when available.
       additionalProperties: false
       required: [verification_id, completions]
       properties:
@@ -13104,6 +14239,21 @@ components:
           example: []
           items:
             $ref: "#/components/schemas/CaptureCompletion"
+        experience:
+          type: object
+          description: The exact experience, locale, and copy versions pinned to this session.
+          additionalProperties: false
+          required: [experience_id, version, locale, tenant_copy_version, mandatory_copy_version, source, digest, key_id, pinned_at]
+          properties:
+            experience_id: { $ref: "#/components/schemas/ExperienceID" }
+            version: { type: integer, minimum: 1, example: 1 }
+            locale: { type: string, minLength: 2, maxLength: 35, example: en }
+            tenant_copy_version: { type: string, maxLength: 64, example: tc_acme_v1 }
+            mandatory_copy_version: { type: string, maxLength: 32, example: mc-2026-09-01 }
+            source: { type: string, enum: [pinned, published, default], example: pinned }
+            digest: { type: string, pattern: '^[0-9a-f]{64}$', example: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa }
+            key_id: { type: string, maxLength: 64, example: expkey_core_1 }
+            pinned_at: { type: string, format: date-time, example: '2026-09-20T12:00:00Z' }
     CaptureConnection:
       type: object
       description: Display-once browser connection material. Treat websocket_url as a secret.
@@ -15070,6 +16220,312 @@ components:
         aggregate_id: { type: string, minLength: 1, maxLength: 200, example: ver_01M11HEQG00000000000000000 }
         records: { type: array, maxItems: 1000, items: { $ref: '#/components/schemas/PrivacyRetentionRecord' }, example: [{ id: evd_01M11HEQG00000000000000000, data_class: raw_evidence, region: ng-1, duration_seconds: 2592000, expires_at: '2026-10-06T00:00:00Z' }] }
         holds: { type: array, maxItems: 100, items: { $ref: '#/components/schemas/PrivacyHold' }, example: [] }
+    PrivacyRequestID:
+      type: string
+      description: Stable Idenqa privacy-request identifier.
+      pattern: ^prq_[0-9A-HJKMNP-TV-Z]{26}$
+      example: prq_01M11HEQG00000000000000000
+    PrivacyRestrictionID:
+      type: string
+      description: Stable Idenqa processing-restriction identifier.
+      pattern: ^prs_[0-9A-HJKMNP-TV-Z]{26}$
+      example: prs_01M11HEQG00000000000000000
+    PrivacyDisclosureID:
+      type: string
+      description: Stable Idenqa disclosure identifier.
+      pattern: ^pdc_[0-9A-HJKMNP-TV-Z]{26}$
+      example: pdc_01M11HEQG00000000000000000
+    PrivacyProcessorID:
+      type: string
+      description: Stable Idenqa processor-inventory identifier.
+      pattern: ^prc_[0-9A-HJKMNP-TV-Z]{26}$
+      example: prc_01M11HEQG00000000000000000
+    PrivacyRequestType:
+      type: string
+      description: Selected data-subject privacy-request type.
+      enum: [access, portability, correction, restriction, objection, erasure]
+      example: access
+    PrivacyRequestState:
+      type: string
+      description: Observable privacy-request workflow state. Terminal states are immutable.
+      enum: [requested, in_review, approved, partially_approved, denied, executing, completed, failed, withdrawn, expired]
+      example: in_review
+    PrivacyRequestChannel:
+      type: string
+      description: Submission channel. The tenant API key is always the controller.
+      enum: [tenant_api, subject_outcome]
+      example: tenant_api
+    PrivacyDecisionOutcome:
+      type: string
+      description: Immutable decision outcome.
+      enum: [approved, partially_approved, denied]
+      example: approved
+    PrivacyRequestDecision:
+      type: object
+      description: One bounded decision command.
+      additionalProperties: false
+      required: [expected_version, reason_code]
+      properties:
+        expected_version: { type: integer, format: int64, minimum: 1, example: 2 }
+        outcome: { $ref: '#/components/schemas/PrivacyDecisionOutcome' }
+        reason_code: { type: string, minLength: 1, maxLength: 64, example: access_approved }
+    PrivacyRequestExpectedVersion:
+      type: object
+      description: One expected-version command for a privacy-request transition.
+      additionalProperties: false
+      required: [expected_version]
+      properties:
+        expected_version: { type: integer, format: int64, minimum: 1, example: 3 }
+    PrivacyRequestCreate:
+      type: object
+      description: One bounded privacy-request instruction. Exactly one correction target is required for correction requests; purpose is required for objections.
+      additionalProperties: false
+      required: [type, region]
+      properties:
+        type: { $ref: '#/components/schemas/PrivacyRequestType' }
+        subject_id: { type: string, minLength: 1, maxLength: 200, example: sub_01M11HEQG00000000000000000 }
+        verification_id: { type: string, minLength: 1, maxLength: 64, example: ver_01M11HEQG00000000000000000 }
+        region: { type: string, minLength: 1, maxLength: 63, example: ng-1 }
+        expires_at: { type: string, format: date-time, description: Optional bounded expiry within the deployment maximum., example: '2026-10-20T12:00:00Z' }
+        purpose: { type: string, minLength: 1, maxLength: 128, example: liveness-check }
+        record_id: { type: string, minLength: 1, maxLength: 64, example: obs_01M11HEQG00000000000000000 }
+        decision_id: { type: string, minLength: 1, maxLength: 64, example: dec_01M11HEQG00000000000000000 }
+        name: { type: string, minLength: 1, maxLength: 128, example: identity.name.full }
+        value: { type: string, minLength: 1, maxLength: 1024, example: Ada }
+        kind: { type: string, enum: [observation, claim, fact], example: observation }
+        normalization: { type: string, enum: [identity.exact.v1, identity.trim.v1, identity.ascii_upper.v1], example: identity.trim.v1 }
+    PrivacyRequestDecisionSummary:
+      type: object
+      description: One immutable decision statement without the actor credential.
+      additionalProperties: false
+      required: [id, outcome, reason_code, decided_at, version]
+      properties:
+        id: { type: string, pattern: '^prd_[0-9A-HJKMNP-TV-Z]{26}$', example: prd_01M11HEQG00000000000000000 }
+        outcome: { $ref: '#/components/schemas/PrivacyDecisionOutcome' }
+        reason_code: { type: string, minLength: 1, maxLength: 64, example: access_approved }
+        decided_at: { type: string, format: date-time, example: '2026-09-20T12:05:00Z' }
+        version: { type: integer, format: int64, minimum: 1, example: 3 }
+    PrivacyRequestSummary:
+      type: object
+      description: Safe privacy-request summary without actor credentials, internal events, or effect payloads.
+      additionalProperties: false
+      required: [id, type, state, channel, region, expires_at, requested_at, updated_at, version]
+      properties:
+        id: { $ref: '#/components/schemas/PrivacyRequestID' }
+        type: { $ref: '#/components/schemas/PrivacyRequestType' }
+        state: { $ref: '#/components/schemas/PrivacyRequestState' }
+        channel: { $ref: '#/components/schemas/PrivacyRequestChannel' }
+        subject_id: { type: string, maxLength: 200, example: sub_01M11HEQG00000000000000000 }
+        verification_id: { type: string, maxLength: 64, example: ver_01M11HEQG00000000000000000 }
+        region: { type: string, minLength: 1, maxLength: 63, example: ng-1 }
+        reason_code: { type: string, maxLength: 64, example: access_approved }
+        failure_class: { type: string, maxLength: 64, example: effect_failed }
+        effect_kind: { type: string, maxLength: 64, example: subject_export }
+        effect_reference: { type: string, maxLength: 512, example: 'subject:sub_01M11HEQG00000000000000000' }
+        effect_digest: { type: string, maxLength: 128, example: 'sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef' }
+        expires_at: { type: string, format: date-time, example: '2026-10-20T12:00:00Z' }
+        requested_at: { type: string, format: date-time, example: '2026-09-20T12:00:00Z' }
+        updated_at: { type: string, format: date-time, example: '2026-09-20T12:05:00Z' }
+        version: { type: integer, format: int64, minimum: 1, example: 3 }
+    PrivacyRequestStatus:
+      type: object
+      description: Full safe privacy-request status with its immutable decision statements.
+      additionalProperties: false
+      required: [id, type, state, channel, region, expires_at, requested_at, updated_at, version, decisions]
+      properties:
+        id: { $ref: '#/components/schemas/PrivacyRequestID' }
+        type: { $ref: '#/components/schemas/PrivacyRequestType' }
+        state: { $ref: '#/components/schemas/PrivacyRequestState' }
+        channel: { $ref: '#/components/schemas/PrivacyRequestChannel' }
+        subject_id: { type: string, maxLength: 200, example: sub_01M11HEQG00000000000000000 }
+        verification_id: { type: string, maxLength: 64, example: ver_01M11HEQG00000000000000000 }
+        region: { type: string, minLength: 1, maxLength: 63, example: ng-1 }
+        reason_code: { type: string, maxLength: 64, example: access_approved }
+        failure_class: { type: string, maxLength: 64, example: effect_failed }
+        effect_kind: { type: string, maxLength: 64, example: subject_export }
+        effect_reference: { type: string, maxLength: 512, example: 'subject:sub_01M11HEQG00000000000000000' }
+        effect_digest: { type: string, maxLength: 128, example: 'sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef' }
+        expires_at: { type: string, format: date-time, example: '2026-10-20T12:00:00Z' }
+        requested_at: { type: string, format: date-time, example: '2026-09-20T12:00:00Z' }
+        updated_at: { type: string, format: date-time, example: '2026-09-20T12:05:00Z' }
+        version: { type: integer, format: int64, minimum: 1, example: 3 }
+        decisions: { type: array, maxItems: 8, items: { $ref: '#/components/schemas/PrivacyRequestDecisionSummary' }, example: [] }
+    PrivacyRequestList:
+      type: object
+      description: Bounded ascending privacy-request page with a signed tenant-, filter- and limit-bound cursor.
+      additionalProperties: false
+      required: [data, page]
+      properties:
+        data: { type: array, maxItems: 100, items: { $ref: '#/components/schemas/PrivacyRequestSummary' }, example: [] }
+        page: { $ref: '#/components/schemas/Page' }
+    PrivacyRestrictionScope:
+      type: string
+      description: Subject-blocking restriction or purpose-scoped objection record.
+      enum: [subject, purpose]
+      example: subject
+    PrivacyRestrictionState:
+      type: string
+      description: Observable restriction state.
+      enum: [active, lifted]
+      example: active
+    PrivacyRestriction:
+      type: object
+      description: One processing restriction or purpose-scoped objection record.
+      additionalProperties: false
+      required: [id, request_id, subject_id, scope, reason_code, region, state, starts_at, version]
+      properties:
+        id: { $ref: '#/components/schemas/PrivacyRestrictionID' }
+        request_id: { $ref: '#/components/schemas/PrivacyRequestID' }
+        subject_id: { type: string, minLength: 1, maxLength: 200, example: sub_01M11HEQG00000000000000000 }
+        scope: { $ref: '#/components/schemas/PrivacyRestrictionScope' }
+        purpose: { type: string, maxLength: 128, example: liveness-check }
+        reason_code: { type: string, minLength: 1, maxLength: 64, example: subject_request }
+        region: { type: string, minLength: 1, maxLength: 63, example: ng-1 }
+        state: { $ref: '#/components/schemas/PrivacyRestrictionState' }
+        starts_at: { type: string, format: date-time, example: '2026-09-20T12:05:00Z' }
+        lifted_at: { type: string, format: date-time, example: '2026-09-21T09:00:00Z' }
+        lift_reason_code: { type: string, maxLength: 64, example: lifted_by_tenant }
+        version: { type: integer, format: int64, minimum: 1, example: 1 }
+    PrivacyRestrictionLift:
+      type: object
+      description: One expected-version lift command with an audited reason.
+      additionalProperties: false
+      required: [expected_version, reason_code]
+      properties:
+        expected_version: { type: integer, format: int64, minimum: 1, example: 1 }
+        reason_code: { type: string, enum: [lifted_by_tenant, lifted_by_subject, restriction_expired], example: lifted_by_tenant }
+    PrivacyRestrictionList:
+      type: object
+      description: Bounded ascending restriction page with a signed tenant-, filter- and limit-bound cursor.
+      additionalProperties: false
+      required: [data, page]
+      properties:
+        data: { type: array, maxItems: 100, items: { $ref: '#/components/schemas/PrivacyRestriction' }, example: [] }
+        page: { $ref: '#/components/schemas/Page' }
+    PrivacyDisclosureClass:
+      type: string
+      description: Closed transferred-data class.
+      enum: [subject_export, identity_successor, deletion_request, restriction, objection]
+      example: subject_export
+    PrivacyDisclosure:
+      type: object
+      description: One immutable reference-only transfer or disclosure record. The reference is a bounded digest, never a document body.
+      additionalProperties: false
+      required: [id, request_id, recipient, purpose, data_class, legal_basis, region, reference, disclosed_at, version]
+      properties:
+        id: { $ref: '#/components/schemas/PrivacyDisclosureID' }
+        request_id: { $ref: '#/components/schemas/PrivacyRequestID' }
+        recipient: { type: string, minLength: 1, maxLength: 200, example: legal.counsel }
+        purpose: { type: string, minLength: 1, maxLength: 128, example: access.request }
+        data_class: { $ref: '#/components/schemas/PrivacyDisclosureClass' }
+        legal_basis: { type: string, minLength: 1, maxLength: 200, example: controller.contract }
+        region: { type: string, minLength: 1, maxLength: 63, example: ng-1 }
+        reference: { type: string, minLength: 1, maxLength: 128, example: 'sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef' }
+        disclosed_at: { type: string, format: date-time, example: '2026-09-20T12:05:00Z' }
+        version: { type: integer, format: int64, minimum: 1, example: 1 }
+    PrivacyDisclosureCreate:
+      type: object
+      description: One immutable disclosure command.
+      additionalProperties: false
+      required: [request_id, recipient, purpose, data_class, legal_basis, region, reference]
+      properties:
+        request_id: { $ref: '#/components/schemas/PrivacyRequestID' }
+        recipient: { type: string, minLength: 1, maxLength: 200, example: legal.counsel }
+        purpose: { type: string, minLength: 1, maxLength: 128, example: access.request }
+        data_class: { $ref: '#/components/schemas/PrivacyDisclosureClass' }
+        legal_basis: { type: string, minLength: 1, maxLength: 200, example: controller.contract }
+        region: { type: string, minLength: 1, maxLength: 63, example: ng-1 }
+        reference: { type: string, minLength: 1, maxLength: 128, example: 'sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef' }
+    PrivacyDisclosureList:
+      type: object
+      description: Bounded ascending disclosure page with a signed tenant-, filter- and limit-bound cursor.
+      additionalProperties: false
+      required: [data, page]
+      properties:
+        data: { type: array, maxItems: 100, items: { $ref: '#/components/schemas/PrivacyDisclosure' }, example: [] }
+        page: { $ref: '#/components/schemas/Page' }
+    PrivacyProcessorRole:
+      type: string
+      description: Closed processor-inventory role.
+      enum: [processor, subprocessor, recipient]
+      example: processor
+    PrivacyProcessor:
+      type: object
+      description: One versioned processor, subprocessor, or recipient inventory entry.
+      additionalProperties: false
+      required: [id, name, role, purpose, data_classes, regions, transfer_mechanism, version, created_at, updated_at]
+      properties:
+        id: { $ref: '#/components/schemas/PrivacyProcessorID' }
+        name: { type: string, minLength: 1, maxLength: 200, example: Example KYC }
+        role: { $ref: '#/components/schemas/PrivacyProcessorRole' }
+        purpose: { type: string, minLength: 1, maxLength: 128, example: identity.verification }
+        data_classes: { type: array, minItems: 1, maxItems: 8, items: { type: string, enum: [raw_evidence, derived_evidence, webhook_payload, workflow_metadata, audit_record, deletion_proof, backup] }, example: [raw_evidence] }
+        regions: { type: array, minItems: 1, maxItems: 16, items: { type: string, minLength: 1, maxLength: 63 }, example: [ng-1] }
+        transfer_mechanism: { type: string, minLength: 1, maxLength: 128, example: standard.contractual_clauses }
+        version: { type: integer, format: int64, minimum: 1, example: 1 }
+        created_at: { type: string, format: date-time, example: '2026-09-20T12:00:00Z' }
+        updated_at: { type: string, format: date-time, example: '2026-09-20T12:00:00Z' }
+    PrivacyProcessorPut:
+      type: object
+      description: One create or expected-version processor inventory command.
+      additionalProperties: false
+      required: [name, role, purpose, data_classes, regions, transfer_mechanism, expected_version]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 200, example: Example KYC }
+        role: { $ref: '#/components/schemas/PrivacyProcessorRole' }
+        purpose: { type: string, minLength: 1, maxLength: 128, example: identity.verification }
+        data_classes: { type: array, minItems: 1, maxItems: 8, items: { type: string, enum: [raw_evidence, derived_evidence, webhook_payload, workflow_metadata, audit_record, deletion_proof, backup] }, example: [raw_evidence] }
+        regions: { type: array, minItems: 1, maxItems: 16, items: { type: string, minLength: 1, maxLength: 63 }, example: [ng-1] }
+        transfer_mechanism: { type: string, minLength: 1, maxLength: 128, example: standard.contractual_clauses }
+        expected_version: { type: integer, format: int64, minimum: 0, description: Zero creates version one; a positive value applies one expected-version update., example: 0 }
+    PrivacyProcessorList:
+      type: object
+      description: Bounded ascending processor inventory page.
+      additionalProperties: false
+      required: [data, page]
+      properties:
+        data: { type: array, maxItems: 100, items: { $ref: '#/components/schemas/PrivacyProcessor' }, example: [] }
+        page: { $ref: '#/components/schemas/Page' }
+    SubjectPrivacyStatus:
+      type: string
+      description: Closed subject-safe request status. Internal states are collapsed and reasons are never disclosed.
+      enum: [received, in_review, in_progress, completed, closed, withdrawn, expired]
+      example: in_review
+    SubjectPrivacyRequest:
+      type: object
+      description: Closed subject-safe privacy-request projection. No identifiers, reasons, actors, or tenant state are present.
+      additionalProperties: false
+      required: [type, status, requested_at, updated_at]
+      properties:
+        type: { $ref: '#/components/schemas/PrivacyRequestType' }
+        status: { $ref: '#/components/schemas/SubjectPrivacyStatus' }
+        requested_at: { type: string, format: date-time, example: '2026-09-20T12:00:00Z' }
+        updated_at: { type: string, format: date-time, example: '2026-09-20T12:05:00Z' }
+    SubjectPrivacyRequestCreate:
+      type: object
+      description: One subject-channel request instruction. The verification scope comes only from the outcome credential.
+      additionalProperties: false
+      required: [type, region]
+      properties:
+        type: { $ref: '#/components/schemas/PrivacyRequestType' }
+        subject_id: { type: string, minLength: 1, maxLength: 200, example: sub_01M11HEQG00000000000000000 }
+        region: { type: string, minLength: 1, maxLength: 63, example: ng-1 }
+        purpose: { type: string, minLength: 1, maxLength: 128, example: liveness-check }
+        record_id: { type: string, minLength: 1, maxLength: 64, example: obs_01M11HEQG00000000000000000 }
+        decision_id: { type: string, minLength: 1, maxLength: 64, example: dec_01M11HEQG00000000000000000 }
+        name: { type: string, minLength: 1, maxLength: 128, example: identity.name.full }
+        value: { type: string, minLength: 1, maxLength: 1024, example: Ada }
+        kind: { type: string, enum: [observation, claim, fact], example: observation }
+        normalization: { type: string, enum: [identity.exact.v1, identity.trim.v1, identity.ascii_upper.v1], example: identity.trim.v1 }
+    SubjectPrivacyRequestList:
+      type: object
+      description: Bounded subject-safe privacy-request page.
+      additionalProperties: false
+      required: [data, page]
+      properties:
+        data: { type: array, maxItems: 100, items: { $ref: '#/components/schemas/SubjectPrivacyRequest' }, example: [] }
+        page: { $ref: '#/components/schemas/Page' }
+
     ModelRegistryName:
       type: string
       description: Tenant-owned evaluation-model registry name.
@@ -15549,6 +17005,548 @@ components:
         attempt_state: { type: string, enum: [failed, timed_out, cancelled], example: failed }
         check_state: { type: string, enum: [failed, timed_out, cancelled], example: failed }
         produces_identity_outcome: { type: boolean, enum: [false], example: false }
+    PackCountry:
+      type: string
+      description: ISO 3166-1 alpha-2 country code assigned to a registered pack.
+      pattern: '^[A-Z]{2}$'
+      example: NG
+    PackDocumentType:
+      type: string
+      description: Closed pack document-type vocabulary. The canonical drivers_license spelling is accepted on query input only.
+      enum: [passport, national_id, driver_licence]
+      example: passport
+    PackSupportLevel:
+      type: string
+      description: Honest capability classification. It is not a legal or provider approval.
+      enum: [fully_supported, structurally_supported, provider_only, best_effort, unsupported]
+      example: structurally_supported
+    PackLifecycleState:
+      type: string
+      description: Registry lifecycle of one immutable pack revision.
+      enum: [draft, active, deprecated, retired]
+      example: active
+    PackLegalReviewState:
+      type: string
+      description: Bounded legal-review status; not_reviewed is the fail-closed default.
+      enum: [not_reviewed, pending, reviewed]
+      example: not_reviewed
+    PackEvaluationState:
+      type: string
+      description: Bounded evaluation-coverage state.
+      enum: [not_evaluated, partially_evaluated, evaluated]
+      example: not_evaluated
+    PackDeclarationState:
+      type: string
+      description: Bounded support declaration for one acquisition path.
+      enum: [supported, unsupported, unknown]
+      example: unknown
+    PackSide:
+      type: string
+      description: One physical document side mapped to an evidence artefact.
+      enum: [front, back]
+      example: front
+    PackFieldName:
+      type: string
+      description: Canonical document field vocabulary already owned by the document package.
+      enum: [document_number, document_type, issuing_state, nationality, first_name, last_name, other_names, date_of_birth, date_of_expiry, date_of_issue, sex, personal_number]
+      example: document_number
+    PackSecurityCheck:
+      type: string
+      description: Closed deterministic Core capability vocabulary. Anti-tamper and template inspection remain provider or model gated.
+      enum: [core.barcode_structure, core.cross_field_consistency, core.front_back_consistency, core.mrz_check_digits]
+      example: core.mrz_check_digits
+    PackAssuranceMapping:
+      type: object
+      description: One reference to an existing platform assurance capability, or an explicit unmapped state with a reason.
+      additionalProperties: false
+      required: [state]
+      properties:
+        capability: { $ref: '#/components/schemas/AssuranceCapabilityName' }
+        state: { type: string, enum: [mapped, not_mapped], example: not_mapped }
+        reason: { type: string, pattern: '^[a-z][a-z0-9._-]{0,99}$', maxLength: 100, example: no_pack_specific_assurance_profile }
+    PackDeclaration:
+      type: object
+      description: One barcode, MRZ, or NFC support declaration without provider or legal approval.
+      additionalProperties: false
+      required: [state, formats]
+      properties:
+        state: { $ref: '#/components/schemas/PackDeclarationState' }
+        formats:
+          type: array
+          maxItems: 8
+          items: { type: string, minLength: 1, maxLength: 32 }
+          example: [td3]
+        reference: { type: string, minLength: 1, maxLength: 256, example: ICAO Doc 9303 Part 4 }
+        reason: { type: string, pattern: '^[a-z][a-z0-9._-]{0,99}$', maxLength: 100, example: nfc_not_implemented }
+      example: { state: supported, formats: [td3], reference: ICAO Doc 9303 Part 4 }
+    PackKnownVersion:
+      type: object
+      description: One publicly referenced document version or format edition.
+      additionalProperties: false
+      required: [version, reference]
+      properties:
+        version: { type: string, pattern: '^[a-z][a-z0-9._-]{0,99}$', maxLength: 100, example: icao-9303-td3 }
+        reference: { type: string, minLength: 1, maxLength: 256, example: ICAO Doc 9303 Part 4, seventh edition (2015) }
+    PackRequirementReference:
+      type: object
+      description: One parser or model requirement reference. It never claims that the referenced implementation was accepted.
+      additionalProperties: false
+      required: [kind, reference, version]
+      properties:
+        kind: { type: string, enum: [model, parser], example: parser }
+        reference: { type: string, pattern: '^[a-z][a-z0-9._-]{0,99}$', maxLength: 100, example: idenqa.document.mrz }
+        version: { type: string, pattern: '^[a-z][a-z0-9._-]{0,31}$', maxLength: 32, example: v1 }
+    PackRequirementSlot:
+      type: object
+      description: One configurable country or jurisdiction requirement slot. The pack supplies a tenant-policy key, never a legal value.
+      additionalProperties: false
+      required: [name, key]
+      properties:
+        name: { type: string, enum: [authority, controller, processor, recipient, region, transfer], example: authority }
+        key: { type: string, pattern: '^[a-z][a-z0-9._-]{0,99}$', maxLength: 100, example: idenqa.requirement.authority }
+    PackEvaluationCoverage:
+      type: object
+      description: Bounded evaluation coverage with opaque references. not_evaluated carries no references.
+      additionalProperties: false
+      required: [state, references]
+      properties:
+        state: { $ref: '#/components/schemas/PackEvaluationState' }
+        references:
+          type: array
+          maxItems: 16
+          items: { type: string, pattern: '^[a-z][a-z0-9._-]{0,99}$', maxLength: 100 }
+          example: []
+    PackLegalReview:
+      type: object
+      description: Honest legal-review status with an optional opaque reference. A reviewed state requires one; no pack asserts review without a reference.
+      additionalProperties: false
+      required: [state]
+      properties:
+        state: { $ref: '#/components/schemas/PackLegalReviewState' }
+        reference: { type: string, minLength: 1, maxLength: 256, example: legal-review-pending-2026-09 }
+    PackDocumentSummary:
+      type: object
+      description: Bounded document entry in a pack list projection.
+      additionalProperties: false
+      required: [type, support_level]
+      properties:
+        type: { $ref: '#/components/schemas/PackDocumentType' }
+        support_level: { $ref: '#/components/schemas/PackSupportLevel' }
+    PackDocument:
+      type: object
+      description: One immutable document entry. Supported content is present only when the evidence list justifies it; unsupported entries carry no support claims.
+      additionalProperties: false
+      required: [type, known_versions, required_sides, supported_fields, security_checks, barcode, mrz, nfc, model_and_parser_requirements, evaluation_coverage, support_level, known_limitations, evidence, assurance_mappings]
+      properties:
+        type: { $ref: '#/components/schemas/PackDocumentType' }
+        known_versions:
+          type: array
+          maxItems: 16
+          items: { $ref: '#/components/schemas/PackKnownVersion' }
+          example: []
+        required_sides:
+          type: array
+          maxItems: 2
+          items: { $ref: '#/components/schemas/PackSide' }
+          example: [front]
+        supported_fields:
+          type: array
+          maxItems: 32
+          items: { $ref: '#/components/schemas/PackFieldName' }
+          example: [document_number, date_of_birth]
+        security_checks:
+          type: array
+          maxItems: 16
+          items: { $ref: '#/components/schemas/PackSecurityCheck' }
+          example: []
+        barcode: { $ref: '#/components/schemas/PackDeclaration' }
+        mrz: { $ref: '#/components/schemas/PackDeclaration' }
+        nfc: { $ref: '#/components/schemas/PackDeclaration' }
+        model_and_parser_requirements:
+          type: array
+          maxItems: 16
+          items: { $ref: '#/components/schemas/PackRequirementReference' }
+          example: []
+        evaluation_coverage: { $ref: '#/components/schemas/PackEvaluationCoverage' }
+        support_level: { $ref: '#/components/schemas/PackSupportLevel' }
+        known_limitations:
+          type: array
+          maxItems: 32
+          items: { type: string, pattern: '^[a-z][a-z0-9._-]{0,99}$', maxLength: 100 }
+          example: [no_legal_review, no_provider_evaluation]
+        evidence:
+          type: array
+          maxItems: 32
+          items: { type: string, pattern: '^[a-z][a-z0-9._-]{0,99}$', maxLength: 100 }
+          example: [core_mrz_parser_v1, icao_9303_td3_structure]
+        assurance_mappings:
+          type: array
+          maxItems: 16
+          items: { $ref: '#/components/schemas/PackAssuranceMapping' }
+          example: [{ state: not_mapped, reason: no_pack_specific_assurance_profile }]
+    Pack:
+      type: object
+      description: Immutable canonical country pack document. Digest covers exact content; lifecycle transitions never rewrite it.
+      additionalProperties: false
+      required: [schema_major, schema_minor, country, country_alpha3, authority, revision, published_at, digest, lifecycle_state, legal_review, requirement_slots, documents]
+      properties:
+        schema_major: { type: integer, minimum: 1, maximum: 1, example: 1 }
+        schema_minor: { type: integer, minimum: 0, maximum: 0, example: 0 }
+        country: { $ref: '#/components/schemas/PackCountry' }
+        country_alpha3: { type: string, pattern: '^[A-Z]{3}$', example: NGA }
+        authority: { type: string, pattern: '^[a-z][a-z0-9._-]{0,99}$', maxLength: 100, example: idenqa.requirement.authority }
+        revision: { type: integer, minimum: 1, maximum: 4294967295, example: 1 }
+        published_at: { type: string, format: date-time, example: '2026-09-20T00:00:00Z' }
+        digest: { type: string, pattern: '^[0-9a-f]{64}$', example: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa }
+        lifecycle_state: { $ref: '#/components/schemas/PackLifecycleState' }
+        legal_review: { $ref: '#/components/schemas/PackLegalReview' }
+        requirement_slots:
+          type: array
+          minItems: 1
+          maxItems: 16
+          items: { $ref: '#/components/schemas/PackRequirementSlot' }
+          example: [{ name: authority, key: idenqa.requirement.authority }]
+        documents:
+          type: array
+          minItems: 1
+          maxItems: 8
+          items: { $ref: '#/components/schemas/PackDocument' }
+    PackSummary:
+      type: object
+      description: Safe list projection of one registered pack revision with current lifecycle state.
+      additionalProperties: false
+      required: [country, country_alpha3, revision, digest, published_at, lifecycle_state, legal_review, documents]
+      properties:
+        country: { $ref: '#/components/schemas/PackCountry' }
+        country_alpha3: { type: string, pattern: '^[A-Z]{3}$', example: NGA }
+        revision: { type: integer, minimum: 1, maximum: 4294967295, example: 1 }
+        digest: { type: string, pattern: '^[0-9a-f]{64}$', example: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa }
+        published_at: { type: string, format: date-time, example: '2026-09-20T00:00:00Z' }
+        lifecycle_state: { $ref: '#/components/schemas/PackLifecycleState' }
+        legal_review: { $ref: '#/components/schemas/PackLegalReview' }
+        documents:
+          type: array
+          maxItems: 8
+          items: { $ref: '#/components/schemas/PackDocumentSummary' }
+          example: [{ type: passport, support_level: structurally_supported }]
+    PackResource:
+      type: object
+      description: One exact pack revision with its current registry lifecycle state and expected-version counter.
+      additionalProperties: false
+      required: [pack, lifecycle_state, version]
+      properties:
+        pack: { $ref: '#/components/schemas/Pack' }
+        lifecycle_state: { $ref: '#/components/schemas/PackLifecycleState' }
+        version: { type: integer, minimum: 0, maximum: 9223372036854775807, example: 0 }
+        updated_at: { type: string, format: date-time, example: '2026-09-20T00:00:00Z' }
+    PackPage:
+      type: object
+      description: Bounded list of registered pack revisions. The embedded registry is reviewed and bounded, so has_more is always false.
+      additionalProperties: false
+      required: [data, page]
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/PackSummary' }
+          example: []
+        page: { $ref: '#/components/schemas/Page' }
+    DocumentSupport:
+      type: object
+      description: Honest support-level projection for one active pack document. It contains no legal conclusion, provider approval, or security-feature finding.
+      additionalProperties: false
+      required: [country, country_alpha3, document_type, pack_revision, pack_digest, lifecycle_state, legal_review, support_level, known_versions, required_sides, supported_fields, security_checks, barcode, mrz, nfc, model_and_parser_requirements, evaluation_coverage, known_limitations, evidence, assurance_mappings, requirement_slots, authority]
+      properties:
+        country: { $ref: '#/components/schemas/PackCountry' }
+        country_alpha3: { type: string, pattern: '^[A-Z]{3}$', example: NGA }
+        document_type: { $ref: '#/components/schemas/PackDocumentType' }
+        pack_revision: { type: integer, minimum: 1, maximum: 4294967295, example: 1 }
+        pack_digest: { type: string, pattern: '^[0-9a-f]{64}$', example: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa }
+        lifecycle_state: { $ref: '#/components/schemas/PackLifecycleState' }
+        legal_review: { $ref: '#/components/schemas/PackLegalReview' }
+        support_level: { $ref: '#/components/schemas/PackSupportLevel' }
+        known_versions:
+          type: array
+          maxItems: 16
+          items: { $ref: '#/components/schemas/PackKnownVersion' }
+          example: []
+        required_sides:
+          type: array
+          maxItems: 2
+          items: { $ref: '#/components/schemas/PackSide' }
+          example: [front]
+        supported_fields:
+          type: array
+          maxItems: 32
+          items: { $ref: '#/components/schemas/PackFieldName' }
+          example: [document_number]
+        security_checks:
+          type: array
+          maxItems: 16
+          items: { $ref: '#/components/schemas/PackSecurityCheck' }
+          example: []
+        barcode: { $ref: '#/components/schemas/PackDeclaration' }
+        mrz: { $ref: '#/components/schemas/PackDeclaration' }
+        nfc: { $ref: '#/components/schemas/PackDeclaration' }
+        model_and_parser_requirements:
+          type: array
+          maxItems: 16
+          items: { $ref: '#/components/schemas/PackRequirementReference' }
+          example: []
+        evaluation_coverage: { $ref: '#/components/schemas/PackEvaluationCoverage' }
+        known_limitations:
+          type: array
+          maxItems: 32
+          items: { type: string, pattern: '^[a-z][a-z0-9._-]{0,99}$', maxLength: 100 }
+          example: [no_legal_review]
+        evidence:
+          type: array
+          maxItems: 32
+          items: { type: string, pattern: '^[a-z][a-z0-9._-]{0,99}$', maxLength: 100 }
+          example: [core_mrz_parser_v1]
+        assurance_mappings:
+          type: array
+          maxItems: 16
+          items: { $ref: '#/components/schemas/PackAssuranceMapping' }
+          example: [{ state: not_mapped, reason: no_pack_specific_assurance_profile }]
+        requirement_slots:
+          type: array
+          minItems: 1
+          maxItems: 16
+          items: { $ref: '#/components/schemas/PackRequirementSlot' }
+          example: [{ name: authority, key: idenqa.requirement.authority }]
+        authority: { type: string, pattern: '^[a-z][a-z0-9._-]{0,99}$', maxLength: 100, example: idenqa.requirement.authority }
+
+    ExperienceID:
+      type: string
+      description: Stable portable capture-experience identifier.
+      pattern: '^exp_[0-9A-HJKMNP-TV-Z]{26}$'
+      example: exp_01J00000000000000000000000
+    ExperienceState:
+      type: string
+      description: Aggregate lifecycle state. The live published revision stays live while a new draft is prepared.
+      enum: [draft, approved, published, revoked]
+      example: published
+    ExperienceRevisionState:
+      type: string
+      description: Immutable per-version lifecycle state.
+      enum: [draft, approved, published, superseded, revoked]
+      example: published
+    ExperienceCopyEntry:
+      description: One bounded tenant copy value. Core-owned mandatory namespaces are rejected.
+      type: object
+      additionalProperties: false
+      required: [key, value]
+      properties:
+        key: { type: string, maxLength: 128, pattern: '^(?!regulatory\.)(?!consent\.)(?!safety\.)(?!accessibility\.)[a-z][a-z0-9._-]{0,127}$', example: capture.title }
+        value: { type: string, minLength: 1, maxLength: 2048, example: Verify your identity }
+    ExperienceLocaleCopy:
+      description: One locale catalogue of bounded tenant copy.
+      type: object
+      additionalProperties: false
+      required: [locale, entries]
+      properties:
+        locale: { type: string, minLength: 2, maxLength: 35, pattern: '^[A-Za-z]{2,8}(-[A-Za-z0-9]{1,8})*$', example: en }
+        entries: { type: array, minItems: 1, maxItems: 64, items: { $ref: '#/components/schemas/ExperienceCopyEntry' }, example: [{ key: capture.title, value: Verify your identity }] }
+    ExperienceCopy:
+      example: { version: tc_acme_v1, locales: [{ locale: en, entries: [{ key: capture.title, value: Verify your identity }] }] }
+      description: Structured tenant copy keyed by locale with an independent copy version.
+      type: object
+      additionalProperties: false
+      required: [version, locales]
+      properties:
+        version: { type: string, maxLength: 64, pattern: '^[a-z0-9][a-z0-9._-]{0,63}$', example: tc_acme_v1 }
+        locales: { type: array, minItems: 1, maxItems: 16, items: { $ref: '#/components/schemas/ExperienceLocaleCopy' }, example: [{ locale: en, entries: [{ key: capture.title, value: Verify your identity }] }] }
+    ExperienceTarget:
+      description: One ordered targeting rule. Empty dimensions are unconstrained; an empty rule is a catch-all.
+      type: object
+      additionalProperties: false
+      properties:
+        workflow: { type: string, maxLength: 128, pattern: '^[a-z][a-z0-9._-]{0,127}$', example: capture.identity }
+        countries: { type: array, maxItems: 64, uniqueItems: true, items: { type: string, pattern: '^[A-Z]{2}$' }, example: [NG] }
+        application_ids: { type: array, maxItems: 16, uniqueItems: true, items: { type: string, minLength: 1, maxLength: 200 }, example: [dev.acme.app] }
+        origins: { type: array, maxItems: 16, uniqueItems: true, items: { type: string, maxLength: 2048, pattern: '^https://[a-z0-9.-]+(?::[0-9]{1,5})?$' }, example: [https://capture.acme.example] }
+        sdk_version_min: { type: string, pattern: '^[0-9]+\.[0-9]+\.[0-9]+$', example: 1.0.0 }
+        sdk_version_max: { type: string, pattern: '^[0-9]+\.[0-9]+\.[0-9]+$', example: 2.9.9 }
+    ExperienceAsset:
+      type: object
+      additionalProperties: false
+      required: [key, kind, mime, size, digest, object_key, object_version]
+      description: Vetted image asset reference. Executable and script-capable content is rejected.
+      properties:
+        key: { type: string, pattern: '^[a-z][a-z0-9._-]{0,63}$', example: logo }
+        kind: { const: image }
+        mime: { enum: [image/png, image/jpeg, image/webp, image/avif], example: image/png }
+        size: { type: integer, format: int64, minimum: 1, maximum: 2097152, example: 4096 }
+        digest: { type: string, pattern: '^[0-9a-f]{64}$', example: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa }
+        object_key: { type: string, maxLength: 512, pattern: '^[A-Za-z0-9][A-Za-z0-9._/-]{0,511}$', example: experiences/acme/logo.png }
+        object_version: { type: string, minLength: 1, maxLength: 200, pattern: '^[A-Za-z0-9][A-Za-z0-9._-]{0,199}$', example: v1 }
+    ExperienceCustomLink:
+      description: One optional validated HTTPS link with bounded tenant-facing text.
+      type: object
+      additionalProperties: false
+      required: [label, url]
+      properties:
+        label: { type: string, minLength: 1, maxLength: 120, example: Accessibility }
+        url: { type: string, minLength: 1, maxLength: 2048, pattern: '^https://', example: https://acme.example/accessibility }
+    ExperienceLinks:
+      description: Validated HTTPS support, privacy, and terms destinations plus optional custom links.
+      type: object
+      additionalProperties: false
+      required: [support, privacy, terms]
+      properties:
+        support: { type: string, minLength: 1, maxLength: 2048, pattern: '^https://', example: https://support.acme.example/help }
+        privacy: { type: string, minLength: 1, maxLength: 2048, pattern: '^https://', example: https://acme.example/privacy }
+        terms: { type: string, minLength: 1, maxLength: 2048, pattern: '^https://', example: https://acme.example/terms }
+        custom: { type: array, maxItems: 8, items: { $ref: '#/components/schemas/ExperienceCustomLink' } }
+    ExperienceTheme:
+      type: object
+      additionalProperties: false
+      required: [primary_color, accent_color, background_color, text_color]
+      description: Safe portable theme tokens. Host appearance-only CSS variables remain authoritative for host-local branding.
+      properties:
+        primary_color: { type: string, pattern: '^#[0-9a-f]{6}$', example: '#1f6feb' }
+        accent_color: { type: string, pattern: '^#[0-9a-f]{6}$', example: '#0b3d91' }
+        background_color: { type: string, pattern: '^#[0-9a-f]{6}$', example: '#ffffff' }
+        text_color: { type: string, pattern: '^#[0-9a-f]{6}$', example: '#1b1f23' }
+        logo_asset_key: { type: string, pattern: '^[a-z][a-z0-9._-]{0,63}$', example: logo }
+    ExperienceDocument:
+      example: { schema_version: '1.0', experience_id: exp_01J00000000000000000000000, version: 1, name: Acme selfie capture, copy: { version: tc_acme_v1, locales: [{ locale: en, entries: [{ key: capture.title, value: Verify your identity }] }] }, mandatory_copy_version: mc-2026-09-01, default_locale: en, targeting: [], links: { support: https://acme.example/support, privacy: https://acme.example/privacy, terms: https://acme.example/terms }, theme: { primary_color: '#1f6feb', accent_color: '#0b3d91', background_color: '#ffffff', text_color: '#1b1f23' } }
+      type: object
+      additionalProperties: false
+      description: One immutable signed experience revision.
+      required: [schema_version, experience_id, version, name, copy, mandatory_copy_version, default_locale, targeting, links, theme]
+      properties:
+        schema_version: { const: '1.0' }
+        experience_id: { $ref: '#/components/schemas/ExperienceID' }
+        version: { type: integer, minimum: 1, example: 1 }
+        name: { type: string, minLength: 1, maxLength: 120, example: Acme selfie capture }
+        copy: { $ref: '#/components/schemas/ExperienceCopy' }
+        mandatory_copy_version: { type: string, pattern: '^mc-[0-9]{4}-[0-9]{2}-[0-9]{2}(-[0-9]{1,2})?$', example: mc-2026-09-01 }
+        default_locale: { type: string, minLength: 2, maxLength: 35, pattern: '^[A-Za-z]{2,8}(-[A-Za-z0-9]{1,8})*$', example: en }
+        targeting: { type: array, maxItems: 32, items: { $ref: '#/components/schemas/ExperienceTarget' }, example: [{ workflow: capture.identity, countries: [NG] }] }
+        assets: { type: array, maxItems: 16, items: { $ref: '#/components/schemas/ExperienceAsset' }, example: [] }
+        links: { $ref: '#/components/schemas/ExperienceLinks' }
+        theme: { $ref: '#/components/schemas/ExperienceTheme' }
+        allowed_origins: { type: array, maxItems: 16, uniqueItems: true, items: { type: string, maxLength: 2048, pattern: '^https://[a-z0-9.-]+(?::[0-9]{1,5})?$' }, example: [https://capture.acme.example] }
+    ExperienceManifest:
+      type: object
+      additionalProperties: false
+      description: Signed envelope. Digest and signature cover the canonical document bytes only.
+      required: [document, digest, key_id, algorithm, signature]
+      properties:
+        document: { $ref: '#/components/schemas/ExperienceDocument' }
+        digest: { type: string, pattern: '^[0-9a-f]{64}$', example: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa }
+        key_id: { type: string, pattern: '^[a-z][a-z0-9._-]{0,63}$', example: expkey_core_1 }
+        algorithm: { const: ed25519 }
+        signature: { type: string, pattern: '^[0-9a-f]{128}$', example: '00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000' }
+    ExperienceMandatoryCopy:
+      example: { version: mc-2026-09-01, digest: bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb, entries: [{ key: regulatory.processing_notice, value: Your identity information is processed to verify your identity. }] }
+      type: object
+      additionalProperties: false
+      description: Core-owned, non-overridable regulatory, consent, safety, and accessibility copy.
+      required: [version, digest, entries]
+      properties:
+        version: { type: string, pattern: '^mc-[0-9]{4}-[0-9]{2}-[0-9]{2}(-[0-9]{1,2})?$', example: mc-2026-09-01 }
+        digest: { type: string, pattern: '^[0-9a-f]{64}$', example: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa }
+        entries: { type: array, minItems: 1, maxItems: 64, items: { $ref: '#/components/schemas/ExperienceCopyEntry' }, example: [{ key: capture.title, value: Verify your identity }] }
+    ExperiencePinned:
+      type: object
+      additionalProperties: false
+      description: Exact experience, locale, tenant-copy, and mandatory-copy versions pinned to one session.
+      required: [experience_id, version, locale, tenant_copy_version, mandatory_copy_version, source, digest, key_id, pinned_at]
+      properties:
+        experience_id: { $ref: '#/components/schemas/ExperienceID' }
+        version: { type: integer, minimum: 1, example: 1 }
+        locale: { type: string, minLength: 2, maxLength: 35, example: en }
+        tenant_copy_version: { type: string, maxLength: 64, example: tc_acme_v1 }
+        mandatory_copy_version: { type: string, maxLength: 32, example: mc-2026-09-01 }
+        source: { type: string, enum: [pinned, published, default], example: published }
+        digest: { type: string, pattern: '^[0-9a-f]{64}$', example: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa }
+        key_id: { type: string, maxLength: 64, example: expkey_core_1 }
+        pinned_at: { type: string, format: date-time, example: '2026-09-20T12:00:00Z' }
+    ExperienceResolution:
+      type: object
+      additionalProperties: false
+      description: Signed experience document plus Core-owned mandatory copy and exact pinned versions.
+      required: [manifest, mandatory_copy, pinned, fallback]
+      properties:
+        manifest: { $ref: '#/components/schemas/ExperienceManifest' }
+        mandatory_copy: { $ref: '#/components/schemas/ExperienceMandatoryCopy' }
+        pinned: { $ref: '#/components/schemas/ExperiencePinned' }
+        fallback: { type: boolean, description: True when the signed accessible safe default was substituted., example: false }
+    ExperienceMutation:
+      example: { version: tc_acme_v1, locales: [{ locale: en, entries: [{ key: capture.title, value: Verify your identity }] }] }
+      type: object
+      additionalProperties: false
+      description: Bounded tenant draft input. Identifier and version are Core-assigned.
+      required: [name, copy, mandatory_copy_version, default_locale, targeting, links, theme]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 120, example: Acme selfie capture }
+        copy: { $ref: '#/components/schemas/ExperienceCopy' }
+        mandatory_copy_version: { type: string, pattern: '^mc-[0-9]{4}-[0-9]{2}-[0-9]{2}(-[0-9]{1,2})?$', example: mc-2026-09-01 }
+        default_locale: { type: string, minLength: 2, maxLength: 35, pattern: '^[A-Za-z]{2,8}(-[A-Za-z0-9]{1,8})*$', example: en }
+        targeting: { type: array, maxItems: 32, items: { $ref: '#/components/schemas/ExperienceTarget' }, example: [{ workflow: capture.identity, countries: [NG] }] }
+        assets: { type: array, maxItems: 16, items: { $ref: '#/components/schemas/ExperienceAsset' }, example: [] }
+        links: { $ref: '#/components/schemas/ExperienceLinks' }
+        theme: { $ref: '#/components/schemas/ExperienceTheme' }
+        allowed_origins: { type: array, maxItems: 16, uniqueItems: true, items: { type: string, maxLength: 2048, pattern: '^https://[a-z0-9.-]+(?::[0-9]{1,5})?$' }, example: [https://capture.acme.example] }
+    ExperienceDraft:
+      description: Optimistic precondition and one bounded draft document for a new immutable revision.
+      type: object
+      additionalProperties: false
+      required: [expected_version, document]
+      properties:
+        expected_version: { type: integer, format: int64, minimum: 1, description: Current aggregate revision returned by the last read., example: 1 }
+        document: { $ref: '#/components/schemas/ExperienceMutation' }
+    ExperienceTransition:
+      description: Expected-version precondition and optional bounded reason for approve and publish commands.
+      type: object
+      additionalProperties: false
+      required: [expected_version]
+      properties:
+        expected_version: { type: integer, format: int64, minimum: 1, example: 2 }
+        reason: { type: string, maxLength: 512, example: Approved by compliance }
+    ExperienceRevocation:
+      description: Expected-version precondition and required bounded reason for the kill switch.
+      type: object
+      additionalProperties: false
+      required: [expected_version, reason]
+      properties:
+        expected_version: { type: integer, format: int64, minimum: 1, example: 3 }
+        reason: { type: string, minLength: 1, maxLength: 512, example: Brand copy incident }
+    ExperienceRollback:
+      description: Expected-version precondition and previously approved target version to republish.
+      type: object
+      additionalProperties: false
+      required: [expected_version, target_version]
+      properties:
+        expected_version: { type: integer, format: int64, minimum: 1, example: 4 }
+        target_version: { type: integer, minimum: 1, example: 1 }
+        reason: { type: string, maxLength: 512, example: Restore prior approved revision }
+    Experience:
+      description: One tenant-owned portable capture experience aggregate and its latest immutable signed revision.
+      type: object
+      additionalProperties: false
+      required: [id, state, revision, latest_version, approved_version, published_version, document, created_at, updated_at]
+      properties:
+        id: { $ref: '#/components/schemas/ExperienceID' }
+        state: { $ref: '#/components/schemas/ExperienceState' }
+        revision: { type: integer, format: int64, minimum: 1, description: Optimistic aggregate revision for expected_version preconditions., example: 3 }
+        latest_version: { type: integer, minimum: 1, example: 2 }
+        approved_version: { type: integer, minimum: 0, example: 2 }
+        published_version: { type: integer, minimum: 0, example: 2 }
+        document: { $ref: '#/components/schemas/ExperienceDocument' }
+        created_at: { type: string, format: date-time, example: '2026-09-20T12:00:00Z' }
+        updated_at: { type: string, format: date-time, example: '2026-09-20T12:05:00Z' }
+    ExperienceList:
+      description: One bounded ascending page of tenant-owned portable capture experiences.
+      type: object
+      additionalProperties: false
+      required: [data, page]
+      properties:
+        data: { type: array, items: { $ref: '#/components/schemas/Experience' }, example: [] }
+        page: { $ref: '#/components/schemas/Page' }
+
   responses:
     CaptureOriginNotAllowed:
       description: The browser Origin is missing, malformed, duplicated, or not allowed.
