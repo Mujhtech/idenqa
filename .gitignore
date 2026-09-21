@@ -5,6 +5,7 @@
 
 /bin/
 /.cache/
+/.build/
 /coverage.out
 /node_modules/
 /.pnpm-store/

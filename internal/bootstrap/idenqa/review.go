@@ -34,6 +34,7 @@ type reviewRequest struct {
 	body        any
 	idempotency bool
 	binary      bool
+	transform   func([]byte) ([]byte, error)
 }
 
 func newReviewCommand() *cobra.Command {
@@ -424,6 +425,13 @@ func runReviewHTTP(command *cobra.Command, options *reviewOptions, request revie
 			return cli.RuntimeError(operation, err)
 		}
 		return nil
+	}
+	if request.transform != nil {
+		transformed, transformErr := request.transform(raw)
+		if transformErr != nil {
+			return cli.RuntimeError(operation, transformErr)
+		}
+		raw = transformed
 	}
 	if response.StatusCode == http.StatusNoContent {
 		return nil

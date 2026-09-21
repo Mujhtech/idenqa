@@ -17,6 +17,8 @@ import (
 	"github.com/Mujhtech/idenqa/internal/config"
 	deliverypostgres "github.com/Mujhtech/idenqa/internal/delivery/postgres"
 	deliverytask "github.com/Mujhtech/idenqa/internal/delivery/task"
+	"github.com/Mujhtech/idenqa/internal/pack"
+	packpostgres "github.com/Mujhtech/idenqa/internal/pack/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/platform/postgres"
@@ -116,6 +118,25 @@ func NewProcessWithInfrastructure(ctx context.Context, configuration config.Work
 	if logger == nil || registry == nil {
 		return nil, errors.New("worker logger and task registry are required")
 	}
+	providers, err := telemetry.NewConfiguredProviders(
+		ctx,
+		"idenqa-worker",
+		build.Version,
+		telemetryConfig(configuration.API),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("construct worker telemetry: %w", err)
+	}
+	metrics, err := telemetry.NewDomainMetrics(providers.MeterProvider())
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		return nil, fmt.Errorf("construct worker domain metrics: %w", err)
+	}
+	defer func() {
+		if !constructed {
+			_ = providers.Shutdown(context.Background())
+		}
+	}()
 	connectionPool, err := postgres.Open(ctx, postgres.Config{
 		URL: configuration.DatabaseURL, Role: configuration.DatabaseRole,
 		MaxConnections:      configuration.DatabaseMaxConnections,
@@ -268,6 +289,7 @@ func NewProcessWithInfrastructure(ctx context.Context, configuration config.Work
 		connectionPool.Close()
 		return nil, fmt.Errorf("construct verification lifecycle store: %w", err)
 	}
+	lifecycleStore.WithMetrics(metrics)
 	externalWait, err := verificationpostgres.NewExternalWaitStore(connectionPool, lifecycleStore, identifiers, clock.System{})
 	if err != nil {
 		connectionPool.Close()
@@ -280,6 +302,29 @@ func NewProcessWithInfrastructure(ctx context.Context, configuration config.Work
 	if err := executeHandler.WithSemanticRetries(identifiers, adapter); err != nil {
 		connectionPool.Close()
 		return nil, fmt.Errorf("configure verification semantic retries: %w", err)
+	}
+	packSeeds, err := pack.Seeds()
+	if err != nil {
+		connectionPool.Close()
+		return nil, fmt.Errorf("load embedded packs: %w", err)
+	}
+	packStore, err := packpostgres.New(connectionPool)
+	if err != nil {
+		connectionPool.Close()
+		return nil, err
+	}
+	packRegistry, err := pack.NewRegistry(packSeeds, packStore, clock.System{}.Now)
+	if err != nil {
+		connectionPool.Close()
+		return nil, fmt.Errorf("construct pack registry: %w", err)
+	}
+	if err := packRegistry.Load(ctx); err != nil {
+		connectionPool.Close()
+		return nil, fmt.Errorf("load pack lifecycle: %w", err)
+	}
+	if err := executeHandler.WithDocumentSupport(packRegistry); err != nil {
+		connectionPool.Close()
+		return nil, fmt.Errorf("configure document support: %w", err)
 	}
 	if err := registry.Register(verificationtask.ExecuteKey, executeHandler); err != nil {
 		connectionPool.Close()
@@ -348,8 +393,9 @@ func NewProcessWithInfrastructure(ctx context.Context, configuration config.Work
 	completion, err := verificationpostgres.NewCompletionStore(connectionPool, deliveryInfrastructure.wrapper, identifiers, clock.System{})
 	if err != nil {
 		connectionPool.Close()
-		return nil, fmt.Errorf("construct verification completion: %w", err)
+		return nil, err
 	}
+	completion.WithMetrics(metrics)
 	reviewRules, err := config.LoadReviewRouting(configuration.ReviewRoutingFile)
 	if err != nil {
 		connectionPool.Close()
@@ -425,6 +471,7 @@ func NewProcessWithInfrastructure(ctx context.Context, configuration config.Work
 			connectionPool.Close()
 			return nil, fmt.Errorf("construct webhook handler: %w", err)
 		}
+		handler.WithMetrics(metrics)
 		if err := registry.Register(deliverytask.DeliverKey, handler); err != nil {
 			connectionPool.Close()
 			return nil, err
@@ -472,6 +519,7 @@ func NewProcessWithInfrastructure(ctx context.Context, configuration config.Work
 			connectionPool.Close()
 			return nil, fmt.Errorf("construct worker privacy service: %w", err)
 		}
+		privacyService.WithMetrics(metrics)
 		privacyHandler, err := privacytask.NewHandler(privacyService)
 		if err != nil {
 			connectionPool.Close()
@@ -487,23 +535,18 @@ func NewProcessWithInfrastructure(ctx context.Context, configuration config.Work
 			return nil, fmt.Errorf("construct privacy deletion coordinator: %w", err)
 		}
 	}
-	providers, err := telemetry.NewConfiguredProviders(
-		ctx,
-		"idenqa-worker",
-		build.Version,
-		telemetryConfig(configuration.API),
-	)
-	if err != nil {
-		connectionPool.Close()
-		return nil, fmt.Errorf("construct worker telemetry: %w", err)
-	}
 	bridge, err := taskheadgate.NewTelemetry(
 		providers.TracerProvider(), providers.MeterProvider(), configuration.HeadgateInstallationID,
 	)
 	if err != nil {
-		_ = providers.Shutdown(context.Background())
 		connectionPool.Close()
 		return nil, fmt.Errorf("construct task telemetry: %w", err)
+	}
+	if realProvider != nil {
+		realProvider.withMetrics(metrics)
+	}
+	if realModel != nil {
+		realModel.withMetrics(metrics)
 	}
 	workerConfiguration := taskheadgate.DefaultWorkerConfig()
 	workerConfiguration.WorkerID = workerID
@@ -542,13 +585,11 @@ func NewProcessWithInfrastructure(ctx context.Context, configuration config.Work
 	workerConfiguration.MemoryLimitBytes = configuration.MemoryLimitBytes
 	workerConfiguration.MemoryCheckPeriod = configuration.MemoryCheckPeriod
 	if err := adapter.ApplyPolicies(ctx, workerConfiguration); err != nil {
-		_ = providers.Shutdown(context.Background())
 		connectionPool.Close()
 		return nil, err
 	}
 	backgroundWorker, err := adapter.NewWorker(registry, workerConfiguration, bridge)
 	if err != nil {
-		_ = providers.Shutdown(context.Background())
 		connectionPool.Close()
 		return nil, err
 	}

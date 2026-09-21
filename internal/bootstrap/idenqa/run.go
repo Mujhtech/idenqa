@@ -45,6 +45,8 @@ func newRootCommand(info buildinfo.Info) *cobra.Command {
 		newProposalCommand(),
 		newReviewCommand(),
 		newModelCommand(),
+		newPackCommand(),
+		newExperienceCommand(),
 		newProviderCommand(),
 		newPrivacyCommand(),
 		newSubjectCommand(),

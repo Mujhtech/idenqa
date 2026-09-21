@@ -15,6 +15,8 @@ import (
 	"github.com/Mujhtech/idenqa/internal/identity"
 	identitypostgres "github.com/Mujhtech/idenqa/internal/identity/postgres"
 
+	assetstore "github.com/Mujhtech/idenqa/adapters/experience/assetstore"
+	ed25519signer "github.com/Mujhtech/idenqa/adapters/experience/ed25519signer"
 	"github.com/Mujhtech/idenqa/db/migrations"
 	"github.com/Mujhtech/idenqa/internal/access"
 	accesspostgres "github.com/Mujhtech/idenqa/internal/access/postgres"
@@ -26,8 +28,12 @@ import (
 	deliverypostgres "github.com/Mujhtech/idenqa/internal/delivery/postgres"
 	"github.com/Mujhtech/idenqa/internal/evidence"
 	evidencepostgres "github.com/Mujhtech/idenqa/internal/evidence/postgres"
+	"github.com/Mujhtech/idenqa/internal/experience"
+	experiencepostgres "github.com/Mujhtech/idenqa/internal/experience/postgres"
 	"github.com/Mujhtech/idenqa/internal/model"
 	modelpostgres "github.com/Mujhtech/idenqa/internal/model/postgres"
+	"github.com/Mujhtech/idenqa/internal/pack"
+	packpostgres "github.com/Mujhtech/idenqa/internal/pack/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
 	tinkcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto/tink"
 	"github.com/Mujhtech/idenqa/internal/platform/cursor"
@@ -274,6 +280,13 @@ func newProcess(
 
 		return nil, fmt.Errorf("construct API telemetry: %w", err)
 	}
+	metrics, err := telemetry.NewDomainMetrics(providers.MeterProvider())
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+
+		return nil, fmt.Errorf("construct API domain metrics: %w", err)
+	}
 	registry, err := evidence.BuiltInRegistry()
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
@@ -364,6 +377,13 @@ func newProcess(
 
 		return nil, fmt.Errorf("construct tenant exporter: %w", err)
 	}
+	tenantSubjectExporter, err := tenantexport.NewSubjectExporter(tenantExportStore, nil)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+
+		return nil, fmt.Errorf("construct subject exporter: %w", err)
+	}
 	tenantRoutes, err := httpapi.NewTenantRoutes(accessMiddleware, tenantReader, tenantExporter, logger)
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
@@ -411,6 +431,7 @@ func newProcess(
 		connectionPool.Close()
 		return nil, fmt.Errorf("construct review service: %w", err)
 	}
+	reviewService.WithMetrics(metrics)
 	reviewRoutes, err := httpapi.NewReviewRoutes(accessMiddleware, reviewService, logger)
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
@@ -475,6 +496,7 @@ func newProcess(
 
 		return nil, fmt.Errorf("construct verification session persistence: %w", err)
 	}
+	sessionStore.WithMetrics(metrics)
 	sessionService, err := verification.NewSessionService(
 		sessionStore,
 		identifiers,
@@ -498,6 +520,54 @@ func newProcess(
 
 		return nil, fmt.Errorf("construct verification session service: %w", err)
 	}
+	var experienceStore *experiencepostgres.Store
+	var experienceRoutes RouteRegistrar
+	var experienceService *experience.Service
+	if !configuration.ExperienceSigningKeys.IsZero() {
+		keyring, err := ed25519signer.New(configuration.ExperienceSigningVersion, configuration.ExperienceSigningKeys.Values())
+		if err != nil {
+			_ = providers.Shutdown(context.Background())
+			connectionPool.Close()
+
+			return nil, fmt.Errorf("construct experience signing keyring: %w", err)
+		}
+		experienceStore, err = experiencepostgres.New(connectionPool)
+		if err != nil {
+			_ = providers.Shutdown(context.Background())
+			connectionPool.Close()
+
+			return nil, fmt.Errorf("construct experience persistence: %w", err)
+		}
+		mandatoryCopy, err := experience.NewDefaultMandatoryCatalogue()
+		if err != nil {
+			_ = providers.Shutdown(context.Background())
+			connectionPool.Close()
+
+			return nil, fmt.Errorf("construct mandatory copy catalogue: %w", err)
+		}
+		var assetVerifier experience.AssetStore = experience.DenyAssets{}
+		if objects, ok := infrastructure.objects.(evidence.ObjectReader); ok && objects != nil {
+			verifier, err := assetstore.New(objects)
+			if err != nil {
+				_ = providers.Shutdown(context.Background())
+				connectionPool.Close()
+
+				return nil, fmt.Errorf("construct asset verifier: %w", err)
+			}
+			assetVerifier = verifier
+		}
+		experienceService, err = experience.NewService(experience.Deps{
+			Repository: experienceStore, Pins: experienceStore, Signer: keyring, Verifier: keyring,
+			Assets: assetVerifier, Mandatory: mandatoryCopy, IDs: identifiers, Clock: clock.System{},
+		})
+		if err != nil {
+			_ = providers.Shutdown(context.Background())
+			connectionPool.Close()
+
+			return nil, fmt.Errorf("construct experience service: %w", err)
+		}
+		sessionService.WithExperience(experienceService)
+	}
 	captureAuthenticator, err := verification.NewCaptureAuthenticator(
 		sessionStore,
 		captureSigner,
@@ -515,6 +585,16 @@ func newProcess(
 		connectionPool.Close()
 
 		return nil, fmt.Errorf("construct capture access middleware: %w", err)
+	}
+	if experienceService != nil {
+		registered, err := httpapi.NewExperienceRoutes(accessMiddleware, captureMiddleware, experienceService, cursorCodec, logger)
+		if err != nil {
+			_ = providers.Shutdown(context.Background())
+			connectionPool.Close()
+
+			return nil, fmt.Errorf("construct experience routes: %w", err)
+		}
+		experienceRoutes = registered
 	}
 	captureOutcomeService, err := verification.NewCaptureOutcomeService(sessionStore)
 	if err != nil {
@@ -1018,12 +1098,51 @@ func newProcess(
 		return nil, err
 	}
 
+	packSeeds, err := pack.Seeds()
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, fmt.Errorf("load embedded packs: %w", err)
+	}
+	// The production pool persists lifecycle transitions. Alternative test
+	// databases without the owned PostgreSQL pool keep embedded lifecycle only.
+	var packStore pack.Store
+	if storePool, ok := connectionPool.(packpostgres.StorePool); ok {
+		persisted, storeErr := packpostgres.New(storePool)
+		if storeErr != nil {
+			_ = providers.Shutdown(context.Background())
+			connectionPool.Close()
+			return nil, storeErr
+		}
+		packStore = persisted
+	}
+	packRegistry, err := pack.NewRegistry(packSeeds, packStore, clock.System{}.Now)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, fmt.Errorf("construct pack registry: %w", err)
+	}
+	if err := packRegistry.Load(ctx); err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, fmt.Errorf("load pack lifecycle: %w", err)
+	}
+	packRoutes, err := httpapi.NewPackRoutes(accessMiddleware, packRegistry, logger)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, err
+	}
+
 	routes := []RouteRegistrar{
-		assuranceRoutes, identityRoutes, fraudRoutes, followupRoutes, reviewManagementRoutes, proposalRoutes, tenantRoutes, modelRoutes, policyRoutes, policySimulationRoutes, webhookRoutes, decisionRoutes, reviewRoutes, profileRoutes, verificationRoutes, captureOutcomeRoutes, cancellationRoutes, authorityRoutes, connectionRoutes, realtimeRoutes, providerRegistrationRoutes,
+		assuranceRoutes, identityRoutes, fraudRoutes, followupRoutes, reviewManagementRoutes, proposalRoutes, tenantRoutes, modelRoutes, policyRoutes, policySimulationRoutes, webhookRoutes, decisionRoutes, reviewRoutes, profileRoutes, verificationRoutes, captureOutcomeRoutes, cancellationRoutes, authorityRoutes, connectionRoutes, realtimeRoutes, providerRegistrationRoutes, packRoutes,
 	}
 	internalRoutes := []InternalRouteRegistrar{}
 	if nativeBootstrapRoutes != nil {
 		routes = append(routes, nativeBootstrapRoutes)
+	}
+	if experienceRoutes != nil {
+		routes = append(routes, experienceRoutes)
 	}
 	var uploadPolicy *evidence.UploadPolicy
 	if infrastructure.enabled() {
@@ -1081,6 +1200,7 @@ func newProcess(
 
 			return nil, fmt.Errorf("construct evidence persistence: %w", err)
 		}
+		evidenceStore.WithMetrics(metrics)
 		privacyStore, err := privacypostgres.New(connectionPool, infrastructure.keys)
 		if err != nil {
 			_ = providers.Shutdown(context.Background())
@@ -1105,7 +1225,26 @@ func newProcess(
 			connectionPool.Close()
 			return nil, fmt.Errorf("construct privacy service: %w", err)
 		}
-		privacyRoutes, err := httpapi.NewPrivacyRoutes(accessMiddleware, privacyService, cursorCodec, logger)
+		privacyService.WithMetrics(metrics)
+		privacyDispatcher, err := privacy.NewDispatcher(
+			privacySubjectBundle{exporter: tenantSubjectExporter},
+			privacySubjectDeletion{store: identityStore, now: time.Now},
+			privacyCorrection{identity: identityStore, followup: followupStore, now: time.Now, retention: configuration.VerificationIdempotencyTTL},
+		)
+		if err != nil {
+			_ = providers.Shutdown(context.Background())
+			connectionPool.Close()
+			return nil, fmt.Errorf("construct privacy dispatcher: %w", err)
+		}
+		privacyRequestService, err := privacy.NewRequestService(privacyStore, privacyStore, privacyStore, privacyStore, privacyDispatcher, identifiers, time.Now, privacy.SelectedRequestConfig())
+		if err != nil {
+			_ = providers.Shutdown(context.Background())
+			connectionPool.Close()
+			return nil, fmt.Errorf("construct privacy request service: %w", err)
+		}
+		privacyRequestService.WithMetrics(metrics)
+		authorityService.WithRestrictionGate(privacyRequestService)
+		privacyRoutes, err := httpapi.NewPrivacyRoutes(accessMiddleware, privacyService, privacyRequestService, captureOutcomeMiddleware, cursorCodec, logger)
 		if err != nil {
 			_ = providers.Shutdown(context.Background())
 			connectionPool.Close()
@@ -1190,6 +1329,9 @@ func newProcess(
 			connectionPool.Close()
 
 			return nil, fmt.Errorf("construct capture progress routes: %w", err)
+		}
+		if experienceStore != nil {
+			progressRoutes.WithExperiencePins(experienceStore)
 		}
 		routes = append(routes, uploadRoutes, progressRoutes, privacyRoutes)
 		uploadPolicy = &policy

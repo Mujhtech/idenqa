@@ -8,9 +8,11 @@ import (
 	"strings"
 	"time"
 
+	contract "github.com/Mujhtech/idenqa/contracts/experience/v1"
 	"github.com/Mujhtech/idenqa/internal/access"
 	"github.com/Mujhtech/idenqa/internal/authority"
 	"github.com/Mujhtech/idenqa/internal/evidence"
+	"github.com/Mujhtech/idenqa/internal/experience"
 	"github.com/Mujhtech/idenqa/internal/platform/idempotency"
 	"github.com/Mujhtech/idenqa/internal/policy"
 	"github.com/Mujhtech/idenqa/internal/privacy"
@@ -345,6 +347,18 @@ func Map(err error) *Error {
 			"The capture profile changed or cannot make this transition.",
 			err,
 		)
+	}
+	if errors.Is(err, experience.ErrNotFound) {
+		return New(http.StatusNotFound, CodeNotFound, "Not found", "The requested resource was not found.", err)
+	}
+	if errors.Is(err, experience.ErrConflict) || errors.Is(err, experience.ErrRevoked) {
+		return New(http.StatusConflict, CodeConflict, "Conflict", "The experience lifecycle conflicts with current state.", err)
+	}
+	if errors.Is(err, experience.ErrSignature) || errors.Is(err, experience.ErrInvalid) ||
+		errors.Is(err, experience.ErrUnknownMandatoryCopy) || errors.Is(err, experience.ErrAssetUnavailable) ||
+		errors.Is(err, contract.ErrInvalid) || errors.Is(err, contract.ErrUnsupportedVersion) ||
+		errors.Is(err, contract.ErrTooLarge) || errors.Is(err, contract.ErrReservedCopy) {
+		return New(http.StatusBadRequest, CodeInvalidRequest, "Invalid request", "The experience document or command is invalid.", err)
 	}
 	var maxBytes *http.MaxBytesError
 	if errors.As(err, &maxBytes) {
