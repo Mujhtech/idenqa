@@ -26,7 +26,7 @@ require (
 	github.com/go-chi/render v1.0.3
 	github.com/golang-migrate/migrate/v4 v4.19.1
 	github.com/google/cel-go v0.31.0
-	github.com/jackc/pgx/v5 v5.10.0
+	github.com/jackc/pgx/v5 v5.11.0
 	github.com/joho/godotenv v1.5.1
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/mujhtech/headgate/go v0.1.10
