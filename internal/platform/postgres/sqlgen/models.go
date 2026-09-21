@@ -452,6 +452,74 @@ type IdenqaEvidenceUploadIntentAudit struct {
 	OccurredAt       pgtype.Timestamptz
 }
 
+type IdenqaExperience struct {
+	TenantID         string
+	ID               string
+	State            string
+	Revision         int64
+	LatestVersion    int32
+	ApprovedVersion  int32
+	PublishedVersion int32
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+}
+
+type IdenqaExperienceEvent struct {
+	TenantID      string
+	ExperienceID  string
+	Sequence      int64
+	Operation     string
+	FromState     *string
+	ToState       string
+	Version       int32
+	TargetVersion int32
+	ActorID       string
+	Reason        *string
+	Digest        string
+	OccurredAt    pgtype.Timestamptz
+}
+
+type IdenqaExperienceRevision struct {
+	TenantID     string
+	ExperienceID string
+	Version      int32
+	State        string
+	Document     []byte
+	Digest       string
+	KeyID        string
+	Signature    string
+	ActorID      string
+	CreatedAt    pgtype.Timestamptz
+}
+
+type IdenqaExperienceSessionPin struct {
+	TenantID             string
+	VerificationID       string
+	ExperienceID         string
+	Version              int32
+	Locale               string
+	TenantCopyVersion    string
+	MandatoryCopyVersion string
+	Source               string
+	Digest               string
+	KeyID                string
+	PinnedAt             pgtype.Timestamptz
+}
+
+type IdenqaExperienceTargeting struct {
+	TenantID       string
+	ExperienceID   string
+	Version        int32
+	RuleIndex      int32
+	Workflow       *string
+	Countries      []byte
+	ApplicationIds []byte
+	Origins        []byte
+	SdkVersionMin  *string
+	SdkVersionMax  *string
+	Specificity    int32
+}
+
 type IdenqaFraudConfiguration struct {
 	TenantID      string
 	Version       int64
@@ -747,6 +815,28 @@ type IdenqaOutcomeToken struct {
 	RevokedAt      pgtype.Timestamptz
 }
 
+type IdenqaPackReleaseHistory struct {
+	Country           string
+	Revision          int64
+	TransitionVersion int64
+	Operation         string
+	PreviousState     string
+	State             string
+	PackDigest        string
+	Reason            string
+	Actor             string
+	RecordedAt        pgtype.Timestamptz
+}
+
+type IdenqaPackReleaseState struct {
+	Country           string
+	Revision          int64
+	State             string
+	Digest            string
+	TransitionVersion int64
+	UpdatedAt         pgtype.Timestamptz
+}
+
 type IdenqaPolicy struct {
 	TenantID          string
 	ID                string
@@ -829,6 +919,82 @@ type IdenqaPolicySnapshot struct {
 	Canonical         string
 }
 
+type IdenqaPrivacyDisclosure struct {
+	TenantID    string
+	ID          string
+	RequestID   string
+	Recipient   string
+	Purpose     string
+	DataClass   string
+	LegalBasis  string
+	Region      string
+	Reference   string
+	DisclosedAt pgtype.Timestamptz
+	Version     int64
+}
+
+type IdenqaPrivacyRequest struct {
+	TenantID        string
+	ID              string
+	Type            string
+	State           string
+	Channel         string
+	SubjectID       *string
+	VerificationID  *string
+	Region          string
+	Payload         []byte
+	ReasonCode      *string
+	FailureClass    *string
+	EffectKind      *string
+	EffectReference *string
+	EffectDigest    *string
+	ExpiresAt       pgtype.Timestamptz
+	RequestedAt     pgtype.Timestamptz
+	UpdatedAt       pgtype.Timestamptz
+	Version         int64
+}
+
+type IdenqaPrivacyRequestDecision struct {
+	TenantID   string
+	RequestID  string
+	ID         string
+	Outcome    string
+	ReasonCode string
+	ActorID    string
+	DecidedAt  pgtype.Timestamptz
+	Version    int64
+}
+
+type IdenqaPrivacyRequestEvent struct {
+	TenantID    string
+	RequestID   string
+	Sequence    int64
+	EventType   string
+	FromState   string
+	ToState     string
+	ReasonCode  *string
+	ActorDigest *string
+	Detail      *string
+	Digest      string
+	OccurredAt  pgtype.Timestamptz
+}
+
+type IdenqaPrivacyRestriction struct {
+	TenantID       string
+	ID             string
+	RequestID      string
+	SubjectID      string
+	Scope          string
+	Purpose        *string
+	ReasonCode     string
+	Region         string
+	State          string
+	StartsAt       pgtype.Timestamptz
+	LiftedAt       pgtype.Timestamptz
+	LiftReasonCode *string
+	Version        int64
+}
+
 type IdenqaProcessingAuthority struct {
 	ID                   string
 	TenantID             string
@@ -856,6 +1022,33 @@ type IdenqaProcessingAuthority struct {
 	RestrictedAt         pgtype.Timestamptz
 	WithdrawnAt          pgtype.Timestamptz
 	SupersededAt         pgtype.Timestamptz
+}
+
+type IdenqaProcessorInventory struct {
+	TenantID          string
+	ID                string
+	Name              string
+	Role              string
+	Purpose           string
+	DataClasses       []byte
+	Regions           []byte
+	TransferMechanism string
+	Version           int64
+	CreatedAt         pgtype.Timestamptz
+	UpdatedAt         pgtype.Timestamptz
+}
+
+type IdenqaProcessorInventoryRevision struct {
+	TenantID          string
+	ID                string
+	Version           int64
+	Name              string
+	Role              string
+	Purpose           string
+	DataClasses       []byte
+	Regions           []byte
+	TransferMechanism string
+	RecordedAt        pgtype.Timestamptz
 }
 
 type IdenqaPromptRegistry struct {
@@ -936,6 +1129,32 @@ type IdenqaProviderDispatch struct {
 	RequestDigest string
 	ClaimedAt     pgtype.Timestamptz
 	ResultBody    []byte
+}
+
+type IdenqaProviderRegistration struct {
+	TenantID          string
+	ID                string
+	AdapterID         string
+	Region            string
+	Configuration     []byte
+	Inputs            []byte
+	SelfieRequirement *string
+	Restrictions      []byte
+	Enabled           bool
+	Version           int64
+	ActorKeyID        string
+	CreatedAt         pgtype.Timestamptz
+	UpdatedAt         pgtype.Timestamptz
+}
+
+type IdenqaProviderRegistrationHistory struct {
+	TenantID       string
+	RegistrationID string
+	Version        int64
+	ActorKeyID     string
+	Operation      string
+	Reason         string
+	Receipt        []byte
 }
 
 type IdenqaProviderRequest struct {
