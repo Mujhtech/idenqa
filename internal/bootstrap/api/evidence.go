@@ -8,7 +8,7 @@ import (
 	"github.com/Mujhtech/idenqa/internal/config"
 	"github.com/Mujhtech/idenqa/internal/evidence"
 	platformcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto"
-	localkms "github.com/Mujhtech/idenqa/internal/platform/kms/local"
+	"github.com/Mujhtech/idenqa/internal/platform/kms/keys"
 	localobjects "github.com/Mujhtech/idenqa/internal/platform/objectstore/local"
 )
 
@@ -53,8 +53,19 @@ func NewEvidenceInfrastructure(
 	return EvidenceInfrastructure{objects: objects, keys: keys, lifecycle: lifecycle}, nil
 }
 
-func configuredLocalEvidence(configuration config.API) (EvidenceInfrastructure, error) {
-	if !configuration.LocalEvidenceEnabled() {
+func configuredEvidence(ctx context.Context, configuration config.API) (EvidenceInfrastructure, error) {
+	keyOptions := keys.Options{
+		Provider:             configuration.KMSProvider,
+		LocalKeyringFile:     configuration.EvidenceLocalKeyringFile,
+		AWSKeyID:             configuration.KMSAWSKeyID,
+		AWSRegion:            configuration.KMSAWSRegion,
+		AWSMaxPlaintextBytes: configuration.KMSAWSMaxPlaintextBytes,
+	}
+	if !configuration.EvidenceLocalObjectsEnabled() {
+		if keys.Enabled(keyOptions) {
+			return EvidenceInfrastructure{}, errors.New("selected KMS provider requires a local evidence directory in the root API")
+		}
+
 		return EvidenceInfrastructure{}, nil
 	}
 	policy, err := configuration.EvidenceUploadPolicy()
@@ -70,14 +81,14 @@ func configuredLocalEvidence(configuration config.API) (EvidenceInfrastructure, 
 	if err != nil {
 		return EvidenceInfrastructure{}, errors.New("open local evidence object store")
 	}
-	keys, err := localkms.Open(configuration.EvidenceLocalKeyringFile)
+	keyring, err := keys.Open(ctx, keyOptions)
 	if err != nil {
 		_ = objects.Close()
 
-		return EvidenceInfrastructure{}, errors.New("open local evidence keyring")
+		return EvidenceInfrastructure{}, err
 	}
-	lifecycle := &localEvidenceLifecycle{objects: objects, keys: keys}
-	infrastructure, err := NewEvidenceInfrastructure(objects, keys, lifecycle)
+	lifecycle := &localEvidenceLifecycle{objects: objects, keys: keyring}
+	infrastructure, err := NewEvidenceInfrastructure(objects, keyring, lifecycle)
 	if err != nil {
 		_ = lifecycle.Shutdown(context.Background())
 

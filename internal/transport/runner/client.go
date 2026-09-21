@@ -48,14 +48,39 @@ func DialOptions(configuration ClientConfig) ([]grpc.DialOption, error) {
 	}, nil
 }
 
-// ServerTLSCredentials loads a complete certificate and key pair and enforces TLS 1.2+.
-func ServerTLSCredentials(certificateFile, keyFile string) (credentials.TransportCredentials, error) {
+// LoadServerTLSIdentity loads a complete certificate and key pair from mounted
+// files without constructing transport credentials.
+func LoadServerTLSIdentity(certificateFile, keyFile string) (tls.Certificate, error) {
 	if certificateFile == "" || keyFile == "" {
-		return nil, errors.New("runner server certificate and key are required")
+		return tls.Certificate{}, errors.New("runner server certificate and key are required")
 	}
 	pair, err := tls.LoadX509KeyPair(certificateFile, keyFile)
 	if err != nil {
-		return nil, errors.New("load runner server TLS identity")
+		return tls.Certificate{}, errors.New("load runner server TLS identity")
+	}
+
+	return pair, nil
+}
+
+// ParseServerTLSIdentity parses a PEM certificate and key pair supplied by a
+// secret provider.
+func ParseServerTLSIdentity(certificatePEM, keyPEM []byte) (tls.Certificate, error) {
+	if len(certificatePEM) == 0 || len(keyPEM) == 0 {
+		return tls.Certificate{}, errors.New("runner server certificate and key are required")
+	}
+	pair, err := tls.X509KeyPair(certificatePEM, keyPEM)
+	if err != nil {
+		return tls.Certificate{}, errors.New("parse runner server TLS identity")
+	}
+
+	return pair, nil
+}
+
+// ServerTLSCredentials loads a complete certificate and key pair and enforces TLS 1.2+.
+func ServerTLSCredentials(certificateFile, keyFile string) (credentials.TransportCredentials, error) {
+	pair, err := LoadServerTLSIdentity(certificateFile, keyFile)
+	if err != nil {
+		return nil, err
 	}
 	return credentials.NewTLS(&tls.Config{
 		MinVersion:   tls.VersionTLS12,

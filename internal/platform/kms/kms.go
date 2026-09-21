@@ -2,9 +2,11 @@
 package kms
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 )
 
 const (
@@ -95,4 +97,15 @@ func validLabel(value string) bool {
 func (key WrappedKey) Redacted() string {
 	return fmt.Sprintf("wrapped key provider=%s reference=%s version=%s algorithm=%s", key.record.Provider,
 		key.record.Reference, key.record.Version, key.record.Algorithm)
+}
+
+// DestructionScheduler schedules provider-side destruction of one wrapping key
+// after a verified reference scan proved no ciphertext depends on it. It is
+// implemented by providers that own a deletion lifecycle; providers without
+// one simply do not implement it.
+type DestructionScheduler interface {
+	// ScheduleDestruction returns the instant the provider will complete
+	// deletion. Implementations must be idempotent for an already scheduled
+	// key and must refuse a reference they do not own.
+	ScheduleDestruction(ctx context.Context, reference, version string, pendingWindow time.Duration) (time.Time, error)
 }

@@ -1,0 +1,15 @@
+DROP TRIGGER IF EXISTS break_glass_uses_append_only ON idenqa.break_glass_uses;
+DROP TRIGGER IF EXISTS break_glass_requests_transition ON idenqa.break_glass_requests;
+DROP TRIGGER IF EXISTS support_grants_transition ON idenqa.support_grants;
+DROP TRIGGER IF EXISTS hmac_key_domains_transition ON idenqa.hmac_key_domains;
+DROP TRIGGER IF EXISTS hmac_keys_transition ON idenqa.hmac_keys;
+DROP FUNCTION IF EXISTS idenqa.protect_break_glass_use();
+DROP FUNCTION IF EXISTS idenqa.protect_break_glass_request();
+DROP FUNCTION IF EXISTS idenqa.protect_support_grant();
+DROP FUNCTION IF EXISTS idenqa.protect_hmac_key_domain();
+DROP FUNCTION IF EXISTS idenqa.protect_hmac_key_version();
+DROP TABLE IF EXISTS idenqa.break_glass_uses;
+DROP TABLE IF EXISTS idenqa.break_glass_requests;
+DROP TABLE IF EXISTS idenqa.support_grants;
+DROP TABLE IF EXISTS idenqa.hmac_keys;
+DROP TABLE IF EXISTS idenqa.hmac_key_domains;

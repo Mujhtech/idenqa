@@ -14,6 +14,8 @@ import (
 	fraudpostgres "github.com/Mujhtech/idenqa/internal/fraud/postgres"
 	"github.com/Mujhtech/idenqa/internal/identity"
 	identitypostgres "github.com/Mujhtech/idenqa/internal/identity/postgres"
+	"github.com/Mujhtech/idenqa/internal/keycustody"
+	keycustodypostgres "github.com/Mujhtech/idenqa/internal/keycustody/postgres"
 
 	assetstore "github.com/Mujhtech/idenqa/adapters/experience/assetstore"
 	ed25519signer "github.com/Mujhtech/idenqa/adapters/experience/ed25519signer"
@@ -56,6 +58,8 @@ import (
 	realtimepostgres "github.com/Mujhtech/idenqa/internal/realtime/postgres"
 	"github.com/Mujhtech/idenqa/internal/review"
 	reviewpostgres "github.com/Mujhtech/idenqa/internal/review/postgres"
+	"github.com/Mujhtech/idenqa/internal/support"
+	supportpostgres "github.com/Mujhtech/idenqa/internal/support/postgres"
 	tenantpostgres "github.com/Mujhtech/idenqa/internal/tenant/postgres"
 	"github.com/Mujhtech/idenqa/internal/tenantexport"
 	tenantexportpostgres "github.com/Mujhtech/idenqa/internal/tenantexport/postgres"
@@ -139,7 +143,7 @@ func NewProcess(
 	state *health.State,
 	build buildinfo.Info,
 ) (*Process, error) {
-	infrastructure, err := configuredLocalEvidence(configuration)
+	infrastructure, err := configuredEvidence(ctx, configuration)
 	if err != nil {
 		return nil, err
 	}
@@ -868,6 +872,60 @@ func newProcess(
 		connectionPool.Close()
 		return nil, err
 	}
+	keyCustodyStore, err := keycustodypostgres.New(connectionPool, infrastructure.keys, infrastructure.keys, identityStore, keyCustodyGenerator(identifiers))
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, err
+	}
+	keyCustodyService, err := keycustody.NewService(keyCustodyStore, identifiers, time.Now)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, err
+	}
+	kmsRoutes, err := httpapi.NewKMSRoutes(accessMiddleware, keyCustodyService, logger)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, err
+	}
+	supportStore, err := supportpostgres.New(connectionPool, identifiers)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, err
+	}
+	supportService, err := support.NewService(supportStore, access.TenantRegistry(), time.Now)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, err
+	}
+	supportRoutes, err := httpapi.NewSupportRoutes(accessMiddleware, supportService, logger)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, err
+	}
+	keyRewrapService, keyDestructionService, keyRecoveryService, err := configuredKeyOperations(
+		connectionPool, infrastructure, identifiers, keyCustodyStore,
+	)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+
+		return nil, err
+	}
+	keyOperationRoutes, err := keyOperationRoutesOrNil(
+		accessMiddleware, keyRewrapService, keyDestructionService, keyRecoveryService, logger,
+	)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+
+		return nil, err
+	}
 	fraudStore, err := fraudpostgres.New(connectionPool, infrastructure.keys)
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
@@ -910,12 +968,32 @@ func newProcess(
 		connectionPool.Close()
 		return nil, fmt.Errorf("construct provider registration persistence: %w", err)
 	}
+	providerHealthPolicy, err := configuration.ProviderHealthPolicy()
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, fmt.Errorf("construct provider health policy: %w", err)
+	}
+	providerHealthStore, err := providerpostgres.NewHealthStore(connectionPool, clock.System{}, nil)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, fmt.Errorf("construct provider health persistence: %w", err)
+	}
+	providerHealth, err := provider.NewHealthService(providerHealthStore, providerHealthStore, nil, nil, providerHealthPolicy, time.Now)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, fmt.Errorf("construct provider health service: %w", err)
+	}
+	providerHealth.WithMetrics(metrics)
 	registrationService, err := provider.NewRegistrationManagement(registrationStore, identifiers, time.Now, configuration.VerificationIdempotencyTTL, configuredProviderManifests(configuration))
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
 		connectionPool.Close()
 		return nil, fmt.Errorf("construct provider registration service: %w", err)
 	}
+	registrationService.WithHealth(providerHealth)
 	providerRegistrationRoutes, err := httpapi.NewProviderRoutes(accessMiddleware, registrationService, cursorCodec, logger)
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
@@ -1135,9 +1213,12 @@ func newProcess(
 	}
 
 	routes := []RouteRegistrar{
-		assuranceRoutes, identityRoutes, fraudRoutes, followupRoutes, reviewManagementRoutes, proposalRoutes, tenantRoutes, modelRoutes, policyRoutes, policySimulationRoutes, webhookRoutes, decisionRoutes, reviewRoutes, profileRoutes, verificationRoutes, captureOutcomeRoutes, cancellationRoutes, authorityRoutes, connectionRoutes, realtimeRoutes, providerRegistrationRoutes, packRoutes,
+		assuranceRoutes, identityRoutes, fraudRoutes, followupRoutes, reviewManagementRoutes, proposalRoutes, tenantRoutes, modelRoutes, policyRoutes, policySimulationRoutes, webhookRoutes, decisionRoutes, reviewRoutes, profileRoutes, verificationRoutes, captureOutcomeRoutes, cancellationRoutes, authorityRoutes, connectionRoutes, realtimeRoutes, providerRegistrationRoutes, packRoutes, kmsRoutes, supportRoutes,
 	}
 	internalRoutes := []InternalRouteRegistrar{}
+	if keyOperationRoutes != nil {
+		routes = append(routes, keyOperationRoutes)
+	}
 	if nativeBootstrapRoutes != nil {
 		routes = append(routes, nativeBootstrapRoutes)
 	}

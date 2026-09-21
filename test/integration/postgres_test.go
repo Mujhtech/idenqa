@@ -248,6 +248,9 @@ func (database *isolatedDatabase) createRuntimeRole(t *testing.T) string {
 		"GRANT SELECT, INSERT, UPDATE ON idenqa.provider_registrations TO " + pgx.Identifier{role}.Sanitize(),
 		"GRANT SELECT, INSERT ON idenqa.provider_registration_history TO " + pgx.Identifier{role}.Sanitize(),
 		"GRANT SELECT, INSERT, UPDATE ON idenqa.provider_async_operations TO " + pgx.Identifier{role}.Sanitize(),
+		"GRANT SELECT, INSERT, UPDATE ON idenqa.provider_health_snapshots TO " + pgx.Identifier{role}.Sanitize(),
+		"GRANT SELECT, INSERT, DELETE ON idenqa.provider_dispatch_leases TO " + pgx.Identifier{role}.Sanitize(),
+		"GRANT SELECT, INSERT, UPDATE, DELETE ON idenqa.provider_dispatch_admissions TO " + pgx.Identifier{role}.Sanitize(),
 		"GRANT SELECT, INSERT, UPDATE ON idenqa.provider_callback_receipts TO " + pgx.Identifier{role}.Sanitize(),
 		"GRANT EXECUTE ON FUNCTION idenqa.resolve_provider_callback(text) TO " + pgx.Identifier{role}.Sanitize(),
 		"GRANT SELECT, INSERT ON idenqa.model_requests TO " + pgx.Identifier{role}.Sanitize(),
@@ -349,6 +352,14 @@ func (database *isolatedDatabase) createRuntimeRole(t *testing.T) string {
 		"GRANT SELECT, INSERT ON idenqa.privacy_disclosures TO " + pgx.Identifier{role}.Sanitize(),
 		"GRANT SELECT, INSERT, UPDATE ON idenqa.processor_inventory TO " + pgx.Identifier{role}.Sanitize(),
 		"GRANT SELECT, INSERT ON idenqa.processor_inventory_revisions TO " + pgx.Identifier{role}.Sanitize(),
+		"GRANT SELECT, INSERT, UPDATE ON idenqa.hmac_key_domains,idenqa.hmac_keys TO " + pgx.Identifier{role}.Sanitize(),
+		"GRANT SELECT, INSERT, UPDATE ON idenqa.support_grants,idenqa.break_glass_requests TO " + pgx.Identifier{role}.Sanitize(),
+		"GRANT SELECT, INSERT ON idenqa.break_glass_uses TO " + pgx.Identifier{role}.Sanitize(),
+		"GRANT SELECT, INSERT, UPDATE ON idenqa.key_rewrap_state TO " + pgx.Identifier{role}.Sanitize(),
+		"GRANT SELECT, INSERT ON idenqa.key_rewrap_audit TO " + pgx.Identifier{role}.Sanitize(),
+		"GRANT SELECT, INSERT ON idenqa.key_destruction_verifications,idenqa.key_destruction_schedules TO " + pgx.Identifier{role}.Sanitize(),
+		"GRANT SELECT, INSERT, UPDATE ON idenqa.key_recovery_ceremonies TO " + pgx.Identifier{role}.Sanitize(),
+		"GRANT EXECUTE ON FUNCTION idenqa.list_key_rewrap_tenants(text, integer) TO " + pgx.Identifier{role}.Sanitize(),
 	}
 	for _, statement := range statements {
 		if _, err := connection.Exec(t.Context(), statement); err != nil {

@@ -14,7 +14,7 @@ import (
 	"github.com/Mujhtech/idenqa/internal/cli"
 	"github.com/Mujhtech/idenqa/internal/config"
 	"github.com/Mujhtech/idenqa/internal/platform/health"
-	localkms "github.com/Mujhtech/idenqa/internal/platform/kms/local"
+	"github.com/Mujhtech/idenqa/internal/platform/kms/keys"
 	"github.com/Mujhtech/idenqa/internal/platform/logging"
 	"github.com/spf13/cobra"
 )
@@ -94,18 +94,24 @@ func composeEvidence(
 	if err != nil {
 		return bootstrapapi.EvidenceInfrastructure{}, err
 	}
-	keys, err := localkms.Open(configuration.EvidenceLocalKeyringFile)
+	keyring, err := keys.Open(ctx, keys.Options{
+		Provider:             configuration.KMSProvider,
+		LocalKeyringFile:     configuration.EvidenceLocalKeyringFile,
+		AWSKeyID:             configuration.KMSAWSKeyID,
+		AWSRegion:            configuration.KMSAWSRegion,
+		AWSMaxPlaintextBytes: configuration.KMSAWSMaxPlaintextBytes,
+	})
 	if err != nil {
-		return bootstrapapi.EvidenceInfrastructure{}, errors.New("open mounted evidence keyring")
+		return bootstrapapi.EvidenceInfrastructure{}, err
 	}
 	objects, err := s3objects.Open(ctx, configuration.ObjectStoreConfig(policy.MaximumBytes()))
 	if err != nil {
-		_ = keys.Close()
+		_ = keyring.Close()
 
 		return bootstrapapi.EvidenceInfrastructure{}, errors.New("open S3 evidence object store")
 	}
-	lifecycle := &evidenceLifecycle{keys: keys}
-	infrastructure, err := bootstrapapi.NewEvidenceInfrastructure(objects, keys, lifecycle)
+	lifecycle := &evidenceLifecycle{keys: keyring}
+	infrastructure, err := bootstrapapi.NewEvidenceInfrastructure(objects, keyring, lifecycle)
 	if err != nil {
 		_ = lifecycle.Shutdown(context.Background())
 

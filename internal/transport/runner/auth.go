@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"strings"
+	"sync"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -25,31 +26,64 @@ var errInvalidCredential = errors.New("runner credential is invalid")
 
 // CredentialSet holds digests for the currently accepted rotation window.
 // Full credentials are retained only by the gRPC client's per-RPC credential.
+// Replace atomically advances the window so an old credential remains accepted
+// until a reload explicitly removes it.
 type CredentialSet struct {
+	mutex   sync.RWMutex
 	digests [][sha256.Size]byte
 }
 
 // NewCredentialSet validates and hashes one or more active runner credentials.
 func NewCredentialSet(credentials ...string) (*CredentialSet, error) {
+	digests, err := credentialDigests(credentials...)
+	if err != nil {
+		return nil, err
+	}
+
+	return &CredentialSet{digests: digests}, nil
+}
+
+// NewEmptyCredentialSet constructs a set that accepts no credential until the
+// first successful Replace. It is used while a provider-bound credential is
+// primed and fails closed until then.
+func NewEmptyCredentialSet() *CredentialSet { return &CredentialSet{} }
+
+// Replace atomically replaces the accepted credential window. It preserves the
+// existing window when the candidate credentials are invalid.
+func (set *CredentialSet) Replace(credentials ...string) error {
+	if set == nil {
+		return errors.New("runner credential set is not initialised")
+	}
+	digests, err := credentialDigests(credentials...)
+	if err != nil {
+		return err
+	}
+	set.mutex.Lock()
+	set.digests = digests
+	set.mutex.Unlock()
+
+	return nil
+}
+
+func credentialDigests(credentials ...string) ([][sha256.Size]byte, error) {
 	if len(credentials) == 0 || len(credentials) > 2 {
 		return nil, errors.New("runner credential set must contain one or two credentials")
 	}
-
-	set := &CredentialSet{digests: make([][sha256.Size]byte, 0, len(credentials))}
+	digests := make([][sha256.Size]byte, 0, len(credentials))
 	for _, credential := range credentials {
 		if err := validateCredential(credential); err != nil {
 			return nil, err
 		}
 		digest := sha256.Sum256([]byte(credential))
-		for _, existing := range set.digests {
+		for _, existing := range digests {
 			if subtle.ConstantTimeCompare(existing[:], digest[:]) == 1 {
 				return nil, errors.New("runner credential set contains a duplicate")
 			}
 		}
-		set.digests = append(set.digests, digest)
+		digests = append(digests, digest)
 	}
 
-	return set, nil
+	return digests, nil
 }
 
 func validateCredential(credential string) error {
@@ -69,10 +103,14 @@ func (set *CredentialSet) matches(credential string) bool {
 		return false
 	}
 	digest := sha256.Sum256([]byte(credential))
+	set.mutex.RLock()
+	accepted := set.digests
 	matched := 0
-	for _, accepted := range set.digests {
-		matched |= subtle.ConstantTimeCompare(accepted[:], digest[:])
+	for _, candidate := range accepted {
+		matched |= subtle.ConstantTimeCompare(candidate[:], digest[:])
 	}
+	set.mutex.RUnlock()
+
 	return matched == 1
 }
 

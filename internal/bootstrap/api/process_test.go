@@ -120,7 +120,7 @@ func TestNewProcessComposesLocalEvidenceUploadRoutes(t *testing.T) {
 		HTTPMaxBodyBytes:          1_048_576,
 	}
 	configureTestSecrets(t, &configuration)
-	infrastructure, err := configuredLocalEvidence(configuration)
+	infrastructure, err := configuredEvidence(context.Background(), configuration)
 	if err != nil {
 		t.Fatalf("configure local evidence infrastructure: %v", err)
 	}

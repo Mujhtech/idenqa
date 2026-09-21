@@ -37,6 +37,8 @@ const (
 	DutyPrivacyDeletion = "idenqa-privacy-deletion"
 	// DutyWebhookRetention elects one installation-wide payload expiry worker.
 	DutyWebhookRetention = "idenqa-webhook-retention"
+	// DutyKeyRewrap elects one installation-wide KMS wrapping sweep worker.
+	DutyKeyRewrap = "idenqa-key-rewrap"
 
 	headerTaskName       = "idenqa-task-name"
 	headerIdempotencyKey = "idenqa-idempotency-key"
@@ -156,9 +158,11 @@ func (adapter *Adapter) ListJobs(ctx context.Context, state string, limit uint32
 	}
 	result := make([]JobSummary, 0, len(page.Jobs))
 	for _, job := range page.Jobs {
-		result = append(result, JobSummary{ID: job.ID, Kind: job.Kind, Queue: job.Queue, State: job.State,
+		result = append(result, JobSummary{
+			ID: job.ID, Kind: job.Kind, Queue: job.Queue, State: job.State,
 			FailureClass: failureClass(job.ErrorsJSON), Attempt: job.Attempt, CrashAttempt: job.CrashAttempt,
-			MaxAttempts: job.MaxAttempts, EnqueuedAt: time.UnixMilli(job.EnqueuedAtMs).UTC(), ScheduledAt: time.UnixMilli(job.ScheduledAtMs).UTC()})
+			MaxAttempts: job.MaxAttempts, EnqueuedAt: time.UnixMilli(job.EnqueuedAtMs).UTC(), ScheduledAt: time.UnixMilli(job.ScheduledAtMs).UTC(),
+		})
 	}
 	return result, page.NextCursor, nil
 }

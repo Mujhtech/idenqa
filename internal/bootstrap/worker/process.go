@@ -17,6 +17,10 @@ import (
 	"github.com/Mujhtech/idenqa/internal/config"
 	deliverypostgres "github.com/Mujhtech/idenqa/internal/delivery/postgres"
 	deliverytask "github.com/Mujhtech/idenqa/internal/delivery/task"
+	"github.com/Mujhtech/idenqa/internal/evidence"
+	evidencepostgres "github.com/Mujhtech/idenqa/internal/evidence/postgres"
+	"github.com/Mujhtech/idenqa/internal/keyrewrap"
+	keyrewrappostgres "github.com/Mujhtech/idenqa/internal/keyrewrap/postgres"
 	"github.com/Mujhtech/idenqa/internal/pack"
 	packpostgres "github.com/Mujhtech/idenqa/internal/pack/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
@@ -62,6 +66,7 @@ type Process struct {
 	fanoutCoordinator      *deliverytask.FanoutCoordinator
 	webhookRetention       *deliverypostgres.Store
 	expiryCoordinator      *verificationtask.ExpiryCoordinator
+	keyRewrap              *keyrewrap.Service
 	logger                 *slog.Logger
 	workerID               string
 	reconciliationInterval time.Duration
@@ -92,7 +97,7 @@ func NewProcessWithEvidence(
 	registry *task.Registry,
 	infrastructure EvidenceInfrastructure,
 ) (*Process, error) {
-	delivery, err := configuredLocalDelivery(configuration)
+	delivery, err := configuredDelivery(ctx, configuration)
 	if err != nil {
 		if infrastructure.enabled() {
 			_ = infrastructure.lifecycle.Shutdown(context.Background())
@@ -213,7 +218,7 @@ func NewProcessWithInfrastructure(ctx context.Context, configuration config.Work
 	if realProvider != nil {
 		route := executionRoute{planner: realProvider.plan, preparation: realProvider.preparation, signals: realProvider.plan.OutputSignals()}
 		if realProvider.registrations != nil {
-			route.registration = &registrationRoute{source: realProvider.registrations, manifest: realProvider.plan.Manifest,
+			route.registration = &registrationRoute{source: realProvider.registrations, health: realProvider.health, manifest: realProvider.plan.Manifest,
 				template: realProvider.plan.Binding, deployment: realProvider.plan, preparation: realProvider.preparation}
 		}
 		routes = append(routes, route)
@@ -460,6 +465,7 @@ func NewProcessWithInfrastructure(ctx context.Context, configuration config.Work
 	var deliveryCoordinator *deliverytask.Coordinator
 	var fanoutCoordinator *deliverytask.FanoutCoordinator
 	var webhookRetention *deliverypostgres.Store
+	var keyRewrap *keyrewrap.Service
 	if deliveryInfrastructure.enabled() {
 		store, err := deliverypostgres.New(connectionPool)
 		if err != nil {
@@ -496,6 +502,74 @@ func NewProcessWithInfrastructure(ctx context.Context, configuration config.Work
 			return nil, err
 		}
 		webhookRetention = store
+		rewrapRepository, err := keyrewrappostgres.New(connectionPool, deliveryInfrastructure.wrapper, deliveryInfrastructure.unwrapper, clock.System{}.Now)
+		if err != nil {
+			connectionPool.Close()
+			return nil, fmt.Errorf("construct key rewrap repository: %w", err)
+		}
+		evidenceCatalog, err := evidence.BuiltInCatalog()
+		if err != nil {
+			connectionPool.Close()
+			return nil, fmt.Errorf("load evidence registry: %w", err)
+		}
+		evidenceStore, err := evidencepostgres.New(connectionPool, deliveryInfrastructure.wrapper, evidenceCatalog)
+		if err != nil {
+			connectionPool.Close()
+			return nil, fmt.Errorf("construct key rewrap evidence persistence: %w", err)
+		}
+		evidenceRewrapper, err := evidence.NewRewrapper(evidenceStore, evidenceStore, deliveryInfrastructure.wrapper, deliveryInfrastructure.unwrapper)
+		if err != nil {
+			connectionPool.Close()
+			return nil, fmt.Errorf("construct evidence key rewrapper: %w", err)
+		}
+		evidenceAdapter, err := keyrewrappostgres.NewEvidenceAdapter(rewrapRepository, evidenceRewrapper, workerID, clock.System{}.Now)
+		if err != nil {
+			connectionPool.Close()
+			return nil, fmt.Errorf("construct evidence key rewrap adapter: %w", err)
+		}
+		webhookEventAdapter, err := keyrewrappostgres.NewWebhookEventAdapter(rewrapRepository)
+		if err != nil {
+			connectionPool.Close()
+			return nil, fmt.Errorf("construct webhook event rewrap adapter: %w", err)
+		}
+		webhookDeliveryAdapter, err := keyrewrappostgres.NewWebhookDeliveryAdapter(rewrapRepository)
+		if err != nil {
+			connectionPool.Close()
+			return nil, fmt.Errorf("construct webhook delivery rewrap adapter: %w", err)
+		}
+		webhookSecretAdapter, err := keyrewrappostgres.NewWebhookSecretAdapter(rewrapRepository)
+		if err != nil {
+			connectionPool.Close()
+			return nil, fmt.Errorf("construct webhook secret rewrap adapter: %w", err)
+		}
+		hmacAdapter, err := keyrewrappostgres.NewHMACKeyAdapter(rewrapRepository)
+		if err != nil {
+			connectionPool.Close()
+			return nil, fmt.Errorf("construct hmac key rewrap adapter: %w", err)
+		}
+		identityLookupAdapter, err := keyrewrappostgres.NewIdentityLookupAdapter(rewrapRepository)
+		if err != nil {
+			connectionPool.Close()
+			return nil, fmt.Errorf("construct identity lookup rewrap adapter: %w", err)
+		}
+		identitySubjectAdapter, err := keyrewrappostgres.NewIdentitySubjectAdapter(rewrapRepository)
+		if err != nil {
+			connectionPool.Close()
+			return nil, fmt.Errorf("construct identity subject rewrap adapter: %w", err)
+		}
+		fraudAdapter, err := keyrewrappostgres.NewFraudKeyAdapter(rewrapRepository)
+		if err != nil {
+			connectionPool.Close()
+			return nil, fmt.Errorf("construct fraud key rewrap adapter: %w", err)
+		}
+		keyRewrap, err = keyrewrap.NewService(rewrapRepository, rewrapRepository, []keyrewrap.Adapter{
+			evidenceAdapter, webhookEventAdapter, webhookDeliveryAdapter, webhookSecretAdapter,
+			hmacAdapter, identityLookupAdapter, identitySubjectAdapter, fraudAdapter,
+		}, deliveryInfrastructure.wrapper, metrics, clock.System{}.Now)
+		if err != nil {
+			connectionPool.Close()
+			return nil, fmt.Errorf("construct key rewrap service: %w", err)
+		}
 	}
 	var privacyCoordinator *privacytask.Coordinator
 	if infrastructure.enabled() {
@@ -616,6 +690,7 @@ func NewProcessWithInfrastructure(ctx context.Context, configuration config.Work
 		deliveryCoordinator: deliveryCoordinator,
 		fanoutCoordinator:   fanoutCoordinator,
 		webhookRetention:    webhookRetention,
+		keyRewrap:           keyRewrap,
 		expiryCoordinator:   expiryCoordinator,
 		processing:          processing, processingBatch: configuration.ReconciliationBatchSize,
 		identity: identityStore, fraud: fraudStore, reviewWorker: reviewWorker, worker: backgroundWorker, coordinator: coordinator, policyCoordinator: policyCoordinator, privacyCoordinator: privacyCoordinator, duties: adapter,
@@ -679,6 +754,7 @@ func (process *Process) runCoordination(ctx context.Context) {
 	process.schedulePolicyAuthorships(ctx)
 	process.schedulePrivacyDeletions(ctx)
 	process.expireWebhookData(ctx)
+	process.rewrapKeyMaterial(ctx)
 	process.projectPendingProgress(ctx)
 	for {
 		select {
@@ -688,6 +764,7 @@ func (process *Process) runCoordination(ctx context.Context) {
 			process.scheduleReconciliations(ctx)
 			process.schedulePrivacyDeletions(ctx)
 			process.expireWebhookData(ctx)
+			process.rewrapKeyMaterial(ctx)
 		case <-progressTicker.C:
 			process.scheduleExpirations(ctx)
 			process.scheduleWebhookDeliveries(ctx)
@@ -722,6 +799,34 @@ func (process *Process) expireWebhookData(ctx context.Context) {
 		process.logger.ErrorContext(ctx, "expire webhook retention data", "error", err)
 	} else if claimed {
 		process.logger.DebugContext(ctx, "completed webhook retention duty")
+	}
+}
+
+func (process *Process) rewrapKeyMaterial(ctx context.Context) {
+	if process.keyRewrap == nil {
+		return
+	}
+	lease := min(2*process.reconciliationInterval, 2*time.Hour)
+	claimed, err := process.duties.RunDuty(ctx, taskheadgate.DutyKeyRewrap, process.workerID, lease, func(ctx context.Context) error {
+		results, err := process.keyRewrap.SweepAll(ctx, keyrewrap.DefaultBatch)
+		if err != nil {
+			return err
+		}
+		for _, result := range results {
+			if result.Failed > 0 || result.EpochChanged || result.Completed || result.Rewrapped > 0 {
+				process.logger.InfoContext(ctx, "key rewrap sweep",
+					"class", result.Class.String(), "generation", result.Generation, "status", result.Status,
+					"rewrapped", result.Rewrapped, "skipped", result.Skipped, "failed", result.Failed,
+					"epoch_changed", result.EpochChanged)
+			}
+		}
+
+		return nil
+	})
+	if err != nil && !errors.Is(err, context.Canceled) {
+		process.logger.ErrorContext(ctx, "rewrap stored key material", "error", err)
+	} else if claimed {
+		process.logger.DebugContext(ctx, "completed key rewrap duty")
 	}
 }
 

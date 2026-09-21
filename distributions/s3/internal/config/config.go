@@ -35,8 +35,11 @@ func Load(envFile string) (Configuration, error) {
 	if configuration.EvidenceLocalDirectory != "" {
 		return Configuration{}, errors.New("validate S3 distribution configuration: local evidence directory is not supported")
 	}
-	if configuration.EvidenceLocalKeyringFile == "" {
+	if configuration.KMSProvider == "local" && configuration.EvidenceLocalKeyringFile == "" {
 		return Configuration{}, errors.New("validate S3 distribution configuration: local keyring file is required")
+	}
+	if configuration.KMSProvider == "aws" && configuration.EvidenceLocalKeyringFile != "" {
+		return Configuration{}, errors.New("validate S3 distribution configuration: AWS KMS provider must not configure a local keyring")
 	}
 	policy, err := configuration.EvidenceUploadPolicy()
 	if err != nil {

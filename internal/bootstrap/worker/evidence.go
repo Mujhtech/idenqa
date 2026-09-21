@@ -32,7 +32,7 @@ func NewEvidenceInfrastructure(objects EvidenceObjects, lifecycle EvidenceLifecy
 }
 
 func configuredLocalEvidence(configuration config.Worker) (EvidenceInfrastructure, error) {
-	if !configuration.LocalEvidenceEnabled() {
+	if !configuration.EvidenceLocalObjectsEnabled() {
 		return EvidenceInfrastructure{}, nil
 	}
 	policy, err := configuration.EvidenceUploadPolicy()

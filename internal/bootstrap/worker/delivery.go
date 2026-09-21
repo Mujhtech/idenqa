@@ -9,7 +9,7 @@ import (
 	"github.com/Mujhtech/idenqa/internal/config"
 	deliverytask "github.com/Mujhtech/idenqa/internal/delivery/task"
 	platformcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto"
-	localkms "github.com/Mujhtech/idenqa/internal/platform/kms/local"
+	"github.com/Mujhtech/idenqa/internal/platform/kms/keys"
 	"github.com/Mujhtech/idenqa/internal/transport/callback"
 )
 
@@ -31,16 +31,23 @@ func NewDeliveryInfrastructure(wrapper platformcrypto.KeyWrapper, unwrapper plat
 	return DeliveryInfrastructure{wrapper: wrapper, unwrapper: unwrapper, sender: sender, lifecycle: lifecycle}, nil
 }
 
-func configuredLocalDelivery(configuration config.Worker) (DeliveryInfrastructure, error) {
-	if configuration.EvidenceLocalKeyringFile == "" {
+func configuredDelivery(ctx context.Context, configuration config.Worker) (DeliveryInfrastructure, error) {
+	options := keys.Options{
+		Provider:             configuration.KMSProvider,
+		LocalKeyringFile:     configuration.EvidenceLocalKeyringFile,
+		AWSKeyID:             configuration.KMSAWSKeyID,
+		AWSRegion:            configuration.KMSAWSRegion,
+		AWSMaxPlaintextBytes: configuration.KMSAWSMaxPlaintextBytes,
+	}
+	if !keys.Enabled(options) {
 		return DeliveryInfrastructure{}, nil
 	}
-	keys, err := localkms.Open(configuration.EvidenceLocalKeyringFile)
+	keyring, err := keys.Open(ctx, options)
 	if err != nil {
-		return DeliveryInfrastructure{}, errors.New("open worker webhook signing keyring")
+		return DeliveryInfrastructure{}, err
 	}
 	sender := callback.Client{Resolver: net.DefaultResolver, Dialer: &net.Dialer{Timeout: 10 * time.Second}, Timeout: 15 * time.Second}
-	return NewDeliveryInfrastructure(keys, keys, sender, keyringLifecycle{keys})
+	return NewDeliveryInfrastructure(keyring, keyring, sender, keyringLifecycle{keyring})
 }
 
 type keyringLifecycle struct{ keys interface{ Close() error } }
