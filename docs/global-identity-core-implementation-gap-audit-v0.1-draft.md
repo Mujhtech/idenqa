@@ -75,7 +75,7 @@ The current repository cannot yet run that complete journey using real selected 
 | Predictive model execution      | The ONNX evaluation runner, immutable evaluation registry, threshold revisions, dataset comparison/drift tooling, and durable PAD/face-comparison composition are implemented.                                                                                                                                                 | Accepted data and weights, calibrated production thresholds, temporal liveness evidence, production deployment, and production promotion/rollback evidence.                                          |
 | Tenant-local fraud              | [`internal/fraud`](../internal/fraud), migration 48, public API/SDK, and policy integration implement the selected tenant-local baseline.                                                                                                                                                                                      | Deployment-specific source acceptance and regional approval; cross-tenant intelligence remains explicitly deferred.                                                                                  |
 | Subject and identity projection | [`internal/identity`](../internal/identity), migration 49, public API/SDK, and privacy/policy integration implement the initial core subject and identity model.                                                                                                                                                               | Real structured-provider ingestion, richer country normalisation, and larger incremental deletion planning.                                                                                          |
-| Provider execution              | Dojah and Smile ID adapters are composed through bounded synchronous and asynchronous runtime paths with local-fixture recovery evidence; tenant provider registration and selection with secret-free configuration references, dispatch-evidence health reads and a failure-classification preview are implemented.                                                                                                                                                                                      | Tenant-owned official-account runs, production secrets, live health-based routing, provider-side deletion, legal/regional approval, and equivalent fallback proof.                                        |
+| Provider execution              | Dojah and Smile ID adapters are composed through bounded synchronous and asynchronous runtime paths with local-fixture recovery evidence; tenant provider registration and selection with secret-free configuration references, dispatch-evidence health reads, health-based registration routing, circuit breaking and a failure-classification preview are implemented.                                                                                                                                                                                      | Tenant-owned official-account runs, production credential custody evidence, provider-side deletion, legal/regional approval, and equivalent fallback proof.                                        |
 | Biometrics and documents        | Acquisition orchestration, ONNX preparation, evaluation-only PAD/face comparison, provider document-analysis paths, Capture Web auto-capture with perspective correction, and Core MRZ/barcode/field-consistency/classification with documented provider extraction exist and remain fail-closed or inconclusive without accepted assurance.                                                                                                                                | Production PAD/face models and evaluation, complete temporal capture, template/security-feature and manipulation inspection, portrait extraction, full OCR coverage and derived-data deletion.                                          |
 | Public API                      | The generated OpenAPI and TypeScript SDK include review, fraud, identity, assurance, proposal, cancellation, resume, policy and webhook administration; privacy deletion inspection, policy simulation/diff/regression, tenant provider administration and evaluation-model registry administration are also public. Tenant verification reads project the optional current decision and current review case. | Decision history/reconsideration, general evidence and consent administration, model health, privacy administration writes and OAuth client credentials. |
 | Webhooks                        | L-02 composes atomic completion delivery; H-01 adds public endpoint administration, inspection, rotation and replay; catalogue/subscriptions, exact `1.0` endpoint pins, resumable fanout with replacement-worker proof, list/SSE/local forwarding, hold-aware seven-day payload retention with 365-day tombstones, custom forward headers, endpoint-subscription discovery, a local reference-only projection, and `Last-Event-ID`-based durable history replay are implemented. | The fixture-backed packaged delivery proof passes; production-safe webhook networking and external release evidence remain. |
@@ -283,20 +283,13 @@ Dojah and Smile ID adapter source, manifests, normalisation, conformance tests, 
 **Remaining:**
 
 - Hardened provider-runner deployment and external acceptance evidence.
-- Production secret-manager resolver.
-- Dynamic credential rotation.
 - General purpose-bound subject-input resolution beyond the Smile ID deployment-bound country/document-type references.
 - Broader multi-operation grants and durable delivery recovery beyond the first document route.
-- Provider health cache and selection input.
 - Broader provider reconciliation beyond the implemented status-only polling and verified callback-receipt paths.
 - Provider-side deletion orchestration.
 
 ### 9.2 Missing resilience and cost controls
 
-- Circuit breakers.
-- Health-based routing from live health data.
-- Degraded-mode visibility.
-- Per-provider concurrency and rate control.
 - Provider-side duplicate-charge reconciliation and budgets beyond the implemented one-initial-dispatch-per-attempt receipt.
 - Cost attribution and budget limits.
 - Safe fallback demonstration in the complete workflow.
@@ -488,7 +481,7 @@ Completed 19 September 2026: exact endpoint schema-version `1.0` pinning; a 257-
 
 Remaining limitations:
 - The packaged decision-to-delivery proof uses a documented development-only internal-network exception; production webhook networking remains external-beta evidence under section 27.
-- `verification.collecting` is emitted on transitions into `collecting` (the resume path); creation inserts the activated `collecting` session without a distinct transition. `provider.degraded` has no provider-health owner and remains outside the catalogue.
+- `verification.collecting` is emitted on transitions into `collecting` (the resume path); creation inserts the activated `collecting` session without a distinct transition. `provider.degraded` is now emitted once per transition into `degraded`/`not_ready` from the provider health and circuit-breaker layer (migration 68).
 
 V-04 completed the application, persistence, task, transport, verifier, and deterministic proof boundary. L-02 adds the runnable completion and delivery composition. H-01 adds separately permissioned, atomically audited administration and replay, display-once secret delivery, overlap-safe rotation and signed tenant-bound inspection cursors. Receivers continue deduplicating the unchanged signed event ID across manual replay.
 
@@ -545,22 +538,16 @@ Remaining capabilities are external or infrastructure gates:
 
 ## 21. Production KMS, HSM, and secrets
 
-**Classification:** Current-core production gap and TBD
+**Classification:** Implemented selected scope — AWS KMS and AWS Secrets Manager are the selected first production providers and the custody mechanisms are implemented; live AWS acceptance, the identity lookup migration and outbound runner credential rotation remain
 
-The repository provides an owned KMS boundary, local keyring, per-object streaming encryption, wrapped evidence keys, and evidence-key rewrapping.
+The repository provides an owned KMS boundary, local keyring, per-object streaming encryption, wrapped evidence keys, and evidence-key rewrapping. The user selected AWS KMS and AWS Secrets Manager as the first production KMS/HSM and secret-manager providers; `adapters/kms/aws` implements the owned KMS and secret-resolver ports with fail-closed provider selection (`KMS_PROVIDER=local|aws`, `SECRETS_PROVIDER=file|aws`), and Core never resolves or stores provider secret values. Tenant-scoped HMAC key custody (migration 69) provides domain-separated immutable versions with create/rotate/disable/retire, expected-version checks, audit and backward verification of previously issued identifiers. Runners prime and dynamically reload `secret://` references with last-good fallback, credential overlap and TLS rotation, and tenant provider credential references are version-pinned per dispatch with an audited rotation operation. Migration 70 adds a fenced, resumable fleet rewrap duty covering evidence content, webhook events/deliveries/secrets, custody HMAC keys, identity lookup/subject values and fraud correlation — rewrap, verify, then update, with per-batch audit and bounded metrics. Verified destruction requires reference-free repeatable-read snapshots across those classes and records immutable receipts before scheduling AWS KMS key deletion; dual-control recovery ceremonies support `rewrap` and `migrate_epoch`. Delegated, time-bounded support access and approval-gated break-glass access with expiry and append-only use ledgers are implemented with API/CLI surfaces and regenerated contracts.
 
-Missing capabilities include:
+Remaining:
 
-- First production KMS or HSM adapter.
-- Tenant-scoped HMAC key management for predictable identifiers.
-- Provider secret-manager adapter.
-- Model secret and configuration management.
-- Dynamic secret and runner-credential reload.
-- Fleet rewrap orchestration.
-- Key retirement and verified destruction.
-- Production key recovery ceremonies.
-- Delegated support access.
-- Break-glass access with approval, expiry, and audit.
+- Live AWS KMS/Secrets Manager acceptance evidence: real key-deletion scheduling, rotated-material rewraps and IAM failure modes.
+- Migrating the identity keyed-identifier lookup onto the custody catalog end-to-end (migration 71 plus dual legacy/custody verification).
+- Resolving API/worker outbound runner client credentials through the secret provider with redial/overlap.
+- Production recovery-ceremony rehearsals and the operational rotation cadence, where content-algorithm migration rollout remains under decision 16.
 
 The precise first production provider remains unresolved in the repository/package draft and must not be selected by this audit.
 
@@ -599,7 +586,7 @@ Remaining families are gated on data other sections must produce:
 
 - Capture drop-off by step needs a subject-journey start event; completion and recapture counters are the available proxies.
 - Model score, threshold, cohort and drift metrics need the section 4 evaluation dataset and production calibration.
-- Provider cost attribution and live health routing depend on sections 9.2/9.3; dispatch-outcome metrics currently provide degraded-mode visibility for providers.
+- Provider cost attribution and budgets depend on sections 9.2/9.3; live health routing, the bounded health gauge and degraded-mode visibility are implemented.
 - Regional pending-work capacity needs region on work payloads; per-region session starts are implemented.
 
 Metrics and traces must continue to exclude raw evidence, personal claims, credentials, and high-cardinality subject identifiers.
