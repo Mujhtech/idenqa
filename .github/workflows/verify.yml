@@ -7,6 +7,9 @@ on:
 permissions:
   contents: read
 
+env:
+  COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
+
 concurrency:
   group: verify-${{ github.ref }}
   cancel-in-progress: true
@@ -47,6 +50,9 @@ jobs:
         uses: actions/setup-node@v7.0.0
         with:
           node-version: 22.22.3
+
+      - name: Enable Corepack
+        run: corepack enable
 
       - name: Install TypeScript workspace
         run: corepack pnpm install --frozen-lockfile
