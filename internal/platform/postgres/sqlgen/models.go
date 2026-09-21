@@ -123,6 +123,39 @@ type IdenqaAuthorityAudit struct {
 	OccurredAt       pgtype.Timestamptz
 }
 
+type IdenqaBreakGlassRequest struct {
+	TenantID          string
+	ID                string
+	Requester         string
+	Reason            string
+	Permissions       []byte
+	DurationSeconds   int64
+	State             string
+	Version           int64
+	RequestedAt       pgtype.Timestamptz
+	ApprovalExpiresAt pgtype.Timestamptz
+	ApprovedAt        pgtype.Timestamptz
+	ApprovedBy        *string
+	UsableUntil       pgtype.Timestamptz
+	DeniedAt          pgtype.Timestamptz
+	DeniedBy          *string
+	RevokedAt         pgtype.Timestamptz
+	RevokedBy         *string
+	RevocationReason  *string
+	CreatedAt         pgtype.Timestamptz
+	UpdatedAt         pgtype.Timestamptz
+}
+
+type IdenqaBreakGlassUse struct {
+	TenantID   string
+	RequestID  string
+	Sequence   int64
+	Permission string
+	Target     string
+	Actor      string
+	UsedAt     pgtype.Timestamptz
+}
+
 type IdenqaCaptureProfile struct {
 	ID                string
 	TenantID          string
@@ -579,6 +612,27 @@ type IdenqaGenerativeModelRegistry struct {
 	ActorID   string
 }
 
+type IdenqaHmacKey struct {
+	TenantID    string
+	Domain      string
+	Version     int64
+	ID          string
+	State       string
+	WrappedKey  []byte
+	CreatedAt   pgtype.Timestamptz
+	RetiredAt   pgtype.Timestamptz
+	RewrappedAt pgtype.Timestamptz
+}
+
+type IdenqaHmacKeyDomain struct {
+	TenantID      string
+	Domain        string
+	Generation    int64
+	ActiveVersion *int64
+	CreatedAt     pgtype.Timestamptz
+	UpdatedAt     pgtype.Timestamptz
+}
+
 type IdenqaIdempotencyRecord struct {
 	TenantID           string
 	PrincipalID        string
@@ -708,6 +762,100 @@ type IdenqaImpactAssessment struct {
 	RiskLevel  string
 	CreatedAt  pgtype.Timestamptz
 	ActorID    string
+}
+
+type IdenqaKeyDestructionSchedule struct {
+	ID                 string
+	VerificationID     string
+	Provider           string
+	Reference          string
+	Version            string
+	Algorithm          string
+	Mode               string
+	ProviderDeletionAt pgtype.Timestamptz
+	Actor              string
+	Reason             string
+	CreatedAt          pgtype.Timestamptz
+}
+
+type IdenqaKeyDestructionVerification struct {
+	ID         string
+	Provider   string
+	Reference  string
+	Version    string
+	Algorithm  string
+	State      string
+	Counts     []byte
+	Total      int64
+	Verifier   string
+	Reason     string
+	Digest     string
+	VerifiedAt pgtype.Timestamptz
+}
+
+type IdenqaKeyRecoveryCeremony struct {
+	ID              string
+	Kind            string
+	Class           string
+	TenantID        *string
+	TargetProvider  string
+	TargetReference string
+	TargetVersion   string
+	TargetAlgorithm string
+	State           string
+	Version         int64
+	StartedBy       string
+	StartedAt       pgtype.Timestamptz
+	ApproveBy       pgtype.Timestamptz
+	ApprovedBy      *string
+	ApprovedAt      pgtype.Timestamptz
+	UsableUntil     pgtype.Timestamptz
+	CompletedBy     *string
+	CompletedAt     pgtype.Timestamptz
+	AbortedBy       *string
+	AbortedAt       pgtype.Timestamptz
+	AbortReason     *string
+	Receipt         []byte
+	Reason          string
+	UpdatedAt       pgtype.Timestamptz
+}
+
+type IdenqaKeyRewrapAudit struct {
+	Class        string
+	Generation   int64
+	Sequence     int64
+	Epoch        []byte
+	CursorTenant string
+	CursorObject string
+	NextTenant   string
+	NextObject   string
+	Processed    int32
+	Rewrapped    int32
+	Skipped      int32
+	Failed       int32
+	Status       string
+	ErrorClass   *string
+	OccurredAt   pgtype.Timestamptz
+}
+
+type IdenqaKeyRewrapState struct {
+	Class               string
+	EpochKey            string
+	Epoch               []byte
+	Generation          int64
+	Status              string
+	CursorTenant        string
+	CursorObject        string
+	Processed           int64
+	Rewrapped           int64
+	Skipped             int64
+	Failed              int64
+	ConsecutiveFailures int32
+	LastError           *string
+	NextAttemptAt       pgtype.Timestamptz
+	StartedAt           pgtype.Timestamptz
+	CompletedAt         pgtype.Timestamptz
+	UpdatedAt           pgtype.Timestamptz
 }
 
 type IdenqaLegalHold struct {
@@ -1131,6 +1279,43 @@ type IdenqaProviderDispatch struct {
 	ResultBody    []byte
 }
 
+type IdenqaProviderDispatchAdmission struct {
+	TenantID    string
+	LimitKey    string
+	WindowStart pgtype.Timestamptz
+	Admitted    int64
+}
+
+type IdenqaProviderDispatchLease struct {
+	TenantID   string
+	LimitKey   string
+	LeaseID    string
+	AcquiredAt pgtype.Timestamptz
+	ExpiresAt  pgtype.Timestamptz
+}
+
+type IdenqaProviderHealthSnapshot struct {
+	TenantID                  string
+	AdapterID                 string
+	ProviderID                string
+	RegistrationID            *string
+	Region                    string
+	State                     string
+	ReasonCode                string
+	BreakerState              string
+	BreakerSince              pgtype.Timestamptz
+	WindowSeconds             int32
+	CompletedDispatches       int64
+	FailedDispatches          int64
+	FailureRatio              float64
+	FailureClasses            []byte
+	AsyncUnresolvedDispatches int64
+	AsyncExpiredDispatches    int64
+	CallbacksAdopted          int64
+	ObservedAt                pgtype.Timestamptz
+	Version                   int64
+}
+
 type IdenqaProviderRegistration struct {
 	TenantID          string
 	ID                string
@@ -1426,6 +1611,25 @@ type IdenqaSubjectResponse struct {
 	Locale                    string
 	RenderedExperienceVersion *string
 	RecordedAt                pgtype.Timestamptz
+}
+
+type IdenqaSupportGrant struct {
+	TenantID         string
+	ID               string
+	Grantee          string
+	Patterns         []byte
+	Permissions      []byte
+	Reason           string
+	GrantedBy        string
+	State            string
+	Version          int64
+	StartsAt         pgtype.Timestamptz
+	ExpiresAt        pgtype.Timestamptz
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+	RevokedAt        pgtype.Timestamptz
+	RevokedBy        *string
+	RevocationReason *string
 }
 
 type IdenqaTenant struct {

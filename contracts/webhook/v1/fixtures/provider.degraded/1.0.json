@@ -1,0 +1,1 @@
+{"id":"evt_01M11HEQG00000000000000000","type":"provider.degraded","schema_version":"1.0","created_at":"2026-09-18T09:00:00Z","tenant_id":"ten_01M11HEQG00000000000000000","region":"eu-west","data":{"provider_id":"pvr_01M11HEQG00000000000000000","region":"eu-west","state":"not_ready","reason_code":"critical_failure_ratio","observed_at":"2026-09-18T09:00:00Z"}}

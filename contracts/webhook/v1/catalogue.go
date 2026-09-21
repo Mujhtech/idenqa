@@ -64,6 +64,7 @@ const (
 	CaseAssigned                  Type = "case.assigned"
 	CaseFindingRecorded           Type = "case.finding_recorded"
 	AppealUpdated                 Type = "appeal.updated"
+	ProviderDegraded              Type = "provider.degraded"
 )
 
 // Definition describes one catalogue event type and its closed data fields.
@@ -132,6 +133,7 @@ var definitions = []Definition{
 	{Type: CaseAssigned, SchemaVersion: SchemaVersion, RequiredData: []string{"case_id", "verification_id"}, OptionalData: []string{"operator_id", "state", "case"}},
 	{Type: CaseFindingRecorded, SchemaVersion: SchemaVersion, RequiredData: []string{"case_id", "verification_id"}, OptionalData: []string{"finding_id", "resolution", "reason_code", "case"}},
 	{Type: AppealUpdated, SchemaVersion: SchemaVersion, RequiredData: []string{"appeal_id", "case_id"}, OptionalData: []string{"state", "outcome", "appeal"}},
+	{Type: ProviderDegraded, SchemaVersion: SchemaVersion, RequiredData: []string{"provider_id", "region", "state", "reason_code", "observed_at"}},
 }
 
 // Catalogue returns a defensive copy of the closed event catalogue.

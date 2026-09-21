@@ -54,6 +54,10 @@ tags:
     description: Immutable country, document, and support-level pack inspection. Pack content is embedded and reviewed at build time; legal, provider, and security-feature approval is never asserted.
   - name: Experiences
     description: Portable tenant-owned capture experiences with immutable signed revisions, approval-gated publication, kill switch, rollback, export and import, and the Core-shipped signed safe default.
+  - name: Key custody
+    description: Tenant predictable-identifier key lifecycles, bounded KMS material rewraps, verified key destruction, and dual-control recovery ceremonies. Wrapped material is never returned.
+  - name: Support access
+    description: Time-bounded delegated support grants and dual-control emergency break-glass requests with an append-only use ledger.
 paths:
   /v1/tenant:
     get:
@@ -7627,6 +7631,45 @@ paths:
         '429': { $ref: '#/components/responses/RateLimited' }
         '500': { $ref: '#/components/responses/InternalError' }
         '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v1/providers/{providerID}/rotate-credential:
+    parameters:
+      - $ref: '#/components/parameters/ProviderID'
+    post:
+      tags: [Providers]
+      operationId: rotateProviderRegistrationCredential
+      summary: Rotate one tenant provider registration credential reference
+      description: |
+        Requires providers:write. Version-checks the registration pointer and
+        advances the credential secret reference or opaque credential version.
+        Credential values are rejected; only a secret:// reference and an opaque
+        version are accepted. In-flight requests keep their persisted request pin;
+        subsequent dispatches use the rotated reference and the runner resolves
+        exactly that version. The command is attributed and appended to immutable
+        history, and a registration whose credentials cannot be resolved is
+        visible as not_ready rather than silently dispatching.
+      security: [TenantAPIKey: []]
+      x-required-scopes: [providers:write]
+      requestBody:
+        required: true
+        description: Version-checked credential rotation command.
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProviderCredentialRotationRequest' }
+      responses:
+        '200':
+          description: The rotated registration receipt was returned.
+          headers: { X-Request-ID: { $ref: '#/components/headers/XRequestID' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProviderRegistrationReceipt' }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
   /v1/providers/{providerID}/health:
     parameters:
       - $ref: '#/components/parameters/ProviderID'
@@ -7636,10 +7679,13 @@ paths:
       summary: Read bounded registration health
       description: |
         Requires providers:read. Returns a bounded read over the tenant's own persisted
-        provider requests and dispatch receipts for this registration: counts by
-        dispatch state and the last normalized outcome or failure class. It never
-        performs an external provider probe, returns no provider topology and never
-        exposes evidence bytes.
+        provider requests and dispatch receipts for this registration plus the cached
+        derived readiness state: counts by dispatch state, the last normalized outcome
+        or failure class, the rolling-window failure ratio, asynchronous backlog and
+        expiry counts, callback adoption and the bounded circuit breaker state. The
+        state is derived from owned evidence only; it never performs an external
+        provider probe beyond the existing runner health surface, returns no provider
+        topology, never switches a route across regions and never exposes evidence bytes.
       security: [TenantAPIKey: []]
       x-required-scopes: [providers:read]
       responses:
@@ -7658,6 +7704,9 @@ paths:
                     pending_dispatches: 0
                     completed_dispatches: 0
                     failed_dispatches: 0
+                    state: unknown
+                    reason_code: no_evidence
+                    breaker_state: closed
         '400': { $ref: '#/components/responses/InvalidRequest' }
         '401': { $ref: '#/components/responses/Unauthenticated' }
         '403': { $ref: '#/components/responses/InsufficientScope' }
@@ -8804,6 +8853,844 @@ paths:
         '429': { $ref: '#/components/responses/RateLimited' }
         '500': { $ref: '#/components/responses/InternalError' }
         '503': { $ref: '#/components/responses/ServiceUnavailable' }
+
+  /v1/kms/domains:
+    post:
+      operationId: createKMSDomain
+      summary: Create a tenant HMAC key domain
+      description: Creates the first immutable key version for a namespaced predictable-identifier domain. The wrapped key material is never returned.
+      tags: [Key custody]
+      security: [TenantAPIKey: []]
+      x-required-scopes: [kms:write]
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        description: Immutable domain creation command.
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/KMSDomainCreateRequest" }
+            example: { domain: identity.identifier.v1, reason: Rotate after incident review }
+      responses:
+        "200":
+          description: The domain and its first active key version were created.
+          headers: { X-Request-ID: { $ref: "#/components/headers/XRequestID" } }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KeyCustodyDomain" }
+              example: { domain: identity.identifier.v1, active_version: 2, generation: 2, enabled: true }
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/InsufficientScope" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /v1/kms/domains/{domain}:
+    parameters:
+      - name: domain
+        in: path
+        required: true
+        description: Namespaced predictable-identifier key domain.
+        schema:
+          type: string
+          pattern: "^[a-z][a-z0-9._-]{2,199}$"
+    get:
+      operationId: getKMSDomain
+      summary: Get a tenant HMAC key domain
+      description: Returns safe lifecycle metadata for every retained key version without wrapped material.
+      tags: [Key custody]
+      security: [TenantAPIKey: []]
+      x-required-scopes: [kms:read]
+      responses:
+        "200":
+          description: The key domain lifecycle metadata was returned.
+          headers: { X-Request-ID: { $ref: "#/components/headers/XRequestID" } }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KeyCustodyDomain" }
+              example: { domain: identity.identifier.v1, active_version: 2, generation: 2, enabled: true }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/InsufficientScope" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /v1/kms/domains/{domain}/rotate:
+    parameters:
+      - name: domain
+        in: path
+        required: true
+        description: Namespaced predictable-identifier key domain.
+        schema:
+          type: string
+          pattern: "^[a-z][a-z0-9._-]{2,199}$"
+    post:
+      operationId: rotateKMSDomain
+      summary: Rotate a tenant HMAC key domain
+      description: Adds the next immutable key version and makes it the only issuance target. Prior versions keep verifying.
+      tags: [Key custody]
+      security: [TenantAPIKey: []]
+      x-required-scopes: [kms:write]
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        description: Optimistic version-checked key lifecycle command.
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/KMSVersionedCommand" }
+            example: { expected_version: 1, reason: Scheduled key rotation }
+      responses:
+        "200":
+          description: The domain was rotated to the next active key version.
+          headers: { X-Request-ID: { $ref: "#/components/headers/XRequestID" } }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KeyCustodyDomain" }
+              example: { domain: identity.identifier.v1, active_version: 2, generation: 2, enabled: true }
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/InsufficientScope" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /v1/kms/domains/{domain}/versions/{version}/disable:
+    parameters:
+      - name: domain
+        in: path
+        required: true
+        description: Namespaced predictable-identifier key domain.
+        schema:
+          type: string
+          pattern: "^[a-z][a-z0-9._-]{2,199}$"
+      - name: version
+        in: path
+        required: true
+        description: Exact retained key version to disable.
+        schema: { type: integer, minimum: 1, maximum: 64 }
+    post:
+      operationId: disableKMSVersion
+      summary: Disable one tenant HMAC key version
+      description: Disabling the active version fails new issuance closed while older versions keep verifying.
+      tags: [Key custody]
+      security: [TenantAPIKey: []]
+      x-required-scopes: [kms:write]
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        description: Optimistic version-checked key lifecycle command.
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/KMSVersionedCommand" }
+            example: { expected_version: 1, reason: Retire compromised key material }
+      responses:
+        "200":
+          description: The key version was disabled.
+          headers: { X-Request-ID: { $ref: "#/components/headers/XRequestID" } }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KeyCustodyDomain" }
+              example: { domain: identity.identifier.v1, active_version: 2, generation: 2, enabled: true }
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/InsufficientScope" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /v1/kms/domains/{domain}/versions/{version}/retire:
+    parameters:
+      - name: domain
+        in: path
+        required: true
+        description: Namespaced predictable-identifier key domain.
+        schema:
+          type: string
+          pattern: "^[a-z][a-z0-9._-]{2,199}$"
+      - name: version
+        in: path
+        required: true
+        description: Exact disabled key version to retire.
+        schema: { type: integer, minimum: 1, maximum: 64 }
+    post:
+      operationId: retireKMSVersion
+      summary: Retire one disabled tenant HMAC key version
+      description: Retirement is refused while the version is active or still referenced by durable identifier tokens.
+      tags: [Key custody]
+      security: [TenantAPIKey: []]
+      x-required-scopes: [kms:write]
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        description: Optimistic version-checked key lifecycle command.
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/KMSVersionedCommand" }
+            example: { expected_version: 1, reason: Retire unreferenced key material }
+      responses:
+        "200":
+          description: The key version was retired.
+          headers: { X-Request-ID: { $ref: "#/components/headers/XRequestID" } }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KeyCustodyDomain" }
+              example: { domain: identity.identifier.v1, active_version: 2, generation: 2, enabled: true }
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/InsufficientScope" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /v1/kms/rewrap:
+    get:
+      operationId: getKeyRewrapStatus
+      summary: Get fleet KMS material rewrap progress
+      description: Returns durable per-class cursor, generation, and bounded counters for the installation-wide wrapping sweep.
+      tags: [Key custody]
+      security: [TenantAPIKey: []]
+      x-required-scopes: [kms:read]
+      responses:
+        "200":
+          description: The per-class rewrap state was returned.
+          headers: { X-Request-ID: { $ref: "#/components/headers/XRequestID" } }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KeyRewrapStatus" }
+              example: { classes: [] }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/InsufficientScope" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /v1/kms/rewrap/run:
+    post:
+      operationId: runKeyRewrap
+      summary: Run one bounded KMS material rewrap pass
+      description: Processes at most one bounded batch per selected artifact class. Failed objects stop their class without advancing the durable cursor.
+      tags: [Key custody]
+      security: [TenantAPIKey: []]
+      x-required-scopes: [kms:write]
+      requestBody:
+        description: Optional artifact class and bounded batch size.
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/KeyRewrapRunRequest" }
+            example: { batch: 64 }
+      responses:
+        "200":
+          description: The bounded rewrap pass completed or recorded a class failure.
+          headers: { X-Request-ID: { $ref: "#/components/headers/XRequestID" } }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KeyRewrapRun" }
+              example: { batches: [] }
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/InsufficientScope" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /v1/kms/destruction-verifications:
+    post:
+      operationId: verifyKeyDestruction
+      summary: Verify no durable reference remains for KMS material
+      description: Scans every durable artifact class in one consistent snapshot and records an immutable receipt. A blocked receipt is recorded and returned as a conflict while any reference remains.
+      tags: [Key custody]
+      security: [TenantAPIKey: []]
+      x-required-scopes: [kms:write]
+      requestBody:
+        description: Exact wrapping identity to scan for remaining references.
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/KeyDestructionVerifyRequest" }
+            example: { provider: local.file, reference: local-0123456789abcdef0123456789abcdef, version: v1, algorithm: AES256_GCM, reason: Retire prior material epoch }
+      responses:
+        "200":
+          description: The material has no remaining durable references.
+          headers: { X-Request-ID: { $ref: "#/components/headers/XRequestID" } }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KeyDestructionVerification" }
+              example: { id: kdv_01M11HEQG00000000000000000, state: verified, provider: local.file, reference: local-0123456789abcdef0123456789abcdef, version: v1, algorithm: AES256_GCM, total: 0, counts: {}, verifier: key_01M11HEQG00000000000000000, reason: Retire prior material epoch, digest: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, verified_at: "2026-09-21T12:00:00Z" }
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/InsufficientScope" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /v1/kms/destruction-verifications/{verificationID}:
+    parameters:
+      - name: verificationID
+        in: path
+        required: true
+        description: Immutable destruction verification receipt identifier.
+        schema: { type: string, pattern: "^kdv_[0-9A-HJKMNP-TV-Z]{26}$" }
+    get:
+      operationId: getKeyDestructionVerification
+      summary: Get one destruction verification receipt
+      tags: [Key custody]
+      security: [TenantAPIKey: []]
+      x-required-scopes: [kms:read]
+      responses:
+        "200":
+          description: The immutable verification receipt was returned.
+          headers: { X-Request-ID: { $ref: "#/components/headers/XRequestID" } }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KeyDestructionVerification" }
+              example: { id: kdv_01M11HEQG00000000000000000, state: verified, provider: local.file, reference: local-0123456789abcdef0123456789abcdef, version: v1, algorithm: AES256_GCM, total: 0, counts: {}, verifier: key_01M11HEQG00000000000000000, reason: Retire prior material epoch, digest: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, verified_at: "2026-09-21T12:00:00Z" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/InsufficientScope" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /v1/kms/destruction-verifications/{verificationID}/schedule:
+    parameters:
+      - name: verificationID
+        in: path
+        required: true
+        description: Immutable destruction verification receipt identifier.
+        schema: { type: string, pattern: "^kdv_[0-9A-HJKMNP-TV-Z]{26}$" }
+    post:
+      operationId: scheduleKeyDestruction
+      summary: Schedule provider deletion for verified KMS material
+      description: Requires a verified, unexpired receipt. The provider call is skipped in record-only mode.
+      tags: [Key custody]
+      security: [TenantAPIKey: []]
+      x-required-scopes: [kms:write]
+      requestBody:
+        description: Provider deletion window and recording mode.
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/KeyDestructionScheduleRequest" }
+            example: { window: 168h, record_only: false, reason: Schedule provider key deletion }
+      responses:
+        "200":
+          description: The destruction schedule was recorded.
+          headers: { X-Request-ID: { $ref: "#/components/headers/XRequestID" } }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KeyDestructionSchedule" }
+              example: { id: kds_01M11HEQG00000000000000000, verification_id: kdv_01M11HEQG00000000000000000, mode: recorded, actor: key_01M11HEQG00000000000000000, reason: Retire prior material epoch, created_at: "2026-09-21T12:00:00Z" }
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/InsufficientScope" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /v1/kms/recovery-ceremonies:
+    post:
+      operationId: startKeyRecoveryCeremony
+      summary: Start a dual-control key recovery ceremony
+      description: A second distinct principal must approve before any rewrap or epoch migration can complete.
+      tags: [Key custody]
+      security: [TenantAPIKey: []]
+      x-required-scopes: [kms:write]
+      requestBody:
+        description: Recovery ceremony kind, class, and target identity.
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/KeyRecoveryStartRequest" }
+            example: { kind: migrate_epoch, class: keycustody.hmac, target: { provider: aws.kms, reference: "arn:aws:kms:us-east-1:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab", version: material-1, algorithm: SYMMETRIC_DEFAULT }, reason: Migrate to rotated KMS material }
+      responses:
+        "200":
+          description: The recovery ceremony was started.
+          headers: { X-Request-ID: { $ref: "#/components/headers/XRequestID" } }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KeyRecoveryCeremony" }
+              example: { id: krc_01M11HEQG00000000000000000, kind: migrate_epoch, class: keycustody.hmac, state: started, version: 1, started_by: key_01M11HEQG00000000000000000, started_at: "2026-09-21T12:00:00Z", approve_by: "2026-09-22T12:00:00Z", reason: Migrate to rotated KMS material, updated_at: "2026-09-21T12:00:00Z" }
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/InsufficientScope" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /v1/kms/recovery-ceremonies/{ceremonyID}:
+    parameters:
+      - name: ceremonyID
+        in: path
+        required: true
+        description: Key recovery ceremony identifier.
+        schema: { type: string, pattern: "^krc_[0-9A-HJKMNP-TV-Z]{26}$" }
+    get:
+      operationId: getKeyRecoveryCeremony
+      summary: Get one key recovery ceremony
+      tags: [Key custody]
+      security: [TenantAPIKey: []]
+      x-required-scopes: [kms:read]
+      responses:
+        "200":
+          description: The ceremony state was returned.
+          headers: { X-Request-ID: { $ref: "#/components/headers/XRequestID" } }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KeyRecoveryCeremony" }
+              example: { id: krc_01M11HEQG00000000000000000, kind: migrate_epoch, class: keycustody.hmac, state: started, version: 1, started_by: key_01M11HEQG00000000000000000, started_at: "2026-09-21T12:00:00Z", approve_by: "2026-09-22T12:00:00Z", reason: Migrate to rotated KMS material, updated_at: "2026-09-21T12:00:00Z" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/InsufficientScope" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /v1/kms/recovery-ceremonies/{ceremonyID}/approve:
+    parameters:
+      - name: ceremonyID
+        in: path
+        required: true
+        description: Key recovery ceremony identifier.
+        schema: { type: string, pattern: "^krc_[0-9A-HJKMNP-TV-Z]{26}$" }
+    post:
+      operationId: approveKeyRecoveryCeremony
+      summary: Approve a key recovery ceremony as a distinct principal
+      description: Self-approval is refused. Approval is only valid inside the bounded approval window.
+      tags: [Key custody]
+      security: [TenantAPIKey: []]
+      x-required-scopes: [kms:write]
+      requestBody:
+        description: Optimistic ceremony version and audit reason.
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/KeyRecoveryTransitionRequest" }
+            example: { expected_version: 1, reason: Independent recovery approval }
+      responses:
+        "200":
+          description: The ceremony was approved.
+          headers: { X-Request-ID: { $ref: "#/components/headers/XRequestID" } }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KeyRecoveryCeremony" }
+              example: { id: krc_01M11HEQG00000000000000000, kind: migrate_epoch, class: keycustody.hmac, state: started, version: 1, started_by: key_01M11HEQG00000000000000000, started_at: "2026-09-21T12:00:00Z", approve_by: "2026-09-22T12:00:00Z", reason: Migrate to rotated KMS material, updated_at: "2026-09-21T12:00:00Z" }
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/InsufficientScope" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /v1/kms/recovery-ceremonies/{ceremonyID}/complete:
+    parameters:
+      - name: ceremonyID
+        in: path
+        required: true
+        description: Key recovery ceremony identifier.
+        schema: { type: string, pattern: "^krc_[0-9A-HJKMNP-TV-Z]{26}$" }
+    post:
+      operationId: completeKeyRecoveryCeremony
+      summary: Complete an approved key recovery ceremony
+      description: Applies the selected rewrap or epoch migration inside the bounded use window. A failed execution leaves the ceremony approved.
+      tags: [Key custody]
+      security: [TenantAPIKey: []]
+      x-required-scopes: [kms:write]
+      requestBody:
+        description: Optimistic ceremony version and audit reason.
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/KeyRecoveryTransitionRequest" }
+            example: { expected_version: 2, reason: Apply approved recovery operation }
+      responses:
+        "200":
+          description: The ceremony completed and its operation was applied.
+          headers: { X-Request-ID: { $ref: "#/components/headers/XRequestID" } }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KeyRecoveryCeremony" }
+              example: { id: krc_01M11HEQG00000000000000000, kind: migrate_epoch, class: keycustody.hmac, state: started, version: 1, started_by: key_01M11HEQG00000000000000000, started_at: "2026-09-21T12:00:00Z", approve_by: "2026-09-22T12:00:00Z", reason: Migrate to rotated KMS material, updated_at: "2026-09-21T12:00:00Z" }
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/InsufficientScope" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /v1/kms/recovery-ceremonies/{ceremonyID}/abort:
+    parameters:
+      - name: ceremonyID
+        in: path
+        required: true
+        description: Key recovery ceremony identifier.
+        schema: { type: string, pattern: "^krc_[0-9A-HJKMNP-TV-Z]{26}$" }
+    post:
+      operationId: abortKeyRecoveryCeremony
+      summary: Abort a key recovery ceremony
+      description: Aborting changes no key material and is permitted from the started or approved state.
+      tags: [Key custody]
+      security: [TenantAPIKey: []]
+      x-required-scopes: [kms:write]
+      requestBody:
+        description: Optimistic ceremony version and audit reason.
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/KeyRecoveryTransitionRequest" }
+            example: { expected_version: 1, reason: Abort recovery after incident review }
+      responses:
+        "200":
+          description: The ceremony was aborted without applying anything.
+          headers: { X-Request-ID: { $ref: "#/components/headers/XRequestID" } }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KeyRecoveryCeremony" }
+              example: { id: krc_01M11HEQG00000000000000000, kind: migrate_epoch, class: keycustody.hmac, state: started, version: 1, started_by: key_01M11HEQG00000000000000000, started_at: "2026-09-21T12:00:00Z", approve_by: "2026-09-22T12:00:00Z", reason: Migrate to rotated KMS material, updated_at: "2026-09-21T12:00:00Z" }
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/InsufficientScope" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /v1/support/grants:
+    get:
+      operationId: listSupportGrants
+      summary: List delegated support grants
+      description: Returns every delegated grant visible to the authenticated tenant without credential material.
+      tags: [Support access]
+      security: [TenantAPIKey: []]
+      x-required-scopes: [support_access:read]
+      responses:
+        "200":
+          description: The delegated grants were returned.
+          headers: { X-Request-ID: { $ref: "#/components/headers/XRequestID" } }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SupportResult" }
+              example: { grants: [] }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/InsufficientScope" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+    post:
+      operationId: createSupportGrant
+      summary: Grant time-bounded delegated support access
+      tags: [Support access]
+      security: [TenantAPIKey: []]
+      x-required-scopes: [support_access:write]
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        description: Delegated grant scope, duration, and reason.
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SupportGrantRequest" }
+            example: { grantee: support_engineer, patterns: ["subjects:read"], duration: 24h, reason: Investigate reported capture issue }
+      responses:
+        "200":
+          description: The delegated grant was created.
+          headers: { X-Request-ID: { $ref: "#/components/headers/XRequestID" } }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SupportResult" }
+              example: { grants: [] }
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/InsufficientScope" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /v1/support/grants/{grantID}:
+    parameters:
+      - name: grantID
+        in: path
+        required: true
+        description: Delegated support grant identifier.
+        schema: { type: string, pattern: "^spt_[0-9A-HJKMNP-TV-Z]{26}$" }
+    get:
+      operationId: getSupportGrant
+      summary: Get one delegated support grant
+      tags: [Support access]
+      security: [TenantAPIKey: []]
+      x-required-scopes: [support_access:read]
+      responses:
+        "200":
+          description: The delegated grant was returned.
+          headers: { X-Request-ID: { $ref: "#/components/headers/XRequestID" } }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SupportResult" }
+              example: { grants: [] }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/InsufficientScope" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /v1/support/grants/{grantID}/revoke:
+    parameters:
+      - name: grantID
+        in: path
+        required: true
+        description: Delegated support grant identifier.
+        schema: { type: string, pattern: "^spt_[0-9A-HJKMNP-TV-Z]{26}$" }
+    post:
+      operationId: revokeSupportGrant
+      summary: Revoke a delegated support grant
+      tags: [Support access]
+      security: [TenantAPIKey: []]
+      x-required-scopes: [support_access:write]
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        description: Optimistic version-checked support command.
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SupportVersionedCommand" }
+            example: { expected_version: 1, reason: Incident resolved }
+      responses:
+        "200":
+          description: The delegated grant was revoked.
+          headers: { X-Request-ID: { $ref: "#/components/headers/XRequestID" } }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SupportResult" }
+              example: { grants: [] }
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/InsufficientScope" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /v1/support/break-glass:
+    post:
+      operationId: requestBreakGlass
+      summary: Request emergency break-glass access
+      description: The requester cannot approve their own request; two distinct principals are required.
+      tags: [Support access]
+      security: [TenantAPIKey: []]
+      x-required-scopes: [break_glass:request]
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        description: Emergency permission set, duration, and reason.
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SupportBreakGlassRequest" }
+            example: { permissions: ["identity:reveal"], duration: 1h, reason: Production incident triage }
+      responses:
+        "200":
+          description: The break-glass request was recorded.
+          headers: { X-Request-ID: { $ref: "#/components/headers/XRequestID" } }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SupportResult" }
+              example: { grants: [] }
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/InsufficientScope" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /v1/support/break-glass/{requestID}:
+    parameters:
+      - name: requestID
+        in: path
+        required: true
+        description: Break-glass request identifier.
+        schema: { type: string, pattern: "^bge_[0-9A-HJKMNP-TV-Z]{26}$" }
+    get:
+      operationId: getBreakGlass
+      summary: Get one break-glass request
+      tags: [Support access]
+      security: [TenantAPIKey: []]
+      x-required-scopes: [support_access:read]
+      responses:
+        "200":
+          description: The break-glass request was returned.
+          headers: { X-Request-ID: { $ref: "#/components/headers/XRequestID" } }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SupportResult" }
+              example: { grants: [] }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/InsufficientScope" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /v1/support/break-glass/{requestID}/approve:
+    parameters:
+      - name: requestID
+        in: path
+        required: true
+        description: Break-glass request identifier.
+        schema: { type: string, pattern: "^bge_[0-9A-HJKMNP-TV-Z]{26}$" }
+    post:
+      operationId: approveBreakGlass
+      summary: Approve a break-glass request as a distinct principal
+      description: Self-approval is refused and approval is only valid inside the bounded request window.
+      tags: [Support access]
+      security: [TenantAPIKey: []]
+      x-required-scopes: [break_glass:approve]
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        description: Optimistic version-checked support command.
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SupportVersionedCommand" }
+            example: { expected_version: 1, reason: Independent incident approval }
+      responses:
+        "200":
+          description: The break-glass request was approved.
+          headers: { X-Request-ID: { $ref: "#/components/headers/XRequestID" } }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SupportResult" }
+              example: { grants: [] }
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/InsufficientScope" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /v1/support/break-glass/{requestID}/deny:
+    parameters:
+      - name: requestID
+        in: path
+        required: true
+        description: Break-glass request identifier.
+        schema: { type: string, pattern: "^bge_[0-9A-HJKMNP-TV-Z]{26}$" }
+    post:
+      operationId: denyBreakGlass
+      summary: Deny a break-glass request
+      tags: [Support access]
+      security: [TenantAPIKey: []]
+      x-required-scopes: [break_glass:approve]
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        description: Optimistic version-checked support command.
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SupportVersionedCommand" }
+            example: { expected_version: 1, reason: Request not justified }
+      responses:
+        "200":
+          description: The break-glass request was denied.
+          headers: { X-Request-ID: { $ref: "#/components/headers/XRequestID" } }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SupportResult" }
+              example: { grants: [] }
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/InsufficientScope" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /v1/support/break-glass/{requestID}/revoke:
+    parameters:
+      - name: requestID
+        in: path
+        required: true
+        description: Break-glass request identifier.
+        schema: { type: string, pattern: "^bge_[0-9A-HJKMNP-TV-Z]{26}$" }
+    post:
+      operationId: revokeBreakGlass
+      summary: Revoke an approved break-glass window
+      tags: [Support access]
+      security: [TenantAPIKey: []]
+      x-required-scopes: [support_access:write]
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        description: Optimistic version-checked support command.
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SupportVersionedCommand" }
+            example: { expected_version: 2, reason: Incident resolved early }
+      responses:
+        "200":
+          description: The break-glass window was revoked.
+          headers: { X-Request-ID: { $ref: "#/components/headers/XRequestID" } }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SupportResult" }
+              example: { grants: [] }
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/InsufficientScope" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /v1/support/break-glass/{requestID}/uses:
+    parameters:
+      - name: requestID
+        in: path
+        required: true
+        description: Break-glass request identifier.
+        schema: { type: string, pattern: "^bge_[0-9A-HJKMNP-TV-Z]{26}$" }
+    post:
+      operationId: recordBreakGlassUse
+      summary: Append one break-glass use to the ledger
+      description: The permission must be inside the approved set and the request must still be inside its use window.
+      tags: [Support access]
+      security: [TenantAPIKey: []]
+      x-required-scopes: [break_glass:use]
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        description: Approved permission use to append to the ledger.
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SupportUseRequest" }
+            example: { expected_version: 2, permissions: ["identity:reveal"], target: sub_01M11HEQG00000000000000000 }
+      responses:
+        "200":
+          description: The use was appended to the immutable ledger.
+          headers: { X-Request-ID: { $ref: "#/components/headers/XRequestID" } }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SupportResult" }
+              example: { grants: [] }
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/InsufficientScope" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
 
 components:
   securitySchemes:
@@ -16906,10 +17793,27 @@ components:
       properties:
         expected_version: { type: integer, format: int64, minimum: 1, maximum: 9007199254740990, example: 2 }
         reason: { type: string, pattern: '^[a-z][a-z0-9._-]{0,63}$', example: enable }
+    ProviderCredentialRotation:
+      type: object
+      description: New secret-manager reference version for one tenant provider registration. Credential values are never representable.
+      additionalProperties: false
+      required: [secret_reference, credential_version]
+      properties:
+        secret_reference: { type: string, minLength: 10, maxLength: 512, pattern: '^secret://', example: 'secret://aws/prod/dojah/tenant' }
+        credential_version: { type: string, minLength: 1, maxLength: 128, example: v2 }
+    ProviderCredentialRotationRequest:
+      type: object
+      description: Version-checked credential-reference rotation command.
+      additionalProperties: false
+      required: [expected_version, reason, credential]
+      properties:
+        expected_version: { type: integer, format: int64, minimum: 1, maximum: 9007199254740990, example: 3 }
+        reason: { type: string, pattern: '^[a-z][a-z0-9._-]{0,63}$', example: rotation }
+        credential: { $ref: '#/components/schemas/ProviderCredentialRotation' }
     ProviderRegistrationOperation:
       type: string
       description: Closed registration command operation.
-      enum: [create, update, enable, disable]
+      enum: [create, update, enable, disable, rotate-credential]
       example: create
     ProviderRegistrationReceipt:
       type: object
@@ -16959,11 +17863,34 @@ components:
         class: { type: string, maxLength: 100, example: unavailable }
         code: { type: string, maxLength: 100, example: provider_unavailable }
         recorded_at: { type: string, format: date-time, example: '2026-09-20T00:00:00Z' }
+    ProviderHealthState:
+      type: string
+      description: Bounded provider readiness derived from Core-owned evidence and the existing runner health surface.
+      enum: [ready, degraded, not_ready, unknown]
+      example: ready
+    ProviderBreakerState:
+      type: string
+      description: Bounded per-registration circuit breaker state.
+      enum: [closed, open, half_open]
+      example: closed
+    ProviderFailureClassCount:
+      type: object
+      description: One bounded dispatch failure class count inside the rolling window.
+      additionalProperties: false
+      required: [class, count]
+      properties:
+        class: { type: string, maxLength: 100, example: unavailable }
+        count: { type: integer, format: int64, minimum: 0, example: 1 }
     ProviderRegistrationHealth:
       type: object
-      description: Bounded read over the tenant's own persisted request and dispatch records. It is not an external provider probe.
+      description: |
+        Bounded read over the tenant's own persisted request and dispatch records plus the
+        cached derived readiness snapshot. The derived state comes from owned dispatch,
+        asynchronous, callback and expiry evidence inside a bounded rolling window; it is
+        never an invented external probe, never carries an identity conclusion and never
+        exposes evidence bytes.
       additionalProperties: false
-      required: [registration_id, adapter_id, requests, pending_dispatches, completed_dispatches, failed_dispatches]
+      required: [registration_id, adapter_id, requests, pending_dispatches, completed_dispatches, failed_dispatches, state, reason_code]
       properties:
         registration_id: { $ref: '#/components/schemas/ProviderID' }
         adapter_id: { $ref: '#/components/schemas/ProviderAdapterID' }
@@ -16974,6 +17901,25 @@ components:
         last_outcome: { type: string, enum: [completed, failed], example: completed }
         last_failure: { $ref: '#/components/schemas/ProviderRegistrationHealthFailure' }
         last_activity_at: { type: string, format: date-time, example: '2026-09-20T00:00:00Z' }
+        state: { $ref: '#/components/schemas/ProviderHealthState' }
+        reason_code: { type: string, pattern: '^[a-z][a-z0-9._-]{0,63}$', maxLength: 64, example: healthy }
+        observed_at: { type: string, format: date-time, example: '2026-09-20T00:00:00Z' }
+        window_seconds: { type: integer, format: int64, minimum: 0, maximum: 86400, example: 300 }
+        window_completed_dispatches: { type: integer, format: int64, minimum: 0, example: 10 }
+        window_failed_dispatches: { type: integer, format: int64, minimum: 0, example: 1 }
+        failure_ratio: { type: number, minimum: 0, maximum: 1, example: 0.1 }
+        failure_classes:
+          type: array
+          maxItems: 16
+          example: [{ class: unavailable, count: 1 }]
+          items: { $ref: '#/components/schemas/ProviderFailureClassCount' }
+        async_unresolved_dispatches: { type: integer, format: int64, minimum: 0, example: 0 }
+        async_expired_dispatches: { type: integer, format: int64, minimum: 0, example: 0 }
+        callbacks_adopted: { type: integer, format: int64, minimum: 0, example: 0 }
+        breaker_state: { $ref: '#/components/schemas/ProviderBreakerState' }
+        breaker_since: { type: string, format: date-time, example: '2026-09-20T00:00:00Z' }
+        stale: { type: boolean, example: false }
+        continuity: { type: boolean, example: false }
     ProviderFailureClass:
       type: string
       description: Stable provider failure classification.
@@ -17547,6 +18493,397 @@ components:
         data: { type: array, items: { $ref: '#/components/schemas/Experience' }, example: [] }
         page: { $ref: '#/components/schemas/Page' }
 
+    KMSDomainCreateRequest:
+      description: Command that creates the first version of a predictable-identifier key domain.
+      type: object
+      additionalProperties: false
+      required: [domain, reason]
+      properties:
+        domain:
+          example: identity.identifier.v1
+          type: string
+          pattern: "^[a-z][a-z0-9._-]{2,199}$"
+        reason:
+          example: Retire prior material epoch
+          type: string
+          minLength: 8
+          maxLength: 512
+    KMSVersionedCommand:
+      description: Command that rotates or transitions one exact key version.
+      type: object
+      additionalProperties: false
+      required: [expected_version, reason]
+      properties:
+        expected_version:
+          example: 1
+          type: integer
+          minimum: 0
+          maximum: 64
+        reason:
+          example: Retire prior material epoch
+          type: string
+          minLength: 8
+          maxLength: 512
+    KMSVersion:
+      description: Immutable safe metadata for one retained key version.
+      type: object
+      additionalProperties: false
+      required: [id, domain, version, state, created_at]
+      properties:
+        id: { type: string, pattern: "^hmk_[0-9A-HJKMNP-TV-Z]{26}$", example: hmk_01M11HEQG00000000000000000 }
+        domain: { type: string, example: identity.identifier.v1 }
+        version: { type: integer, minimum: 1, maximum: 64, example: 1 }
+        state: { type: string, enum: [active, disabled, retired], example: active }
+        created_at: { type: string, format: date-time, example: "2026-09-21T12:00:00Z" }
+        retired_at: { type: string, format: date-time, example: "2026-09-21T12:00:00Z" }
+    KeyCustodyDomain:
+      description: Tenant key domain with its retained versions and active issuance pointer.
+      type: object
+      additionalProperties: false
+      required: [domain, active_version, generation, enabled]
+      properties:
+        domain: { type: string, example: identity.identifier.v1 }
+        active_version: { type: integer, minimum: 0, maximum: 64, example: 1 }
+        generation: { type: integer, minimum: 0, example: 1 }
+        versions:
+          example: []
+          type: array
+          items: { $ref: "#/components/schemas/KMSVersion" }
+        enabled: { type: boolean, example: true }
+    KeyRewrapClassState:
+      description: Durable rewrap cursor, generation, and bounded counters for one artifact class.
+      type: object
+      additionalProperties: false
+      required: [class, generation, status, epoch, cursor_tenant, cursor_object, processed, rewrapped, skipped, failed]
+      properties:
+        class: { type: string, example: webhook.event }
+        generation: { type: integer, minimum: 1, example: 1 }
+        status: { type: string, enum: [running, failed, completed], example: running }
+        epoch: { type: string, pattern: "^[0-9a-f]{64}$", example: 8fa2e84effb4128181f3f71db0c12fad609e704021422272eb96fb99637ccaa4 }
+        cursor_tenant: { type: string, example: example }
+        cursor_object: { type: string, example: example }
+        processed: { type: integer, minimum: 0, example: 1 }
+        rewrapped: { type: integer, minimum: 0, example: 1 }
+        skipped: { type: integer, minimum: 0, example: 1 }
+        failed: { type: integer, minimum: 0, example: 1 }
+        last_error: { type: string, example: example }
+        next_attempt_at: { type: string, format: date-time, example: "2026-09-21T12:00:00Z" }
+    KeyRewrapStatus:
+      description: Installation-wide rewrap progress across every artifact class.
+      type: object
+      additionalProperties: false
+      required: [classes]
+      properties:
+        classes:
+          example: []
+          type: array
+          items: { $ref: "#/components/schemas/KeyRewrapClassState" }
+    KeyRewrapRunRequest:
+      description: One bounded rewrap pass selection.
+      type: object
+      additionalProperties: false
+      properties:
+        class:
+          example: webhook.event
+          type: string
+          enum: [evidence.content, webhook.event, webhook.delivery, webhook.secret, keycustody.hmac, identity.lookup, identity.subject, fraud.correlation]
+        batch: { type: integer, minimum: 1, maximum: 500, default: 64, example: 1 }
+    KeyRewrapBatchResult:
+      description: Outcome of one bounded rewrap pass for one artifact class.
+      type: object
+      additionalProperties: false
+      required: [class, generation, status, rewrapped, skipped, failed, epoch_changed]
+      properties:
+        class: { type: string, example: webhook.event }
+        generation: { type: integer, minimum: 1, example: 1 }
+        status: { type: string, enum: [running, failed, completed], example: running }
+        rewrapped: { type: integer, minimum: 0, example: 1 }
+        skipped: { type: integer, minimum: 0, example: 1 }
+        failed: { type: integer, minimum: 0, example: 1 }
+        epoch_changed: { type: boolean, example: true }
+    KeyRewrapRun:
+      description: Outcomes of the requested bounded rewrap pass.
+      type: object
+      additionalProperties: false
+      required: [batches]
+      properties:
+        batches:
+          example: []
+          type: array
+          items: { $ref: "#/components/schemas/KeyRewrapBatchResult" }
+    KeyDestructionVerifyRequest:
+      description: Reference scan request for one exact wrapping identity.
+      type: object
+      additionalProperties: false
+      required: [provider, reference, version, algorithm, reason]
+      properties:
+        provider: { type: string, minLength: 1, maxLength: 512, example: aws.kms }
+        reference: { type: string, minLength: 1, maxLength: 512, example: local-0123456789abcdef0123456789abcdef }
+        version: { type: string, minLength: 1, maxLength: 512, example: v1 }
+        algorithm: { type: string, minLength: 1, maxLength: 512, example: AES256_GCM }
+        reason: { type: string, minLength: 8, maxLength: 500, example: Retire prior material epoch }
+    KeyDestructionScheduleRequest:
+      description: Provider deletion scheduling request for a verified receipt.
+      type: object
+      additionalProperties: false
+      required: [reason]
+      properties:
+        window:
+          type: string
+          description: Go duration between 1h and 720h. Providers may require a whole-day window inside that bound.
+          example: 168h
+        record_only:
+          example: false
+          type: boolean
+          description: Records the decision without calling the provider. Required when no provider scheduler is configured.
+        reason: { type: string, minLength: 8, maxLength: 500, example: Retire prior material epoch }
+    KeyDestructionVerification:
+      description: Immutable proof that no durable reference remains for the wrapping identity.
+      type: object
+      additionalProperties: false
+      required: [id, state, provider, reference, version, algorithm, total, counts, verifier, reason, digest, verified_at]
+      properties:
+        id: { type: string, pattern: "^kdv_[0-9A-HJKMNP-TV-Z]{26}$", example: kdv_01M11HEQG00000000000000000 }
+        state: { type: string, enum: [verified, blocked], example: verified }
+        provider: { type: string, example: aws.kms }
+        reference: { type: string, example: local-0123456789abcdef0123456789abcdef }
+        version: { type: string, example: v1 }
+        algorithm: { type: string, example: AES256_GCM }
+        total: { type: integer, minimum: 0, example: 1 }
+        counts:
+          type: object
+          example: {}
+          additionalProperties: { type: integer, minimum: 0 }
+          description: Reference count per durable artifact class.
+        verifier: { type: string, example: example }
+        reason: { type: string, example: Retire prior material epoch }
+        digest: { type: string, pattern: "^[0-9a-f]{64}$", example: 8fa2e84effb4128181f3f71db0c12fad609e704021422272eb96fb99637ccaa4 }
+        verified_at: { type: string, format: date-time, example: "2026-09-21T12:00:00Z" }
+    KeyDestructionSchedule:
+      description: Recorded provider deletion decision tied to one verified receipt.
+      type: object
+      additionalProperties: false
+      required: [id, verification_id, mode, actor, reason, created_at]
+      properties:
+        id: { type: string, pattern: "^kds_[0-9A-HJKMNP-TV-Z]{26}$", example: kds_01M11HEQG00000000000000000 }
+        verification_id: { type: string, pattern: "^kdv_[0-9A-HJKMNP-TV-Z]{26}$", example: kdv_01M11HEQG00000000000000000 }
+        mode: { type: string, enum: [scheduled, recorded], example: scheduled }
+        provider_deletion_at: { type: string, format: date-time, example: "2026-09-21T12:00:00Z" }
+        actor: { type: string, example: example }
+        reason: { type: string, example: Retire prior material epoch }
+        created_at: { type: string, format: date-time, example: "2026-09-21T12:00:00Z" }
+    KeyRecoveryTarget:
+      description: Provider wrapping identity targeted by a recovery ceremony.
+      type: object
+      additionalProperties: false
+      required: [provider, reference, version, algorithm]
+      properties:
+        provider: { type: string, minLength: 1, maxLength: 512, example: aws.kms }
+        reference: { type: string, minLength: 1, maxLength: 512, example: local-0123456789abcdef0123456789abcdef }
+        version: { type: string, minLength: 1, maxLength: 512, example: v1 }
+        algorithm: { type: string, minLength: 1, maxLength: 512, example: AES256_GCM }
+    KeyRecoveryStartRequest:
+      description: Dual-control recovery ceremony start command.
+      type: object
+      additionalProperties: false
+      required: [kind, class, reason]
+      properties:
+        kind: { type: string, enum: [rewrap, migrate_epoch], example: migrate_epoch }
+        class:
+          example: evidence.content
+          type: string
+          enum: [evidence.content, webhook.event, webhook.delivery, webhook.secret, keycustody.hmac, identity.lookup, identity.subject, fraud.correlation]
+        tenant: { type: string, pattern: "^ten_[0-9A-HJKMNP-TV-Z]{26}$", example: ten_01M11HEQG00000000000000000 }
+        target:
+          type: object
+          $ref: "#/components/schemas/KeyRecoveryTarget"
+          example: { provider: aws.kms, reference: local-0123456789abcdef0123456789abcdef, version: v1, algorithm: AES256_GCM }
+        reason: { type: string, minLength: 8, maxLength: 500, example: Retire prior material epoch }
+    KeyRecoveryTransitionRequest:
+      description: Version-checked recovery ceremony transition command.
+      type: object
+      additionalProperties: false
+      required: [expected_version, reason]
+      properties:
+        expected_version: { type: integer, minimum: 1, example: 1 }
+        reason: { type: string, minLength: 8, maxLength: 500, example: Retire prior material epoch }
+    KeyRecoveryCeremony:
+      description: Auditable dual-control recovery or epoch migration ceremony.
+      type: object
+      additionalProperties: false
+      required: [id, kind, class, state, version, started_by, started_at, approve_by, reason, updated_at]
+      properties:
+        id: { type: string, pattern: "^krc_[0-9A-HJKMNP-TV-Z]{26}$", example: krc_01M11HEQG00000000000000000 }
+        kind: { type: string, enum: [rewrap, migrate_epoch], example: rewrap }
+        class: { type: string, example: webhook.event }
+        tenant: { type: string, example: example }
+        state: { type: string, enum: [started, approved, completed, aborted], example: started }
+        version: { type: integer, minimum: 1, example: 1 }
+        started_by: { type: string, example: example }
+        started_at: { type: string, format: date-time, example: "2026-09-21T12:00:00Z" }
+        approve_by: { type: string, format: date-time, example: "2026-09-21T12:00:00Z" }
+        approved_by: { type: string, example: example }
+        approved_at: { type: string, format: date-time, example: "2026-09-21T12:00:00Z" }
+        usable_until: { type: string, format: date-time, example: "2026-09-21T12:00:00Z" }
+        completed_by: { type: string, example: example }
+        completed_at: { type: string, format: date-time, example: "2026-09-21T12:00:00Z" }
+        aborted_by: { type: string, example: example }
+        abort_reason: { type: string, example: example }
+        receipt:
+          example: {}
+          type: object
+          additionalProperties: true
+        reason: { type: string, example: Retire prior material epoch }
+        updated_at: { type: string, format: date-time, example: "2026-09-21T12:00:00Z" }
+    SupportGrant:
+      description: Time-bounded delegated support grant.
+      example: { id: spt_01M11HEQG00000000000000000, grantee: support_engineer, patterns: [subjects:read], permissions: [subjects:read], reason: Investigate reported capture issue, granted_by: key_01M11HEQG00000000000000000, state: active, version: 1, starts_at: "2026-09-21T12:00:00Z", expires_at: "2026-09-22T12:00:00Z", created_at: "2026-09-21T12:00:00Z", updated_at: "2026-09-21T12:00:00Z" }
+      type: object
+      additionalProperties: false
+      required: [id, grantee, patterns, permissions, reason, granted_by, state, version, starts_at, expires_at, created_at, updated_at]
+      properties:
+        id: { type: string, pattern: "^spt_[0-9A-HJKMNP-TV-Z]{26}$", example: spt_01M11HEQG00000000000000000 }
+        grantee: { type: string, example: example }
+        patterns:
+          example: []
+          type: array
+          items: { type: string }
+        permissions:
+          example: []
+          type: array
+          items: { type: string }
+        reason: { type: string, example: Retire prior material epoch }
+        granted_by: { type: string, example: example }
+        state: { type: string, enum: [active, revoked, expired], example: active }
+        version: { type: integer, minimum: 1, example: 1 }
+        starts_at: { type: string, format: date-time, example: "2026-09-21T12:00:00Z" }
+        expires_at: { type: string, format: date-time, example: "2026-09-21T12:00:00Z" }
+        created_at: { type: string, format: date-time, example: "2026-09-21T12:00:00Z" }
+        updated_at: { type: string, format: date-time, example: "2026-09-21T12:00:00Z" }
+        revoked_at: { type: string, format: date-time, example: "2026-09-21T12:00:00Z" }
+        revoked_by: { type: string, example: example }
+        revocation_reason: { type: string, example: example }
+    SupportEmergency:
+      description: Break-glass request with its approval and expiry state.
+      type: object
+      additionalProperties: false
+      required: [id, requester, reason, permissions, duration, state, version, requested_at, approval_expires_at]
+      properties:
+        id: { type: string, pattern: "^bge_[0-9A-HJKMNP-TV-Z]{26}$", example: bge_01M11HEQG00000000000000000 }
+        requester: { type: string, example: example }
+        reason: { type: string, example: Retire prior material epoch }
+        permissions:
+          example: []
+          type: array
+          items: { type: string }
+        duration:
+          example: 1
+          type: integer
+          description: Approved access duration in nanoseconds.
+        state: { type: string, enum: [requested, approved, denied, revoked], example: requested }
+        version: { type: integer, minimum: 1, example: 1 }
+        requested_at: { type: string, format: date-time, example: "2026-09-21T12:00:00Z" }
+        approval_expires_at: { type: string, format: date-time, example: "2026-09-21T12:00:00Z" }
+        approved_at: { type: string, format: date-time, example: "2026-09-21T12:00:00Z" }
+        approved_by: { type: string, example: example }
+        usable_until: { type: string, format: date-time, example: "2026-09-21T12:00:00Z" }
+        denied_at: { type: string, format: date-time, example: "2026-09-21T12:00:00Z" }
+        denied_by: { type: string, example: example }
+        revoked_at: { type: string, format: date-time, example: "2026-09-21T12:00:00Z" }
+        revoked_by: { type: string, example: example }
+        revocation_reason: { type: string, example: example }
+    SupportUse:
+      description: Append-only break-glass use ledger entry.
+      type: object
+      additionalProperties: false
+      required: [sequence, permission, target, actor, used_at]
+      properties:
+        sequence: { type: integer, minimum: 1, example: 1 }
+        permission: { type: string, example: example }
+        target: { type: string, example: sub_01M11HEQG00000000000000000 }
+        actor: { type: string, example: example }
+        used_at: { type: string, format: date-time, example: "2026-09-21T12:00:00Z" }
+    SupportResult:
+      description: Safe support state without credential material.
+      type: object
+      additionalProperties: false
+      properties:
+        grant:
+          type: object
+          $ref: "#/components/schemas/SupportGrant"
+          example: { id: spt_01M11HEQG00000000000000000, grantee: support_engineer, patterns: [subjects:read], permissions: [subjects:read], reason: Investigate reported capture issue, granted_by: key_01M11HEQG00000000000000000, state: active, version: 1, starts_at: "2026-09-21T12:00:00Z", expires_at: "2026-09-22T12:00:00Z", created_at: "2026-09-21T12:00:00Z", updated_at: "2026-09-21T12:00:00Z" }
+        emergency:
+          type: object
+          $ref: "#/components/schemas/SupportEmergency"
+          example: { id: bge_01M11HEQG00000000000000000, requester: key_01M11HEQG00000000000000000, reason: Production incident triage, permissions: [identity:reveal], duration: 3600000000000, state: approved, version: 2, requested_at: "2026-09-21T12:00:00Z", approval_expires_at: "2026-09-21T13:00:00Z", approved_at: "2026-09-21T12:05:00Z", approved_by: key_01M11HEQG00000000000000001, usable_until: "2026-09-21T13:05:00Z" }
+        uses:
+          example: []
+          type: array
+          items: { $ref: "#/components/schemas/SupportUse" }
+        grants:
+          example: []
+          type: array
+          items: { $ref: "#/components/schemas/SupportGrant" }
+    SupportGrantRequest:
+      description: Delegated support grant command.
+      type: object
+      additionalProperties: false
+      required: [grantee, patterns, duration, reason]
+      properties:
+        grantee:
+          example: support_engineer
+          type: string
+          pattern: "^[a-z0-9][a-z0-9._-]{0,127}$"
+        patterns:
+          type: array
+          example: [subjects:read]
+          minItems: 1
+          maxItems: 8
+          items: { type: string }
+        duration:
+          type: string
+          description: Go duration between 5m and 72h.
+          example: 24h
+        reason: { type: string, minLength: 8, maxLength: 500, example: Retire prior material epoch }
+    SupportBreakGlassRequest:
+      description: Emergency break-glass request command.
+      type: object
+      additionalProperties: false
+      required: [permissions, duration, reason]
+      properties:
+        permissions:
+          example: [identity:reveal]
+          type: array
+          minItems: 1
+          maxItems: 4
+          items: { type: string }
+        duration:
+          type: string
+          description: Go duration between 5m and 4h.
+          example: 1h
+        reason: { type: string, minLength: 8, maxLength: 500, example: Retire prior material epoch }
+    SupportVersionedCommand:
+      description: Version-checked support transition command.
+      type: object
+      additionalProperties: false
+      required: [expected_version, reason]
+      properties:
+        expected_version: { type: integer, minimum: 1, example: 1 }
+        reason: { type: string, minLength: 8, maxLength: 500, example: Retire prior material epoch }
+    SupportUseRequest:
+      description: Break-glass use ledger command.
+      type: object
+      additionalProperties: false
+      required: [expected_version, permissions, target]
+      properties:
+        expected_version: { type: integer, minimum: 1, example: 1 }
+        permissions:
+          type: array
+          example: [identity:reveal]
+          minItems: 1
+          maxItems: 4
+          items: { type: string }
+        target: { type: string, minLength: 1, maxLength: 256, example: sub_01M11HEQG00000000000000000 }
   responses:
     CaptureOriginNotAllowed:
       description: The browser Origin is missing, malformed, duplicated, or not allowed.

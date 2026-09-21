@@ -126,6 +126,20 @@ const (
 	PermissionProvidersRead Permission = "providers:read"
 	// PermissionProvidersWrite permits registering, updating and toggling tenant provider routes.
 	PermissionProvidersWrite Permission = "providers:write"
+	// PermissionKMSRead permits reading tenant HMAC key lifecycle metadata.
+	PermissionKMSRead Permission = "kms:read"
+	// PermissionKMSWrite permits creating, rotating, disabling, and retiring tenant HMAC key versions.
+	PermissionKMSWrite Permission = "kms:write"
+	// PermissionSupportAccessRead permits reading tenant support-access grants and break-glass state.
+	PermissionSupportAccessRead Permission = "support_access:read"
+	// PermissionSupportAccessWrite permits granting and revoking time-bounded support access.
+	PermissionSupportAccessWrite Permission = "support_access:write"
+	// PermissionBreakGlassRequest permits requesting emergency break-glass access.
+	PermissionBreakGlassRequest Permission = "break_glass:request"
+	// PermissionBreakGlassApprove permits approving or rejecting a break-glass request.
+	PermissionBreakGlassApprove Permission = "break_glass:approve"
+	// PermissionBreakGlassUse permits recording an approved break-glass use.
+	PermissionBreakGlassUse Permission = "break_glass:use"
 )
 
 // ParsePermission validates an exact resource-action permission.
@@ -196,8 +210,20 @@ func NewRegistry(permissions ...Permission) (Registry, error) {
 
 // TenantRegistry returns the initial tenant-assignable permission registry.
 func TenantRegistry() Registry {
-	return Registry{permissions: []Permission{PermissionSubjectsRead, PermissionSubjectsWrite, PermissionSubjectsDelete, PermissionIdentityRead, PermissionIdentityWrite, PermissionIdentityReveal, PermissionIdentityConfigure, PermissionFraudRead, PermissionFraudWrite, PermissionFraudConfigure,
-		PermissionModelsRead, PermissionModelsWrite, PermissionModelsActivate,
+	return Registry{permissions: []Permission{
+		PermissionSubjectsRead,
+		PermissionSubjectsWrite,
+		PermissionSubjectsDelete,
+		PermissionIdentityRead,
+		PermissionIdentityWrite,
+		PermissionIdentityReveal,
+		PermissionIdentityConfigure,
+		PermissionFraudRead,
+		PermissionFraudWrite,
+		PermissionFraudConfigure,
+		PermissionModelsRead,
+		PermissionModelsWrite,
+		PermissionModelsActivate,
 		PermissionAuthoritiesRead,
 		PermissionAuthoritiesWrite,
 		PermissionCaptureProfilesRead,
@@ -240,6 +266,13 @@ func TenantRegistry() Registry {
 		PermissionPromptsWrite,
 		PermissionProvidersRead,
 		PermissionProvidersWrite,
+		PermissionKMSRead,
+		PermissionKMSWrite,
+		PermissionSupportAccessRead,
+		PermissionSupportAccessWrite,
+		PermissionBreakGlassRequest,
+		PermissionBreakGlassApprove,
+		PermissionBreakGlassUse,
 	}}
 }
 

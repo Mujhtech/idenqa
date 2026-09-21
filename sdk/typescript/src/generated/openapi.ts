@@ -2828,6 +2828,36 @@ export interface paths {
         readonly patch?: never;
         readonly trace?: never;
     };
+    readonly "/v1/providers/{providerID}/rotate-credential": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant-owned provider registration identifier. */
+                readonly providerID: components["parameters"]["ProviderID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Rotate one tenant provider registration credential reference
+         * @description Requires providers:write. Version-checks the registration pointer and
+         *     advances the credential secret reference or opaque credential version.
+         *     Credential values are rejected; only a secret:// reference and an opaque
+         *     version are accepted. In-flight requests keep their persisted request pin;
+         *     subsequent dispatches use the rotated reference and the runner resolves
+         *     exactly that version. The command is attributed and appended to immutable
+         *     history, and a registration whose credentials cannot be resolved is
+         *     visible as not_ready rather than silently dispatching.
+         */
+        readonly post: operations["rotateProviderRegistrationCredential"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
     readonly "/v1/providers/{providerID}/health": {
         readonly parameters: {
             readonly query?: never;
@@ -2841,10 +2871,13 @@ export interface paths {
         /**
          * Read bounded registration health
          * @description Requires providers:read. Returns a bounded read over the tenant's own persisted
-         *     provider requests and dispatch receipts for this registration: counts by
-         *     dispatch state and the last normalized outcome or failure class. It never
-         *     performs an external provider probe, returns no provider topology and never
-         *     exposes evidence bytes.
+         *     provider requests and dispatch receipts for this registration plus the cached
+         *     derived readiness state: counts by dispatch state, the last normalized outcome
+         *     or failure class, the rolling-window failure ratio, asynchronous backlog and
+         *     expiry counts, callback adoption and the bounded circuit breaker state. The
+         *     state is derived from owned evidence only; it never performs an external
+         *     provider probe beyond the existing runner health surface, returns no provider
+         *     topology, never switches a route across regions and never exposes evidence bytes.
          */
         readonly get: operations["getProviderRegistrationHealth"];
         readonly put?: never;
@@ -3493,6 +3526,521 @@ export interface paths {
         readonly get: operations["exportExperience"];
         readonly put?: never;
         readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/kms/domains": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Create a tenant HMAC key domain
+         * @description Creates the first immutable key version for a namespaced predictable-identifier domain. The wrapped key material is never returned.
+         */
+        readonly post: operations["createKMSDomain"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/kms/domains/{domain}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Namespaced predictable-identifier key domain. */
+                readonly domain: string;
+            };
+            readonly cookie?: never;
+        };
+        /**
+         * Get a tenant HMAC key domain
+         * @description Returns safe lifecycle metadata for every retained key version without wrapped material.
+         */
+        readonly get: operations["getKMSDomain"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/kms/domains/{domain}/rotate": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Namespaced predictable-identifier key domain. */
+                readonly domain: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Rotate a tenant HMAC key domain
+         * @description Adds the next immutable key version and makes it the only issuance target. Prior versions keep verifying.
+         */
+        readonly post: operations["rotateKMSDomain"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/kms/domains/{domain}/versions/{version}/disable": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Namespaced predictable-identifier key domain. */
+                readonly domain: string;
+                /** @description Exact retained key version to disable. */
+                readonly version: number;
+            };
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Disable one tenant HMAC key version
+         * @description Disabling the active version fails new issuance closed while older versions keep verifying.
+         */
+        readonly post: operations["disableKMSVersion"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/kms/domains/{domain}/versions/{version}/retire": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Namespaced predictable-identifier key domain. */
+                readonly domain: string;
+                /** @description Exact disabled key version to retire. */
+                readonly version: number;
+            };
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Retire one disabled tenant HMAC key version
+         * @description Retirement is refused while the version is active or still referenced by durable identifier tokens.
+         */
+        readonly post: operations["retireKMSVersion"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/kms/rewrap": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Get fleet KMS material rewrap progress
+         * @description Returns durable per-class cursor, generation, and bounded counters for the installation-wide wrapping sweep.
+         */
+        readonly get: operations["getKeyRewrapStatus"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/kms/rewrap/run": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Run one bounded KMS material rewrap pass
+         * @description Processes at most one bounded batch per selected artifact class. Failed objects stop their class without advancing the durable cursor.
+         */
+        readonly post: operations["runKeyRewrap"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/kms/destruction-verifications": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Verify no durable reference remains for KMS material
+         * @description Scans every durable artifact class in one consistent snapshot and records an immutable receipt. A blocked receipt is recorded and returned as a conflict while any reference remains.
+         */
+        readonly post: operations["verifyKeyDestruction"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/kms/destruction-verifications/{verificationID}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Immutable destruction verification receipt identifier. */
+                readonly verificationID: string;
+            };
+            readonly cookie?: never;
+        };
+        /** Get one destruction verification receipt */
+        readonly get: operations["getKeyDestructionVerification"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/kms/destruction-verifications/{verificationID}/schedule": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Immutable destruction verification receipt identifier. */
+                readonly verificationID: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Schedule provider deletion for verified KMS material
+         * @description Requires a verified, unexpired receipt. The provider call is skipped in record-only mode.
+         */
+        readonly post: operations["scheduleKeyDestruction"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/kms/recovery-ceremonies": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Start a dual-control key recovery ceremony
+         * @description A second distinct principal must approve before any rewrap or epoch migration can complete.
+         */
+        readonly post: operations["startKeyRecoveryCeremony"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/kms/recovery-ceremonies/{ceremonyID}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Key recovery ceremony identifier. */
+                readonly ceremonyID: string;
+            };
+            readonly cookie?: never;
+        };
+        /** Get one key recovery ceremony */
+        readonly get: operations["getKeyRecoveryCeremony"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/kms/recovery-ceremonies/{ceremonyID}/approve": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Key recovery ceremony identifier. */
+                readonly ceremonyID: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Approve a key recovery ceremony as a distinct principal
+         * @description Self-approval is refused. Approval is only valid inside the bounded approval window.
+         */
+        readonly post: operations["approveKeyRecoveryCeremony"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/kms/recovery-ceremonies/{ceremonyID}/complete": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Key recovery ceremony identifier. */
+                readonly ceremonyID: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Complete an approved key recovery ceremony
+         * @description Applies the selected rewrap or epoch migration inside the bounded use window. A failed execution leaves the ceremony approved.
+         */
+        readonly post: operations["completeKeyRecoveryCeremony"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/kms/recovery-ceremonies/{ceremonyID}/abort": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Key recovery ceremony identifier. */
+                readonly ceremonyID: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Abort a key recovery ceremony
+         * @description Aborting changes no key material and is permitted from the started or approved state.
+         */
+        readonly post: operations["abortKeyRecoveryCeremony"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/support/grants": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * List delegated support grants
+         * @description Returns every delegated grant visible to the authenticated tenant without credential material.
+         */
+        readonly get: operations["listSupportGrants"];
+        readonly put?: never;
+        /** Grant time-bounded delegated support access */
+        readonly post: operations["createSupportGrant"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/support/grants/{grantID}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Delegated support grant identifier. */
+                readonly grantID: string;
+            };
+            readonly cookie?: never;
+        };
+        /** Get one delegated support grant */
+        readonly get: operations["getSupportGrant"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/support/grants/{grantID}/revoke": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Delegated support grant identifier. */
+                readonly grantID: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /** Revoke a delegated support grant */
+        readonly post: operations["revokeSupportGrant"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/support/break-glass": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Request emergency break-glass access
+         * @description The requester cannot approve their own request; two distinct principals are required.
+         */
+        readonly post: operations["requestBreakGlass"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/support/break-glass/{requestID}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Break-glass request identifier. */
+                readonly requestID: string;
+            };
+            readonly cookie?: never;
+        };
+        /** Get one break-glass request */
+        readonly get: operations["getBreakGlass"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/support/break-glass/{requestID}/approve": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Break-glass request identifier. */
+                readonly requestID: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Approve a break-glass request as a distinct principal
+         * @description Self-approval is refused and approval is only valid inside the bounded request window.
+         */
+        readonly post: operations["approveBreakGlass"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/support/break-glass/{requestID}/deny": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Break-glass request identifier. */
+                readonly requestID: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /** Deny a break-glass request */
+        readonly post: operations["denyBreakGlass"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/support/break-glass/{requestID}/revoke": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Break-glass request identifier. */
+                readonly requestID: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /** Revoke an approved break-glass window */
+        readonly post: operations["revokeBreakGlass"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/support/break-glass/{requestID}/uses": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Break-glass request identifier. */
+                readonly requestID: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Append one break-glass use to the ledger
+         * @description The permission must be inside the approved set and the request must still be inside its use window.
+         */
+        readonly post: operations["recordBreakGlassUse"];
         readonly delete?: never;
         readonly options?: never;
         readonly head?: never;
@@ -8875,12 +9423,30 @@ export interface components {
             /** @example enable */
             readonly reason: string;
         };
+        /** @description New secret-manager reference version for one tenant provider registration. Credential values are never representable. */
+        readonly ProviderCredentialRotation: {
+            /** @example secret://aws/prod/dojah/tenant */
+            readonly secret_reference: string;
+            /** @example v2 */
+            readonly credential_version: string;
+        };
+        /** @description Version-checked credential-reference rotation command. */
+        readonly ProviderCredentialRotationRequest: {
+            /**
+             * Format: int64
+             * @example 3
+             */
+            readonly expected_version: number;
+            /** @example rotation */
+            readonly reason: string;
+            readonly credential: components["schemas"]["ProviderCredentialRotation"];
+        };
         /**
          * @description Closed registration command operation.
          * @example create
          * @enum {string}
          */
-        readonly ProviderRegistrationOperation: "create" | "update" | "enable" | "disable";
+        readonly ProviderRegistrationOperation: "create" | "update" | "enable" | "disable" | "rotate-credential";
         /** @description Original safe result of one registration command with the original actor and replay marker. */
         readonly ProviderRegistrationReceipt: {
             readonly registration: components["schemas"]["ProviderRegistration"];
@@ -8925,7 +9491,35 @@ export interface components {
              */
             readonly recorded_at?: string;
         };
-        /** @description Bounded read over the tenant's own persisted request and dispatch records. It is not an external provider probe. */
+        /**
+         * @description Bounded provider readiness derived from Core-owned evidence and the existing runner health surface.
+         * @example ready
+         * @enum {string}
+         */
+        readonly ProviderHealthState: "ready" | "degraded" | "not_ready" | "unknown";
+        /**
+         * @description Bounded per-registration circuit breaker state.
+         * @example closed
+         * @enum {string}
+         */
+        readonly ProviderBreakerState: "closed" | "open" | "half_open";
+        /** @description One bounded dispatch failure class count inside the rolling window. */
+        readonly ProviderFailureClassCount: {
+            /** @example unavailable */
+            readonly class: string;
+            /**
+             * Format: int64
+             * @example 1
+             */
+            readonly count: number;
+        };
+        /**
+         * @description Bounded read over the tenant's own persisted request and dispatch records plus the
+         *     cached derived readiness snapshot. The derived state comes from owned dispatch,
+         *     asynchronous, callback and expiry evidence inside a bounded rolling window; it is
+         *     never an invented external probe, never carries an identity conclusion and never
+         *     exposes evidence bytes.
+         */
         readonly ProviderRegistrationHealth: {
             readonly registration_id: components["schemas"]["ProviderID"];
             readonly adapter_id: components["schemas"]["ProviderAdapterID"];
@@ -8960,6 +9554,65 @@ export interface components {
              * @example 2026-09-20T00:00:00Z
              */
             readonly last_activity_at?: string;
+            readonly state: components["schemas"]["ProviderHealthState"];
+            /** @example healthy */
+            readonly reason_code: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-20T00:00:00Z
+             */
+            readonly observed_at?: string;
+            /**
+             * Format: int64
+             * @example 300
+             */
+            readonly window_seconds?: number;
+            /**
+             * Format: int64
+             * @example 10
+             */
+            readonly window_completed_dispatches?: number;
+            /**
+             * Format: int64
+             * @example 1
+             */
+            readonly window_failed_dispatches?: number;
+            /** @example 0.1 */
+            readonly failure_ratio?: number;
+            /**
+             * @example [
+             *       {
+             *         "class": "unavailable",
+             *         "count": 1
+             *       }
+             *     ]
+             */
+            readonly failure_classes?: readonly components["schemas"]["ProviderFailureClassCount"][];
+            /**
+             * Format: int64
+             * @example 0
+             */
+            readonly async_unresolved_dispatches?: number;
+            /**
+             * Format: int64
+             * @example 0
+             */
+            readonly async_expired_dispatches?: number;
+            /**
+             * Format: int64
+             * @example 0
+             */
+            readonly callbacks_adopted?: number;
+            readonly breaker_state?: components["schemas"]["ProviderBreakerState"];
+            /**
+             * Format: date-time
+             * @example 2026-09-20T00:00:00Z
+             */
+            readonly breaker_since?: string;
+            /** @example false */
+            readonly stale?: boolean;
+            /** @example false */
+            readonly continuity?: boolean;
         };
         /**
          * @description Stable provider failure classification.
@@ -9762,6 +10415,585 @@ export interface components {
             /** @example [] */
             readonly data: readonly components["schemas"]["Experience"][];
             readonly page: components["schemas"]["Page"];
+        };
+        /** @description Command that creates the first version of a predictable-identifier key domain. */
+        readonly KMSDomainCreateRequest: {
+            /** @example identity.identifier.v1 */
+            readonly domain: string;
+            /** @example Retire prior material epoch */
+            readonly reason: string;
+        };
+        /** @description Command that rotates or transitions one exact key version. */
+        readonly KMSVersionedCommand: {
+            /** @example 1 */
+            readonly expected_version: number;
+            /** @example Retire prior material epoch */
+            readonly reason: string;
+        };
+        /** @description Immutable safe metadata for one retained key version. */
+        readonly KMSVersion: {
+            /** @example hmk_01M11HEQG00000000000000000 */
+            readonly id: string;
+            /** @example identity.identifier.v1 */
+            readonly domain: string;
+            /** @example 1 */
+            readonly version: number;
+            /**
+             * @example active
+             * @enum {string}
+             */
+            readonly state: "active" | "disabled" | "retired";
+            /**
+             * Format: date-time
+             * @example 2026-09-21T12:00:00Z
+             */
+            readonly created_at: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-21T12:00:00Z
+             */
+            readonly retired_at?: string;
+        };
+        /** @description Tenant key domain with its retained versions and active issuance pointer. */
+        readonly KeyCustodyDomain: {
+            /** @example identity.identifier.v1 */
+            readonly domain: string;
+            /** @example 1 */
+            readonly active_version: number;
+            /** @example 1 */
+            readonly generation: number;
+            /** @example [] */
+            readonly versions?: readonly components["schemas"]["KMSVersion"][];
+            /** @example true */
+            readonly enabled: boolean;
+        };
+        /** @description Durable rewrap cursor, generation, and bounded counters for one artifact class. */
+        readonly KeyRewrapClassState: {
+            /** @example webhook.event */
+            readonly class: string;
+            /** @example 1 */
+            readonly generation: number;
+            /**
+             * @example running
+             * @enum {string}
+             */
+            readonly status: "running" | "failed" | "completed";
+            /** @example 8fa2e84effb4128181f3f71db0c12fad609e704021422272eb96fb99637ccaa4 */
+            readonly epoch: string;
+            /** @example example */
+            readonly cursor_tenant: string;
+            /** @example example */
+            readonly cursor_object: string;
+            /** @example 1 */
+            readonly processed: number;
+            /** @example 1 */
+            readonly rewrapped: number;
+            /** @example 1 */
+            readonly skipped: number;
+            /** @example 1 */
+            readonly failed: number;
+            /** @example example */
+            readonly last_error?: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-21T12:00:00Z
+             */
+            readonly next_attempt_at?: string;
+        };
+        /** @description Installation-wide rewrap progress across every artifact class. */
+        readonly KeyRewrapStatus: {
+            /** @example [] */
+            readonly classes: readonly components["schemas"]["KeyRewrapClassState"][];
+        };
+        /** @description One bounded rewrap pass selection. */
+        readonly KeyRewrapRunRequest: {
+            /**
+             * @example webhook.event
+             * @enum {string}
+             */
+            readonly class?: "evidence.content" | "webhook.event" | "webhook.delivery" | "webhook.secret" | "keycustody.hmac" | "identity.lookup" | "identity.subject" | "fraud.correlation";
+            /**
+             * @default 64
+             * @example 1
+             */
+            readonly batch: number;
+        };
+        /** @description Outcome of one bounded rewrap pass for one artifact class. */
+        readonly KeyRewrapBatchResult: {
+            /** @example webhook.event */
+            readonly class: string;
+            /** @example 1 */
+            readonly generation: number;
+            /**
+             * @example running
+             * @enum {string}
+             */
+            readonly status: "running" | "failed" | "completed";
+            /** @example 1 */
+            readonly rewrapped: number;
+            /** @example 1 */
+            readonly skipped: number;
+            /** @example 1 */
+            readonly failed: number;
+            /** @example true */
+            readonly epoch_changed: boolean;
+        };
+        /** @description Outcomes of the requested bounded rewrap pass. */
+        readonly KeyRewrapRun: {
+            /** @example [] */
+            readonly batches: readonly components["schemas"]["KeyRewrapBatchResult"][];
+        };
+        /** @description Reference scan request for one exact wrapping identity. */
+        readonly KeyDestructionVerifyRequest: {
+            /** @example aws.kms */
+            readonly provider: string;
+            /** @example local-0123456789abcdef0123456789abcdef */
+            readonly reference: string;
+            /** @example v1 */
+            readonly version: string;
+            /** @example AES256_GCM */
+            readonly algorithm: string;
+            /** @example Retire prior material epoch */
+            readonly reason: string;
+        };
+        /** @description Provider deletion scheduling request for a verified receipt. */
+        readonly KeyDestructionScheduleRequest: {
+            /**
+             * @description Go duration between 1h and 720h. Providers may require a whole-day window inside that bound.
+             * @example 168h
+             */
+            readonly window?: string;
+            /**
+             * @description Records the decision without calling the provider. Required when no provider scheduler is configured.
+             * @example false
+             */
+            readonly record_only?: boolean;
+            /** @example Retire prior material epoch */
+            readonly reason: string;
+        };
+        /** @description Immutable proof that no durable reference remains for the wrapping identity. */
+        readonly KeyDestructionVerification: {
+            /** @example kdv_01M11HEQG00000000000000000 */
+            readonly id: string;
+            /**
+             * @example verified
+             * @enum {string}
+             */
+            readonly state: "verified" | "blocked";
+            /** @example aws.kms */
+            readonly provider: string;
+            /** @example local-0123456789abcdef0123456789abcdef */
+            readonly reference: string;
+            /** @example v1 */
+            readonly version: string;
+            /** @example AES256_GCM */
+            readonly algorithm: string;
+            /** @example 1 */
+            readonly total: number;
+            /**
+             * @description Reference count per durable artifact class.
+             * @example {}
+             */
+            readonly counts: {
+                readonly [key: string]: number;
+            };
+            /** @example example */
+            readonly verifier: string;
+            /** @example Retire prior material epoch */
+            readonly reason: string;
+            /** @example 8fa2e84effb4128181f3f71db0c12fad609e704021422272eb96fb99637ccaa4 */
+            readonly digest: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-21T12:00:00Z
+             */
+            readonly verified_at: string;
+        };
+        /** @description Recorded provider deletion decision tied to one verified receipt. */
+        readonly KeyDestructionSchedule: {
+            /** @example kds_01M11HEQG00000000000000000 */
+            readonly id: string;
+            /** @example kdv_01M11HEQG00000000000000000 */
+            readonly verification_id: string;
+            /**
+             * @example scheduled
+             * @enum {string}
+             */
+            readonly mode: "scheduled" | "recorded";
+            /**
+             * Format: date-time
+             * @example 2026-09-21T12:00:00Z
+             */
+            readonly provider_deletion_at?: string;
+            /** @example example */
+            readonly actor: string;
+            /** @example Retire prior material epoch */
+            readonly reason: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-21T12:00:00Z
+             */
+            readonly created_at: string;
+        };
+        /** @description Provider wrapping identity targeted by a recovery ceremony. */
+        readonly KeyRecoveryTarget: {
+            /** @example aws.kms */
+            readonly provider: string;
+            /** @example local-0123456789abcdef0123456789abcdef */
+            readonly reference: string;
+            /** @example v1 */
+            readonly version: string;
+            /** @example AES256_GCM */
+            readonly algorithm: string;
+        };
+        /** @description Dual-control recovery ceremony start command. */
+        readonly KeyRecoveryStartRequest: {
+            /**
+             * @example migrate_epoch
+             * @enum {string}
+             */
+            readonly kind: "rewrap" | "migrate_epoch";
+            /**
+             * @example evidence.content
+             * @enum {string}
+             */
+            readonly class: "evidence.content" | "webhook.event" | "webhook.delivery" | "webhook.secret" | "keycustody.hmac" | "identity.lookup" | "identity.subject" | "fraud.correlation";
+            /** @example ten_01M11HEQG00000000000000000 */
+            readonly tenant?: string;
+            /**
+             * @example {
+             *       "provider": "aws.kms",
+             *       "reference": "local-0123456789abcdef0123456789abcdef",
+             *       "version": "v1",
+             *       "algorithm": "AES256_GCM"
+             *     }
+             */
+            readonly target?: components["schemas"]["KeyRecoveryTarget"];
+            /** @example Retire prior material epoch */
+            readonly reason: string;
+        };
+        /** @description Version-checked recovery ceremony transition command. */
+        readonly KeyRecoveryTransitionRequest: {
+            /** @example 1 */
+            readonly expected_version: number;
+            /** @example Retire prior material epoch */
+            readonly reason: string;
+        };
+        /** @description Auditable dual-control recovery or epoch migration ceremony. */
+        readonly KeyRecoveryCeremony: {
+            /** @example krc_01M11HEQG00000000000000000 */
+            readonly id: string;
+            /**
+             * @example rewrap
+             * @enum {string}
+             */
+            readonly kind: "rewrap" | "migrate_epoch";
+            /** @example webhook.event */
+            readonly class: string;
+            /** @example example */
+            readonly tenant?: string;
+            /**
+             * @example started
+             * @enum {string}
+             */
+            readonly state: "started" | "approved" | "completed" | "aborted";
+            /** @example 1 */
+            readonly version: number;
+            /** @example example */
+            readonly started_by: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-21T12:00:00Z
+             */
+            readonly started_at: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-21T12:00:00Z
+             */
+            readonly approve_by: string;
+            /** @example example */
+            readonly approved_by?: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-21T12:00:00Z
+             */
+            readonly approved_at?: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-21T12:00:00Z
+             */
+            readonly usable_until?: string;
+            /** @example example */
+            readonly completed_by?: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-21T12:00:00Z
+             */
+            readonly completed_at?: string;
+            /** @example example */
+            readonly aborted_by?: string;
+            /** @example example */
+            readonly abort_reason?: string;
+            /** @example {} */
+            readonly receipt?: {
+                readonly [key: string]: unknown;
+            };
+            /** @example Retire prior material epoch */
+            readonly reason: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-21T12:00:00Z
+             */
+            readonly updated_at: string;
+        };
+        /**
+         * @description Time-bounded delegated support grant.
+         * @example {
+         *       "id": "spt_01M11HEQG00000000000000000",
+         *       "grantee": "support_engineer",
+         *       "patterns": [
+         *         "subjects:read"
+         *       ],
+         *       "permissions": [
+         *         "subjects:read"
+         *       ],
+         *       "reason": "Investigate reported capture issue",
+         *       "granted_by": "key_01M11HEQG00000000000000000",
+         *       "state": "active",
+         *       "version": 1,
+         *       "starts_at": "2026-09-21T12:00:00Z",
+         *       "expires_at": "2026-09-22T12:00:00Z",
+         *       "created_at": "2026-09-21T12:00:00Z",
+         *       "updated_at": "2026-09-21T12:00:00Z"
+         *     }
+         */
+        readonly SupportGrant: {
+            /** @example spt_01M11HEQG00000000000000000 */
+            readonly id: string;
+            /** @example example */
+            readonly grantee: string;
+            /** @example [] */
+            readonly patterns: readonly string[];
+            /** @example [] */
+            readonly permissions: readonly string[];
+            /** @example Retire prior material epoch */
+            readonly reason: string;
+            /** @example example */
+            readonly granted_by: string;
+            /**
+             * @example active
+             * @enum {string}
+             */
+            readonly state: "active" | "revoked" | "expired";
+            /** @example 1 */
+            readonly version: number;
+            /**
+             * Format: date-time
+             * @example 2026-09-21T12:00:00Z
+             */
+            readonly starts_at: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-21T12:00:00Z
+             */
+            readonly expires_at: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-21T12:00:00Z
+             */
+            readonly created_at: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-21T12:00:00Z
+             */
+            readonly updated_at: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-21T12:00:00Z
+             */
+            readonly revoked_at?: string;
+            /** @example example */
+            readonly revoked_by?: string;
+            /** @example example */
+            readonly revocation_reason?: string;
+        };
+        /** @description Break-glass request with its approval and expiry state. */
+        readonly SupportEmergency: {
+            /** @example bge_01M11HEQG00000000000000000 */
+            readonly id: string;
+            /** @example example */
+            readonly requester: string;
+            /** @example Retire prior material epoch */
+            readonly reason: string;
+            /** @example [] */
+            readonly permissions: readonly string[];
+            /**
+             * @description Approved access duration in nanoseconds.
+             * @example 1
+             */
+            readonly duration: number;
+            /**
+             * @example requested
+             * @enum {string}
+             */
+            readonly state: "requested" | "approved" | "denied" | "revoked";
+            /** @example 1 */
+            readonly version: number;
+            /**
+             * Format: date-time
+             * @example 2026-09-21T12:00:00Z
+             */
+            readonly requested_at: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-21T12:00:00Z
+             */
+            readonly approval_expires_at: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-21T12:00:00Z
+             */
+            readonly approved_at?: string;
+            /** @example example */
+            readonly approved_by?: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-21T12:00:00Z
+             */
+            readonly usable_until?: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-21T12:00:00Z
+             */
+            readonly denied_at?: string;
+            /** @example example */
+            readonly denied_by?: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-21T12:00:00Z
+             */
+            readonly revoked_at?: string;
+            /** @example example */
+            readonly revoked_by?: string;
+            /** @example example */
+            readonly revocation_reason?: string;
+        };
+        /** @description Append-only break-glass use ledger entry. */
+        readonly SupportUse: {
+            /** @example 1 */
+            readonly sequence: number;
+            /** @example example */
+            readonly permission: string;
+            /** @example sub_01M11HEQG00000000000000000 */
+            readonly target: string;
+            /** @example example */
+            readonly actor: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-21T12:00:00Z
+             */
+            readonly used_at: string;
+        };
+        /** @description Safe support state without credential material. */
+        readonly SupportResult: {
+            /**
+             * @example {
+             *       "id": "spt_01M11HEQG00000000000000000",
+             *       "grantee": "support_engineer",
+             *       "patterns": [
+             *         "subjects:read"
+             *       ],
+             *       "permissions": [
+             *         "subjects:read"
+             *       ],
+             *       "reason": "Investigate reported capture issue",
+             *       "granted_by": "key_01M11HEQG00000000000000000",
+             *       "state": "active",
+             *       "version": 1,
+             *       "starts_at": "2026-09-21T12:00:00Z",
+             *       "expires_at": "2026-09-22T12:00:00Z",
+             *       "created_at": "2026-09-21T12:00:00Z",
+             *       "updated_at": "2026-09-21T12:00:00Z"
+             *     }
+             */
+            readonly grant?: components["schemas"]["SupportGrant"];
+            /**
+             * @example {
+             *       "id": "bge_01M11HEQG00000000000000000",
+             *       "requester": "key_01M11HEQG00000000000000000",
+             *       "reason": "Production incident triage",
+             *       "permissions": [
+             *         "identity:reveal"
+             *       ],
+             *       "duration": 3600000000000,
+             *       "state": "approved",
+             *       "version": 2,
+             *       "requested_at": "2026-09-21T12:00:00Z",
+             *       "approval_expires_at": "2026-09-21T13:00:00Z",
+             *       "approved_at": "2026-09-21T12:05:00Z",
+             *       "approved_by": "key_01M11HEQG00000000000000001",
+             *       "usable_until": "2026-09-21T13:05:00Z"
+             *     }
+             */
+            readonly emergency?: components["schemas"]["SupportEmergency"];
+            /** @example [] */
+            readonly uses?: readonly components["schemas"]["SupportUse"][];
+            /** @example [] */
+            readonly grants?: readonly components["schemas"]["SupportGrant"][];
+        };
+        /** @description Delegated support grant command. */
+        readonly SupportGrantRequest: {
+            /** @example support_engineer */
+            readonly grantee: string;
+            /**
+             * @example [
+             *       "subjects:read"
+             *     ]
+             */
+            readonly patterns: readonly string[];
+            /**
+             * @description Go duration between 5m and 72h.
+             * @example 24h
+             */
+            readonly duration: string;
+            /** @example Retire prior material epoch */
+            readonly reason: string;
+        };
+        /** @description Emergency break-glass request command. */
+        readonly SupportBreakGlassRequest: {
+            /**
+             * @example [
+             *       "identity:reveal"
+             *     ]
+             */
+            readonly permissions: readonly string[];
+            /**
+             * @description Go duration between 5m and 4h.
+             * @example 1h
+             */
+            readonly duration: string;
+            /** @example Retire prior material epoch */
+            readonly reason: string;
+        };
+        /** @description Version-checked support transition command. */
+        readonly SupportVersionedCommand: {
+            /** @example 1 */
+            readonly expected_version: number;
+            /** @example Retire prior material epoch */
+            readonly reason: string;
+        };
+        /** @description Break-glass use ledger command. */
+        readonly SupportUseRequest: {
+            /** @example 1 */
+            readonly expected_version: number;
+            /**
+             * @example [
+             *       "identity:reveal"
+             *     ]
+             */
+            readonly permissions: readonly string[];
+            /** @example sub_01M11HEQG00000000000000000 */
+            readonly target: string;
         };
         readonly evidence: string;
         readonly artefact: string;
@@ -17391,6 +18623,43 @@ export interface operations {
             readonly 503: components["responses"]["ServiceUnavailable"];
         };
     };
+    readonly rotateProviderRegistrationCredential: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant-owned provider registration identifier. */
+                readonly providerID: components["parameters"]["ProviderID"];
+            };
+            readonly cookie?: never;
+        };
+        /** @description Version-checked credential rotation command. */
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["ProviderCredentialRotationRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description The rotated registration receipt was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["ProviderRegistrationReceipt"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     readonly getProviderRegistrationHealth: {
         readonly parameters: {
             readonly query?: never;
@@ -19426,6 +20695,1293 @@ export interface operations {
             readonly 401: components["responses"]["Unauthenticated"];
             readonly 403: components["responses"]["InsufficientScope"];
             readonly 404: components["responses"]["NotFound"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly createKMSDomain: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** @description Immutable domain creation command. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "domain": "identity.identifier.v1",
+                 *       "reason": "Rotate after incident review"
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["KMSDomainCreateRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description The domain and its first active key version were created. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "domain": "identity.identifier.v1",
+                     *       "active_version": 2,
+                     *       "generation": 2,
+                     *       "enabled": true
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["KeyCustodyDomain"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly getKMSDomain: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Namespaced predictable-identifier key domain. */
+                readonly domain: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The key domain lifecycle metadata was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "domain": "identity.identifier.v1",
+                     *       "active_version": 2,
+                     *       "generation": 2,
+                     *       "enabled": true
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["KeyCustodyDomain"];
+                };
+            };
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly rotateKMSDomain: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                /** @description Namespaced predictable-identifier key domain. */
+                readonly domain: string;
+            };
+            readonly cookie?: never;
+        };
+        /** @description Optimistic version-checked key lifecycle command. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "expected_version": 1,
+                 *       "reason": "Scheduled key rotation"
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["KMSVersionedCommand"];
+            };
+        };
+        readonly responses: {
+            /** @description The domain was rotated to the next active key version. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "domain": "identity.identifier.v1",
+                     *       "active_version": 2,
+                     *       "generation": 2,
+                     *       "enabled": true
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["KeyCustodyDomain"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly disableKMSVersion: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                /** @description Namespaced predictable-identifier key domain. */
+                readonly domain: string;
+                /** @description Exact retained key version to disable. */
+                readonly version: number;
+            };
+            readonly cookie?: never;
+        };
+        /** @description Optimistic version-checked key lifecycle command. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "expected_version": 1,
+                 *       "reason": "Retire compromised key material"
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["KMSVersionedCommand"];
+            };
+        };
+        readonly responses: {
+            /** @description The key version was disabled. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "domain": "identity.identifier.v1",
+                     *       "active_version": 2,
+                     *       "generation": 2,
+                     *       "enabled": true
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["KeyCustodyDomain"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly retireKMSVersion: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                /** @description Namespaced predictable-identifier key domain. */
+                readonly domain: string;
+                /** @description Exact disabled key version to retire. */
+                readonly version: number;
+            };
+            readonly cookie?: never;
+        };
+        /** @description Optimistic version-checked key lifecycle command. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "expected_version": 1,
+                 *       "reason": "Retire unreferenced key material"
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["KMSVersionedCommand"];
+            };
+        };
+        readonly responses: {
+            /** @description The key version was retired. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "domain": "identity.identifier.v1",
+                     *       "active_version": 2,
+                     *       "generation": 2,
+                     *       "enabled": true
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["KeyCustodyDomain"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly getKeyRewrapStatus: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The per-class rewrap state was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "classes": []
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["KeyRewrapStatus"];
+                };
+            };
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly runKeyRewrap: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** @description Optional artifact class and bounded batch size. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "batch": 64
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["KeyRewrapRunRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description The bounded rewrap pass completed or recorded a class failure. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "batches": []
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["KeyRewrapRun"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly verifyKeyDestruction: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** @description Exact wrapping identity to scan for remaining references. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "provider": "local.file",
+                 *       "reference": "local-0123456789abcdef0123456789abcdef",
+                 *       "version": "v1",
+                 *       "algorithm": "AES256_GCM",
+                 *       "reason": "Retire prior material epoch"
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["KeyDestructionVerifyRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description The material has no remaining durable references. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "kdv_01M11HEQG00000000000000000",
+                     *       "state": "verified",
+                     *       "provider": "local.file",
+                     *       "reference": "local-0123456789abcdef0123456789abcdef",
+                     *       "version": "v1",
+                     *       "algorithm": "AES256_GCM",
+                     *       "total": 0,
+                     *       "counts": {},
+                     *       "verifier": "key_01M11HEQG00000000000000000",
+                     *       "reason": "Retire prior material epoch",
+                     *       "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                     *       "verified_at": "2026-09-21T12:00:00Z"
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["KeyDestructionVerification"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly getKeyDestructionVerification: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Immutable destruction verification receipt identifier. */
+                readonly verificationID: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The immutable verification receipt was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "kdv_01M11HEQG00000000000000000",
+                     *       "state": "verified",
+                     *       "provider": "local.file",
+                     *       "reference": "local-0123456789abcdef0123456789abcdef",
+                     *       "version": "v1",
+                     *       "algorithm": "AES256_GCM",
+                     *       "total": 0,
+                     *       "counts": {},
+                     *       "verifier": "key_01M11HEQG00000000000000000",
+                     *       "reason": "Retire prior material epoch",
+                     *       "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                     *       "verified_at": "2026-09-21T12:00:00Z"
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["KeyDestructionVerification"];
+                };
+            };
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly scheduleKeyDestruction: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Immutable destruction verification receipt identifier. */
+                readonly verificationID: string;
+            };
+            readonly cookie?: never;
+        };
+        /** @description Provider deletion window and recording mode. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "window": "168h",
+                 *       "record_only": false,
+                 *       "reason": "Schedule provider key deletion"
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["KeyDestructionScheduleRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description The destruction schedule was recorded. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "kds_01M11HEQG00000000000000000",
+                     *       "verification_id": "kdv_01M11HEQG00000000000000000",
+                     *       "mode": "recorded",
+                     *       "actor": "key_01M11HEQG00000000000000000",
+                     *       "reason": "Retire prior material epoch",
+                     *       "created_at": "2026-09-21T12:00:00Z"
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["KeyDestructionSchedule"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly startKeyRecoveryCeremony: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** @description Recovery ceremony kind, class, and target identity. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "kind": "migrate_epoch",
+                 *       "class": "keycustody.hmac",
+                 *       "target": {
+                 *         "provider": "aws.kms",
+                 *         "reference": "arn:aws:kms:us-east-1:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab",
+                 *         "version": "material-1",
+                 *         "algorithm": "SYMMETRIC_DEFAULT"
+                 *       },
+                 *       "reason": "Migrate to rotated KMS material"
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["KeyRecoveryStartRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description The recovery ceremony was started. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "krc_01M11HEQG00000000000000000",
+                     *       "kind": "migrate_epoch",
+                     *       "class": "keycustody.hmac",
+                     *       "state": "started",
+                     *       "version": 1,
+                     *       "started_by": "key_01M11HEQG00000000000000000",
+                     *       "started_at": "2026-09-21T12:00:00Z",
+                     *       "approve_by": "2026-09-22T12:00:00Z",
+                     *       "reason": "Migrate to rotated KMS material",
+                     *       "updated_at": "2026-09-21T12:00:00Z"
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["KeyRecoveryCeremony"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly getKeyRecoveryCeremony: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Key recovery ceremony identifier. */
+                readonly ceremonyID: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The ceremony state was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "krc_01M11HEQG00000000000000000",
+                     *       "kind": "migrate_epoch",
+                     *       "class": "keycustody.hmac",
+                     *       "state": "started",
+                     *       "version": 1,
+                     *       "started_by": "key_01M11HEQG00000000000000000",
+                     *       "started_at": "2026-09-21T12:00:00Z",
+                     *       "approve_by": "2026-09-22T12:00:00Z",
+                     *       "reason": "Migrate to rotated KMS material",
+                     *       "updated_at": "2026-09-21T12:00:00Z"
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["KeyRecoveryCeremony"];
+                };
+            };
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly approveKeyRecoveryCeremony: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Key recovery ceremony identifier. */
+                readonly ceremonyID: string;
+            };
+            readonly cookie?: never;
+        };
+        /** @description Optimistic ceremony version and audit reason. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "expected_version": 1,
+                 *       "reason": "Independent recovery approval"
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["KeyRecoveryTransitionRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description The ceremony was approved. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "krc_01M11HEQG00000000000000000",
+                     *       "kind": "migrate_epoch",
+                     *       "class": "keycustody.hmac",
+                     *       "state": "started",
+                     *       "version": 1,
+                     *       "started_by": "key_01M11HEQG00000000000000000",
+                     *       "started_at": "2026-09-21T12:00:00Z",
+                     *       "approve_by": "2026-09-22T12:00:00Z",
+                     *       "reason": "Migrate to rotated KMS material",
+                     *       "updated_at": "2026-09-21T12:00:00Z"
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["KeyRecoveryCeremony"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly completeKeyRecoveryCeremony: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Key recovery ceremony identifier. */
+                readonly ceremonyID: string;
+            };
+            readonly cookie?: never;
+        };
+        /** @description Optimistic ceremony version and audit reason. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "expected_version": 2,
+                 *       "reason": "Apply approved recovery operation"
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["KeyRecoveryTransitionRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description The ceremony completed and its operation was applied. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "krc_01M11HEQG00000000000000000",
+                     *       "kind": "migrate_epoch",
+                     *       "class": "keycustody.hmac",
+                     *       "state": "started",
+                     *       "version": 1,
+                     *       "started_by": "key_01M11HEQG00000000000000000",
+                     *       "started_at": "2026-09-21T12:00:00Z",
+                     *       "approve_by": "2026-09-22T12:00:00Z",
+                     *       "reason": "Migrate to rotated KMS material",
+                     *       "updated_at": "2026-09-21T12:00:00Z"
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["KeyRecoveryCeremony"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly abortKeyRecoveryCeremony: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Key recovery ceremony identifier. */
+                readonly ceremonyID: string;
+            };
+            readonly cookie?: never;
+        };
+        /** @description Optimistic ceremony version and audit reason. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "expected_version": 1,
+                 *       "reason": "Abort recovery after incident review"
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["KeyRecoveryTransitionRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description The ceremony was aborted without applying anything. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "krc_01M11HEQG00000000000000000",
+                     *       "kind": "migrate_epoch",
+                     *       "class": "keycustody.hmac",
+                     *       "state": "started",
+                     *       "version": 1,
+                     *       "started_by": "key_01M11HEQG00000000000000000",
+                     *       "started_at": "2026-09-21T12:00:00Z",
+                     *       "approve_by": "2026-09-22T12:00:00Z",
+                     *       "reason": "Migrate to rotated KMS material",
+                     *       "updated_at": "2026-09-21T12:00:00Z"
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["KeyRecoveryCeremony"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly listSupportGrants: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The delegated grants were returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "grants": []
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["SupportResult"];
+                };
+            };
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly createSupportGrant: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** @description Delegated grant scope, duration, and reason. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "grantee": "support_engineer",
+                 *       "patterns": [
+                 *         "subjects:read"
+                 *       ],
+                 *       "duration": "24h",
+                 *       "reason": "Investigate reported capture issue"
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["SupportGrantRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description The delegated grant was created. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "grants": []
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["SupportResult"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly getSupportGrant: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Delegated support grant identifier. */
+                readonly grantID: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The delegated grant was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "grants": []
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["SupportResult"];
+                };
+            };
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly revokeSupportGrant: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                /** @description Delegated support grant identifier. */
+                readonly grantID: string;
+            };
+            readonly cookie?: never;
+        };
+        /** @description Optimistic version-checked support command. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "expected_version": 1,
+                 *       "reason": "Incident resolved"
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["SupportVersionedCommand"];
+            };
+        };
+        readonly responses: {
+            /** @description The delegated grant was revoked. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "grants": []
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["SupportResult"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly requestBreakGlass: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** @description Emergency permission set, duration, and reason. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "permissions": [
+                 *         "identity:reveal"
+                 *       ],
+                 *       "duration": "1h",
+                 *       "reason": "Production incident triage"
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["SupportBreakGlassRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description The break-glass request was recorded. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "grants": []
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["SupportResult"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly getBreakGlass: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Break-glass request identifier. */
+                readonly requestID: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The break-glass request was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "grants": []
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["SupportResult"];
+                };
+            };
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly approveBreakGlass: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                /** @description Break-glass request identifier. */
+                readonly requestID: string;
+            };
+            readonly cookie?: never;
+        };
+        /** @description Optimistic version-checked support command. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "expected_version": 1,
+                 *       "reason": "Independent incident approval"
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["SupportVersionedCommand"];
+            };
+        };
+        readonly responses: {
+            /** @description The break-glass request was approved. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "grants": []
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["SupportResult"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly denyBreakGlass: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                /** @description Break-glass request identifier. */
+                readonly requestID: string;
+            };
+            readonly cookie?: never;
+        };
+        /** @description Optimistic version-checked support command. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "expected_version": 1,
+                 *       "reason": "Request not justified"
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["SupportVersionedCommand"];
+            };
+        };
+        readonly responses: {
+            /** @description The break-glass request was denied. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "grants": []
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["SupportResult"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly revokeBreakGlass: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                /** @description Break-glass request identifier. */
+                readonly requestID: string;
+            };
+            readonly cookie?: never;
+        };
+        /** @description Optimistic version-checked support command. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "expected_version": 2,
+                 *       "reason": "Incident resolved early"
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["SupportVersionedCommand"];
+            };
+        };
+        readonly responses: {
+            /** @description The break-glass window was revoked. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "grants": []
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["SupportResult"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly recordBreakGlassUse: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                /** @description Break-glass request identifier. */
+                readonly requestID: string;
+            };
+            readonly cookie?: never;
+        };
+        /** @description Approved permission use to append to the ledger. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "expected_version": 2,
+                 *       "permissions": [
+                 *         "identity:reveal"
+                 *       ],
+                 *       "target": "sub_01M11HEQG00000000000000000"
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["SupportUseRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description The use was appended to the immutable ledger. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "grants": []
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["SupportResult"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
             readonly 429: components["responses"]["RateLimited"];
             readonly 500: components["responses"]["InternalError"];
             readonly 503: components["responses"]["ServiceUnavailable"];
