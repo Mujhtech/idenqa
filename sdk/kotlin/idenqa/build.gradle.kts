@@ -21,6 +21,19 @@ dependencies {
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
 }
 
+// AGP's built-in Kotlin compiler is 2.2.0, which reads metadata up to 2.3.0.
+// Force the whole Kotlin test stack to 2.3.21 so a transitive 2.4.x bump cannot
+// break unit-test compilation until the Android toolchain moves to Kotlin 2.4.
+configurations.configureEach {
+    resolutionStrategy {
+        force(
+            "org.jetbrains.kotlin:kotlin-stdlib:2.3.21",
+            "org.jetbrains.kotlin:kotlin-test:2.3.21",
+            "org.jetbrains.kotlin:kotlin-test-junit:2.3.21",
+        )
+    }
+}
+
 tasks.withType<org.gradle.api.tasks.testing.Test>().configureEach {
     systemProperty("idenqa.repo.root", rootProject.projectDir.parentFile.parentFile.absolutePath)
 }
