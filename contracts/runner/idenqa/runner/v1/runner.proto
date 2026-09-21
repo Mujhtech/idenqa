@@ -265,6 +265,20 @@ message ProviderRequest {
   string callback_reference = 16 [(buf.validate.field).string.pattern = "^$|^pcb_[0-9A-HJKMNP-TV-Z]{26}$"];
 }
 
+// ProviderDocumentField is one bounded provider-extracted document field.
+message ProviderDocumentField {
+  string name = 1 [(buf.validate.field).string = {min_len: 1, max_len: 128}];
+  string value = 2 [(buf.validate.field).string = {min_len: 1, max_len: 128}];
+}
+
+// ProviderDocumentObservation carries transient provider-extracted document
+// data. Core consumes it locally into bounded signals; it is never persisted.
+message ProviderDocumentObservation {
+  repeated string mrz_lines = 1 [(buf.validate.field).repeated = {max_items: 3, items: {string: {min_len: 1, max_bytes: 44}}}];
+  string barcode_payload = 2 [(buf.validate.field).string.max_bytes = 4096];
+  repeated ProviderDocumentField fields = 3 [(buf.validate.field).repeated.max_items = 32];
+}
+
 // ProviderResult is the bounded terminal provider result.
 message ProviderResult {
   Version contract = 1 [(buf.validate.field).required = true];
@@ -273,6 +287,7 @@ message ProviderResult {
   repeated Signal signals = 4 [(buf.validate.field).repeated.max_items = 128];
   Failure failure = 5;
   google.protobuf.Timestamp completed_at = 6 [(buf.validate.field).required = true];
+  ProviderDocumentObservation document = 7;
 }
 
 // ModelProvenance pins every execution-relevant model artefact.

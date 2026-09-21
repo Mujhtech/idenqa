@@ -108,7 +108,7 @@ export function cameraFacingMode(artefact: string): CameraFacingMode {
   return artefact === "idenqa.artefact.selfie_image" ? "user" : "environment";
 }
 
-function canvasBlob(canvas: HTMLCanvasElement, mediaType: EvidenceMediaType): Promise<Blob> {
+export function canvasBlob(canvas: HTMLCanvasElement, mediaType: EvidenceMediaType): Promise<Blob> {
   return new Promise((resolve, reject) => {
     canvas.toBlob(
       (body) => {

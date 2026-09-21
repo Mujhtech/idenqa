@@ -10,6 +10,7 @@ import (
 	providerv1 "github.com/Mujhtech/idenqa/contracts/provider/v1"
 	authoritypostgres "github.com/Mujhtech/idenqa/internal/authority/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
 	pg "github.com/Mujhtech/idenqa/internal/platform/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/postgres/sqlgen"
 	"github.com/Mujhtech/idenqa/internal/provider"
@@ -24,8 +25,9 @@ type transactionRunner interface {
 
 // RequestStore owns tenant-scoped reference envelopes and dispatch history.
 type RequestStore struct {
-	pool   transactionRunner
-	source clock.Clock
+	pool    transactionRunner
+	source  clock.Clock
+	metrics provider.Metrics
 }
 
 // NewRequestStore constructs durable provider dispatch persistence.
@@ -33,7 +35,15 @@ func NewRequestStore(pool transactionRunner, source clock.Clock) (*RequestStore,
 	if pool == nil || source == nil {
 		return nil, provider.ErrRequestUnavailable
 	}
-	return &RequestStore{pool, source}, nil
+	return &RequestStore{pool: pool, source: source}, nil
+}
+
+// WithMetrics attaches the bounded provider metric receiver.
+func (store *RequestStore) WithMetrics(metrics provider.Metrics) *RequestStore {
+	if store != nil && metrics != nil {
+		store.metrics = metrics
+	}
+	return store
 }
 
 // SaveWithin appends the request with its owning attempt, grant and task transaction.
@@ -131,7 +141,7 @@ func (store *RequestStore) Claim(ctx context.Context, request providerv1.Request
 			// A durable callback receipt is authoritative before any provider
 			// polling. Recording it through the dispatch first-result-wins guard
 			// keeps callback and status delivery on one result path.
-			value, err := adoptCallbackReceipt(ctx, tx, request, digest)
+			value, err := store.adoptCallbackReceipt(ctx, tx, request, digest)
 			if err != nil {
 				return err
 			}
@@ -145,9 +155,10 @@ func (store *RequestStore) Claim(ctx context.Context, request providerv1.Request
 // adoptCallbackReceipt promotes one terminal callback receipt into the
 // provider dispatch under the same first-result-wins guard as every other
 // completion. It is a no-op when no terminal receipt exists.
-func adoptCallbackReceipt(ctx context.Context, tx pg.Transaction, request providerv1.Request, digest string) (*providerv1.Result, error) {
+func (store *RequestStore) adoptCallbackReceipt(ctx context.Context, tx pg.Transaction, request providerv1.Request, digest string) (*providerv1.Result, error) {
 	var body []byte
-	err := tx.QueryRow(ctx, `SELECT progress_body FROM idenqa.provider_callback_receipts WHERE tenant_id=$1 AND attempt_id=$2 AND result_digest IS NOT NULL ORDER BY received_at DESC, provider_replay_id LIMIT 1`, request.TenantID, request.AttemptID).Scan(&body)
+	var receivedAt time.Time
+	err := tx.QueryRow(ctx, `SELECT progress_body,received_at FROM idenqa.provider_callback_receipts WHERE tenant_id=$1 AND attempt_id=$2 AND result_digest IS NOT NULL ORDER BY received_at DESC, provider_replay_id LIMIT 1`, request.TenantID, request.AttemptID).Scan(&body, &receivedAt)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
@@ -158,6 +169,13 @@ func adoptCallbackReceipt(ctx context.Context, tx pg.Transaction, request provid
 	if json.Unmarshal(body, &progress) != nil || progress.ValidateForRequest(request) != nil || progress.Result == nil {
 		return nil, provider.ErrRequestUnavailable
 	}
+	// A receipt written by an older revision could still carry a transient
+	// document observation; consume it before it reaches dispatch persistence.
+	consumed, err := verification.ConsumeProviderDocument(*progress.Result)
+	if err != nil {
+		return nil, provider.ErrRequestUnavailable
+	}
+	progress.Result = &consumed
 	encoded, err := json.Marshal(progress.Result)
 	if err != nil {
 		return nil, err
@@ -167,6 +185,7 @@ func adoptCallbackReceipt(ctx context.Context, tx pg.Transaction, request provid
 		return nil, err
 	}
 	if tag.RowsAffected() == 1 {
+		store.observeCallbackDelay(ctx, tx, request, receivedAt)
 		return progress.Result, nil
 	}
 	var stored []byte
@@ -177,11 +196,47 @@ func adoptCallbackReceipt(ctx context.Context, tx pg.Transaction, request provid
 	if json.Unmarshal(stored, &value) != nil || value.ValidateForRequest(request) != nil {
 		return nil, provider.ErrRequestUnavailable
 	}
-	return &value, nil
+	fallback, consumeErr := verification.ConsumeProviderDocument(value)
+	if consumeErr != nil {
+		return nil, provider.ErrRequestUnavailable
+	}
+	return &fallback, nil
 }
 
-// Complete retains the first validated result; a retry cannot replace its meaning.
+// observeCallbackDelay records the delay between the durable dispatch claim and
+// the adopted terminal receipt. It carries only the deployment provider label.
+func (store *RequestStore) observeCallbackDelay(ctx context.Context, tx pg.Transaction, request providerv1.Request, receivedAt time.Time) {
+	if store.metrics == nil || receivedAt.IsZero() {
+		return
+	}
+	var claimedAt time.Time
+	err := tx.QueryRow(ctx, `SELECT claimed_at FROM idenqa.provider_dispatches WHERE tenant_id=$1 AND attempt_id=$2`, request.TenantID, request.AttemptID).Scan(&claimedAt)
+	if err != nil {
+		return
+	}
+	delay := receivedAt.Sub(claimedAt)
+	if delay <= 0 {
+		return
+	}
+	providerLabel := request.Adapter.AdapterID
+	if providerLabel == "" {
+		providerLabel = request.ProviderID
+	}
+	store.metrics.RecordProviderCallbackDelay(observability.ProviderCallbackDelay{
+		Provider: observability.Provider(providerLabel),
+		Delay:    delay,
+	})
+}
+
+// Complete retains the first validated result; a retry cannot replace its
+// meaning. Any transient document observation is consumed before persistence so
+// raw document data can never reach provider_dispatches.result_body.
 func (store *RequestStore) Complete(ctx context.Context, request providerv1.Request, result providerv1.Result) error {
+	consumed, err := verification.ConsumeProviderDocument(result)
+	if err != nil {
+		return provider.ErrRequestUnavailable
+	}
+	result = consumed
 	if result.ValidateForRequest(request) != nil {
 		return provider.ErrRequestUnavailable
 	}

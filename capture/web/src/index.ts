@@ -34,6 +34,38 @@ export {
   prepareFileUpload,
 } from "./upload.js";
 export {
+  DOCUMENT_CAPTURE_GATE_DEFAULTS,
+  DOCUMENT_DETECTION_DEFAULTS,
+  createDocumentCaptureGate,
+  detectDocumentQuad,
+  grayFrameDifference,
+  normalizeDocumentCaptureGateOptions,
+  normalizeDocumentDetectionOptions,
+  polygonArea,
+  rgbaToGrayFrame,
+  scaleDocumentQuad,
+  varianceOfLaplacian,
+} from "./document-detection.js";
+export {
+  DOCUMENT_CORRECTION_DEFAULTS,
+  applyDocumentHomography,
+  computeDocumentHomography,
+  correctDocumentFrame,
+  documentCorrectionSize,
+  normalizeDocumentCorrectionOptions,
+  orientDocumentQuad,
+  warpDocumentFrame,
+} from "./document-correction.js";
+export {
+  DOCUMENT_ARTEFACT_BACK,
+  DOCUMENT_ARTEFACT_FRONT,
+  DOCUMENT_GUIDE_ASPECT_RATIO,
+  captureCorrectedDocumentFrame,
+  createDocumentFrameObserver,
+  isDocumentArtefact,
+  normalizeCaptureDocumentCaptureOptions,
+} from "./document-capture.js";
+export {
   CAPTURE_EXPERIENCE_VERSION,
   CaptureFlowController,
   CaptureFlowError,
@@ -115,6 +147,34 @@ export type {
   CaptureTerminalFlowStatus,
 } from "./flow.js";
 export type { FileUploadPolicy } from "./upload.js";
+export type {
+  DocumentCaptureGate,
+  DocumentCaptureGateOptions,
+  DocumentCaptureGateReason,
+  DocumentCaptureGateResult,
+  DocumentCaptureGateStatus,
+  DocumentDetection,
+  DocumentDetectionOptions,
+  DocumentFrameObservation,
+  DocumentQuad,
+  GrayFrame,
+  PixelBuffer,
+  Point,
+} from "./document-detection.js";
+export type {
+  CorrectedDocumentFrame,
+  DocumentCorrectionOptions,
+  DocumentCorrectionSize,
+  DocumentHomography,
+} from "./document-correction.js";
+export type {
+  CaptureDocumentCaptureOptions,
+  DocumentFrameObserver,
+  NormalizedCaptureDocumentCaptureOptions,
+} from "./document-capture.js";
 
 export { createRecaptureHandoff } from "./recapture.js";
 export type { RecaptureHandoff } from "./recapture.js";
+
+export { applyCaptureExperienceTheme, captureExperiencePresentation } from "./experience.js";
+export type { CaptureExperiencePresentation } from "./experience.js";

@@ -1,9 +1,11 @@
 package dojah_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
 	"reflect"
@@ -248,5 +250,198 @@ func TestDocumentAnalysisUsesExplicitStatusAndDocumentedBody(t *testing.T) {
 				t.Fatalf("document body keys differ from reviewed contract")
 			}
 		})
+	}
+}
+
+// TestDocumentAnalysisMapsOnlyDocumentedExtraction proves the adapter forwards
+// extraction only from the documented POST /api/v1/document/analysis response
+// keys and only when status.overall_status marks the analysis valid. Unknown
+// keys, unreadable entries, wrong types, malformed or oversized values, and the
+// undocumented MRZ and barcode shapes never produce an observation.
+func TestDocumentAnalysisMapsOnlyDocumentedExtraction(t *testing.T) {
+	t.Parallel()
+	documented := `{"field_name":"Document Number","field_key":"document_number","status":1,"value":"12345678"},` +
+		`{"field_name":"Sex","field_key":"sex","status":1,"value":"M"},` +
+		`{"field_name":"Date of Birth","field_key":"dob","status":1,"value":"1990-08-01"},` +
+		`{"field_name":"Date of Expiry","field_key":"expiry_date","status":1,"value":"2031-01-15"}`
+	documentType := `{"document_name":"United States - Permanent Resident Card (2010)","document_country_name":"United States","document_country_code":"USA"}`
+	tests := []struct {
+		name        string
+		body        string
+		check       string
+		wantOutcome providerv1.SignalOutcome
+		want        *providerv1.DocumentObservation
+	}{
+		{
+			name:        "documented valid extraction",
+			body:        `{"entity":{"status":{"overall_status":1},"document_type":` + documentType + `,"text_data":[` + documented + `]}}`,
+			check:       "idenqa.check.document_analysis",
+			wantOutcome: providerv1.SignalOutcomeSatisfied,
+			want: &providerv1.DocumentObservation{Fields: []providerv1.DocumentField{
+				{Name: "issuing_state", Value: "USA"},
+				{Name: "document_number", Value: "12345678"},
+				{Name: "sex", Value: "M"},
+				{Name: "date_of_birth", Value: "1990-08-01"},
+				{Name: "date_of_expiry", Value: "2031-01-15"},
+			}},
+		},
+		{
+			name:        "invalid status never carries extraction",
+			body:        `{"entity":{"status":{"overall_status":0,"reason":"NOT_VALID"},"document_type":` + documentType + `,"text_data":[` + documented + `]}}`,
+			check:       "idenqa.check.document_analysis",
+			wantOutcome: providerv1.SignalOutcomeNotSatisfied,
+			want:        nil,
+		},
+		{
+			name:        "inconclusive status never carries extraction",
+			body:        `{"entity":{"status":{"overall_status":2},"document_type":` + documentType + `,"text_data":[` + documented + `]}}`,
+			check:       "idenqa.check.document_analysis",
+			wantOutcome: providerv1.SignalOutcomeInconclusive,
+			want:        nil,
+		},
+		{
+			name:        "missing status never carries extraction",
+			body:        `{"entity":{"document_type":` + documentType + `,"text_data":[` + documented + `]}}`,
+			check:       "idenqa.check.document_analysis",
+			wantOutcome: providerv1.SignalOutcomeInconclusive,
+			want:        nil,
+		},
+		{
+			name: "unreadable absent and wrongly typed entries are ignored",
+			body: `{"entity":{"status":{"overall_status":1},"text_data":[` +
+				`{"field_key":"document_number","status":2,"value":"PRIVATE-VALUE"},` +
+				`{"field_key":"sex","status":0,"value":"M"},` +
+				`{"field_key":"dob","status":"1","value":"1990-08-01"}]}}`,
+			check:       "idenqa.check.document_analysis",
+			wantOutcome: providerv1.SignalOutcomeSatisfied,
+			want:        nil,
+		},
+		{
+			name: "undocumented keys are never forwarded",
+			body: `{"entity":{"status":{"overall_status":1},"text_data":[` +
+				`{"field_key":"surname","status":1,"value":"Doe"},` +
+				`{"field_key":"given_names","status":1,"value":"John"},` +
+				`{"field_key":"nationality","status":1,"value":"USA"},` +
+				`{"field_key":"mrz","status":1,"value":"P<UTODOE<<JOHN<<<<<<<<<<<<<<<<<<<<<<<<<<"},` +
+				`{"field_key":"barcode_payload","status":1,"value":"@\n\u001e\rANSI 636000080002"}]}}`,
+			check:       "idenqa.check.document_analysis",
+			wantOutcome: providerv1.SignalOutcomeSatisfied,
+			want:        nil,
+		},
+		{
+			name:        "wrong types and malformed documents are ignored",
+			body:        `{"entity":{"status":{"overall_status":1},"document_type":"USA","text_data":[{"field_key":42,"status":1,"value":"x"},{"field_key":"document_number","status":1,"value":12345678},{"field_key":"dob","status":1,"value":"not-a-date"},{"field_key":"expiry_date","status":true,"value":"2031-01-15"}]}}`,
+			check:       "idenqa.check.document_analysis",
+			wantOutcome: providerv1.SignalOutcomeSatisfied,
+			want:        nil,
+		},
+		{
+			name: "oversized malformed and duplicate values are dropped",
+			body: `{"entity":{"status":{"overall_status":1},"text_data":[` +
+				`{"field_key":"document_number","status":1,"value":"` + strings.Repeat("X", providerv1.MaximumDocumentFieldBytes+1) + `"},` +
+				`{"field_key":"sex","status":1,"value":"M\u0001"},` +
+				`{"field_key":"dob","status":1,"value":"01/08/1990"},` +
+				`{"field_key":"expiry_date","status":1,"value":"2031-01-15"},` +
+				`{"field_key":"expiry_date","status":1,"value":"2040-01-01"}]}}`,
+			check:       "idenqa.check.document_analysis",
+			wantOutcome: providerv1.SignalOutcomeSatisfied,
+			want: &providerv1.DocumentObservation{Fields: []providerv1.DocumentField{
+				{Name: "date_of_expiry", Value: "2031-01-15"},
+			}},
+		},
+		{
+			name:        "non-document checks never attach an observation",
+			body:        `{"entity":{"status":{"overall_status":1},"document_type":` + documentType + `,"text_data":[` + documented + `]}}`,
+			check:       "idenqa.check.passive_liveness",
+			wantOutcome: providerv1.SignalOutcomeSatisfied,
+			want:        nil,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			transport := &client{status: 200, body: test.body}
+			adapter, err := dojah.New(secrets{}, inputs{}, evidence{}, transport, func() time.Time { return fixedNow })
+			if err != nil {
+				t.Fatal(err)
+			}
+			request, _ := fixture(t, adapter, test.check)
+			if test.check == "idenqa.check.document_analysis" {
+				request.Evidence[0].Variant = "document.front"
+			}
+			result, err := adapter.Execute(t.Context(), request)
+			if err != nil || result.Signals[0].Outcome != test.wantOutcome {
+				t.Fatalf("result = %+v, error = %v", result, err)
+			}
+			if !reflect.DeepEqual(result.Document, test.want) {
+				t.Fatalf("document = %+v, want = %+v", result.Document, test.want)
+			}
+			if err := result.Validate(); err != nil {
+				t.Fatalf("result failed contract validation: %v", err)
+			}
+		})
+	}
+}
+
+// TestDocumentExtractionNeverLeaksRawValuesIntoErrorsOrFailures proves the
+// mapped and malformed document paths never place raw provider values, or any
+// fragment of them, into returned errors, failure classifications, or logs.
+func TestDocumentExtractionNeverLeaksRawValuesIntoErrorsOrFailures(t *testing.T) {
+	const sentinel = "SENTINELRAWDOCUMENTVALUE"
+	var logs bytes.Buffer
+	previous := slog.Default()
+	slog.SetDefault(slog.New(slog.NewJSONHandler(&logs, nil)))
+	defer slog.SetDefault(previous)
+
+	tests := []struct {
+		name      string
+		transport *client
+	}{
+		{
+			name: "mapped extraction",
+			transport: &client{status: http.StatusOK, body: `{"entity":{"status":{"overall_status":1},"document_type":{"document_country_code":"USA"},` +
+				`"text_data":[{"field_key":"document_number","status":1,"value":"` + sentinel + `"}]}}`},
+		},
+		{
+			name:      "malformed success body",
+			transport: &client{status: http.StatusOK, body: `{"entity":{"status":{"overall_status":1},"text_data":[{"field_key":"document_number","status":1,"value":"` + sentinel + `"}`},
+		},
+		{
+			name:      "provider rejection body",
+			transport: &client{status: http.StatusBadRequest, body: `{"error":"` + sentinel + `"}`},
+		},
+		{
+			name: "unknown and oversized keys",
+			transport: &client{status: http.StatusOK, body: `{"entity":{"status":{"overall_status":1},"text_data":[` +
+				`{"field_key":"` + sentinel + `","status":1,"value":"` + sentinel + `"},` +
+				`{"field_key":"document_number","status":1,"value":"` + sentinel + strings.Repeat("X", providerv1.MaximumDocumentFieldBytes) + `"}]}}`},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			adapter, err := dojah.New(secrets{}, inputs{}, evidence{}, test.transport, func() time.Time { return fixedNow })
+			if err != nil {
+				t.Fatal(err)
+			}
+			request, _ := fixture(t, adapter, "idenqa.check.document_analysis")
+			request.Evidence[0].Variant = "document.front"
+			result, executeErr := adapter.Execute(t.Context(), request)
+			if executeErr != nil {
+				t.Fatalf("adapter returned a raw execution error: %v", executeErr)
+			}
+			encoded, err := json.Marshal(struct {
+				Failure *providerv1.Failure `json:"failure,omitempty"`
+				Signals []providerv1.Signal `json:"signals,omitempty"`
+			}{Failure: result.Failure, Signals: result.Signals})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if bytes.Contains(encoded, []byte(sentinel)) || bytes.Contains(logs.Bytes(), []byte(sentinel)) {
+				t.Fatalf("raw provider value escaped into failure state or logs: %s", encoded)
+			}
+		})
+	}
+	if strings.Contains(logs.String(), sentinel) {
+		t.Fatalf("raw provider value reached logs: %s", logs.String())
 	}
 }

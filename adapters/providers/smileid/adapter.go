@@ -365,6 +365,12 @@ func normalise(request providerv1.Request, response map[string]any, now func() t
 		{Name: "idenqa.signal.face_match_1to1", Outcome: actionOutcome(actions, "Selfie_To_ID_Card_Compare", "Selfie_To_ID_Authority_Compare")},
 		{Name: "idenqa.signal.document_authenticity", Outcome: actionOutcome(actions, "Verify_Document", "Document_Check")},
 	}
+	// This legacy status path is deliberately fail-closed for extraction.
+	// Smile ID documents extracted document fields only for the v3 verification
+	// webhook id_fields object, which VerifyCallback maps; the v1 job_status
+	// result shape is not part of the current provider documentation, so no
+	// undocumented key (FullName, IDNumber, ExpirationDate, Gender, ...) is
+	// guessed or forwarded here.
 	return providerv1.Result{Contract: request.Contract, AttemptID: request.AttemptID, Outcome: providerv1.ResultOutcomeCompleted, Signals: signals, CompletedAt: now().UTC()}
 }
 

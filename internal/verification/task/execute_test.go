@@ -2,7 +2,9 @@ package task
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -185,6 +187,60 @@ func TestExecuteHandlerQuarantinesMalformedResultWithoutWriting(t *testing.T) {
 	}
 	if committed := work(t.Context(), nil); committed.Outcome != platformtask.OutcomeQuarantine || store.saves != 0 {
 		t.Fatalf("commit = %+v, saves=%d", committed, store.saves)
+	}
+}
+
+type documentProvider struct {
+	observation providerv1.DocumentObservation
+	completedAt time.Time
+}
+
+func (executor documentProvider) Execute(_ context.Context, request providerv1.Request) (providerv1.Result, error) {
+	return providerv1.Result{
+		Contract: request.Contract, AttemptID: request.AttemptID, Outcome: providerv1.ResultOutcomeCompleted,
+		Signals:  []providerv1.Signal{{Name: "idenqa.signal.document_quality", Outcome: providerv1.SignalOutcomeSatisfied}},
+		Document: &executor.observation, CompletedAt: executor.completedAt,
+	}, nil
+}
+
+func TestExecuteHandlerConsumesDocumentObservationBeforeCommit(t *testing.T) {
+	t.Parallel()
+	check, attempt, now := taskRunningCheck(t, verification.RunnerProvider, 23)
+	store := &checkStore{check: check}
+	observation := providerv1.DocumentObservation{Fields: []providerv1.DocumentField{
+		{Name: "document_number", Value: "X90000009"},
+		{Name: "document_type", Value: "passport"},
+		{Name: "issuing_country", Value: "UTO"},
+	}}
+	handler := executeHandler(t, store,
+		documentProvider{observation: observation, completedAt: now.Add(time.Second)},
+		synthetic.Model{Scenario: synthetic.Success, Now: time.Now})
+	work, prepared := handler.Prepare(t.Context(), executeDelivery(t, check, attempt, now, 24))
+	if prepared.Outcome != platformtask.OutcomeComplete || work == nil {
+		t.Fatalf("Prepare() = work %v, result %+v", work != nil, prepared)
+	}
+	if committed := work(t.Context(), nil); committed.Outcome != platformtask.OutcomeComplete {
+		t.Fatalf("commit = %+v", committed)
+	}
+	if store.check.Outcome == verification.CheckPassed {
+		t.Fatalf("document observation produced an identity outcome: %s", store.check.Outcome)
+	}
+	observations := store.check.Attempts()[0].Observations
+	derived := false
+	for _, observation := range observations {
+		if observation.Signal.Name == verification.SignalDocumentClassification {
+			derived = true
+		}
+	}
+	if !derived {
+		t.Fatalf("derived document signals are missing: %+v", observations)
+	}
+	encoded, err := json.Marshal(observations)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(encoded), "X90000009") {
+		t.Fatal("persisted observations retained a raw document value")
 	}
 }
 

@@ -361,6 +361,7 @@ func providerResultToProto(result providerv1.Result) *runnerv1.ProviderResult {
 		Contract: versionToProto(result.Contract.Major, result.Contract.Minor), AttemptId: result.AttemptID,
 		Outcome: resultOutcomeToProto(string(result.Outcome)), Signals: signals,
 		Failure: providerFailureToProto(result.Failure), CompletedAt: timestamppb.New(result.CompletedAt),
+		Document: providerDocumentToProto(result.Document),
 	}
 }
 
@@ -372,12 +373,48 @@ func providerResultFromProto(message *runnerv1.ProviderResult) (providerv1.Resul
 	for index, signal := range message.GetSignals() {
 		signals[index] = providerv1.Signal{Name: signal.GetName(), Outcome: providerv1.SignalOutcome(signalOutcomeFromProto(signal.GetOutcome())), ReasonCodes: signal.GetReasonCodes()}
 	}
+	document, err := providerDocumentFromProto(message.GetDocument())
+	if err != nil {
+		return providerv1.Result{}, err
+	}
 	result := providerv1.Result{
 		Contract: providerVersionFromProto(message.GetContract()), AttemptID: message.GetAttemptId(),
 		Outcome: providerv1.ResultOutcome(resultOutcomeFromProto(message.GetOutcome())), Signals: signals,
-		Failure: providerFailureFromProto(message.GetFailure()), CompletedAt: message.GetCompletedAt().AsTime(),
+		Failure: providerFailureFromProto(message.GetFailure()), Document: document, CompletedAt: message.GetCompletedAt().AsTime(),
 	}
 	return result, result.Validate()
+}
+
+func providerDocumentToProto(observation *providerv1.DocumentObservation) *runnerv1.ProviderDocumentObservation {
+	if observation == nil {
+		return nil
+	}
+	fields := make([]*runnerv1.ProviderDocumentField, len(observation.Fields))
+	for index, field := range observation.Fields {
+		fields[index] = &runnerv1.ProviderDocumentField{Name: field.Name, Value: field.Value}
+	}
+	return &runnerv1.ProviderDocumentObservation{
+		MrzLines: observation.MRZLines, BarcodePayload: observation.BarcodePayload, Fields: fields,
+	}
+}
+
+func providerDocumentFromProto(message *runnerv1.ProviderDocumentObservation) (*providerv1.DocumentObservation, error) {
+	if message == nil {
+		return nil, nil
+	}
+	observation := &providerv1.DocumentObservation{
+		MRZLines: message.GetMrzLines(), BarcodePayload: message.GetBarcodePayload(),
+	}
+	for _, field := range message.GetFields() {
+		if field == nil {
+			return nil, errors.New("provider document field is missing")
+		}
+		observation.Fields = append(observation.Fields, providerv1.DocumentField{Name: field.GetName(), Value: field.GetValue()})
+	}
+	if err := observation.Validate(); err != nil {
+		return nil, err
+	}
+	return observation, nil
 }
 
 func providerFailureToProto(failure *providerv1.Failure) *runnerv1.Failure {

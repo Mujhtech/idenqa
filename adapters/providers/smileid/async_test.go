@@ -22,7 +22,7 @@ func (reader *countedEvidence) ReadProviderEvidence(context.Context, providerv1.
 func asyncStatus(t *testing.T, request providerv1.Request) map[string]any {
 	t.Helper()
 	timestamp := fixedNow.Format("2006-01-02T15:04:05.000Z")
-	return map[string]any{"code": "2302", "timestamp": timestamp, "signature": signature("test-key", timestamp, "085"), "job_id": request.AttemptID, "user_id": request.VerificationID, "job_complete": true, "job_success": true, "result": map[string]any{"SmileJobID": "job-123", "PartnerParams": map[string]any{"job_id": request.AttemptID, "user_id": request.VerificationID, "job_type": 6}, "Actions": map[string]any{"Selfie_Check": "Passed", "Liveness_Check": "Passed", "Verify_Document": "Passed", "Selfie_To_ID_Card_Compare": "Completed"}}}
+	return map[string]any{"code": "2302", "timestamp": timestamp, "signature": signature("test-key", timestamp), "job_id": request.AttemptID, "user_id": request.VerificationID, "job_complete": true, "job_success": true, "result": map[string]any{"SmileJobID": "job-123", "PartnerParams": map[string]any{"job_id": request.AttemptID, "user_id": request.VerificationID, "job_type": 6}, "Actions": map[string]any{"Selfie_Check": "Passed", "Liveness_Check": "Passed", "Verify_Document": "Passed", "Selfie_To_ID_Card_Compare": "Completed"}}}
 }
 func TestAdvanceResumeNeverReadsEvidenceAndRejectsUnboundResults(t *testing.T) {
 	t.Parallel()
@@ -41,7 +41,7 @@ func TestAdvanceResumeNeverReadsEvidenceAndRejectsUnboundResults(t *testing.T) {
 		{name: "bad signature", mutate: func(m map[string]any) { m["signature"] = "invalid" }, fail: true},
 		{name: "stale signature", mutate: func(m map[string]any) {
 			m["timestamp"] = "2020-01-01T00:00:00Z"
-			m["signature"] = signature("test-key", m["timestamp"].(string), "085")
+			m["signature"] = signature("test-key", m["timestamp"].(string))
 		}, fail: true},
 		{name: "malformed completion", mutate: func(m map[string]any) { m["job_complete"] = "true" }, fail: true},
 	}

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 	"unicode"
+	"unicode/utf8"
 )
 
 var (
@@ -207,9 +208,14 @@ func (result Result) Validate() error {
 		if result.Failure != nil || len(result.Signals) == 0 {
 			return invalid("result", "completed outcome requires signals and no failure")
 		}
+		if result.Document != nil {
+			if err := result.Document.Validate(); err != nil {
+				return err
+			}
+		}
 	case ResultOutcomeFailed:
-		if result.Failure == nil || len(result.Signals) != 0 {
-			return invalid("result", "failed outcome requires one failure and no signals")
+		if result.Failure == nil || len(result.Signals) != 0 || result.Document != nil {
+			return invalid("result", "failed outcome requires one failure and no signals or document data")
 		}
 		if err := result.Failure.validate(); err != nil {
 			return err
@@ -230,6 +236,83 @@ func (result Result) Validate() error {
 		return invalid("result", "exceeds maximum encoded size")
 	}
 	return nil
+}
+
+// Validate rejects unbounded or malformed provider document observations.
+func (observation DocumentObservation) Validate() error {
+	if len(observation.MRZLines) > MaximumMRZLines || len(observation.Fields) > MaximumDocumentFields ||
+		len(observation.BarcodePayload) > MaximumBarcodePayloadBytes {
+		return invalid("document", "bounds are invalid")
+	}
+	if len(observation.MRZLines) == 0 && observation.BarcodePayload == "" && len(observation.Fields) == 0 {
+		return invalid("document", "carries no observation")
+	}
+	for index, line := range observation.MRZLines {
+		if !validMRZLine(line) {
+			return invalid(fmt.Sprintf("document.mrz_lines[%d]", index), "is invalid")
+		}
+	}
+	if observation.BarcodePayload != "" && !validBarcodePayload(observation.BarcodePayload) {
+		return invalid("document.barcode_payload", "is invalid")
+	}
+	for index, field := range observation.Fields {
+		if err := field.Validate(); err != nil {
+			return invalid(fmt.Sprintf("document.fields[%d]", index), "is invalid")
+		}
+	}
+	return nil
+}
+
+// Validate rejects unbounded or non-printable extracted field entries.
+func (field DocumentField) Validate() error {
+	if !validDocumentText(field.Name, MaximumDocumentFieldBytes) || !validDocumentText(field.Value, MaximumDocumentFieldBytes) {
+		return invalid("document.fields", "entry is invalid")
+	}
+	return nil
+}
+
+func validMRZLine(value string) bool {
+	if value == "" || len(value) > MaximumMRZLineBytes || !utf8.ValidString(value) {
+		return false
+	}
+	for _, character := range value {
+		switch {
+		case character >= 'A' && character <= 'Z', character >= 'a' && character <= 'z',
+			character >= '0' && character <= '9', character == '<', character == ' ':
+			continue
+		default:
+			return false
+		}
+	}
+	return true
+}
+
+func validBarcodePayload(value string) bool {
+	if value == "" || len(value) > MaximumBarcodePayloadBytes || !utf8.ValidString(value) {
+		return false
+	}
+	for _, character := range value {
+		// AAMVA payloads use group and record separators with CR/LF framing.
+		if character == '\t' || character == '\n' || character == '\r' || character == '\x1d' || character == '\x1e' {
+			continue
+		}
+		if character < 0x20 || character == 0x7f {
+			return false
+		}
+	}
+	return true
+}
+
+func validDocumentText(value string, maximum int) bool {
+	if value == "" || len(value) > maximum || strings.TrimSpace(value) != value || !utf8.ValidString(value) {
+		return false
+	}
+	for _, character := range value {
+		if character < 0x20 || character == 0x7f {
+			return false
+		}
+	}
+	return true
 }
 
 // ValidateForRequest additionally proves exact attempt and version binding.

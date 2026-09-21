@@ -169,7 +169,11 @@ func (journey *providerPublicJourney) run(t *testing.T, admin, runtime *pg.Pool,
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = io.WriteString(w, `{"entity":{"status":{"overall_status":1},"text_data":[{"value":"discard-sensitive-provider-output"}]}}`)
+		_, _ = io.WriteString(w, `{"entity":{"status":{"overall_status":1},"document_type":{"document_country_code":"NGA"},"text_data":[`+
+			`{"field_name":"Document Number","field_key":"document_number","status":1,"value":"SENTINELDOCUMENTNUMBER"},`+
+			`{"field_name":"Sex","field_key":"sex","status":1,"value":"M"},`+
+			`{"field_name":"Date of Birth","field_key":"dob","status":1,"value":"1990-08-01"},`+
+			`{"field_name":"Date of Expiry","field_key":"expiry_date","status":1,"value":"2099-01-15"}]}}`)
 	}))
 	var smileFixture *smileJourneyFixture
 	if journey.smile {
@@ -375,7 +379,7 @@ func (journey *providerPublicJourney) run(t *testing.T, admin, runtime *pg.Pool,
 	if err := admin.Native().QueryRow(t.Context(), `SELECT (SELECT count(*) FROM idenqa.verification_checks),(SELECT count(*) FROM idenqa.provider_dispatches WHERE result_body IS NOT NULL),(SELECT count(*) FROM idenqa.verification_observations),(SELECT request_body FROM idenqa.provider_requests LIMIT 1)`).Scan(&checks, &dispatches, &observations, &saved); err != nil {
 		t.Fatal(err)
 	}
-	if checks != 1 || dispatches != 1 || observations != map[bool]int{false: 1, true: 4}[journey.smile] || (!journey.smile && calls.Load() != 1) {
+	if checks != 1 || dispatches != 1 || observations != map[bool]int{false: 5, true: 4}[journey.smile] || (!journey.smile && calls.Load() != 1) {
 		t.Fatalf("provider execution duplicated or incomplete: %d %d %d calls=%d", checks, dispatches, observations, calls.Load())
 	}
 	if journey.smile {
@@ -410,6 +414,14 @@ func (journey *providerPublicJourney) run(t *testing.T, admin, runtime *pg.Pool,
 	if bytes.Contains(encoded, []byte("discard-sensitive")) {
 		t.Fatal("raw provider output escaped normalization")
 	}
+	if !journey.smile {
+		// The mapped Dojah observation is consumed into bounded Core signals,
+		// the stored dispatch carries no raw value, and no durable state leaks
+		// the extracted document number.
+		assertStoredProviderSignal(t, *result, verification.SignalDocumentExpiry, providerv1.SignalOutcomeSatisfied)
+		assertStoredProviderSignal(t, *result, verification.SignalDocumentClassification, providerv1.SignalOutcomeInconclusive)
+		assertNoProviderRawLeak(t, admin, "SENTINELDOCUMENTNUMBER")
+	}
 	// Completed dispatches cannot redeem or leak their evidence, including exact replay.
 	payload, _ := json.Marshal(map[string]string{"attempt_id": request.AttemptID, "grant_id": request.Evidence[0].GrantID, "redemption_id": request.Evidence[0].RedemptionID})
 	req, err := http.NewRequestWithContext(t.Context(), "POST", base+"/internal/v1/provider-evidence", bytes.NewReader(payload))
@@ -430,6 +442,28 @@ func (journey *providerPublicJourney) run(t *testing.T, admin, runtime *pg.Pool,
 		t.Fatalf("completed grant replay status=%d", response.StatusCode)
 	}
 }
+
+// assertNoProviderRawLeak proves one raw provider extraction value never
+// reached any durable provider body, observation, outbox event, or realtime
+// event.
+func assertNoProviderRawLeak(t *testing.T, admin *pg.Pool, sentinel string) {
+	t.Helper()
+	pattern := "%" + sentinel + "%"
+	var leaked int
+	if err := admin.Native().QueryRow(t.Context(), `SELECT
+		(SELECT count(*) FROM idenqa.provider_dispatches WHERE result_body::text LIKE $1) +
+		(SELECT count(*) FROM idenqa.provider_requests WHERE request_body::text LIKE $1) +
+		(SELECT count(*) FROM idenqa.provider_callback_receipts WHERE progress_body::text LIKE $1) +
+		(SELECT count(*) FROM idenqa.verification_observations WHERE signal_name::text LIKE $1 OR reason_codes::text LIKE $1) +
+		(SELECT count(*) FROM idenqa.outbox_events WHERE payload::text LIKE $1) +
+		(SELECT count(*) FROM idenqa.realtime_events WHERE payload::text LIKE $1)`, pattern).Scan(&leaked); err != nil {
+		t.Fatal(err)
+	}
+	if leaked != 0 {
+		t.Fatalf("durable state leaked raw provider document value: %d rows", leaked)
+	}
+}
+
 func waitProviderAttempt(t *testing.T, admin *pg.Pool, verificationID string, expected ...int) {
 	t.Helper()
 	deadline := time.NewTimer(20 * time.Second)

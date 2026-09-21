@@ -1,6 +1,10 @@
 import { LitElement, css, html, nothing, type PropertyValues } from "lit";
 
-import type { CaptureRealtimeEvent, SubjectResponseAction } from "@idenqa/sdk";
+import type {
+  CaptureRealtimeEvent,
+  ExperienceResolution,
+  SubjectResponseAction,
+} from "@idenqa/sdk";
 import type { EvidenceUpload } from "@idenqa/sdk";
 
 import {
@@ -21,8 +25,26 @@ import {
   captureCameraFrame,
   startCamera,
   stopCamera,
+  type CameraFrame,
 } from "./camera.js";
 import { FILE_UPLOAD_METHOD, fileUploadPolicy, formatBytes } from "./upload.js";
+import {
+  DOCUMENT_GUIDE_ASPECT_RATIO,
+  captureCorrectedDocumentFrame,
+  createDocumentFrameObserver,
+  isDocumentArtefact,
+  normalizeCaptureDocumentCaptureOptions,
+  type CaptureDocumentCaptureOptions,
+  type DocumentFrameObserver,
+  type NormalizedCaptureDocumentCaptureOptions,
+} from "./document-capture.js";
+import {
+  createDocumentCaptureGate,
+  type DocumentCaptureGate,
+  type DocumentCaptureGateResult,
+  type DocumentDetection,
+  type DocumentQuad,
+} from "./document-detection.js";
 import {
   createCaptureLocalizer,
   type CaptureLocalizer,
@@ -41,6 +63,11 @@ import {
   type CaptureMethodAdapterContext,
   type CaptureMethodAdapterProgress,
 } from "./method-adapter.js";
+import {
+  applyCaptureExperienceTheme,
+  captureExperiencePresentation,
+  type CaptureExperiencePresentation,
+} from "./experience.js";
 
 export const IDENQA_CAPTURE_TAG_NAME = "idenqa-capture";
 
@@ -85,8 +112,20 @@ export interface CaptureElementStartOptions extends CaptureFlowStartOptions {
   readonly expectedVerificationId?: string;
   /** Optional translations for package-owned UI copy. The server notice is never overridden. */
   readonly messageCatalogue?: CaptureMessageCatalogue;
+  /**
+   * Optional signed portable-experience resolution. It supplies the pinned
+   * locale, tenant copy for the allow-listed UI keys, safe theme tokens where
+   * the host has not set its own, and validated links. It never changes
+   * assurance, notices, or capture requirements.
+   */
+  readonly experience?: ExperienceResolution;
   /** Programmatic integrations for approved acquisition methods not owned by the built-in UI. */
   readonly methodAdapters?: readonly CaptureMethodAdapter[];
+  /**
+   * Optional tuning for automatic document capture, perspective correction, and
+   * cropping. Detection is enabled for document artefacts unless explicitly disabled.
+   */
+  readonly documentCapture?: CaptureDocumentCaptureOptions;
 }
 
 export interface CaptureCompleteDetail extends CaptureProgressDetail {
@@ -115,6 +154,23 @@ interface StepCompletion {
   readonly acquisitionMethod: string;
   readonly uploadId: string;
   readonly evidenceId: string;
+}
+
+interface StepDocumentState {
+  readonly status: DocumentCaptureGateResult["status"];
+  readonly reason?: DocumentCaptureGateResult["reason"];
+  readonly progress: number;
+  readonly quad?: DocumentQuad;
+  readonly frameWidth?: number;
+  readonly frameHeight?: number;
+}
+
+interface StepDocumentObservation {
+  interval: ReturnType<typeof globalThis.setInterval> | undefined;
+  autoCaptureTimer: ReturnType<typeof globalThis.setTimeout> | undefined;
+  readonly observer: DocumentFrameObserver;
+  readonly gate: DocumentCaptureGate;
+  detection: DocumentDetection | undefined;
 }
 
 interface StepAdapterState {
@@ -445,6 +501,42 @@ export class IdenqaCaptureElement extends LitElement {
       margin: 0;
     }
 
+    .document-preview-frame {
+      position: relative;
+    }
+
+    .document-guide {
+      block-size: 100%;
+      inline-size: 100%;
+      inset: 0;
+      pointer-events: none;
+      position: absolute;
+    }
+
+    .document-guide-target {
+      fill: none;
+      stroke: var(--idq-capture-face-guide);
+      stroke-dasharray: 14 12;
+      stroke-width: 3.5;
+    }
+
+    .document-guide-quad {
+      fill: none;
+      stroke: var(--idq-capture-face-guide);
+      stroke-linejoin: round;
+      stroke-width: 5;
+    }
+
+    .document-guide[data-state="steadying"] .document-guide-target {
+      stroke-dasharray: 6 6;
+      stroke-width: 4.5;
+    }
+
+    .document-guide[data-state="ready"] .document-guide-target {
+      stroke-dasharray: none;
+      stroke-width: 7;
+    }
+
     .adapter-option {
       display: grid;
       gap: 1rem;
@@ -501,7 +593,8 @@ export class IdenqaCaptureElement extends LitElement {
       transform: translateX(50%);
     }
 
-    .liveness-auto-capture {
+    .liveness-auto-capture,
+    .document-auto-capture {
       align-items: center;
       background: var(--idq-capture-surface-strong);
       border-radius: 999px;
@@ -515,7 +608,8 @@ export class IdenqaCaptureElement extends LitElement {
       padding: 0.4rem 0.75rem;
     }
 
-    .liveness-auto-capture::before {
+    .liveness-auto-capture::before,
+    .document-auto-capture::before {
       content: "●";
       font-size: 0.55rem;
     }
@@ -1125,6 +1219,12 @@ export class IdenqaCaptureElement extends LitElement {
   `;
 
   declare plan: CapturePlan | undefined;
+
+  /** Signed portable-experience presentation applied to this journey, if any. */
+  get experience(): CaptureExperiencePresentation | undefined {
+    return this.#experience;
+  }
+
   readonly #selectedMethods = new Map<string, string>();
   readonly #uploadStates = new Map<string, StepUploadState>();
   readonly #cameraStates = new Map<string, StepCameraState>();
@@ -1139,18 +1239,36 @@ export class IdenqaCaptureElement extends LitElement {
   #captureCompleteDispatched = false;
   #outcomePolling = false;
   #localizer: CaptureLocalizer = createCaptureLocalizer(browserLocale());
+  #experience: CaptureExperiencePresentation | undefined;
   #journeyPhase: JourneyPhase = "intro";
   #stepStage: StepStage = "method";
   #activeStepIndex = 0;
+  readonly #documentStates = new Map<string, StepDocumentState>();
+  readonly #documentObservations = new Map<string, StepDocumentObservation>();
+  readonly #capturingSteps = new Set<string>();
+  #documentCapture: NormalizedCaptureDocumentCaptureOptions =
+    normalizeCaptureDocumentCaptureOptions();
 
   async start(options: CaptureElementStartOptions): Promise<CaptureFlowSnapshot> {
     const {
       messageCatalogue = {},
+      experience,
       expectedVerificationId,
       methodAdapters = [],
+      documentCapture,
       ...flowOptions
     } = options;
-    this.#localizer = createCaptureLocalizer(browserLocale(), messageCatalogue);
+    const presentation =
+      experience === undefined ? undefined : captureExperiencePresentation(experience);
+    this.#experience = presentation;
+    if (presentation?.theme !== undefined) applyCaptureExperienceTheme(this, presentation.theme);
+    const catalogue = mergeCaptureMessageCatalogues(
+      presentation?.messageCatalogue,
+      messageCatalogue,
+    );
+    const documentCaptureOptions = normalizeCaptureDocumentCaptureOptions(documentCapture);
+    this.#localizer = createCaptureLocalizer(presentation?.locale ?? browserLocale(), catalogue);
+    this.#documentCapture = documentCaptureOptions;
     this.#clearCameraStates();
     this.#clearAdapterStates();
     this.#flowAbortController?.abort();
@@ -1190,8 +1308,8 @@ export class IdenqaCaptureElement extends LitElement {
         }
       } else {
         this.#localizer = createCaptureLocalizer(
-          snapshot.authoritySnapshot.notice.locale,
-          messageCatalogue,
+          this.#experience?.locale ?? snapshot.authoritySnapshot.notice.locale,
+          catalogue,
         );
         this.#assertMethodAdapters(snapshot.plan);
         this.#restoreRecoveredProgress(snapshot);
@@ -2238,6 +2356,12 @@ export class IdenqaCaptureElement extends LitElement {
     lockedByFile: boolean,
   ) {
     const videoId = `idq-camera-${idSuffix}`;
+    const key = stepKey(step);
+    const documentCaptureActive =
+      isDocumentArtefact(step.artefact) &&
+      this.#documentCapture.enabled &&
+      this.#flowController !== undefined;
+    const documentState = this.#documentStates.get(key);
     return html`
       <div class="camera-option">
         ${
@@ -2265,24 +2389,42 @@ export class IdenqaCaptureElement extends LitElement {
         ${
           state?.status === "streaming"
             ? html`
-                <video
-                  class="camera-preview"
-                  id=${videoId}
-                  width="640"
-                  height="480"
-                  autoplay
-                  muted
-                  playsinline
-                  aria-label=${this.#text("liveCameraPreviewLabel", {
-                    artefact: friendlyArtefact(step.artefact, this.#localizer),
-                  })}
-                ></video>
+                <div
+                  class="document-preview-frame"
+                  data-document-capture=${String(documentCaptureActive)}
+                >
+                  <video
+                    class="camera-preview"
+                    id=${videoId}
+                    width="640"
+                    height="480"
+                    autoplay
+                    muted
+                    playsinline
+                    aria-label=${this.#text("liveCameraPreviewLabel", {
+                      artefact: friendlyArtefact(step.artefact, this.#localizer),
+                    })}
+                  ></video>
+                  ${documentCaptureActive ? this.#renderDocumentGuide(state, documentState) : nothing}
+                </div>
                 <p class="camera-guidance">${this.#text("cameraGuidance")}</p>
+                ${
+                  documentCaptureActive && this.#documentCapture.autoCapture
+                    ? html`<p class="document-auto-capture">
+                        ${this.#text("documentAutoCapture")}
+                      </p>`
+                    : nothing
+                }
                 <div class="camera-actions">
                   <button
                     type="button"
-                    ?disabled=${state.ready !== true}
-                    @click=${() => void this.#capturePhoto(step, videoId)}
+                    ?disabled=${state.ready !== true || this.#capturingSteps.has(key)}
+                    @click=${() =>
+                      void this.#capturePhoto(
+                        step,
+                        videoId,
+                        this.#documentObservations.get(key)?.detection,
+                      )}
                   >
                     ${this.#text("capturePhoto")}
                   </button>
@@ -2344,7 +2486,9 @@ export class IdenqaCaptureElement extends LitElement {
               ? this.#text("waitingForCameraPermission")
               : state?.status === "streaming"
                 ? state.ready === true
-                  ? this.#text("cameraReady")
+                  ? documentCaptureActive
+                    ? documentHintMessage(documentState, this.#localizer)
+                    : this.#text("cameraReady")
                   : this.#text("startingCameraPreview")
                 : state?.status === "reviewing"
                   ? this.#text("reviewCapturedPhoto")
@@ -2359,6 +2503,38 @@ export class IdenqaCaptureElement extends LitElement {
             : nothing
         }
       </div>
+    `;
+  }
+
+  #renderDocumentGuide(state: StepCameraState, documentState: StepDocumentState | undefined) {
+    const width = state.width ?? 640;
+    const height = state.height ?? 480;
+    if (width <= 0 || height <= 0) return nothing;
+    const guide = documentGuideRect(width, height);
+    const quad = documentState?.quad;
+    return html`
+      <svg
+        class="document-guide"
+        viewBox="0 0 ${width} ${height}"
+        preserveAspectRatio="xMidYMid meet"
+        data-state=${documentState?.status ?? "searching"}
+        aria-hidden="true"
+        focusable="false"
+      >
+        <rect
+          class="document-guide-target"
+          x=${roundCoordinate(guide.x)}
+          y=${roundCoordinate(guide.y)}
+          width=${roundCoordinate(guide.width)}
+          height=${roundCoordinate(guide.height)}
+          rx=${roundCoordinate(Math.min(guide.width, guide.height) * 0.04)}
+        ></rect>
+        ${
+          quad === undefined
+            ? nothing
+            : html`<polygon class="document-guide-quad" points=${quadPoints(quad)}></polygon>`
+        }
+      </svg>
     `;
   }
 
@@ -2804,42 +2980,64 @@ export class IdenqaCaptureElement extends LitElement {
         return;
       }
       video.srcObject = stream;
-      video.addEventListener("loadedmetadata", () => this.#markCameraReady(key, stream, video), {
-        once: true,
-      });
+      video.addEventListener(
+        "loadedmetadata",
+        () => this.#markCameraReady(step, key, stream, video),
+        {
+          once: true,
+        },
+      );
       await video.play();
-      this.#markCameraReady(key, stream, video);
+      this.#markCameraReady(step, key, stream, video);
     } catch (error) {
       if (signal.aborted) return;
       this.#handleCameraFailure(step, error);
     }
   }
 
-  async #capturePhoto(step: CapturePlanStep, videoId: string): Promise<void> {
+  async #capturePhoto(
+    step: CapturePlanStep,
+    videoId: string,
+    detection?: DocumentDetection,
+  ): Promise<void> {
     const key = stepKey(step);
     const state = this.#cameraStates.get(key);
     const video = this.renderRoot.querySelector<HTMLVideoElement>(`#${videoId}`);
     if (state?.status !== "streaming" || state.ready !== true || video === null) return;
+    if (this.#capturingSteps.has(key)) return;
     const flow = this.#flowSnapshot;
     if (flow === undefined || !isActiveCaptureFlowSnapshot(flow)) return;
+    this.#capturingSteps.add(key);
+    this.#stopDocumentObservation(key);
     try {
       const policy = fileUploadPolicy(flow.session, step);
       const mediaType = policy.allowedMediaTypes.includes("image/jpeg")
         ? "image/jpeg"
         : policy.allowedMediaTypes[0]!;
-      const frame = await captureCameraFrame(video, mediaType);
+      let frame: CameraFrame | undefined;
+      if (detection !== undefined && isDocumentArtefact(step.artefact)) {
+        frame = await captureCorrectedDocumentFrame(
+          video,
+          mediaType,
+          detection,
+          this.#documentCapture,
+        );
+      }
+      const captured = frame ?? (await captureCameraFrame(video, mediaType));
       stopCamera(state.stream);
       video.srcObject = null;
       this.#cameraStates.set(key, {
         status: "reviewing",
-        body: frame.body,
-        previewUrl: URL.createObjectURL(frame.body),
-        width: frame.width,
-        height: frame.height,
+        body: captured.body,
+        previewUrl: URL.createObjectURL(captured.body),
+        width: captured.width,
+        height: captured.height,
       });
       this.requestUpdate();
     } catch (error) {
       this.#handleCameraFailure(step, error);
+    } finally {
+      this.#capturingSteps.delete(key);
     }
   }
 
@@ -2923,6 +3121,8 @@ export class IdenqaCaptureElement extends LitElement {
   }
 
   #clearCameraState(key: string): void {
+    this.#stopDocumentObservation(key);
+    this.#capturingSteps.delete(key);
     const state = this.#cameraStates.get(key);
     stopCamera(state?.stream);
     if (state?.previewUrl !== undefined) URL.revokeObjectURL(state.previewUrl);
@@ -2939,7 +3139,12 @@ export class IdenqaCaptureElement extends LitElement {
     for (const key of [...this.#uploadStates.keys()]) this.#clearUploadState(key);
   }
 
-  #markCameraReady(key: string, stream: MediaStream, video: HTMLVideoElement): void {
+  #markCameraReady(
+    step: CapturePlanStep,
+    key: string,
+    stream: MediaStream,
+    video: HTMLVideoElement,
+  ): void {
     const state = this.#cameraStates.get(key);
     if (
       state?.status !== "streaming" ||
@@ -2949,12 +3154,107 @@ export class IdenqaCaptureElement extends LitElement {
     ) {
       return;
     }
-    this.#cameraStates.set(key, { ...state, ready: true });
+    this.#cameraStates.set(key, {
+      ...state,
+      ready: true,
+      width: video.videoWidth,
+      height: video.videoHeight,
+    });
+    if (
+      isDocumentArtefact(step.artefact) &&
+      this.#documentCapture.enabled &&
+      !this.#documentObservations.has(key)
+    ) {
+      this.#startDocumentObservation(step, key, video);
+    }
     this.requestUpdate();
   }
 
   #clearCameraStates(): void {
+    for (const key of [...this.#documentObservations.keys()]) this.#stopDocumentObservation(key);
     for (const key of [...this.#cameraStates.keys()]) this.#clearCameraState(key);
+    this.#documentStates.clear();
+    this.#capturingSteps.clear();
+  }
+
+  #startDocumentObservation(step: CapturePlanStep, key: string, video: HTMLVideoElement): void {
+    this.#stopDocumentObservation(key);
+    const observer = createDocumentFrameObserver(this.#documentCapture);
+    const gate = createDocumentCaptureGate(this.#documentCapture.gate);
+    const observation: StepDocumentObservation = {
+      interval: undefined,
+      autoCaptureTimer: undefined,
+      observer,
+      gate,
+      detection: undefined,
+    };
+    observation.interval = globalThis.setInterval(() => {
+      this.#observeDocument(step, key, video, observation);
+    }, this.#documentCapture.observationIntervalMs);
+    this.#documentObservations.set(key, observation);
+    this.#setDocumentState(key, { status: "searching", progress: 0 });
+  }
+
+  #observeDocument(
+    step: CapturePlanStep,
+    key: string,
+    video: HTMLVideoElement,
+    observation: StepDocumentObservation,
+  ): void {
+    if (this.#documentObservations.get(key) !== observation) return;
+    const camera = this.#cameraStates.get(key);
+    if (camera?.status !== "streaming" || camera.ready !== true) return;
+    if (this.#capturingSteps.has(key) || this.#completedSteps.has(key)) return;
+    const observed = observation.observer.observe(video);
+    if (observed === undefined) return;
+    const result = observation.gate.observe(observed);
+    observation.detection = observed.detection;
+    this.#setDocumentState(key, {
+      status: result.status,
+      progress: result.requiredFrames === 0 ? 0 : result.stableFrames / result.requiredFrames,
+      ...(result.reason === undefined ? {} : { reason: result.reason }),
+      ...(observed.detection === undefined
+        ? {}
+        : {
+            quad: observed.detection.quad,
+            frameWidth: observed.detection.frameWidth,
+            frameHeight: observed.detection.frameHeight,
+          }),
+    });
+    if (
+      result.status === "ready" &&
+      this.#documentCapture.autoCapture &&
+      observed.detection !== undefined &&
+      observation.autoCaptureTimer === undefined
+    ) {
+      const detection = observed.detection;
+      observation.autoCaptureTimer = globalThis.setTimeout(() => {
+        observation.autoCaptureTimer = undefined;
+        if (this.#documentObservations.get(key) !== observation) return;
+        void this.#capturePhoto(step, video.id, detection);
+      }, this.#documentCapture.autoCaptureDelayMs);
+    }
+  }
+
+  #stopDocumentObservation(key: string): void {
+    const observation = this.#documentObservations.get(key);
+    if (observation === undefined) return;
+    if (observation.interval !== undefined) globalThis.clearInterval(observation.interval);
+    if (observation.autoCaptureTimer !== undefined) {
+      globalThis.clearTimeout(observation.autoCaptureTimer);
+    }
+    observation.observer.dispose();
+    this.#documentObservations.delete(key);
+    this.#documentStates.delete(key);
+  }
+
+  #setDocumentState(key: string, next: StepDocumentState): void {
+    const current = this.#documentStates.get(key);
+    if (current !== undefined && documentStateSignature(current) === documentStateSignature(next)) {
+      return;
+    }
+    this.#documentStates.set(key, next);
+    this.requestUpdate();
   }
 
   #completeStep(step: CapturePlanStep, acquisitionMethod: string, upload: EvidenceUpload): void {
@@ -3210,6 +3510,61 @@ function stepKey(step: CapturePlanStep): string {
   ]);
 }
 
+function documentStateSignature(state: StepDocumentState): string {
+  const quad = state.quad;
+  const points =
+    quad === undefined
+      ? ""
+      : [quad.topLeft, quad.topRight, quad.bottomRight, quad.bottomLeft]
+          .map((point) => `${point.x.toFixed(1)},${point.y.toFixed(1)}`)
+          .join(";");
+  return `${state.status}|${state.reason ?? ""}|${state.progress.toFixed(2)}|${points}|${state.frameWidth ?? 0}x${state.frameHeight ?? 0}`;
+}
+
+function documentHintMessage(
+  state: StepDocumentState | undefined,
+  localizer: CaptureLocalizer,
+): string {
+  if (state === undefined || state.status === "searching") {
+    return localizer.text("documentSearching");
+  }
+  if (state.status === "ready") return localizer.text("documentReady");
+  if (state.status === "steadying") return localizer.text("documentHoldSteady");
+  return state.reason === "low_coverage"
+    ? localizer.text("documentMoveCloser")
+    : localizer.text("documentAligning");
+}
+
+function documentGuideRect(
+  width: number,
+  height: number,
+): { readonly x: number; readonly y: number; readonly width: number; readonly height: number } {
+  const maximumWidth = width * 0.86;
+  const maximumHeight = height * 0.86;
+  let guideWidth = maximumWidth;
+  let guideHeight = guideWidth / DOCUMENT_GUIDE_ASPECT_RATIO;
+  if (guideHeight > maximumHeight) {
+    guideHeight = maximumHeight;
+    guideWidth = guideHeight * DOCUMENT_GUIDE_ASPECT_RATIO;
+  }
+  return {
+    x: (width - guideWidth) / 2,
+    y: (height - guideHeight) / 2,
+    width: guideWidth,
+    height: guideHeight,
+  };
+}
+
+function quadPoints(quad: DocumentQuad): string {
+  return [quad.topLeft, quad.topRight, quad.bottomRight, quad.bottomLeft]
+    .map((point) => `${roundCoordinate(point.x)},${roundCoordinate(point.y)}`)
+    .join(" ");
+}
+
+function roundCoordinate(value: number): number {
+  return Math.round(value * 10) / 10;
+}
+
 function captureProgress(
   plan: CapturePlan,
   completedSteps: ReadonlyMap<string, StepCompletion>,
@@ -3360,6 +3715,18 @@ function labelForIdentifier(identifier: string): string {
 
 function browserLocale(): string {
   return globalThis.navigator?.languages?.[0] ?? globalThis.navigator?.language ?? "en";
+}
+
+function mergeCaptureMessageCatalogues(
+  base: CaptureMessageCatalogue | undefined,
+  override: CaptureMessageCatalogue,
+): CaptureMessageCatalogue {
+  if (base === undefined) return override;
+  const merged: Record<string, Partial<Record<CaptureMessageKey, string>>> = {};
+  for (const locale of new Set([...Object.keys(base), ...Object.keys(override)])) {
+    merged[locale] = { ...base[locale], ...override[locale] };
+  }
+  return merged;
 }
 
 function planSteps(plan: CapturePlan): readonly CapturePlanStep[] {

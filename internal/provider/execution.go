@@ -10,6 +10,7 @@ import (
 
 	providerv1 "github.com/Mujhtech/idenqa/contracts/provider/v1"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
 	"github.com/Mujhtech/idenqa/internal/tenant"
 	"github.com/Mujhtech/idenqa/internal/verification"
 )
@@ -33,6 +34,7 @@ type DurableExecutor struct {
 	repository RequestRepository
 	executor   providerv1.Executor
 	now        func() time.Time
+	metrics    Metrics
 }
 
 // NewDurableExecutor composes a single provider dispatch with durable recovery.
@@ -40,7 +42,15 @@ func NewDurableExecutor(repository RequestRepository, executor providerv1.Execut
 	if repository == nil || executor == nil || now == nil {
 		return nil, ErrRequestUnavailable
 	}
-	return &DurableExecutor{repository, executor, now}, nil
+	return &DurableExecutor{repository, executor, now, nil}, nil
+}
+
+// WithMetrics attaches the bounded provider dispatch metric receiver.
+func (executor *DurableExecutor) WithMetrics(metrics Metrics) *DurableExecutor {
+	if executor != nil && metrics != nil {
+		executor.metrics = metrics
+	}
+	return executor
 }
 
 // Execute sends one exact request, or recovers its stored result without a new call.
@@ -53,12 +63,20 @@ func (executor *DurableExecutor) Execute(ctx context.Context, request providerv1
 		return providerv1.Result{}, err
 	}
 	if result != nil {
+		executor.observe(request, observability.DispatchRecovered, observability.FailureNone)
 		return *result, nil
 	}
 	if !claimed {
+		executor.observe(request, observability.DispatchFailed, observability.FailureUnavailable)
 		return providerv1.Result{}, ErrDispatchPending
 	}
 	value, err := executor.executor.Execute(ctx, request)
+	if err == nil {
+		// The document observation is transient: consume it into bounded Core
+		// signals before any persistence. A malformed observation fails closed
+		// as an operational ambiguity, never as an identity outcome.
+		value, err = verification.ConsumeProviderDocument(value)
+	}
 	if err != nil || value.ValidateForRequest(request) != nil {
 		// The remote process may have submitted the request before losing its reply.
 		// Persist a stable ambiguity outcome; a failed commit leaves the claim pending.
@@ -67,7 +85,19 @@ func (executor *DurableExecutor) Execute(ctx context.Context, request providerv1
 	if err := executor.repository.Complete(ctx, request, value); err != nil {
 		return providerv1.Result{}, err
 	}
+	executor.observe(request, providerDispatchOutcome(value), providerFailureClass(value))
 	return value, nil
+}
+
+func (executor *DurableExecutor) observe(request providerv1.Request, outcome observability.DispatchOutcome, class observability.FailureClass) {
+	if executor.metrics == nil {
+		return
+	}
+	executor.metrics.RecordProviderDispatch(observability.ProviderDispatch{
+		Provider:     providerLabel(request),
+		Outcome:      outcome,
+		FailureClass: class,
+	})
 }
 
 func (executor *DurableExecutor) uncertain(request providerv1.Request) providerv1.Result {

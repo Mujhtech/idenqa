@@ -13,8 +13,11 @@ import (
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 )
 
-// ProviderResultFingerprint identifies exact safe provider delivery content for inbox deduplication.
+// ProviderResultFingerprint identifies exact safe provider delivery content for
+// inbox deduplication. The transient document observation is never bound into
+// the digest, so a result with and without it fingerprints identically.
 func ProviderResultFingerprint(result providerv1.Result) (string, error) {
+	result.Document = nil
 	return resultFingerprint(result)
 }
 
@@ -37,11 +40,14 @@ type ObservationIDGenerator interface {
 	NewObservation() (id.Observation, error)
 }
 
-// NormaliseProviderResult validates an exact provider binding and removes contract-specific types.
+// NormaliseProviderResult validates an exact provider binding and removes
+// contract-specific types. Optional deterministic document post-processing
+// appends bounded Core signals without changing provider signal meaning.
 func NormaliseProviderResult(
 	result providerv1.Result,
 	attempt Attempt,
 	identifiers ObservationIDGenerator,
+	options ...ResultOption,
 ) ([]Observation, *Failure, error) {
 	if identifiers == nil || result.AttemptID != attempt.ID.String() ||
 		!providerv1.CurrentVersion.Accepts(result.Contract) || !utcNonZero(result.CompletedAt) ||
@@ -62,18 +68,35 @@ func NormaliseProviderResult(
 	if result.Outcome != providerv1.ResultOutcomeCompleted || result.Failure != nil {
 		return nil, nil, ErrInvalidCheck
 	}
+	consumed, err := ConsumeProviderDocument(result)
+	if err != nil {
+		return nil, nil, err
+	}
+	result = consumed
 	signals := make([]Signal, len(result.Signals))
 	for index, signal := range result.Signals {
 		signals[index] = Signal{Name: signal.Name, Outcome: SignalOutcome(signal.Outcome), ReasonCodes: signal.ReasonCodes}
 	}
+	resolved, err := resolveResultOptions(options)
+	if err != nil {
+		return nil, nil, err
+	}
+	derived, err := documentSignals(resolved, result.CompletedAt)
+	if err != nil {
+		return nil, nil, err
+	}
+	signals = mergeDocumentSignals(signals, derived)
 	return observations(attempt, result.CompletedAt, signals, identifiers)
 }
 
-// NormaliseModelResult validates an exact model binding and removes contract-specific types.
+// NormaliseModelResult validates an exact model binding and removes
+// contract-specific types. Optional deterministic document post-processing
+// appends bounded Core signals without changing model signal meaning.
 func NormaliseModelResult(
 	result modelv1.Result,
 	attempt Attempt,
 	identifiers ObservationIDGenerator,
+	options ...ResultOption,
 ) ([]Observation, *Failure, error) {
 	if identifiers == nil || result.AttemptID != attempt.ID.String() ||
 		!modelv1.CurrentVersion.Accepts(result.Contract) || !utcNonZero(result.CompletedAt) ||
@@ -95,6 +118,15 @@ func NormaliseModelResult(
 	for index, signal := range result.Signals {
 		signals[index] = Signal{Name: signal.Name, Outcome: SignalOutcome(signal.Outcome), ReasonCodes: signal.ReasonCodes}
 	}
+	resolved, err := resolveResultOptions(options)
+	if err != nil {
+		return nil, nil, err
+	}
+	derived, err := documentSignals(resolved, result.CompletedAt)
+	if err != nil {
+		return nil, nil, err
+	}
+	signals = mergeDocumentSignals(signals, derived)
 	return observations(attempt, result.CompletedAt, signals, identifiers)
 }
 
@@ -118,12 +150,12 @@ func observations(attempt Attempt, completedAt time.Time, signals []Signal, iden
 }
 
 // ApplyProviderResult shares the callback, polling, and direct execution result path.
-func ApplyProviderResult(check *Check, result providerv1.Result, identifiers ObservationIDGenerator, fence uint64) (string, error) {
+func ApplyProviderResult(check *Check, result providerv1.Result, identifiers ObservationIDGenerator, fence uint64, options ...ResultOption) (string, error) {
 	attempt, err := attemptForResult(check, RunnerProvider, result.AttemptID)
 	if err != nil {
 		return "", err
 	}
-	observations, failure, err := NormaliseProviderResult(result, attempt, identifiers)
+	observations, failure, err := NormaliseProviderResult(result, attempt, identifiers, options...)
 	if err != nil {
 		return "", err
 	}
@@ -134,12 +166,12 @@ func ApplyProviderResult(check *Check, result providerv1.Result, identifiers Obs
 }
 
 // ApplyModelResult shares the synchronous and asynchronous model result path.
-func ApplyModelResult(check *Check, result modelv1.Result, identifiers ObservationIDGenerator, fence uint64) (string, error) {
+func ApplyModelResult(check *Check, result modelv1.Result, identifiers ObservationIDGenerator, fence uint64, options ...ResultOption) (string, error) {
 	attempt, err := attemptForResult(check, RunnerModel, result.AttemptID)
 	if err != nil {
 		return "", err
 	}
-	observations, failure, err := NormaliseModelResult(result, attempt, identifiers)
+	observations, failure, err := NormaliseModelResult(result, attempt, identifiers, options...)
 	if err != nil {
 		return "", err
 	}

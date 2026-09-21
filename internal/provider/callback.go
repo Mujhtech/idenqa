@@ -193,8 +193,14 @@ func CallbackConfigurationDigest(request providerv1.Request) (string, error) {
 }
 
 // CallbackProgressDigest canonicalizes one normalized progress value for
-// exact replay comparison.
+// exact replay comparison. A transient document observation is never bound
+// into the digest.
 func CallbackProgressDigest(progress providerv1.Progress) (string, error) {
+	if progress.Result != nil && progress.Result.Document != nil {
+		copyOf := *progress.Result
+		copyOf.Document = nil
+		progress.Result = &copyOf
+	}
 	encoded, err := json.Marshal(progress)
 	if err != nil {
 		return "", err

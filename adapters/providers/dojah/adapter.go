@@ -155,10 +155,14 @@ func (adapter *Adapter) imageCheck(ctx context.Context, request providerv1.Reque
 		return transportFailure(request, adapter.now, status, retryAfter), nil
 	}
 	outcome := responseOutcome(response)
+	var observation *providerv1.DocumentObservation
 	if signal == "idenqa.signal.document_quality" {
 		outcome = documentOutcome(response)
+		observation = documentObservation(response, outcome)
 	}
-	return completed(request, adapter.now, signal, outcome), nil
+	result := completed(request, adapter.now, signal, outcome)
+	result.Document = observation
+	return result, nil
 }
 
 func (adapter *Adapter) faceMatch(ctx context.Context, request providerv1.Request, configuration Config) (providerv1.Result, error) {
@@ -467,4 +471,99 @@ func documentOutcome(response map[string]any) providerv1.SignalOutcome {
 	default:
 		return providerv1.SignalOutcomeInconclusive
 	}
+}
+
+// documentObservation maps only the extraction keys published for
+// POST /api/v1/document/analysis. Extraction is attached only to an explicitly
+// valid analysis; failed, inconclusive, or absent status always stays without
+// an observation. The endpoint documents no MRZ text and no decoded barcode
+// payload, so those fields remain absent rather than being inferred from other
+// keys. Unknown text_data keys, unreadable entries, malformed values, and
+// values outside the closed contract bounds are ignored.
+func documentObservation(response map[string]any, outcome providerv1.SignalOutcome) *providerv1.DocumentObservation {
+	if outcome != providerv1.SignalOutcomeSatisfied {
+		return nil
+	}
+	entity, ok := response["entity"].(map[string]any)
+	if !ok {
+		return nil
+	}
+	var observation providerv1.DocumentObservation
+	if documentType, ok := entity["document_type"].(map[string]any); ok {
+		appendDocumentField(&observation, "issuing_state", documentType["document_country_code"])
+	}
+	if entries, ok := entity["text_data"].([]any); ok {
+		for _, entry := range entries {
+			item, ok := entry.(map[string]any)
+			if !ok || !documentFieldRead(item["status"]) {
+				continue
+			}
+			switch documentFieldKey(item["field_key"]) {
+			case "document_number":
+				appendDocumentField(&observation, "document_number", item["value"])
+			case "sex":
+				appendDocumentField(&observation, "sex", item["value"])
+			case "dob":
+				appendDocumentField(&observation, "date_of_birth", documentDate(item["value"]))
+			case "expiry_date":
+				appendDocumentField(&observation, "date_of_expiry", documentDate(item["value"]))
+			}
+		}
+	}
+	if observation.Validate() != nil {
+		return nil
+	}
+	return &observation
+}
+
+// documentFieldRead reports the documented text_data read status: 1 is read,
+// 0 is not present, and 2 is present but unreadable.
+func documentFieldRead(status any) bool {
+	value, ok := status.(float64)
+	return ok && value == 1
+}
+
+func documentFieldKey(value any) string {
+	text, ok := value.(string)
+	if !ok {
+		return ""
+	}
+	return strings.TrimSpace(text)
+}
+
+// documentDate accepts only the documented YYYY-MM-DD value shape. Any other
+// shape is dropped at the boundary instead of being forwarded for guessing.
+func documentDate(value any) string {
+	text, ok := value.(string)
+	if !ok {
+		return ""
+	}
+	parsed, err := time.Parse("2006-01-02", strings.TrimSpace(text))
+	if err != nil {
+		return ""
+	}
+	return parsed.Format("2006-01-02")
+}
+
+// appendDocumentField adds one bounded canonical field. Duplicate canonical
+// names, wrong JSON types, and values rejected by the closed contract
+// validation are ignored.
+func appendDocumentField(observation *providerv1.DocumentObservation, name string, value any) {
+	if len(observation.Fields) >= providerv1.MaximumDocumentFields {
+		return
+	}
+	for _, existing := range observation.Fields {
+		if existing.Name == name {
+			return
+		}
+	}
+	text, ok := value.(string)
+	if !ok {
+		return
+	}
+	candidate := providerv1.DocumentField{Name: name, Value: strings.TrimSpace(text)}
+	if candidate.Validate() != nil {
+		return
+	}
+	observation.Fields = append(observation.Fields, candidate)
 }

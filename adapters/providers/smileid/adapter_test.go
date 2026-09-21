@@ -1,6 +1,7 @@
 package smileid_test
 
 import (
+	"bytes"
 	"context"
 	"crypto/hmac"
 	"crypto/sha256"
@@ -197,12 +198,50 @@ func fixture(t *testing.T, adapter *smileid.Adapter) (providerv1.Request, provid
 }
 
 func statusBody(timestamp string, success bool) string {
-	signature := signature("test-key", timestamp, "085")
+	signature := signature("test-key", timestamp)
 	return fmt.Sprintf(`{"timestamp":%q,"signature":%q,"job_complete":true,"job_success":%t,"result":{"Actions":{"Liveness_Check":"Passed","Selfie_To_ID_Card_Compare":"Completed","Document_Check":"Passed"}}}`, timestamp, signature, success)
 }
 
-func signature(key, timestamp, partner string) string {
+func signature(key, timestamp string) string {
 	mac := hmac.New(sha256.New, []byte(key))
-	_, _ = mac.Write([]byte(timestamp + partner + "sid_request"))
+	_, _ = mac.Write([]byte(timestamp + "085" + "sid_request"))
 	return base64.StdEncoding.EncodeToString(mac.Sum(nil))
+}
+
+// TestStatusNormalisationNeverForwardsUnconfirmedExtraction proves the legacy
+// v1 job_status path is explicitly fail-closed for extraction. Smile ID
+// documents extracted fields only on the v3 verification webhook id_fields
+// object, so undocumented status keys (id_fields, FullName, IDNumber,
+// ExpirationDate, Gender) are never forwarded as an observation.
+func TestStatusNormalisationNeverForwardsUnconfirmedExtraction(t *testing.T) {
+	t.Parallel()
+	const sentinel = "SENTINELRAWV1STATUS"
+	timestamp := fixedNow.Format("2006-01-02T15:04:05.000Z")
+	status := fmt.Sprintf(
+		`{"code":"2302","timestamp":%q,"signature":%q,"job_complete":true,"job_success":true,"result":{"SmileJobID":"job-123","Actions":{"Liveness_Check":"Passed","Verify_Document":"Passed","Selfie_To_ID_Card_Compare":"Completed"},"id_fields":{"id_number":%q,"country":"NG","id_type":"PASSPORT"},"FullName":%q,"IDNumber":%q,"ExpirationDate":"2031-01-15","Gender":"Female"}}`,
+		timestamp, signature("test-key", timestamp), sentinel, sentinel, sentinel)
+	transport := &client{responses: []response{
+		{200, `{"upload_url":"https://uploads.example/job.zip","code":"2202"}`, ""},
+		{200, `{}`, ""},
+		{200, status, ""},
+	}}
+	adapter, err := smileid.New(secrets{}, inputs{}, evidence{}, transport, waiter{}, func() time.Time { return fixedNow })
+	if err != nil {
+		t.Fatal(err)
+	}
+	request, _ := fixture(t, adapter)
+	result, err := adapter.Execute(t.Context(), request)
+	if err != nil || result.Outcome != providerv1.ResultOutcomeCompleted {
+		t.Fatalf("result = %+v, error = %v", result, err)
+	}
+	if result.Document != nil {
+		t.Fatalf("legacy status forwarded unconfirmed extraction: %+v", result.Document)
+	}
+	encoded, err := json.Marshal(result)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes.Contains(encoded, []byte(sentinel)) {
+		t.Fatalf("legacy status forwarded raw provider values: %s", encoded)
+	}
 }

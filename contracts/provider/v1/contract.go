@@ -15,6 +15,16 @@ const (
 	MinorVersion uint16 = 1
 	// MaxResultBytes is the largest encoded provider result accepted by v1.
 	MaxResultBytes = 256 * 1024
+	// MaximumMRZLines bounds machine-readable-zone lines in one observation.
+	MaximumMRZLines = 3
+	// MaximumMRZLineBytes bounds one machine-readable-zone line (ICAO TD3).
+	MaximumMRZLineBytes = 44
+	// MaximumBarcodePayloadBytes bounds one already-decoded barcode payload.
+	MaximumBarcodePayloadBytes = 4096
+	// MaximumDocumentFields bounds provider-extracted fields in one observation.
+	MaximumDocumentFields = 32
+	// MaximumDocumentFieldBytes bounds one extracted field name or value.
+	MaximumDocumentFieldBytes = 128
 )
 
 // Version identifies one compatible contract revision.
@@ -186,14 +196,31 @@ type Failure struct {
 	RetryAfter time.Duration    `json:"retry_after,omitempty"`
 }
 
+// DocumentField is one provider-extracted document field before canonical
+// Core analysis. It carries a bounded technical key and an extracted value.
+type DocumentField struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+
+// DocumentObservation is transient provider-extracted document data. It may
+// traverse TLS and process memory, is consumed by Core document analysis, and
+// must never be logged, persisted, audited, or bound into a digest.
+type DocumentObservation struct {
+	MRZLines       []string        `json:"mrz_lines,omitempty"`
+	BarcodePayload string          `json:"barcode_payload,omitempty"`
+	Fields         []DocumentField `json:"fields,omitempty"`
+}
+
 // Result is the bounded terminal result for one exact attempt.
 type Result struct {
-	Contract    Version       `json:"contract"`
-	AttemptID   string        `json:"attempt_id"`
-	Outcome     ResultOutcome `json:"outcome"`
-	Signals     []Signal      `json:"signals"`
-	Failure     *Failure      `json:"failure,omitempty"`
-	CompletedAt time.Time     `json:"completed_at"`
+	Contract    Version              `json:"contract"`
+	AttemptID   string               `json:"attempt_id"`
+	Outcome     ResultOutcome        `json:"outcome"`
+	Signals     []Signal             `json:"signals"`
+	Failure     *Failure             `json:"failure,omitempty"`
+	Document    *DocumentObservation `json:"document,omitempty"`
+	CompletedAt time.Time            `json:"completed_at"`
 }
 
 // HealthState is a safe lifecycle classification without topology details.

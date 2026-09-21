@@ -96,6 +96,15 @@ func (store *RequestStore) SaveCallbackProgress(ctx context.Context, target prov
 	if progress.ValidateForRequest(target.Request) != nil {
 		return provider.CallbackReceipt{}, provider.ErrCallbackInvalid
 	}
+	if progress.Result != nil {
+		// The document observation is transient: consume it into bounded Core
+		// signals before the receipt is digested or persisted.
+		consumed, err := verification.ConsumeProviderDocument(*progress.Result)
+		if err != nil {
+			return provider.CallbackReceipt{}, provider.ErrCallbackInvalid
+		}
+		progress.Result = &consumed
+	}
 	replayID := progress.ReplayID
 	if replayID == "" {
 		replayID = progress.ProviderJobID

@@ -83,6 +83,7 @@ type ExecuteHandler struct {
 	retryIDs      SemanticRetryIdentifiers
 	retryEnqueuer SemanticRetryEnqueuer
 	externalWait  ExternalWait
+	support       verification.DocumentSupportResolver
 }
 
 // NewExecuteHandler constructs the exact version-1 verification task handler.
@@ -109,6 +110,17 @@ func NewExecuteHandlerWithRequests(store CheckStore, identifiers ResultIdentifie
 	}
 	handler.requests = requests
 	return handler, nil
+}
+
+// WithDocumentSupport attaches the active pack registry so a document the
+// registry explicitly marks unsupported is classified provisionally. It never
+// changes provider signal meaning or assurance semantics.
+func (handler *ExecuteHandler) WithDocumentSupport(resolver verification.DocumentSupportResolver) error {
+	if handler == nil || resolver == nil {
+		return errors.New("verification task: document support resolver is required")
+	}
+	handler.support = resolver
+	return nil
 }
 
 // WithSemanticRetries enables bounded provider semantic attempts. The setting
@@ -198,6 +210,13 @@ func (handler *ExecuteHandler) Prepare(
 		if executeErr != nil {
 			return nil, executionError(executeErr)
 		}
+		// The observation is transient: consume it into bounded signals before
+		// anything is fingerprinted, persisted, audited, or logged.
+		consumed, consumeErr := verification.ConsumeProviderDocument(result)
+		if consumeErr != nil {
+			return nil, platformtask.Quarantine(consumeErr)
+		}
+		result = consumed
 		fingerprint, fingerprintErr := verification.ProviderResultFingerprint(result)
 		if fingerprintErr != nil {
 			return nil, platformtask.Quarantine(fingerprintErr)
@@ -235,7 +254,7 @@ func (handler *ExecuteHandler) providerWork(
 	return func(ctx context.Context, transaction postgres.Transaction) platformtask.Result {
 		return handler.commit(ctx, scope, transaction, payload, actor, fingerprint, result.CompletedAt,
 			func(check *verification.Check, attempt verification.Attempt) (string, error) {
-				return verification.ApplyProviderResult(check, result, handler.identifiers, attempt.Fence)
+				return verification.ApplyProviderResult(check, result, handler.identifiers, attempt.Fence, handler.resultOptions()...)
 			})
 	}
 }
@@ -250,9 +269,16 @@ func (handler *ExecuteHandler) modelWork(
 	return func(ctx context.Context, transaction postgres.Transaction) platformtask.Result {
 		return handler.commit(ctx, scope, transaction, payload, actor, fingerprint, result.CompletedAt,
 			func(check *verification.Check, attempt verification.Attempt) (string, error) {
-				return verification.ApplyModelResult(check, result, handler.identifiers, attempt.Fence)
+				return verification.ApplyModelResult(check, result, handler.identifiers, attempt.Fence, handler.resultOptions()...)
 			})
 	}
+}
+
+func (handler *ExecuteHandler) resultOptions() []verification.ResultOption {
+	if handler.support == nil {
+		return nil
+	}
+	return []verification.ResultOption{verification.WithDocumentSupport(handler.support)}
 }
 
 func (handler *ExecuteHandler) commit(

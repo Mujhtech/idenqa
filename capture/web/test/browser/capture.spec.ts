@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import type { IdenqaCaptureElement } from "../../src/index.js";
+import type { CaptureDocumentCaptureOptions, IdenqaCaptureElement } from "../../src/index.js";
 
 test("renders the plain-HTML capture plan with semantic, keyboard-operable choices", async ({
   page,
@@ -441,6 +441,266 @@ test("camera cancellation stops the preview without activating fallback", async 
   await expect(page.getByLabel("Choose File")).toHaveCount(0);
 });
 
+test("auto-captures a stable document, corrects perspective, and uploads the corrected frame", async ({
+  page,
+}) => {
+  const requests = await mockCaptureFlow(page, {
+    consentRequired: false,
+    primaryMethods: ["idenqa.method.live_camera"],
+    requirement: {
+      key: "identity_document",
+      evidenceType: "idenqa.evidence.document_image",
+      artefacts: ["idenqa.artefact.document_front"],
+    },
+  });
+  await installSyntheticDocumentCamera(page);
+  await page.goto("/");
+  await loadCaptureFlow(page, "synthetic-document-auto-token", ["idenqa.method.live_camera"], {
+    autoCaptureDelayMs: 1000,
+    observationIntervalMs: 120,
+    gate: { requiredStableFrames: 3 },
+  });
+  await page.getByRole("button", { name: "Get Started" }).click();
+  await page.getByRole("button", { name: "Acknowledge & Continue" }).click();
+  await page.getByRole("button", { name: "Continue to Capture" }).click();
+  await page.getByRole("button", { name: "Start Camera" }).click();
+
+  await expect(
+    page.getByLabel("Live camera preview for Front of Your Identity Document"),
+  ).toBeVisible();
+  await expect(page.locator("idenqa-capture .document-guide")).toBeVisible();
+  await expect(page.getByText("Automatic document capture is on")).toBeVisible();
+
+  await expect(page.getByText("Hold the camera steady.")).toBeVisible();
+  await page.waitForTimeout(1200);
+  await expect(
+    page.getByAltText("Captured Preview of Front of Your Identity Document"),
+  ).toHaveCount(0);
+  expect(requests.uploadBodies).toHaveLength(0);
+
+  await page.evaluate(() => {
+    (
+      globalThis as typeof globalThis & { __setDocumentMotion?: (value: number) => void }
+    ).__setDocumentMotion?.(0);
+  });
+  await expect(page.getByText("Document found. Hold still while the photo is taken.")).toBeVisible({
+    timeout: 10_000,
+  });
+  await expect(
+    page.getByAltText("Captured Preview of Front of Your Identity Document"),
+  ).toBeVisible({ timeout: 10_000 });
+
+  const preview = page.getByAltText("Captured Preview of Front of Your Identity Document");
+  const dimensions = await preview.evaluate((image) => ({
+    width: Number(image.getAttribute("width")),
+    height: Number(image.getAttribute("height")),
+    naturalWidth: (image as HTMLImageElement).naturalWidth,
+  }));
+  expect(dimensions.width).toBeLessThan(640);
+  expect(dimensions.height).toBeLessThan(480);
+  expect(dimensions.width / dimensions.height).toBeGreaterThan(1.2);
+  expect(dimensions.width / dimensions.height).toBeLessThan(1.9);
+  expect(dimensions.naturalWidth).toBe(dimensions.width);
+
+  await page.getByRole("button", { name: "Use Photo" }).click();
+  await expect(page.getByRole("heading", { name: "Verifying Your Identity" })).toBeVisible();
+  expect(requests.uploadIntents[0]).toMatchObject({
+    requirement_key: "identity_document",
+    artefact: "idenqa.artefact.document_front",
+    acquisition_method: "idenqa.method.live_camera",
+  });
+  expect(requests.uploadBodies[0]).toMatch(/^ffd8ff/);
+  expect(jpegDimensions(requests.uploadBodies[0]!)).toEqual({
+    width: dimensions.width,
+    height: dimensions.height,
+  });
+});
+
+test("retakes a document photo and replaces the corrected artefact", async ({ page }) => {
+  const requests = await mockCaptureFlow(page, {
+    consentRequired: false,
+    primaryMethods: ["idenqa.method.live_camera"],
+    requirement: {
+      key: "identity_document",
+      evidenceType: "idenqa.evidence.document_image",
+      artefacts: ["idenqa.artefact.document_front"],
+    },
+  });
+  await installSyntheticDocumentCamera(page, { motion: false });
+  await page.goto("/");
+  await loadCaptureFlow(page, "synthetic-document-retake-token", ["idenqa.method.live_camera"], {
+    observationIntervalMs: 120,
+    gate: { requiredStableFrames: 3 },
+  });
+  await page.getByRole("button", { name: "Get Started" }).click();
+  await page.getByRole("button", { name: "Acknowledge & Continue" }).click();
+  await page.getByRole("button", { name: "Continue to Capture" }).click();
+  await page.getByRole("button", { name: "Start Camera" }).click();
+
+  const preview = page.getByAltText("Captured Preview of Front of Your Identity Document");
+  await expect(preview).toBeVisible({ timeout: 10_000 });
+  const firstPreview = await preview.getAttribute("src");
+  await page.getByRole("button", { name: "Retake Photo" }).click();
+  await expect(preview).toBeVisible({ timeout: 10_000 });
+  const secondPreview = await preview.getAttribute("src");
+  expect(secondPreview).not.toBe(firstPreview);
+
+  await page.getByRole("button", { name: "Use Photo" }).click();
+  await expect(page.getByRole("heading", { name: "Verifying Your Identity" })).toBeVisible();
+  expect(requests.uploadBodies).toHaveLength(1);
+  expect(requests.uploadBodies[0]).toMatch(/^ffd8ff/);
+});
+
+test("never auto-captures without a document and keeps the manual shutter working", async ({
+  page,
+}) => {
+  const requests = await mockCaptureFlow(page, {
+    consentRequired: false,
+    primaryMethods: ["idenqa.method.live_camera"],
+    requirement: {
+      key: "identity_document",
+      evidenceType: "idenqa.evidence.document_image",
+      artefacts: ["idenqa.artefact.document_front"],
+    },
+  });
+  await installSyntheticDocumentCamera(page, { document: false });
+  await page.goto("/");
+  await loadCaptureFlow(page, "synthetic-document-manual-token", ["idenqa.method.live_camera"], {
+    observationIntervalMs: 120,
+    gate: { requiredStableFrames: 3 },
+  });
+  await page.getByRole("button", { name: "Get Started" }).click();
+  await page.getByRole("button", { name: "Acknowledge & Continue" }).click();
+  await page.getByRole("button", { name: "Continue to Capture" }).click();
+  await page.getByRole("button", { name: "Start Camera" }).click();
+
+  await expect(page.getByText("Point the camera at the document.")).toBeVisible();
+  await page.waitForTimeout(1200);
+  await expect(
+    page.getByAltText("Captured Preview of Front of Your Identity Document"),
+  ).toHaveCount(0);
+  expect(requests.uploadBodies).toHaveLength(0);
+
+  await page.getByRole("button", { name: "Capture Photo" }).click();
+  const preview = page.getByAltText("Captured Preview of Front of Your Identity Document");
+  await expect(preview).toBeVisible();
+  const dimensions = await preview.evaluate((image) => ({
+    width: Number(image.getAttribute("width")),
+    height: Number(image.getAttribute("height")),
+  }));
+  expect(dimensions).toEqual({ width: 640, height: 480 });
+
+  await page.getByRole("button", { name: "Use Photo" }).click();
+  await expect(page.getByRole("heading", { name: "Verifying Your Identity" })).toBeVisible();
+  expect(requests.uploadIntents).toHaveLength(1);
+  expect(requests.uploadBodies[0]).toMatch(/^ffd8ff/);
+  expect(jpegDimensions(requests.uploadBodies[0]!)).toEqual({ width: 640, height: 480 });
+});
+
+function jpegDimensions(hex: string): { readonly width: number; readonly height: number } {
+  const bytes = Buffer.from(hex, "hex");
+  let offset = 2;
+  while (offset + 9 < bytes.length) {
+    if (bytes[offset] !== 0xff) {
+      offset += 1;
+      continue;
+    }
+    const marker = bytes[offset + 1]!;
+    if (marker === 0xd8 || marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) {
+      offset += 2;
+      continue;
+    }
+    const length = bytes.readUInt16BE(offset + 2);
+    const startOfFrame =
+      (marker >= 0xc0 && marker <= 0xc3) ||
+      (marker >= 0xc5 && marker <= 0xc7) ||
+      (marker >= 0xc9 && marker <= 0xcb) ||
+      (marker >= 0xcd && marker <= 0xcf);
+    if (startOfFrame) {
+      return { height: bytes.readUInt16BE(offset + 5), width: bytes.readUInt16BE(offset + 7) };
+    }
+    offset += 2 + length;
+  }
+  throw new Error("The captured JPEG does not expose a start-of-frame marker.");
+}
+
+async function installSyntheticDocumentCamera(
+  page: import("@playwright/test").Page,
+  options: { readonly document?: boolean; readonly motion?: boolean } = {},
+): Promise<void> {
+  await page.addInitScript(
+    (input: { readonly document: boolean; readonly motion: boolean }) => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 640;
+      canvas.height = 480;
+      const context = canvas.getContext("2d");
+      const state = { motion: input.motion ? 1 : 0, frame: 0 };
+      Object.defineProperty(globalThis, "__setDocumentMotion", {
+        configurable: true,
+        value: (value: number) => {
+          state.motion = value;
+        },
+      });
+      const draw = () => {
+        if (context === null) return;
+        state.frame += 1;
+        if (!input.document) {
+          const gradient = context.createLinearGradient(0, 0, canvas.width, canvas.height);
+          gradient.addColorStop(0, "#23282e");
+          gradient.addColorStop(1, "#313841");
+          context.fillStyle = gradient;
+          context.fillRect(0, 0, canvas.width, canvas.height);
+          return;
+        }
+        context.fillStyle = "#1b2026";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        const phase = state.motion === 0 ? 0 : ((state.frame * 20) % 140) - 70;
+        const corners = [
+          { x: 90 + phase, y: 110 },
+          { x: 552 + phase, y: 96 },
+          { x: 566 + phase, y: 392 },
+          { x: 74 + phase, y: 376 },
+        ];
+        context.beginPath();
+        context.moveTo(corners[0]!.x, corners[0]!.y);
+        context.lineTo(corners[1]!.x, corners[1]!.y);
+        context.lineTo(corners[2]!.x, corners[2]!.y);
+        context.lineTo(corners[3]!.x, corners[3]!.y);
+        context.closePath();
+        context.fillStyle = "#f5f1e6";
+        context.fill();
+        context.save();
+        context.clip();
+        context.fillStyle = "#2f5d50";
+        context.fillRect(110 + phase, 140, 430, 52);
+        context.fillStyle = "#9aa1a9";
+        for (let line = 0; line < 5; line += 1) {
+          context.fillRect(110 + phase, 230 + line * 28, 380 - line * 30, 10);
+        }
+        context.fillStyle = "#3c4752";
+        context.fillRect(120 + ((state.frame * 3) % 40), 396, 18, 18);
+        context.restore();
+        context.lineWidth = 8;
+        context.strokeStyle = "#0f1419";
+        context.stroke();
+      };
+      const mediaDevices = navigator.mediaDevices;
+      Object.defineProperty(navigator, "mediaDevices", {
+        configurable: true,
+        value: {
+          getUserMedia: async () => canvas.captureStream(12),
+          enumerateDevices: mediaDevices?.enumerateDevices?.bind(mediaDevices) ?? (async () => []),
+          getSupportedConstraints:
+            mediaDevices?.getSupportedConstraints?.bind(mediaDevices) ?? (() => ({})),
+        },
+      });
+      draw();
+      setInterval(draw, 40);
+    },
+    { document: options.document ?? true, motion: options.motion ?? true },
+  );
+}
+
 test("runs ordered active-liveness prompts and completes only after Core confirmation", async ({
   page,
 }) => {
@@ -673,6 +933,7 @@ async function loadCaptureFlow(
   page: Parameters<typeof mockCaptureFlow>[0],
   captureToken: string,
   methods: readonly string[] = ["idenqa.method.file_upload"],
+  documentCapture?: CaptureDocumentCaptureOptions,
 ) {
   await page.locator("idenqa-capture").evaluate(
     (element, input) =>
@@ -684,8 +945,9 @@ async function loadCaptureFlow(
           supportedMethods: [...input.selectedMethods],
           availableMethods: [...input.selectedMethods],
         },
+        ...(input.documentCapture === undefined ? {} : { documentCapture: input.documentCapture }),
       }),
-    { token: captureToken, selectedMethods: methods },
+    { token: captureToken, selectedMethods: methods, documentCapture },
   );
 }
 
