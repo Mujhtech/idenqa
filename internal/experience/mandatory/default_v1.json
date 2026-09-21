@@ -1,0 +1,25 @@
+{
+  "version": "mc-2026-09-01",
+  "entries": [
+    {
+      "key": "regulatory.processing_notice",
+      "value": "Your identity information is processed to verify your identity. The organisation that sent you here is the data controller."
+    },
+    {
+      "key": "regulatory.retention_notice",
+      "value": "Your information is kept only as long as the law and the controller's retention policy require."
+    },
+    {
+      "key": "consent.explicit",
+      "value": "I understand and agree to the processing described in the privacy notice."
+    },
+    {
+      "key": "safety.capture_guidance",
+      "value": "Only continue if you are in a safe, private place and it is safe to use your camera."
+    },
+    {
+      "key": "accessibility.support",
+      "value": "If you cannot complete this step or need an alternative, use the support link to ask for help."
+    }
+  ]
+}

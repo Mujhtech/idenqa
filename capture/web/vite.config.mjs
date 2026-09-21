@@ -1,4 +1,4 @@
-import { IdenqaClient, createIdempotencyKey } from "@idenqa/sdk";
+import { CaptureClient, IdenqaClient, createIdempotencyKey } from "@idenqa/sdk";
 import { defineConfig, loadEnv } from "vite";
 
 import { createReviewDemoPlugin } from "./demo/review-server.mjs";
@@ -233,6 +233,24 @@ async function provisionJourney({ apiKey, coreUrl, outcome, policyId, region }) 
   if (outcome === "expired") {
     await waitForVerificationState(tenant, verification.data.session.id, "expired");
   }
+  // Resolve and pin the portable experience server-side so the browser never
+  // needs the tenant API key and the signed document reaches the component.
+  let experience;
+  try {
+    const captureClient = new CaptureClient({
+      baseUrl: coreUrl,
+      captureToken: verification.data.captureToken,
+    });
+    experience = (
+      await runStage("resolve experience", () =>
+        captureClient.getExperience({ workflow: "capture.identity", locale: "en" }),
+      )
+    ).data;
+  } catch {
+    // A deployment without experience signing keys still runs the journey with
+    // the package-owned safe default presentation.
+    experience = undefined;
+  }
   return {
     baseUrl: "/core/",
     verificationId: verification.data.session.id,
@@ -241,6 +259,7 @@ async function provisionJourney({ apiKey, coreUrl, outcome, policyId, region }) 
     sessionVersion: verification.data.session.version,
     region,
     outcome,
+    ...(experience === undefined ? {} : { experience }),
   };
 }
 

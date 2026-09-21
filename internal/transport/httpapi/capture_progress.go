@@ -9,10 +9,15 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/Mujhtech/idenqa/internal/evidence"
+	"github.com/Mujhtech/idenqa/internal/experience"
 	openapiv1 "github.com/Mujhtech/idenqa/internal/gen/openapi/v1"
+	"github.com/Mujhtech/idenqa/internal/platform/id"
+	"github.com/Mujhtech/idenqa/internal/tenant"
 	"github.com/Mujhtech/idenqa/internal/transport/httpapi/respond"
+	"github.com/Mujhtech/idenqa/internal/verification"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -21,11 +26,24 @@ type CaptureProgressFinder interface {
 	Find(context.Context, evidence.UploadPrincipal) (evidence.CaptureProgress, error)
 }
 
+// ExperiencePinFinder is the token-scoped read capability for the session's
+// pinned portable-experience versions.
+type ExperiencePinFinder interface {
+	FindPin(context.Context, tenant.Scope, id.Verification) (experience.Pin, error)
+}
+
 // CaptureProgressRoutes adapts authoritative capture recovery to HTTP.
 type CaptureProgressRoutes struct {
 	capture *CaptureAccessMiddleware
 	finder  CaptureProgressFinder
+	pins    ExperiencePinFinder
 	logger  *slog.Logger
+}
+
+// WithExperiencePins attaches the optional read-only experience pin projection.
+func (routes *CaptureProgressRoutes) WithExperiencePins(pins ExperiencePinFinder) *CaptureProgressRoutes {
+	routes.pins = pins
+	return routes
 }
 
 // NewCaptureProgressRoutes constructs the capture progress read surface.
@@ -92,8 +110,53 @@ func (routes *CaptureProgressRoutes) find(writer http.ResponseWriter, request *h
 	}
 	if err := respond.JSON(writer, request, http.StatusOK, openapiv1.CaptureProgress{
 		VerificationID: progress.VerificationID.String(), Completions: completions,
+		Experience: routes.pinnedExperience(request, captureContext),
 	}); err != nil {
 		routes.logger.ErrorContext(request.Context(), "write capture progress response")
+	}
+}
+
+func (routes *CaptureProgressRoutes) pinnedExperience(
+	request *http.Request,
+	captureContext verification.CaptureContext,
+) *struct {
+	Digest string `json:"digest"`
+
+	ExperienceID         openapiv1.ExperienceID                    `json:"experience_id"`
+	KeyID                string                                    `json:"key_id"`
+	Locale               string                                    `json:"locale"`
+	MandatoryCopyVersion string                                    `json:"mandatory_copy_version"`
+	PinnedAt             time.Time                                 `json:"pinned_at"`
+	Source               openapiv1.CaptureProgressExperienceSource `json:"source"`
+	TenantCopyVersion    string                                    `json:"tenant_copy_version"`
+	Version              int                                       `json:"version"`
+} {
+	if routes.pins == nil {
+		return nil
+	}
+	pin, err := routes.pins.FindPin(request.Context(), captureContext.TenantScope(), captureContext.Session().ID())
+	if err != nil {
+		return nil
+	}
+	source := openapiv1.CaptureProgressExperienceSource(pin.Source)
+	if !source.Valid() {
+		source = openapiv1.CaptureProgressExperienceSourceDefault
+	}
+	return &struct {
+		Digest string `json:"digest"`
+
+		ExperienceID         openapiv1.ExperienceID                    `json:"experience_id"`
+		KeyID                string                                    `json:"key_id"`
+		Locale               string                                    `json:"locale"`
+		MandatoryCopyVersion string                                    `json:"mandatory_copy_version"`
+		PinnedAt             time.Time                                 `json:"pinned_at"`
+		Source               openapiv1.CaptureProgressExperienceSource `json:"source"`
+		TenantCopyVersion    string                                    `json:"tenant_copy_version"`
+		Version              int                                       `json:"version"`
+	}{
+		Digest: pin.Digest, ExperienceID: pin.ExperienceID.String(), KeyID: pin.KeyID,
+		Locale: pin.Locale, MandatoryCopyVersion: pin.MandatoryCopyVersion, PinnedAt: pin.PinnedAt,
+		Source: source, TenantCopyVersion: pin.TenantCopyVersion, Version: int(pin.Version),
 	}
 }
 

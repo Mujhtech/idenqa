@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/Mujhtech/idenqa/internal/access"
+	"github.com/Mujhtech/idenqa/internal/experience"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/tenant"
 )
@@ -224,4 +225,44 @@ func newSessionServiceFixture(t *testing.T) (*SessionService, *sessionServiceRep
 	}
 
 	return service, repository
+}
+
+type pinningStub struct {
+	called       bool
+	verification id.Verification
+	request      experience.ResolutionRequest
+}
+
+func (stub *pinningStub) PinForSession(
+	_ context.Context,
+	_ tenant.Scope,
+	verificationID id.Verification,
+	request experience.ResolutionRequest,
+) (experience.Pin, error) {
+	stub.called, stub.verification, stub.request = true, verificationID, request
+	return experience.Pin{}, nil
+}
+
+func TestSessionServicePinsExperienceAtCreation(t *testing.T) {
+	t.Parallel()
+
+	service, _ := newSessionServiceFixture(t)
+	pinner := &pinningStub{}
+	service.WithExperience(pinner)
+	authority := newProfileServiceAuthority(t, access.Pattern("verification_sessions:create"))
+	profileID := mustProfileID(t)
+	policyID, _ := id.ParsePolicy("pol_01ARZ3NDEKTSV4RRFFQ69G5FAV")
+	created, err := service.Create(context.Background(), authority, "attempt-1", SessionCreateInput{
+		ProfileID: profileID, PolicyID: policyID, Locale: "fr",
+		Experience: &experience.ResolutionRequest{Workflow: "capture.identity", Country: "NG"},
+	})
+	if err != nil {
+		t.Fatalf("Create() error = %v", err)
+	}
+	if !pinner.called || pinner.verification.String() != created.Session.ID().String() {
+		t.Fatalf("pin = %+v, session = %s", pinner, created.Session.ID())
+	}
+	if pinner.request.Workflow != "capture.identity" || pinner.request.Country != "NG" || pinner.request.Locale != "fr" {
+		t.Fatalf("resolution request = %+v", pinner.request)
+	}
 }

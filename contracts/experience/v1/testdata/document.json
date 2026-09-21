@@ -1,0 +1,55 @@
+{
+  "schema_version": "1.0",
+  "experience_id": "exp_01J00000000000000000000000",
+  "version": 1,
+  "name": "Acme selfie capture",
+  "mandatory_copy_version": "mc-2026-09-01",
+  "default_locale": "en",
+  "copy": {
+    "version": "tc_acme_v1",
+    "locales": [
+      {
+        "locale": "en",
+        "entries": [
+          { "key": "capture.title", "value": "Verify your identity" },
+          { "key": "capture.instruction", "value": "Take a clear selfie in good light." }
+        ]
+      },
+      {
+        "locale": "fr",
+        "entries": [
+          { "key": "capture.title", "value": "Vérifiez votre identité" },
+          { "key": "capture.instruction", "value": "Prenez un selfie net avec un bon éclairage." }
+        ]
+      }
+    ]
+  },
+  "targeting": [
+    { "workflow": "capture.identity", "countries": ["NG"], "application_ids": ["dev.acme.app"], "sdk_version_min": "1.0.0", "sdk_version_max": "2.9.9" }
+  ],
+  "assets": [
+    {
+      "key": "logo",
+      "kind": "image",
+      "mime": "image/png",
+      "size": 4096,
+      "digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "object_key": "experiences/acme/logo.png",
+      "object_version": "v1"
+    }
+  ],
+  "links": {
+    "support": "https://support.acme.example/help",
+    "privacy": "https://acme.example/privacy",
+    "terms": "https://acme.example/terms",
+    "custom": [{ "label": "Accessibility", "url": "https://acme.example/accessibility" }]
+  },
+  "theme": {
+    "primary_color": "#1f6feb",
+    "accent_color": "#0b3d91",
+    "background_color": "#ffffff",
+    "text_color": "#1b1f23",
+    "logo_asset_key": "logo"
+  },
+  "allowed_origins": ["https://capture.acme.example"]
+}

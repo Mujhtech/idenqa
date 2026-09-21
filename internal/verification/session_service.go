@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/Mujhtech/idenqa/internal/access"
+	"github.com/Mujhtech/idenqa/internal/experience"
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/platform/idempotency"
@@ -39,6 +40,17 @@ type SessionCreateInput struct {
 	VerificationTTL *time.Duration
 	CaptureTokenTTL *time.Duration
 	OutcomePostTTL  *time.Duration
+	// Locale and Experience optionally select and pin the portable capture
+	// experience at creation. Nil keeps resolution to the deployment defaults.
+	Locale     string
+	Experience *experience.ResolutionRequest
+}
+
+// ExperiencePinner resolves and pins the portable capture experience for a
+// session. Pinning is best-effort: bootstrap resolution falls back to the
+// signed safe default, so a pin failure never blocks session creation.
+type ExperiencePinner interface {
+	PinForSession(context.Context, tenant.Scope, id.Verification, experience.ResolutionRequest) (experience.Pin, error)
 }
 
 // CreatedSession carries display-once capture and outcome bearer tokens alongside
@@ -81,6 +93,15 @@ type SessionService struct {
 	clock         clock.Clock
 	lifetimes     SessionLifetimes
 	region        string
+	experience    ExperiencePinner
+}
+
+// WithExperience wires optional portable-experience pinning into session
+// creation. It is composed after construction so deployments without
+// experience signing keys keep working unchanged.
+func (service *SessionService) WithExperience(pinner ExperiencePinner) *SessionService {
+	service.experience = pinner
+	return service
 }
 
 // NewSessionService constructs the verification-session application service.
@@ -196,6 +217,7 @@ func (service *SessionService) Create(
 	if err != nil {
 		return CreatedSession{}, err
 	}
+	service.pinExperience(ctx, authority, creation.Session.ID(), input)
 	presented, err := service.captureSigner.Sign(creation.Credential)
 	if err != nil {
 		return CreatedSession{}, fmt.Errorf("sign capture token: %w", err)
@@ -210,6 +232,28 @@ func (service *SessionService) Create(
 		CaptureToken: presented, OutcomeCredential: creation.OutcomeCredential,
 		OutcomeToken: outcomeToken,
 	}, nil
+}
+
+// pinExperience resolves and persists the session experience pin. Resolution
+// failure is deliberately non-fatal: bootstrap always falls back to the signed
+// accessible safe default and resume re-resolves to that same default.
+func (service *SessionService) pinExperience(
+	ctx context.Context,
+	authority access.Context,
+	verificationID id.Verification,
+	input SessionCreateInput,
+) {
+	if service.experience == nil {
+		return
+	}
+	request := experience.ResolutionRequest{Locale: input.Locale}
+	if input.Experience != nil {
+		request = *input.Experience
+		if request.Locale == "" {
+			request.Locale = input.Locale
+		}
+	}
+	_, _ = service.experience.PinForSession(ctx, authority.TenantScope(), verificationID, request)
 }
 
 // Find returns a tenant-owned verification session after application-level authorisation.

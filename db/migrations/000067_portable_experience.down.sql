@@ -1,0 +1,12 @@
+DROP TABLE IF EXISTS idenqa.experience_session_pins;
+DROP TABLE IF EXISTS idenqa.experience_targeting;
+DROP TABLE IF EXISTS idenqa.experience_events;
+DROP TABLE IF EXISTS idenqa.experience_revisions;
+DROP TABLE IF EXISTS idenqa.experiences;
+DROP FUNCTION IF EXISTS idenqa.reject_experience_pin_change();
+DROP FUNCTION IF EXISTS idenqa.reject_experience_event_change();
+DROP FUNCTION IF EXISTS idenqa.reject_experience_targeting_change();
+DROP FUNCTION IF EXISTS idenqa.reject_experience_revision_change();
+DROP FUNCTION IF EXISTS idenqa.protect_experience_revision();
+DROP FUNCTION IF EXISTS idenqa.reject_experience_revision_delete();
+DROP FUNCTION IF EXISTS idenqa.protect_experience_record();

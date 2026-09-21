@@ -17,6 +17,7 @@ import (
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/platform/idempotency"
 	idempotencypostgres "github.com/Mujhtech/idenqa/internal/platform/idempotency/postgres"
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
 	"github.com/Mujhtech/idenqa/internal/platform/outbox"
 	platformpostgres "github.com/Mujhtech/idenqa/internal/platform/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/postgres/sqlgen"
@@ -38,6 +39,7 @@ type SessionStore struct {
 	pool    transactionRunner
 	catalog evidence.Catalog
 	wrapper platformcrypto.KeyWrapper
+	metrics Metrics
 }
 
 // NewSessionStore constructs a verification-session PostgreSQL adapter.
@@ -47,6 +49,14 @@ func NewSessionStore(pool transactionRunner, wrapper platformcrypto.KeyWrapper, 
 	}
 
 	return &SessionStore{pool: pool, catalog: catalog, wrapper: wrapper}, nil
+}
+
+// WithMetrics attaches the bounded verification metric receiver.
+func (store *SessionStore) WithMetrics(metrics Metrics) *SessionStore {
+	if store != nil && metrics != nil {
+		store.metrics = metrics
+	}
+	return store
 }
 
 // Create atomically reserves idempotency, locks the selected active published
@@ -61,6 +71,7 @@ func (store *SessionStore) Create(
 	}
 
 	var creation verification.SessionCreation
+	fresh := false
 	err := store.write(ctx, scope, func(ctx context.Context, queries *sqlgen.Queries, tx platformpostgres.Transaction) error {
 		reservation, err := idempotencypostgres.Reserve(ctx, queries, mutation.Idempotency)
 		if err != nil {
@@ -131,6 +142,7 @@ func (store *SessionStore) Create(
 		if err := store.insertCreation(ctx, tx, queries, mutation, creation, registry); err != nil {
 			return err
 		}
+		fresh = true
 		if err := policypg.PinAssuranceWithin(ctx, tx, scope, session.ID().String(), session.PolicyID().String()); err != nil {
 			return err
 		}
@@ -156,6 +168,11 @@ func (store *SessionStore) Create(
 		)
 	})
 
+	if err == nil && fresh && store.metrics != nil {
+		store.metrics.RecordVerificationSessionStart(observability.SessionStart{
+			Region: observability.Region(mutation.Region),
+		})
+	}
 	return creation, err
 }
 

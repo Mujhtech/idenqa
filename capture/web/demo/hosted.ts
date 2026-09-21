@@ -1,4 +1,4 @@
-import { CaptureClient, createIdempotencyKey } from "@idenqa/sdk";
+import { CaptureClient, createIdempotencyKey, type ExperienceResolution } from "@idenqa/sdk";
 
 import {
   createActiveLivenessMethodAdapter,
@@ -14,6 +14,7 @@ interface HostedBootstrap {
   readonly outcomeToken: string;
   readonly sessionVersion: number;
   readonly region: string;
+  readonly experience?: ExperienceResolution;
   readonly outcome:
     | "verified"
     | "not_verified"
@@ -62,6 +63,7 @@ async function startHostedJourney(element: IdenqaCaptureElement): Promise<void> 
     expectedVerificationId: bootstrap.verificationId,
     capabilities: browserCapabilities(),
     region: bootstrap.region,
+    ...(bootstrap.experience === undefined ? {} : { experience: bootstrap.experience }),
     ...(activeLiveness
       ? {
           methodAdapters: [

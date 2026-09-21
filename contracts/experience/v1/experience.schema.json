@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://idenqa.dev/contracts/experience/v1/experience.schema.json",
+  "title": "Idenqa portable capture experience v1",
+  "description": "Closed, bounded portable capture-experience document. Canonicalised and signed as an Ed25519 manifest. Tenant copy must not claim the mandatory regulatory, consent, safety, or accessibility namespaces.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "experience_id",
+    "version",
+    "name",
+    "copy",
+    "mandatory_copy_version",
+    "default_locale",
+    "targeting",
+    "links",
+    "theme"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "experience_id": { "type": "string", "pattern": "^exp_[0-9A-HJKMNP-TV-Z]{26}$" },
+    "version": { "type": "integer", "minimum": 1 },
+    "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+    "copy": { "$ref": "#/$defs/copy" },
+    "mandatory_copy_version": { "type": "string", "pattern": "^mc-[0-9]{4}-[0-9]{2}-[0-9]{2}(-[0-9]{1,2})?$" },
+    "default_locale": { "type": "string", "minLength": 2, "maxLength": 35, "pattern": "^[A-Za-z]{2,8}(-[A-Za-z0-9]{1,8})*$" },
+    "targeting": { "type": "array", "maxItems": 32, "items": { "$ref": "#/$defs/target" } },
+    "assets": { "type": "array", "maxItems": 16, "items": { "$ref": "#/$defs/asset" } },
+    "links": { "$ref": "#/$defs/links" },
+    "theme": { "$ref": "#/$defs/theme" },
+    "allowed_origins": {
+      "type": "array",
+      "maxItems": 16,
+      "uniqueItems": true,
+      "items": { "type": "string", "maxLength": 2048, "pattern": "^https://[a-z0-9.-]+(?::[0-9]{1,5})?$" }
+    }
+  },
+  "$defs": {
+    "copy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "locales"],
+      "properties": {
+        "version": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$" },
+        "locales": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["locale", "entries"],
+            "properties": {
+              "locale": { "type": "string", "minLength": 2, "maxLength": 35, "pattern": "^[A-Za-z]{2,8}(-[A-Za-z0-9]{1,8})*$" },
+              "entries": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 64,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["key", "value"],
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "maxLength": 128,
+                      "pattern": "^(?!regulatory\\.)(?!consent\\.)(?!safety\\.)(?!accessibility\\.)[a-z][a-z0-9._-]{0,127}$"
+                    },
+                    "value": { "type": "string", "minLength": 1, "maxLength": 2048 }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "workflow": { "type": "string", "maxLength": 128, "pattern": "^[a-z][a-z0-9._-]{0,127}$" },
+        "countries": { "type": "array", "maxItems": 64, "uniqueItems": true, "items": { "type": "string", "pattern": "^[A-Z]{2}$" } },
+        "application_ids": { "type": "array", "maxItems": 16, "uniqueItems": true, "items": { "type": "string", "minLength": 1, "maxLength": 200 } },
+        "origins": { "type": "array", "maxItems": 16, "uniqueItems": true, "items": { "type": "string", "maxLength": 2048, "pattern": "^https://[a-z0-9.-]+(?::[0-9]{1,5})?$" } },
+        "sdk_version_min": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+        "sdk_version_max": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" }
+      },
+      "dependentRequired": {
+        "sdk_version_min": ["sdk_version_max"],
+        "sdk_version_max": ["sdk_version_min"]
+      }
+    },
+    "asset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "kind", "mime", "size", "digest", "object_key", "object_version"],
+      "properties": {
+        "key": { "type": "string", "pattern": "^[a-z][a-z0-9._-]{0,63}$" },
+        "kind": { "const": "image" },
+        "mime": { "enum": ["image/png", "image/jpeg", "image/webp", "image/avif"] },
+        "size": { "type": "integer", "minimum": 1, "maximum": 2097152 },
+        "digest": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "object_key": { "type": "string", "maxLength": 512, "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]{0,511}$" },
+        "object_version": { "type": "string", "minLength": 1, "maxLength": 200, "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,199}$" }
+      }
+    },
+    "links": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["support", "privacy", "terms"],
+      "properties": {
+        "support": { "$ref": "#/$defs/httpsURL" },
+        "privacy": { "$ref": "#/$defs/httpsURL" },
+        "terms": { "$ref": "#/$defs/httpsURL" },
+        "custom": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["label", "url"],
+            "properties": {
+              "label": { "type": "string", "minLength": 1, "maxLength": 120 },
+              "url": { "$ref": "#/$defs/httpsURL" }
+            }
+          }
+        }
+      }
+    },
+    "httpsURL": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2048,
+      "pattern": "^https://[^\\s/@]+(/[^\\s]*)?$"
+    },
+    "theme": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["primary_color", "accent_color", "background_color", "text_color"],
+      "properties": {
+        "primary_color": { "$ref": "#/$defs/color" },
+        "accent_color": { "$ref": "#/$defs/color" },
+        "background_color": { "$ref": "#/$defs/color" },
+        "text_color": { "$ref": "#/$defs/color" },
+        "logo_asset_key": { "type": "string", "pattern": "^[a-z][a-z0-9._-]{0,63}$" }
+      }
+    },
+    "color": { "type": "string", "pattern": "^#[0-9a-f]{6}$" }
+  }
+}

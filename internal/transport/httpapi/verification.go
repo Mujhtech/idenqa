@@ -11,6 +11,7 @@ import (
 
 	"github.com/Mujhtech/idenqa/internal/access"
 	"github.com/Mujhtech/idenqa/internal/evidence"
+	"github.com/Mujhtech/idenqa/internal/experience"
 	openapiv1 "github.com/Mujhtech/idenqa/internal/gen/openapi/v1"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/policy"
@@ -189,6 +190,7 @@ func (routes *VerificationRoutes) create(writer http.ResponseWriter, request *ht
 	created, err := routes.service.Create(request.Context(), authority, key, verification.SessionCreateInput{
 		ProfileID: profileID, PolicyID: policyID, VerificationTTL: verificationTTL,
 		CaptureTokenTTL: captureTTL, OutcomePostTTL: outcomePostTTL,
+		Locale: optionalStringValue(body.Locale), Experience: experienceResolutionRequest(body.Experience),
 	})
 	if err != nil {
 		routes.problem(writer, request, err)
@@ -390,5 +392,31 @@ func (routes *VerificationRoutes) writeJSON(
 ) {
 	if err := respond.JSON(writer, request, status, value); err != nil {
 		routes.logger.ErrorContext(request.Context(), "write verification response")
+	}
+}
+
+func optionalStringValue(value *string) string {
+	if value == nil {
+		return ""
+	}
+	return *value
+}
+
+func experienceResolutionRequest(value *struct {
+	ApplicationID *string `json:"application_id,omitempty"`
+	Country       *string `json:"country,omitempty"`
+	Origin        *string `json:"origin,omitempty"`
+	SdkVersion    *string `json:"sdk_version,omitempty"`
+	Workflow      *string `json:"workflow,omitempty"`
+}) *experience.ResolutionRequest {
+	if value == nil {
+		return nil
+	}
+	return &experience.ResolutionRequest{
+		Workflow:      optionalStringValue(value.Workflow),
+		Country:       optionalStringValue(value.Country),
+		ApplicationID: optionalStringValue(value.ApplicationID),
+		Origin:        optionalStringValue(value.Origin),
+		SDKVersion:    optionalStringValue(value.SdkVersion),
 	}
 }
