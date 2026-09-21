@@ -19,6 +19,8 @@ var (
 	ErrHeld = errors.New("privacy: deletion blocked by legal hold")
 	// ErrConflict means a stale transition or changed replay was attempted.
 	ErrConflict = errors.New("privacy: lifecycle conflict")
+	// ErrUnavailable means an owned effect mechanism is not configured or reachable.
+	ErrUnavailable = errors.New("privacy: effect unavailable")
 )
 
 // DataClass selects one typed retention baseline.
@@ -320,6 +322,20 @@ func (deletion Deletion) Complete(now time.Time) (Deletion, error) {
 }
 
 func validRegion(value string) bool { return token(value, 63) }
+
+// displayText allows printable ASCII including interior spaces for
+// human-readable names. Leading or trailing whitespace is rejected.
+func displayText(value string, maximum int) bool {
+	if len(value) == 0 || len(value) > maximum || value[0] == ' ' || value[len(value)-1] == ' ' {
+		return false
+	}
+	for _, character := range value {
+		if character < 0x20 || character > 0x7e {
+			return false
+		}
+	}
+	return true
+}
 
 func token(value string, maximum int) bool {
 	if len(value) == 0 || len(value) > maximum {

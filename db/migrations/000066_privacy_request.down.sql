@@ -1,0 +1,13 @@
+DROP TABLE IF EXISTS idenqa.processor_inventory_revisions;
+DROP TABLE IF EXISTS idenqa.processor_inventory;
+DROP TABLE IF EXISTS idenqa.privacy_disclosures;
+DROP TABLE IF EXISTS idenqa.privacy_restrictions;
+DROP TABLE IF EXISTS idenqa.privacy_request_decisions;
+DROP TABLE IF EXISTS idenqa.privacy_request_events;
+DROP TABLE IF EXISTS idenqa.privacy_requests;
+DROP FUNCTION IF EXISTS idenqa.reject_processor_inventory_revision_change();
+DROP FUNCTION IF EXISTS idenqa.reject_privacy_disclosure_change();
+DROP FUNCTION IF EXISTS idenqa.protect_privacy_restriction_record();
+DROP FUNCTION IF EXISTS idenqa.reject_privacy_request_decision_change();
+DROP FUNCTION IF EXISTS idenqa.reject_privacy_request_event_change();
+DROP FUNCTION IF EXISTS idenqa.protect_privacy_request_record();

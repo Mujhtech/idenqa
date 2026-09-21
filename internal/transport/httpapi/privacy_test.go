@@ -70,7 +70,7 @@ func privacyTestCursor(t *testing.T) *cursor.Codec {
 
 func privacyTestRouter(t *testing.T, fixture *httpAccessFixture, service *privacyTestService) http.Handler {
 	t.Helper()
-	routes, err := NewPrivacyRoutes(fixture.middleware, service, privacyTestCursor(t), fixture.logger)
+	routes, err := NewPrivacyRoutes(fixture.middleware, service, nil, nil, privacyTestCursor(t), fixture.logger)
 	if err != nil {
 		t.Fatal(err)
 	}

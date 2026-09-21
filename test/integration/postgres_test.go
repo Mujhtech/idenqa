@@ -288,6 +288,11 @@ func (database *isolatedDatabase) createRuntimeRole(t *testing.T) string {
 		"GRANT SELECT, INSERT, UPDATE ON idenqa.appeals TO " + pgx.Identifier{role}.Sanitize(),
 		"GRANT SELECT, INSERT, UPDATE ON idenqa.capture_tokens TO " + pgx.Identifier{role}.Sanitize(),
 		"GRANT SELECT, INSERT, UPDATE ON idenqa.outcome_tokens TO " + pgx.Identifier{role}.Sanitize(),
+		"GRANT SELECT, INSERT, UPDATE ON idenqa.experiences TO " + pgx.Identifier{role}.Sanitize(),
+		"GRANT SELECT, INSERT, UPDATE ON idenqa.experience_revisions TO " + pgx.Identifier{role}.Sanitize(),
+		"GRANT SELECT, INSERT ON idenqa.experience_targeting TO " + pgx.Identifier{role}.Sanitize(),
+		"GRANT SELECT, INSERT ON idenqa.experience_events TO " + pgx.Identifier{role}.Sanitize(),
+		"GRANT SELECT, INSERT ON idenqa.experience_session_pins TO " + pgx.Identifier{role}.Sanitize(),
 		"GRANT SELECT, INSERT, UPDATE, DELETE ON idenqa.websocket_connection_tickets TO " + pgx.Identifier{role}.Sanitize(),
 		"GRANT SELECT, INSERT ON idenqa.realtime_client_commands TO " + pgx.Identifier{role}.Sanitize(),
 		"GRANT SELECT, INSERT, UPDATE ON idenqa.realtime_streams TO " + pgx.Identifier{role}.Sanitize(),
@@ -338,6 +343,12 @@ func (database *isolatedDatabase) createRuntimeRole(t *testing.T) string {
 		"GRANT SELECT, INSERT, UPDATE ON idenqa.accepted_commands TO " + pgx.Identifier{role}.Sanitize(),
 		"GRANT SELECT, INSERT, UPDATE ON idenqa.proposal_mode_configs TO " + pgx.Identifier{role}.Sanitize(),
 		"GRANT SELECT, INSERT ON idenqa.prompt_registry,idenqa.generative_model_registry,idenqa.impact_assessments TO " + pgx.Identifier{role}.Sanitize(),
+		"GRANT SELECT, INSERT, UPDATE ON idenqa.privacy_requests TO " + pgx.Identifier{role}.Sanitize(),
+		"GRANT SELECT, INSERT ON idenqa.privacy_request_events,idenqa.privacy_request_decisions TO " + pgx.Identifier{role}.Sanitize(),
+		"GRANT SELECT, INSERT, UPDATE ON idenqa.privacy_restrictions TO " + pgx.Identifier{role}.Sanitize(),
+		"GRANT SELECT, INSERT ON idenqa.privacy_disclosures TO " + pgx.Identifier{role}.Sanitize(),
+		"GRANT SELECT, INSERT, UPDATE ON idenqa.processor_inventory TO " + pgx.Identifier{role}.Sanitize(),
+		"GRANT SELECT, INSERT ON idenqa.processor_inventory_revisions TO " + pgx.Identifier{role}.Sanitize(),
 	}
 	for _, statement := range statements {
 		if _, err := connection.Exec(t.Context(), statement); err != nil {

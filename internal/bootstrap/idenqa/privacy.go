@@ -26,6 +26,10 @@ func newPrivacyCommand() *cobra.Command {
 	root.AddCommand(newPrivacyDeletionCommand())
 	root.AddCommand(newPrivacyDeletionRetryCommand())
 	root.AddCommand(newPrivacyRetentionCommand())
+	root.AddCommand(newPrivacyRequestCommand())
+	root.AddCommand(newPrivacyRestrictionCommand())
+	root.AddCommand(newPrivacyDisclosureCommand())
+	root.AddCommand(newPrivacyProcessorCommand())
 	return root
 }
 

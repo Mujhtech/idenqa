@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/Mujhtech/idenqa/internal/platform/id"
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
 	"github.com/Mujhtech/idenqa/internal/tenant"
 )
 
@@ -115,6 +116,7 @@ type Service struct {
 	eraser      TargetEraser
 	identifiers IdentifierGenerator
 	now         func() time.Time
+	metrics     Metrics
 }
 
 // NewService constructs the lifecycle application service.
@@ -123,6 +125,14 @@ func NewService(repository Repository, eraser TargetEraser, identifiers Identifi
 		return nil, ErrInvalid
 	}
 	return &Service{repository: repository, eraser: eraser, identifiers: identifiers, now: now}, nil
+}
+
+// WithMetrics attaches the bounded privacy metric receiver.
+func (service *Service) WithMetrics(metrics Metrics) *Service {
+	if service != nil && metrics != nil {
+		service.metrics = metrics
+	}
+	return service
 }
 
 // RequestDeletion creates one exact, region-pinned workflow.
@@ -164,7 +174,7 @@ func (service *Service) requestDeletionAt(ctx context.Context, scope tenant.Scop
 }
 
 // Run advances one workflow until a failure, legal hold, backup boundary, or completion.
-func (service *Service) Run(ctx context.Context, scope tenant.Scope, actor Actor, identifier id.Deletion) (Deletion, error) {
+func (service *Service) Run(ctx context.Context, scope tenant.Scope, actor Actor, identifier id.Deletion) (result Deletion, err error) {
 	if !actor.permits(PermissionRunDeletion) {
 		return Deletion{}, ErrConflict
 	}
@@ -172,6 +182,8 @@ func (service *Service) Run(ctx context.Context, scope tenant.Scope, actor Actor
 	if err != nil {
 		return Deletion{}, err
 	}
+	from := deletion.State
+	defer func() { service.observeDeletion(from, result) }()
 	now := service.now().UTC()
 	if deletion.State == DeletionCompleted {
 		return deletion, nil
@@ -248,6 +260,29 @@ func (service *Service) Run(ctx context.Context, scope tenant.Scope, actor Actor
 	return deletion, nil
 }
 
+// observeDeletion records the bounded state change and backup-expiry age of one
+// completed Run pass. It never labels tenant, aggregate, or deletion identity.
+func (service *Service) observeDeletion(from DeletionState, next Deletion) {
+	if service.metrics == nil || next.ID.IsZero() {
+		return
+	}
+	region := observability.Region(next.Region)
+	kind := deletionClass(next.Targets)
+	if from != next.State {
+		service.metrics.RecordDeletionTransition(observability.DeletionTransition{
+			From:   deletionState(from),
+			To:     deletionState(next.State),
+			Kind:   kind,
+			Region: region,
+		})
+	}
+	if next.State == DeletionAwaitingBackup {
+		if age := next.BackupExpiresAt.Sub(service.now().UTC()); age > 0 {
+			service.metrics.RecordBackupExpiry(observability.BackupExpiry{Age: age, Region: region})
+		}
+	}
+}
+
 // RunDue advances a bounded batch of expired or retryable workflows. Each
 // workflow remains independently transactional so one failure cannot hide the
 // remaining identifiers from a later scheduler pass.
@@ -274,7 +309,29 @@ func (service *Service) RunDue(ctx context.Context, scope tenant.Scope, actor Ac
 			results = append(results, deletion)
 		}
 	}
+	service.observeBacklog(results)
 	return results, failures
+}
+
+// observeBacklog records the bounded due-work sample grouped by resulting
+// state. It is a lower bound when the caller's limit truncates the queue.
+func (service *Service) observeBacklog(results []Deletion) {
+	if service.metrics == nil || len(results) == 0 {
+		return
+	}
+	counts := make(map[DeletionState]int64, len(results))
+	for _, value := range results {
+		if value.ID.IsZero() {
+			continue
+		}
+		counts[value.State]++
+	}
+	for state, count := range counts {
+		service.metrics.RecordDeletionBacklog(observability.DeletionBacklog{
+			State: deletionState(state),
+			Count: count,
+		})
+	}
 }
 
 // FindDeletion loads one tenant-scoped deletion workflow.

@@ -32,18 +32,21 @@ type PrivacyService interface {
 
 // PrivacyRoutes exposes safe observable lifecycle administration.
 type PrivacyRoutes struct {
-	access  *AccessMiddleware
-	service PrivacyService
-	cursors ProfileCursor
-	logger  *slog.Logger
+	access   *AccessMiddleware
+	service  PrivacyService
+	requests PrivacyRequestService
+	outcome  *OutcomeAccessMiddleware
+	cursors  ProfileCursor
+	logger   *slog.Logger
 }
 
-// NewPrivacyRoutes constructs privacy administration routes.
-func NewPrivacyRoutes(accessMiddleware *AccessMiddleware, service PrivacyService, cursors ProfileCursor, logger *slog.Logger) (*PrivacyRoutes, error) {
+// NewPrivacyRoutes constructs privacy administration routes. The request
+// service and outcome middleware may be nil when that surface is not wired.
+func NewPrivacyRoutes(accessMiddleware *AccessMiddleware, service PrivacyService, requests PrivacyRequestService, outcome *OutcomeAccessMiddleware, cursors ProfileCursor, logger *slog.Logger) (*PrivacyRoutes, error) {
 	if accessMiddleware == nil || service == nil || cursors == nil || logger == nil {
 		return nil, errors.New("privacy route dependencies are required")
 	}
-	return &PrivacyRoutes{access: accessMiddleware, service: service, cursors: cursors, logger: logger}, nil
+	return &PrivacyRoutes{access: accessMiddleware, service: service, requests: requests, outcome: outcome, cursors: cursors, logger: logger}, nil
 }
 
 // Register mounts privacy administration endpoints on router.
@@ -58,6 +61,7 @@ func (routes *PrivacyRoutes) Register(router chi.Router) {
 	router.With(reads...).Get("/retention/resolutions", routes.retentionResolution)
 	router.With(holds...).Post("/legal-holds", routes.createHold)
 	router.With(holds...).Post("/legal-holds/{holdID}/release", routes.releaseHold)
+	routes.registerRequests(router)
 }
 
 type deletionRequest struct {

@@ -9,6 +9,7 @@ import (
 	"github.com/Mujhtech/idenqa/internal/access"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/platform/idempotency"
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
 	"github.com/Mujhtech/idenqa/internal/tenant"
 )
 
@@ -41,6 +42,7 @@ type Service struct {
 	identifiers IdentifierGenerator
 	now         func() time.Time
 	authority   Authority
+	metrics     Metrics
 }
 
 // NewService constructs the review application service without reviewer authority.
@@ -50,6 +52,14 @@ func NewService(repository Repository, identifiers IdentifierGenerator, now func
 		return nil, ErrInvalid
 	}
 	return &Service{repository: repository, identifiers: identifiers, now: now}, nil
+}
+
+// WithMetrics attaches the bounded review metric receiver.
+func (service *Service) WithMetrics(metrics Metrics) *Service {
+	if service != nil && metrics != nil {
+		service.metrics = metrics
+	}
+	return service
 }
 
 // NewAuthorizedService resolves reviewer privileges at the application boundary.
@@ -163,7 +173,30 @@ func (service *Service) SubmitFinding(ctx context.Context, scope tenant.Scope, a
 	if err := service.repository.SaveCase(ctx, scope, actor, next, expectedVersion, &finding); err != nil {
 		return Case{}, err
 	}
+	service.observeResolution(value, next, resolution)
 	return next, nil
+}
+
+// observeResolution records one bounded final reviewer resolution and its case
+// age. An intermediate dual-control finding is not a resolution.
+func (service *Service) observeResolution(previous, resolved Case, resolution Resolution) {
+	if service.metrics == nil || (resolved.State != CaseResolved && resolved.State != CaseEscalated) {
+		return
+	}
+	outcome := reviewOutcome(resolution)
+	if resolved.State == CaseEscalated {
+		outcome = observability.ReviewInconclusive
+	}
+	duration := resolved.UpdatedAt.Sub(previous.CreatedAt)
+	if duration < 0 {
+		duration = 0
+	}
+	service.metrics.RecordReviewResolution(observability.ReviewResolution{
+		Outcome:   outcome,
+		Oversight: reviewOversight(previous.Oversight),
+		Duration:  duration,
+		Region:    observability.Region(previous.Region),
+	})
 }
 
 // Correct records immutable decision supersession lineage.

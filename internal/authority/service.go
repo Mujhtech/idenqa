@@ -130,15 +130,32 @@ type ResponseInput struct {
 	RenderedExperienceVersion string
 }
 
+// RestrictionGate reports whether new processing is blocked for one subject.
+// It is implemented by the privacy-request boundary and consulted at the
+// processing-authorization choke point. In-flight external operations and
+// completed decisions are deliberately untouched.
+type RestrictionGate interface {
+	Blocked(context.Context, tenant.Scope, string) (bool, error)
+}
+
 // Service coordinates authority use cases without transport or storage types.
 type Service struct {
-	notices     NoticeRepository
-	authorities ProcessingRepository
-	responses   ResponseRepository
-	sessions    SessionFinder
-	identifiers IDGenerator
-	clock       clock.Clock
-	retention   time.Duration
+	notices      NoticeRepository
+	authorities  ProcessingRepository
+	responses    ResponseRepository
+	sessions     SessionFinder
+	identifiers  IDGenerator
+	clock        clock.Clock
+	retention    time.Duration
+	restrictions RestrictionGate
+}
+
+// WithRestrictionGate attaches the optional subject-restriction gate.
+func (service *Service) WithRestrictionGate(gate RestrictionGate) *Service {
+	if service != nil && gate != nil {
+		service.restrictions = gate
+	}
+	return service
 }
 
 // AuthorizeEvidence re-evaluates current authority and the latest subject
@@ -154,6 +171,15 @@ func (service *Service) AuthorizeEvidence(
 	}
 	if err := ctx.Err(); err != nil {
 		return evidence.AuthorizationDecision{}, fmt.Errorf("authorize evidence: %w", err)
+	}
+	if service.restrictions != nil {
+		blocked, restrictionErr := service.restrictions.Blocked(ctx, scope, request.SubjectID.String())
+		if restrictionErr != nil {
+			return evidence.AuthorizationDecision{}, fmt.Errorf("evaluate processing restriction: %w", restrictionErr)
+		}
+		if blocked {
+			return evidence.AuthorizationDecision{}, ErrProcessingNotPermitted
+		}
 	}
 	session, err := service.sessions.FindSession(ctx, scope, request.VerificationID)
 	if err != nil || session.TenantID() != scope.ID() {
