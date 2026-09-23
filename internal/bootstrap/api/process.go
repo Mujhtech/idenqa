@@ -1298,6 +1298,31 @@ func newProcess(
 			return nil, fmt.Errorf("construct evidence persistence: %w", err)
 		}
 		evidenceStore.WithMetrics(metrics)
+		evidenceAdministration, err := evidence.NewAdministration(
+			evidenceStore,
+			evidenceStore,
+			evidenceStore,
+			evidenceStore,
+			clock.System{},
+		)
+		if err != nil {
+			_ = providers.Shutdown(context.Background())
+			connectionPool.Close()
+			return nil, fmt.Errorf("construct evidence administration: %w", err)
+		}
+		evidenceAdministrationRoutes, err := httpapi.NewEvidenceAdministrationRoutes(accessMiddleware, evidenceAdministration, logger)
+		if err != nil {
+			_ = providers.Shutdown(context.Background())
+			connectionPool.Close()
+			return nil, fmt.Errorf("construct evidence administration routes: %w", err)
+		}
+		grantAdministration, err := evidence.NewGrantAdministration(evidenceStore, authorityService, identifiers, catalog, clock.System{}, time.Hour, configuration.VerificationIdempotencyTTL)
+		if err != nil {
+			_ = providers.Shutdown(context.Background())
+			connectionPool.Close()
+			return nil, fmt.Errorf("construct evidence grant administration: %w", err)
+		}
+		evidenceAdministrationRoutes.WithGrantIssuer(grantAdministration)
 		privacyStore, err := privacypostgres.New(connectionPool, infrastructure.keys)
 		if err != nil {
 			_ = providers.Shutdown(context.Background())
@@ -1430,7 +1455,7 @@ func newProcess(
 		if experienceStore != nil {
 			progressRoutes.WithExperiencePins(experienceStore)
 		}
-		routes = append(routes, uploadRoutes, progressRoutes, privacyRoutes)
+		routes = append(routes, uploadRoutes, progressRoutes, privacyRoutes, evidenceAdministrationRoutes)
 		uploadPolicy = &policy
 	}
 	if configuration.ProviderRuntimeFile != "" {

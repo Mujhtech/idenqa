@@ -37,6 +37,7 @@ func newRootCommand(info buildinfo.Info) *cobra.Command {
 		newTenantCommand(),
 		newAPIKeyCommand(),
 		newEvidenceKeyCommand(),
+		newEvidenceCommand(),
 		newConsentCommand(),
 		newKMSCommand(),
 		newSupportCommand(),

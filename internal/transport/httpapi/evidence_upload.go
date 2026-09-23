@@ -13,7 +13,6 @@ import (
 	platformcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/transport/httpapi/apierror"
-	"github.com/Mujhtech/idenqa/internal/transport/httpapi/respond"
 	"github.com/Mujhtech/idenqa/internal/verification"
 	"github.com/go-chi/chi/v5"
 )
@@ -41,12 +40,12 @@ type EvidenceUploadAccepter interface {
 
 // EvidenceUploadRoutes adapts requirement-bound upload issuance and ingress to HTTP.
 type EvidenceUploadRoutes struct {
+	handlerBase
 	capture *CaptureAccessMiddleware
 	issuer  EvidenceUploadIssuer
 	finder  EvidenceUploadFinder
 	accept  EvidenceUploadAccepter
 	policy  evidence.UploadPolicy
-	logger  *slog.Logger
 }
 
 // NewEvidenceUploadRoutes constructs the capture-token evidence-upload surface.
@@ -64,12 +63,12 @@ func NewEvidenceUploadRoutes(
 	}
 
 	return &EvidenceUploadRoutes{
-		capture: capture,
-		issuer:  issuer,
-		finder:  finder,
-		accept:  accept,
-		policy:  policy,
-		logger:  logger,
+		capture:     capture,
+		issuer:      issuer,
+		finder:      finder,
+		accept:      accept,
+		policy:      policy,
+		handlerBase: newHandlerBase(logger, "evidence upload"),
 	}, nil
 }
 
@@ -158,10 +157,16 @@ func (routes *EvidenceUploadRoutes) issue(writer http.ResponseWriter, request *h
 
 		return
 	}
+	sequence, err := parseTemporalFrame(body.Sequence)
+	if err != nil {
+		routes.problem(writer, request, invalidRequest(err))
+		return
+	}
 	upload, err := routes.issuer.Issue(request.Context(), captureContext, key, authority.UploadRequest{
 		RequirementKey: body.RequirementKey, Artefact: artefact, AcquisitionMethod: method,
 		FallbackCondition: fallback, ExpectedBytes: body.ExpectedBytes,
 		ExpectedDigest: body.ExpectedDigest, MediaType: string(body.MediaType), Region: body.Region,
+		Sequence: sequence,
 	})
 	if err != nil {
 		routes.problem(writer, request, err)
@@ -239,10 +244,43 @@ func evidenceUploadResponse(upload evidence.Upload) openapiv1.EvidenceUpload {
 		EvidenceType: string(record.EvidenceType), Artefact: string(record.Artefact),
 		AcquisitionMethod: string(record.AcquisitionMethod),
 		FallbackCondition: optionalCaptureFallbackCondition(record.FallbackCondition), Assurances: assurances,
+		Sequence:          temporalFrameResponse(record.Sequence),
 		AllowedMediaTypes: allowed, MaximumBytes: record.MaximumBytes,
 		ExpectedBytes: record.ExpectedBytes, MediaType: openapiv1.EvidenceUploadMediaType(record.MediaType),
 		Region: record.Region, CreatedAt: record.CreatedAt, UpdatedAt: record.UpdatedAt,
 		ExpiresAt: record.ExpiresAt, AcceptedAt: record.AcceptedAt,
+	}
+}
+
+func parseTemporalFrame(value *openapiv1.TemporalEvidenceFrame) (*evidence.TemporalFrame, error) {
+	if value == nil {
+		return nil, nil
+	}
+	if value.Index < 0 || value.Index > 31 || value.Count < 2 || value.Count > 32 {
+		return nil, errors.New("temporal frame position is invalid")
+	}
+	previous := ""
+	if value.PreviousDigest != nil {
+		previous = *value.PreviousDigest
+	}
+	return &evidence.TemporalFrame{
+		SequenceDigest: value.SequenceDigest, Index: uint16(value.Index), Count: uint16(value.Count),
+		ChallengeID: value.ChallengeID, CapturedAt: value.CapturedAt.UTC(), PreviousDigest: previous,
+	}, nil
+}
+
+func temporalFrameResponse(value *evidence.TemporalFrame) *openapiv1.TemporalEvidenceFrame {
+	if value == nil {
+		return nil
+	}
+	var previous *string
+	if value.PreviousDigest != "" {
+		copy := value.PreviousDigest
+		previous = &copy
+	}
+	return &openapiv1.TemporalEvidenceFrame{
+		SequenceDigest: value.SequenceDigest, Index: int(value.Index), Count: int(value.Count),
+		ChallengeID: value.ChallengeID, CapturedAt: value.CapturedAt, PreviousDigest: previous,
 	}
 }
 
@@ -253,23 +291,6 @@ func optionalCaptureFallbackCondition(value string) *openapiv1.CaptureFallbackCo
 	fallback := openapiv1.CaptureFallbackCondition(value)
 
 	return &fallback
-}
-
-func (routes *EvidenceUploadRoutes) problem(writer http.ResponseWriter, request *http.Request, err error) {
-	if writeErr := respond.WriteProblem(writer, request, err, requestIDString(request.Context())); writeErr != nil {
-		routes.logger.ErrorContext(request.Context(), "write evidence upload problem response")
-	}
-}
-
-func (routes *EvidenceUploadRoutes) writeJSON(
-	writer http.ResponseWriter,
-	request *http.Request,
-	status int,
-	value any,
-) {
-	if err := respond.JSON(writer, request, status, value); err != nil {
-		routes.logger.ErrorContext(request.Context(), "write evidence upload response")
-	}
 }
 
 func accessFailure() error {
