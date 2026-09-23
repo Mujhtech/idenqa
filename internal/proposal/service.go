@@ -51,7 +51,6 @@ type AuditRecorder interface {
 	Append(ctx context.Context, scope tenant.Scope, eventType string, aggregateID string, actorID string, digest string, occurredAt time.Time) error
 }
 
-// Service owns proposal lifecycle and guardrail orchestration.
 // Service owns proposal lifecycle, guardrail orchestration, mode configuration,
 // prompt/model registries, and deterministic accepted-command execution.
 type Service struct {
@@ -61,7 +60,9 @@ type Service struct {
 	commands  CommandStore
 	modes     ModeStore
 	registry  RegistryStore
+	usage     GenerationUsageStore
 	model     proposalv1.ProposalModel
+	binding   GenerationBindingChecker
 	evidence  EvidenceChecker
 	authority AuthorityChecker
 	region    RegionValidator
@@ -77,7 +78,9 @@ type ServiceConfig struct {
 	Commands  CommandStore
 	Modes     ModeStore
 	Registry  RegistryStore
+	Usage     GenerationUsageStore
 	Model     proposalv1.ProposalModel
+	Binding   GenerationBindingChecker
 	Evidence  EvidenceChecker
 	Authority AuthorityChecker
 	Region    RegionValidator
@@ -98,13 +101,23 @@ func NewService(config ServiceConfig) (*Service, error) {
 		commands:  config.Commands,
 		modes:     config.Modes,
 		registry:  config.Registry,
+		usage:     config.Usage,
 		model:     config.Model,
+		binding:   config.Binding,
 		evidence:  config.Evidence,
 		authority: config.Authority,
 		region:    config.Region,
 		limiter:   config.Limiter,
 		audit:     config.Audit,
 	}, nil
+}
+
+// GetGenerationUsageReport returns bounded tenant operational accounting.
+func (service *Service) GetGenerationUsageReport(ctx context.Context, scope tenant.Scope, from, to time.Time) (GenerationUsageReport, error) {
+	if service.usage == nil || scope.ID().IsZero() {
+		return GenerationUsageReport{}, ErrNotFound
+	}
+	return service.usage.GetGenerationUsageReport(ctx, scope.ID(), from, to)
 }
 
 // GetProposal retrieves a proposal with tenant scope.
@@ -164,7 +177,7 @@ func (service *Service) CreateProposal(ctx context.Context, scope tenant.Scope, 
 		}
 		proposal.Supersedes = &superseded
 	}
-	return service.persistPending(ctx, scope, proposal, modeConfig, actorID)
+	return service.persistPending(ctx, scope, proposal, modeConfig, actorID, false)
 }
 
 // Propose invokes the configured ProposalModel to produce a bounded proposal,
@@ -188,6 +201,14 @@ func (service *Service) Propose(ctx context.Context, scope tenant.Scope, request
 	if err != nil {
 		return Proposal{}, err
 	}
+	if service.binding != nil {
+		if err := service.binding.ValidateGenerationBinding(ctx, scope.ID(), modeConfig, request); err != nil {
+			return Proposal{}, err
+		}
+	}
+	if err := service.preflightGeneration(ctx, scope, request, modeConfig); err != nil {
+		return Proposal{}, err
+	}
 	agent, err := service.model.Propose(ctx, request)
 	if err != nil {
 		return Proposal{}, err
@@ -202,7 +223,49 @@ func (service *Service) Propose(ctx context.Context, scope tenant.Scope, request
 	if err != nil {
 		return Proposal{}, err
 	}
-	return service.persistPending(ctx, scope, proposal, modeConfig, actorID)
+	return service.persistPending(ctx, scope, proposal, modeConfig, actorID, true)
+}
+
+// preflightGeneration runs every guard that can be decided from the request
+// before bounded context leaves Core. Human-approval requirements are allowed
+// here because the generated proposal remains pending; all other denials stop
+// the provider call. The cost limiter is charged exactly once for generation.
+func (service *Service) preflightGeneration(ctx context.Context, scope tenant.Scope, request proposalv1.ProposalRequest, modeConfig ModeConfig) error {
+	preflight := Proposal{
+		TenantID:      scope.ID(),
+		Mode:          request.Mode,
+		Actions:       request.Actions,
+		EvidenceRefs:  request.EvidenceRefs,
+		SignalRefs:    request.SignalRefs,
+		ContextDigest: request.ContextDigest,
+	}
+	if request.VerificationID != "" {
+		verificationID, err := id.ParseVerification(request.VerificationID)
+		if err != nil {
+			return ErrInvalid
+		}
+		preflight.VerificationID = verificationID
+	} else {
+		policyID, err := id.ParsePolicy(request.PolicyID)
+		if err != nil {
+			return ErrInvalid
+		}
+		preflight.PolicyID = &policyID
+	}
+	result, err := ValidateGuardrails(ctx, GuardrailInput{
+		Proposal: preflight, ModeConfig: modeConfig, Evidence: service.evidence,
+		Authority: service.authority, Region: service.region, CostLimiter: service.limiter,
+	})
+	if err != nil {
+		return err
+	}
+	if result.Allowed || result.Reason == "human approval required" || result.Reason == "high-risk requires human approval" {
+		return nil
+	}
+	if result.Reason == "rate limited" {
+		return ErrRateLimited
+	}
+	return fmt.Errorf("%w: generation preflight: %s", ErrNotAllowed, result.Reason)
 }
 
 // resolveModeConfig loads the stored automation mode and fails closed when the
@@ -225,9 +288,13 @@ func (service *Service) resolveModeConfig(ctx context.Context, scope tenant.Scop
 }
 
 // persistPending runs guardrails and stores a validated pending proposal.
-func (service *Service) persistPending(ctx context.Context, scope tenant.Scope, proposal Proposal, modeConfig ModeConfig, actorID string) (Proposal, error) {
+func (service *Service) persistPending(ctx context.Context, scope tenant.Scope, proposal Proposal, modeConfig ModeConfig, actorID string, costPrechecked bool) (Proposal, error) {
 	if err := proposal.Validate(); err != nil {
 		return Proposal{}, err
+	}
+	var limiter CostLimiter
+	if !costPrechecked {
+		limiter = service.limiter
 	}
 	guardInput := GuardrailInput{
 		Proposal:      proposal,
@@ -235,7 +302,7 @@ func (service *Service) persistPending(ctx context.Context, scope tenant.Scope, 
 		Evidence:      service.evidence,
 		Authority:     service.authority,
 		Region:        service.region,
-		CostLimiter:   service.limiter,
+		CostLimiter:   limiter,
 		HumanApproved: false,
 	}
 	result, err := ValidateGuardrails(ctx, guardInput)
@@ -245,7 +312,7 @@ func (service *Service) persistPending(ctx context.Context, scope tenant.Scope, 
 	if !result.Allowed {
 		// Hard failures are rejected at creation; human-approval requirements
 		// defer to the approval step.
-		if result.Reason == "rate limited" || result.Reason == "unknown evidence_ref" ||
+		if result.Reason == "rate limited" || result.Reason == "unknown evidence_ref" || result.Reason == "unknown signal_ref" ||
 			result.Reason == "raw evidence in args" || result.Reason == "processing authority not permitted" ||
 			result.Reason == "region not allowed" {
 			return Proposal{}, fmt.Errorf("%w: %s", ErrNotAllowed, result.Reason)
@@ -498,46 +565,54 @@ func (service *Service) transition(ctx context.Context, scope tenant.Scope, prop
 }
 
 // PutModeConfig stores a versioned automation-mode configuration with expectedVersion CAS.
-func (service *Service) PutModeConfig(ctx context.Context, scope tenant.Scope, workflow string, mode proposalv1.AutomationMode, allowedKinds []proposalv1.ActionKind, version int64, actorID string) (ModeConfig, error) {
+func (service *Service) PutModeConfig(ctx context.Context, scope tenant.Scope, workflow string, mode proposalv1.AutomationMode, allowedKinds []proposalv1.ActionKind, pins ModePins, version int64, actorID string) (ModeConfig, error) {
 	if scope.ID().IsZero() || workflow == "" || actorID == "" {
 		return ModeConfig{}, ErrInvalid
 	}
 	if mode == proposalv1.AutomationModeUnknown {
 		return ModeConfig{}, ErrInvalid
 	}
+	if service.binding != nil && mode != proposalv1.AutomationModeDisabled {
+		if pins.ModelID == nil || pins.PromptID == nil || pins.ModelVersion < 1 || pins.PromptVersion < 1 || pins.ActivationRevision < 1 || service.registry == nil {
+			return ModeConfig{}, ErrInvalid
+		}
+		activation, err := service.registry.GetActivation(ctx, scope.ID(), workflow)
+		if err != nil {
+			return ModeConfig{}, err
+		}
+		if activation.State != GenerationActivationActive || activation.Revision != pins.ActivationRevision ||
+			activation.ModelRegistryID != *pins.ModelID || activation.ModelRegistryVersion != pins.ModelVersion ||
+			activation.PromptRegistryID != *pins.PromptID || activation.PromptRegistryVersion != pins.PromptVersion {
+			return ModeConfig{}, ErrNotAllowed
+		}
+	}
 	now := service.clock.Now().UTC()
 	existing, err := service.modes.Get(ctx, scope.ID(), workflow)
-	var existingVersion int64
-	var existingFound bool
 	if err != nil {
 		if !errors.Is(err, ErrNotFound) {
 			return ModeConfig{}, err
 		}
+		if version != 0 {
+			return ModeConfig{}, ErrConflict
+		}
+		version = 1
 	} else {
-		existingFound = true
-		existingVersion = existing.Version
-		if version != 0 && version != existingVersion+1 {
+		if version != existing.Version {
 			return ModeConfig{}, ErrConflict
 		}
-		if version == 0 {
-			version = existingVersion + 1
-		}
-	}
-	if !existingFound {
-		if version == 0 {
-			version = 1
-		} else if version != 1 {
-			return ModeConfig{}, ErrConflict
-		}
+		version = existing.Version + 1
 	}
 	config := ModeConfig{
 		TenantID:     scope.ID(),
 		Workflow:     workflow,
 		Mode:         mode,
 		AllowedKinds: allowedKinds,
-		Version:      version,
-		CreatedAt:    now,
-		UpdatedAt:    now,
+		ModelID:      pins.ModelID, ModelVersion: pins.ModelVersion,
+		PromptID: pins.PromptID, PromptVersion: pins.PromptVersion,
+		ActivationRevision: pins.ActivationRevision,
+		Version:            version,
+		CreatedAt:          now,
+		UpdatedAt:          now,
 	}
 	if existing.Version != 0 {
 		config.CreatedAt = existing.CreatedAt
@@ -564,7 +639,7 @@ func (service *Service) GetModeConfig(ctx context.Context, scope tenant.Scope, w
 
 // CreatePromptRecord creates an immutable prompt version.
 func (service *Service) CreatePromptRecord(ctx context.Context, scope tenant.Scope, content, modelID, actorID string) (PromptRecord, error) {
-	if scope.ID().IsZero() || content == "" || modelID == "" || actorID == "" {
+	if scope.ID().IsZero() || content == "" || !validGenerationToken(modelID) || actorID == "" {
 		return PromptRecord{}, ErrInvalid
 	}
 	if service.registry == nil {
@@ -603,9 +678,135 @@ func (service *Service) GetPromptRecord(ctx context.Context, scope tenant.Scope,
 	return service.registry.GetPrompt(ctx, scope.ID(), promptID, version)
 }
 
+// CreateModelRecord creates an immutable tenant-owned generative-model revision.
+func (service *Service) CreateModelRecord(ctx context.Context, scope tenant.Scope, logicalModelID, digest, actorID string) (GenerativeModelRecord, error) {
+	if scope.ID().IsZero() || !validGenerationToken(logicalModelID) || !isSHA256(digest) || actorID == "" {
+		return GenerativeModelRecord{}, ErrInvalid
+	}
+	if service.registry == nil {
+		return GenerativeModelRecord{}, ErrNotFound
+	}
+	modelID, err := service.ids.NewModel()
+	if err != nil {
+		return GenerativeModelRecord{}, err
+	}
+	record := GenerativeModelRecord{ID: modelID, TenantID: scope.ID(), Version: 1, ModelID: logicalModelID, Digest: digest, CreatedAt: service.clock.Now().UTC(), ActorID: actorID}
+	if err := service.registry.CreateModel(ctx, record); err != nil {
+		return GenerativeModelRecord{}, err
+	}
+	return record, nil
+}
+
+// GetModelRecord retrieves an immutable tenant-owned model revision.
+func (service *Service) GetModelRecord(ctx context.Context, scope tenant.Scope, modelID id.Model, version int64) (GenerativeModelRecord, error) {
+	if service.registry == nil || scope.ID().IsZero() {
+		return GenerativeModelRecord{}, ErrNotFound
+	}
+	return service.registry.GetModel(ctx, scope.ID(), modelID, version)
+}
+
+// ActivateGenerationRoute publishes one exact registry/runtime route revision.
+func (service *Service) ActivateGenerationRoute(ctx context.Context, scope tenant.Scope, activation GenerationActivation, expectedRevision int64, actorID string) (GenerationActivation, error) {
+	if service.registry == nil || scope.ID().IsZero() || actorID == "" || expectedRevision < 0 {
+		return GenerationActivation{}, ErrInvalid
+	}
+	model, err := service.registry.GetModel(ctx, scope.ID(), activation.ModelRegistryID, activation.ModelRegistryVersion)
+	if err != nil {
+		return GenerationActivation{}, err
+	}
+	prompt, err := service.registry.GetPrompt(ctx, scope.ID(), activation.PromptRegistryID, activation.PromptRegistryVersion)
+	if err != nil {
+		return GenerationActivation{}, err
+	}
+	if model.ModelID == "" || prompt.ModelID != model.ModelID {
+		return GenerationActivation{}, ErrNotAllowed
+	}
+	activation.TenantID = scope.ID()
+	activation.ModelID = model.ModelID
+	activation.Revision = expectedRevision + 1
+	activation.State = GenerationActivationActive
+	activation.Action = "activated"
+	activation.ActorID = actorID
+	activation.OccurredAt = service.clock.Now().UTC()
+	if err := service.registry.PutActivation(ctx, activation, expectedRevision); err != nil {
+		return GenerationActivation{}, err
+	}
+	return activation, nil
+}
+
+// RetireGenerationRoute disables the current workflow route without deleting history.
+func (service *Service) RetireGenerationRoute(ctx context.Context, scope tenant.Scope, workflow string, expectedRevision int64, reason, actorID string) (GenerationActivation, error) {
+	if service.registry == nil || scope.ID().IsZero() || workflow == "" || expectedRevision < 1 || actorID == "" {
+		return GenerationActivation{}, ErrInvalid
+	}
+	current, err := service.registry.GetActivation(ctx, scope.ID(), workflow)
+	if err != nil {
+		return GenerationActivation{}, err
+	}
+	if current.Revision != expectedRevision {
+		return GenerationActivation{}, ErrConflict
+	}
+	current.Revision++
+	current.State = GenerationActivationRetired
+	current.Action = "retired"
+	current.SourceRevision = 0
+	current.Reason, current.ActorID, current.OccurredAt = reason, actorID, service.clock.Now().UTC()
+	if err := service.registry.PutActivation(ctx, current, expectedRevision); err != nil {
+		return GenerationActivation{}, err
+	}
+	return current, nil
+}
+
+// RollbackGenerationRoute republishes a prior active route as a new revision.
+func (service *Service) RollbackGenerationRoute(ctx context.Context, scope tenant.Scope, workflow string, expectedRevision, targetRevision int64, reason, actorID string) (GenerationActivation, error) {
+	if service.registry == nil || scope.ID().IsZero() || workflow == "" || expectedRevision < 1 || targetRevision < 1 || actorID == "" {
+		return GenerationActivation{}, ErrInvalid
+	}
+	current, err := service.registry.GetActivation(ctx, scope.ID(), workflow)
+	if err != nil {
+		return GenerationActivation{}, err
+	}
+	if current.Revision != expectedRevision {
+		return GenerationActivation{}, ErrConflict
+	}
+	target, err := service.registry.GetActivationRevision(ctx, scope.ID(), workflow, targetRevision)
+	if err != nil {
+		return GenerationActivation{}, err
+	}
+	if target.State != GenerationActivationActive {
+		return GenerationActivation{}, ErrNotAllowed
+	}
+	target.Revision = expectedRevision + 1
+	target.State = GenerationActivationActive
+	target.Action = "rolled_back"
+	target.SourceRevision = targetRevision
+	target.Reason, target.ActorID, target.OccurredAt = reason, actorID, service.clock.Now().UTC()
+	if err := service.registry.PutActivation(ctx, target, expectedRevision); err != nil {
+		return GenerationActivation{}, err
+	}
+	return target, nil
+}
+
+// GetGenerationActivation returns the current workflow activation.
+func (service *Service) GetGenerationActivation(ctx context.Context, scope tenant.Scope, workflow string) (GenerationActivation, error) {
+	if service.registry == nil || scope.ID().IsZero() || workflow == "" {
+		return GenerationActivation{}, ErrInvalid
+	}
+	return service.registry.GetActivation(ctx, scope.ID(), workflow)
+}
+
+// ListGenerationActivationHistory returns newest lifecycle revisions first.
+func (service *Service) ListGenerationActivationHistory(ctx context.Context, scope tenant.Scope, workflow string, limit int) ([]GenerationActivation, error) {
+	if service.registry == nil || scope.ID().IsZero() || workflow == "" {
+		return nil, ErrInvalid
+	}
+	return service.registry.ListActivationHistory(ctx, scope.ID(), workflow, limit)
+}
+
 // CreateImpactRecord stores an AI impact assessment.
 func (service *Service) CreateImpactRecord(ctx context.Context, scope tenant.Scope, kind proposalv1.ActionKind, assessment, riskLevel, actorID string) (ImpactAssessment, error) {
-	if scope.ID().IsZero() || assessment == "" || actorID == "" {
+	if scope.ID().IsZero() || !proposalv1.IsAllowedKind(kind) || assessment == "" || len(assessment) > 8192 ||
+		(riskLevel != "low" && riskLevel != "medium" && riskLevel != "high" && riskLevel != "critical") || actorID == "" {
 		return ImpactAssessment{}, ErrInvalid
 	}
 	if service.registry == nil {
@@ -628,6 +829,22 @@ func (service *Service) CreateImpactRecord(ctx context.Context, scope tenant.Sco
 		_ = service.audit.Append(ctx, scope, "impact.created.v1", record.ID, actorID, string(kind), now)
 	}
 	return record, nil
+}
+
+// GetImpactRecord returns one immutable AI impact assessment.
+func (service *Service) GetImpactRecord(ctx context.Context, scope tenant.Scope, assessmentID string) (ImpactAssessment, error) {
+	if service.registry == nil || scope.ID().IsZero() || assessmentID == "" {
+		return ImpactAssessment{}, ErrInvalid
+	}
+	return service.registry.GetImpact(ctx, scope.ID(), assessmentID)
+}
+
+// ListImpactRecords returns a bounded newest-first page of assessments.
+func (service *Service) ListImpactRecords(ctx context.Context, scope tenant.Scope, before time.Time, limit int) ([]ImpactAssessment, error) {
+	if service.registry == nil || scope.ID().IsZero() || limit < 1 || limit > 100 {
+		return nil, ErrInvalid
+	}
+	return service.registry.ListImpacts(ctx, scope.ID(), before, limit)
 }
 
 // ProposeReviewCopilot creates a model-driven review-copilot summary proposal.

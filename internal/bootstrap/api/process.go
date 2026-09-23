@@ -1114,11 +1114,12 @@ func newProcess(
 		connectionPool.Close()
 		return nil, fmt.Errorf("construct proposal persistence: %w", err)
 	}
-	referenceModel, err := proposal.NewReferenceModel(identifiers, clock.System{})
+	proposalRegistry := proposalpostgres.NewRegistryStore(connectionPool)
+	proposalModel, proposalBinding, err := configuredProposalModel(ctx, configuration, identifiers, proposalRegistry, proposalStore)
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
 		connectionPool.Close()
-		return nil, fmt.Errorf("construct proposal reference model: %w", err)
+		return nil, fmt.Errorf("construct proposal model: %w", err)
 	}
 	proposalService, err := proposal.NewService(proposal.ServiceConfig{
 		Generator: identifiers,
@@ -1126,8 +1127,10 @@ func newProcess(
 		Proposals: proposalStore,
 		Commands:  proposalStore,
 		Modes:     proposalpostgres.NewModeStore(connectionPool),
-		Registry:  proposalpostgres.NewRegistryStore(connectionPool),
-		Model:     referenceModel,
+		Registry:  proposalRegistry,
+		Usage:     proposalStore,
+		Model:     proposalModel,
+		Binding:   proposalBinding,
 		Evidence:  proposalpostgres.NewEvidenceChecker(connectionPool),
 		Authority: proposalpostgres.NewAuthorityChecker(connectionPool, clock.System{}),
 		Region:    proposalpostgres.NewRegionValidator(connectionPool, clock.System{}),

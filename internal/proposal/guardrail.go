@@ -108,6 +108,15 @@ func ValidateGuardrails(ctx context.Context, input GuardrailInput) (GuardrailRes
 				return GuardrailResult{Allowed: false, Reason: "unknown evidence_ref"}, nil
 			}
 		}
+		for _, ref := range proposal.SignalRefs {
+			exists, err := input.Evidence.Exists(ctx, proposal.TenantID.String(), proposal.VerificationID.String(), ref)
+			if err != nil {
+				return GuardrailResult{}, err
+			}
+			if !exists {
+				return GuardrailResult{Allowed: false, Reason: "unknown signal_ref"}, nil
+			}
+		}
 	}
 	// 3. Tool and action allow-list: already validated in contract, but recheck
 	for _, action := range proposal.Actions {

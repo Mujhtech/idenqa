@@ -84,3 +84,20 @@ func TestGuardrailRegionAndAuthorityFailClosed(t *testing.T) {
 		t.Fatalf("allowed authority+region rejected: %s", result.Reason)
 	}
 }
+
+func TestGuardrailValidatesEvidenceAndSignalReferences(t *testing.T) {
+	t.Parallel()
+	p := guardrailProposal(t)
+	p.EvidenceRefs = []string{"evd_ref_1"}
+	p.SignalRefs = []string{"sig_ref_missing"}
+	result, err := proposal.ValidateGuardrails(t.Context(), proposal.GuardrailInput{
+		Proposal: p, ModeConfig: proposal.ModeConfig{AllowedKinds: []proposalv1.ActionKind{proposalv1.ActionReviewCopilotSummarize}},
+		Evidence: proposal.NewInMemoryEvidenceChecker([]string{"evd_ref_1"}),
+	})
+	if err != nil {
+		t.Fatalf("ValidateGuardrails() error = %v", err)
+	}
+	if result.Allowed || result.Reason != "unknown signal_ref" {
+		t.Fatalf("ValidateGuardrails() = %+v, want unknown signal_ref", result)
+	}
+}

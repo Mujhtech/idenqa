@@ -364,6 +364,7 @@ type API struct {
 	ReviewAuthorityFile string `envconfig:"REVIEW_AUTHORITY_FILE"`
 	ProviderRuntimeFile string `envconfig:"PROVIDER_RUNTIME_FILE"`
 	ModelRuntimeFile    string `envconfig:"MODEL_RUNTIME_FILE"`
+	ProposalRuntimeFile string `envconfig:"PROPOSAL_RUNTIME_FILE"`
 	EvidenceUploadConfiguration
 	EvidenceLocalDirectory     string                `envconfig:"EVIDENCE_LOCAL_DIRECTORY"`
 	EvidenceLocalKeyringFile   string                `envconfig:"EVIDENCE_LOCAL_KEYRING_FILE"`

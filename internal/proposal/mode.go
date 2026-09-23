@@ -2,7 +2,6 @@ package proposal
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	proposalv1 "github.com/Mujhtech/idenqa/contracts/proposal/v1"
@@ -12,16 +11,20 @@ import (
 // ModeConfig is the versioned tenant/workflow automation configuration.
 // It is pinned at session creation and travels with the session.
 type ModeConfig struct {
-	TenantID         id.Tenant
-	Workflow         string
-	Mode             proposalv1.AutomationMode
-	AllowListVersion string
-	AllowedKinds     []proposalv1.ActionKind
-	CostDailyLimit   int
-	PromptID         *id.Prompt
-	Version          int64
-	CreatedAt        time.Time
-	UpdatedAt        time.Time
+	TenantID           id.Tenant
+	Workflow           string
+	Mode               proposalv1.AutomationMode
+	AllowListVersion   string
+	AllowedKinds       []proposalv1.ActionKind
+	CostDailyLimit     int
+	ModelID            *id.Model
+	ModelVersion       int64
+	PromptID           *id.Prompt
+	PromptVersion      int64
+	ActivationRevision int64
+	Version            int64
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
 }
 
 // Validate checks immutable mode invariants.
@@ -46,10 +49,23 @@ func (config ModeConfig) Validate() error {
 	if config.CostDailyLimit < 0 || config.CostDailyLimit > 100000 {
 		return ErrInvalid
 	}
+	pinned := config.ModelID != nil || config.ModelVersion != 0 || config.PromptID != nil || config.PromptVersion != 0 || config.ActivationRevision != 0
+	if pinned && (config.ModelID == nil || config.ModelVersion < 1 || config.PromptID == nil || config.PromptVersion < 1 || config.ActivationRevision < 1) {
+		return ErrInvalid
+	}
 	if config.CreatedAt.IsZero() || config.UpdatedAt.IsZero() {
 		return ErrInvalid
 	}
 	return nil
+}
+
+// ModePins select one exact active registry route revision.
+type ModePins struct {
+	ModelID            *id.Model
+	ModelVersion       int64
+	PromptID           *id.Prompt
+	PromptVersion      int64
+	ActivationRevision int64
 }
 
 // ModeStore is the consumer-owned persistence port for mode configurations.
@@ -96,6 +112,3 @@ func (store *InMemoryModeStore) Put(_ context.Context, config ModeConfig) error 
 	store.configs[key] = config
 	return nil
 }
-
-// Ensure import for errors used.
-var _ = errors.New

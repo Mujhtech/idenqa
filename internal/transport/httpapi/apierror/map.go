@@ -242,6 +242,28 @@ var rules = []rule{
 		retryAfter: time.Second,
 	},
 	{
+		targets: []error{proposal.ErrModelRejected},
+		status:  http.StatusUnprocessableEntity,
+		code:    CodeInvalidRequest,
+		title:   "Model request rejected",
+		detail:  "The configured model could not fulfil the proposal request.",
+	},
+	{
+		targets: []error{proposal.ErrModelOutput},
+		status:  http.StatusBadGateway,
+		code:    CodeServiceUnavailable,
+		title:   "Invalid model response",
+		detail:  "The configured model returned an invalid proposal.",
+	},
+	{
+		targets:    []error{proposal.ErrModelUnavailable},
+		status:     http.StatusServiceUnavailable,
+		code:       CodeServiceUnavailable,
+		title:      "Model unavailable",
+		detail:     "The configured model is unavailable.",
+		retryAfter: time.Second,
+	},
+	{
 		targets: []error{proposal.ErrModeDisabled},
 		status:  http.StatusForbidden,
 		code:    CodeInsufficientScope,

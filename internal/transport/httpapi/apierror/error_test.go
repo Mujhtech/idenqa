@@ -18,6 +18,7 @@ import (
 	"github.com/Mujhtech/idenqa/internal/platform/idempotency"
 	"github.com/Mujhtech/idenqa/internal/policy"
 	"github.com/Mujhtech/idenqa/internal/privacy"
+	"github.com/Mujhtech/idenqa/internal/proposal"
 	"github.com/Mujhtech/idenqa/internal/provider"
 	"github.com/Mujhtech/idenqa/internal/support"
 	"github.com/Mujhtech/idenqa/internal/transport/httpapi/apierror"
@@ -83,7 +84,11 @@ func TestMapProposalModelFailures(t *testing.T) {
 		err        error
 		wantStatus int
 		wantCode   string
-	}{}
+	}{
+		{"rejected", proposal.ErrModelRejected, http.StatusUnprocessableEntity, apierror.CodeInvalidRequest},
+		{"invalid output", proposal.ErrModelOutput, http.StatusBadGateway, apierror.CodeServiceUnavailable},
+		{"unavailable", proposal.ErrModelUnavailable, http.StatusServiceUnavailable, apierror.CodeServiceUnavailable},
+	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()

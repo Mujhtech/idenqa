@@ -341,8 +341,109 @@ func TestProposalModeRegistryAndGuardrailPersistence(t *testing.T) {
 	if err := registryStore.CreateModel(ctx, modelRecord); err != nil {
 		t.Fatalf("create model: %v", err)
 	}
-	if _, err := registryStore.GetModel(ctx, firstTenant.ID(), modelID, 1); err != nil {
+	fetchedModel, err := registryStore.GetModel(ctx, firstTenant.ID(), modelID, 1)
+	if err != nil {
 		t.Fatalf("get model: %v", err)
+	}
+	if fetchedModel.ModelID != modelRecord.ModelID || fetchedModel.Digest != modelRecord.Digest {
+		t.Fatalf("model route/digest mismatch: %+v", fetchedModel)
+	}
+	if _, err := registryStore.GetModel(ctx, secondTenant.ID(), modelID, 1); !errors.Is(err, proposal.ErrNotFound) {
+		t.Fatalf("cross-tenant model Get() error = %v, want ErrNotFound", err)
+	}
+
+	// Generation activation: exact route CAS, immutable history, and tenant isolation.
+	activation := proposal.GenerationActivation{
+		TenantID: firstTenant.ID(), Workflow: "default", Revision: 1, State: proposal.GenerationActivationActive,
+		ModelRegistryID: modelID, ModelRegistryVersion: 1, PromptRegistryID: promptID, PromptRegistryVersion: 1,
+		ModelID: "model.test", ModelVersion: "snapshot-1", PromptVersion: "prompt-1",
+		Action: "activated", Reason: "integration approval", ActorID: "key_01ARZ3NDEKTSV4RRFFQ69G5FAV", OccurredAt: now,
+	}
+	if err := registryStore.PutActivation(ctx, activation, 0); err != nil {
+		t.Fatalf("put activation: %v", err)
+	}
+	fetchedActivation, err := registryStore.GetActivation(ctx, firstTenant.ID(), "default")
+	if err != nil {
+		t.Fatalf("get activation: %v", err)
+	}
+	if fetchedActivation.Action != "activated" || fetchedActivation.Revision != 1 || fetchedActivation.ModelRegistryID != modelID {
+		t.Fatalf("activation mismatch: %+v", fetchedActivation)
+	}
+	if _, err := registryStore.GetActivation(ctx, secondTenant.ID(), "default"); !errors.Is(err, proposal.ErrNotFound) {
+		t.Fatalf("cross-tenant activation Get() error = %v, want ErrNotFound", err)
+	}
+	if err := registryStore.PutActivation(ctx, activation, 1); !errors.Is(err, proposal.ErrInvalid) {
+		t.Fatalf("non-sequential activation error = %v, want ErrInvalid", err)
+	}
+	retired := activation
+	retired.Revision = 2
+	retired.State = proposal.GenerationActivationRetired
+	retired.Action = "retired"
+	retired.Reason = "integration retirement"
+	retired.OccurredAt = now.Add(time.Second)
+	if err := registryStore.PutActivation(ctx, retired, 1); err != nil {
+		t.Fatalf("retire activation: %v", err)
+	}
+	history, err := registryStore.ListActivationHistory(ctx, firstTenant.ID(), "default", 10)
+	if err != nil {
+		t.Fatalf("list activation history: %v", err)
+	}
+	if len(history) != 2 || history[0].Revision != 2 || history[1].Revision != 1 {
+		t.Fatalf("activation history mismatch: %+v", history)
+	}
+	pinnedMode := modeConfig
+	pinnedMode.ModelID = &modelID
+	pinnedMode.ModelVersion = 1
+	pinnedMode.PromptID = &promptID
+	pinnedMode.PromptVersion = 1
+	pinnedMode.ActivationRevision = 2
+	pinnedMode.Version = 2
+	pinnedMode.UpdatedAt = now.Add(2 * time.Second)
+	if err := modeStore.Put(ctx, pinnedMode); err != nil {
+		t.Fatalf("put pinned mode: %v", err)
+	}
+	gotPinned, err := modeStore.Get(ctx, firstTenant.ID(), "default")
+	if err != nil {
+		t.Fatalf("get pinned mode: %v", err)
+	}
+	if gotPinned.ModelID == nil || *gotPinned.ModelID != modelID || gotPinned.PromptID == nil || *gotPinned.PromptID != promptID || gotPinned.ActivationRevision != 2 {
+		t.Fatalf("pinned mode mismatch: %+v", gotPinned)
+	}
+
+	// Generation usage: durable content-free receipt and cross-tenant non-disclosure.
+	proposalID, err := identifiers.NewProposal()
+	if err != nil {
+		t.Fatalf("new proposal id: %v", err)
+	}
+	usage := proposal.GenerationUsage{
+		TenantID: firstTenant.ID(), ProposalID: proposalID, ModelID: "model.test",
+		ModelVersion: "snapshot-1", PromptVersion: "prompt-1", ProviderRequestID: "request-1",
+		InputTokens: 17, OutputTokens: 5, EstimatedCostMicros: 9, RecordedAt: now,
+		Outcome: proposal.GenerationOutcomeSucceeded, UsageReported: true,
+	}
+	proposalStore, err := proposalpostgres.New(runtimePool, clock.System{})
+	if err != nil {
+		t.Fatalf("new proposal store: %v", err)
+	}
+	if err := proposalStore.RecordGenerationUsage(ctx, usage); err != nil {
+		t.Fatalf("record generation usage: %v", err)
+	}
+	fetchedUsage, err := proposalStore.GetGenerationUsage(ctx, firstTenant.ID(), proposalID)
+	if err != nil {
+		t.Fatalf("get generation usage: %v", err)
+	}
+	if fetchedUsage.ModelID != usage.ModelID || fetchedUsage.EstimatedCostMicros != usage.EstimatedCostMicros {
+		t.Fatalf("generation usage mismatch: %+v", fetchedUsage)
+	}
+	if _, err := proposalStore.GetGenerationUsage(ctx, secondTenant.ID(), proposalID); !errors.Is(err, proposal.ErrNotFound) {
+		t.Fatalf("cross-tenant generation usage Get() error = %v, want ErrNotFound", err)
+	}
+	usageReport, err := proposalStore.GetGenerationUsageReport(ctx, firstTenant.ID(), now.Add(-time.Second), now.Add(time.Second))
+	if err != nil {
+		t.Fatalf("get generation usage report: %v", err)
+	}
+	if usageReport.Attempts != 1 || usageReport.Succeeded != 1 || usageReport.InputTokens != 17 || usageReport.EstimatedCostMicros != 9 {
+		t.Fatalf("generation usage report mismatch: %+v", usageReport)
 	}
 	impact := proposal.ImpactAssessment{
 		ID: "imp_integration_01", TenantID: firstTenant.ID(), Kind: proposalv1.ActionPolicyDraftGenerate,

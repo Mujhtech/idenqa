@@ -3,6 +3,7 @@ package proposal_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"testing"
 	"time"
 
@@ -72,6 +73,200 @@ func (r *deterministicReader) Read(p []byte) (int, error) {
 		p[i] = r.counter
 	}
 	return len(p), nil
+}
+
+type countingProposalModel struct {
+	delegate proposalv1.ProposalModel
+	calls    int
+}
+
+type rejectingGenerationBinding struct{ calls int }
+
+func (binding *rejectingGenerationBinding) ValidateGenerationBinding(
+	_ context.Context,
+	_ id.Tenant,
+	_ proposal.ModeConfig,
+	_ proposalv1.ProposalRequest,
+) error {
+	binding.calls++
+	return proposal.ErrNotAllowed
+}
+
+func (model *countingProposalModel) Propose(ctx context.Context, request proposalv1.ProposalRequest) (proposalv1.AgentProposal, error) {
+	model.calls++
+	return model.delegate.Propose(ctx, request)
+}
+
+func TestProposeRateLimitsBeforeModelInvocation(t *testing.T) {
+	t.Parallel()
+	clk := testClock{now: time.Now().UTC().Truncate(time.Microsecond)}
+	identifiers, err := id.NewGenerator(clk, &deterministicReader{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	reference, err := proposal.NewReferenceModel(identifiers, clk)
+	if err != nil {
+		t.Fatal(err)
+	}
+	model := &countingProposalModel{delegate: reference}
+	modes := proposal.NewInMemoryModeStore()
+	service, err := proposal.NewService(proposal.ServiceConfig{
+		Generator: identifiers, Clock: clk, Proposals: proposal.NewInMemoryProposalStore(),
+		Commands: proposal.NewInMemoryCommandStore(), Modes: modes, Model: model,
+		Evidence:  proposal.NewInMemoryEvidenceChecker([]string{"evd_ref_1"}),
+		Authority: proposal.NewInMemoryAuthorityChecker(true), Region: proposal.NewInMemoryRegionValidator(true),
+		Limiter: proposal.NewInMemoryLimiter(1),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	scope := testScope(t)
+	if err := modes.Put(t.Context(), proposal.ModeConfig{
+		TenantID: scope.ID(), Workflow: "default", Mode: proposalv1.AutomationModeAssist,
+		AllowedKinds: []proposalv1.ActionKind{proposalv1.ActionReviewCopilotSummarize},
+		Version:      1, CreatedAt: clk.now, UpdatedAt: clk.now,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	request := proposalv1.ProposalRequest{
+		TenantID: scope.ID().String(), VerificationID: testVerificationID(t).String(), Mode: proposalv1.AutomationModeAssist,
+		Actions:      []proposalv1.BoundedAction{{Kind: proposalv1.ActionReviewCopilotSummarize, Args: json.RawMessage(`{"summary":"bounded"}`)}},
+		EvidenceRefs: []string{"evd_ref_1"}, ModelID: "model.test", ModelVersion: "v1", PromptVersion: "p1",
+		ContextDigest: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", ExpiresAt: clk.now.Add(time.Hour),
+	}
+	if _, err := service.Propose(t.Context(), scope, request, "key_01ARZ3NDEKTSV4RRFFQ69G5FAV"); err != nil {
+		t.Fatalf("first Propose() error = %v", err)
+	}
+	if _, err := service.Propose(t.Context(), scope, request, "key_01ARZ3NDEKTSV4RRFFQ69G5FAV"); !errors.Is(err, proposal.ErrRateLimited) {
+		t.Fatalf("second Propose() error = %v, want rate limited", err)
+	}
+	if model.calls != 1 {
+		t.Fatalf("model calls = %d, want 1", model.calls)
+	}
+}
+
+func TestGenerationRouteLifecycleAndModePins(t *testing.T) {
+	t.Parallel()
+	now := time.Date(2026, 9, 21, 12, 0, 0, 0, time.UTC)
+	identifiers, err := id.NewGenerator(testClock{now: now}, &deterministicReader{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	registry := proposal.NewInMemoryRegistry()
+	modes := proposal.NewInMemoryModeStore()
+	service, err := proposal.NewService(proposal.ServiceConfig{
+		Generator: identifiers,
+		Clock:     testClock{now: now},
+		Proposals: proposal.NewInMemoryProposalStore(),
+		Commands:  proposal.NewInMemoryCommandStore(),
+		Modes:     modes,
+		Registry:  registry,
+		Binding:   &rejectingGenerationBinding{},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	scope := testScope(t)
+	actorID := "key_01ARZ3NDEKTSV4RRFFQ69G5FAV"
+	model, err := service.CreateModelRecord(t.Context(), scope, "ai.review", "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", actorID)
+	if err != nil {
+		t.Fatalf("CreateModelRecord() error = %v", err)
+	}
+	prompt, err := service.CreatePromptRecord(t.Context(), scope, "Return bounded review actions.", "ai.review", actorID)
+	if err != nil {
+		t.Fatalf("CreatePromptRecord() error = %v", err)
+	}
+	active, err := service.ActivateGenerationRoute(t.Context(), scope, proposal.GenerationActivation{
+		Workflow: "default", ModelRegistryID: model.ID, ModelRegistryVersion: model.Version,
+		PromptRegistryID: prompt.ID, PromptRegistryVersion: prompt.Version,
+		ModelVersion: "model-2026-09", PromptVersion: "review-p1", Reason: "evaluation approved",
+	}, 0, actorID)
+	if err != nil {
+		t.Fatalf("ActivateGenerationRoute() error = %v", err)
+	}
+	if active.Revision != 1 || active.Action != "activated" || active.State != proposal.GenerationActivationActive {
+		t.Fatalf("activation = %+v", active)
+	}
+	if _, err := service.PutModeConfig(t.Context(), scope, "default", proposalv1.AutomationModeAssist, nil, proposal.ModePins{}, 0, actorID); !errors.Is(err, proposal.ErrInvalid) {
+		t.Fatalf("unpinned PutModeConfig() error = %v, want invalid", err)
+	}
+	if _, err := service.PutModeConfig(t.Context(), scope, "default", proposalv1.AutomationModeAssist, nil, proposal.ModePins{
+		ModelID: &model.ID, ModelVersion: model.Version, PromptID: &prompt.ID, PromptVersion: prompt.Version, ActivationRevision: active.Revision,
+	}, 0, actorID); err != nil {
+		t.Fatalf("pinned PutModeConfig() error = %v", err)
+	}
+	if _, err := service.PutModeConfig(t.Context(), scope, "default", proposalv1.AutomationModeAssist, nil, proposal.ModePins{
+		ModelID: &model.ID, ModelVersion: model.Version, PromptID: &prompt.ID, PromptVersion: prompt.Version, ActivationRevision: active.Revision,
+	}, 0, actorID); !errors.Is(err, proposal.ErrConflict) {
+		t.Fatalf("stale PutModeConfig() error = %v, want conflict", err)
+	}
+	retired, err := service.RetireGenerationRoute(t.Context(), scope, "default", 1, "provider contract ended", actorID)
+	if err != nil {
+		t.Fatalf("RetireGenerationRoute() error = %v", err)
+	}
+	if retired.Revision != 2 || retired.State != proposal.GenerationActivationRetired || retired.Action != "retired" {
+		t.Fatalf("retired activation = %+v", retired)
+	}
+	if _, err := service.RollbackGenerationRoute(t.Context(), scope, "default", 1, 1, "stale", actorID); !errors.Is(err, proposal.ErrConflict) {
+		t.Fatalf("stale RollbackGenerationRoute() error = %v, want conflict", err)
+	}
+	rolledBack, err := service.RollbackGenerationRoute(t.Context(), scope, "default", 2, 1, "restore approved route", actorID)
+	if err != nil {
+		t.Fatalf("RollbackGenerationRoute() error = %v", err)
+	}
+	if rolledBack.Revision != 3 || rolledBack.Action != "rolled_back" || rolledBack.SourceRevision != 1 {
+		t.Fatalf("rolled back activation = %+v", rolledBack)
+	}
+	history, err := service.ListGenerationActivationHistory(t.Context(), scope, "default", 10)
+	if err != nil {
+		t.Fatalf("ListGenerationActivationHistory() error = %v", err)
+	}
+	if len(history) != 3 || history[0].Revision != 3 || history[1].Revision != 2 || history[2].Revision != 1 {
+		t.Fatalf("history = %+v", history)
+	}
+}
+
+func TestProposeRejectsUnapprovedGenerationBindingBeforeModelInvocation(t *testing.T) {
+	t.Parallel()
+	clk := testClock{now: time.Now().UTC().Truncate(time.Microsecond)}
+	identifiers, err := id.NewGenerator(clk, &deterministicReader{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	reference, err := proposal.NewReferenceModel(identifiers, clk)
+	if err != nil {
+		t.Fatal(err)
+	}
+	model := &countingProposalModel{delegate: reference}
+	binding := &rejectingGenerationBinding{}
+	modes := proposal.NewInMemoryModeStore()
+	service, err := proposal.NewService(proposal.ServiceConfig{
+		Generator: identifiers, Clock: clk, Proposals: proposal.NewInMemoryProposalStore(),
+		Commands: proposal.NewInMemoryCommandStore(), Modes: modes, Model: model, Binding: binding,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	scope := testScope(t)
+	if err := modes.Put(t.Context(), proposal.ModeConfig{
+		TenantID: scope.ID(), Workflow: "default", Mode: proposalv1.AutomationModeAssist,
+		AllowedKinds: []proposalv1.ActionKind{proposalv1.ActionReviewCopilotSummarize},
+		Version:      1, CreatedAt: clk.now, UpdatedAt: clk.now,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	request := proposalv1.ProposalRequest{
+		TenantID: scope.ID().String(), VerificationID: testVerificationID(t).String(), Mode: proposalv1.AutomationModeAssist,
+		Actions: []proposalv1.BoundedAction{{Kind: proposalv1.ActionReviewCopilotSummarize, Args: json.RawMessage(`{}`)}},
+		ModelID: "model.test", ModelVersion: "v1", PromptVersion: "p1",
+		ContextDigest: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", ExpiresAt: clk.now.Add(time.Hour),
+	}
+	if _, err := service.Propose(t.Context(), scope, request, "key_01ARZ3NDEKTSV4RRFFQ69G5FAV"); !errors.Is(err, proposal.ErrNotAllowed) {
+		t.Fatalf("Propose() error = %v, want not allowed", err)
+	}
+	if binding.calls != 1 || model.calls != 0 {
+		t.Fatalf("binding calls = %d, model calls = %d", binding.calls, model.calls)
+	}
 }
 
 func TestCreateProposal_ValidAndGuardrail(t *testing.T) {

@@ -21,6 +21,7 @@ require (
 	buf.build/go/protovalidate v1.3.0
 	github.com/Mujhtech/idenqa/adapters/kms/aws v0.0.0
 	github.com/Mujhtech/idenqa/sdk/go v0.0.0
+	github.com/anthropics/anthropic-sdk-go v1.74.0
 	github.com/coder/websocket v1.8.15
 	github.com/go-chi/chi/v5 v5.3.2
 	github.com/go-chi/cors v1.2.2
@@ -35,6 +36,7 @@ require (
 	github.com/mujhtech/headgate/go/headgatemigrate v0.1.10
 	github.com/oapi-codegen/runtime v1.7.0
 	github.com/oklog/ulid/v2 v2.1.2
+	github.com/openai/openai-go/v3 v3.64.0
 	github.com/riandyrn/otelchi v0.12.3
 	github.com/spf13/cobra v1.10.2
 	github.com/tink-crypto/tink-go/v2 v2.8.0
@@ -359,6 +361,7 @@ require (
 	github.com/sqlc-dev/doubleclick v1.0.0 // indirect
 	github.com/sqlc-dev/sqlc v1.31.1 // indirect
 	github.com/ssgreg/nlreturn/v2 v2.2.1 // indirect
+	github.com/standard-webhooks/standard-webhooks/libraries v0.0.1 // indirect
 	github.com/stbenjam/no-sprintf-host-port v0.3.1 // indirect
 	github.com/stretchr/objx v0.5.3 // indirect
 	github.com/stretchr/testify v1.12.1 // indirect
@@ -366,7 +369,7 @@ require (
 	github.com/tetafro/godot v1.5.6 // indirect
 	github.com/tetratelabs/wazero v1.12.0 // indirect
 	github.com/tidwall/btree v1.8.1 // indirect
-	github.com/tidwall/gjson v1.18.0 // indirect
+	github.com/tidwall/gjson v1.19.0 // indirect
 	github.com/tidwall/match v1.2.0 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/tidwall/sjson v1.2.5 // indirect
@@ -408,7 +411,7 @@ require (
 	go.uber.org/zap v1.28.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	go.yaml.in/yaml/v4 v4.0.0-rc.6 // indirect
-	golang.org/x/crypto v0.55.0 // indirect
+	golang.org/x/crypto v0.56.0 // indirect
 	golang.org/x/exp v0.0.0-20260709172345-9ea1abe57597 // indirect
 	golang.org/x/exp/typeparams v0.0.0-20260209203927-2842357ff358 // indirect
 	golang.org/x/mod v0.39.0 // indirect
