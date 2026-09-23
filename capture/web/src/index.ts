@@ -1,4 +1,15 @@
 export { CapturePlanError, applyCaptureFailureFallback, createCapturePlan } from "./planner.js";
+export { CapturePoseGate, CAPTURE_POSE_DEFAULTS } from "./pose.js";
+export type {
+  CaptureFacePose,
+  CapturePosePolicy,
+  CapturePoseProgress,
+  CapturePoseFeedback,
+} from "./pose.js";
+export { createBrowserPoseTracker } from "./pose-tracker.js";
+export type { CapturePoseTracker } from "./pose-tracker.js";
+export { auditCaptureThemeContrast, captureContrastRatio } from "./theme-contrast.js";
+export type { CaptureThemePalette, CaptureThemeContrastIssue } from "./theme-contrast.js";
 export {
   CaptureCameraError,
   LIVE_CAMERA_METHOD,

@@ -64,6 +64,14 @@ export interface CaptureOutcomeFlowSnapshot {
 export type CaptureFlowSnapshot = CaptureActiveFlowSnapshot | CaptureOutcomeFlowSnapshot;
 
 export interface CaptureFlowClient {
+  selectDocument?(
+    input: {
+      readonly requirementKey: string;
+      readonly documentType: string;
+      readonly expectedVersion: number;
+    },
+    options: { readonly idempotencyKey: string; readonly signal?: AbortSignal },
+  ): Promise<SDKResponse<VerificationSession>>;
   observe?(
     session: VerificationSession,
     options?: { readonly capabilities?: readonly string[]; readonly signal?: AbortSignal },
@@ -131,6 +139,7 @@ export class CaptureFlowController {
   readonly #region: string | undefined;
   readonly #recoveryPollingIntervalMs: number;
   readonly #responseKeys = new Map<SubjectResponseAction, string>();
+  readonly #documentSelectionKeys = new Map<string, string>();
   readonly #uploads = new Map<string, UploadTransaction>();
   readonly #uploadIssueKeys = new Map<string, UploadIssueKey>();
   #snapshot: CaptureFlowSnapshot | undefined;
@@ -169,6 +178,49 @@ export class CaptureFlowController {
       );
     }
     return this.#readSnapshot(signal, false);
+  }
+
+  async selectDocument(
+    requirementKey: string,
+    documentType: string,
+    signal?: AbortSignal,
+  ): Promise<CaptureFlowSnapshot> {
+    const current = this.#snapshot;
+    if (
+      current === undefined ||
+      !isActiveSnapshot(current) ||
+      current.status !== "capture_ready" ||
+      this.#client.selectDocument === undefined
+    ) {
+      throw new CaptureFlowError(
+        "CAPTURE_FLOW_INVALID_STATE",
+        "Document selection is not available.",
+      );
+    }
+    const requirement = current.session.requirements.requirements.find(
+      (candidate) => candidate.key === requirementKey,
+    );
+    if (!requirement?.document_options?.some((option) => option.id === documentType)) {
+      throw new CaptureFlowError(
+        "CAPTURE_FLOW_INVALID_STATE",
+        "Document type is not permitted by this session.",
+      );
+    }
+    const expectedVersion = current.session.version;
+    const key = JSON.stringify([requirementKey, documentType, expectedVersion]);
+    let idempotencyKey = this.#documentSelectionKeys.get(key);
+    if (idempotencyKey === undefined) {
+      idempotencyKey = this.#idempotencyKeyFactory();
+      this.#documentSelectionKeys.set(key, idempotencyKey);
+    }
+    await this.#client.selectDocument(
+      { requirementKey, documentType, expectedVersion },
+      {
+        idempotencyKey,
+        ...(signal === undefined ? {} : { signal }),
+      },
+    );
+    return this.refresh(signal);
   }
 
   async #readSnapshot(
@@ -216,6 +268,7 @@ export class CaptureFlowController {
     this.#progressETag = progressResponse.etag;
     if (resetTransactions) {
       this.#responseKeys.clear();
+      this.#documentSelectionKeys.clear();
       this.#uploads.clear();
       this.#uploadIssueKeys.clear();
     }
@@ -433,6 +486,24 @@ export class CaptureFlowController {
         "The selected acquisition method is not available for this capture step.",
       );
     }
+    const requirement = current.plan.requirements.find(
+      (candidate) => candidate.key === step.requirementKey,
+    );
+    if (
+      requirement === undefined ||
+      (requirement.documentOptions !== undefined && requirement.selectedDocument === undefined) ||
+      !requirement.steps.some(
+        (candidate) =>
+          candidate.artefact === step.artefact &&
+          candidate.methodOptions.includes(method) &&
+          candidate.fallbackCondition === step.fallbackCondition,
+      )
+    ) {
+      throw new CaptureUploadError(
+        "CAPTURE_UPLOAD_INVALID_STATE",
+        "Choose a permitted document before collecting its required side.",
+      );
+    }
     const prepared = await prepareFileUpload(body, fileUploadPolicy(current.session, step));
     const key = uploadStepKey(step, method);
     let transaction = this.#uploads.get(key);
@@ -539,6 +610,7 @@ export function createCaptureFlowController(
     getOutcome: (requestOptions) => outcome.getOutcome(requestOptions),
     pollProgress: (etag, requestOptions) => capture.pollProgress(etag, requestOptions),
     respond: (input, requestOptions) => capture.respond(input, requestOptions),
+    selectDocument: (input, requestOptions) => capture.selectDocument(input, requestOptions),
     createEvidenceUpload: (input, requestOptions) =>
       capture.createEvidenceUpload(input, requestOptions),
     getEvidenceUpload: (uploadID, requestOptions) =>

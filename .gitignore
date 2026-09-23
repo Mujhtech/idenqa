@@ -12,6 +12,7 @@
 /sdk/typescript/dist/
 /sdk/typescript/node_modules/
 /capture/web/dist/
+/capture/web/demo/public/idenqa-liveness/
 /capture/web/node_modules/
 /capture/web/playwright-report/
 /capture/web/test-results/

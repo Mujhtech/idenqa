@@ -7,6 +7,40 @@ import {
 } from "../src/index.js";
 
 describe("capture acquisition plan", () => {
+  it("accepts bounded 1.1 pose policies without changing legacy 1.0 plans", () => {
+    const input = plan();
+    const pose = { target_degrees: 20, tolerance_degrees: 7, hold_duration_ms: 450 };
+    Object.assign(input.requirements[0]!.challenges[0]!, { pose });
+    expect(() => parseCaptureAcquisitionPlan(input)).toThrow();
+    input.schema_version = "1.1";
+    expect(parseCaptureAcquisitionPlan(input).requirements[0]!.challenges[0]!.pose).toEqual(pose);
+    expect(parseCaptureAcquisitionPlan(plan()).schema_version).toBe("1.0");
+  });
+
+  it.each([
+    { target_degrees: 0 },
+    { tolerance_degrees: 20 },
+    { hold_duration_ms: 0 },
+    { hold_duration_ms: NaN },
+    { bypass: true },
+  ])("rejects weakening or malformed pose policies: %j", (override) => {
+    const input = plan();
+    input.schema_version = "1.1";
+    Object.assign(input.requirements[0]!.challenges[0]!, {
+      pose: { target_degrees: 20, tolerance_degrees: 7, hold_duration_ms: 450, ...override },
+    });
+    expect(() => parseCaptureAcquisitionPlan(input)).toThrow();
+  });
+
+  it("rejects a pose policy whose holds cannot fit the deadline", () => {
+    const input = plan();
+    input.schema_version = "1.1";
+    Object.assign(input.requirements[0]!.challenges[0]!, {
+      maximum_duration_ms: 500,
+      pose: { target_degrees: 20, tolerance_degrees: 7, hold_duration_ms: 450 },
+    });
+    expect(() => parseCaptureAcquisitionPlan(input)).toThrow();
+  });
   it("strictly parses the ordered active-liveness contract", () => {
     const parsed = parseCaptureAcquisitionPlan(plan());
 

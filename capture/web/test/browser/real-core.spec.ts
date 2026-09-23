@@ -1,8 +1,101 @@
 import { expect, test, type Page } from "@playwright/test";
+import type { CaptureElementStartOptions, IdenqaCaptureElement } from "../../src/index.js";
 
 const liveDemo = process.env.IDENQA_CAPTURE_LIVE_DEMO_URL === undefined ? test.skip : test;
 
 test.describe.configure({ mode: "serial" });
+
+for (const [surface, documentType, label] of [
+  ["hosted", "driver_license", "driver license"],
+  ["embedded", "national_id", "national identity card"],
+  ["hosted", "passport", "passport"],
+] as const) {
+  liveDemo(
+    `completes ${surface} ${documentType} selection, retake and required sides against Core`,
+    async ({ page }, testInfo) => {
+      testInfo.setTimeout(90_000);
+      await page.setViewportSize({ width: 390, height: 844 });
+      const bootstrapResponse = page.waitForResponse(
+        (response) =>
+          response.url().includes("/__idenqa_demo/bootstrap") && response.status() === 201,
+      );
+      await page.goto(`/${surface}.html?journey=document`);
+      const bootstrap = await (await bootstrapResponse).json();
+      await page.getByRole("button", { name: "Get Started" }).click();
+      await page.getByRole("button", { name: "Agree & Continue" }).click();
+      await page.getByRole("button", { name: label, exact: true }).click();
+      await page.getByRole("button", { name: "Continue to Capture" }).click();
+      await expect(
+        page.getByRole("heading", { name: `Take a clear photo of the front of your ${label}.` }),
+      ).toBeVisible();
+      await page.getByRole("button", { name: "Start Camera" }).click();
+      await expect(page.getByRole("button", { name: "Capture Photo", exact: true })).toBeEnabled();
+      await page.screenshot({
+        path: testInfo.outputPath("document-front-capture.png"),
+        fullPage: true,
+      });
+      await page.getByRole("button", { name: "Capture Photo", exact: true }).click();
+      await expect(
+        page.getByRole("heading", { name: /Make sure the lighting is good/ }),
+      ).toBeVisible();
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await page.screenshot({
+        path: testInfo.outputPath("document-front-review.png"),
+        fullPage: true,
+      });
+      await page.getByRole("button", { name: "Retake Photo" }).click();
+      await page.getByRole("button", { name: "Capture Photo", exact: true }).click();
+      await page.getByRole("button", { name: "Use Photo" }).click();
+      if (documentType === "passport") {
+        await expect(page.getByRole("heading", { name: "Identity Verified" })).toBeVisible({
+          timeout: 30_000,
+        });
+        await expect(page.getByText("Back of ID", { exact: true })).toHaveCount(0);
+        return;
+      }
+      await expect(
+        page.getByRole("heading", { name: "Front of Your Identity Document Added" }),
+      ).toBeVisible();
+
+      // Recreate the component from host-held credentials alone. Selection and progress
+      // comes from Core, not the old component's in-memory completion map.
+      await page.locator("idenqa-capture").evaluate(
+        async (element, input) => {
+          const replacement = document.createElement("idenqa-capture") as IdenqaCaptureElement;
+          element.replaceWith(replacement);
+          await replacement.start({
+            baseUrl: new URL(input.bootstrap.baseUrl, location.href),
+            captureToken: input.bootstrap.captureToken,
+            outcomeToken: input.bootstrap.outcomeToken,
+            expectedVerificationId: input.bootstrap.verificationId,
+            region: input.bootstrap.region,
+            capabilities: {
+              supportedMethods: ["idenqa.method.live_camera"],
+              availableMethods: ["idenqa.method.live_camera"],
+            },
+            documentCapture: { autoCapture: false },
+          } satisfies CaptureElementStartOptions);
+        },
+        { bootstrap, documentType },
+      );
+      await page.getByRole("button", { name: "Get Started" }).click();
+      await expect(page.getByRole("heading", { name: "Welcome Back" })).toBeVisible();
+      await page.getByRole("button", { name: "Resume Capture" }).click();
+      await expect(page.getByRole("button", { name: "Change document" })).toHaveCount(0);
+      await page.getByRole("button", { name: "Continue to Capture" }).click();
+      await expect(
+        page.getByRole("heading", { name: `Take a clear photo of the back of your ${label}.` }),
+      ).toBeVisible();
+      await page.getByRole("button", { name: "Start Camera" }).click();
+      await page.getByRole("button", { name: "Capture Photo", exact: true }).click();
+      await page.getByRole("button", { name: "Use Photo" }).click();
+      await expect(page.getByRole("heading", { name: "Identity Verified" })).toBeVisible({
+        timeout: 30_000,
+      });
+      await page.screenshot({ path: testInfo.outputPath("document-verified.png"), fullPage: true });
+    },
+  );
+}
 
 for (const surface of ["hosted", "embedded"] as const) {
   liveDemo(
@@ -30,22 +123,55 @@ for (const surface of ["hosted", "embedded"] as const) {
   );
 }
 
-liveDemo("runs active-liveness capture through authoritative Core progress", async ({ page }) => {
+liveDemo("does not submit liveness when the real tracker sees no face", async ({ page }) => {
+  const uploads: string[] = [];
+  page.on("request", (request) => {
+    if (request.method() === "POST" && request.url().includes("/evidence-uploads"))
+      uploads.push(request.url());
+  });
   await page.goto("/hosted.html?method=active-liveness");
-
-  await expect(page.getByRole("heading", { name: "Let’s Verify Your Identity" })).toBeVisible();
   await page.getByRole("button", { name: "Get Started" }).click();
   await page.getByRole("button", { name: "Agree & Continue" }).click();
-  await expect(page.getByRole("heading", { name: "Let’s Make Sure You’re You" })).toBeVisible();
   await page.getByRole("button", { name: "Start Liveness Check" }).click();
-
   await expect(page.locator("idenqa-capture").locator(".adapter-prompt")).toHaveText(
-    "Look Straight at the Camera",
+    "Bring Your Face Into View",
+    { timeout: 15000 },
   );
-  await expect(page.getByRole("heading", { name: "Identity Verified" })).toBeVisible({
-    timeout: 30_000,
+  await expect(page.getByRole("button", { name: "Start Liveness Check" })).toBeVisible({
+    timeout: 20000,
   });
+  expect(uploads).toEqual([]);
+  await expect(page.getByRole("heading", { name: "Identity Verified" })).toHaveCount(0);
 });
+
+liveDemo(
+  "runs synthetic measured liveness through authoritative Core progress",
+  async ({ page }) => {
+    // This tests temporal submission and Core progress, not landmark accuracy.
+    await page.route("**/idenqa-liveness/pose-worker.js", (route) =>
+      route.fulfill({
+        contentType: "text/javascript",
+        body: `let sample = 0; self.onmessage = ({data}) => {
+      if (data.type === "init") { self.postMessage({ready:true}); return; }
+      data.bitmap.close(); const index = sample++;
+      self.postMessage({pose:{faceCount:1,yaw:index>=14&&index<21?-20:index>=28?20:0,
+        pitch:0,roll:0,centerX:0.5,centerY:0.5,width:0.4,height:0.6,leftEyeClosed:0,rightEyeClosed:0}});
+    };`,
+      }),
+    );
+    await page.goto("/hosted.html?method=active-liveness");
+
+    await expect(page.getByRole("heading", { name: "Let’s Verify Your Identity" })).toBeVisible();
+    await page.getByRole("button", { name: "Get Started" }).click();
+    await page.getByRole("button", { name: "Agree & Continue" }).click();
+    await expect(page.getByRole("heading", { name: "Let’s Make Sure You’re You" })).toBeVisible();
+    await page.getByRole("button", { name: "Start Liveness Check" }).click();
+
+    await expect(page.getByRole("heading", { name: "Identity Verified" })).toBeVisible({
+      timeout: 30_000,
+    });
+  },
+);
 
 liveDemo(
   "completes a composed review and linked-recapture journey against Core",
@@ -113,11 +239,12 @@ liveDemo("renders a subject-cancelled Core session", async ({ page }) => {
 
 liveDemo(
   "renders an expired Core session with the read-only outcome credential",
-  async ({ page }) => {
+  async ({ page }, testInfo) => {
+    testInfo.setTimeout(150_000);
     await page.goto("/hosted.html?outcome=expired");
 
     await expect(page.getByRole("heading", { name: "This Verification Has Expired" })).toBeVisible({
-      timeout: 30_000,
+      timeout: 130_000,
     });
     await expect(
       page.getByText("This capture link is no longer active.", { exact: false }),

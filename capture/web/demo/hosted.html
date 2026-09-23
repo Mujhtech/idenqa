@@ -8,7 +8,7 @@
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0c1311" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; connect-src 'self' ws: wss:; img-src 'self' blob:; script-src 'self'; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'self'; frame-ancestors 'self'"
+      content="default-src 'self'; connect-src 'self' ws: wss:; img-src 'self' blob:; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self'; style-src 'self' 'unsafe-inline'; base-uri 'none'; form-action 'self'; frame-ancestors 'self'"
     />
     <title>Identity Verification</title>
     <style>

@@ -10,6 +10,8 @@ import {
 import { captureCameraFrame, startCamera, stopCamera, type CameraFrame } from "./camera.js";
 import type { CaptureMethodAdapter, CaptureMethodAdapterCopyResolver } from "./method-adapter.js";
 import type { CaptureRuntimeFallbackReason } from "./planner.js";
+import { CapturePoseGate } from "./pose.js";
+import { createBrowserPoseTracker, type CapturePoseTracker } from "./pose-tracker.js";
 
 export interface CaptureActiveLivenessQuality {
   readonly width: number;
@@ -55,7 +57,11 @@ export interface CaptureActiveLivenessAdapterOptions {
   readonly acquisitionRequirementId?: string;
   readonly copy?: CaptureMethodAdapterCopyResolver;
   readonly mediaType?: "image/jpeg" | "image/png";
+  /** @deprecated Retained for source compatibility; never bypasses pose checks. */
   readonly settleDurationMs?: number;
+  readonly poseAssetBaseUrl?: string;
+  readonly poseTrackerFactory?: (signal: AbortSignal) => Promise<CapturePoseTracker>;
+  readonly monotonicClock?: () => number;
   readonly clock?: () => Date;
   readonly cameraSessionFactory?: (
     camera: CaptureAcquisitionCamera,
@@ -169,9 +175,14 @@ export function createActiveLivenessMethodAdapter(
       ) {
         throw invalid("The active-liveness plan does not match the capture step.");
       }
-      controls.update({ phase: "requesting_permission" });
       let session: CaptureActiveLivenessCameraSession | undefined;
+      let tracker: CapturePoseTracker | undefined;
       try {
+        controls.update({ phase: "preparing" });
+        tracker = await (options.poseTrackerFactory?.(context.signal) ??
+          createBrowserPoseTracker(context.signal, options.poseAssetBaseUrl));
+        if (context.signal.aborted) throw abortReason(context.signal);
+        controls.update({ phase: "requesting_permission" });
         session = await cameraSessionFactory(requirement.camera, context.signal);
         await controls.setPreview(session.stream);
         controls.update({ phase: "ready" });
@@ -184,28 +195,53 @@ export function createActiveLivenessMethodAdapter(
               total: requirement.challenges.length,
               prompt: challenge.prompt,
             });
-            await abortableDelay(
-              Math.min(settleDurationMs, Math.floor(challenge.maximum_duration_ms / 2)),
-              signal,
-            );
-            const captured = await session!.capture(mediaType, signal);
-            const quality = await assess(captured, requirement, challenge, signal);
-            const failures = qualityFailures(captured, quality, requirement.quality, mediaType);
-            if (failures.length > 0) {
-              throw new CaptureActiveLivenessError(
-                "CAPTURE_ACTIVE_LIVENESS_QUALITY",
-                "The liveness frame did not meet the required capture quality. Adjust the camera and retry.",
-                failures,
-              );
+            const gate = new CapturePoseGate(challenge);
+            for (;;) {
+              if (signal.aborted) throw abortReason(signal);
+              const captured = await session!.capture(mediaType, signal);
+              const capturedAt = clock().toISOString();
+              const measuredAt = (options.monotonicClock ?? (() => performance.now()))();
+              const pose = await tracker!.measure(captured, signal);
+              const assessed = await assess(captured, requirement, challenge, signal);
+              const quality =
+                options.assess === undefined
+                  ? { ...assessed, faceCount: pose.faceCount }
+                  : assessed;
+              const failures = qualityFailures(captured, quality, requirement.quality, mediaType);
+              // A missing assessor for a required metric cannot recover by waiting.
+              if (
+                failures.some(
+                  (failure) => failure.endsWith("_unavailable") || failure.endsWith("_invalid"),
+                )
+              ) {
+                throw new CaptureActiveLivenessError(
+                  "CAPTURE_ACTIVE_LIVENESS_QUALITY",
+                  "Required capture quality cannot be measured.",
+                  failures,
+                );
+              }
+              if (signal.aborted) throw abortReason(signal);
+              const fresh =
+                (options.monotonicClock ?? (() => performance.now()))() - measuredAt <= 500;
+              const progress = gate.update(pose, measuredAt, failures.length === 0 && fresh);
+              controls.update({
+                phase: "challenge",
+                current: index + 1,
+                total: requirement.challenges.length,
+                prompt: challenge.prompt,
+                poseProgress: progress.fraction,
+                poseFeedback: progress.feedback,
+              });
+              if (progress.complete)
+                return {
+                  challengeId: challenge.id,
+                  prompt: challenge.prompt,
+                  capturedAt,
+                  body: captured.body,
+                  quality,
+                } satisfies CaptureActiveLivenessFrame;
+              await abortableDelay(80, signal);
             }
-            const capturedAt = clock().toISOString();
-            return {
-              challengeId: challenge.id,
-              prompt: challenge.prompt,
-              capturedAt,
-              body: captured.body,
-              quality,
-            } satisfies CaptureActiveLivenessFrame;
           });
           frames.push(frame);
         }
@@ -228,6 +264,7 @@ export function createActiveLivenessMethodAdapter(
           context.signal,
         );
       } finally {
+        tracker?.close();
         session?.close();
         await controls.setPreview(undefined);
       }
@@ -279,10 +316,16 @@ async function createBrowserCameraSession(
     throw error;
   }
   let closed = false;
+  let lastFrameTime = -1;
   return {
     stream,
     capture: async (mediaType, captureSignal) => {
       if (closed || captureSignal.aborted) throw abortReason(captureSignal);
+      while (video.currentTime === lastFrameTime || document.hidden) {
+        await abortableDelay(40, captureSignal);
+        if (closed) throw new Error("Camera stopped.");
+      }
+      lastFrameTime = video.currentTime;
       return captureCameraFrame(video, mediaType);
     },
     close: () => {

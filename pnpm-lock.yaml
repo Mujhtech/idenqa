@@ -20,6 +20,9 @@ importers:
       '@idenqa/sdk':
         specifier: workspace:*
         version: link:../../sdk/typescript
+      '@mediapipe/tasks-vision':
+        specifier: 1.0.1
+        version: 1.0.1
       lit:
         specifier: 3.3.3
         version: 3.3.3
@@ -122,6 +125,9 @@ packages:
 
   '@loaderkit/resolve@1.0.6':
     resolution: {integrity: sha512-G8FdIoF5CypfwmD9rl8BXod5HDn8JqB0CCNBXDTaRZ+yRYhARrrSToX1zg1zy9jX3zLqigsELwhT4gNtkdQAUg==}
+
+  '@mediapipe/tasks-vision@1.0.1':
+    resolution: {integrity: sha512-rvRE2FmAZ6ZxKSw7wq+e+jQDpN3t1B/tD2mJz9SmAzb1msoDkd4dMoE4wAh8Z30Um0PQwLiHr9QtomhmXk3aUQ==}
 
   '@oxc-project/types@0.147.0':
     resolution: {integrity: sha512-IJ3s6ltHLp45S0bh7phkX+gJO7A1Wuz2EaqpAhb8WjqDwbzMiWKHhyyT42tskaWjEYXtHtVCPpnBJVT9+dcRLg==}
@@ -1222,6 +1228,8 @@ snapshots:
   '@loaderkit/resolve@1.0.6':
     dependencies:
       '@braidai/lang': 1.1.2
+
+  '@mediapipe/tasks-vision@1.0.1': {}
 
   '@oxc-project/types@0.147.0': {}
 

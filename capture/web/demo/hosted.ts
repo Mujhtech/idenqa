@@ -40,6 +40,8 @@ async function startHostedJourney(element: IdenqaCaptureElement): Promise<void> 
   const bootstrapURL = new URL("/__idenqa_demo/bootstrap", location.href);
   const requestedOutcome = new URLSearchParams(location.search).get("outcome");
   if (requestedOutcome !== null) bootstrapURL.searchParams.set("outcome", requestedOutcome);
+  const documentJourney = new URLSearchParams(location.search).get("journey") === "document";
+  if (documentJourney) bootstrapURL.searchParams.set("journey", "document");
   const response = await fetch(bootstrapURL, {
     method: "POST",
     cache: "no-store",
@@ -55,7 +57,8 @@ async function startHostedJourney(element: IdenqaCaptureElement): Promise<void> 
       { idempotencyKey: createIdempotencyKey("demo_cancel") },
     );
   }
-  const activeLiveness = new URLSearchParams(location.search).get("method") === "active-liveness";
+  const activeLiveness =
+    !documentJourney && new URLSearchParams(location.search).get("method") === "active-liveness";
   await element.start({
     baseUrl,
     captureToken: bootstrap.captureToken,
@@ -80,7 +83,7 @@ async function startHostedJourney(element: IdenqaCaptureElement): Promise<void> 
 
 function demoActiveLivenessPlan(verificationId: string) {
   return {
-    schema_version: "1.0",
+    schema_version: "1.1",
     plan_id: "plan.capture_web_demo.active_liveness.v1",
     session_id: verificationId,
     requirements: [
@@ -96,9 +99,9 @@ function demoActiveLivenessPlan(verificationId: string) {
           maximum_bytes: 16_777_216,
         },
         challenges: [
-          { id: "challenge.neutral", prompt: "neutral", maximum_duration_ms: 5_000 },
-          { id: "challenge.turn_left", prompt: "turn_left", maximum_duration_ms: 5_000 },
-          { id: "challenge.turn_right", prompt: "turn_right", maximum_duration_ms: 5_000 },
+          { id: "challenge.neutral", prompt: "neutral", maximum_duration_ms: 15_000 },
+          { id: "challenge.turn_left", prompt: "turn_left", maximum_duration_ms: 15_000 },
+          { id: "challenge.turn_right", prompt: "turn_right", maximum_duration_ms: 15_000 },
         ],
       },
     ],
@@ -108,31 +111,50 @@ function demoActiveLivenessPlan(verificationId: string) {
 function coreDemoSubmitter(baseUrl: URL, bootstrap: HostedBootstrap) {
   const client = new CaptureClient({ baseUrl, captureToken: bootstrap.captureToken });
   return async (submission: CaptureActiveLivenessSubmission, signal: AbortSignal) => {
-    const representative = submission.frames[0];
-    if (representative === undefined)
+    if (submission.frames.length < 2)
       throw new Error("The liveness sequence has no captured frame.");
-    const digest = await sha256(representative.body);
-    const issued = await client.createEvidenceUpload(
-      {
-        requirementKey: submission.requirementKey,
-        artefact: submission.artefact,
-        acquisitionMethod: submission.acquisitionMethod,
-        ...(submission.fallbackCondition === undefined
-          ? {}
-          : { fallbackCondition: submission.fallbackCondition }),
-        expectedBytes: representative.body.size,
-        expectedDigest: digest,
-        mediaType: evidenceMediaType(representative.body),
-        region: bootstrap.region,
-      },
-      { idempotencyKey: createIdempotencyKey("demo_liveness"), signal },
+    const sequenceDigest = await sha256Text(
+      JSON.stringify({
+        schemaVersion: submission.schemaVersion,
+        planId: submission.planId,
+        requirementId: submission.requirementId,
+        challenges: submission.frames.map((frame) => frame.challengeId),
+      }),
     );
-    if (issued.etag === undefined) throw new Error("Core did not return an upload precondition.");
-    await client.uploadEvidence(issued.data.id, representative.body, {
-      etag: issued.etag,
-      digest,
-      signal,
-    });
+    let previousDigest: string | undefined;
+    for (const [index, frame] of submission.frames.entries()) {
+      const digest = await sha256(frame.body);
+      const issued = await client.createEvidenceUpload(
+        {
+          requirementKey: submission.requirementKey,
+          artefact: submission.artefact,
+          acquisitionMethod: submission.acquisitionMethod,
+          ...(submission.fallbackCondition === undefined
+            ? {}
+            : { fallbackCondition: submission.fallbackCondition }),
+          sequence: {
+            sequenceDigest,
+            index,
+            count: submission.frames.length,
+            challengeId: frame.challengeId,
+            capturedAt: frame.capturedAt,
+            ...(previousDigest === undefined ? {} : { previousDigest }),
+          },
+          expectedBytes: frame.body.size,
+          expectedDigest: digest,
+          mediaType: evidenceMediaType(frame.body),
+          region: bootstrap.region,
+        },
+        { idempotencyKey: createIdempotencyKey(`demo_liveness_${index}`), signal },
+      );
+      if (issued.etag === undefined) throw new Error("Core did not return an upload precondition.");
+      await client.uploadEvidence(issued.data.id, frame.body, {
+        etag: issued.etag,
+        digest,
+        signal,
+      });
+      previousDigest = digest;
+    }
   };
 }
 
@@ -146,6 +168,10 @@ async function sha256(body: Blob): Promise<string> {
   return `sha256:${[...new Uint8Array(bytes)]
     .map((value) => value.toString(16).padStart(2, "0"))
     .join("")}`;
+}
+
+async function sha256Text(value: string): Promise<string> {
+  return sha256(new Blob([value], { type: "text/plain" }));
 }
 
 function browserCapabilities() {

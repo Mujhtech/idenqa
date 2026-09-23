@@ -129,7 +129,11 @@ done
 IDENQA_DATABASE_ADMIN_URL= ./bin/worker >"$worker_log" 2>&1 &
 worker_pid=$!
 
+corepack pnpm --dir capture/web build
+corepack pnpm --dir capture/web assets:prepare
+
 IDENQA_DEMO_CORE_URL=$core_url \
+IDENQA_DEMO_CONFORMANCE=true \
 IDENQA_DEMO_TENANT_API_KEY=$api_key \
 IDENQA_DEMO_TENANT_API_KEY_ID=$api_key_id \
 IDENQA_DEMO_TENANT_ID=$tenant_id \

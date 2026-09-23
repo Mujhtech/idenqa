@@ -1,4 +1,6 @@
-export const CAPTURE_ACQUISITION_SCHEMA_VERSION = "1.0" as const;
+import type { CapturePosePolicy } from "./pose.js";
+
+export const CAPTURE_ACQUISITION_SCHEMA_VERSION = "1.1" as const;
 
 export type CaptureAcquisitionCamera = "front" | "back";
 export type CaptureLivenessPrompt =
@@ -20,6 +22,8 @@ export interface CaptureLivenessChallenge {
   readonly id: string;
   readonly prompt: CaptureLivenessPrompt;
   readonly maximum_duration_ms: number;
+  /** v1.1 pose gate. Legacy v1.0 uses the package's non-bypassable defaults. */
+  readonly pose?: CapturePosePolicy;
 }
 
 export interface CaptureAcquisitionRequirement {
@@ -33,7 +37,7 @@ export interface CaptureAcquisitionRequirement {
 }
 
 export interface CaptureAcquisitionPlan {
-  readonly schema_version: typeof CAPTURE_ACQUISITION_SCHEMA_VERSION;
+  readonly schema_version: "1.0" | typeof CAPTURE_ACQUISITION_SCHEMA_VERSION;
   readonly plan_id: string;
   readonly session_id: string;
   readonly requirements: readonly CaptureAcquisitionRequirement[];
@@ -69,13 +73,22 @@ const prompts = new Set<CaptureLivenessPrompt>([
 export function parseCaptureAcquisitionPlan(value: unknown): CaptureAcquisitionPlan {
   const input = record(value, "capture acquisition plan");
   exactKeys(input, ["schema_version", "plan_id", "session_id", "requirements"], "plan");
-  if (input.schema_version !== CAPTURE_ACQUISITION_SCHEMA_VERSION) {
-    throw invalid("schema_version must be 1.0.");
+  if (
+    input.schema_version !== "1.0" &&
+    input.schema_version !== CAPTURE_ACQUISITION_SCHEMA_VERSION
+  ) {
+    throw invalid("schema_version must be 1.0 or 1.1.");
   }
   const planID = boundedString(input.plan_id, "plan_id", 160, referencePattern);
   const sessionID = boundedString(input.session_id, "session_id", 30, verificationPattern);
   const values = array(input.requirements, "requirements", 1, 16);
   const requirements = values.map((item, index) => parseRequirement(item, index));
+  if (
+    input.schema_version === "1.0" &&
+    requirements.some((r) => r.challenges.some((c) => c.pose !== undefined))
+  ) {
+    throw invalid("Pose policy requires acquisition schema 1.1.");
+  }
   const identifiers = new Set<string>();
   const bindings = new Set<string>();
   for (const requirement of requirements) {
@@ -94,7 +107,7 @@ export function parseCaptureAcquisitionPlan(value: unknown): CaptureAcquisitionP
     bindings.add(binding);
   }
   return {
-    schema_version: CAPTURE_ACQUISITION_SCHEMA_VERSION,
+    schema_version: input.schema_version,
     plan_id: planID,
     session_id: sessionID,
     requirements,
@@ -230,13 +243,33 @@ function parseChallenge(
 ): CaptureLivenessChallenge {
   const field = `requirements[${requirementIndex}].challenges[${challengeIndex}]`;
   const input = record(value, field);
-  exactKeys(input, ["id", "prompt", "maximum_duration_ms"], field);
+  exactKeys(input, ["id", "prompt", "maximum_duration_ms", "pose"], field, [
+    "id",
+    "prompt",
+    "maximum_duration_ms",
+  ]);
+  let pose: CapturePosePolicy | undefined;
+  if (input.pose !== undefined) {
+    const value = record(input.pose, `${field}.pose`);
+    exactKeys(value, ["target_degrees", "tolerance_degrees", "hold_duration_ms"], `${field}.pose`);
+    pose = {
+      target_degrees: integer(value.target_degrees, "target_degrees", 15, 30),
+      tolerance_degrees: integer(value.tolerance_degrees, "tolerance_degrees", 3, 8),
+      hold_duration_ms: integer(value.hold_duration_ms, "hold_duration_ms", 300, 1500),
+    };
+    if (
+      typeof input.maximum_duration_ms !== "number" ||
+      input.maximum_duration_ms < pose.hold_duration_ms * 2 + 500
+    )
+      throw invalid("Challenge deadline cannot accommodate neutral and target holds.");
+  }
   if (typeof input.prompt !== "string" || !prompts.has(input.prompt as CaptureLivenessPrompt)) {
     throw invalid(`${field}.prompt is not supported.`);
   }
   return {
     id: boundedString(input.id, `${field}.id`, 160, referencePattern),
     prompt: input.prompt as CaptureLivenessPrompt,
+    ...(pose === undefined ? {} : { pose }),
     maximum_duration_ms: integer(
       input.maximum_duration_ms,
       `${field}.maximum_duration_ms`,

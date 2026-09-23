@@ -31,6 +31,80 @@ const capabilities = {
 };
 
 describe("CaptureFlowController", () => {
+  it("retries a lost document-selection response with the same key and recovers the Core branch", async () => {
+    const base = session.requirements.requirements[0]!;
+    let current: VerificationSession = {
+      ...session,
+      requirements: {
+        ...session.requirements,
+        requirements: [
+          {
+            ...base,
+            key: "document",
+            evidence_type: "idenqa.evidence.document_image",
+            artefacts: ["idenqa.artefact.document_back", "idenqa.artefact.document_front"],
+            document_options: [
+              { id: "passport", label: "passport", artefacts: ["idenqa.artefact.document_front"] },
+              {
+                id: "driver_license",
+                label: "driver license",
+                artefacts: ["idenqa.artefact.document_front", "idenqa.artefact.document_back"],
+              },
+            ],
+          },
+        ],
+      },
+    };
+    const selectDocument = vi
+      .fn<NonNullable<CaptureFlowClient["selectDocument"]>>()
+      .mockRejectedValueOnce(new Error("response lost"))
+      .mockImplementationOnce(async () => {
+        current = { ...current, version: 2, documentSelections: { document: "passport" } };
+        return response(current);
+      });
+    const getSession = () => Promise.resolve(response(current));
+    const acknowledged = authoritySnapshot({ latestResponse: subjectResponse("acknowledge") });
+    const flowClient = {
+      ...client({
+        getSession,
+        snapshot: {
+          ...acknowledged,
+          authority: {
+            ...acknowledged.authority,
+            evidenceTypes: ["idenqa.evidence.document_image"],
+          },
+        },
+      }),
+      selectDocument,
+    };
+    const controller = new CaptureFlowController(flowClient, capabilities, {
+      idempotencyKeyFactory: () => "stable_selection_key",
+    });
+    const before = await controller.load();
+    if (!("plan" in before)) throw new Error("Expected capture plan");
+    await expect(
+      controller.uploadFile(
+        before.plan.requirements[0]!.steps[0]!,
+        new Blob(["test"], { type: "image/png" }),
+      ),
+    ).rejects.toThrow("Choose a permitted document");
+    await expect(controller.selectDocument("document", "passport")).rejects.toThrow(
+      "response lost",
+    );
+    const after = await controller.selectDocument("document", "passport");
+    expect(selectDocument.mock.calls[0]).toEqual(selectDocument.mock.calls[1]);
+    if (!("plan" in after)) throw new Error("Expected capture plan");
+    expect(after.plan.requirements[0]?.steps.map((step) => step.artefact)).toEqual([
+      "idenqa.artefact.document_front",
+    ]);
+    expect(after.session.requirements).toEqual(before.session.requirements);
+    const restored = await new CaptureFlowController(flowClient, capabilities).load();
+    expect("plan" in restored && restored.plan.requirements[0]?.selectedDocument).toBe("passport");
+    await expect(controller.selectDocument("document", "unlisted")).rejects.toThrow(
+      "not permitted",
+    );
+    expect(selectDocument).toHaveBeenCalledTimes(2);
+  });
   it("loads a terminal authoritative outcome without calling active-capture endpoints", async () => {
     const getSession = vi.fn<CaptureFlowClient["getSession"]>();
     const controller = new CaptureFlowController(

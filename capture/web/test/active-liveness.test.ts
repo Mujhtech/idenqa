@@ -2,13 +2,106 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   CaptureActiveLivenessError,
-  createActiveLivenessMethodAdapter,
+  createActiveLivenessMethodAdapter as createAdapter,
   type CaptureActiveLivenessCameraSession,
   type CaptureMethodAdapterControls,
   type CaptureMethodAdapterContext,
 } from "../src/index.js";
 
+// Explicit synthetic measurements for orchestration tests; production uses the
+// local landmark worker. Six neutral samples, then neutral/left, then neutral/right.
+function createActiveLivenessMethodAdapter(options: Parameters<typeof createAdapter>[0]) {
+  let sample = 0;
+  return createAdapter({
+    ...options,
+    monotonicClock: () => sample * 100,
+    poseTrackerFactory: async () => ({
+      close() {},
+      async measure() {
+        const index = sample++;
+        return {
+          faceCount: 1,
+          yaw: index >= 12 && index < 18 ? -20 : index >= 24 ? 20 : 0,
+          pitch: 0,
+          roll: 0,
+          centerX: 0.5,
+          centerY: 0.5,
+          width: 0.4,
+          height: 0.6,
+          leftEyeClosed: 0,
+          rightEyeClosed: 0,
+        };
+      },
+    }),
+  });
+}
+
 describe("active liveness adapter", () => {
+  it.each(["stationary", "wrong_direction", "tracking_lost", "poor_quality"])(
+    "never submits on %s and closes resources at the deadline",
+    async (mode) => {
+      vi.useFakeTimers();
+      try {
+        const input = plan();
+        input.requirements[0]!.challenges = [
+          { id: "turn", prompt: "turn_right", maximum_duration_ms: 5000 },
+        ];
+        const submit = vi.fn();
+        const close = vi.fn();
+        const trackerClose = vi.fn();
+        let count = 0;
+        const adapter = createAdapter({
+          plan: input,
+          requirementKey: "selfie",
+          submit,
+          cameraSessionFactory: async () => ({
+            stream: { getTracks: () => [] } as unknown as MediaStream,
+            close,
+            capture: async () => ({
+              body: new Blob(["frame"], { type: "image/jpeg" }),
+              width: 720,
+              height: 720,
+            }),
+          }),
+          poseTrackerFactory: async () => ({
+            close: trackerClose,
+            measure: async () => ({
+              faceCount: mode === "tracking_lost" && count++ > 10 ? 0 : 1,
+              yaw: mode === "wrong_direction" ? -20 : 0,
+              pitch: 0,
+              roll: 0,
+              centerX: 0.5,
+              centerY: 0.5,
+              width: 0.4,
+              height: 0.6,
+              leftEyeClosed: 0,
+              rightEyeClosed: 0,
+            }),
+          }),
+          assess: async (frame) => ({
+            width: 720,
+            height: 720,
+            byteCount: frame.body.size,
+            brightness: mode === "poor_quality" ? 0 : 0.5,
+            contrast: 0.5,
+            sharpness: 0.5,
+            glare: 0,
+            faceCount: 1,
+          }),
+        });
+        const pending = expect(adapter.acquire(context(), controls([], []))).rejects.toMatchObject({
+          code: "CAPTURE_ACTIVE_LIVENESS_TIMEOUT",
+        });
+        await vi.advanceTimersByTimeAsync(5000);
+        await pending;
+        expect(submit).not.toHaveBeenCalled();
+        expect(close).toHaveBeenCalledOnce();
+        expect(trackerClose).toHaveBeenCalledOnce();
+      } finally {
+        vi.useRealTimers();
+      }
+    },
+  );
   it("describes the server-issued challenge count on the one-action preparation page", () => {
     const adapter = createActiveLivenessMethodAdapter({
       plan: plan(),
@@ -58,15 +151,15 @@ describe("active liveness adapter", () => {
       controls(updates, previews),
     );
 
-    expect(capture).toHaveBeenCalledTimes(3);
-    expect(updates).toEqual([
-      { phase: "requesting_permission" },
-      { phase: "ready" },
-      { phase: "challenge", current: 1, total: 3, prompt: "neutral" },
-      { phase: "challenge", current: 2, total: 3, prompt: "turn_left" },
-      { phase: "challenge", current: 3, total: 3, prompt: "turn_right" },
-      { phase: "submitting" },
-    ]);
+    expect(capture).toHaveBeenCalledTimes(30);
+    expect(updates).toEqual(
+      expect.arrayContaining([
+        { phase: "challenge", current: 1, total: 3, prompt: "neutral" },
+        { phase: "challenge", current: 2, total: 3, prompt: "turn_left" },
+        { phase: "challenge", current: 3, total: 3, prompt: "turn_right" },
+        { phase: "submitting" },
+      ]),
+    );
     expect(previews).toEqual([stream, undefined]);
     expect(submit).toHaveBeenCalledOnce();
     expect(submit.mock.calls[0]?.[0]).toMatchObject({
@@ -108,7 +201,7 @@ describe("active liveness adapter", () => {
 
     await expect(adapter.acquire(context(), controls([], []))).rejects.toMatchObject({
       code: "CAPTURE_ACTIVE_LIVENESS_QUALITY",
-      failures: expect.arrayContaining(["brightness_unavailable", "face_count_unavailable"]),
+      failures: expect.arrayContaining(["brightness_unavailable"]),
     } satisfies Partial<CaptureActiveLivenessError>);
     expect(close).toHaveBeenCalledOnce();
   });

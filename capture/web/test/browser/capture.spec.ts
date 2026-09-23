@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { auditCaptureThemeContrast, captureContrastRatio } from "../../src/theme-contrast.js";
 
 import type { CaptureDocumentCaptureOptions, IdenqaCaptureElement } from "../../src/index.js";
 
@@ -84,6 +85,78 @@ test("applies public styling variables across the component boundary", async ({ 
   await expect(shell).toHaveCSS("background-color", "rgb(254, 252, 232)");
   await expect(primary).toHaveCSS("background-color", "rgb(124, 58, 237)");
 });
+
+test("audits computed light, dark and host theme contrast including hover and focus", async ({
+  page,
+}) => {
+  await page.goto("/");
+  for (const mode of ["light", "dark"] as const) {
+    await page.emulateMedia({ colorScheme: mode });
+    const palette = await readThemePalette(page);
+    expect(auditCaptureThemeContrast(palette)).toEqual([]);
+  }
+  await page.locator("idenqa-capture").evaluate((element) => {
+    element.style.setProperty("--idq-capture-background", "#ffffff");
+    element.style.setProperty("--idq-capture-text", "#eeeeee");
+  });
+  expect(auditCaptureThemeContrast(await readThemePalette(page))).toContainEqual(
+    expect.objectContaining({
+      foreground: "text",
+      background: "background",
+      reason: "insufficient_contrast",
+    }),
+  );
+});
+
+test("applies portable themes beneath host overrides and clears previous experience colours", async ({
+  page,
+}) => {
+  await page.emulateMedia({ colorScheme: "light" });
+  await page.goto("/");
+  const moduleURL = `/@fs${new URL("../../src/experience.ts", import.meta.url).pathname}`;
+  await page.locator("idenqa-capture").evaluate(async (element, moduleURL) => {
+    const { applyCaptureExperienceTheme } = await import(moduleURL);
+    applyCaptureExperienceTheme(element, {
+      "--idq-capture-background": "#fff7ed",
+      "--idq-capture-text": "#1b1f23",
+    });
+  }, moduleURL);
+  await expect(page.locator("idenqa-capture .shell")).toHaveCSS(
+    "background-color",
+    "rgb(255, 247, 237)",
+  );
+  await page.addStyleTag({ content: "idenqa-capture { --idq-capture-background: #fefce8; }" });
+  await expect(page.locator("idenqa-capture .shell")).toHaveCSS(
+    "background-color",
+    "rgb(254, 252, 232)",
+  );
+  await page.locator("idenqa-capture").evaluate(async (element, moduleURL) => {
+    const { applyCaptureExperienceTheme } = await import(moduleURL);
+    applyCaptureExperienceTheme(element, undefined);
+  }, moduleURL);
+  await expect(page.locator("idenqa-capture .shell")).toHaveCSS("color", "rgb(20, 32, 29)");
+  await expect(page.locator("idenqa-capture .shell")).toHaveCSS(
+    "background-color",
+    "rgb(254, 252, 232)",
+  );
+});
+
+async function readThemePalette(page: import("@playwright/test").Page) {
+  return page.locator("idenqa-capture .shell").evaluate((element) => {
+    const style = getComputedStyle(element);
+    const token = (name: string) => style.getPropertyValue(`--idq-capture-${name}`).trim();
+    return {
+      background: token("background"),
+      surface: token("surface"),
+      surfaceStrong: token("surface-strong"),
+      text: token("text"),
+      muted: token("muted"),
+      accent: token("accent"),
+      accentStrong: token("accent-strong"),
+      accentForeground: token("accent-foreground"),
+    };
+  });
+}
 
 test("supports RTL direction, text enlargement, reduced motion, and forced colours", async ({
   page,
@@ -441,6 +514,184 @@ test("camera cancellation stops the preview without activating fallback", async 
   await expect(page.getByLabel("Choose File")).toHaveCount(0);
 });
 
+test("records a sole pinned document option before showing preparation", async ({ page }) => {
+  await mockCaptureFlow(page, {
+    consentRequired: false,
+    primaryMethods: ["idenqa.method.live_camera"],
+    requirement: {
+      key: "identity_document",
+      evidenceType: "idenqa.evidence.document_image",
+      artefacts: ["idenqa.artefact.document_front"],
+      documentOptions: [
+        { id: "passport", label: "passport", artefacts: ["idenqa.artefact.document_front"] },
+      ],
+    },
+  });
+  await page.goto("/");
+  await loadCaptureFlow(page, "synthetic-single-document", ["idenqa.method.live_camera"]);
+  await page.getByRole("button", { name: "Get Started" }).click();
+  await page.getByRole("button", { name: "Acknowledge & Continue" }).click();
+  await page.getByRole("button", { name: "Continue to Capture" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Take a clear photo of the front of your passport." }),
+  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Which document will you use?" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Change document" })).toHaveCount(0);
+});
+
+test("keeps document selection visible when Core rejects the choice", async ({ page }) => {
+  const observed = await mockCaptureFlow(page, {
+    consentRequired: false,
+    primaryMethods: ["idenqa.method.live_camera"],
+    requirement: {
+      key: "identity_document",
+      evidenceType: "idenqa.evidence.document_image",
+      artefacts: ["idenqa.artefact.document_front"],
+      documentOptions: [
+        { id: "passport", label: "passport", artefacts: ["idenqa.artefact.document_front"] },
+        {
+          id: "national_id",
+          label: "national identity card",
+          artefacts: ["idenqa.artefact.document_front"],
+        },
+      ],
+    },
+  });
+  await page.route("**/core/v1/capture/document-selection", (route) =>
+    route.fulfill({
+      status: 409,
+      json: {
+        error: {
+          code: "SESSION_CONFLICT",
+          message: "The session changed.",
+          request_id: "req_selection_conflict",
+        },
+      },
+    }),
+  );
+  await page.goto("/");
+  await loadCaptureFlow(page, "synthetic-document-selection-conflict", [
+    "idenqa.method.live_camera",
+  ]);
+  await page.getByRole("button", { name: "Get Started" }).click();
+  await page.getByRole("button", { name: "Acknowledge & Continue" }).click();
+  await page.getByRole("button", { name: "passport", exact: true }).click();
+  await expect(page.getByRole("alert")).toHaveText(
+    "We couldn’t save that choice. Select your document to try again.",
+  );
+  await expect(page.getByRole("heading", { name: "Which document will you use?" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Continue to Capture" })).toHaveCount(0);
+  expect(observed.uploadIntents).toHaveLength(0);
+});
+
+test("document selection drives front/back capture and survives review and retake", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const requests = await mockCaptureFlow(page, {
+    consentRequired: false,
+    primaryMethods: ["idenqa.method.live_camera", "idenqa.method.file_upload"],
+    requirement: {
+      key: "identity_document",
+      evidenceType: "idenqa.evidence.document_image",
+      artefacts: ["idenqa.artefact.document_front", "idenqa.artefact.document_back"],
+      documentOptions: [
+        {
+          id: "driver_license",
+          label: "driver license",
+          artefacts: ["idenqa.artefact.document_front", "idenqa.artefact.document_back"],
+        },
+        {
+          id: "national_id",
+          label: "national identity card",
+          artefacts: ["idenqa.artefact.document_front", "idenqa.artefact.document_back"],
+        },
+      ],
+    },
+  });
+  await page.goto("/");
+  await loadCaptureFlow(
+    page,
+    "synthetic-document-selection",
+    ["idenqa.method.live_camera", "idenqa.method.file_upload"],
+    { autoCapture: false },
+  );
+  await page.getByRole("button", { name: "Get Started" }).click();
+  await page.getByRole("button", { name: "Acknowledge & Continue" }).click();
+  await expect(page.getByRole("heading", { name: "Which document will you use?" })).toBeVisible();
+  await page.getByRole("button", { name: "driver license" }).click();
+  await page.getByRole("button", { name: "Change document" }).click();
+  await page.getByRole("button", { name: "Back", exact: true }).click();
+  await page.getByRole("button", { name: "Change document" }).click();
+  await page.getByRole("button", { name: "national identity card" }).click();
+  await page.getByRole("button", { name: "Use Another Method" }).click();
+  await page.getByRole("button", { name: "Upload File" }).click();
+  await page.getByRole("button", { name: "Use Another Method" }).click();
+  await page.getByRole("button", { name: "Use Camera" }).click();
+  await page.getByRole("button", { name: "Continue to Capture" }).click();
+  await expect(
+    page.getByRole("heading", {
+      name: "Take a clear photo of the front of your national identity card.",
+    }),
+  ).toBeVisible();
+  await expect(page.locator("idenqa-capture .shell")).toHaveCSS("background-color", "rgb(8, 8, 8)");
+  await page.locator("idenqa-capture summary").click();
+  await expect(page.getByText(/Place your document on a flat surface/)).toBeVisible();
+  await page.locator("idenqa-capture summary").click();
+  await page.getByRole("button", { name: "Start Camera" }).click();
+  await expect(page.getByRole("button", { name: "Capture Photo", exact: true })).toBeEnabled();
+  await page.screenshot({
+    path: test.info().outputPath("document-capture-mobile.png"),
+    fullPage: true,
+  });
+  await page.getByRole("button", { name: "Capture Photo", exact: true }).click();
+  await expect(page.getByRole("heading", { name: /Make sure the lighting is good/ })).toBeVisible();
+  const reviewColours = await page
+    .locator("idenqa-capture .document-camera .primary")
+    .evaluate((element) => {
+      const style = getComputedStyle(element);
+      return { foreground: style.color, background: style.backgroundColor };
+    });
+  expect(
+    captureContrastRatio(reviewColours.foreground, reviewColours.background),
+  ).toBeGreaterThanOrEqual(4.5);
+  await page.screenshot({
+    path: test.info().outputPath("document-review-mobile.png"),
+    fullPage: true,
+  });
+  expect(requests.uploadBodies).toHaveLength(0);
+  await page.getByRole("button", { name: "Retake Photo" }).click();
+  await expect(
+    page.getByRole("heading", { name: /front of your national identity card/ }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Capture Photo", exact: true }).click();
+  await page.getByRole("button", { name: "Use Photo" }).click();
+  await page.getByRole("button", { name: "Continue to Next Step" }).click();
+  await expect(page.getByRole("button", { name: "Change document" })).toHaveCount(0);
+  await page.getByRole("button", { name: "Continue to Capture" }).click();
+  await expect(
+    page.getByRole("heading", { name: /back of your national identity card/ }),
+  ).toBeVisible();
+  await expect(page.getByText("Back of ID", { exact: true })).toBeVisible();
+  expect(requests.uploadIntents.map((input) => input.artefact)).toEqual([
+    "idenqa.artefact.document_front",
+  ]);
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth - innerWidth),
+  ).toBeLessThanOrEqual(0);
+  await page.reload();
+  await loadCaptureFlow(page, "synthetic-document-selection", ["idenqa.method.live_camera"], {
+    autoCapture: false,
+  });
+  await page.getByRole("button", { name: "Get Started" }).click();
+  await page.getByRole("button", { name: "Resume Capture" }).click();
+  await page.getByRole("button", { name: "Continue to Capture" }).click();
+  await expect(
+    page.getByRole("heading", { name: /back of your national identity card/ }),
+  ).toBeVisible();
+  expect(requests.uploadBodies).toHaveLength(1);
+});
+
 test("auto-captures a stable document, corrects perspective, and uploads the corrected frame", async ({
   page,
 }) => {
@@ -736,13 +987,13 @@ test("runs ordered active-liveness prompts and completes only after Core confirm
 
   const progress = page.getByRole("progressbar", { name: "Liveness challenge progress" });
   await expect(page.getByText("Look Straight at the Camera")).toBeVisible();
-  await expect(progress).toHaveJSProperty("value", 1);
+  await expect(progress).toHaveJSProperty("value", 0);
   await advanceSyntheticAdapter(page);
   await expect(page.getByText("Slowly Turn Your Head Left")).toBeVisible();
-  await expect(progress).toHaveJSProperty("value", 2);
+  await expect(progress).toHaveJSProperty("value", 1);
   await advanceSyntheticAdapter(page);
   await expect(page.getByText("Slowly Turn Your Head Right")).toBeVisible();
-  await expect(progress).toHaveJSProperty("value", 3);
+  await expect(progress).toHaveJSProperty("value", 2);
 
   expect(requests.adapterCompletions).toHaveLength(0);
   await advanceSyntheticAdapter(page);
@@ -1070,6 +1321,11 @@ async function mockCaptureFlow(
       readonly key: string;
       readonly evidenceType: string;
       readonly artefacts: readonly string[];
+      readonly documentOptions?: readonly {
+        readonly id: string;
+        readonly label: string;
+        readonly artefacts: readonly string[];
+      }[];
     };
     readonly outcomeState?:
       | "capture_required"
@@ -1108,6 +1364,25 @@ async function mockCaptureFlow(
   };
   const uploadBindings = new Map<string, BrowserUploadBinding>();
   const acceptedUploads = new Set<string>();
+  const documentSelections: Record<string, string> = {};
+  let sessionVersion = 1;
+  await page.route("**/core/v1/capture/document-selection", async (route) => {
+    const input = route.request().postDataJSON();
+    expect(input.expected_version).toBe(sessionVersion);
+    expect(
+      options.requirement?.documentOptions?.some((option) => option.id === input.document_type),
+    ).toBe(true);
+    documentSelections[input.requirement_key] = input.document_type;
+    sessionVersion++;
+    await route.fulfill({
+      json: {
+        ...captureSessionResponse(options),
+        version: sessionVersion,
+        document_selections: documentSelections,
+      },
+      headers: { "X-Request-ID": "req_document_selection" },
+    });
+  });
   await page.route("**/core/v1/capture/outcome", async (route) => {
     observed.authorization.push(route.request().headers().authorization ?? "");
     await route.fulfill({
@@ -1123,7 +1398,11 @@ async function mockCaptureFlow(
   await page.route("**/core/v1/capture/session", async (route) => {
     observed.authorization.push(route.request().headers().authorization ?? "");
     await route.fulfill({
-      json: captureSessionResponse(options),
+      json: {
+        ...captureSessionResponse(options),
+        version: sessionVersion,
+        document_selections: documentSelections,
+      },
       headers: { "X-Request-ID": "req_session" },
     });
   });
@@ -1277,6 +1556,11 @@ function captureSessionResponse(options: {
     readonly key: string;
     readonly evidenceType: string;
     readonly artefacts: readonly string[];
+    readonly documentOptions?: readonly {
+      readonly id: string;
+      readonly label: string;
+      readonly artefacts: readonly string[];
+    }[];
   };
 }) {
   const requirement = sessionResponse.requirements.requirements[0]!;
@@ -1290,6 +1574,9 @@ function captureSessionResponse(options: {
           key: options.requirement?.key ?? requirement.key,
           evidence_type: options.requirement?.evidenceType ?? requirement.evidence_type,
           artefacts: options.requirement?.artefacts ?? requirement.artefacts,
+          ...(options.requirement?.documentOptions === undefined
+            ? {}
+            : { document_options: options.requirement.documentOptions }),
           acquisition: {
             strategy: "any_of",
             methods: options.primaryMethods ?? ["idenqa.method.file_upload"],

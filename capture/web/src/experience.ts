@@ -86,18 +86,33 @@ export function captureExperiencePresentation(
   };
 }
 
+const appliedThemes = new WeakMap<HTMLElement, CSSStyleSheet>();
+
 /**
- * Apply safe theme tokens only where the host has not provided an
- * appearance-only `--idq-capture-*` value. Host branding always wins.
+ * Apply colour tokens inside the connected component's shadow cascade. Outer
+ * host rules and inline branding win naturally over :host declarations. Reading
+ * computed custom properties cannot distinguish branding from built-in defaults.
+ * Calling again replaces the previous experience; undefined clears it.
  */
 export function applyCaptureExperienceTheme(
   element: HTMLElement,
   theme: Readonly<Record<string, string>> | undefined,
 ): void {
-  if (theme === undefined) return;
-  const computed = getComputedStyle(element);
-  for (const [token, value] of Object.entries(theme)) {
-    if (computed.getPropertyValue(token).trim() !== "") continue;
-    element.style.setProperty(token, value);
+  const root = element.shadowRoot;
+  if (root === null) return;
+  const previous = appliedThemes.get(element);
+  if (previous !== undefined) {
+    root.adoptedStyleSheets = root.adoptedStyleSheets.filter((sheet) => sheet !== previous);
+    appliedThemes.delete(element);
   }
+  if (theme === undefined) return;
+  const declarations: string[] = [];
+  for (const [token, value] of Object.entries(theme)) {
+    if (!Object.values(THEME_TOKENS).includes(token) || !CSS.supports("color", value)) continue;
+    declarations.push(`${token}: ${value};`);
+  }
+  const sheet = new CSSStyleSheet();
+  sheet.replaceSync(`:host { ${declarations.join(" ")} }`);
+  root.adoptedStyleSheets = [...root.adoptedStyleSheets, sheet];
+  appliedThemes.set(element, sheet);
 }

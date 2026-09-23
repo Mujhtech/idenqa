@@ -22,11 +22,11 @@ describe("createCapturePlan", () => {
     ]);
   });
 
-  it("creates a required step for every document artefact", () => {
+  it("presents the front before the back from Core's canonical artefact set", () => {
     const plan = createCapturePlan(
       session(
         requirement({
-          artefacts: ["idenqa.artefact.document_front", "idenqa.artefact.document_back"],
+          artefacts: ["idenqa.artefact.document_back", "idenqa.artefact.document_front"],
           methods: [fileUpload],
         }),
       ),
@@ -49,6 +49,42 @@ describe("createCapturePlan", () => {
       [liveCamera],
       [fileUpload],
     ]);
+  });
+
+  it("uses the Core-selected passport branch without rewriting the pinned artefact union", () => {
+    const document = requirement({
+      artefacts: ["idenqa.artefact.document_back", "idenqa.artefact.document_front"],
+      methods: [liveCamera],
+    });
+    const snapshot = session({
+      ...document,
+      evidence_type: "idenqa.evidence.document_image",
+      document_options: [
+        { id: "passport", label: "passport", artefacts: ["idenqa.artefact.document_front"] },
+        {
+          id: "driver_license",
+          label: "driver license",
+          artefacts: ["idenqa.artefact.document_front", "idenqa.artefact.document_back"],
+        },
+      ],
+    });
+    const input = { ...snapshot, documentSelections: { [document.key]: "passport" } };
+    const before = JSON.stringify(input.requirements);
+    const plan = createCapturePlan(input, {
+      supportedMethods: [liveCamera],
+      availableMethods: [liveCamera],
+    });
+    expect(plan.requirements[0]?.selectedDocument).toBe("passport");
+    expect(plan.requirements[0]?.steps.map((step) => step.artefact)).toEqual([
+      "idenqa.artefact.document_front",
+    ]);
+    expect(JSON.stringify(input.requirements)).toBe(before);
+    expect(() =>
+      createCapturePlan(
+        { ...snapshot, documentSelections: { [document.key]: "not_allowed" } },
+        { supportedMethods: [liveCamera], availableMethods: [liveCamera] },
+      ),
+    ).toThrow(CapturePlanError);
   });
 
   it("uses only a policy-approved capability fallback", () => {

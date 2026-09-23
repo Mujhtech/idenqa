@@ -6,7 +6,7 @@
   "additionalProperties": false,
   "required": ["schema_version", "plan_id", "session_id", "requirements"],
   "properties": {
-    "schema_version": { "const": "1.0" },
+    "schema_version": { "enum": ["1.0", "1.1"] },
     "plan_id": { "$ref": "#/$defs/reference" },
     "session_id": { "type": "string", "pattern": "^ver_[0-9A-HJKMNP-TV-Z]{26}$" },
     "requirements": {
@@ -16,9 +16,34 @@
       "items": { "$ref": "#/$defs/requirement" }
     }
   },
+  "if": { "properties": { "schema_version": { "const": "1.0" } } },
+  "then": {
+    "properties": {
+      "requirements": {
+        "items": {
+          "properties": { "challenges": { "items": { "not": { "required": ["pose"] } } } }
+        }
+      }
+    }
+  },
   "$defs": {
+    "pose": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target_degrees", "tolerance_degrees", "hold_duration_ms"],
+      "properties": {
+        "target_degrees": { "type": "integer", "minimum": 15, "maximum": 30 },
+        "tolerance_degrees": { "type": "integer", "minimum": 3, "maximum": 8 },
+        "hold_duration_ms": { "type": "integer", "minimum": 300, "maximum": 1500 }
+      }
+    },
     "name": { "type": "string", "minLength": 1, "maxLength": 160, "pattern": "^[a-z0-9._-]+$" },
-    "reference": { "type": "string", "minLength": 1, "maxLength": 160, "pattern": "^[A-Za-z0-9._:-]+$" },
+    "reference": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160,
+      "pattern": "^[A-Za-z0-9._:-]+$"
+    },
     "quality": {
       "type": "object",
       "additionalProperties": false,
@@ -41,14 +66,25 @@
       "required": ["id", "prompt", "maximum_duration_ms"],
       "properties": {
         "id": { "$ref": "#/$defs/reference" },
-        "prompt": { "enum": ["neutral", "turn_left", "turn_right", "look_up", "look_down", "blink"] },
-        "maximum_duration_ms": { "type": "integer", "minimum": 500, "maximum": 15000 }
+        "prompt": {
+          "enum": ["neutral", "turn_left", "turn_right", "look_up", "look_down", "blink"]
+        },
+        "maximum_duration_ms": { "type": "integer", "minimum": 500, "maximum": 15000 },
+        "pose": { "$ref": "#/$defs/pose" }
       }
     },
     "requirement": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "evidence_type", "artefact", "acquisition_method", "camera", "quality", "challenges"],
+      "required": [
+        "id",
+        "evidence_type",
+        "artefact",
+        "acquisition_method",
+        "camera",
+        "quality",
+        "challenges"
+      ],
       "properties": {
         "id": { "$ref": "#/$defs/reference" },
         "evidence_type": { "$ref": "#/$defs/name" },

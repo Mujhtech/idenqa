@@ -1,4 +1,4 @@
-import { LitElement, css, html, nothing, type PropertyValues } from "lit";
+import { LitElement, css, html, svg, nothing, type PropertyValues } from "lit";
 
 import type {
   CaptureRealtimeEvent,
@@ -563,12 +563,28 @@ export class IdenqaCaptureElement extends LitElement {
     }
 
     .liveness-face-guide {
-      border: 0.2rem solid var(--idq-capture-face-guide);
-      border-block-color: var(--idq-capture-face-guide-muted);
-      border-radius: 48% 48% 44% 44% / 42% 42% 56% 56%;
-      inset: 10% 27% 8%;
+      inset: 4% 12%;
+      width: 76%;
+      height: 92%;
       pointer-events: none;
       position: absolute;
+    }
+    .liveness-face-guide line {
+      stroke: #ffffff;
+      stroke-width: 0.7;
+      stroke-linecap: round;
+      opacity: 0.3;
+    }
+    .liveness-face-guide line[data-active="true"] {
+      opacity: 1;
+    }
+    .liveness-face-guide line[data-filled="true"] {
+      stroke: #79e8b1;
+      opacity: 1;
+    }
+    .liveness-pose-meter {
+      width: 100%;
+      accent-color: var(--idq-capture-accent);
     }
 
     .liveness-overlay-prompt {
@@ -1211,7 +1227,213 @@ export class IdenqaCaptureElement extends LitElement {
       }
     }
 
+    .shell.document-camera-shell {
+      background: #080808;
+      color: #fff;
+      --idq-capture-text: #fff;
+      --idq-capture-muted: #c9c9c9;
+      --idq-capture-media-background: #080808;
+    }
+
+    .document-camera-shell .product-header,
+    .document-camera-shell .journey-progress {
+      position: absolute;
+      inline-size: 1px;
+      block-size: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+    }
+
+    .document-camera {
+      background: #080808;
+      color: #fff;
+      padding: clamp(1rem, 4vw, 2rem);
+      border-radius: 0.75rem;
+      gap: 1.25rem;
+    }
+
+    .document-camera-shell .document-camera {
+      padding: 0;
+      border-radius: 0;
+      padding-block-start: 0.5rem;
+    }
+
+    .document-navigation {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .document-camera-shell .document-navigation button {
+      background: transparent;
+      color: #c9c9c9;
+      border-color: transparent;
+      padding: 0.5rem;
+      min-block-size: 2.75rem;
+      font-size: 0.875rem;
+    }
+
+    .document-camera .document-instruction {
+      background: #262626;
+      color: #fff;
+      border-radius: 0.5rem;
+      padding: 0.875rem 1rem;
+      font-size: 1.0625rem;
+      font-weight: 500;
+      line-height: 1.6;
+      text-align: center;
+      margin: 0;
+      letter-spacing: normal;
+      text-wrap: pretty;
+    }
+
+    .document-viewfinder {
+      border: 3px solid #fff;
+      border-radius: 0.875rem;
+      overflow: hidden;
+      min-inline-size: 0;
+    }
+
+    .document-camera .camera-preview {
+      background: #080808;
+      border-radius: 0;
+      max-height: none;
+    }
+
+    .document-camera-placeholder {
+      aspect-ratio: 4 / 3;
+      display: grid;
+      place-items: center;
+      color: #737373;
+    }
+
+    .document-camera-placeholder svg {
+      inline-size: 4rem;
+      block-size: auto;
+    }
+
+    .document-side-label {
+      display: flex;
+      align-items: center;
+      gap: 0.875rem;
+      padding: 1rem;
+      background: #e8e8e8;
+      color: #424242;
+      font-size: 0.9375rem;
+      line-height: 1.5;
+    }
+
+    .document-side-label svg {
+      flex-shrink: 0;
+      color: #19166b;
+    }
+    .document-camera .document-guide-target {
+      stroke: #fff;
+      stroke-dasharray: none;
+    }
+    .document-camera .document-guide-quad {
+      stroke: #a7f3d0;
+    }
+
+    .document-feedback,
+    .document-auto-copy {
+      color: #c9c9c9;
+      text-align: center;
+      font-size: 0.875rem;
+      margin: 0;
+    }
+
+    .document-feedback:empty {
+      display: none;
+    }
+    .document-help {
+      text-align: center;
+    }
+    .document-help summary {
+      cursor: pointer;
+      padding: 0.75rem;
+      min-block-size: 2.75rem;
+      box-sizing: border-box;
+      list-style-position: inside;
+    }
+    .document-help p {
+      color: #c9c9c9;
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+    .document-help summary:focus-visible {
+      outline: 3px solid #fff;
+      outline-offset: 3px;
+      border-radius: 0.25rem;
+    }
+
+    .document-camera .document-controls {
+      grid-template-columns: 1fr;
+      margin-block-start: auto;
+      padding-block-start: 1.5rem;
+    }
+
+    .document-camera[data-state="reviewing"] .document-controls {
+      padding-block-start: clamp(2rem, 10vh, 5rem);
+    }
+
+    .document-camera button,
+    .document-camera-shell .journey-actions button {
+      background: transparent;
+      color: #fff;
+      border-color: #606060;
+      min-block-size: 3rem;
+    }
+
+    .document-camera button.primary {
+      background: #fff;
+      border-color: #fff;
+      color: #171717;
+    }
+    .document-camera button:hover,
+    .document-camera-shell .journey-actions button:hover {
+      background: #262626;
+    }
+    .document-camera button.primary:hover {
+      background: #e8e8e8;
+    }
+    .document-camera button:focus-visible,
+    .document-camera-shell .journey-actions button:focus-visible {
+      outline-color: #fff;
+    }
+    .document-camera .error {
+      background: #321b1b;
+      color: #ffd6d6;
+    }
+    .document-shutter {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      justify-content: center;
+    }
+    .shutter-icon {
+      inline-size: 1.5rem;
+      block-size: 1.5rem;
+      border: 2px solid #fff;
+      border-radius: 50%;
+      box-shadow: inset 0 0 0 3px #080808;
+      background: #fff;
+    }
+
     @media (forced-colors: active) {
+      .document-camera,
+      .shell.document-camera-shell,
+      .document-camera .document-instruction,
+      .document-side-label {
+        background: Canvas;
+        color: CanvasText;
+      }
+      .document-viewfinder {
+        border-color: CanvasText;
+      }
+      .document-camera .document-guide-target {
+        stroke: CanvasText;
+      }
       button[aria-pressed="true"] {
         outline: 0.1875rem solid ButtonText;
       }
@@ -1226,6 +1448,13 @@ export class IdenqaCaptureElement extends LitElement {
   }
 
   readonly #selectedMethods = new Map<string, string>();
+  #documentChoices: Readonly<
+    Record<string, { readonly options: readonly { readonly id: string; readonly label: string }[] }>
+  > = {};
+  readonly #selectedDocuments = new Map<string, string>();
+  #choosingDocument: string | undefined;
+  #savingDocument = false;
+  #documentSelectionError = false;
   readonly #uploadStates = new Map<string, StepUploadState>();
   readonly #cameraStates = new Map<string, StepCameraState>();
   readonly #adapterStates = new Map<string, StepAdapterState>();
@@ -1261,7 +1490,7 @@ export class IdenqaCaptureElement extends LitElement {
     const presentation =
       experience === undefined ? undefined : captureExperiencePresentation(experience);
     this.#experience = presentation;
-    if (presentation?.theme !== undefined) applyCaptureExperienceTheme(this, presentation.theme);
+    applyCaptureExperienceTheme(this, presentation?.theme);
     const catalogue = mergeCaptureMessageCatalogues(
       presentation?.messageCatalogue,
       messageCatalogue,
@@ -1269,6 +1498,11 @@ export class IdenqaCaptureElement extends LitElement {
     const documentCaptureOptions = normalizeCaptureDocumentCaptureOptions(documentCapture);
     this.#localizer = createCaptureLocalizer(presentation?.locale ?? browserLocale(), catalogue);
     this.#documentCapture = documentCaptureOptions;
+    this.#documentChoices = {};
+    this.#selectedDocuments.clear();
+    this.#choosingDocument = undefined;
+    this.#savingDocument = false;
+    this.#documentSelectionError = false;
     this.#clearCameraStates();
     this.#clearAdapterStates();
     this.#flowAbortController?.abort();
@@ -1389,7 +1623,7 @@ export class IdenqaCaptureElement extends LitElement {
   protected override render() {
     return html`
       <section
-        class="shell"
+        class=${this.#isDocumentCameraScreen() ? "shell document-camera-shell" : "shell"}
         aria-labelledby="capture-title"
         lang=${this.#localizer.locale}
         dir=${this.#localizer.direction}
@@ -1613,14 +1847,163 @@ export class IdenqaCaptureElement extends LitElement {
               </p>`
         }
         ${
-          this.#stepStage === "method"
-            ? this.#renderMethodChoice(step, item)
-            : this.#stepStage === "preparation"
-              ? this.#renderPreparation(step, item)
-              : this.#renderCaptureTask(step, item)
+          isDocumentArtefact(step.artefact) &&
+          this.#documentChoices[step.requirementKey] !== undefined &&
+          (!this.#selectedDocuments.has(step.requirementKey) ||
+            this.#choosingDocument === step.requirementKey)
+            ? this.#renderDocumentChoice(step)
+            : this.#stepStage === "method"
+              ? this.#renderMethodChoice(step, item)
+              : this.#stepStage === "preparation"
+                ? this.#renderPreparation(step, item)
+                : this.#renderCaptureTask(step, item)
         }
       </div>
     `;
+  }
+
+  #isDocumentCameraScreen(): boolean {
+    const flow = this.#flowSnapshot;
+    if (
+      flow === undefined ||
+      !isActiveCaptureFlowSnapshot(flow) ||
+      flow.status !== "capture_ready" ||
+      this.#journeyPhase !== "capture" ||
+      this.#stepStage !== "capture"
+    )
+      return false;
+    const step = planSteps(flow.plan)[this.#activeStepIndex];
+    return (
+      step !== undefined &&
+      isDocumentArtefact(step.artefact) &&
+      (this.#selectedMethods.get(stepKey(step)) ?? step.methodOptions[0]) === LIVE_CAMERA_METHOD
+    );
+  }
+
+  #renderDocumentChoice(step: CapturePlanStep) {
+    if (
+      this.#documentChoices[step.requirementKey]?.options.length === 1 &&
+      !this.#documentSelectionError
+    ) {
+      return html`<p role="status">${this.#text("savingDocument")}</p>
+        ${this.#renderJourneyExit()}`;
+    }
+    return html`
+      <div>
+        <h2>${this.#text("chooseDocumentTitle")}</h2>
+        <p class="screen-copy">${this.#text("chooseDocumentBody")}</p>
+      </div>
+      <div class="method-list">
+        ${this.#documentChoices[step.requirementKey]!.options.map(
+          (option) => html`
+            <button
+              class="method-card"
+              type="button"
+              ?disabled=${this.#savingDocument}
+              aria-pressed=${String(this.#selectedDocuments.get(step.requirementKey) === option.id)}
+              @click=${() => void this.#selectDocument(step, option.id)}
+            >
+              <span class="method-icon" aria-hidden="true">${this.#documentIcon()}</span>
+              <span>${option.label}</span><span class="chevron" aria-hidden="true">›</span>
+            </button>
+          `,
+        )}
+      </div>
+      ${this.#savingDocument ? html`<p role="status">${this.#text("savingDocument")}</p>` : nothing}
+      ${this.#documentSelectionError ? html`<p class="error" role="alert">${this.#text("documentSelectionFailed")}</p>` : nothing}
+      ${
+        this.#choosingDocument === step.requirementKey
+          ? html`
+              <button
+                type="button"
+                ?disabled=${this.#savingDocument}
+                @click=${() => {
+                  this.#choosingDocument = undefined;
+                  this.#documentSelectionError = false;
+                  this.requestUpdate();
+                }}
+              >
+                ${this.#text("back")}
+              </button>
+            `
+          : nothing
+      }
+      ${this.#renderJourneyExit()}
+    `;
+  }
+
+  async #selectDocument(step: CapturePlanStep, documentType: string): Promise<void> {
+    if (this.#savingDocument || this.#flowController === undefined) return;
+    const controller = this.#flowController;
+    const abort = this.#flowAbortController;
+    this.#savingDocument = true;
+    this.#documentSelectionError = false;
+    this.requestUpdate();
+    try {
+      const snapshot = await controller.selectDocument(
+        step.requirementKey,
+        documentType,
+        abort?.signal,
+      );
+      if (this.#flowController !== controller || abort?.signal.aborted) return;
+      this.#flowSnapshot = snapshot;
+      this.#restoreRecoveredProgress(snapshot);
+      this.#choosingDocument = undefined;
+      if (isActiveCaptureFlowSnapshot(snapshot)) {
+        this.#enterNextIncompleteStep(snapshot.plan, 0);
+      } else if (snapshot.status === "processing" || snapshot.status === "action_required") {
+        this.#pollAuthoritativeOutcome();
+      }
+      const confirmedType = isActiveCaptureFlowSnapshot(snapshot)
+        ? snapshot.session.documentSelections?.[step.requirementKey]
+        : undefined;
+      if (confirmedType !== undefined) {
+        this.dispatchEvent(
+          new CustomEvent("idenqa:document-selected", {
+            bubbles: true,
+            composed: true,
+            detail: { requirementKey: step.requirementKey, documentType: confirmedType },
+          }),
+        );
+      }
+    } catch {
+      if (this.#flowController === controller && !abort?.signal.aborted)
+        this.#documentSelectionError = true;
+    } finally {
+      if (this.#flowController === controller) {
+        this.#savingDocument = false;
+        this.requestUpdate();
+      }
+    }
+  }
+
+  #documentIcon() {
+    return html`<svg
+      width="40"
+      height="28"
+      viewBox="0 0 40 28"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.6"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <rect x="1" y="1" width="38" height="26" rx="3" />
+      <circle cx="12" cy="10" r="4" />
+      <path d="M5 22v-2a7 7 0 0 1 14 0v2ZM24 8h10M24 13h10M24 18h6" />
+    </svg>`;
+  }
+
+  #documentItem(step: CapturePlanStep): string {
+    const selected = this.#documentChoices[step.requirementKey]?.options.find(
+      (option) => option.id === this.#selectedDocuments.get(step.requirementKey),
+    );
+    return this.#text(
+      step.artefact.endsWith("document_back") ? "documentBackOf" : "documentFrontOf",
+      {
+        document: selected?.label ?? this.#text("identityDocument"),
+      },
+    );
   }
 
   #renderMethodChoice(step: CapturePlanStep, item: string) {
@@ -1711,6 +2094,19 @@ export class IdenqaCaptureElement extends LitElement {
         <button type="button" @click=${() => this.#backFromPreparation(step)}>
           ${step.methodOptions.length > 1 ? this.#text("chooseAnotherMethod") : this.#text("back")}
         </button>
+        ${
+          this.#canChangeDocument(step)
+            ? html`<button
+                type="button"
+                @click=${() => {
+                  this.#choosingDocument = step.requirementKey;
+                  this.requestUpdate();
+                }}
+              >
+                ${this.#text("changeDocument")}
+              </button>`
+            : nothing
+        }
       </div>
       <button class="quiet" type="button" @click=${() => this.cancel()}>
         ${this.#text("cancel")}
@@ -1757,6 +2153,28 @@ export class IdenqaCaptureElement extends LitElement {
       uploadState?.status === "uploading" ||
       isCameraBusy(cameraState) ||
       adapterState?.status === "running";
+    if (
+      method === LIVE_CAMERA_METHOD &&
+      adapter === undefined &&
+      isDocumentArtefact(step.artefact)
+    ) {
+      const documentBusy = cameraState?.status === "uploading" || this.#capturingSteps.has(key);
+      return html`
+        <div class="document-navigation">
+          <button
+            type="button"
+            ?disabled=${documentBusy}
+            @click=${() => this.#backToPreparation(step)}
+          >
+            ${this.#text("back")}
+          </button>
+          <button type="button" ?disabled=${documentBusy} @click=${() => this.cancel()}>
+            ${this.#text("cancel")}
+          </button>
+        </div>
+        ${this.#renderCamera(step, `guided-${this.#activeStepIndex}`, cameraState, false)}
+      `;
+    }
     return html`
       <div>
         <p class="eyebrow">${this.#text("capture")}</p>
@@ -2066,6 +2484,10 @@ export class IdenqaCaptureElement extends LitElement {
     this.#selectedMethods.set(key, step.methodOptions[0]!);
     this.#stepStage = "preparation";
     this.#journeyPhase = "capture";
+    const options = this.#documentChoices[step.requirementKey]?.options;
+    if (options?.length === 1 && !this.#selectedDocuments.has(step.requirementKey)) {
+      void this.#selectDocument(step, options[0]!.id);
+    }
     this.requestUpdate();
   }
 
@@ -2073,6 +2495,21 @@ export class IdenqaCaptureElement extends LitElement {
     this.#selectMethod(step, method);
     this.#stepStage = "preparation";
     this.requestUpdate();
+  }
+
+  #canChangeDocument(step: CapturePlanStep): boolean {
+    const flow = this.#flowSnapshot;
+    return (
+      isDocumentArtefact(step.artefact) &&
+      (this.#documentChoices[step.requirementKey]?.options.length ?? 0) > 1 &&
+      flow !== undefined &&
+      isActiveCaptureFlowSnapshot(flow) &&
+      !planSteps(flow.plan).some(
+        (candidate) =>
+          candidate.requirementKey === step.requirementKey &&
+          this.#completedSteps.has(stepKey(candidate)),
+      )
+    );
   }
 
   #backFromPreparation(step: CapturePlanStep): void {
@@ -2362,6 +2799,9 @@ export class IdenqaCaptureElement extends LitElement {
       this.#documentCapture.enabled &&
       this.#flowController !== undefined;
     const documentState = this.#documentStates.get(key);
+    if (isDocumentArtefact(step.artefact)) {
+      return this.#renderDocumentCamera(step, idSuffix, state, lockedByFile, documentCaptureActive);
+    }
     return html`
       <div class="camera-option">
         ${
@@ -2506,6 +2946,158 @@ export class IdenqaCaptureElement extends LitElement {
     `;
   }
 
+  #renderDocumentCamera(
+    step: CapturePlanStep,
+    idSuffix: string,
+    state: StepCameraState | undefined,
+    lockedByFile: boolean,
+    detectionEnabled: boolean,
+  ) {
+    const key = stepKey(step);
+    const videoId = `idq-camera-${idSuffix}`;
+    const reviewing = state?.previewUrl !== undefined;
+    const uploading = state?.status === "uploading";
+    const streaming = state?.status === "streaming";
+    const documentState = this.#documentStates.get(key);
+    return html`
+      <div class="document-camera camera-option" data-state=${state?.status ?? "idle"}>
+        <h2 class="document-instruction">
+          ${
+            reviewing
+              ? this.#text("documentReviewInstruction")
+              : this.#text("documentCaptureInstruction", { item: this.#documentItem(step) })
+          }
+        </h2>
+        <div class="document-viewfinder">
+          <div class="document-preview-frame" data-document-capture=${String(detectionEnabled)}>
+            ${
+              reviewing
+                ? html`
+                    <img
+                      class="camera-preview"
+                      src=${state.previewUrl!}
+                      alt=${this.#text("capturedPreviewLabel", { artefact: this.#selectedDocuments.has(step.requirementKey) ? this.#documentItem(step) : friendlyArtefact(step.artefact, this.#localizer) })}
+                      width=${state.width ?? 640}
+                      height=${state.height ?? 480}
+                    />
+                  `
+                : streaming
+                  ? html`
+                      <video
+                        class="camera-preview"
+                        id=${videoId}
+                        width="640"
+                        height="480"
+                        autoplay
+                        muted
+                        playsinline
+                        aria-label=${this.#text("liveCameraPreviewLabel", { artefact: this.#selectedDocuments.has(step.requirementKey) ? this.#documentItem(step) : friendlyArtefact(step.artefact, this.#localizer) })}
+                      ></video>
+                      ${detectionEnabled ? this.#renderDocumentGuide(state, documentState) : nothing}
+                    `
+                  : html`<div class="document-camera-placeholder" aria-hidden="true">
+                      ${this.#documentIcon()}
+                    </div>`
+            }
+          </div>
+          <div class="document-side-label">
+            ${this.#documentIcon()}<span
+              >${this.#text(step.artefact.endsWith("document_back") ? "documentBackLabel" : "documentFrontLabel")}</span
+            >
+          </div>
+        </div>
+        <p class="document-feedback" role="status" aria-live="polite">
+          ${
+            uploading
+              ? this.#text("uploadingCapturedPhoto")
+              : state?.status === "requesting"
+                ? this.#text("waitingForCameraPermission")
+                : streaming
+                  ? state.ready !== true
+                    ? this.#text("startingCameraPreview")
+                    : detectionEnabled
+                      ? documentHintMessage(documentState, this.#localizer)
+                      : this.#text("cameraReady")
+                  : nothing
+          }
+        </p>
+        ${
+          streaming && detectionEnabled && this.#documentCapture.autoCapture
+            ? html`<p class="document-auto-copy">${this.#text("documentAutoCapture")}</p>`
+            : nothing
+        }
+        ${
+          !reviewing
+            ? html` <details class="document-help">
+                <summary>${this.#text("documentHelp")}</summary>
+                <p>${this.#text("documentHelpBody")}</p>
+              </details>`
+            : nothing
+        }
+        ${state?.status === "error" ? html`<p class="error" role="alert">${state.message}</p>` : nothing}
+        <div class="document-controls camera-actions">
+          ${
+            reviewing
+              ? html`
+                  <button
+                    class="primary"
+                    type="button"
+                    ?disabled=${uploading || state.body === undefined}
+                    @click=${() => void this.#uploadCamera(step, state.body!)}
+                  >
+                    ${this.#text(uploading ? "uploadingPhoto" : "usePhoto")}
+                  </button>
+                  <button
+                    type="button"
+                    ?disabled=${uploading}
+                    @click=${() => void this.#retakePhoto(step, idSuffix)}
+                  >
+                    ${this.#text("retakePhoto")}
+                  </button>
+                `
+              : streaming
+                ? html`
+                    <button
+                      class="document-shutter"
+                      type="button"
+                      ?disabled=${state.ready !== true || this.#capturingSteps.has(key)}
+                      @click=${() => void this.#capturePhoto(step, videoId, this.#documentObservations.get(key)?.detection)}
+                    >
+                      <span class="shutter-icon" aria-hidden="true"></span
+                      >${this.#text("capturePhoto")}
+                    </button>
+                    ${
+                      this.#isDocumentCameraScreen()
+                        ? nothing
+                        : html`<button type="button" @click=${() => this.#cancelCamera(step)}>
+                            ${this.#text("cancelCamera")}
+                          </button>`
+                    }
+                  `
+                : html`
+                    <button
+                      class="primary"
+                      type="button"
+                      ?disabled=${lockedByFile || state?.status === "requesting"}
+                      @click=${() => void this.#startCamera(step, idSuffix)}
+                    >
+                      ${this.#text(
+                        lockedByFile
+                          ? "fileUploadInProgress"
+                          : state?.status === "requesting"
+                            ? "requestingCamera"
+                            : state?.status === "error"
+                              ? "retryCamera"
+                              : "startCamera",
+                      )}
+                    </button>
+                  `
+          }
+        </div>
+      </div>
+    `;
+  }
+
   #renderDocumentGuide(state: StepCameraState, documentState: StepDocumentState | undefined) {
     const width = state.width ?? 640;
     const height = state.height ?? 480;
@@ -2538,6 +3130,36 @@ export class IdenqaCaptureElement extends LitElement {
     `;
   }
 
+  #renderPoseRing(progress: CaptureMethodAdapterProgress | undefined) {
+    const prompt = progress?.prompt;
+    const center =
+      prompt === "turn_right"
+        ? 0
+        : prompt === "turn_left"
+          ? Math.PI
+          : prompt === "look_up"
+            ? -Math.PI / 2
+            : Math.PI / 2;
+    const all = prompt === "neutral" || prompt === "blink";
+    const ticks = Array.from({ length: 64 }, (_, index) => {
+      const angle = (index / 64) * Math.PI * 2 - Math.PI;
+      const distance = Math.atan2(Math.sin(angle - center), Math.cos(angle - center));
+      return {
+        angle,
+        active: all || Math.abs(distance) <= Math.PI / 3,
+        order: all ? index / 64 : (distance + Math.PI / 3) / ((Math.PI * 2) / 3),
+      };
+    });
+    return html`<svg class="liveness-face-guide" viewBox="0 0 100 100" aria-hidden="true">
+      ${ticks.map(
+        ({ angle, active, order }) => svg`<line
+        x1=${50 + Math.cos(angle) * 39} y1=${50 + Math.sin(angle) * 43}
+        x2=${50 + Math.cos(angle) * 43} y2=${50 + Math.sin(angle) * 47}
+        data-active=${String(active)} data-filled=${String(active && (progress?.poseProgress ?? 0) > order)} />`,
+      )}
+    </svg>`;
+  }
+
   #renderMethodAdapter(
     step: CapturePlanStep,
     idSuffix: string,
@@ -2552,6 +3174,11 @@ export class IdenqaCaptureElement extends LitElement {
       state?.progress?.phase === "challenge" && state.progress.prompt !== undefined
         ? livenessPrompt(state.progress.prompt, this.#localizer)
         : undefined;
+    const feedback = state?.progress?.poseFeedback;
+    const guidance =
+      feedback === undefined || feedback === "follow_prompt"
+        ? prompt
+        : this.#text(poseFeedbackKey(feedback));
     return html`
       <div
         class="adapter-option"
@@ -2575,12 +3202,12 @@ export class IdenqaCaptureElement extends LitElement {
                 ${
                   activeLiveness
                     ? html`
-                        <span class="liveness-face-guide" aria-hidden="true"></span>
+                        ${this.#renderPoseRing(state?.progress)}
                         ${
                           prompt === undefined
                             ? nothing
                             : html`<span class="liveness-overlay-prompt" aria-hidden="true"
-                                >${prompt}</span
+                                >${guidance}</span
                               >`
                         }
                       `
@@ -2604,12 +3231,24 @@ export class IdenqaCaptureElement extends LitElement {
                               total: formatNumber(state.progress.total!, this.#localizer.locale),
                             })}
                           </p>
-                          <p class="adapter-prompt">${prompt}</p>
+                          <p class="adapter-prompt">${guidance}</p>
                           <progress
                             aria-label=${this.#text("livenessProgressLabel")}
-                            value=${state.progress.current!}
+                            aria-live="off"
+                            value=${state.progress.current! - 1 + (state.progress.poseProgress ?? 0)}
                             max=${state.progress.total!}
                           ></progress>
+                          ${
+                            state.progress.poseProgress === undefined
+                              ? nothing
+                              : html` <progress
+                                  class="liveness-pose-meter"
+                                  aria-live="off"
+                                  aria-label=${this.#text("poseProgressLabel")}
+                                  value=${state.progress.poseProgress}
+                                  max="1"
+                                ></progress>`
+                          }
                         `
                       : nothing
                   }
@@ -3316,6 +3955,15 @@ export class IdenqaCaptureElement extends LitElement {
 
   #restoreRecoveredProgress(snapshot: CaptureFlowSnapshot): void {
     if (!isActiveCaptureFlowSnapshot(snapshot)) return;
+    const choices: Record<string, { options: readonly { id: string; label: string }[] }> = {};
+    this.#selectedDocuments.clear();
+    for (const requirement of snapshot.plan.requirements) {
+      if (requirement.documentOptions !== undefined)
+        choices[requirement.key] = { options: requirement.documentOptions };
+      if (requirement.selectedDocument !== undefined)
+        this.#selectedDocuments.set(requirement.key, requirement.selectedDocument);
+    }
+    this.#documentChoices = choices;
     const steps = snapshot.plan.requirements.flatMap((requirement) => requirement.steps);
     for (const completion of snapshot.progress.completions) {
       const matches = steps.filter(
@@ -3624,6 +4272,24 @@ function adapterProgressMessage(
     return localizer.text("adapterSubmitting", { method });
   }
   return localizer.text("adapterRunning", { method });
+}
+
+function poseFeedbackKey(
+  feedback: NonNullable<CaptureMethodAdapterProgress["poseFeedback"]>,
+): CaptureMessageKey {
+  const keys = {
+    find_face: "poseFindFace",
+    one_face: "poseOneFace",
+    center_face: "poseCenterFace",
+    move_closer: "poseMoveCloser",
+    move_back: "poseMoveBack",
+    face_forward: "poseFaceForward",
+    follow_prompt: "poseFollowPrompt",
+    hold_still: "poseHoldStill",
+    open_eyes: "poseOpenEyes",
+    quality: "poseQuality",
+  } as const;
+  return keys[feedback];
 }
 
 function livenessPrompt(

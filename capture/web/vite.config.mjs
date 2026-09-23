@@ -42,6 +42,31 @@ const demoOutcomes = new Set([
   "failed",
 ]);
 
+const documentProfile = {
+  ...demoProfile,
+  requirements: [
+    {
+      ...demoProfile.requirements[0],
+      key: "identity_document",
+      evidence_type: "idenqa.evidence.document_image",
+      artefacts: ["idenqa.artefact.document_front", "idenqa.artefact.document_back"],
+      document_options: [
+        {
+          id: "driver_license",
+          label: "driver license",
+          artefacts: ["idenqa.artefact.document_front", "idenqa.artefact.document_back"],
+        },
+        {
+          id: "national_id",
+          label: "national identity card",
+          artefacts: ["idenqa.artefact.document_front", "idenqa.artefact.document_back"],
+        },
+        { id: "passport", label: "passport", artefacts: ["idenqa.artefact.document_front"] },
+      ],
+    },
+  ],
+};
+
 const demoPolicyResults = {
   verified: { state: "satisfied", directive: "complete_verified" },
   not_verified: { state: "not_satisfied", directive: "complete_not_verified" },
@@ -62,6 +87,9 @@ export default defineConfig(({ mode }) => {
 
   return {
     server: {
+      // Conformance must keep its loaded module graph stable while other work
+      // rebuilds workspace packages; hot reload would silently restart sessions.
+      ...(environment.IDENQA_DEMO_CONFORMANCE === "true" ? { hmr: false, watch: null } : {}),
       headers: {
         "Referrer-Policy": "no-referrer",
         "X-Content-Type-Options": "nosniff",
@@ -105,6 +133,10 @@ export default defineConfig(({ mode }) => {
             }
             try {
               const outcome = requestedDemoOutcome(request.url);
+              const documentJourney =
+                new URL(request.url ?? "", "http://capture-web.invalid").searchParams.get(
+                  "journey",
+                ) === "document";
               let policyIdPromise = policyIdPromises.get(outcome);
               policyIdPromise ??= provisionDemoPolicy({ apiKey, coreUrl, outcome }).catch(
                 (error) => {
@@ -120,6 +152,7 @@ export default defineConfig(({ mode }) => {
                 outcome,
                 policyId,
                 region,
+                documentJourney,
               });
               response.statusCode = 201;
               response.end(JSON.stringify(journey));
@@ -159,11 +192,14 @@ async function provisionDemoPolicy({ apiKey, coreUrl, outcome }) {
   return policy.data.policy.id;
 }
 
-async function provisionJourney({ apiKey, coreUrl, outcome, policyId, region }) {
+async function provisionJourney({ apiKey, coreUrl, outcome, policyId, region, documentJourney }) {
   const tenant = new IdenqaClient({ baseUrl: coreUrl, apiKey });
   const createdProfile = await runStage("create profile", () =>
     tenant.captureProfiles.create(
-      { name: "Capture Web hosted demo", document: demoProfile },
+      {
+        name: "Capture Web hosted demo",
+        document: documentJourney ? documentProfile : demoProfile,
+      },
       { idempotencyKey: createIdempotencyKey("demo_profile") },
     ),
   );
@@ -188,7 +224,9 @@ async function provisionJourney({ apiKey, coreUrl, outcome, policyId, region }) 
         recipient: "Idenqa local demo tenant",
         copy: {
           title: "Identity Verification Notice",
-          summary: "We need a synthetic selfie image to demonstrate the capture journey.",
+          summary: documentJourney
+            ? "We need synthetic front and back document images to demonstrate the capture journey."
+            : "We need a synthetic selfie image to demonstrate the capture journey.",
           purpose:
             "The synthetic image is used only for this local identity-capture demonstration.",
           consequences: "You may refuse. Capture will stop and no evidence will be collected.",
@@ -205,7 +243,7 @@ async function provisionJourney({ apiKey, coreUrl, outcome, policyId, region }) 
         policyId,
         verificationTtlSeconds: outcome === "expired" ? 5 : 1800,
         captureTokenTtlSeconds: outcome === "expired" ? 5 : 1800,
-        outcomeTokenPostExpiryTtlSeconds: outcome === "expired" ? 60 : 86400,
+        outcomeTokenPostExpiryTtlSeconds: outcome === "expired" ? 300 : 86400,
       },
       { idempotencyKey: createIdempotencyKey("demo_verification") },
     ),
@@ -264,7 +302,9 @@ async function provisionJourney({ apiKey, coreUrl, outcome, policyId, region }) 
 }
 
 async function waitForVerificationState(tenant, verificationId, wanted) {
-  const deadline = Date.now() + 20_000;
+  // Expiry is durable maintenance work. Allow its 30-second initial backoff
+  // after a legitimate serialisation retry instead of assuming first-attempt success.
+  const deadline = Date.now() + 120_000;
   while (Date.now() < deadline) {
     const current = await tenant.verifications.get(verificationId);
     if (current.data.state === wanted) return;

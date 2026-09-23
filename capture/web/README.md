@@ -1,5 +1,44 @@
 # Idenqa Web capture
 
+## Measured liveness
+
+Active liveness now gates each challenge on local face measurements rather than
+a delay. A stable neutral face precedes each movement; the requested pose must
+reach its target and hold before its frame is accepted. The segmented ring shows
+measured movement/hold progress. Missing/multiple faces, poor framing, wrong
+movement, stale frames and failed configured quality checks pause/reset progress.
+Timeout permits another attempt; cancellation releases camera and worker.
+
+The default tracker runs MediaPipe Tasks Vision 1.0.1 in a dedicated classic
+worker. Runtime model/WASM assets must be hosted on the page origin:
+
+```sh
+corepack pnpm --filter @idenqa/capture build
+corepack pnpm --filter @idenqa/capture assets:prepare
+```
+
+The second command prepares `demo/public/idenqa-liveness/`; pass a destination
+directory as its first argument for another host, and optionally a local model
+file as the second argument for offline preparation. The model digest is checked.
+Serve these assets at `/idenqa-liveness/` or supply `poseAssetBaseUrl`. Permit
+`worker-src 'self'`, same-origin asset fetches and WASM compilation
+(`script-src 'self' 'wasm-unsafe-eval'`) in the host/worker CSP. No public CDN or
+Google service receives camera frames. The worker bundle is separate from the
+main library. See [third-party notices](THIRD_PARTY_NOTICES.md).
+
+Acquisition schema 1.1 adds bounded pose policies; legacy 1.0 plans use the same
+non-bypassable defaults. `settleDurationMs` is deprecated and cannot skip checks.
+`poseTrackerFactory` is an integration/test seam with subject-right-positive yaw
+and up-positive pitch in degrees; a mirrored preview does not change these axes.
+Required image-quality metrics still need an `assess` implementation; defaults
+measure dimensions, bytes and tracked face count. Local pose checks are not PAD.
+
+**Acceptance open:** real-camera accuracy and left/right behaviour, mobile/browser
+performance, representative subject evaluation, calibrated thresholds and explicit
+visual/interaction acceptance. Synthetic pose tests establish orchestration only.
+The hosted fixture's local acquisition plan is not production plan issuance.
+Earlier live-Core timed-liveness evidence does not prove measured pose compliance.
+
 `@idenqa/capture` is the open-source, framework-neutral Web capture package for
 Idenqa Core. It consumes only public `@idenqa/sdk` contracts and does not require
 Console or managed Cloud.
@@ -81,6 +120,91 @@ file-upload alternative only when the immutable profile explicitly permits a
 `capture_failed` fallback; cancelling the camera does not activate that
 fallback.
 
+## Document capture and selection
+
+Document-camera steps use a dark, focused viewfinder with side identification,
+expandable help, and a separate review state. The subject confirms **Use Photo**
+or chooses **Retake Photo** before an upload begins. Automatic detection and the
+manual shutter share the same review flow.
+
+Document choices come from the tenant's published capture profile, pinned into
+the session. Add `document_options` to a document-image requirement when creating
+the profile through the tenant API:
+
+```ts
+const documentRequirement = {
+  key: "identity_document",
+  purpose: "idenqa.purpose.identity_verification",
+  evidence_type: "idenqa.evidence.document_image",
+  artefacts: ["idenqa.artefact.document_front", "idenqa.artefact.document_back"],
+  document_options: [
+    {
+      id: "driver_license",
+      label: "driver license",
+      artefacts: ["idenqa.artefact.document_front", "idenqa.artefact.document_back"],
+    },
+    { id: "passport", label: "passport", artefacts: ["idenqa.artefact.document_front"] },
+  ],
+  acquisition: { strategy: "any_of", methods: ["idenqa.method.live_camera"] },
+  required_assurances: [],
+  constraints: [],
+  fallbacks: [],
+};
+```
+
+Labels should be localised document names suitable for use in a sentence. The
+selection applies across that requirement's capture, review, retakes, and recovery.
+Capture Web calls `CaptureClient.selectDocument` with the session version and an
+idempotency key, then refreshes Core before presenting the selected branch. The
+`idenqa:document-selected` event supplies `requirementKey` and `documentType`
+after Core confirms. Reload restores the choice from `session.documentSelections`;
+hosts do not pass a catalogue or selected ID into `start`.
+When the profile offers only one option, Capture Web records it through the same
+Core command after the notice response and omits the redundant choice screen.
+
+The requirement's artefacts are the union of its pinned alternatives. Selecting
+passport activates its front-only branch; selecting driver license requires
+both sides. This does not rewrite the immutable profile snapshot or alter
+acquisition methods or assurance. Core rejects uploads before selection and
+outside the selected branch. Selection cannot switch once an upload intent
+exists for the requirement, including failed or abandoned uploads. Profiles
+without `document_options` retain their original fixed-artefact behaviour and
+generic identity-document instructions.
+
+The live-Core hosted and embedded fixtures expose this journey at
+`/hosted.html?journey=document` and `/embedded.html?journey=document`. The server
+creates the profile with driver license, national identity card, and passport
+branches before session creation. Core canonicalises the artefact set;
+Capture Web presents the front before the back without changing either binding.
+
+The real-Core browser suite recreates the component after the front is accepted,
+recovers the document selection and accepted progress from Core, captures the
+back, and waits for an authoritative synthetic policy outcome. A passport
+journey verifies completion after the front only.
+Camera images and the synthetic worker are conformance fixtures, not document
+authenticity or biometric-assurance evidence.
+
+### Theme contrast diagnostics
+
+`auditCaptureThemeContrast(palette)` checks resolved opaque sRGB palette values
+for normal text, secondary text, button labels, hover labels, and offset focus
+rings. Supply `background`, `surface`, `surfaceStrong`, `text`, `muted`, `accent`,
+`accentStrong`, and `accentForeground` from your final light or dark theme.
+The function returns per-pair diagnostics with the measured ratio and required
+minimum (4.5:1 for text, 3:1 for the focus ring); an empty list means those pairs
+passed. `captureContrastRatio(foreground, background)` exposes the same unrounded
+WCAG 2.x relative-luminance calculation for other rendered pairs.
+
+Hex colours and opaque `rgb(r, g, b)` computed values are supported. Transparency,
+unresolved variables and other colour spaces return an unsupported-colour
+diagnostic rather than passing. Resolve/composite those colours before auditing.
+This is an authoring and conformance tool; it does not alter tenant branding,
+enforce Core publication, or certify the accessibility of an entire page.
+Browser tests check computed light/dark defaults, low-contrast host overrides,
+and the document review action. Portable theme colours live in the shadow
+cascade, beneath host stylesheet and inline overrides, and are cleared when a
+new journey has no portable theme.
+
 ## Styling and theming
 
 `<idenqa-capture>` exposes a public CSS custom-property surface on the host
@@ -144,8 +268,8 @@ The supported appearance variables are:
 System dark mode supplies accessible dark defaults for the semantic colour
 variables, while host declarations still take precedence. Forced-colour and
 reduced-motion safeguards remain package-owned. These variables customize the
-local presentation only: they are not the still-missing versioned portable
-experience manifest, cannot replace an immutable notice, and cannot change the
+local presentation only: they do not replace the signed portable
+experience manifest or an immutable notice, and cannot change the
 capture plan or assert assurance.
 
 ## Active liveness
@@ -204,12 +328,12 @@ provider or model must evaluate the temporal evidence and return an
 authoritative normalised result.
 
 The self-hosted hosted demo exposes this path at
-`/hosted.html?method=active-liveness`. It executes three camera prompts, uploads
-one representative captured frame through the ordinary Core evidence boundary,
-and completes only after authoritative Core progress reports the exact step.
-That synthetic path proves orchestration, cleanup, upload, and receipt. Core v1
-does not yet persist the complete temporal frame set, so it is not evidence of
-production liveness or PAD performance.
+`/hosted.html?method=active-liveness`. It executes three camera prompts and uploads
+every frame with ordered challenge/time metadata and a content-digest chain
+through the Core evidence boundary. It completes only after authoritative Core
+progress reports the exact step. That synthetic path proves orchestration,
+cleanup, sequence upload, and receipt; it is not evidence of production liveness
+or PAD performance.
 
 ## Extension acquisition methods
 

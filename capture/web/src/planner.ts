@@ -1,5 +1,6 @@
 import type {
   CaptureAcquisition,
+  CaptureDocumentOption,
   CaptureFallback,
   CaptureFallbackReason,
   CaptureRequirement,
@@ -31,6 +32,8 @@ export interface CapturePlanRequirement {
   readonly evidenceType: string;
   readonly requiredAssurances: readonly string[];
   readonly steps: readonly CapturePlanStep[];
+  readonly documentOptions?: readonly CaptureDocumentOption[];
+  readonly selectedDocument?: string;
 }
 
 export interface CapturePlan {
@@ -72,7 +75,32 @@ export function createCapturePlan(
     }
     requirementKeys.add(key);
 
+    if (requirement.document_options !== undefined) {
+      const options = requirement.document_options;
+      if (
+        requirement.evidence_type !== "idenqa.evidence.document_image" ||
+        options.length === 0 ||
+        options.length > 16 ||
+        new Set(options.map((option) => option.id)).size !== options.length ||
+        options.some(
+          (option) =>
+            !option.id.trim() ||
+            !option.label.trim() ||
+            option.artefacts.length === 0 ||
+            option.artefacts.some((artefact) => !requirement.artefacts.includes(artefact)),
+        )
+      ) {
+        throw invalidSession("The pinned document choices are invalid.");
+      }
+    }
     const acquisition = selectAcquisition(requirement, methods);
+    const selectedDocument = session.documentSelections?.[key];
+    const option = requirement.document_options?.find(
+      (candidate) => candidate.id === selectedDocument,
+    );
+    if (selectedDocument !== undefined && option === undefined) {
+      throw invalidSession("The selected document is not in the pinned capture requirement.");
+    }
     return {
       key,
       purpose: canonicalValue(requirement.purpose, "requirement purpose"),
@@ -81,7 +109,14 @@ export function createCapturePlan(
         requirement.required_assurances,
         "required assurances",
       ),
-      steps: createSteps(requirement, acquisition),
+      steps: createSteps(
+        option === undefined ? requirement : { ...requirement, artefacts: option.artefacts },
+        acquisition,
+      ),
+      ...(requirement.document_options === undefined
+        ? {}
+        : { documentOptions: requirement.document_options }),
+      ...(selectedDocument === undefined ? {} : { selectedDocument }),
     } satisfies CapturePlanRequirement;
   });
 
@@ -234,7 +269,14 @@ function createSteps(
   requirement: CaptureRequirement,
   selected: SelectedAcquisition,
 ): readonly CapturePlanStep[] {
-  const artefacts = uniqueCanonicalValues(requirement.artefacts, "requirement artefacts");
+  const artefacts = [...uniqueCanonicalValues(requirement.artefacts, "requirement artefacts")];
+  // Core canonicalises the artefact set lexically. Present the familiar front
+  // then back journey without removing requirements or changing their bindings.
+  const front = artefacts.indexOf("idenqa.artefact.document_front");
+  const back = artefacts.indexOf("idenqa.artefact.document_back");
+  if (front >= 0 && back >= 0 && back < front) {
+    [artefacts[back], artefacts[front]] = [artefacts[front]!, artefacts[back]!];
+  }
   if (selected.acquisition.strategy === "any_of") {
     return artefacts.map((artefact) =>
       step(requirement, artefact, selected.availableMethods, selected),
