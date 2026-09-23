@@ -33,16 +33,17 @@ import (
 )
 
 type captureAcceptanceFixture struct {
-	admin, runtime *pg.Pool
-	database       *isolatedDatabase
-	scope          tenant.Scope
-	authorities    *authoritypostgres.Store
-	creation       verification.SessionCreation
-	registry       evidence.Registry
-	catalog        evidence.Catalog
-	ids            *id.Generator
-	declaration    authority.Authority
-	now            time.Time
+	admin, runtime   *pg.Pool
+	database         *isolatedDatabase
+	scope            tenant.Scope
+	authorities      *authoritypostgres.Store
+	creation         verification.SessionCreation
+	creationMutation verification.SessionCreateMutation
+	registry         evidence.Registry
+	catalog          evidence.Catalog
+	ids              *id.Generator
+	declaration      authority.Authority
+	now              time.Time
 }
 
 func TestCaptureAcceptanceObservesExpiryAfterTokenLock(t *testing.T) {
@@ -291,58 +292,60 @@ func (f captureAcceptanceFixture) prepare(t *testing.T) (*evidencepostgres.Store
 	var mutations []evidence.UploadAcceptance
 	body := []byte{0xff, 0xd8, 0xff, 0xe0, 1, 2, 3, 4}
 	for _, requirement := range f.creation.Session.Requirements().Requirements {
-		uploadID, err := f.ids.NewUpload()
-		if err != nil {
-			t.Fatal(err)
+		for _, artefact := range verification.EffectiveArtefacts(requirement, f.creation.Session.DocumentSelections()) {
+			uploadID, err := f.ids.NewUpload()
+			if err != nil {
+				t.Fatal(err)
+			}
+			evidenceID, err := f.ids.NewEvidence()
+			if err != nil {
+				t.Fatal(err)
+			}
+			upload, err := evidence.NewUpload(evidence.UploadInput{
+				ID: uploadID, TenantID: f.scope.ID(), CaptureTokenID: f.creation.Credential.ID(),
+				SubjectID: f.declaration.SubjectID(), VerificationID: f.creation.Session.ID(), EvidenceID: evidenceID,
+				AuthorityID: f.declaration.ID(), ResponseID: snapshot.Response.Record().ID,
+				ProfileID: f.creation.Session.ProfileID(), ProfileRevision: f.creation.Session.ProfileRevision(), ProfileDigest: f.creation.Session.ProfileDigest(),
+				RequirementKey: requirement.Key, Purpose: requirement.Purpose, EvidenceType: requirement.EvidenceType,
+				Artefact: artefact, AcquisitionMethod: evidence.MethodLiveCamera,
+				Assurances:        []evidence.Name{evidence.AssuranceLiveCapture, evidence.AssuranceFreshness},
+				AllowedMediaTypes: []string{evidence.MediaTypeJPEG}, MaximumBytes: evidence.DefaultUploadMaximumBytes,
+				ExpectedBytes: int64(len(body)), ExpectedDigest: string(platformcrypto.Sum(body)), MediaType: evidence.MediaTypeJPEG,
+				Region: f.declaration.Record().Regions[0], RetentionClass: "tenant.retention.identity_v1", CreatedAt: f.now, SessionExpiresAt: f.creation.Session.ExpiresAt(),
+			}, f.registry, evidence.DefaultUploadPolicy())
+			if err != nil {
+				t.Fatal(err)
+			}
+			request, err := idempotency.NewRequest(f.scope.ID(), f.creation.Credential.ID(), evidence.OperationCreateUpload, requirement.Key+string(artefact), []byte(`{}`), f.now, time.Hour)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err := store.CreateUpload(t.Context(), f.scope, evidence.UploadCreateMutation{Upload: upload, Idempotency: request}); err != nil {
+				t.Fatal(err)
+			}
+			claimed, err := store.ClaimUploadAttempt(t.Context(), f.scope, f.creation.Credential.ID(), uploadID, 1, f.now)
+			if err != nil {
+				t.Fatal(err)
+			}
+			record := claimed.Record()
+			prepared, err := protector.Prepare(t.Context(), f.scope, evidence.ProtectionInput{
+				ID: evidenceID, SubjectID: record.SubjectID, VerificationID: record.VerificationID,
+				RequirementKey: record.RequirementKey, EvidenceType: record.EvidenceType, Artefact: record.Artefact,
+				AcquisitionMethod: record.AcquisitionMethod, Assurances: record.Assurances, Region: record.Region,
+				RetentionClass: record.RetentionClass, ContentRevision: 1, MediaType: record.MediaType,
+				Plaintext: bytes.NewReader(body), CreatedAt: f.now,
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := store.CreateObjectReconciliation(t.Context(), f.scope, claimed, prepared, f.now); err != nil {
+				t.Fatal(err)
+			}
+			mutations = append(mutations, evidence.UploadAcceptance{
+				UploadID: uploadID, CaptureTokenID: record.CaptureTokenID, ExpectedVersion: claimed.Version(), Attempt: claimed.Attempt(),
+				Asset: prepared.Asset(), PlaintextBytes: int64(len(body)), EventID: mustCaptureEvent(t, f.ids), OccurredAt: f.now,
+			})
 		}
-		evidenceID, err := f.ids.NewEvidence()
-		if err != nil {
-			t.Fatal(err)
-		}
-		upload, err := evidence.NewUpload(evidence.UploadInput{
-			ID: uploadID, TenantID: f.scope.ID(), CaptureTokenID: f.creation.Credential.ID(),
-			SubjectID: f.declaration.SubjectID(), VerificationID: f.creation.Session.ID(), EvidenceID: evidenceID,
-			AuthorityID: f.declaration.ID(), ResponseID: snapshot.Response.Record().ID,
-			ProfileID: f.creation.Session.ProfileID(), ProfileRevision: f.creation.Session.ProfileRevision(), ProfileDigest: f.creation.Session.ProfileDigest(),
-			RequirementKey: requirement.Key, Purpose: requirement.Purpose, EvidenceType: requirement.EvidenceType,
-			Artefact: requirement.Artefacts[0], AcquisitionMethod: evidence.MethodLiveCamera,
-			Assurances:        []evidence.Name{evidence.AssuranceLiveCapture, evidence.AssuranceFreshness},
-			AllowedMediaTypes: []string{evidence.MediaTypeJPEG}, MaximumBytes: evidence.DefaultUploadMaximumBytes,
-			ExpectedBytes: int64(len(body)), ExpectedDigest: string(platformcrypto.Sum(body)), MediaType: evidence.MediaTypeJPEG,
-			Region: f.declaration.Record().Regions[0], RetentionClass: "tenant.retention.identity_v1", CreatedAt: f.now, SessionExpiresAt: f.creation.Session.ExpiresAt(),
-		}, f.registry, evidence.DefaultUploadPolicy())
-		if err != nil {
-			t.Fatal(err)
-		}
-		request, err := idempotency.NewRequest(f.scope.ID(), f.creation.Credential.ID(), evidence.OperationCreateUpload, requirement.Key, []byte(`{}`), f.now, time.Hour)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if _, err := store.CreateUpload(t.Context(), f.scope, evidence.UploadCreateMutation{Upload: upload, Idempotency: request}); err != nil {
-			t.Fatal(err)
-		}
-		claimed, err := store.ClaimUploadAttempt(t.Context(), f.scope, f.creation.Credential.ID(), uploadID, 1, f.now)
-		if err != nil {
-			t.Fatal(err)
-		}
-		record := claimed.Record()
-		prepared, err := protector.Prepare(t.Context(), f.scope, evidence.ProtectionInput{
-			ID: evidenceID, SubjectID: record.SubjectID, VerificationID: record.VerificationID,
-			RequirementKey: record.RequirementKey, EvidenceType: record.EvidenceType, Artefact: record.Artefact,
-			AcquisitionMethod: record.AcquisitionMethod, Assurances: record.Assurances, Region: record.Region,
-			RetentionClass: record.RetentionClass, ContentRevision: 1, MediaType: record.MediaType,
-			Plaintext: bytes.NewReader(body), CreatedAt: f.now,
-		})
-		if err != nil {
-			t.Fatal(err)
-		}
-		if err := store.CreateObjectReconciliation(t.Context(), f.scope, claimed, prepared, f.now); err != nil {
-			t.Fatal(err)
-		}
-		mutations = append(mutations, evidence.UploadAcceptance{
-			UploadID: uploadID, CaptureTokenID: record.CaptureTokenID, ExpectedVersion: claimed.Version(), Attempt: claimed.Attempt(),
-			Asset: prepared.Asset(), PlaintextBytes: int64(len(body)), EventID: mustCaptureEvent(t, f.ids), OccurredAt: f.now,
-		})
 	}
 	return store, mutations
 }

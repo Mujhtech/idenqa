@@ -228,6 +228,8 @@ func (database *isolatedDatabase) createRuntimeRole(t *testing.T) string {
 		}
 	}()
 	statements := []string{
+		"GRANT SELECT, INSERT ON idenqa.evidence_temporal_frames TO " + pgx.Identifier{role}.Sanitize(),
+		"GRANT SELECT ON idenqa.pack_release_states, idenqa.pack_release_history TO " + pgx.Identifier{role}.Sanitize(),
 		"GRANT SELECT, INSERT ON idenqa.review_recapture_evaluation_requests,idenqa.capture_recoveries, idenqa.capture_recovery_uploads TO " + pgx.Identifier{role}.Sanitize(),
 		"GRANT SELECT, INSERT, UPDATE ON idenqa.model_registries TO " + pgx.Identifier{role}.Sanitize(),
 		"GRANT SELECT, INSERT ON idenqa.model_registry_revisions, idenqa.model_registry_history TO " + pgx.Identifier{role}.Sanitize(),
@@ -302,6 +304,7 @@ func (database *isolatedDatabase) createRuntimeRole(t *testing.T) string {
 		"GRANT SELECT, INSERT, UPDATE, DELETE ON idenqa.realtime_events TO " + pgx.Identifier{role}.Sanitize(),
 		"GRANT SELECT, INSERT, UPDATE ON idenqa.realtime_acknowledgements TO " + pgx.Identifier{role}.Sanitize(),
 		"GRANT INSERT ON idenqa.verification_session_audit TO " + pgx.Identifier{role}.Sanitize(),
+		"GRANT INSERT ON idenqa.capture_document_selection_audit TO " + pgx.Identifier{role}.Sanitize(),
 		"GRANT SELECT, INSERT ON idenqa.verification_transitions TO " + pgx.Identifier{role}.Sanitize(),
 		"GRANT SELECT, INSERT ON idenqa.notice_versions TO " + pgx.Identifier{role}.Sanitize(),
 		"GRANT INSERT ON idenqa.notice_version_audit TO " + pgx.Identifier{role}.Sanitize(),
@@ -310,7 +313,7 @@ func (database *isolatedDatabase) createRuntimeRole(t *testing.T) string {
 		"GRANT INSERT ON idenqa.authority_audit TO " + pgx.Identifier{role}.Sanitize(),
 		"GRANT SELECT, INSERT ON idenqa.subject_responses TO " + pgx.Identifier{role}.Sanitize(),
 		"GRANT SELECT, INSERT, UPDATE ON idenqa.evidence_assets TO " + pgx.Identifier{role}.Sanitize(),
-		"GRANT INSERT ON idenqa.evidence_asset_audit TO " + pgx.Identifier{role}.Sanitize(),
+		"GRANT SELECT, INSERT ON idenqa.evidence_asset_audit TO " + pgx.Identifier{role}.Sanitize(),
 		"GRANT INSERT ON idenqa.evidence_key_rewrap_audit TO " + pgx.Identifier{role}.Sanitize(),
 		"GRANT SELECT, INSERT, UPDATE ON idenqa.evidence_upload_intents TO " + pgx.Identifier{role}.Sanitize(),
 		"GRANT INSERT ON idenqa.evidence_upload_intent_audit TO " + pgx.Identifier{role}.Sanitize(),
@@ -346,6 +349,9 @@ func (database *isolatedDatabase) createRuntimeRole(t *testing.T) string {
 		"GRANT SELECT, INSERT, UPDATE ON idenqa.accepted_commands TO " + pgx.Identifier{role}.Sanitize(),
 		"GRANT SELECT, INSERT, UPDATE ON idenqa.proposal_mode_configs TO " + pgx.Identifier{role}.Sanitize(),
 		"GRANT SELECT, INSERT ON idenqa.prompt_registry,idenqa.generative_model_registry,idenqa.impact_assessments TO " + pgx.Identifier{role}.Sanitize(),
+		"GRANT SELECT, INSERT ON idenqa.proposal_generation_usage TO " + pgx.Identifier{role}.Sanitize(),
+		"GRANT SELECT, INSERT, UPDATE ON idenqa.proposal_generation_activations TO " + pgx.Identifier{role}.Sanitize(),
+		"GRANT SELECT, INSERT ON idenqa.proposal_generation_activation_history TO " + pgx.Identifier{role}.Sanitize(),
 		"GRANT SELECT, INSERT, UPDATE ON idenqa.privacy_requests TO " + pgx.Identifier{role}.Sanitize(),
 		"GRANT SELECT, INSERT ON idenqa.privacy_request_events,idenqa.privacy_request_decisions TO " + pgx.Identifier{role}.Sanitize(),
 		"GRANT SELECT, INSERT, UPDATE ON idenqa.privacy_restrictions TO " + pgx.Identifier{role}.Sanitize(),

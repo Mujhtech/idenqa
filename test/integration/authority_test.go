@@ -41,7 +41,7 @@ func runAuthorityPersistence(t *testing.T, exercise func(captureAcceptanceFixtur
 	runAuthorityPersistenceInRegion(t, exercise, "local", "tenant.region.ng")
 }
 
-func runAuthorityPersistenceInRegion(t *testing.T, exercise func(captureAcceptanceFixture), sessionRegion, evidenceRegion string) {
+func runAuthorityPersistenceInRegion(t *testing.T, exercise func(captureAcceptanceFixture), sessionRegion, evidenceRegion string, customise ...func(*verification.Profile)) {
 	database := createIsolatedDatabase(t)
 	ctx := t.Context()
 	migrator, err := idenqapostgres.OpenMigrator(ctx, migrationConfig(database.url))
@@ -129,6 +129,9 @@ func runAuthorityPersistenceInRegion(t *testing.T, exercise func(captureAcceptan
 		second := document.Requirements[0]
 		second.Key = "selfie_secondary"
 		document.Requirements = append(document.Requirements, second)
+	}
+	for _, apply := range customise {
+		apply(&document)
 	}
 	profile, draft, err := verification.NewCaptureProfile(
 		profileID, owner.ID(), "Authority profile",
@@ -284,7 +287,8 @@ func runAuthorityPersistenceInRegion(t *testing.T, exercise func(captureAcceptan
 		exercise(captureAcceptanceFixture{
 			admin: adminPool, runtime: runtimePool, database: database, scope: ownerScope, authorities: store,
 			creation: created, registry: registry, catalog: catalog,
-			ids: generator, declaration: storedAuthority, now: now.Add(8 * time.Minute),
+			creationMutation: sessionMutation,
+			ids:              generator, declaration: storedAuthority, now: now.Add(8 * time.Minute),
 		})
 		return
 	}

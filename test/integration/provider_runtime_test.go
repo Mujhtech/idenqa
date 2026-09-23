@@ -50,21 +50,30 @@ import (
 )
 
 type providerPublicJourney struct {
-	runtimeFile  string
-	smile        bool
-	model        bool
-	matching     bool
-	composed     bool
-	providerFile string
+	runtimeFile   string
+	smile         bool
+	model         bool
+	matching      bool
+	composed      bool
+	documentBack  bool
+	backPlaintext []byte
+	providerFile  string
 }
 
 func TestDojahRuntimePublicCaptureThroughDecisionAndWebhook(t *testing.T) {
 	runProviderPublicJourney(t, false, false)
 }
+func TestDojahTwoSidedPublicCaptureThroughDecisionAndWebhook(t *testing.T) {
+	runProviderPublicJourneyWithOptions(t, &providerPublicJourney{documentBack: true})
+}
 func TestSmileRuntimePublicCaptureThroughRestartDecisionAndWebhook(t *testing.T) {
 	runProviderPublicJourney(t, true, false)
 }
 func runProviderPublicJourney(t *testing.T, smile, pad bool, matching ...bool) {
+	runProviderPublicJourneyWithOptions(t, &providerPublicJourney{smile: smile, model: pad, matching: len(matching) > 0 && matching[0], composed: len(matching) > 1 && matching[1]})
+}
+func runProviderPublicJourneyWithOptions(t *testing.T, journey *providerPublicJourney) {
+	t.Helper()
 	directory := t.TempDir()
 	objects, err := objectlocal.Open(objectlocal.Config{Directory: directory, MaxObjectBytes: 2 * evidence.MaximumUploadMaximumBytes})
 	if err != nil {
@@ -75,7 +84,6 @@ func runProviderPublicJourney(t *testing.T, smile, pad bool, matching ...bool) {
 			t.Error(err)
 		}
 	})
-	journey := &providerPublicJourney{smile: smile, model: pad, matching: len(matching) > 0 && matching[0], composed: len(matching) > 1 && matching[1]}
 	backend := publicFlowBackend{providerJourney: journey,
 		start: func(t *testing.T, databaseURL, runtimeRole string, port int, keyringFile string, pepper []byte) publicFlowProcess {
 			t.Helper()
@@ -104,9 +112,13 @@ func runProviderPublicJourney(t *testing.T, smile, pad bool, matching ...bool) {
 	runPublicEvidenceUploadFlow(t, backend)
 }
 
-func providerDocumentProfile(t *testing.T, registry evidence.Registry) verification.Profile {
+func providerDocumentProfile(t *testing.T, registry evidence.Registry, back ...bool) verification.Profile {
 	t.Helper()
-	document, err := verification.NewProfile(registry, []verification.Requirement{{Key: "document", Purpose: evidence.PurposeIdentityVerification, EvidenceType: evidence.EvidenceDocumentImage, Artefacts: []evidence.Name{evidence.ArtefactDocumentFront}, Acquisition: verification.Acquisition{Strategy: verification.StrategyAnyOf, Methods: []evidence.Name{evidence.MethodLiveCamera}}}})
+	artefacts := []evidence.Name{evidence.ArtefactDocumentFront}
+	if len(back) > 0 && back[0] {
+		artefacts = append(artefacts, evidence.ArtefactDocumentBack)
+	}
+	document, err := verification.NewProfile(registry, []verification.Requirement{{Key: "document", Purpose: evidence.PurposeIdentityVerification, EvidenceType: evidence.EvidenceDocumentImage, Artefacts: artefacts, Acquisition: verification.Acquisition{Strategy: verification.StrategyAnyOf, Methods: []evidence.Name{evidence.MethodLiveCamera}}}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -163,7 +175,17 @@ func (journey *providerPublicJourney) run(t *testing.T, admin, runtime *pg.Pool,
 		var body map[string]string
 		err := json.NewDecoder(io.LimitReader(r.Body, 1<<20)).Decode(&body)
 		image, decodeErr := base64.StdEncoding.DecodeString(body["imagefrontside"])
-		if err != nil || decodeErr != nil || !bytes.Equal(image, plaintext) || body["input_type"] != "base64" || len(body) != 2 || r.URL.Path != "/api/v1/document/analysis" || r.Method != "POST" || r.Header.Get("AppId") != "fixture-app" || r.Header.Get("Authorization") != "fixture-key" {
+		wantFields := 2
+		if journey.documentBack {
+			wantFields = 3
+			back, backErr := base64.StdEncoding.DecodeString(body["imagebackside"])
+			if backErr != nil || !bytes.Equal(back, journey.backPlaintext) || bytes.Equal(back, plaintext) {
+				t.Error("document back did not match granted evidence")
+				w.WriteHeader(400)
+				return
+			}
+		}
+		if err != nil || decodeErr != nil || !bytes.Equal(image, plaintext) || body["input_type"] != "base64" || len(body) != wantFields || r.URL.Path != "/api/v1/document/analysis" || r.Method != "POST" || r.Header.Get("AppId") != "fixture-app" || r.Header.Get("Authorization") != "fixture-key" {
 			t.Error("provider request did not match documented wire contract and accepted evidence")
 			w.WriteHeader(400)
 			return
@@ -246,7 +268,7 @@ func (journey *providerPublicJourney) run(t *testing.T, admin, runtime *pg.Pool,
 	if journey.smile {
 		description = smileid.Description()
 	}
-	reference := providerv1.ConfigurationReference{ProviderID: providerID.String(), SchemaDigest: description.Configuration.Digest, SecretReference: "secret://provider/dojah/fixture", CredentialVersion: "v1"}
+	reference := providerv1.ConfigurationReference{ProviderID: providerID.String(), SchemaDigest: description.Configuration.Digest, SecretReference: "secret://file/provider/fixture", CredentialVersion: "v1"}
 	runnerSettings := adapterrunner.Settings{ListenAddress: "127.0.0.1:0", CertificateFile: ca, PrivateKeyFile: key, CredentialFile: runnerKey, TenantID: scope.ID().String(), Configuration: reference, BaseURL: fixture.URL, ProviderCAFile: ca, AppIDFile: write("app.key", []byte("fixture-app")), APIKeyFile: write("api.key", []byte("fixture-key")), GatewayURL: gateway.URL, GatewayCAFile: gatewayCA, GatewayCredentialFile: gatewayKey, Fixture: true}
 	inputs := []providerv1.InputReference{{Name: "idenqa.input.country", Reference: "secret://input/country"}, {Name: "idenqa.input.id_type", Reference: "secret://input/id-type"}}
 	if journey.smile {
@@ -397,6 +419,17 @@ func (journey *providerPublicJourney) run(t *testing.T, admin, runtime *pg.Pool,
 	if json.Unmarshal(saved, &request) != nil || request.Validate() != nil {
 		t.Fatal("invalid saved provider envelope")
 	}
+	if journey.documentBack {
+		if len(request.Evidence) != 2 || request.Evidence[0].Variant != "document.front" || request.Evidence[1].Variant != "document.back" ||
+			request.Evidence[0].EvidenceID == request.Evidence[1].EvidenceID {
+			t.Fatal("two-sided request did not pin distinct ordered evidence")
+		}
+		var grants, uses int
+		if err := admin.Native().QueryRow(t.Context(), `SELECT count(*),COALESCE(sum(uses),0) FROM idenqa.evidence_processing_grants WHERE tenant_id=$1 AND id=ANY($2)`,
+			scope.ID().String(), []string{request.Evidence[0].GrantID, request.Evidence[1].GrantID}).Scan(&grants, &uses); err != nil || grants != 2 || uses != 2 {
+			t.Fatalf("two-sided grant usage: grants=%d uses=%d error=%v", grants, uses, err)
+		}
+	}
 	otherTenant, err := ids.NewTenant()
 	if err != nil {
 		t.Fatal(err)
@@ -423,7 +456,14 @@ func (journey *providerPublicJourney) run(t *testing.T, admin, runtime *pg.Pool,
 		assertNoProviderRawLeak(t, admin, "SENTINELDOCUMENTNUMBER")
 	}
 	// Completed dispatches cannot redeem or leak their evidence, including exact replay.
-	payload, _ := json.Marshal(map[string]string{"attempt_id": request.AttemptID, "grant_id": request.Evidence[0].GrantID, "redemption_id": request.Evidence[0].RedemptionID})
+	for _, reference := range request.Evidence {
+		assertCompletedProviderGrantDenied(t, client, base, gatewaySecret, request.AttemptID, reference)
+	}
+}
+
+func assertCompletedProviderGrantDenied(t *testing.T, client *http.Client, base, gatewaySecret, attemptID string, reference providerv1.EvidenceGrantReference) {
+	t.Helper()
+	payload, _ := json.Marshal(map[string]string{"attempt_id": attemptID, "grant_id": reference.GrantID, "redemption_id": reference.RedemptionID})
 	req, err := http.NewRequestWithContext(t.Context(), "POST", base+"/internal/v1/provider-evidence", bytes.NewReader(payload))
 	if err != nil {
 		t.Fatal(err)

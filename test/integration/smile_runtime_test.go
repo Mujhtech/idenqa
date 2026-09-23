@@ -41,8 +41,12 @@ func smileDocumentProfile(t *testing.T, registry evidence.Registry) verification
 }
 func uploadSmileSelfie(t *testing.T, client *http.Client, base, token string, body []byte) {
 	t.Helper()
+	uploadProviderArtefact(t, client, base, token, body, "selfie", evidence.ArtefactSelfieImage, "smile-selfie-upload")
+}
+func uploadProviderArtefact(t *testing.T, client *http.Client, base, token string, body []byte, requirement string, artefact evidence.Name, key string) {
+	t.Helper()
 	var upload openapiv1.EvidenceUpload
-	headers := performPublicJSONRequest(t, client, publicJSONRequest{Method: "POST", URL: base + "/v1/evidence-uploads", Bearer: token, IdempotencyKey: "smile-selfie-upload", Body: openapiv1.EvidenceUploadCreate{RequirementKey: "selfie", Artefact: string(evidence.ArtefactSelfieImage), AcquisitionMethod: string(evidence.MethodLiveCamera), ExpectedBytes: int64(len(body)), ExpectedDigest: string(platformcrypto.Sum(body)), MediaType: "image/jpeg", Region: "tenant.region.ng"}, WantStatus: 201, Result: &upload})
+	headers := performPublicJSONRequest(t, client, publicJSONRequest{Method: "POST", URL: base + "/v1/evidence-uploads", Bearer: token, IdempotencyKey: key, Body: openapiv1.EvidenceUploadCreate{RequirementKey: requirement, Artefact: string(artefact), AcquisitionMethod: string(evidence.MethodLiveCamera), ExpectedBytes: int64(len(body)), ExpectedDigest: string(platformcrypto.Sum(body)), MediaType: "image/jpeg", Region: "tenant.region.ng"}, WantStatus: 201, Result: &upload})
 	request, err := http.NewRequestWithContext(t.Context(), "PUT", base+"/v1/evidence-uploads/"+upload.ID, bytes.NewReader(body))
 	if err != nil {
 		t.Fatal(err)
@@ -57,7 +61,7 @@ func uploadSmileSelfie(t *testing.T, client *http.Client, base, token string, bo
 	}
 	defer func() { _ = response.Body.Close() }()
 	if response.StatusCode != 200 {
-		t.Fatalf("selfie upload status %d", response.StatusCode)
+		t.Fatalf("provider artefact upload status %d", response.StatusCode)
 	}
 }
 

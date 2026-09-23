@@ -351,7 +351,7 @@ func runPublicEvidenceUploadFlow(t *testing.T, backend publicFlowBackend) {
 	document := integrationProfileDocument(t, registry, evidence.MethodLiveCamera)
 	requirement, artefact := "selfie", string(evidence.ArtefactSelfieImage)
 	if backend.providerJourney != nil && (!backend.providerJourney.model || backend.providerJourney.matching) {
-		document = providerDocumentProfile(t, registry)
+		document = providerDocumentProfile(t, registry, backend.providerJourney.documentBack)
 		if backend.providerJourney.smile || backend.providerJourney.matching {
 			document = smileDocumentProfile(t, registry)
 		}
@@ -501,6 +501,11 @@ func runPublicEvidenceUploadFlow(t *testing.T, backend publicFlowBackend) {
 	if backend.providerJourney != nil && (backend.providerJourney.smile || backend.providerJourney.matching) {
 		uploadSmileSelfie(t, client, baseURL, captureToken, body)
 	}
+	if backend.providerJourney != nil && backend.providerJourney.documentBack {
+		back := append(bytes.Clone(body), []byte("synthetic back side")...)
+		backend.providerJourney.backPlaintext = back
+		uploadProviderArtefact(t, client, baseURL, captureToken, back, "document", evidence.ArtefactDocumentBack, "dojah-back-upload")
+	}
 	assertPersistedEncryptedEvidence(
 		t, adminPool, runtimePool, scope, registry, upload, body, keyringFile, backend.readCiphertext,
 	)
@@ -517,6 +522,7 @@ func runPublicEvidenceUploadFlow(t *testing.T, backend publicFlowBackend) {
 		backend.providerJourney.run(t, adminPool, runtimePool, scope, creation.Session.ID, policyID.String(), digest, baseURL, backendCredential, keyringFile, restart, body)
 	}
 	if backend.verifyProcessing {
+		assertPublicSDKAdministration(t, client, baseURL, backendCredential, upload.EvidenceID, subjectResponse.ID, creation.Session.ID)
 		verificationID, err := id.ParseVerification(creation.Session.ID)
 		if err != nil {
 			t.Fatal(err)
@@ -530,7 +536,7 @@ func runPublicEvidenceUploadFlow(t *testing.T, backend publicFlowBackend) {
 		}
 		var report openapiv1.PolicyDecisionReport
 		performPublicJSONRequest(t, client, publicJSONRequest{Method: http.MethodGet, URL: baseURL + "/v1/decisions/" + decisionID.String(), Bearer: backendCredential, WantStatus: http.StatusOK, Result: &report})
-
+		assertPublicSDKDecisionAndConsent(t, client, baseURL, backendCredential, verificationID.String(), decisionID.String(), subjectResponse.ID)
 	}
 	if backend.verifyProcessing {
 		assertPublicWebhookManagement(t, client, baseURL, backendCredential, keyringFile, adminPool, runtimePool, scope, peppers)

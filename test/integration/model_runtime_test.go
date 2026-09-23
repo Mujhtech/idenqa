@@ -204,6 +204,7 @@ func (journey *providerPublicJourney) runModel(t *testing.T, admin, runtime *pg.
 	configurationModel.Manifest.Provenance.PreprocessingDigest = onnx.FacePreprocessingDigest(*configurationModel.FacePreparation)
 	if journey.matching {
 		configurationModel.FaceMatching = true
+		configurationModel.FacePreparation.Alignment = "arcface-five-point-v1"
 		configurationModel.Width, configurationModel.Height = 112, 112
 		configurationModel.Manifest.Restrictions.MaximumGrants = 2
 		configurationModel.Manifest.Provenance.PreprocessingDigest = onnx.MatchingPreprocessingDigest(*configurationModel.FacePreparation)
