@@ -224,6 +224,12 @@ bounded manifest file as a draft.
   capture progress exposes them.
 - Capture Web bootstrap wiring, presentation derivation, and host-first theme
   application.
+- Capture Web opaque-sRGB theme contrast diagnostics for body/secondary text,
+  button and hover text, and focus rings, with unrounded WCAG 2.x ratios and
+  explicit unsupported-colour findings. Computed default light/dark palettes
+  and host overrides are browser-tested. Experience colours are applied inside
+  the shadow cascade so built-in defaults do not mask them and host branding
+  continues to win; restart clears the prior experience stylesheet.
 - CLI inspection and lifecycle commands.
 - Unit, route, CLI, contract, TypeScript, and joined-DB integration tests,
   including a session pin and revocation-to-safe-default proof.
@@ -234,7 +240,8 @@ bounded manifest file as a draft.
 - DNS-verified custom domains beyond the allowed-origin declaration.
 - Tenant asset upload route and moderation workflow. Asset verification is
   implemented; tenant-facing asset authoring is not.
-- Automated WCAG contrast checking of tenant theme token combinations.
+- Core publication-time contrast enforcement and whole-page accessibility
+  certification; the Web authoring/conformance palette audit is implemented.
 - Native SDK rendering of the resolved document beyond locale and copy.
 
 ## Open items
