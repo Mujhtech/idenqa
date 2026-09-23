@@ -213,13 +213,32 @@ export class CaptureFlowController {
       idempotencyKey = this.#idempotencyKeyFactory();
       this.#documentSelectionKeys.set(key, idempotencyKey);
     }
-    await this.#client.selectDocument(
+    const selection = await this.#client.selectDocument(
       { requirementKey, documentType, expectedVersion },
       {
         idempotencyKey,
         ...(signal === undefined ? {} : { signal }),
       },
     );
+    // Commit the authoritative result before refreshing so an out-of-order
+    // session read issued before the command cannot drop the recorded branch.
+    const active = this.#snapshot;
+    if (
+      active !== undefined &&
+      isActiveSnapshot(active) &&
+      selection.data.version > active.session.version
+    ) {
+      this.#commitSnapshot(
+        createSnapshot(
+          active.outcome,
+          selection.data,
+          active.authoritySnapshot,
+          this.#capabilities,
+          active.region,
+          active.progress,
+        ),
+      );
+    }
     return this.refresh(signal);
   }
 
@@ -230,9 +249,8 @@ export class CaptureFlowController {
     const outcomeResponse = await this.#client.getOutcome(signal === undefined ? {} : { signal });
     if (outcomeResponse.data.state !== "capture_required") {
       const snapshot = createOutcomeSnapshot(outcomeResponse.data);
-      this.#snapshot = snapshot;
       this.#progressETag = undefined;
-      return snapshot;
+      return this.#commitSnapshot(snapshot);
     }
     let sessionResponse: SDKResponse<VerificationSession>;
     let authorityResponse: SDKResponse<CaptureAuthoritySnapshot>;
@@ -250,9 +268,8 @@ export class CaptureFlowController {
       const latestOutcome = await this.#client.getOutcome(signal === undefined ? {} : { signal });
       if (latestOutcome.data.state !== "capture_required") {
         const snapshot = createOutcomeSnapshot(latestOutcome.data);
-        this.#snapshot = snapshot;
         this.#progressETag = undefined;
-        return snapshot;
+        return this.#commitSnapshot(snapshot);
       }
       throw error;
     }
@@ -264,14 +281,35 @@ export class CaptureFlowController {
       this.#region,
       progressResponse.data,
     );
-    this.#snapshot = snapshot;
-    this.#progressETag = progressResponse.etag;
-    if (resetTransactions) {
+    const committed = this.#commitSnapshot(snapshot);
+    if (committed === snapshot) this.#progressETag = progressResponse.etag;
+    if (resetTransactions && committed === snapshot) {
       this.#responseKeys.clear();
       this.#documentSelectionKeys.clear();
       this.#uploads.clear();
       this.#uploadIssueKeys.clear();
     }
+    return committed;
+  }
+
+  /**
+   * Commits a freshly read snapshot without letting an older capture read
+   * replace newer authoritative state. Realtime recovery and REST polling can
+   * resolve out of order, and session versions only move forward, so a lower
+   * version is stale. A resolved outcome projection is terminal for the flow
+   * and must not be replaced by a later active-capture read.
+   */
+  #commitSnapshot(snapshot: CaptureFlowSnapshot): CaptureFlowSnapshot {
+    const current = this.#snapshot;
+    if (current !== undefined) {
+      const currentIsActive = isActiveSnapshot(current);
+      const nextIsActive = isActiveSnapshot(snapshot);
+      if (!currentIsActive && nextIsActive) return current;
+      if (currentIsActive && nextIsActive && snapshot.session.version < current.session.version) {
+        return current;
+      }
+    }
+    this.#snapshot = snapshot;
     return snapshot;
   }
 

@@ -105,6 +105,69 @@ describe("CaptureFlowController", () => {
     );
     expect(selectDocument).toHaveBeenCalledTimes(2);
   });
+  it("keeps a recorded document selection when a later session read resolves stale", async () => {
+    const base = session.requirements.requirements[0]!;
+    const staleSession: VerificationSession = {
+      ...session,
+      requirements: {
+        ...session.requirements,
+        requirements: [
+          {
+            ...base,
+            key: "document",
+            evidence_type: "idenqa.evidence.document_image",
+            artefacts: ["idenqa.artefact.document_front", "idenqa.artefact.document_back"],
+            document_options: [
+              { id: "passport", label: "passport", artefacts: ["idenqa.artefact.document_front"] },
+              {
+                id: "driver_license",
+                label: "driver license",
+                artefacts: [
+                  "idenqa.artefact.document_front",
+                  "idenqa.artefact.document_back",
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    };
+    const selectDocument = vi
+      .fn<NonNullable<CaptureFlowClient["selectDocument"]>>()
+      .mockResolvedValue(
+        response({ ...staleSession, version: 2, documentSelections: { document: "passport" } }),
+      );
+    const acknowledged = authoritySnapshot({ latestResponse: subjectResponse("acknowledge") });
+    const controller = new CaptureFlowController(
+      {
+        ...client({
+          // The read that raced the command still returns the pre-command view.
+          getSession: () => Promise.resolve(response(staleSession)),
+          snapshot: {
+            ...acknowledged,
+            authority: {
+              ...acknowledged.authority,
+              evidenceTypes: ["idenqa.evidence.document_image"],
+            },
+          },
+        }),
+        selectDocument,
+      },
+      capabilities,
+      { idempotencyKeyFactory: () => "stable_selection_key" },
+    );
+    const before = await controller.load();
+    if (!("plan" in before)) throw new Error("Expected capture plan");
+    const selected = await controller.selectDocument("document", "passport");
+    if (!("plan" in selected)) throw new Error("Expected capture plan");
+    expect(selected.plan.requirements[0]?.selectedDocument).toBe("passport");
+    expect(selected.session.version).toBe(2);
+
+    const refreshed = await controller.refresh();
+    if (!("plan" in refreshed)) throw new Error("Expected capture plan");
+    expect(refreshed.plan.requirements[0]?.selectedDocument).toBe("passport");
+    expect(refreshed.session.version).toBe(2);
+  });
   it("loads a terminal authoritative outcome without calling active-capture endpoints", async () => {
     const getSession = vi.fn<CaptureFlowClient["getSession"]>();
     const controller = new CaptureFlowController(
