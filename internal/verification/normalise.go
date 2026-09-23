@@ -98,7 +98,7 @@ func NormaliseModelResult(
 	identifiers ObservationIDGenerator,
 	options ...ResultOption,
 ) ([]Observation, *Failure, error) {
-	if identifiers == nil || result.AttemptID != attempt.ID.String() ||
+	if identifiers == nil || result.Validate() != nil || result.AttemptID != attempt.ID.String() ||
 		!modelv1.CurrentVersion.Accepts(result.Contract) || !utcNonZero(result.CompletedAt) ||
 		result.CompletedAt.Before(attempt.StartedAt) || result.CompletedAt.After(attempt.Deadline) {
 		return nil, nil, ErrInvalidCheck

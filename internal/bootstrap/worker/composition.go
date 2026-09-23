@@ -3,6 +3,8 @@ package worker
 import (
 	"context"
 	"errors"
+	"slices"
+	"strings"
 	"time"
 
 	modelv1 "github.com/Mujhtech/idenqa/contracts/model/v1"
@@ -138,7 +140,10 @@ func composeRoutes(ctx context.Context, routes []executionRoute) (*composedRoute
 	if len(routes) == 0 || len(routes) > 9 {
 		return nil, verification.ErrPlanUnavailable
 	}
-	seen := map[string]bool{}
+	signalGroups := map[string]string{}
+	signalOwners := map[string][]string{}
+	checkSignals := map[string][]string{}
+	planned := []verification.PlannedCheck{}
 	for i, route := range routes {
 		filter, ok := route.planner.(verification.CaptureRoute)
 		if !ok || route.preparation == nil {
@@ -167,18 +172,59 @@ func composeRoutes(ctx context.Context, routes []executionRoute) (*composedRoute
 			if result.preparations[check.Name] != nil {
 				return nil, verification.ErrPlanUnavailable
 			}
+			planned = append(planned, check)
+			checkSignals[check.Name] = slices.Clone(route.signals)
 			result.preparations[check.Name], result.kinds[check.Name] = route.preparation, check.RunnerKind
 			if route.registration != nil {
 				result.registrations[check.Name] = route.registration
 			}
 		}
 		for _, signal := range route.signals {
-			if seen[signal] {
+			group := checks[0].Route.CorrelationGroup
+			if previous, exists := signalGroups[signal]; exists && (group == "" || previous != group) {
 				return nil, verification.ErrPlanUnavailable
 			}
-			seen[signal] = true
+			signalGroups[signal] = group
+			signalOwners[signal] = append(signalOwners[signal], checks[0].Name)
 			result.signals = append(result.signals, signal)
 		}
+	}
+	plannedByName := make(map[string]verification.PlannedCheck, len(planned))
+	for _, check := range planned {
+		plannedByName[check.Name] = check
+	}
+	for signal, owners := range signalOwners {
+		if len(owners) < 2 {
+			continue
+		}
+		ownerSet := make(map[string]bool, len(owners))
+		for _, owner := range owners {
+			ownerSet[owner] = true
+		}
+		roots := 0
+		for _, owner := range owners {
+			fallback := plannedByName[owner].Route.FallbackFor
+			if fallback == "" || !ownerSet[fallback] {
+				roots++
+			}
+		}
+		if roots != 1 || signalGroups[signal] == "" {
+			return nil, verification.ErrPlanUnavailable
+		}
+	}
+	for _, check := range planned {
+		if check.Route.FallbackFor == "" {
+			continue
+		}
+		primary, exists := plannedByName[check.Route.FallbackFor]
+		if !exists || check.Route.CorrelationGroup == "" ||
+			primary.Route.CorrelationGroup != check.Route.CorrelationGroup ||
+			!slices.Equal(checkSignals[check.Name], checkSignals[primary.Name]) {
+			return nil, verification.ErrPlanUnavailable
+		}
+	}
+	if _, err := orderedChecks(planned); err != nil {
+		return nil, err
 	}
 	return result, nil
 }
@@ -211,7 +257,81 @@ func (routes *composedRoutes) Plan(ctx context.Context, input verification.PlanI
 		}
 		result = append(result, checks...)
 	}
-	return result, nil
+	return orderedChecks(result)
+}
+
+// orderedChecks validates and deterministically topologically orders one
+// immutable execution graph. Fallbacks are exact graph edges, not an implicit
+// retry of any model that happens to emit the same signal.
+func orderedChecks(input []verification.PlannedCheck) ([]verification.PlannedCheck, error) {
+	checks := make(map[string]verification.PlannedCheck, len(input))
+	position := make(map[string]int, len(input))
+	for index, check := range input {
+		if _, exists := checks[check.Name]; exists {
+			return nil, verification.ErrPlanUnavailable
+		}
+		checks[check.Name], position[check.Name] = check, index
+	}
+	if len(checks) == 0 {
+		return nil, verification.ErrPlanUnavailable
+	}
+	indegree := make(map[string]int, len(checks))
+	children := make(map[string][]string, len(checks))
+	for name, check := range checks {
+		dependencies := slices.Clone(check.Route.DependsOn)
+		if check.Route.FallbackFor != "" {
+			dependencies = append(dependencies, check.Route.FallbackFor)
+		}
+		seen := map[string]bool{}
+		for _, dependency := range dependencies {
+			if dependency == name || checks[dependency].Name == "" || seen[dependency] {
+				return nil, verification.ErrPlanUnavailable
+			}
+			seen[dependency] = true
+			indegree[name]++
+			children[dependency] = append(children[dependency], name)
+		}
+	}
+	ready := make([]string, 0, len(checks))
+	for name := range checks {
+		if indegree[name] == 0 {
+			ready = append(ready, name)
+		}
+	}
+	slices.SortFunc(ready, func(a, b string) int {
+		if difference := int(checks[a].Route.Priority) - int(checks[b].Route.Priority); difference != 0 {
+			return difference
+		}
+		if difference := position[a] - position[b]; difference != 0 {
+			return difference
+		}
+		return strings.Compare(a, b)
+	})
+	ordered := make([]verification.PlannedCheck, 0, len(checks))
+	for len(ready) > 0 {
+		name := ready[0]
+		ready = ready[1:]
+		ordered = append(ordered, checks[name])
+		for _, child := range children[name] {
+			indegree[child]--
+			if indegree[child] == 0 {
+				ready = append(ready, child)
+			}
+		}
+		slices.SortFunc(ready, func(a, b string) int {
+			if difference := int(checks[a].Route.Priority) - int(checks[b].Route.Priority); difference != 0 {
+				return difference
+			}
+			if difference := position[a] - position[b]; difference != 0 {
+				return difference
+			}
+			return strings.Compare(a, b)
+		})
+	}
+	if len(ordered) != len(checks) {
+		return nil, verification.ErrPlanUnavailable
+	}
+	return ordered, nil
 }
 func (routes *composedRoutes) Prepare(ctx context.Context, tx pg.Transaction, scope tenant.Scope, verificationID id.Verification, checkID id.Check, attemptID id.Attempt, definition verification.PlannedCheck, now, deadline time.Time) (verification.Provenance, func(context.Context, verification.Check) error, error) {
 	preparation := routes.preparations[definition.Name]

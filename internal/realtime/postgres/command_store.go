@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"slices"
@@ -127,7 +128,11 @@ func (store *CommandStore) evaluateCommand(
 	if err != nil {
 		return "", fmt.Errorf("parse realtime command requirements: %w", err)
 	}
-	if !captureStepPermitted(profile, command.Payload()) {
+	var selections map[string]string
+	if err := json.Unmarshal(requirements.DocumentSelections, &selections); err != nil {
+		return "", fmt.Errorf("decode command document selections: %w", err)
+	}
+	if !captureStepPermitted(profile, command.Payload(), selections) {
 		return realtime.CommandPolicyConflict, nil
 	}
 
@@ -159,11 +164,15 @@ func restoreCommandApplication(
 	return "", errors.New("realtime postgres: invalid stored command disposition")
 }
 
-func captureStepPermitted(profile verification.Profile, step realtime.CaptureStepUpdate) bool {
+func captureStepPermitted(profile verification.Profile, step realtime.CaptureStepUpdate, selection ...map[string]string) bool {
+	var selections map[string]string
+	if len(selection) > 0 {
+		selections = selection[0]
+	}
 	artefact := evidence.Name(step.Artefact)
 	method := evidence.Name(step.AcquisitionMethod)
 	for _, requirement := range profile.Requirements {
-		if requirement.Key != step.RequirementKey || !slices.Contains(requirement.Artefacts, artefact) {
+		if requirement.Key != step.RequirementKey || !slices.Contains(verification.EffectiveArtefacts(requirement, selections), artefact) {
 			continue
 		}
 		if slices.Contains(requirement.Acquisition.Methods, method) {

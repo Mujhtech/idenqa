@@ -244,6 +244,16 @@ func (store *ProcessingStore) persistPlannedCheck(ctx context.Context, tx platfo
 	if err := queries.InsertVerificationCheck(ctx, checkInsertParams(check)); err != nil {
 		return platformtask.Intent{}, fmt.Errorf("insert planned check: %w", err)
 	}
+	dependencies := definition.Route.DependsOn
+	if dependencies == nil {
+		// A route without predecessors is an empty PostgreSQL array, not NULL.
+		dependencies = []string{}
+	}
+	if _, err := tx.Exec(ctx, `UPDATE idenqa.verification_checks SET route_priority=$3, route_depends_on=$4, route_fallback_for=NULLIF($5,''), route_correlation_group=NULLIF($6,'') WHERE tenant_id=$1 AND id=$2`,
+		scope.ID().String(), check.ID.String(), definition.Route.Priority, dependencies,
+		definition.Route.FallbackFor, definition.Route.CorrelationGroup); err != nil {
+		return platformtask.Intent{}, fmt.Errorf("persist planned check route: %w", err)
+	}
 	if err := persistAttempts(ctx, queries, check, verification.CheckQueued, ""); err != nil {
 		return platformtask.Intent{}, err
 	}

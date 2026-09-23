@@ -125,9 +125,28 @@
         "acquisition": { "$ref": "#/$defs/acquisition" }
       }
     },
+    "document_option": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "artefacts"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,63}$" },
+        "label": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "artefacts": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "contains": { "const": "idenqa.artefact.document_front" },
+          "items": { "enum": ["idenqa.artefact.document_front", "idenqa.artefact.document_back"] }
+        }
+      }
+    },
     "requirement": {
       "type": "object",
       "additionalProperties": false,
+      "if": { "type": "object", "required": ["document_options"] },
+      "then": { "type": "object", "properties": { "evidence_type": { "type": "string", "const": "idenqa.evidence.document_image" } } },
       "required": [
         "key",
         "purpose",
@@ -140,6 +159,13 @@
       ],
       "properties": {
         "key": { "type": "string", "pattern": "^[a-z][a-z0-9_]{0,63}$" },
+        "document_options": {
+          "description": "Only document_image requirements may offer options. IDs must be unique and the artefact union must equal the requirement artefacts; Core validates these cross-field invariants.",
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "items": { "$ref": "#/$defs/document_option" }
+        },
         "purpose": { "$ref": "#/$defs/purpose_name" },
         "evidence_type": { "$ref": "#/$defs/evidence_name" },
         "artefacts": {

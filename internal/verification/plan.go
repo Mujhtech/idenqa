@@ -20,7 +20,27 @@ type PlannedCheck struct {
 	Name            string
 	RunnerKind      RunnerKind
 	Provenance      Provenance
+	Route           CheckRoute
 }
+
+// CheckRoute carries explicit workflow semantics for a planned check. Empty
+// fields preserve the original independent-check behaviour. Dependencies and
+// fallback targets name other checks in the same immutable plan.
+type CheckRoute struct {
+	Priority         uint16
+	DependsOn        []string
+	FallbackFor      string
+	CorrelationGroup string
+}
+
+// RouteAdmission is the durable decision made immediately before execution.
+type RouteAdmission string
+
+const (
+	RouteRun  RouteAdmission = "run"
+	RouteWait RouteAdmission = "wait"
+	RouteSkip RouteAdmission = "skip"
+)
 
 // PlanInput binds a plan to the immutable session snapshot. It contains no evidence bytes.
 type PlanInput struct {

@@ -62,21 +62,23 @@ type SessionCreation struct {
 // Session is a tenant-owned verification aggregate with an immutable copy of
 // the exact capture requirements selected at creation.
 type Session struct {
-	id              id.Verification
-	tenantID        id.Tenant
-	state           SessionState
-	version         int64
-	profileID       id.Profile
-	policyID        id.Policy
-	profileRevision uint32
-	profileDigest   string
-	region          string
-	requirements    Profile
-	failure         SessionFailure
-	inputRequest    *InputRequest
-	createdAt       time.Time
-	updatedAt       time.Time
-	expiresAt       time.Time
+	id                 id.Verification
+	tenantID           id.Tenant
+	state              SessionState
+	version            int64
+	profileID          id.Profile
+	policyID           id.Policy
+	profileRevision    uint32
+	profileDigest      string
+	region             string
+	requirements       Profile
+	documentSelections map[string]string
+	captureCompletedAt *time.Time
+	failure            SessionFailure
+	inputRequest       *InputRequest
+	createdAt          time.Time
+	updatedAt          time.Time
+	expiresAt          time.Time
 }
 
 // NewSession snapshots one active published capture-profile revision.

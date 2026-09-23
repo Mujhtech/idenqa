@@ -353,6 +353,8 @@ func (store *SessionStore) FindForCapture(
 				SourceProfileRevision: row.SourceProfileRevision,
 				SourceProfileDigest:   row.SourceProfileDigest,
 				Requirements:          row.Requirements,
+				DocumentSelections:    row.DocumentSelections,
+				CaptureCompletedAt:    row.CaptureCompletedAt,
 				Region:                row.Region,
 				PolicyID:              row.PolicyID,
 				DecisionID:            row.DecisionID,
@@ -582,6 +584,7 @@ func (store *SessionStore) restoreReplay(
 	queries *sqlgen.Queries,
 	tenantID id.Tenant,
 	replay idempotency.Result,
+	current ...bool,
 ) (verification.SessionCreation, error) {
 	var references sessionReplay
 	if err := json.Unmarshal(replay.Body(), &references); err != nil {
@@ -615,12 +618,16 @@ func (store *SessionStore) restoreReplay(
 	// The idempotency result deliberately contains no tenant duplication. The
 	// row's tenant is recovered through the transaction's forced RLS scope.
 	// Creation returns its original snapshot; GET returns the current lifecycle.
-	// These three fields are the only mutable fields in the public session view.
-	sessionRow.State = string(verification.SessionStateCollecting)
-	sessionRow.Version = 1
-	sessionRow.UpdatedAt = sessionRow.CreatedAt
-	sessionRow.FailureClass = nil
-	sessionRow.FailureCode = nil
+	// Creation also predates every document selection and failure projection.
+	if len(current) == 0 || !current[0] {
+		sessionRow.State = string(verification.SessionStateCollecting)
+		sessionRow.Version = 1
+		sessionRow.DocumentSelections = []byte(`{}`)
+		sessionRow.CaptureCompletedAt = optionalTimestamp(nil)
+		sessionRow.UpdatedAt = sessionRow.CreatedAt
+		sessionRow.FailureClass = nil
+		sessionRow.FailureCode = nil
+	}
 	session, err := store.restoreSession(sessionRow)
 	if err != nil {
 		return verification.SessionCreation{}, err
@@ -761,6 +768,22 @@ func (store *SessionStore) restoreSession(row sqlgen.IdenqaVerificationSession) 
 	)
 	if err != nil {
 		return verification.Session{}, err
+	}
+	var selections map[string]string
+	if len(row.DocumentSelections) > 0 {
+		if err := json.Unmarshal(row.DocumentSelections, &selections); err != nil {
+			return verification.Session{}, fmt.Errorf("decode document selections: %w", err)
+		}
+	}
+	session, err = session.WithDocumentSelections(selections)
+	if err != nil {
+		return verification.Session{}, err
+	}
+	if row.CaptureCompletedAt.Valid {
+		session, err = session.WithCaptureCompletion(row.CaptureCompletedAt.Time)
+		if err != nil {
+			return verification.Session{}, err
+		}
 	}
 	if row.FailureClass == nil && row.FailureCode == nil {
 		return session, nil

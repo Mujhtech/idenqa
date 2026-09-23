@@ -18,7 +18,6 @@ import (
 	"github.com/Mujhtech/idenqa/internal/review"
 	"github.com/Mujhtech/idenqa/internal/tenant"
 	"github.com/Mujhtech/idenqa/internal/transport/httpapi/apierror"
-	"github.com/Mujhtech/idenqa/internal/transport/httpapi/respond"
 	"github.com/Mujhtech/idenqa/internal/verification"
 	"github.com/go-chi/chi/v5"
 )
@@ -47,13 +46,14 @@ type VerificationCaseReader interface {
 
 // VerificationRoutes adapts tenant verification and capture bootstrap to HTTP.
 type VerificationRoutes struct {
+	handlerBase
+	selection *verification.DocumentSelectionService
 	access    *AccessMiddleware
 	capture   *CaptureAccessMiddleware
 	service   VerificationSessionService
 	catalog   evidence.Catalog
 	decisions VerificationDecisionReader
 	cases     VerificationCaseReader
-	logger    *slog.Logger
 }
 
 // NewVerificationRoutes constructs verification and capture routes. Nil decision
@@ -74,24 +74,18 @@ func NewVerificationRoutes(
 
 	return &VerificationRoutes{
 		access: accessMiddleware, capture: captureMiddleware,
-		service: service, catalog: catalog, decisions: decisions, cases: cases, logger: logger,
+		service: service, catalog: catalog, decisions: decisions, cases: cases, handlerBase: newHandlerBase(logger, "verification"),
 	}, nil
 }
 
 // Register adds tenant session and capture-token bootstrap routes.
 func (routes *VerificationRoutes) Register(router chi.Router) {
-	router.With(
-		routes.access.Authenticate,
-		routes.access.Require(access.PermissionVerificationSessionsCreate),
-	).Post("/verifications", routes.create)
-	router.With(
-		routes.access.Authenticate,
-		routes.access.Require(access.PermissionVerificationSessionsRead),
-	).Get("/verifications/{verificationID}", routes.find)
-	router.With(
-		routes.access.Authenticate,
-		routes.access.Require(access.PermissionVerificationSessionsResume),
-	).Post("/verifications/{verificationID}/resume", routes.resume)
+	if routes.selection != nil {
+		router.With(routes.capture.Authenticate).Post("/capture/document-selection", routes.selectDocument)
+	}
+	router.With(routes.access.Authorize(access.PermissionVerificationSessionsCreate)).Post("/verifications", routes.create)
+	router.With(routes.access.Authorize(access.PermissionVerificationSessionsRead)).Get("/verifications/{verificationID}", routes.find)
+	router.With(routes.access.Authorize(access.PermissionVerificationSessionsResume)).Post("/verifications/{verificationID}/resume", routes.resume)
 	router.With(routes.capture.Authenticate).Get("/capture/session", routes.captureSession)
 }
 
@@ -346,6 +340,9 @@ func verificationSessionResponse(catalog evidence.Catalog, session verification.
 		Requirements: json.RawMessage(requirements), CreatedAt: session.CreatedAt(),
 		UpdatedAt: session.UpdatedAt(), ExpiresAt: session.ExpiresAt(),
 	}
+	if selections := session.DocumentSelections(); len(selections) > 0 {
+		response.DocumentSelections = &selections
+	}
 	// The failure projection is carried only when the session store loaded it.
 	// Subject-safe capture reads never load it, so the same builder cannot leak
 	// operational failure detail through the capture-token projection.
@@ -376,23 +373,6 @@ func captureUnauthenticated(cause error) error {
 		"Authentication is required.",
 		cause,
 	).WithChallenge(`Bearer realm="idenqa-capture"`)
-}
-
-func (routes *VerificationRoutes) problem(writer http.ResponseWriter, request *http.Request, err error) {
-	if writeErr := respond.WriteProblem(writer, request, err, requestIDString(request.Context())); writeErr != nil {
-		routes.logger.ErrorContext(request.Context(), "write verification problem response")
-	}
-}
-
-func (routes *VerificationRoutes) writeJSON(
-	writer http.ResponseWriter,
-	request *http.Request,
-	status int,
-	value any,
-) {
-	if err := respond.JSON(writer, request, status, value); err != nil {
-		routes.logger.ErrorContext(request.Context(), "write verification response")
-	}
 }
 
 func optionalStringValue(value *string) string {

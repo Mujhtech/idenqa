@@ -265,6 +265,30 @@ func (check *Check) BeginAttempt(attempt Attempt) error {
 	return nil
 }
 
+// SkipRunning records that an already-pinned route was deliberately not
+// dispatched because its dependency/fallback condition was not selected.
+// The cancelled attempt is retained for reproduction but carries no subject
+// conclusion and the check has no outcome.
+func (check *Check) SkipRunning(at time.Time, code string) error {
+	if check == nil || check.State != CheckRunning || len(check.attempts) == 0 ||
+		!utcNonZero(at) || at.Before(check.UpdatedAt) || !safeExecutionToken(code, 100) {
+		return ErrInvalidCheck
+	}
+	attempt := &check.attempts[len(check.attempts)-1]
+	if attempt.State != AttemptRunning || at.Before(attempt.StartedAt) {
+		return ErrInvalidCheck
+	}
+	failure := Failure{Class: "cancelled", Code: code, Retry: RetryNever}
+	digest, err := digestResult(nil, &failure)
+	if err != nil {
+		return err
+	}
+	attempt.State, attempt.FinishedAt, attempt.Failure, attempt.resultDigest = AttemptCancelled, at, &failure, digest
+	check.State, check.Outcome, check.UpdatedAt = CheckSkippedByPolicy, "", at
+	check.Version++
+	return nil
+}
+
 // CompleteAttempt applies one exact terminal result or classifies its replay.
 func (check *Check) CompleteAttempt(attemptID id.Attempt, fence uint64, observations []Observation, at time.Time) (string, error) {
 	attempt, disposition, err := check.currentAttempt(attemptID, fence, at)
@@ -509,6 +533,10 @@ func validateCheckAttemptState(state CheckState, attempts []Attempt) error {
 			return ErrInvalidCheck
 		}
 	case CheckCancelled:
+		if latest.State != AttemptCancelled {
+			return ErrInvalidCheck
+		}
+	case CheckSkippedByPolicy:
 		if latest.State != AttemptCancelled {
 			return ErrInvalidCheck
 		}

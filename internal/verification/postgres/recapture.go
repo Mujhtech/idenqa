@@ -100,5 +100,5 @@ func (store *SessionStore) RestoreCreationWithin(ctx context.Context, scope tena
 	if err != nil {
 		return verification.SessionCreation{}, err
 	}
-	return store.restoreReplay(ctx, sqlgen.New(tx), scope.ID(), result)
+	return store.restoreReplay(ctx, sqlgen.New(tx), scope.ID(), result, true)
 }

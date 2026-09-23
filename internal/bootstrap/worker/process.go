@@ -289,6 +289,10 @@ func NewProcessWithInfrastructure(ctx context.Context, configuration config.Work
 			return nil, err
 		}
 	}
+	if err := executeHandler.WithRouteGate(checkStore); err != nil {
+		connectionPool.Close()
+		return nil, err
+	}
 	lifecycleStore, err := verificationpostgres.NewLifecycleStore(connectionPool, deliveryInfrastructure.wrapper, clock.System{})
 	if err != nil {
 		connectionPool.Close()

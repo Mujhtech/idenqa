@@ -210,8 +210,15 @@ func (store *CheckStore) SaveCheckWithin(
 		if err != nil || duplicate {
 			return duplicate, err
 		}
+		occurredAt := commit.Check.UpdatedAt
+		if commit.Receipt != nil {
+			// A result may atomically schedule its successor in the future.
+			// Authorize the received result now, not that future schedule;
+			// execution will independently recheck authority when it runs.
+			occurredAt = commit.Receipt.ReceivedAt
+		}
 		if err := authoritypostgres.ValidateExecutionWithin(ctx, transaction, scope, commit.Check.VerificationID,
-			commit.Check.UpdatedAt, store.clock, verification.SessionStateProcessing); err != nil {
+			occurredAt, store.clock, verification.SessionStateProcessing); err != nil {
 			return false, err
 		}
 	}

@@ -667,6 +667,19 @@ func newProcess(
 
 		return nil, fmt.Errorf("construct verification routes: %w", err)
 	}
+	documentSelectionStore, err := verificationpostgres.NewDocumentSelectionStore(sessionStore, clock.System{})
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, fmt.Errorf("construct document selection store: %w", err)
+	}
+	documentSelectionService, err := verification.NewDocumentSelectionService(documentSelectionStore, identifiers, clock.System{}, configuration.VerificationIdempotencyTTL)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, fmt.Errorf("construct document selection service: %w", err)
+	}
+	verificationRoutes.WithDocumentSelection(documentSelectionService)
 	var nativeBootstrapRoutes RouteRegistrar
 	if len(configuration.NativeApplicationIDs) > 0 {
 		nativeBootstrapService, err := verification.NewNativeBootstrapService(sessionStore, clock.System{}, configuration.NativeApplicationIDs)

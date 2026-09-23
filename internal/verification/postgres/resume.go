@@ -19,10 +19,11 @@ import (
 )
 
 type resumeReplay struct {
-	TokenID    string    `json:"capture_token_id"`
-	Replaced   bool      `json:"replaced"`
-	Version    int64     `json:"version"`
-	OccurredAt time.Time `json:"occurred_at"`
+	DocumentSelections map[string]string `json:"document_selections,omitempty"`
+	TokenID            string            `json:"capture_token_id"`
+	Replaced           bool              `json:"replaced"`
+	Version            int64             `json:"version"`
+	OccurredAt         time.Time         `json:"occurred_at"`
 }
 
 type resumeClock struct{ at time.Time }
@@ -125,7 +126,7 @@ func (store *SessionStore) Resume(ctx context.Context, scope tenant.Scope, mutat
 		if err != nil {
 			return err
 		}
-		saved := resumeReplay{TokenID: credential.ID().String(), Replaced: replaced, Version: receipt.Version, OccurredAt: receipt.OccurredAt}
+		saved := resumeReplay{TokenID: credential.ID().String(), Replaced: replaced, Version: receipt.Version, OccurredAt: receipt.OccurredAt, DocumentSelections: session.DocumentSelections()}
 		encoded, err := json.Marshal(saved)
 		if err != nil {
 			return err
@@ -193,6 +194,10 @@ func (store *SessionStore) restoreResumeResult(ctx context.Context, q *sqlgen.Qu
 		return verification.ResumeResult{}, err
 	}
 	snapshot, err := verification.RestoreSession(base.ID(), scope.ID(), verification.SessionStateCollecting, saved.Version, base.ProfileID(), base.ProfileRevision(), base.ProfileDigest(), base.Requirements(), base.Region(), base.PolicyID(), base.CreatedAt(), saved.OccurredAt.UTC(), base.ExpiresAt(), registry)
+	if err != nil {
+		return verification.ResumeResult{}, err
+	}
+	snapshot, err = snapshot.WithDocumentSelections(saved.DocumentSelections)
 	if err != nil {
 		return verification.ResumeResult{}, err
 	}

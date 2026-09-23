@@ -48,6 +48,11 @@ type verificationDeadlineStore interface {
 	VerificationDeadlineWithin(context.Context, tenant.Scope, postgres.Transaction, id.Verification) (time.Time, error)
 }
 
+type routeGate interface {
+	RouteAdmission(context.Context, tenant.Scope, verification.Check) (verification.RouteAdmission, error)
+	RouteAdmissionWithin(context.Context, tenant.Scope, postgres.Transaction, verification.Check) (verification.RouteAdmission, error)
+}
+
 // ProviderRequests reconstructs the exact persisted request and checks current authority.
 type ProviderRequests interface {
 	Load(context.Context, tenant.Scope, verification.Check, verification.Attempt) (providerv1.Request, error)
@@ -84,6 +89,7 @@ type ExecuteHandler struct {
 	retryEnqueuer SemanticRetryEnqueuer
 	externalWait  ExternalWait
 	support       verification.DocumentSupportResolver
+	routes        routeGate
 }
 
 // NewExecuteHandler constructs the exact version-1 verification task handler.
@@ -149,6 +155,16 @@ func (handler *ExecuteHandler) WithExternalWait(wait ExternalWait) error {
 	return nil
 }
 
+// WithRouteGate enables persisted dependency ordering and exact fallback
+// admission immediately before external execution.
+func (handler *ExecuteHandler) WithRouteGate(gate routeGate) error {
+	if handler == nil || gate == nil {
+		return errors.New("verification task: route gate is required")
+	}
+	handler.routes = gate
+	return nil
+}
+
 // Handle fails closed when a driver cannot provide transactional task effects.
 func (handler *ExecuteHandler) Handle(context.Context, platformtask.Delivery) platformtask.Result {
 	return platformtask.Quarantine(errors.New("verification task requires transactional completion"))
@@ -176,6 +192,21 @@ func (handler *ExecuteHandler) Prepare(
 		return nil, platformtask.Quarantine(err)
 	}
 	actor := delivery.Intent.ID().String()
+	if handler.routes != nil {
+		admission, admissionErr := handler.routes.RouteAdmission(ctx, scope, check)
+		if admissionErr != nil {
+			return nil, prepareStoreResult(admissionErr)
+		}
+		switch admission {
+		case verification.RouteWait:
+			return nil, platformtask.Retry(platformtask.RetryClassTransient, errors.New("verification dependency is not terminal"))
+		case verification.RouteSkip:
+			return handler.skipRouteWork(scope, payload), platformtask.Complete()
+		case verification.RouteRun:
+		default:
+			return nil, platformtask.Quarantine(verification.ErrInvalidCheck)
+		}
+	}
 
 	if delivery.Intent.Key() == AsyncExecuteKey && !time.Now().Before(attempt.Deadline) {
 		result := providerv1.Result{Contract: providerv1.CurrentVersion, AttemptID: attempt.ID.String(), Outcome: providerv1.ResultOutcomeFailed, Failure: &providerv1.Failure{Class: providerv1.FailureDeadline, Code: "provider_job_unresolved", Retry: providerv1.RetryReconcile}, CompletedAt: attempt.Deadline}
@@ -241,6 +272,39 @@ func (handler *ExecuteHandler) Prepare(
 		return handler.modelWork(scope, payload, actor, result, fingerprint), platformtask.Complete()
 	default:
 		return nil, platformtask.Quarantine(verification.ErrInvalidCheck)
+	}
+}
+
+func (handler *ExecuteHandler) skipRouteWork(scope tenant.Scope, payload ExecutePayload) platformtask.TransactionWork {
+	return func(ctx context.Context, transaction postgres.Transaction) platformtask.Result {
+		check, err := handler.store.FindCheckWithin(ctx, scope, transaction, payload.CheckID)
+		if err != nil {
+			return commitStoreResult(err)
+		}
+		admission, err := handler.routes.RouteAdmissionWithin(ctx, scope, transaction, check)
+		if err != nil {
+			return commitStoreResult(err)
+		}
+		if admission == verification.RouteWait {
+			return platformtask.Retry(platformtask.RetryClassTransient, errors.New("verification dependency is not terminal"))
+		}
+		if admission == verification.RouteRun {
+			return platformtask.Retry(platformtask.RetryClassConflict, errors.New("verification route became runnable"))
+		}
+		expected := check.Version
+		at := time.Now().UTC().Truncate(time.Microsecond)
+		if err := check.SkipRunning(at, "route_not_selected"); err != nil {
+			return platformtask.Quarantine(err)
+		}
+		eventID, err := handler.identifiers.NewEvent()
+		if err != nil {
+			return platformtask.Retry(platformtask.RetryClassUnavailable, fmt.Errorf("generate route event: %w", err))
+		}
+		_, err = handler.store.SaveCheckWithin(ctx, scope, transaction, verification.CheckCommit{Check: check, ExpectedVersion: expected, EventID: eventID})
+		if err != nil {
+			return commitStoreResult(err)
+		}
+		return platformtask.Complete()
 	}
 }
 

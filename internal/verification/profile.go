@@ -79,6 +79,7 @@ type Requirement struct {
 	Purpose            evidence.Name
 	EvidenceType       evidence.Name
 	Artefacts          []evidence.Name
+	DocumentOptions    []DocumentOption
 	Acquisition        Acquisition
 	RequiredAssurances []evidence.Name
 	Constraints        []Constraint
@@ -171,6 +172,7 @@ func ParseProfileJSON(encoded []byte, registry evidence.Registry) (Profile, erro
 			Purpose:            item.Purpose,
 			EvidenceType:       item.EvidenceType,
 			Artefacts:          item.Artefacts,
+			DocumentOptions:    item.DocumentOptions,
 			Acquisition:        Acquisition{Strategy: item.Acquisition.Strategy, Methods: item.Acquisition.Methods},
 			RequiredAssurances: item.RequiredAssurances,
 			Constraints:        constraints,
@@ -215,6 +217,9 @@ func ValidateProfile(profile Profile, registry evidence.Registry) error {
 }
 
 func validateRequirement(requirement Requirement, registry evidence.Registry) error {
+	if err := validateDocumentOptions(requirement); err != nil {
+		return err
+	}
 	if !validRequirementKey(requirement.Key) {
 		return fmt.Errorf("capture requirement key %q is invalid", requirement.Key)
 	}
@@ -504,12 +509,16 @@ func CanonicalJSON(profile Profile, registry evidence.Registry) ([]byte, error) 
 			Purpose:            requirement.Purpose,
 			EvidenceType:       requirement.EvidenceType,
 			Artefacts:          nonNilEvidenceNames(requirement.Artefacts),
+			DocumentOptions:    cloneDocumentOptions(requirement.DocumentOptions),
 			Acquisition:        canonicalAcquisition{Strategy: requirement.Acquisition.Strategy, Methods: slices.Clone(requirement.Acquisition.Methods)},
 			RequiredAssurances: nonNilEvidenceNames(requirement.RequiredAssurances),
 			Constraints:        make([]canonicalConstraint, 0, len(requirement.Constraints)),
 			Fallbacks:          make([]canonicalFallback, 0, len(requirement.Fallbacks)),
 		}
 		slices.Sort(item.Artefacts)
+		for index := range item.DocumentOptions {
+			slices.Sort(item.DocumentOptions[index].Artefacts)
+		}
 		slices.Sort(item.RequiredAssurances)
 		for _, constraint := range requirement.Constraints {
 			item.Constraints = append(item.Constraints, canonicalConstraint{Name: constraint.Name, Value: canonicalConstraintValue(constraint.Value)})
@@ -557,6 +566,7 @@ type profileDocument struct {
 }
 
 type requirementDocument struct {
+	DocumentOptions    []DocumentOption     `json:"document_options,omitempty"`
 	Key                string               `json:"key"`
 	Purpose            evidence.Name        `json:"purpose"`
 	EvidenceType       evidence.Name        `json:"evidence_type"`
@@ -573,6 +583,7 @@ type constraintDocument struct {
 }
 
 type canonicalRequirement struct {
+	DocumentOptions    []DocumentOption      `json:"document_options,omitempty"`
 	Key                string                `json:"key"`
 	Purpose            evidence.Name         `json:"purpose"`
 	EvidenceType       evidence.Name         `json:"evidence_type"`
@@ -650,6 +661,7 @@ func cloneProfile(profile Profile) Profile {
 func cloneRequirements(requirements []Requirement) []Requirement {
 	result := slices.Clone(requirements)
 	for index := range result {
+		result[index].DocumentOptions = cloneDocumentOptions(result[index].DocumentOptions)
 		result[index].Artefacts = slices.Clone(result[index].Artefacts)
 		result[index].Acquisition.Methods = slices.Clone(result[index].Acquisition.Methods)
 		result[index].RequiredAssurances = slices.Clone(result[index].RequiredAssurances)

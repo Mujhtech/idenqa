@@ -29,3 +29,27 @@ func TestMatchingPlanRequiresDocumentAndSelfieContract(t *testing.T) {
 		t.Fatal("one-grant pair route accepted")
 	}
 }
+
+func TestPlanSelectsExplicitSelfieAnalysisCapability(t *testing.T) {
+	t.Parallel()
+	request := runtimeRequest(t)
+	binding := model.Binding{
+		TenantID: request.TenantID, PolicyID: "pol_01K4AR9V8FQ2G7ZXCPNM5T6JWH",
+		ProfileDigest: "sha256:" + strings.Repeat("a", 64), Evaluation: modelv1.EvaluationSelfieAnalysis,
+		Requirement: "selfie", Region: "tenant.region.ng", Purpose: "idenqa.purpose.identity_verification",
+		Recipient: "tenant.recipient.primary", Configuration: request.Configuration,
+	}
+	manifest := modelv1.Manifest{Provenance: request.Provenance, Restrictions: request.Restrictions, Capabilities: []modelv1.Capability{{
+		Evaluation: modelv1.EvaluationSelfieAnalysis, AcceptedEvidence: []string{"idenqa.evidence.selfie_image"},
+		OutputSignals: modelv1.SelfieAnalysisSignals(true), TemporalEvidence: true,
+	}}}
+	manifest.Restrictions.MaximumGrants = 8
+	plan, err := model.NewPlan(binding, manifest)
+	if err != nil || plan.Capability.Evaluation != modelv1.EvaluationSelfieAnalysis || plan.OutputDestination() != "model.selfie_analysis" {
+		t.Fatalf("explicit analysis route unavailable: %+v %v", plan, err)
+	}
+	binding.Evaluation = modelv1.EvaluationFaceMatch
+	if _, err := model.NewPlan(binding, manifest); err == nil {
+		t.Fatal("missing explicit capability accepted")
+	}
+}
