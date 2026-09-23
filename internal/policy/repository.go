@@ -13,3 +13,9 @@ type Repository interface {
 	Find(context.Context, tenant.Scope, id.Decision) (Decision, error)
 	FindLatest(context.Context, tenant.Scope, id.Verification) (Decision, error)
 }
+
+// HistoryRepository is the additive decision-lineage read capability. Keeping
+// it separate preserves narrow repositories used by authoring-only consumers.
+type HistoryRepository interface {
+	List(context.Context, tenant.Scope, id.Verification, id.Decision, int) ([]Decision, error)
+}

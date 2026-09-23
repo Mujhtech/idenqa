@@ -24,6 +24,10 @@ type DecisionReader interface {
 	Export(context.Context, access.Context, id.Decision) (policy.DecisionBundle, policy.ReproductionReport, error)
 }
 
+type decisionHistoryReader interface {
+	List(context.Context, access.Context, id.Verification, id.Decision, int) ([]policy.ReproductionReport, error)
+}
+
 // DecisionRoutes adapts safe decision reads and portable export to HTTP.
 type DecisionRoutes struct {
 	access *AccessMiddleware
@@ -46,18 +50,72 @@ func NewDecisionRoutes(
 
 // Register adds exact, latest, and byte-canonical export endpoints.
 func (routes *DecisionRoutes) Register(router chi.Router) {
-	router.With(
-		routes.access.Authenticate,
-		routes.access.Require(access.PermissionDecisionsRead),
-	).Get("/decisions/{decisionID}", routes.find)
-	router.With(
-		routes.access.Authenticate,
-		routes.access.Require(access.PermissionDecisionsRead),
-	).Get("/verifications/{verificationID}/decision", routes.findLatest)
-	router.With(
-		routes.access.Authenticate,
-		routes.access.Require(access.PermissionDecisionsExport),
-	).Get("/decisions/{decisionID}/bundle", routes.export)
+	router.With(routes.access.Authorize(access.PermissionDecisionsRead)).Get("/decisions/{decisionID}", routes.find)
+	router.With(routes.access.Authorize(access.PermissionDecisionsRead)).Get("/verifications/{verificationID}/decision", routes.findLatest)
+	router.With(routes.access.Authorize(access.PermissionDecisionsRead)).Get("/verifications/{verificationID}/decisions", routes.list)
+	router.With(routes.access.Authorize(access.PermissionDecisionsExport)).Get("/decisions/{decisionID}/bundle", routes.export)
+}
+
+func (routes *DecisionRoutes) list(writer http.ResponseWriter, request *http.Request) {
+	verificationID, err := id.ParseVerification(chi.URLParam(request, "verificationID"))
+	if err != nil {
+		routes.writeFailure(writer, request, policy.ErrDecisionNotFound)
+		return
+	}
+	query := request.URL.Query()
+	for key, values := range query {
+		if (key != "before" && key != "limit") || len(values) != 1 {
+			routes.writeFailure(writer, request, invalidRequest(errors.New("decision history query is invalid")))
+			return
+		}
+	}
+	limit := 25
+	if value := query.Get("limit"); value != "" {
+		parsed, parseErr := strconv.Atoi(value)
+		if parseErr != nil || parsed < 1 || parsed > 100 {
+			routes.writeFailure(writer, request, invalidRequest(errors.New("decision history limit must be from 1 to 100")))
+			return
+		}
+		limit = parsed
+	}
+	var before id.Decision
+	if value := query.Get("before"); value != "" {
+		before, err = id.ParseDecision(value)
+		if err != nil {
+			routes.writeFailure(writer, request, invalidRequest(errors.New("decision history cursor is invalid")))
+			return
+		}
+	}
+	authority, ok := AccessContext(request.Context())
+	if !ok {
+		writeAccessProblem(writer, request, routes.logger, access.ErrInvalidCredential, true)
+		return
+	}
+	history, ok := routes.reader.(decisionHistoryReader)
+	if !ok {
+		routes.writeFailure(writer, request, errors.New("decision history is unavailable"))
+		return
+	}
+	reports, err := history.List(request.Context(), authority, verificationID, before, limit)
+	if err != nil {
+		routes.writeFailure(writer, request, err)
+		return
+	}
+	data := make([]openapiv1.PolicyDecisionReport, 0, len(reports))
+	for _, report := range reports {
+		data = append(data, decisionReportResource(report))
+	}
+	response := struct {
+		Data       []openapiv1.PolicyDecisionReport `json:"data"`
+		NextBefore *string                          `json:"next_before,omitempty"`
+	}{Data: data}
+	if len(reports) == limit {
+		value := reports[len(reports)-1].DecisionID
+		response.NextBefore = &value
+	}
+	if err := respond.JSON(writer, request, http.StatusOK, response); err != nil {
+		routes.logger.ErrorContext(request.Context(), "write decision history response")
+	}
 }
 
 func (routes *DecisionRoutes) find(writer http.ResponseWriter, request *http.Request) {

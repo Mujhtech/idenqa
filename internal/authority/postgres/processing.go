@@ -96,7 +96,7 @@ func validateProcessingWithin(ctx context.Context, transaction platformpostgres.
 		session.AuthorityID == nil || session.SubjectID == nil || session.NoticeID == nil ||
 		!session.ExpiresAt.Valid || (!reconsideration && !observedAt.Before(session.ExpiresAt.Time)) ||
 		!session.CaptureCompletedAt.Valid || session.CaptureCompletedAt.Time.After(occurredAt) {
-		return authority.ErrProcessingNotPermitted
+		return fmt.Errorf("validate processing lifecycle and time: %w", authority.ErrProcessingNotPermitted)
 	}
 	row, err := queries.FindProcessingAuthority(ctx, sqlgen.FindProcessingAuthorityParams{
 		TenantID: scope.ID().String(), ID: *session.AuthorityID,
@@ -191,7 +191,7 @@ ORDER BY id`, scope.ID().String(), verificationID.String(), response.Record().Ca
 		}
 		if authorityID != declaration.Record().ID.String() || (responseID != response.Record().ID.String() && !recovered) ||
 			subjectID != declaration.Record().SubjectID.String() || !acceptedAt.Valid || acceptedAt.Time.After(occurredAt) {
-			return authority.ErrProcessingNotPermitted
+			return fmt.Errorf("validate accepted evidence binding and time: %w", authority.ErrProcessingNotPermitted)
 		}
 		request := authority.GrantRequest{
 			TenantID: scope.ID(), VerificationID: verificationID, SubjectID: declaration.Record().SubjectID,

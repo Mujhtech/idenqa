@@ -140,3 +140,31 @@ func (s *FollowupService) Intake(ctx context.Context, auth access.Context, decis
 	}
 	return repository.OpenCorrection(ctx, auth.TenantScope(), decisionID, Actor{auth.Principal().KeyID().String()}, retry)
 }
+
+// Reconsider opens the existing independent correction workflow for one exact verification decision.
+func (s *FollowupService) Reconsider(ctx context.Context, auth access.Context, verificationID id.Verification, decisionID id.Decision, key string) (FollowupResult, error) {
+	if err := auth.Require(access.PermissionAppealsWrite); err != nil {
+		return FollowupResult{}, err
+	}
+	if verificationID.IsZero() || decisionID.IsZero() {
+		return FollowupResult{}, ErrInvalid
+	}
+	body, err := json.Marshal(struct {
+		VerificationID string `json:"verification_id"`
+		DecisionID     string `json:"decision_id"`
+	}{verificationID.String(), decisionID.String()})
+	if err != nil {
+		return FollowupResult{}, err
+	}
+	retry, err := idempotency.NewRequest(auth.TenantScope().ID(), auth.Principal().KeyID(), "verifications.reconsider", key, body, s.now().UTC().Truncate(time.Microsecond), 24*time.Hour)
+	if err != nil {
+		return FollowupResult{}, err
+	}
+	repository, ok := s.repository.(interface {
+		OpenReconsideration(context.Context, tenant.Scope, id.Verification, id.Decision, Actor, idempotency.Request) (FollowupResult, error)
+	})
+	if !ok {
+		return FollowupResult{}, ErrForbidden
+	}
+	return repository.OpenReconsideration(ctx, auth.TenantScope(), verificationID, decisionID, Actor{auth.Principal().KeyID().String()}, retry)
+}

@@ -18,8 +18,20 @@ import (
 
 // OpenCorrection opens one versioned case per eligible challenged decision.
 func (s *FollowupStore) OpenCorrection(ctx context.Context, scope tenant.Scope, decisionID id.Decision, actor review.Actor, retry idempotency.Request) (review.FollowupResult, error) {
+	return s.openCorrection(ctx, scope, id.Verification{}, decisionID, actor, retry, "reviews.correction.intake")
+}
+
+// OpenReconsideration binds the challenged decision to the verification in the public route.
+func (s *FollowupStore) OpenReconsideration(ctx context.Context, scope tenant.Scope, verificationID id.Verification, decisionID id.Decision, actor review.Actor, retry idempotency.Request) (review.FollowupResult, error) {
+	if verificationID.IsZero() {
+		return review.FollowupResult{}, review.ErrInvalid
+	}
+	return s.openCorrection(ctx, scope, verificationID, decisionID, actor, retry, "verifications.reconsider")
+}
+
+func (s *FollowupStore) openCorrection(ctx context.Context, scope tenant.Scope, verificationID id.Verification, decisionID id.Decision, actor review.Actor, retry idempotency.Request, operation string) (review.FollowupResult, error) {
 	var result review.FollowupResult
-	if decisionID.IsZero() || retry.Operation() != "reviews.correction.intake" || retry.TenantID() != scope.ID() || retry.Principal().String() != actor.ID {
+	if decisionID.IsZero() || retry.Operation() != operation || retry.TenantID() != scope.ID() || retry.Principal().String() != actor.ID {
 		return result, review.ErrInvalid
 	}
 	err := s.pool.WithinTransaction(ctx, pg.TransactionOptions{Isolation: pg.IsolationSerializable}, func(ctx context.Context, tx pg.Transaction) error {
@@ -45,6 +57,9 @@ func (s *FollowupStore) OpenCorrection(ctx context.Context, scope tenant.Scope, 
 			if err != nil {
 				return err
 			}
+			if !verificationID.IsZero() && value.VerificationID != verificationID {
+				return review.ErrInvalid
+			}
 			result = review.FollowupResult{CaseID: caseValue, Version: value.Version}
 		} else {
 			if !errors.Is(err, pgx.ErrNoRows) {
@@ -53,6 +68,9 @@ func (s *FollowupStore) OpenCorrection(ctx context.Context, scope tenant.Scope, 
 			decision, err := s.policies.FindWithin(ctx, scope, tx, decisionID)
 			if err != nil {
 				return err
+			}
+			if !verificationID.IsZero() && decision.Snapshot().VerificationID() != verificationID {
+				return review.ErrInvalid
 			}
 			settings, err := findPolicySettings(ctx, tx, scope, decision.Snapshot())
 			if err != nil {

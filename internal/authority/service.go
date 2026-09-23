@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/Mujhtech/idenqa/internal/access"
@@ -18,9 +19,10 @@ import (
 )
 
 const (
-	operationCreateNotice = "notices.create"
-	operationDeclare      = "authorities.declare"
-	operationRespond      = "authorities.respond"
+	operationCreateNotice  = "notices.create"
+	operationDeclare       = "authorities.declare"
+	operationRespond       = "authorities.respond"
+	operationRevokeConsent = "consents.revoke"
 )
 
 // NoticeMutation is one atomic immutable-notice creation command.
@@ -80,6 +82,22 @@ type ProcessingRepository interface {
 type ResponseRepository interface {
 	AppendResponse(context.Context, tenant.Scope, ResponseMutation) (Response, error)
 	CaptureSnapshot(context.Context, tenant.Scope, id.Verification) (Snapshot, error)
+}
+
+// ConsentRepository is the optional tenant consent-administration boundary.
+type ConsentRepository interface {
+	FindResponse(context.Context, tenant.Scope, id.Acknowledgement) (Response, error)
+	RevokeConsent(context.Context, tenant.Scope, ConsentRevocationMutation) (Response, error)
+}
+
+// ConsentRevocationMutation appends one refusal without rewriting the original receipt.
+type ConsentRevocationMutation struct {
+	Original    id.Acknowledgement
+	Response    Response
+	Actor       id.APIKey
+	EventID     id.Event
+	Reason      string
+	Idempotency idempotency.Request
 }
 
 // SessionFinder retrieves immutable verification requirements.
@@ -501,6 +519,59 @@ func (service *Service) Respond(
 	return service.responses.AppendResponse(ctx, captureContext.TenantScope(), ResponseMutation{
 		Response: response, EventID: eventID, Idempotency: request,
 	})
+}
+
+// FindConsent returns one immutable consent receipt to an authorised tenant caller.
+func (service *Service) FindConsent(ctx context.Context, auth access.Context, identifier id.Acknowledgement) (Response, error) {
+	if err := auth.Require(access.PermissionConsentsRead); err != nil {
+		return Response{}, err
+	}
+	repository, ok := service.responses.(ConsentRepository)
+	if !ok {
+		return Response{}, ErrProcessingNotPermitted
+	}
+	response, err := repository.FindResponse(ctx, auth.TenantScope(), identifier)
+	if err != nil {
+		return Response{}, err
+	}
+	return response, nil
+}
+
+// RevokeConsent appends a refusal receipt; the original consent remains immutable.
+func (service *Service) RevokeConsent(ctx context.Context, auth access.Context, identifier id.Acknowledgement, key, reason string) (Response, error) {
+	if err := auth.Require(access.PermissionConsentsWrite); err != nil {
+		return Response{}, err
+	}
+	repository, ok := service.responses.(ConsentRepository)
+	if !ok || reason == "" || len(reason) > 500 || strings.TrimSpace(reason) != reason {
+		return Response{}, ErrProcessingNotPermitted
+	}
+	original, err := repository.FindResponse(ctx, auth.TenantScope(), identifier)
+	if err != nil || original.Record().Action != ResponseConsent {
+		return Response{}, ErrNotFound
+	}
+	now := service.clock.Now().UTC().Truncate(time.Second)
+	responseID, err := service.identifiers.NewAcknowledgement()
+	if err != nil {
+		return Response{}, fmt.Errorf("generate consent revocation id: %w", err)
+	}
+	eventID, err := service.identifiers.NewEvent()
+	if err != nil {
+		return Response{}, fmt.Errorf("generate consent revocation event id: %w", err)
+	}
+	record := original.Record()
+	revocation, err := NewResponse(ResponseRecord{ID: responseID, TenantID: record.TenantID, AuthorityID: record.AuthorityID, NoticeID: record.NoticeID, SubjectID: record.SubjectID, VerificationID: record.VerificationID, CaptureTokenID: record.CaptureTokenID, Action: ResponseRefuse, Locale: record.Locale, RenderedExperienceVersion: record.RenderedExperienceVersion, RecordedAt: now})
+	if err != nil {
+		return Response{}, err
+	}
+	retry, err := service.idempotencyRequest(auth, operationRevokeConsent, key, struct {
+		ConsentID string `json:"consent_id"`
+		Reason    string `json:"reason"`
+	}{identifier.String(), reason}, now)
+	if err != nil {
+		return Response{}, err
+	}
+	return repository.RevokeConsent(ctx, auth.TenantScope(), ConsentRevocationMutation{Original: identifier, Response: revocation, Actor: auth.Principal().KeyID(), EventID: eventID, Reason: reason, Idempotency: retry})
 }
 
 func (service *Service) idempotencyRequest(

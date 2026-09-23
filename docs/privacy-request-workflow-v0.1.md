@@ -133,6 +133,13 @@ Subject-safe routes:
 | `POST /capture/privacy-requests` | Outcome credential | `202` closed projection |
 | `GET /capture/privacy-requests` | Outcome credential | Closed projection page |
 
+The public TypeScript `client.privacy` facade and typed Go client cover request
+creation/inspection/decisions/withdrawal/execution, restriction inspection/lifting,
+disclosures and processor inventory, plus deletion and retention reads. See
+[public SDK resources](public-sdk-resources-v0.1.md) for exact methods, retry and
+expected-version semantics, and the passing synthetic integration evidence.
+This does not close the production execution gates in sections 10 and 11.
+
 ## 8. CLI surface
 
 ```
@@ -189,5 +196,6 @@ Additional gated behaviour:
 - TBD: disclosure reference format beyond the bounded digest currently used.
 - TBD: scheduled expiry ownership (worker task versus operator command) and
   batching limits across tenants.
-- TBD: provider-side deletion, model-cache deletion, and external-delivery
-  retention contracts referenced in section 10.
+- TBD: provider-side deletion, external model-workload cache teardown, and
+  external-delivery retention contracts referenced in section 10. Model-contract
+  v1.1 forbids declared persistence or non-zero retention of derived model data.

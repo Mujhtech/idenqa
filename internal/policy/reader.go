@@ -68,6 +68,43 @@ func (reader *Reader) FindLatest(
 	return reproduceReport(decision)
 }
 
+// List returns a bounded newest-first page from one verification's immutable
+// decision lineage. The before decision is an opaque tenant-scoped cursor.
+func (reader *Reader) List(
+	ctx context.Context,
+	authority access.Context,
+	verificationID id.Verification,
+	before id.Decision,
+	limit int,
+) ([]ReproductionReport, error) {
+	if err := reader.ready(); err != nil {
+		return nil, err
+	}
+	if err := authority.Require(access.PermissionDecisionsRead); err != nil {
+		return nil, err
+	}
+	if verificationID.IsZero() || limit < 1 || limit > 100 {
+		return nil, ErrDecisionNotFound
+	}
+	history, ok := reader.repository.(HistoryRepository)
+	if !ok {
+		return nil, errors.New("policy: decision history is unavailable")
+	}
+	decisions, err := history.List(ctx, authority.TenantScope(), verificationID, before, limit)
+	if err != nil {
+		return nil, fmt.Errorf("list policy decisions: %w", err)
+	}
+	reports := make([]ReproductionReport, 0, len(decisions))
+	for _, decision := range decisions {
+		report, reportErr := reproduceReport(decision)
+		if reportErr != nil {
+			return nil, reportErr
+		}
+		reports = append(reports, report)
+	}
+	return reports, nil
+}
+
 // Export returns exact portable bytes only under the separate export permission.
 func (reader *Reader) Export(
 	ctx context.Context,

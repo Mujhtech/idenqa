@@ -316,6 +316,47 @@ func (store *Store) FindLatest(
 	return decision, err
 }
 
+// List restores a bounded newest-first page of one verification's immutable
+// decision lineage.
+func (store *Store) List(
+	ctx context.Context,
+	scope tenant.Scope,
+	verificationID id.Verification,
+	before id.Decision,
+	limit int,
+) ([]policy.Decision, error) {
+	if scope.ID().IsZero() || verificationID.IsZero() || limit < 1 || limit > 100 {
+		return nil, policy.ErrDecisionNotFound
+	}
+	result := make([]policy.Decision, 0, limit)
+	err := store.read(ctx, scope, func(ctx context.Context, queries *sqlgen.Queries) error {
+		// #nosec G115 -- limit is rejected by the application reader unless it is in the closed 1..100 range.
+		rows, err := queries.ListPolicyDecisionBundles(ctx, sqlgen.ListPolicyDecisionBundlesParams{
+			TenantID: scope.ID().String(), VerificationID: verificationID.String(),
+			BeforeID: before.String(), PageLimit: int32(limit),
+		})
+		if err != nil {
+			return fmt.Errorf("list policy decisions: %w", err)
+		}
+		for _, row := range rows {
+			decision, restoreErr := restoreDecision(decisionRecord{
+				ID: row.ID, TenantID: row.TenantID, VerificationID: row.VerificationID,
+				SnapshotDigest: row.SnapshotDigest, EvaluationDigest: row.EvaluationDigest,
+				DecisionDigest: row.DecisionDigest, Selected: row.Selected, Outcome: row.Outcome,
+				Actor: row.Actor, SupersedesID: row.SupersedesID, DecidedAt: row.DecidedAt,
+				Canonical: row.Canonical, SnapshotCanonical: row.SnapshotCanonical,
+				EvaluationCanonical: row.EvaluationCanonical,
+			})
+			if restoreErr != nil {
+				return restoreErr
+			}
+			result = append(result, decision)
+		}
+		return nil
+	})
+	return result, err
+}
+
 func persistSnapshot(ctx context.Context, queries *sqlgen.Queries, snapshot policy.Snapshot) error {
 	reference, evaluator := snapshot.Policy(), snapshot.Evaluator()
 	rows, err := queries.InsertPolicySnapshot(ctx, sqlgen.InsertPolicySnapshotParams{

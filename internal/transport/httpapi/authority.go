@@ -10,7 +10,6 @@ import (
 	"github.com/Mujhtech/idenqa/internal/authority"
 	openapiv1 "github.com/Mujhtech/idenqa/internal/gen/openapi/v1"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
-	"github.com/Mujhtech/idenqa/internal/transport/httpapi/respond"
 	"github.com/Mujhtech/idenqa/internal/verification"
 	"github.com/go-chi/chi/v5"
 )
@@ -26,12 +25,18 @@ type ProcessingAuthorityService interface {
 	Respond(context.Context, verification.CaptureContext, string, authority.ResponseInput) (authority.Response, error)
 }
 
+type consentAdministrationService interface {
+	FindConsent(context.Context, access.Context, id.Acknowledgement) (authority.Response, error)
+	RevokeConsent(context.Context, access.Context, id.Acknowledgement, string, string) (authority.Response, error)
+}
+
 // AuthorityRoutes adapts notice and processing-authority use cases to HTTP.
 type AuthorityRoutes struct {
-	access  *AccessMiddleware
-	capture *CaptureAccessMiddleware
-	service ProcessingAuthorityService
-	logger  *slog.Logger
+	handlerBase
+	access   *AccessMiddleware
+	capture  *CaptureAccessMiddleware
+	service  ProcessingAuthorityService
+	consents consentAdministrationService
 }
 
 // NewAuthorityRoutes constructs tenant and capture authority routes.
@@ -45,28 +50,83 @@ func NewAuthorityRoutes(
 		return nil, errors.New("authority route dependencies are required")
 	}
 	return &AuthorityRoutes{
-		access: accessMiddleware, capture: captureMiddleware, service: service, logger: logger,
+		access: accessMiddleware, capture: captureMiddleware, service: service, handlerBase: newHandlerBase(logger, "authority"),
+		consents: func() consentAdministrationService { value, _ := service.(consentAdministrationService); return value }(),
 	}, nil
 }
 
 // Register adds tenant declaration and subject-facing capture routes.
 func (routes *AuthorityRoutes) Register(router chi.Router) {
-	router.With(routes.access.Authenticate, routes.access.Require(access.PermissionNoticesWrite)).
+	router.With(routes.access.Authorize(access.PermissionNoticesWrite)).
 		Post("/notices", routes.createNotice)
-	router.With(routes.access.Authenticate, routes.access.Require(access.PermissionNoticesRead)).
+	router.With(routes.access.Authorize(access.PermissionNoticesRead)).
 		Get("/notices/{noticeID}", routes.findNotice)
-	router.With(routes.access.Authenticate, routes.access.Require(access.PermissionAuthoritiesWrite)).
+	router.With(routes.access.Authorize(access.PermissionAuthoritiesWrite)).
 		Post("/verifications/{verificationID}/authority", routes.declare)
-	router.With(routes.access.Authenticate, routes.access.Require(access.PermissionAuthoritiesRead)).
+	router.With(routes.access.Authorize(access.PermissionAuthoritiesRead)).
 		Get("/verifications/{verificationID}/authority", routes.find)
-	router.With(routes.access.Authenticate, routes.access.Require(access.PermissionAuthoritiesWrite)).
+	router.With(routes.access.Authorize(access.PermissionAuthoritiesWrite)).
 		Post("/verifications/{verificationID}/authority/restrict", routes.transition(authority.StateRestricted))
-	router.With(routes.access.Authenticate, routes.access.Require(access.PermissionAuthoritiesWrite)).
+	router.With(routes.access.Authorize(access.PermissionAuthoritiesWrite)).
 		Post("/verifications/{verificationID}/authority/withdraw", routes.transition(authority.StateWithdrawn))
-	router.With(routes.access.Authenticate, routes.access.Require(access.PermissionAuthoritiesWrite)).
+	router.With(routes.access.Authorize(access.PermissionAuthoritiesWrite)).
 		Post("/verifications/{verificationID}/authority/supersede", routes.transition(authority.StateSuperseded))
 	router.With(routes.capture.Authenticate).Get("/capture/authority", routes.captureSnapshot)
 	router.With(routes.capture.Authenticate).Post("/capture/authority/responses", routes.respond)
+	router.With(routes.capture.Authenticate).Post("/consent-receipts", routes.respond)
+	if routes.consents != nil {
+		router.With(routes.access.Authorize(access.PermissionConsentsRead)).Get("/consent-receipts/{consentID}", routes.findConsent)
+		router.With(routes.access.Authorize(access.PermissionConsentsWrite)).Post("/consent-receipts/{consentID}/revoke", routes.revokeConsent)
+	}
+}
+
+func (routes *AuthorityRoutes) findConsent(writer http.ResponseWriter, request *http.Request) {
+	identifier, err := id.ParseAcknowledgement(chi.URLParam(request, "consentID"))
+	if err != nil {
+		routes.problem(writer, request, authority.ErrNotFound)
+		return
+	}
+	auth, ok := routes.accessContext(writer, request)
+	if !ok {
+		return
+	}
+	receipt, err := routes.consents.FindConsent(request.Context(), auth, identifier)
+	if err != nil {
+		routes.problem(writer, request, err)
+		return
+	}
+	routes.writeJSON(writer, request, http.StatusOK, subjectResponse(receipt))
+}
+
+func (routes *AuthorityRoutes) revokeConsent(writer http.ResponseWriter, request *http.Request) {
+	identifier, err := id.ParseAcknowledgement(chi.URLParam(request, "consentID"))
+	if err != nil {
+		routes.problem(writer, request, authority.ErrNotFound)
+		return
+	}
+	key, err := parseIdempotencyKey(request.Header.Values("Idempotency-Key"))
+	if err != nil {
+		routes.problem(writer, request, err)
+		return
+	}
+	body, err := decodeJSONBody[struct {
+		Reason string `json:"reason"`
+	}](request)
+	if err != nil {
+		routes.problem(writer, request, invalidRequest(err))
+		return
+	}
+	auth, ok := routes.accessContext(writer, request)
+	if !ok {
+		return
+	}
+	receipt, err := routes.consents.RevokeConsent(request.Context(), auth, identifier, key, body.Reason)
+	if err != nil {
+		routes.problem(writer, request, err)
+		return
+	}
+	writer.Header().Set("Location", "/v1/consent-receipts/"+receipt.Record().ID.String())
+	routes.writeJSON(writer, request, http.StatusCreated, subjectResponse(receipt))
 }
 
 func (routes *AuthorityRoutes) createNotice(writer http.ResponseWriter, request *http.Request) {
@@ -314,17 +374,5 @@ func subjectResponse(receipt authority.Response) openapiv1.SubjectResponse {
 		SubjectID: record.SubjectID.String(), VerificationID: record.VerificationID.String(),
 		Action: openapiv1.SubjectResponseAction(record.Action), Locale: record.Locale,
 		RenderedExperienceVersion: rendered, RecordedAt: record.RecordedAt,
-	}
-}
-
-func (routes *AuthorityRoutes) problem(writer http.ResponseWriter, request *http.Request, err error) {
-	if writeErr := respond.WriteProblem(writer, request, err, requestIDString(request.Context())); writeErr != nil {
-		routes.logger.ErrorContext(request.Context(), "write authority problem response")
-	}
-}
-
-func (routes *AuthorityRoutes) writeJSON(writer http.ResponseWriter, request *http.Request, status int, value any) {
-	if err := respond.JSON(writer, request, status, value); err != nil {
-		routes.logger.ErrorContext(request.Context(), "write authority response")
 	}
 }

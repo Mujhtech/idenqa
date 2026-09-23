@@ -21,15 +21,55 @@ func NewReviewFollowupRoutes(auth *AccessMiddleware, service *review.FollowupSer
 	if auth == nil || service == nil || logger == nil {
 		return nil, review.ErrInvalid
 	}
-	return &ReviewFollowupRoutes{&ReviewRoutes{access: auth, logger: logger}, service}, nil
+	return &ReviewFollowupRoutes{
+		base:    &ReviewRoutes{handlerBase: newHandlerBase(logger, "review"), access: auth},
+		service: service,
+	}, nil
 }
 
 // Register mounts authenticated review endpoints.
 func (r *ReviewFollowupRoutes) Register(router chi.Router) {
-	router.With(r.base.access.Authenticate, r.base.access.Require(access.PermissionAppealsWrite)).Post("/decisions/{decisionID}/review-cases", r.intake)
-	mw := []func(http.Handler) http.Handler{r.base.access.Authenticate, r.base.access.Require(access.PermissionReviewsWrite)}
+	router.With(r.base.access.Authorize(access.PermissionAppealsWrite)).Post("/decisions/{decisionID}/review-cases", r.intake)
+	router.With(r.base.access.Authorize(access.PermissionAppealsWrite)).Post("/verifications/{verificationID}/reconsiderations", r.reconsider)
+	mw := []func(http.Handler) http.Handler{r.base.access.Authorize(access.PermissionReviewsWrite)}
 	router.With(mw...).Post("/review-cases/{caseID}/arbitrations", func(w http.ResponseWriter, req *http.Request) { r.execute(w, req, false) })
 	router.With(mw...).Post("/review-cases/{caseID}/corrections/evaluate", func(w http.ResponseWriter, req *http.Request) { r.execute(w, req, true) })
+}
+
+func (r *ReviewFollowupRoutes) reconsider(w http.ResponseWriter, req *http.Request) {
+	auth, _, ok := r.base.authority(req)
+	if !ok {
+		r.base.problem(w, req, access.ErrInvalidCredential)
+		return
+	}
+	verificationID, err := id.ParseVerification(chi.URLParam(req, "verificationID"))
+	if err != nil {
+		r.base.problem(w, req, review.ErrInvalid)
+		return
+	}
+	body, err := decodeJSONBody[struct {
+		DecisionID string `json:"decision_id"`
+	}](req)
+	if err != nil {
+		r.base.problem(w, req, invalidRequest(err))
+		return
+	}
+	decisionID, err := id.ParseDecision(body.DecisionID)
+	if err != nil {
+		r.base.problem(w, req, review.ErrInvalid)
+		return
+	}
+	key, err := parseIdempotencyKey(req.Header.Values("Idempotency-Key"))
+	if err != nil {
+		r.base.problem(w, req, err)
+		return
+	}
+	result, err := r.service.Reconsider(req.Context(), auth, verificationID, decisionID, key)
+	if err != nil {
+		r.base.problem(w, req, err)
+		return
+	}
+	r.base.write(w, req, http.StatusCreated, result)
 }
 func (r *ReviewFollowupRoutes) execute(w http.ResponseWriter, req *http.Request, correction bool) {
 	auth, _, ok := r.base.authority(req)

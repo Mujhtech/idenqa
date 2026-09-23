@@ -42,6 +42,7 @@ type UploadRequest struct {
 	ExpectedDigest    string
 	MediaType         string
 	Region            string
+	Sequence          *evidence.TemporalFrame
 }
 
 // UploadService resolves a capture request against immutable requirements,
@@ -106,6 +107,13 @@ func (service *UploadService) Issue(
 	if err != nil {
 		return evidence.Upload{}, err
 	}
+	if !slices.Contains(verification.EffectiveArtefacts(requirement, session.DocumentSelections()), input.Artefact) {
+		return evidence.Upload{}, ErrProcessingNotPermitted
+	}
+	if input.Sequence != nil && (input.AcquisitionMethod != evidence.MethodLiveCamera ||
+		input.Sequence.CapturedAt.Before(session.CreatedAt()) || input.Sequence.CapturedAt.After(now)) {
+		return evidence.Upload{}, ErrProcessingNotPermitted
+	}
 	mediaTypes, maximumBytes, err := service.resolveUploadConstraints(requirement)
 	if err != nil {
 		return evidence.Upload{}, err
@@ -141,9 +149,10 @@ func (service *UploadService) Issue(
 		ExpectedDigest    string                         `json:"expected_digest"`
 		MediaType         string                         `json:"media_type"`
 		Region            string                         `json:"region"`
+		Sequence          *evidence.TemporalFrame        `json:"sequence,omitempty"`
 	}{
 		input.RequirementKey, input.Artefact, input.AcquisitionMethod, input.FallbackCondition,
-		input.ExpectedBytes, input.ExpectedDigest, input.MediaType, input.Region,
+		input.ExpectedBytes, input.ExpectedDigest, input.MediaType, input.Region, input.Sequence,
 	})
 	if err != nil {
 		return evidence.Upload{}, fmt.Errorf("serialise upload issue command: %w", err)
@@ -177,6 +186,7 @@ func (service *UploadService) Issue(
 		MediaType: input.MediaType, Region: input.Region,
 		RetentionClass: record.RetentionReference, CreatedAt: now,
 		SessionExpiresAt: session.ExpiresAt(),
+		Sequence:         input.Sequence,
 	}, registry, service.policy)
 	if err != nil {
 		return evidence.Upload{}, err
