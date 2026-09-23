@@ -93,6 +93,36 @@ WHERE decisions.tenant_id = sqlc.arg(tenant_id)
   )
 LIMIT 1;
 
+-- name: ListPolicyDecisionBundles :many
+SELECT
+    decisions.*,
+    snapshots.canonical AS snapshot_canonical,
+    evaluations.canonical AS evaluation_canonical
+FROM idenqa.verification_decisions AS decisions
+JOIN idenqa.policy_snapshots AS snapshots
+  ON snapshots.tenant_id = decisions.tenant_id
+ AND snapshots.verification_id = decisions.verification_id
+ AND snapshots.snapshot_digest = decisions.snapshot_digest
+JOIN idenqa.policy_evaluations AS evaluations
+  ON evaluations.tenant_id = decisions.tenant_id
+ AND evaluations.verification_id = decisions.verification_id
+ AND evaluations.snapshot_digest = decisions.snapshot_digest
+ AND evaluations.evaluation_digest = decisions.evaluation_digest
+WHERE decisions.tenant_id = sqlc.arg(tenant_id)
+  AND decisions.verification_id = sqlc.arg(verification_id)
+  AND (
+      sqlc.arg(before_id)::text = '' OR
+      (decisions.decided_at, decisions.id) < (
+          SELECT cursor.decided_at, cursor.id
+          FROM idenqa.verification_decisions AS cursor
+          WHERE cursor.tenant_id = sqlc.arg(tenant_id)
+            AND cursor.verification_id = sqlc.arg(verification_id)
+            AND cursor.id = sqlc.arg(before_id)
+      )
+  )
+ORDER BY decisions.decided_at DESC, decisions.id DESC
+LIMIT sqlc.arg(page_limit);
+
 -- name: InsertPolicy :execrows
 INSERT INTO idenqa.policies (
     tenant_id, id, activation_version, active_revision, created_at, updated_at

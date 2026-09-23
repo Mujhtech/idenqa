@@ -123,7 +123,7 @@ func (store *CommandStore) evaluateCommand(
 	if err != nil {
 		return "", fmt.Errorf("load realtime command authority: %w", err)
 	}
-	profile, err := verification.ParseProfileFromCatalog(requirements, store.catalog)
+	profile, err := verification.ParseProfileFromCatalog(requirements.Requirements, store.catalog)
 	if err != nil {
 		return "", fmt.Errorf("parse realtime command requirements: %w", err)
 	}

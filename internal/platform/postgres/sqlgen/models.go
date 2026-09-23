@@ -156,6 +156,16 @@ type IdenqaBreakGlassUse struct {
 	UsedAt     pgtype.Timestamptz
 }
 
+type IdenqaCaptureDocumentSelectionAudit struct {
+	TenantID         string
+	VerificationID   string
+	AggregateVersion int64
+	CaptureTokenID   string
+	RequirementKey   string
+	DocumentType     string
+	OccurredAt       pgtype.Timestamptz
+}
+
 type IdenqaCaptureProfile struct {
 	ID                string
 	TenantID          string
@@ -432,6 +442,20 @@ type IdenqaEvidenceProcessingGrantAudit struct {
 	OccurredAt       pgtype.Timestamptz
 }
 
+type IdenqaEvidenceTemporalFrame struct {
+	TenantID       string
+	VerificationID string
+	UploadID       string
+	EvidenceID     string
+	SequenceDigest string
+	FrameIndex     int32
+	FrameCount     int32
+	ChallengeID    string
+	CapturedAt     pgtype.Timestamptz
+	PreviousDigest *string
+	ContentDigest  string
+}
+
 type IdenqaEvidenceUploadIntent struct {
 	ID                         string
 	TenantID                   string
@@ -610,6 +634,8 @@ type IdenqaGenerativeModelRegistry struct {
 	Digest    string
 	CreatedAt pgtype.Timestamptz
 	ActorID   string
+	// Provider-neutral route identifier. NULL marks a pre-binding record that cannot authorize generation.
+	LogicalModelID *string
 }
 
 type IdenqaHmacKey struct {
@@ -1234,17 +1260,75 @@ type IdenqaProposal struct {
 	PolicyID       *string
 }
 
+type IdenqaProposalGenerationActivation struct {
+	TenantID              string
+	Workflow              string
+	Revision              int64
+	State                 string
+	ModelRegistryID       string
+	ModelRegistryVersion  int64
+	PromptRegistryID      string
+	PromptRegistryVersion int64
+	LogicalModelID        string
+	UpstreamModelVersion  string
+	PromptVersion         string
+	Action                string
+	SourceRevision        *int64
+	UpdatedAt             pgtype.Timestamptz
+	ActorID               string
+	Reason                string
+}
+
+type IdenqaProposalGenerationActivationHistory struct {
+	TenantID              string
+	Workflow              string
+	Revision              int64
+	State                 string
+	ModelRegistryID       string
+	ModelRegistryVersion  int64
+	PromptRegistryID      string
+	PromptRegistryVersion int64
+	LogicalModelID        string
+	UpstreamModelVersion  string
+	PromptVersion         string
+	Action                string
+	SourceRevision        *int64
+	Reason                string
+	ActorID               string
+	OccurredAt            pgtype.Timestamptz
+}
+
+type IdenqaProposalGenerationUsage struct {
+	TenantID            string
+	ProposalID          string
+	ModelID             string
+	ModelVersion        string
+	PromptVersion       string
+	ProviderRequestID   string
+	InputTokens         int64
+	OutputTokens        int64
+	EstimatedCostMicros int64
+	RecordedAt          pgtype.Timestamptz
+	Outcome             string
+	UsageReported       bool
+	ErrorCode           string
+}
+
 type IdenqaProposalModeConfig struct {
-	TenantID         string
-	Workflow         string
-	Mode             string
-	AllowListVersion string
-	AllowedKinds     []byte
-	CostDailyLimit   int32
-	PromptID         *string
-	Version          int64
-	CreatedAt        pgtype.Timestamptz
-	UpdatedAt        pgtype.Timestamptz
+	TenantID              string
+	Workflow              string
+	Mode                  string
+	AllowListVersion      string
+	AllowedKinds          []byte
+	CostDailyLimit        int32
+	PromptID              *string
+	Version               int64
+	CreatedAt             pgtype.Timestamptz
+	UpdatedAt             pgtype.Timestamptz
+	ModelRegistryID       *string
+	ModelRegistryVersion  *int64
+	PromptRegistryVersion *int64
+	ActivationRevision    *int64
 }
 
 type IdenqaProviderAsyncOperation struct {
@@ -1695,15 +1779,19 @@ type IdenqaVerificationAttemptDiagnostic struct {
 }
 
 type IdenqaVerificationCheck struct {
-	ID             string
-	TenantID       string
-	VerificationID string
-	Name           string
-	State          string
-	Outcome        *string
-	Version        int64
-	CreatedAt      pgtype.Timestamptz
-	UpdatedAt      pgtype.Timestamptz
+	ID                    string
+	TenantID              string
+	VerificationID        string
+	Name                  string
+	State                 string
+	Outcome               *string
+	Version               int64
+	CreatedAt             pgtype.Timestamptz
+	UpdatedAt             pgtype.Timestamptz
+	RoutePriority         int32
+	RouteDependsOn        []string
+	RouteFallbackFor      *string
+	RouteCorrelationGroup *string
 }
 
 type IdenqaVerificationDecision struct {
@@ -1800,6 +1888,7 @@ type IdenqaVerificationSession struct {
 	ExpiryDiscoveredAt    pgtype.Timestamptz
 	FailureClass          *string
 	FailureCode           *string
+	DocumentSelections    []byte
 }
 
 type IdenqaVerificationSessionAudit struct {

@@ -252,6 +252,53 @@ func (q *Queries) InsertEvidenceKeyRewrapAudit(ctx context.Context, arg InsertEv
 	return err
 }
 
+const listEvidenceAssetAudit = `-- name: ListEvidenceAssetAudit :many
+SELECT aggregate_version, action, reason, occurred_at
+FROM idenqa.evidence_asset_audit
+WHERE tenant_id = $1
+  AND evidence_id = $2
+ORDER BY aggregate_version ASC
+LIMIT $3
+`
+
+type ListEvidenceAssetAuditParams struct {
+	TenantID   string
+	EvidenceID string
+	PageLimit  int32
+}
+
+type ListEvidenceAssetAuditRow struct {
+	AggregateVersion int64
+	Action           string
+	Reason           *string
+	OccurredAt       pgtype.Timestamptz
+}
+
+func (q *Queries) ListEvidenceAssetAudit(ctx context.Context, arg ListEvidenceAssetAuditParams) ([]ListEvidenceAssetAuditRow, error) {
+	rows, err := q.db.Query(ctx, listEvidenceAssetAudit, arg.TenantID, arg.EvidenceID, arg.PageLimit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListEvidenceAssetAuditRow
+	for rows.Next() {
+		var i ListEvidenceAssetAuditRow
+		if err := rows.Scan(
+			&i.AggregateVersion,
+			&i.Action,
+			&i.Reason,
+			&i.OccurredAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const lockEvidenceAssetForKeyRewrap = `-- name: LockEvidenceAssetForKeyRewrap :one
 SELECT id, tenant_id, subject_id, verification_id, requirement_key, evidence_type, artefact, acquisition_method, assurances, registry_schema_version, registry_revision, registry_digest, region, retention_class, content_revision, object_key, object_version, ciphertext_size, ciphertext_checksum, envelope_format_version, content_algorithm, key_purpose, key_provider, key_reference, key_version, key_algorithm, wrapped_key, context_schema_version, context_digest, plaintext_digest, media_type, integrity, state, version, created_at, updated_at, quarantine_reason, quarantined_at FROM idenqa.evidence_assets
 WHERE tenant_id = $1 AND id = $2 AND version = $3

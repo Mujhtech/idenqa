@@ -878,6 +878,101 @@ func (q *Queries) ListPolicyAuthoritativeObservations(ctx context.Context, arg L
 	return items, nil
 }
 
+const listPolicyDecisionBundles = `-- name: ListPolicyDecisionBundles :many
+SELECT
+    decisions.id, decisions.tenant_id, decisions.verification_id, decisions.snapshot_digest, decisions.evaluation_digest, decisions.decision_digest, decisions.selected, decisions.outcome, decisions.actor, decisions.supersedes_id, decisions.decided_at, decisions.canonical,
+    snapshots.canonical AS snapshot_canonical,
+    evaluations.canonical AS evaluation_canonical
+FROM idenqa.verification_decisions AS decisions
+JOIN idenqa.policy_snapshots AS snapshots
+  ON snapshots.tenant_id = decisions.tenant_id
+ AND snapshots.verification_id = decisions.verification_id
+ AND snapshots.snapshot_digest = decisions.snapshot_digest
+JOIN idenqa.policy_evaluations AS evaluations
+  ON evaluations.tenant_id = decisions.tenant_id
+ AND evaluations.verification_id = decisions.verification_id
+ AND evaluations.snapshot_digest = decisions.snapshot_digest
+ AND evaluations.evaluation_digest = decisions.evaluation_digest
+WHERE decisions.tenant_id = $1
+  AND decisions.verification_id = $2
+  AND (
+      $3::text = '' OR
+      (decisions.decided_at, decisions.id) < (
+          SELECT cursor.decided_at, cursor.id
+          FROM idenqa.verification_decisions AS cursor
+          WHERE cursor.tenant_id = $1
+            AND cursor.verification_id = $2
+            AND cursor.id = $3
+      )
+  )
+ORDER BY decisions.decided_at DESC, decisions.id DESC
+LIMIT $4
+`
+
+type ListPolicyDecisionBundlesParams struct {
+	TenantID       string
+	VerificationID string
+	BeforeID       string
+	PageLimit      int32
+}
+
+type ListPolicyDecisionBundlesRow struct {
+	ID                  string
+	TenantID            string
+	VerificationID      string
+	SnapshotDigest      string
+	EvaluationDigest    string
+	DecisionDigest      string
+	Selected            string
+	Outcome             string
+	Actor               string
+	SupersedesID        *string
+	DecidedAt           pgtype.Timestamptz
+	Canonical           string
+	SnapshotCanonical   string
+	EvaluationCanonical string
+}
+
+func (q *Queries) ListPolicyDecisionBundles(ctx context.Context, arg ListPolicyDecisionBundlesParams) ([]ListPolicyDecisionBundlesRow, error) {
+	rows, err := q.db.Query(ctx, listPolicyDecisionBundles,
+		arg.TenantID,
+		arg.VerificationID,
+		arg.BeforeID,
+		arg.PageLimit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListPolicyDecisionBundlesRow
+	for rows.Next() {
+		var i ListPolicyDecisionBundlesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.TenantID,
+			&i.VerificationID,
+			&i.SnapshotDigest,
+			&i.EvaluationDigest,
+			&i.DecisionDigest,
+			&i.Selected,
+			&i.Outcome,
+			&i.Actor,
+			&i.SupersedesID,
+			&i.DecidedAt,
+			&i.Canonical,
+			&i.SnapshotCanonical,
+			&i.EvaluationCanonical,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listPolicyRevisionMetadata = `-- name: ListPolicyRevisionMetadata :many
 SELECT
     policy_id, revision, schema_major, schema_minor, digest,

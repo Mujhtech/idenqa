@@ -21,6 +21,17 @@ SELECT *
 FROM idenqa.evidence_upload_intents
 WHERE tenant_id = $1 AND id = $2;
 
+-- name: CreateEvidenceTemporalFrame :exec
+INSERT INTO idenqa.evidence_temporal_frames (
+    tenant_id, verification_id, upload_id, evidence_id, sequence_digest,
+    frame_index, frame_count, challenge_id, captured_at, previous_digest,
+    content_digest
+) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11);
+
+-- name: FindEvidenceTemporalFrame :one
+SELECT * FROM idenqa.evidence_temporal_frames
+WHERE tenant_id=$1 AND upload_id=$2;
+
 -- name: ListAcceptedEvidenceUploadIntents :many
 SELECT evidence_upload_intents.*
 FROM idenqa.evidence_upload_intents
@@ -33,19 +44,52 @@ WHERE evidence_upload_intents.tenant_id = $1
   AND EXISTS(SELECT 1 FROM idenqa.capture_tokens token WHERE token.tenant_id=evidence_upload_intents.tenant_id AND token.id=$2 AND token.verification_id=$3 AND token.revoked_at IS NULL)
   AND evidence_upload_intents.verification_id = $3
   AND evidence_upload_intents.state = 'accepted'
+  AND (
+    NOT EXISTS (
+      SELECT 1 FROM idenqa.evidence_temporal_frames own_frame
+      WHERE own_frame.tenant_id=evidence_upload_intents.tenant_id
+        AND own_frame.upload_id=evidence_upload_intents.id
+    )
+    OR EXISTS (
+      SELECT 1
+      FROM idenqa.evidence_temporal_frames own_frame
+      WHERE own_frame.tenant_id=evidence_upload_intents.tenant_id
+        AND own_frame.upload_id=evidence_upload_intents.id
+        AND own_frame.frame_index=own_frame.frame_count-1
+        AND own_frame.frame_count=(
+          SELECT COUNT(*)
+          FROM idenqa.evidence_temporal_frames sequence_frame
+          JOIN idenqa.evidence_upload_intents sequence_upload
+            ON sequence_upload.tenant_id=sequence_frame.tenant_id
+           AND sequence_upload.id=sequence_frame.upload_id
+           AND sequence_upload.state='accepted'
+          WHERE sequence_frame.tenant_id=own_frame.tenant_id
+            AND sequence_frame.verification_id=own_frame.verification_id
+            AND sequence_frame.sequence_digest=own_frame.sequence_digest
+        )
+    )
+  )
 ORDER BY evidence_upload_intents.accepted_at, evidence_upload_intents.id
 LIMIT $4;
 
 -- name: LoadCaptureProgressPublication :one
 SELECT
     sessions.requirements,
+    sessions.document_selections,
     tokens.expires_at AS capture_token_expires_at,
     COALESCE(
         jsonb_agg(
             jsonb_build_object(
                 'requirement_key', uploads.requirement_key,
                 'artefact', uploads.artefact,
-                'acquisition_method', uploads.acquisition_method
+                'acquisition_method', uploads.acquisition_method,
+                'sequence_digest', frames.sequence_digest,
+                'frame_index', frames.frame_index,
+                'frame_count', frames.frame_count,
+                'challenge_id', frames.challenge_id,
+                'captured_at', frames.captured_at,
+                'previous_digest', frames.previous_digest,
+                'content_digest', frames.content_digest
             )
             ORDER BY uploads.accepted_at, uploads.id
         ) FILTER (WHERE uploads.state = 'accepted'),
@@ -62,11 +106,13 @@ LEFT JOIN idenqa.evidence_upload_intents AS uploads
  SELECT 1 FROM idenqa.capture_recovery_uploads recovery
  WHERE recovery.tenant_id=uploads.tenant_id AND recovery.new_token_id=tokens.id
  AND recovery.upload_id=uploads.id AND recovery.disposition='retained'))
+LEFT JOIN idenqa.evidence_temporal_frames AS frames
+  ON frames.tenant_id=uploads.tenant_id AND frames.upload_id=uploads.id
 WHERE sessions.tenant_id = sqlc.arg(tenant_id)
   AND sessions.id = sqlc.arg(verification_id)
   AND tokens.id = sqlc.arg(capture_token_id)
   AND tokens.revoked_at IS NULL
-GROUP BY sessions.requirements, tokens.expires_at;
+GROUP BY sessions.requirements, sessions.document_selections, tokens.expires_at;
 
 -- name: LockEvidenceUploadIntent :one
 SELECT *

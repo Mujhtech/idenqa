@@ -442,7 +442,7 @@ func (q *Queries) ListRealtimeEvents(ctx context.Context, arg ListRealtimeEvents
 }
 
 const loadRealtimeCommandAuthority = `-- name: LoadRealtimeCommandAuthority :one
-SELECT sessions.requirements
+SELECT sessions.requirements, sessions.document_selections
 FROM idenqa.websocket_connection_tickets AS tickets
 JOIN idenqa.capture_tokens AS tokens
   ON tokens.tenant_id = tickets.tenant_id
@@ -475,7 +475,12 @@ type LoadRealtimeCommandAuthorityParams struct {
 	ObservedAt     pgtype.Timestamptz
 }
 
-func (q *Queries) LoadRealtimeCommandAuthority(ctx context.Context, arg LoadRealtimeCommandAuthorityParams) ([]byte, error) {
+type LoadRealtimeCommandAuthorityRow struct {
+	Requirements       []byte
+	DocumentSelections []byte
+}
+
+func (q *Queries) LoadRealtimeCommandAuthority(ctx context.Context, arg LoadRealtimeCommandAuthorityParams) (LoadRealtimeCommandAuthorityRow, error) {
 	row := q.db.QueryRow(ctx, loadRealtimeCommandAuthority,
 		arg.TenantID,
 		arg.TicketID,
@@ -484,9 +489,9 @@ func (q *Queries) LoadRealtimeCommandAuthority(ctx context.Context, arg LoadReal
 		arg.ConnectionID,
 		arg.ObservedAt,
 	)
-	var requirements []byte
-	err := row.Scan(&requirements)
-	return requirements, err
+	var i LoadRealtimeCommandAuthorityRow
+	err := row.Scan(&i.Requirements, &i.DocumentSelections)
+	return i, err
 }
 
 const loadRealtimeReplayAuthority = `-- name: LoadRealtimeReplayAuthority :one

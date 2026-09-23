@@ -28,6 +28,7 @@ type Querier interface {
 	CreateEvidenceGrantRedemptionOutcome(ctx context.Context, arg CreateEvidenceGrantRedemptionOutcomeParams) (int64, error)
 	CreateEvidenceObjectReconciliation(ctx context.Context, arg CreateEvidenceObjectReconciliationParams) (int64, error)
 	CreateEvidenceProcessingGrant(ctx context.Context, arg CreateEvidenceProcessingGrantParams) error
+	CreateEvidenceTemporalFrame(ctx context.Context, arg CreateEvidenceTemporalFrameParams) error
 	CreateEvidenceUploadIntent(ctx context.Context, arg CreateEvidenceUploadIntentParams) error
 	CreateIdempotencyRecord(ctx context.Context, arg CreateIdempotencyRecordParams) (int64, error)
 	CreateNoticeVersion(ctx context.Context, arg CreateNoticeVersionParams) (IdenqaNoticeVersion, error)
@@ -58,6 +59,7 @@ type Querier interface {
 	FindEvidenceGrantRedemptionOutcome(ctx context.Context, arg FindEvidenceGrantRedemptionOutcomeParams) (IdenqaEvidenceGrantRedemptionOutcome, error)
 	FindEvidenceObjectReconciliation(ctx context.Context, arg FindEvidenceObjectReconciliationParams) (IdenqaEvidenceObjectReconciliation, error)
 	FindEvidenceProcessingGrant(ctx context.Context, arg FindEvidenceProcessingGrantParams) (IdenqaEvidenceProcessingGrant, error)
+	FindEvidenceTemporalFrame(ctx context.Context, arg FindEvidenceTemporalFrameParams) (IdenqaEvidenceTemporalFrame, error)
 	FindEvidenceUploadIntent(ctx context.Context, arg FindEvidenceUploadIntentParams) (IdenqaEvidenceUploadIntent, error)
 	FindIdempotencyRecord(ctx context.Context, arg FindIdempotencyRecordParams) (IdenqaIdempotencyRecord, error)
 	FindLatestCaptureRecoveryToken(ctx context.Context, arg FindLatestCaptureRecoveryTokenParams) (string, error)
@@ -113,18 +115,20 @@ type Querier interface {
 	ListAcceptedEvidenceUploadIntents(ctx context.Context, arg ListAcceptedEvidenceUploadIntentsParams) ([]IdenqaEvidenceUploadIntent, error)
 	ListCaptureProfilesAfter(ctx context.Context, arg ListCaptureProfilesAfterParams) ([]IdenqaCaptureProfile, error)
 	ListCaptureProfilesFirst(ctx context.Context, arg ListCaptureProfilesFirstParams) ([]IdenqaCaptureProfile, error)
+	ListEvidenceAssetAudit(ctx context.Context, arg ListEvidenceAssetAuditParams) ([]ListEvidenceAssetAuditRow, error)
 	ListPendingCheckProgressEvents(ctx context.Context, arg ListPendingCheckProgressEventsParams) ([]ListPendingCheckProgressEventsRow, error)
 	ListPolicyActivationMetadata(ctx context.Context, arg ListPolicyActivationMetadataParams) ([]ListPolicyActivationMetadataRow, error)
 	// One sentinel row above the in-memory bound makes overflow fail closed rather
 	// than silently truncating authoritative provenance.
 	ListPolicyAuthoritativeObservations(ctx context.Context, arg ListPolicyAuthoritativeObservationsParams) ([]ListPolicyAuthoritativeObservationsRow, error)
+	ListPolicyDecisionBundles(ctx context.Context, arg ListPolicyDecisionBundlesParams) ([]ListPolicyDecisionBundlesRow, error)
 	ListPolicyRevisionMetadata(ctx context.Context, arg ListPolicyRevisionMetadataParams) ([]ListPolicyRevisionMetadataRow, error)
 	ListRealtimeEvents(ctx context.Context, arg ListRealtimeEventsParams) ([]IdenqaRealtimeEvent, error)
 	ListVerificationAttemptDiagnostics(ctx context.Context, arg ListVerificationAttemptDiagnosticsParams) ([]IdenqaVerificationAttemptDiagnostic, error)
 	ListVerificationAttempts(ctx context.Context, arg ListVerificationAttemptsParams) ([]IdenqaVerificationAttempt, error)
 	ListVerificationObservations(ctx context.Context, arg ListVerificationObservationsParams) ([]IdenqaVerificationObservation, error)
 	LoadCaptureProgressPublication(ctx context.Context, arg LoadCaptureProgressPublicationParams) (LoadCaptureProgressPublicationRow, error)
-	LoadRealtimeCommandAuthority(ctx context.Context, arg LoadRealtimeCommandAuthorityParams) ([]byte, error)
+	LoadRealtimeCommandAuthority(ctx context.Context, arg LoadRealtimeCommandAuthorityParams) (LoadRealtimeCommandAuthorityRow, error)
 	LoadRealtimeReplayAuthority(ctx context.Context, arg LoadRealtimeReplayAuthorityParams) (LoadRealtimeReplayAuthorityRow, error)
 	LoadRealtimeSessionAuthority(ctx context.Context, arg LoadRealtimeSessionAuthorityParams) (LoadRealtimeSessionAuthorityRow, error)
 	LockActiveCaptureProfileRevision(ctx context.Context, arg LockActiveCaptureProfileRevisionParams) (LockActiveCaptureProfileRevisionRow, error)

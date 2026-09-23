@@ -43,6 +43,14 @@ INSERT INTO idenqa.evidence_asset_audit (
     tenant_id, evidence_id, aggregate_version, action, reason, occurred_at
 ) VALUES ($1, $2, $3, $4, $5, $6);
 
+-- name: ListEvidenceAssetAudit :many
+SELECT aggregate_version, action, reason, occurred_at
+FROM idenqa.evidence_asset_audit
+WHERE tenant_id = sqlc.arg(tenant_id)
+  AND evidence_id = sqlc.arg(evidence_id)
+ORDER BY aggregate_version ASC
+LIMIT sqlc.arg(page_limit);
+
 -- name: InsertEvidenceKeyRewrapAudit :exec
 INSERT INTO idenqa.evidence_key_rewrap_audit (
     tenant_id, evidence_id, aggregate_version,

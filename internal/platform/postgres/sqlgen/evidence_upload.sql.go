@@ -34,6 +34,45 @@ func (q *Queries) CompleteVerificationCapture(ctx context.Context, arg CompleteV
 	return result.RowsAffected(), nil
 }
 
+const createEvidenceTemporalFrame = `-- name: CreateEvidenceTemporalFrame :exec
+INSERT INTO idenqa.evidence_temporal_frames (
+    tenant_id, verification_id, upload_id, evidence_id, sequence_digest,
+    frame_index, frame_count, challenge_id, captured_at, previous_digest,
+    content_digest
+) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+`
+
+type CreateEvidenceTemporalFrameParams struct {
+	TenantID       string
+	VerificationID string
+	UploadID       string
+	EvidenceID     string
+	SequenceDigest string
+	FrameIndex     int32
+	FrameCount     int32
+	ChallengeID    string
+	CapturedAt     pgtype.Timestamptz
+	PreviousDigest *string
+	ContentDigest  string
+}
+
+func (q *Queries) CreateEvidenceTemporalFrame(ctx context.Context, arg CreateEvidenceTemporalFrameParams) error {
+	_, err := q.db.Exec(ctx, createEvidenceTemporalFrame,
+		arg.TenantID,
+		arg.VerificationID,
+		arg.UploadID,
+		arg.EvidenceID,
+		arg.SequenceDigest,
+		arg.FrameIndex,
+		arg.FrameCount,
+		arg.ChallengeID,
+		arg.CapturedAt,
+		arg.PreviousDigest,
+		arg.ContentDigest,
+	)
+	return err
+}
+
 const createEvidenceUploadIntent = `-- name: CreateEvidenceUploadIntent :exec
 INSERT INTO idenqa.evidence_upload_intents (
     id, tenant_id, capture_token_id, subject_id, verification_id, evidence_id,
@@ -140,6 +179,35 @@ func (q *Queries) CreateEvidenceUploadIntent(ctx context.Context, arg CreateEvid
 	return err
 }
 
+const findEvidenceTemporalFrame = `-- name: FindEvidenceTemporalFrame :one
+SELECT tenant_id, verification_id, upload_id, evidence_id, sequence_digest, frame_index, frame_count, challenge_id, captured_at, previous_digest, content_digest FROM idenqa.evidence_temporal_frames
+WHERE tenant_id=$1 AND upload_id=$2
+`
+
+type FindEvidenceTemporalFrameParams struct {
+	TenantID string
+	UploadID string
+}
+
+func (q *Queries) FindEvidenceTemporalFrame(ctx context.Context, arg FindEvidenceTemporalFrameParams) (IdenqaEvidenceTemporalFrame, error) {
+	row := q.db.QueryRow(ctx, findEvidenceTemporalFrame, arg.TenantID, arg.UploadID)
+	var i IdenqaEvidenceTemporalFrame
+	err := row.Scan(
+		&i.TenantID,
+		&i.VerificationID,
+		&i.UploadID,
+		&i.EvidenceID,
+		&i.SequenceDigest,
+		&i.FrameIndex,
+		&i.FrameCount,
+		&i.ChallengeID,
+		&i.CapturedAt,
+		&i.PreviousDigest,
+		&i.ContentDigest,
+	)
+	return i, err
+}
+
 const findEvidenceUploadIntent = `-- name: FindEvidenceUploadIntent :one
 SELECT id, tenant_id, capture_token_id, subject_id, verification_id, evidence_id, authority_id, response_id, profile_id, profile_revision, profile_digest, registry_schema_version, registry_revision, registry_digest, requirement_key, purpose, evidence_type, artefact, acquisition_method, assurances, encryption_purpose, allowed_media_types, maximum_bytes, expected_bytes, expected_digest, media_type, region, retention_class, state, version, attempt, attempt_timeout_milliseconds, lease_expires_at, created_at, updated_at, expires_at, accepted_at, rejection_reason, fallback_condition
 FROM idenqa.evidence_upload_intents
@@ -242,6 +310,31 @@ WHERE evidence_upload_intents.tenant_id = $1
   AND EXISTS(SELECT 1 FROM idenqa.capture_tokens token WHERE token.tenant_id=evidence_upload_intents.tenant_id AND token.id=$2 AND token.verification_id=$3 AND token.revoked_at IS NULL)
   AND evidence_upload_intents.verification_id = $3
   AND evidence_upload_intents.state = 'accepted'
+  AND (
+    NOT EXISTS (
+      SELECT 1 FROM idenqa.evidence_temporal_frames own_frame
+      WHERE own_frame.tenant_id=evidence_upload_intents.tenant_id
+        AND own_frame.upload_id=evidence_upload_intents.id
+    )
+    OR EXISTS (
+      SELECT 1
+      FROM idenqa.evidence_temporal_frames own_frame
+      WHERE own_frame.tenant_id=evidence_upload_intents.tenant_id
+        AND own_frame.upload_id=evidence_upload_intents.id
+        AND own_frame.frame_index=own_frame.frame_count-1
+        AND own_frame.frame_count=(
+          SELECT COUNT(*)
+          FROM idenqa.evidence_temporal_frames sequence_frame
+          JOIN idenqa.evidence_upload_intents sequence_upload
+            ON sequence_upload.tenant_id=sequence_frame.tenant_id
+           AND sequence_upload.id=sequence_frame.upload_id
+           AND sequence_upload.state='accepted'
+          WHERE sequence_frame.tenant_id=own_frame.tenant_id
+            AND sequence_frame.verification_id=own_frame.verification_id
+            AND sequence_frame.sequence_digest=own_frame.sequence_digest
+        )
+    )
+  )
 ORDER BY evidence_upload_intents.accepted_at, evidence_upload_intents.id
 LIMIT $4
 `
@@ -321,13 +414,21 @@ func (q *Queries) ListAcceptedEvidenceUploadIntents(ctx context.Context, arg Lis
 const loadCaptureProgressPublication = `-- name: LoadCaptureProgressPublication :one
 SELECT
     sessions.requirements,
+    sessions.document_selections,
     tokens.expires_at AS capture_token_expires_at,
     COALESCE(
         jsonb_agg(
             jsonb_build_object(
                 'requirement_key', uploads.requirement_key,
                 'artefact', uploads.artefact,
-                'acquisition_method', uploads.acquisition_method
+                'acquisition_method', uploads.acquisition_method,
+                'sequence_digest', frames.sequence_digest,
+                'frame_index', frames.frame_index,
+                'frame_count', frames.frame_count,
+                'challenge_id', frames.challenge_id,
+                'captured_at', frames.captured_at,
+                'previous_digest', frames.previous_digest,
+                'content_digest', frames.content_digest
             )
             ORDER BY uploads.accepted_at, uploads.id
         ) FILTER (WHERE uploads.state = 'accepted'),
@@ -344,11 +445,13 @@ LEFT JOIN idenqa.evidence_upload_intents AS uploads
  SELECT 1 FROM idenqa.capture_recovery_uploads recovery
  WHERE recovery.tenant_id=uploads.tenant_id AND recovery.new_token_id=tokens.id
  AND recovery.upload_id=uploads.id AND recovery.disposition='retained'))
+LEFT JOIN idenqa.evidence_temporal_frames AS frames
+  ON frames.tenant_id=uploads.tenant_id AND frames.upload_id=uploads.id
 WHERE sessions.tenant_id = $1
   AND sessions.id = $2
   AND tokens.id = $3
   AND tokens.revoked_at IS NULL
-GROUP BY sessions.requirements, tokens.expires_at
+GROUP BY sessions.requirements, sessions.document_selections, tokens.expires_at
 `
 
 type LoadCaptureProgressPublicationParams struct {
@@ -359,6 +462,7 @@ type LoadCaptureProgressPublicationParams struct {
 
 type LoadCaptureProgressPublicationRow struct {
 	Requirements          []byte
+	DocumentSelections    []byte
 	CaptureTokenExpiresAt pgtype.Timestamptz
 	AcceptedBindings      string
 }
@@ -366,7 +470,12 @@ type LoadCaptureProgressPublicationRow struct {
 func (q *Queries) LoadCaptureProgressPublication(ctx context.Context, arg LoadCaptureProgressPublicationParams) (LoadCaptureProgressPublicationRow, error) {
 	row := q.db.QueryRow(ctx, loadCaptureProgressPublication, arg.TenantID, arg.VerificationID, arg.CaptureTokenID)
 	var i LoadCaptureProgressPublicationRow
-	err := row.Scan(&i.Requirements, &i.CaptureTokenExpiresAt, &i.AcceptedBindings)
+	err := row.Scan(
+		&i.Requirements,
+		&i.DocumentSelections,
+		&i.CaptureTokenExpiresAt,
+		&i.AcceptedBindings,
+	)
 	return i, err
 }
 
@@ -460,7 +569,7 @@ func (q *Queries) LockEvidenceUploadIntent(ctx context.Context, arg LockEvidence
 }
 
 const lockVerificationForUpload = `-- name: LockVerificationForUpload :one
-SELECT id, tenant_id, state, version, source_profile_id, source_profile_revision, source_profile_digest, requirements, created_at, updated_at, expires_at, subject_id, authority_id, notice_id, region, policy_id, decision_id, capture_completed_at, completed_decision_id, expiry_discovered_at, failure_class, failure_code FROM idenqa.verification_sessions
+SELECT id, tenant_id, state, version, source_profile_id, source_profile_revision, source_profile_digest, requirements, created_at, updated_at, expires_at, subject_id, authority_id, notice_id, region, policy_id, decision_id, capture_completed_at, completed_decision_id, expiry_discovered_at, failure_class, failure_code, document_selections FROM idenqa.verification_sessions
 WHERE tenant_id = $1 AND id = $2
 FOR UPDATE
 `
@@ -496,6 +605,7 @@ func (q *Queries) LockVerificationForUpload(ctx context.Context, arg LockVerific
 		&i.ExpiryDiscoveredAt,
 		&i.FailureClass,
 		&i.FailureCode,
+		&i.DocumentSelections,
 	)
 	return i, err
 }

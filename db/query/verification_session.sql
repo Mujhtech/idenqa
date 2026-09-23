@@ -88,6 +88,8 @@ SELECT
     sessions.source_profile_revision,
     sessions.source_profile_digest,
     sessions.requirements,
+    sessions.document_selections,
+    sessions.capture_completed_at,
     sessions.region,
     sessions.policy_id,
     sessions.decision_id,

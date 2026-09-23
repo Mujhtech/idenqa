@@ -99,7 +99,7 @@ WHERE tenant_id = sqlc.arg(tenant_id)
   AND command_id = sqlc.arg(command_id);
 
 -- name: LoadRealtimeCommandAuthority :one
-SELECT sessions.requirements
+SELECT sessions.requirements, sessions.document_selections
 FROM idenqa.websocket_connection_tickets AS tickets
 JOIN idenqa.capture_tokens AS tokens
   ON tokens.tenant_id = tickets.tenant_id

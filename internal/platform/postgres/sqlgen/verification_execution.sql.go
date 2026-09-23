@@ -197,7 +197,7 @@ func (q *Queries) CompleteVerificationAttempt(ctx context.Context, arg CompleteV
 }
 
 const findVerificationCheck = `-- name: FindVerificationCheck :one
-SELECT id, tenant_id, verification_id, name, state, outcome, version, created_at, updated_at FROM idenqa.verification_checks
+SELECT id, tenant_id, verification_id, name, state, outcome, version, created_at, updated_at, route_priority, route_depends_on, route_fallback_for, route_correlation_group FROM idenqa.verification_checks
 WHERE tenant_id = $1 AND id = $2
 `
 
@@ -219,6 +219,10 @@ func (q *Queries) FindVerificationCheck(ctx context.Context, arg FindVerificatio
 		&i.Version,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.RoutePriority,
+		&i.RouteDependsOn,
+		&i.RouteFallbackFor,
+		&i.RouteCorrelationGroup,
 	)
 	return i, err
 }
@@ -715,7 +719,7 @@ func (q *Queries) ListVerificationObservations(ctx context.Context, arg ListVeri
 }
 
 const lockVerificationCheck = `-- name: LockVerificationCheck :one
-SELECT id, tenant_id, verification_id, name, state, outcome, version, created_at, updated_at FROM idenqa.verification_checks
+SELECT id, tenant_id, verification_id, name, state, outcome, version, created_at, updated_at, route_priority, route_depends_on, route_fallback_for, route_correlation_group FROM idenqa.verification_checks
 WHERE tenant_id = $1 AND id = $2
 FOR UPDATE
 `
@@ -738,6 +742,10 @@ func (q *Queries) LockVerificationCheck(ctx context.Context, arg LockVerificatio
 		&i.Version,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.RoutePriority,
+		&i.RouteDependsOn,
+		&i.RouteFallbackFor,
+		&i.RouteCorrelationGroup,
 	)
 	return i, err
 }

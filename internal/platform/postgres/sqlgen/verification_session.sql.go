@@ -133,6 +133,8 @@ SELECT
     sessions.source_profile_revision,
     sessions.source_profile_digest,
     sessions.requirements,
+    sessions.document_selections,
+    sessions.capture_completed_at,
     sessions.region,
     sessions.policy_id,
     sessions.decision_id,
@@ -166,6 +168,8 @@ type FindCaptureContextRow struct {
 	SourceProfileRevision int32
 	SourceProfileDigest   string
 	Requirements          []byte
+	DocumentSelections    []byte
+	CaptureCompletedAt    pgtype.Timestamptz
 	Region                *string
 	PolicyID              *string
 	DecisionID            *string
@@ -191,6 +195,8 @@ func (q *Queries) FindCaptureContext(ctx context.Context, arg FindCaptureContext
 		&i.SourceProfileRevision,
 		&i.SourceProfileDigest,
 		&i.Requirements,
+		&i.DocumentSelections,
+		&i.CaptureCompletedAt,
 		&i.Region,
 		&i.PolicyID,
 		&i.DecisionID,
@@ -370,7 +376,7 @@ func (q *Queries) FindOutcomeTokenByVerification(ctx context.Context, arg FindOu
 }
 
 const findVerificationSession = `-- name: FindVerificationSession :one
-SELECT id, tenant_id, state, version, source_profile_id, source_profile_revision, source_profile_digest, requirements, created_at, updated_at, expires_at, subject_id, authority_id, notice_id, region, policy_id, decision_id, capture_completed_at, completed_decision_id, expiry_discovered_at, failure_class, failure_code
+SELECT id, tenant_id, state, version, source_profile_id, source_profile_revision, source_profile_digest, requirements, created_at, updated_at, expires_at, subject_id, authority_id, notice_id, region, policy_id, decision_id, capture_completed_at, completed_decision_id, expiry_discovered_at, failure_class, failure_code, document_selections
 FROM idenqa.verification_sessions
 WHERE tenant_id = $1 AND id = $2
 `
@@ -406,6 +412,7 @@ func (q *Queries) FindVerificationSession(ctx context.Context, arg FindVerificat
 		&i.ExpiryDiscoveredAt,
 		&i.FailureClass,
 		&i.FailureCode,
+		&i.DocumentSelections,
 	)
 	return i, err
 }
