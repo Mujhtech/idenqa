@@ -16,9 +16,16 @@ private struct PassingAssessor: CaptureQualityAssessor {
     }
 }
 
-private actor Presenter: ChallengePresenter {
+private actor Presenter: ChallengePresenter, CapturePoseTracker {
     private(set) var ids: [String] = []
-    func present(_ challenge: LivenessChallenge) { ids.append(challenge.id) }
+    private var prompt: LivenessPrompt = .neutral
+    private var samples = 0
+    func present(_ challenge: LivenessChallenge) { ids.append(challenge.id); prompt = challenge.prompt; samples = 0 }
+    func measure(_ artifact: CapturedArtifact) -> CaptureFacePose {
+        samples += 1
+        let yaw: Double = samples <= 8 ? 0 : prompt == .turnLeft ? -20 : prompt == .turnRight ? 20 : 0
+        return CaptureFacePose(faceCount: 1, yaw: yaw, pitch: 0, roll: 0, centerX: 0.5, centerY: 0.5, width: 0.4, height: 0.5, leftEyeClosed: 0, rightEyeClosed: 0)
+    }
 }
 
 private struct HangingSource: RawCaptureSource {
@@ -30,7 +37,7 @@ private struct HangingSource: RawCaptureSource {
 
 @Test func acquisitionPreservesOrderedChallengeTranscriptWithoutClaimingLiveness() async throws {
     let presenter = Presenter()
-    let coordinator = AcquisitionCoordinator(source: FrameSource(), assessor: PassingAssessor(), presenter: presenter)
+    let coordinator = AcquisitionCoordinator(source: FrameSource(), assessor: PassingAssessor(), presenter: presenter, tracker: presenter)
     let policy = CaptureQualityPolicy(minimumWidth: 720, minimumHeight: 720, maximumBytes: 1024, requiredFaceCount: 1)
     let challenges = [
         LivenessChallenge(id: "neutral", prompt: .neutral, maximumDuration: .seconds(5)),
@@ -64,7 +71,8 @@ private struct HangingSource: RawCaptureSource {
 }
 
 @Test func acquisitionEnforcesServerChallengeDeadline() async throws {
-    let coordinator = AcquisitionCoordinator(source: HangingSource(), assessor: PassingAssessor(), presenter: Presenter())
+    let presenter = Presenter()
+    let coordinator = AcquisitionCoordinator(source: HangingSource(), assessor: PassingAssessor(), presenter: presenter, tracker: presenter)
     let requirement = CaptureRequirement(
         id: "selfie.live",
         evidenceType: "idenqa.evidence.selfie_image",
@@ -76,4 +84,15 @@ private struct HangingSource: RawCaptureSource {
     await #expect(throws: IdenqaError.captureTimeout) {
         try await coordinator.acquire(requirement)
     }
+}
+
+@Test func challengedAcquisitionCannotFallBackToTimedPhoto() async throws {
+    let presenter = Presenter()
+    let coordinator = AcquisitionCoordinator(source: FrameSource(), assessor: PassingAssessor(), presenter: presenter)
+    let requirement = CaptureRequirement(id: "selfie.live", evidenceType: "idenqa.evidence.selfie_image",
+        artefact: "idenqa.artefact.selfie_image", camera: .front,
+        quality: CaptureQualityPolicy(minimumWidth: 720, minimumHeight: 720, maximumBytes: 1024),
+        challenges: [LivenessChallenge(id: "left", prompt: .turnLeft, maximumDuration: .seconds(5))])
+    await #expect(throws: IdenqaError.noCompatibleMethod) { try await coordinator.acquire(requirement) }
+    #expect(await presenter.ids.isEmpty)
 }

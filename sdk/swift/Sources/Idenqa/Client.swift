@@ -108,14 +108,15 @@ public struct IdenqaClient: Sendable {
         return response
     }
 
-    private func captureRequest(method: String, path: String, headers: [String: String] = [:], body: Data? = nil) async throws -> TransportResponse {
+    func captureRequest(method: String, path: String, headers: [String: String] = [:], body: Data? = nil) async throws -> TransportResponse {
         guard let token = try await tokenStore.read(), !token.isEmpty else { throw IdenqaError.invalidConfiguration }
         var values = headers
+        if body != nil, values["Content-Type"] == nil { values["Content-Type"] = "application/json" }
         values["Authorization"] = "Bearer \(token)"
         return try await transport.send(TransportRequest(method: method, url: baseURL.appending(path: path), headers: values, body: body))
     }
 
-    private func decode<T: Decodable>(_ type: T.Type, from body: Data, status: Int = 200) throws -> T {
+    func decode<T: Decodable>(_ type: T.Type, from body: Data, status: Int = 200) throws -> T {
         guard (200...299).contains(status) else { throw mapStatus(status) }
         do {
             return try JSONDecoder.idenqa.decode(type, from: body)

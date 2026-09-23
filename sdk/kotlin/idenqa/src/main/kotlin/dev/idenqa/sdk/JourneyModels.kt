@@ -21,6 +21,7 @@ internal data class CaptureRequirementDocument(
     val acquisition: CaptureAcquisition,
     val requiredAssurances: List<String>,
     val fallbacks: List<CaptureFallback>,
+    val documentOptions: List<CaptureDocumentOption> = emptyList(),
 )
 
 internal data class CaptureProfileDocument(
@@ -39,6 +40,7 @@ internal data class CaptureSessionDetail(
     val region: String,
     val requirements: CaptureProfileDocument,
     val expiresAt: Instant,
+    val documentSelections: Map<String, String> = emptyMap(),
 )
 
 internal data class CaptureCompletion(
@@ -77,6 +79,7 @@ internal data class EvidenceUpload(
 }
 
 internal data class CaptureEvidenceUploadCreate(
+    val sequence: CaptureEvidenceSequence? = null,
     val requirementKey: String,
     val artefact: String,
     val acquisitionMethod: String,
@@ -283,6 +286,9 @@ internal object JourneyJson {
                 requirements = array(requirements, "requirements").map { parseRequirement(it) },
             ),
             expiresAt = Instant.parse(string(value, "expires_at")),
+            documentSelections = (value["document_selections"]?.let(::map) ?: emptyMap<Any, Any>()).entries.associate {
+                (it.key as? String ?: throw IdenqaException.InvalidResponse) to (it.value as? String ?: throw IdenqaException.InvalidResponse)
+            },
         )
     } catch (_: Exception) {
         throw IdenqaException.InvalidResponse
@@ -342,6 +348,7 @@ internal object JourneyJson {
 
     fun encodeEvidenceUploadCreate(input: CaptureEvidenceUploadCreate): String = adapter.toJson(
         linkedMapOf(
+            "sequence" to input.sequence?.wire(),
             "requirement_key" to input.requirementKey,
             "artefact" to input.artefact,
             "acquisition_method" to input.acquisitionMethod,
@@ -418,6 +425,9 @@ internal object JourneyJson {
             artefacts = stringList(entry, "artefacts"),
             acquisition = parseAcquisition(map(entry, "acquisition")),
             requiredAssurances = stringList(entry, "required_assurances"),
+            documentOptions = if (entry.containsKey("document_options")) array(entry,"document_options").map {
+                val option = map(it); CaptureDocumentOption(string(option,"id"),string(option,"label"),stringList(option,"artefacts"))
+            } else emptyList(),
             fallbacks = array(entry, "fallbacks").map { item ->
                 val fallback = map(item)
                 CaptureFallback(stringList(fallback, "on"), parseAcquisition(map(fallback, "acquisition")))

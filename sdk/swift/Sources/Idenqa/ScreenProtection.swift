@@ -34,7 +34,7 @@ import UIKit
 /// `CaptureSensitiveView` masks its contents while the screen is captured.
 @MainActor
 public final class IOSSensitiveScreenProtection: CaptureScreenProtection {
-    public private(set) var isAvailable: Bool = true
+    public nonisolated let isAvailable = true
     private var protected = false
 
     public init() {}

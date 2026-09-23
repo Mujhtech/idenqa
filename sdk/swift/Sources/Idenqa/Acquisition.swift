@@ -4,14 +4,21 @@ public struct AcquisitionCoordinator: Sendable {
     private let source: any RawCaptureSource
     private let assessor: any CaptureQualityAssessor
     private let presenter: any ChallengePresenter
+    private let tracker: (any CapturePoseTracker)?
+    private let progress: @Sendable (String, CapturePoseProgress) async -> Void
 
-    public init(source: any RawCaptureSource, assessor: any CaptureQualityAssessor, presenter: any ChallengePresenter) {
+    public init(source: any RawCaptureSource, assessor: any CaptureQualityAssessor, presenter: any ChallengePresenter,
+                tracker: (any CapturePoseTracker)? = nil,
+                progress: @escaping @Sendable (String, CapturePoseProgress) async -> Void = { _, _ in }) {
         self.source = source
         self.assessor = assessor
         self.presenter = presenter
+        self.tracker = tracker; self.progress = progress
     }
 
     public func acquire(_ requirement: CaptureRequirement) async throws -> [AcquiredFrame] {
+        try requirement.validate()
+        guard requirement.challenges.isEmpty || tracker != nil else { throw IdenqaError.noCompatibleMethod }
         guard !requirement.id.isEmpty, !requirement.evidenceType.isEmpty, !requirement.artefact.isEmpty,
               requirement.quality.minimumWidth > 0, requirement.quality.minimumHeight > 0,
               requirement.quality.maximumBytes > 0, requirement.challenges.count <= 8 else {
@@ -28,14 +35,11 @@ public struct AcquisitionCoordinator: Sendable {
                   challenge.maximumDuration <= .seconds(15) else {
                 throw IdenqaError.invalidConfiguration
             }
-            let artifact = try await capture(challenge)
+            let artifact = try await capture(challenge, requirement: requirement)
             guard artifact.acquisitionMethod == "idenqa.method.live_camera" else {
                 throw IdenqaError.invalidResponse
             }
-            let quality = try await assessor.assess(artifact)
-            guard quality.failures(against: requirement.quality).isEmpty else {
-                throw IdenqaError.captureQuality
-            }
+            let quality = try await Self.validate(artifact, requirement: requirement, assessor: assessor)
             frames.append(AcquiredFrame(
                 challengeID: requirement.challenges.isEmpty ? nil : challenge.id,
                 artifact: artifact,
@@ -45,11 +49,26 @@ public struct AcquisitionCoordinator: Sendable {
         return frames
     }
 
-    private func capture(_ challenge: LivenessChallenge) async throws -> CapturedArtifact {
+    private func capture(_ challenge: LivenessChallenge, requirement: CaptureRequirement) async throws -> CapturedArtifact {
         try await withThrowingTaskGroup(of: CapturedArtifact.self) { group in
             group.addTask {
                 try await presenter.present(challenge)
-                return try await source.capture()
+                if requirement.challenges.isEmpty { return try await source.capture() }
+                guard let tracker else { throw IdenqaError.noCompatibleMethod }
+                var gate = CapturePoseGate(challenge: challenge)
+                while true {
+                    try Task.checkCancellation()
+                    let artifact = try await source.capture()
+                    guard artifact.acquisitionMethod == "idenqa.method.live_camera", artifact.contentType == "image/jpeg",
+                          !artifact.bytes.isEmpty, artifact.bytes.count <= requirement.quality.maximumBytes else { throw IdenqaError.captureQuality }
+                    let measurement = try await assessor.assess(artifact)
+                    let pose = try await tracker.measure(artifact)
+                    let state = gate.update(pose, at: ProcessInfo.processInfo.systemUptime * 1000,
+                        quality: measurement.failures(against: requirement.quality).isEmpty)
+                    await progress(challenge.id, state)
+                    if state.complete { return artifact }
+                    try await Task.sleep(for: .milliseconds(80))
+                }
             }
             group.addTask {
                 try await Task.sleep(for: challenge.maximumDuration)

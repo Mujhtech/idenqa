@@ -5,7 +5,10 @@ plugins {
 android {
     namespace = "dev.idenqa.sdk"
     compileSdk = 37
-    defaultConfig { minSdk = 26 }
+    defaultConfig {
+        minSdk = 26
+        testInstrumentationRunner = "dev.idenqa.sdk.PoseSmoke"
+    }
     buildFeatures { buildConfig = false }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -17,6 +20,10 @@ dependencies {
     api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
     implementation("com.squareup.okhttp3:okhttp:5.5.0")
     implementation("com.squareup.moshi:moshi:1.15.2")
+    implementation("com.google.mediapipe:tasks-vision:1.0.0")
+    // MediaPipe's published POM requests older vulnerable transitive versions.
+    implementation("com.google.guava:guava:33.7.1-android")
+    implementation("com.google.protobuf:protobuf-javalite:4.36.2")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:2.3.21")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
 }

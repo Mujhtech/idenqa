@@ -20,7 +20,12 @@ internal object CapturePlanBuilder {
     ): CapturePlan {
         if (session.requirements.requirements.isEmpty()) throw IdenqaException.InvalidResponse
         val tasks = mutableListOf<CaptureTask>()
-        for (requirement in session.requirements.requirements) {
+        for (original in session.requirements.requirements) {
+            val branch = session.documentSelections[original.key]
+            val artefacts = if (branch == null) original.artefacts else original.documentOptions.firstOrNull { it.id == branch }?.artefacts ?: throw IdenqaException.InvalidResponse
+            val requirement = original.copy(artefacts = artefacts.sortedBy {
+                when { it.endsWith(".document_front") -> 0; it.endsWith(".document_back") -> 1; else -> 2 }
+            })
             if (requirement.key.isEmpty() || requirement.evidenceType.isEmpty() || requirement.artefacts.isEmpty() ||
                 requirement.artefacts.any { it.isEmpty() }
             ) throw IdenqaException.InvalidResponse

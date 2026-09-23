@@ -152,14 +152,52 @@ public actor CaptureJourney {
 
     // MARK: - Capture
 
+    public func notice() async throws -> CaptureNoticeState {
+        guard let session else { throw IdenqaError.notStarted }
+        return try await client.getAuthority().validated(for: session, now: time.now())
+    }
+
+    public func respondToNotice(_ action: CaptureNoticeAction) async throws -> CaptureNoticeState {
+        let state = try await notice()
+        guard action == .refuse || action == (state.consentRequired ? .consent : .acknowledge) else { throw IdenqaError.invalidConfiguration }
+        let key = try await idempotencyKey(storageKey: "notice:\(state.notice.id):\(action.rawValue)", prefix: "notice")
+        try await client.respond(action: action, locale: state.notice.locale, idempotencyKey: key)
+        return try await notice()
+    }
+
+    public func documentChoice() throws -> CaptureDocumentChoice? {
+        guard let session else { throw IdenqaError.notStarted }
+        guard let requirement = session.requirements.requirements.first(where: {
+            !($0.documentOptions ?? []).isEmpty && session.documentSelections?[$0.key] == nil
+        }) else { return nil }
+        return CaptureDocumentChoice(requirementKey: requirement.key, options: requirement.documentOptions ?? [])
+    }
+
+    public func selectDocument(requirementKey: String, documentType: String) async throws -> CaptureJourneySnapshot {
+        guard let session, let requirement = session.requirements.requirements.first(where: { $0.key == requirementKey }),
+              requirement.documentOptions?.contains(where: { $0.id == documentType }) == true else { throw IdenqaError.invalidConfiguration }
+        let key = try await idempotencyKey(storageKey: "document:\(requirementKey):\(documentType):\(session.version)", prefix: "document")
+        let detail = try await client.selectDocument(requirementKey: requirementKey, documentType: documentType, version: session.version, idempotencyKey: key)
+        try await attach(detail)
+        return snapshot()
+    }
+
+    public func documentLabel(for task: CaptureTask) -> String? {
+        guard let requirement = session?.requirements.requirements.first(where: { $0.key == task.requirementKey }),
+              let selected = session?.documentSelections?[task.requirementKey] else { return nil }
+        return requirement.documentOptions?.first(where: { $0.id == selected })?.label
+    }
+
     /// Uploads one captured artefact for the current task. The artefact is
     /// staged in bounded app-private temporary storage and removed on every path.
     @discardableResult
-    public func submit(taskID: String, artifact: CapturedArtifact, method: String) async throws -> CaptureJourneySnapshot {
+    public func submit(taskID: String, artifact: CapturedArtifact, method: String, sequence: CaptureEvidenceSequence? = nil) async throws -> CaptureJourneySnapshot {
         guard let session = session, let plan = plan, let task = plan.tasks.first(where: { $0.id == taskID }) else {
             throw IdenqaError.notStarted
         }
         guard plan.currentTask?.id == taskID else { throw IdenqaError.stateConflict }
+        if let requirement = session.requirements.requirements.first(where: { $0.key == task.requirementKey }),
+           !(requirement.documentOptions ?? []).isEmpty, session.documentSelections?[task.requirementKey] == nil { throw IdenqaError.stateConflict }
         guard task.methodOptions.contains(method),
               capabilities.declaredMethods.contains(method),
               capabilities.availableMethods.contains(method) else {
@@ -174,8 +212,8 @@ public actor CaptureJourney {
         do {
             let body = try await temporaryFiles.data(for: staged)
             let digest = CaptureDigest.sha256Hex(body)
-            let key = try await idempotencyKey(storageKey: "upload.issue:\(task.id)", prefix: "capture_upload")
-            let input = CaptureEvidenceUploadCreate(
+            let key = try await idempotencyKey(storageKey: "upload.issue:\(task.id):\(digest):\(sequence?.sequenceDigest ?? "still"):\(sequence?.index ?? 0)", prefix: "capture_upload")
+            var input = CaptureEvidenceUploadCreate(
                 requirementKey: task.requirementKey,
                 artefact: task.artefact,
                 acquisitionMethod: method,
@@ -185,6 +223,7 @@ public actor CaptureJourney {
                 mediaType: artifact.contentType,
                 region: session.region
             )
+            input.sequence = sequence
             let issued = try await client.createEvidenceUpload(input, idempotencyKey: key)
             guard let etag = issued.etag else { throw IdenqaError.invalidResponse }
             let accepted = try await client.uploadEvidence(
@@ -208,7 +247,7 @@ public actor CaptureJourney {
                 return snapshot()
             }
             try await refreshProgress()
-            if plan.currentTask?.id == taskID {
+            if self.plan?.currentTask?.id == taskID {
                 guidance = CaptureGuidance(
                     code: .confirmationPending,
                     message: guidanceMessage(.confirmationPending),

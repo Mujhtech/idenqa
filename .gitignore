@@ -20,6 +20,7 @@
 /sdk/kotlin/.gradle/
 /sdk/kotlin/build/
 /sdk/kotlin/idenqa/build/
+/sdk/kotlin/idenqa/src/main/assets/idenqa/face_landmarker.task
 *.test
 
 .idea/

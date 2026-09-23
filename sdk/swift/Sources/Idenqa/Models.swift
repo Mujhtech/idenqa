@@ -117,6 +117,10 @@ public struct CaptureQualityMeasurement: Equatable, Sendable {
 
     public func failures(against policy: CaptureQualityPolicy) -> [String] {
         var result: [String] = []
+        if width <= 0 || height <= 0 || byteCount <= 0 || faceCount < 0 ||
+            ![brightness, contrast, sharpness, glare].allSatisfy({ $0.isFinite && (0...1).contains($0) }) {
+            return ["invalid_measurement"]
+        }
         if width < policy.minimumWidth || height < policy.minimumHeight { result.append("dimensions") }
         if byteCount > policy.maximumBytes { result.append("size") }
         if let value = policy.minimumBrightness, brightness < value { result.append("too_dark") }
@@ -133,11 +137,13 @@ public struct LivenessChallenge: Equatable, Sendable {
     public let id: String
     public let prompt: LivenessPrompt
     public let maximumDuration: Duration
+    public let pose: CapturePosePolicy?
 
-    public init(id: String, prompt: LivenessPrompt, maximumDuration: Duration) {
+    public init(id: String, prompt: LivenessPrompt, maximumDuration: Duration, pose: CapturePosePolicy? = nil) {
         self.id = id
         self.prompt = prompt
         self.maximumDuration = maximumDuration
+        self.pose = pose
     }
 }
 
@@ -160,11 +166,13 @@ public struct CaptureRequirement: Equatable, Sendable {
 }
 
 public struct AcquiredFrame: Sendable {
+    public let capturedAt: Date
     public let challengeID: String?
     public let artifact: CapturedArtifact
     public let quality: CaptureQualityMeasurement
 
-    public init(challengeID: String?, artifact: CapturedArtifact, quality: CaptureQualityMeasurement) {
+    public init(challengeID: String?, artifact: CapturedArtifact, quality: CaptureQualityMeasurement, capturedAt: Date = Date()) {
+        self.capturedAt = capturedAt
         self.challengeID = challengeID
         self.artifact = artifact
         self.quality = quality

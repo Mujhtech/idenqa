@@ -27,15 +27,17 @@ struct CaptureRequirementDocument: Codable, Equatable, Sendable {
     let key: String
     let purpose: String
     let evidenceType: String
-    let artefacts: [String]
+    var artefacts: [String]
     let acquisition: CaptureAcquisition
     let requiredAssurances: [String]
     let fallbacks: [CaptureFallback]
+    var documentOptions: [CaptureDocumentOption]? = nil
 
     enum CodingKeys: String, CodingKey {
         case key, purpose, artefacts, acquisition, fallbacks
         case evidenceType = "evidence_type"
         case requiredAssurances = "required_assurances"
+        case documentOptions = "document_options"
     }
 }
 
@@ -51,6 +53,7 @@ struct CaptureProfileDocument: Codable, Equatable, Sendable {
 }
 
 struct CaptureSessionDocument: Codable, Equatable, Sendable {
+    var documentSelections: [String: String]? = nil
     let id: String
     let state: String
     let version: Int64
@@ -67,6 +70,7 @@ struct CaptureSessionDocument: Codable, Equatable, Sendable {
         case profileRevision = "profile_revision"
         case profileDigest = "profile_digest"
         case expiresAt = "expires_at"
+        case documentSelections = "document_selections"
     }
 }
 
@@ -156,6 +160,7 @@ struct EvidenceUploadDocument: Codable, Equatable, Sendable {
 }
 
 struct CaptureEvidenceUploadCreate: Codable, Equatable, Sendable {
+    var sequence: CaptureEvidenceSequence? = nil
     let requirementKey: String
     let artefact: String
     let acquisitionMethod: String
@@ -166,7 +171,7 @@ struct CaptureEvidenceUploadCreate: Codable, Equatable, Sendable {
     let region: String
 
     enum CodingKeys: String, CodingKey {
-        case artefact, region
+        case artefact, region, sequence
         case requirementKey = "requirement_key"
         case acquisitionMethod = "acquisition_method"
         case fallbackCondition = "fallback_condition"

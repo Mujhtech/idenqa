@@ -109,12 +109,47 @@ class CaptureJourney(
 
     // MARK: - Capture
 
+    suspend fun notice(): CaptureNoticeState = mutex.withLock {
+        client.getAuthority(session ?: throw IdenqaException.NotStarted, time.now())
+    }
+
+    suspend fun respondToNotice(action: CaptureNoticeAction): CaptureNoticeState = mutex.withLock {
+        val current = session ?: throw IdenqaException.NotStarted
+        val state = client.getAuthority(current,time.now())
+        if (action != CaptureNoticeAction.REFUSE && action != if(state.consentRequired) CaptureNoticeAction.CONSENT else CaptureNoticeAction.ACKNOWLEDGE) throw IdenqaException.InvalidConfiguration
+        val key = idempotencyKey("notice:${state.notice.id}:${action.wire}","notice")
+        client.respond(action,state.notice.locale,key)
+        client.getAuthority(current,time.now())
+    }
+
+    suspend fun documentChoice(): CaptureDocumentChoice? = mutex.withLock {
+        val current = session ?: throw IdenqaException.NotStarted
+        current.requirements.requirements.firstOrNull { it.documentOptions.isNotEmpty() && current.documentSelections[it.key] == null }
+            ?.let { CaptureDocumentChoice(it.key,it.documentOptions) }
+    }
+
+    suspend fun selectDocument(requirementKey: String, documentType: String): CaptureJourneySnapshot = mutex.withLock {
+        val current = session ?: throw IdenqaException.NotStarted
+        val requirement = current.requirements.requirements.firstOrNull { it.key == requirementKey } ?: throw IdenqaException.InvalidConfiguration
+        if (requirement.documentOptions.none { it.id == documentType }) throw IdenqaException.InvalidConfiguration
+        val key = idempotencyKey("document:$requirementKey:$documentType:${current.version}","document")
+        attach(client.selectDocument(requirementKey,documentType,current.version,key))
+        snapshot()
+    }
+
+    suspend fun documentLabel(task: CaptureTask): String? = mutex.withLock {
+        val current = session ?: return@withLock null
+        current.requirements.requirements.firstOrNull { it.key == task.requirementKey }?.documentOptions
+            ?.firstOrNull { it.id == current.documentSelections[task.requirementKey] }?.label
+    }
+
     /** Uploads one captured artefact for the current task and removes staged bytes on every path. */
-    suspend fun submit(taskId: String, artifact: CapturedArtifact, method: String): CaptureJourneySnapshot = mutex.withLock {
+    suspend fun submit(taskId: String, artifact: CapturedArtifact, method: String, sequence: CaptureEvidenceSequence? = null): CaptureJourneySnapshot = mutex.withLock {
         val currentSession = session ?: throw IdenqaException.NotStarted
         val currentPlan = plan ?: throw IdenqaException.NotStarted
         val task = currentPlan.tasks.firstOrNull { it.id == taskId } ?: throw IdenqaException.NotStarted
         if (currentPlan.currentTask?.id != taskId) throw IdenqaException.StateConflict
+        if (currentSession.requirements.requirements.any { it.key == task.requirementKey && it.documentOptions.isNotEmpty() && currentSession.documentSelections[it.key] == null }) throw IdenqaException.StateConflict
         if (method !in task.methodOptions || method !in captureCapabilities.declaredMethods || method !in captureCapabilities.availableMethods) {
             throw IdenqaException.NoCompatibleMethod
         }
@@ -131,9 +166,10 @@ class CaptureJourney(
         try {
             val body = temporaryFiles.data(staged)
             val digest = JourneyJson.sha256Hex(body)
-            val key = idempotencyKey("upload.issue:$taskId", "capture_upload")
+            val key = idempotencyKey("upload.issue:$taskId:$digest:${sequence?.sequenceDigest ?: "still"}:${sequence?.index ?: 0}", "capture_upload")
             val issued = client.createEvidenceUpload(
                 CaptureEvidenceUploadCreate(
+                    sequence = sequence,
                     requirementKey = task.requirementKey,
                     artefact = task.artefact,
                     acquisitionMethod = method,

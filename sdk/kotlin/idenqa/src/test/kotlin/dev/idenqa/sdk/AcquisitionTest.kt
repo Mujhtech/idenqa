@@ -6,14 +6,34 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class AcquisitionTest {
+    @Test fun challengedAcquisitionCannotFallBackToTimedPhoto() = runTest {
+        var captured = false
+        val coordinator = AcquisitionCoordinator(
+            RawCaptureSource { captured = true; CapturedArtifact(byteArrayOf(1),"image/jpeg","idenqa.method.live_camera") },
+            CaptureQualityAssessor { CaptureQualityMeasurement(720,720,1,0.5,0.5,0.5,0.0,1) }, ChallengePresenter {})
+        assertFailsWith<IdenqaException.NoCompatibleMethod> {
+            coordinator.acquire(CaptureRequirement("selfie", "idenqa.evidence.selfie_image", "idenqa.artefact.selfie_image",
+                CaptureCamera.FRONT,CaptureQualityPolicy(720,720,1024),listOf(LivenessChallenge("left",LivenessPrompt.TURN_LEFT,5000))))
+        }
+        kotlin.test.assertFalse(captured)
+    }
     @Test fun preservesOrderedChallengeTranscriptWithoutClaimingLiveness() = runTest {
         var count = 0
         val presented = mutableListOf<String>()
+        var prompt = LivenessPrompt.NEUTRAL
+        var samples = 0
         val coordinator = AcquisitionCoordinator(
             RawCaptureSource { CapturedArtifact(byteArrayOf((++count).toByte()), "image/jpeg", "idenqa.method.live_camera") },
             CaptureQualityAssessor { artifact -> CaptureQualityMeasurement(1280, 720, artifact.bytes().size, 0.5, 0.4, 0.3, 0.01, 1) },
-            ChallengePresenter { presented += it.id },
+            ChallengePresenter { presented += it.id; prompt = it.prompt; samples = 0 },
+            tracker = CapturePoseTracker {
+                samples++
+                val yaw = if(samples <= 8) 0.0 else when(prompt) { LivenessPrompt.TURN_LEFT -> -20.0; LivenessPrompt.TURN_RIGHT -> 20.0; else -> 0.0 }
+                CaptureFacePose(1,yaw,0.0,0.0,0.5,0.5,0.4,0.5,0.0,0.0)
+            },
+            monotonicMilliseconds = { testScheduler.currentTime.toDouble() },
         )
         val frames = coordinator.acquire(
             CaptureRequirement(
@@ -60,6 +80,7 @@ class AcquisitionTest {
             },
             CaptureQualityAssessor { CaptureQualityMeasurement(1280, 720, 1, 0.5, 0.4, 0.3, 0.01, 1) },
             ChallengePresenter {},
+            tracker = CapturePoseTracker { CaptureFacePose(0,0.0,0.0,0.0,0.5,0.5,0.4,0.5,0.0,0.0) },
         )
         assertFailsWith<IdenqaException.CaptureTimeout> {
             coordinator.acquire(

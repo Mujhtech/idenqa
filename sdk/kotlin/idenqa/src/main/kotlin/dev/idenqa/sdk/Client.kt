@@ -95,9 +95,9 @@ class IdenqaClient(
         return response
     }
 
-    private suspend fun captureRequest(method: String, path: String, headers: Map<String, String> = emptyMap(), body: ByteArray? = null): TransportResponse {
+    internal suspend fun captureRequest(method: String, path: String, headers: Map<String, String> = emptyMap(), body: ByteArray? = null): TransportResponse {
         val token = tokenStore.read()?.takeIf(String::isNotBlank) ?: throw IdenqaException.InvalidConfiguration
-        val values = headers + mapOf("Authorization" to "Bearer $token")
+        val values = (if (body != null && "Content-Type" !in headers) mapOf("Content-Type" to "application/json") else emptyMap()) + headers + mapOf("Authorization" to "Bearer $token")
         return transport.send(TransportRequest(method, baseUri.resolve(path), values, body))
     }
 

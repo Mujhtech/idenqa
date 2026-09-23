@@ -8,13 +8,19 @@ import kotlin.math.min
 import kotlin.math.sqrt
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.ensureActive
 
 class AcquisitionCoordinator(
     private val source: RawCaptureSource,
     private val assessor: CaptureQualityAssessor,
     private val presenter: ChallengePresenter,
+    private val tracker: CapturePoseTracker? = null,
+    private val progress: suspend (String, CapturePoseProgress) -> Unit = { _, _ -> },
+    private val monotonicMilliseconds: () -> Double = { System.nanoTime()/1_000_000.0 },
 ) {
     suspend fun acquire(requirement: CaptureRequirement): List<AcquiredFrame> {
+        requirement.validate()
+        if (requirement.challenges.isNotEmpty() && tracker == null) throw IdenqaException.NoCompatibleMethod
         if (
             requirement.id.isBlank() || requirement.evidenceType.isBlank() || requirement.artefact.isBlank() ||
             requirement.quality.minimumWidth <= 0 || requirement.quality.minimumHeight <= 0 ||
@@ -30,15 +36,34 @@ class AcquisitionCoordinator(
             val artifact = try {
                 withTimeout(challenge.maximumDurationMillis) {
                     presenter.present(challenge)
-                    source.capture()
+                    if (requirement.challenges.isEmpty()) source.capture() else measuredCapture(challenge,requirement)
                 }
             } catch (_: TimeoutCancellationException) {
                 throw IdenqaException.CaptureTimeout
             }
             if (artifact.acquisitionMethod != "idenqa.method.live_camera") throw IdenqaException.InvalidResponse
-            val quality = assessor.assess(artifact)
-            if (quality.failures(requirement.quality).isNotEmpty()) throw IdenqaException.CaptureQuality
+            val quality = validateCapturePhoto(artifact,requirement,assessor)
             AcquiredFrame(if (requirement.challenges.isEmpty()) null else challenge.id, artifact, quality)
+        }
+    }
+
+    private suspend fun measuredCapture(challenge: LivenessChallenge, requirement: CaptureRequirement): CapturedArtifact {
+        val poseTracker = tracker ?: throw IdenqaException.NoCompatibleMethod
+        val gate = CapturePoseGate(challenge)
+        while (true) {
+            kotlinx.coroutines.currentCoroutineContext().ensureActive()
+            val artifact = source.capture()
+            val bytes = artifact.bytes()
+            val valid = artifact.acquisitionMethod == "idenqa.method.live_camera" && artifact.contentType == "image/jpeg" &&
+                bytes.isNotEmpty() && bytes.size <= requirement.quality.maximumBytes
+            bytes.fill(0)
+            if (!valid) throw IdenqaException.CaptureQuality
+            val measurement = assessor.assess(artifact)
+            val pose = poseTracker.measure(artifact)
+            val state = gate.update(pose,monotonicMilliseconds(),measurement.failures(requirement.quality).isEmpty())
+            progress(challenge.id,state)
+            if (state.complete) return artifact
+            kotlinx.coroutines.delay(80)
         }
     }
 }

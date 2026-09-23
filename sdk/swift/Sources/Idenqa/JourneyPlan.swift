@@ -16,7 +16,16 @@ enum CapturePlanBuilder {
     ) throws -> CapturePlan {
         guard !session.requirements.requirements.isEmpty else { throw IdenqaError.invalidResponse }
         var tasks: [CaptureTask] = []
-        for requirement in session.requirements.requirements {
+        for var requirement in session.requirements.requirements {
+            if let selected = session.documentSelections?[requirement.key] {
+                guard let option = requirement.documentOptions?.first(where: { $0.id == selected }) else { throw IdenqaError.invalidResponse }
+                requirement.artefacts = option.artefacts
+            }
+            // Core canonicalises names lexically; the subject captures front first.
+            requirement.artefacts.sort { left, right in
+                func order(_ value: String) -> Int { value.hasSuffix(".document_front") ? 0 : value.hasSuffix(".document_back") ? 1 : 2 }
+                return order(left) < order(right)
+            }
             guard !requirement.key.isEmpty, !requirement.evidenceType.isEmpty, !requirement.artefacts.isEmpty,
                   !requirement.artefacts.contains(where: \.isEmpty) else {
                 throw IdenqaError.invalidResponse
