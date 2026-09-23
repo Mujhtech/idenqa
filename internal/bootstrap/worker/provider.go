@@ -72,7 +72,7 @@ func configuredProvider(ctx context.Context, configuration config.Worker, pool *
 		return nil, err
 	}
 	manifestDescription := dojah.Description()
-	if settings.Adapter == "smileid" {
+	if settings.Adapter == providerv1.AdapterSmileID {
 		manifestDescription = smileid.Description()
 	}
 	plan, err := provider.NewPlan(settings.Binding, manifestDescription)
@@ -130,7 +130,7 @@ func configuredProvider(ctx context.Context, configuration config.Worker, pool *
 		return nil, err
 	}
 	var remote providerv1.Executor
-	if settings.Adapter == "smileid" {
+	if settings.Adapter == providerv1.AdapterSmileID {
 		remote, err = provider.NewAsyncExecutor(requests, client, time.Now)
 	} else {
 		remote, err = provider.NewDurableExecutor(requests, client, time.Now)

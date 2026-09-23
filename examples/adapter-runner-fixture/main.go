@@ -78,7 +78,7 @@ func run() error {
 		CredentialVersion: "v1",
 	}
 	settings := adapterrunner.Settings{
-		Adapter:               "dojah",
+		Adapter:               providerv1.AdapterDojah,
 		AppIDFile:             appIDFile,
 		APIKeyFile:            apiKeyFile,
 		ListenAddress:         listenAddress,

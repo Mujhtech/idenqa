@@ -19,7 +19,7 @@ import (
 
 const (
 	configurationDigest = "sha256:1a43389f9f297b42dc8507a353ba5d98f7c7d150527d67c13af117f1e478bae5"
-	packageDigest       = "sha256:7fb58659eab38742110fb3193890a8ca90ee5930bf47207bfb39bcb8acac10d6"
+	packageDigest       = "sha256:8fe2a2893b4d10e80561c556dfda0935bedc4bd5b15158697dec897ac8b2bca3"
 	maximumBodyBytes    = 1 << 20
 	maximumEvidence     = 10 << 20
 )
@@ -132,7 +132,7 @@ func (adapter *Adapter) Execute(ctx context.Context, request providerv1.Request)
 	case "idenqa.check.face_match_1to1":
 		return adapter.faceMatch(ctx, request, configuration)
 	case "idenqa.check.document_analysis":
-		return adapter.imageCheck(ctx, request, configuration, "/api/v1/document/analysis", "imagefrontside", "document.front", "idenqa.signal.document_quality")
+		return adapter.documentCheck(ctx, request, configuration)
 	case "idenqa.check.authority_lookup":
 		return adapter.authorityLookup(ctx, request, configuration)
 	default:
@@ -147,22 +147,11 @@ func (adapter *Adapter) imageCheck(ctx context.Context, request providerv1.Reque
 	}
 	defer wipe(image)
 	body := map[string]string{field: base64.StdEncoding.EncodeToString(image)}
-	if signal == "idenqa.signal.document_quality" {
-		body["input_type"] = "base64"
-	}
 	response, status, retryAfter, err := adapter.post(ctx, configuration, path, body)
 	if err != nil {
 		return transportFailure(request, adapter.now, status, retryAfter), nil
 	}
-	outcome := responseOutcome(response)
-	var observation *providerv1.DocumentObservation
-	if signal == "idenqa.signal.document_quality" {
-		outcome = documentOutcome(response)
-		observation = documentObservation(response, outcome)
-	}
-	result := completed(request, adapter.now, signal, outcome)
-	result.Document = observation
-	return result, nil
+	return completed(request, adapter.now, signal, responseOutcome(response)), nil
 }
 
 func (adapter *Adapter) faceMatch(ctx context.Context, request providerv1.Request, configuration Config) (providerv1.Result, error) {
@@ -235,10 +224,10 @@ func (adapter *Adapter) do(ctx context.Context, configuration Config, method, en
 	retryAfter := parseRetryAfter(response.Header.Get("Retry-After"))
 	limited := io.LimitReader(response.Body, maximumBodyBytes+1)
 	encoded, readErr := io.ReadAll(limited)
+	defer wipe(encoded)
 	if readErr != nil || len(encoded) > maximumBodyBytes {
 		return nil, response.StatusCode, retryAfter, errors.New("invalid bounded response")
 	}
-	defer wipe(encoded)
 	if response.StatusCode < 200 || response.StatusCode > 299 {
 		return nil, response.StatusCode, retryAfter, errors.New("provider rejected request")
 	}
@@ -281,8 +270,8 @@ func Description() providerv1.Manifest { return manifest() }
 func manifest() providerv1.Manifest {
 	return providerv1.Manifest{
 		Package: providerv1.PackageProvenance{
-			AdapterID:      "dojah",
-			AdapterVersion: "0.1.1",
+			AdapterID:      providerv1.AdapterDojah,
+			AdapterVersion: "0.1.2",
 			PackageDigest:  packageDigest,
 			Contract:       providerv1.CurrentVersion,
 		},
@@ -479,7 +468,8 @@ func documentOutcome(response map[string]any) providerv1.SignalOutcome {
 // an observation. The endpoint documents no MRZ text and no decoded barcode
 // payload, so those fields remain absent rather than being inferred from other
 // keys. Unknown text_data keys, unreadable entries, malformed values, and
-// values outside the closed contract bounds are ignored.
+// values outside the closed contract bounds are ignored. Conflicting valid
+// values suppress the entire observation rather than selecting a field by order.
 func documentObservation(response map[string]any, outcome providerv1.SignalOutcome) *providerv1.DocumentObservation {
 	if outcome != providerv1.SignalOutcomeSatisfied {
 		return nil
@@ -490,7 +480,9 @@ func documentObservation(response map[string]any, outcome providerv1.SignalOutco
 	}
 	var observation providerv1.DocumentObservation
 	if documentType, ok := entity["document_type"].(map[string]any); ok {
-		appendDocumentField(&observation, "issuing_state", documentType["document_country_code"])
+		if !appendDocumentField(&observation, "issuing_state", documentType["document_country_code"]) {
+			return nil
+		}
 	}
 	if entries, ok := entity["text_data"].([]any); ok {
 		for _, entry := range entries {
@@ -498,15 +490,24 @@ func documentObservation(response map[string]any, outcome providerv1.SignalOutco
 			if !ok || !documentFieldRead(item["status"]) {
 				continue
 			}
+			var name string
+			value := item["value"]
 			switch documentFieldKey(item["field_key"]) {
 			case "document_number":
-				appendDocumentField(&observation, "document_number", item["value"])
+				name = "document_number"
 			case "sex":
-				appendDocumentField(&observation, "sex", item["value"])
+				name = "sex"
 			case "dob":
-				appendDocumentField(&observation, "date_of_birth", documentDate(item["value"]))
+				name, value = "date_of_birth", documentDate(value)
 			case "expiry_date":
-				appendDocumentField(&observation, "date_of_expiry", documentDate(item["value"]))
+				name, value = "date_of_expiry", documentDate(value)
+			default:
+				continue
+			}
+			if !appendDocumentField(&observation, name, value) {
+				// A conflicting response cannot supply a trustworthy field winner.
+				// Drop the observation without changing the provider's quality signal.
+				return nil
 			}
 		}
 	}
@@ -545,25 +546,25 @@ func documentDate(value any) string {
 	return parsed.Format("2006-01-02")
 }
 
-// appendDocumentField adds one bounded canonical field. Duplicate canonical
-// names, wrong JSON types, and values rejected by the closed contract
-// validation are ignored.
-func appendDocumentField(observation *providerv1.DocumentObservation, name string, value any) {
-	if len(observation.Fields) >= providerv1.MaximumDocumentFields {
-		return
-	}
-	for _, existing := range observation.Fields {
-		if existing.Name == name {
-			return
-		}
-	}
+// appendDocumentField ignores invalid values and identical duplicates, and returns
+// false for conflicting valid values. No response ordering establishes precedence.
+func appendDocumentField(observation *providerv1.DocumentObservation, name string, value any) bool {
 	text, ok := value.(string)
 	if !ok {
-		return
+		return true
 	}
 	candidate := providerv1.DocumentField{Name: name, Value: strings.TrimSpace(text)}
 	if candidate.Validate() != nil {
-		return
+		return true
+	}
+	for _, existing := range observation.Fields {
+		if existing.Name == name {
+			return existing.Value == candidate.Value
+		}
+	}
+	if len(observation.Fields) >= providerv1.MaximumDocumentFields {
+		return true
 	}
 	observation.Fields = append(observation.Fields, candidate)
+	return true
 }

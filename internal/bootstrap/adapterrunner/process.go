@@ -148,7 +148,7 @@ func NewProcess(ctx context.Context, settings Settings) (*Process, error) {
 	}
 
 	sandboxOrigin := "https://sandbox.dojah.io"
-	if settings.Adapter == "smileid" {
+	if settings.Adapter == providerv1.AdapterSmileID {
 		sandboxOrigin = "https://testapi.smileidentity.com"
 	}
 	if !settings.Fixture && settings.BaseURL != sandboxOrigin {
@@ -169,7 +169,7 @@ func NewProcess(ctx context.Context, settings Settings) (*Process, error) {
 		appID: appID, apiKey: apiKey, credentials: credentials, dynamicConfiguration: dynamicConfiguration}
 	var implementation providerv1.Adapter = adapter
 	clients := []*http.Client{providerHTTP, gatewayHTTP}
-	if settings.Adapter == "smileid" {
+	if settings.Adapter == providerv1.AdapterSmileID {
 		smile, uploadHTTP, err := newSmileAdapter(adapter)
 		if err != nil {
 			return nil, err
@@ -230,7 +230,7 @@ func hydrateStaticCredentials(
 		return nil
 	}
 	identifierFile := settings.AppIDFile
-	if settings.Adapter == "smileid" {
+	if settings.Adapter == providerv1.AdapterSmileID {
 		identifierFile = settings.PartnerIDFile
 	}
 	if settings.AppIDReference == "" {
@@ -360,7 +360,7 @@ func composeReloader(
 			if err != nil {
 				return err
 			}
-			if settings.Adapter == "smileid" && !partnerIDPattern.MatchString(text) {
+			if settings.Adapter == providerv1.AdapterSmileID && !partnerIDPattern.MatchString(text) {
 				return errors.New("reloaded provider partner identifier is invalid")
 			}
 			appID.Store(text)
@@ -571,7 +571,7 @@ func (*scopedAdapter) ResolveProviderInput(context.Context, string) (string, err
 	return "", dojah.ErrInput
 }
 func (adapter *scopedAdapter) Execute(ctx context.Context, request providerv1.Request) (providerv1.Result, error) {
-	if request.Validate() != nil || request.TenantID != adapter.settings.TenantID || !adapter.acceptsConfiguration(request.Configuration) || request.Check != "idenqa.check.document_analysis" || len(request.Evidence) != 1 {
+	if request.Validate() != nil || request.TenantID != adapter.settings.TenantID || !adapter.acceptsConfiguration(request.Configuration) || request.Check != "idenqa.check.document_analysis" || len(request.Evidence) < 1 || len(request.Evidence) > 2 {
 		return providerv1.Result{}, dojah.ErrConfiguration
 	}
 	reader := &gatewayReader{adapter: adapter, request: request}
@@ -595,7 +595,7 @@ func validateTenantCredentials(adapter string, value secret.Value) error {
 	if err != nil {
 		return err
 	}
-	if adapter == "smileid" {
+	if adapter == providerv1.AdapterSmileID {
 		if !partnerIDPattern.MatchString(credentials.PartnerID) || credentials.APIKey == "" {
 			return errors.New("invalid provider credential bundle")
 		}

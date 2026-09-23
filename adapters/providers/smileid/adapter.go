@@ -409,7 +409,7 @@ func verifyResponseSignature(response map[string]any, configuration Config) bool
 
 func manifest() providerv1.Manifest {
 	return providerv1.Manifest{
-		Package:       providerv1.PackageProvenance{AdapterID: "smileid", AdapterVersion: "0.1.1", PackageDigest: packageDigest, Contract: providerv1.CurrentVersion},
+		Package:       providerv1.PackageProvenance{AdapterID: providerv1.AdapterSmileID, AdapterVersion: "0.1.1", PackageDigest: packageDigest, Contract: providerv1.CurrentVersion},
 		Configuration: providerv1.ConfigurationSchema{ID: "smileid.tenant.v1", Digest: configurationDigest},
 		Capabilities: []providerv1.Capability{
 			{Check: "idenqa.check.document_biometric", AcceptedEvidence: []string{"idenqa.evidence.document_image", "idenqa.evidence.selfie_image"}, AcceptedInputs: []string{"idenqa.input.country", "idenqa.input.id_type"}, AcceptedAssurances: []string{"idenqa.assurance.capture_quality", "idenqa.assurance.active_liveness", "idenqa.assurance.face_match_1to1", "idenqa.assurance.document_authenticity"}, ProcessingRegions: []string{"africa"}, SupportsIdempotency: true},

@@ -65,14 +65,14 @@ func TestScopedAdapterResolvesTenantConfigurationBundle(t *testing.T) {
 		t.Fatalf("NewResolver() error = %v", err)
 	}
 	window, err := credential.NewWindow(resolver, func(value secret.Value) error {
-		return validateTenantCredentials("dojah", value)
+		return validateTenantCredentials(providerv1.AdapterDojah, value)
 	})
 	if err != nil {
 		t.Fatalf("NewWindow() error = %v", err)
 	}
 	adapter := &scopedAdapter{
 		settings: Settings{
-			Adapter: "dojah", TenantID: "ten_01M11HEQG00000000000000000",
+			Adapter: providerv1.AdapterDojah, TenantID: "ten_01M11HEQG00000000000000000",
 			BaseURL: "https://sandbox.dojah.io", Configuration: tenantConfiguration(t, base.String(), "v1"),
 		},
 		credentials:          window,
@@ -137,7 +137,7 @@ func TestScopedAdapterFailsClosedAndReportsNotReady(t *testing.T) {
 		t.Fatalf("NewResolver() error = %v", err)
 	}
 	window, err := credential.NewWindow(resolver, func(value secret.Value) error {
-		return validateTenantCredentials("dojah", value)
+		return validateTenantCredentials(providerv1.AdapterDojah, value)
 	})
 	if err != nil {
 		t.Fatalf("NewWindow() error = %v", err)
@@ -147,7 +147,7 @@ func TestScopedAdapterFailsClosedAndReportsNotReady(t *testing.T) {
 	}
 	adapter := &scopedAdapter{
 		settings: Settings{
-			Adapter: "dojah", TenantID: "ten_01M11HEQG00000000000000000",
+			Adapter: providerv1.AdapterDojah, TenantID: "ten_01M11HEQG00000000000000000",
 			BaseURL: "https://sandbox.dojah.io", Configuration: tenantConfiguration(t, base.String(), "v1"),
 		},
 		credentials:          window,
@@ -175,13 +175,13 @@ func TestValidateTenantCredentials(t *testing.T) {
 		value   string
 		wantErr bool
 	}{
-		{name: "dojah", adapter: "dojah", value: `{"app_id":"app","api_key":"key"}`},
-		{name: "smileid", adapter: "smileid", value: `{"partner_id":"partner_1","api_key":"key"}`},
-		{name: "dojah missing key", adapter: "dojah", value: `{"app_id":"app"}`, wantErr: true},
-		{name: "smileid missing partner", adapter: "smileid", value: `{"api_key":"key"}`, wantErr: true},
-		{name: "smileid invalid partner", adapter: "smileid", value: `{"partner_id":"not a partner","api_key":"key"}`, wantErr: true},
-		{name: "unknown field", adapter: "dojah", value: `{"app_id":"app","api_key":"key","extra":"x"}`, wantErr: true},
-		{name: "malformed", adapter: "dojah", value: `{`, wantErr: true},
+		{name: "dojah", adapter: providerv1.AdapterDojah, value: `{"app_id":"app","api_key":"key"}`},
+		{name: "smileid", adapter: providerv1.AdapterSmileID, value: `{"partner_id":"partner_1","api_key":"key"}`},
+		{name: "dojah missing key", adapter: providerv1.AdapterDojah, value: `{"app_id":"app"}`, wantErr: true},
+		{name: "smileid missing partner", adapter: providerv1.AdapterSmileID, value: `{"api_key":"key"}`, wantErr: true},
+		{name: "smileid invalid partner", adapter: providerv1.AdapterSmileID, value: `{"partner_id":"not a partner","api_key":"key"}`, wantErr: true},
+		{name: "unknown field", adapter: providerv1.AdapterDojah, value: `{"app_id":"app","api_key":"key","extra":"x"}`, wantErr: true},
+		{name: "malformed", adapter: providerv1.AdapterDojah, value: `{`, wantErr: true},
 	}
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {

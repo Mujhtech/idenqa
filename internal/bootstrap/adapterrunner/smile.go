@@ -18,9 +18,9 @@ import (
 
 func runtimeManifest(name string) (providerv1.Manifest, error) {
 	switch name {
-	case "", "dojah":
+	case "", providerv1.AdapterDojah:
 		return dojah.Description(), nil
-	case "smileid":
+	case providerv1.AdapterSmileID:
 		return smileid.Description(), nil
 	default:
 		return providerv1.Manifest{}, errors.New("unsupported provider adapter")

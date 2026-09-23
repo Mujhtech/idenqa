@@ -261,7 +261,7 @@ func (write RegistrationWrite) ValidateReport(manifest providerv1.Manifest) Regi
 	if !validRegistrationInputs(write.Inputs) {
 		return reject(RegistrationInputsInvalid)
 	}
-	if manifest.Package.AdapterID == "smileid" {
+	if manifest.Package.AdapterID == providerv1.AdapterSmileID {
 		if len(write.Inputs) != 2 || write.SelfieRequirement == "" || !registrationToken.MatchString(write.SelfieRequirement) {
 			return reject(RegistrationSelfieInvalid)
 		}

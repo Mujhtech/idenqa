@@ -49,7 +49,7 @@ func configuredProviderManifests(configuration config.API) map[string]providerv1
 		return nil
 	}
 	manifest := dojah.Description()
-	if settings.Adapter == "smileid" {
+	if settings.Adapter == providerv1.AdapterSmileID {
 		manifest = smileid.Description()
 	}
 	return map[string]providerv1.Manifest{manifest.Package.AdapterID: manifest}
@@ -77,7 +77,7 @@ func newProviderEvidenceRoutes(configuration config.API, pool database, infrastr
 		return nil, err
 	}
 	manifestDescription := dojah.Description()
-	if settings.Adapter == "smileid" {
+	if settings.Adapter == providerv1.AdapterSmileID {
 		manifestDescription = smileid.Description()
 	}
 	plan, err := provider.NewPlan(settings.Binding, manifestDescription)

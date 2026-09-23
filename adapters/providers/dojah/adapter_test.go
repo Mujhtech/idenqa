@@ -16,6 +16,7 @@ import (
 	"github.com/Mujhtech/idenqa/adapters/providers/dojah"
 	providerconformance "github.com/Mujhtech/idenqa/conformance/provider"
 	providerv1 "github.com/Mujhtech/idenqa/contracts/provider/v1"
+	"github.com/Mujhtech/idenqa/internal/verification"
 )
 
 func TestCheckedInManifestMatchesRuntimeContract(t *testing.T) {
@@ -345,9 +346,7 @@ func TestDocumentAnalysisMapsOnlyDocumentedExtraction(t *testing.T) {
 				`{"field_key":"expiry_date","status":1,"value":"2040-01-01"}]}}`,
 			check:       "idenqa.check.document_analysis",
 			wantOutcome: providerv1.SignalOutcomeSatisfied,
-			want: &providerv1.DocumentObservation{Fields: []providerv1.DocumentField{
-				{Name: "date_of_expiry", Value: "2031-01-15"},
-			}},
+			want:        nil,
 		},
 		{
 			name:        "non-document checks never attach an observation",
@@ -411,6 +410,10 @@ func TestDocumentExtractionNeverLeaksRawValuesIntoErrorsOrFailures(t *testing.T)
 			transport: &client{status: http.StatusBadRequest, body: `{"error":"` + sentinel + `"}`},
 		},
 		{
+			name:      "oversized response body",
+			transport: &client{status: http.StatusOK, body: sentinel + strings.Repeat("X", 1<<20)},
+		},
+		{
 			name: "unknown and oversized keys",
 			transport: &client{status: http.StatusOK, body: `{"entity":{"status":{"overall_status":1},"text_data":[` +
 				`{"field_key":"` + sentinel + `","status":1,"value":"` + sentinel + `"},` +
@@ -443,5 +446,117 @@ func TestDocumentExtractionNeverLeaksRawValuesIntoErrorsOrFailures(t *testing.T)
 	}
 	if strings.Contains(logs.String(), sentinel) {
 		t.Fatalf("raw provider value reached logs: %s", logs.String())
+	}
+}
+
+func TestDocumentExtractionDuplicateAndConsumptionBoundary(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name, first, second string
+		wantDocument        bool
+	}{
+		{"identical duplicates", "2031-01-15", "2031-01-15", true},
+		{"trimmed identical duplicates", " 2031-01-15 ", "2031-01-15", true},
+		{"conflicting future dates", "2031-01-15", "2040-01-01", false},
+		{"valid then expired", "2031-01-15", "2000-01-01", false},
+		{"expired then valid", "2000-01-01", "2031-01-15", false},
+		{"malformed then valid", "not-a-date", "2031-01-15", true},
+		{"valid then malformed", "2031-01-15", "not-a-date", true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			const sentinel = "SENTINEL-DOCUMENT-123"
+			body, err := json.Marshal(map[string]any{"entity": map[string]any{
+				"status": map[string]int{"overall_status": 1},
+				"text_data": []map[string]any{
+					{"field_key": "document_number", "status": 1, "value": sentinel},
+					{"field_key": "expiry_date", "status": 1, "value": tt.first},
+					{"field_key": "expiry_date", "status": 1, "value": tt.second},
+				},
+			}})
+			if err != nil {
+				t.Fatal(err)
+			}
+			adapter, err := dojah.New(secrets{}, inputs{}, evidence{}, &client{status: 200, body: string(body)}, func() time.Time { return fixedNow })
+			if err != nil {
+				t.Fatal(err)
+			}
+			request, _ := fixture(t, adapter, "idenqa.check.document_analysis")
+			request.Evidence[0].Variant = "document.front"
+			result, err := adapter.Execute(t.Context(), request)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if (result.Document != nil) != tt.wantDocument {
+				t.Fatal("unexpected document observation presence")
+			}
+			if result.Signals[0].Outcome != providerv1.SignalOutcomeSatisfied {
+				t.Fatal("extraction changed provider quality meaning")
+			}
+			if tt.wantDocument && len(result.Document.Fields) != 2 {
+				t.Fatal("identical/invalid duplicates changed field count")
+			}
+			consumed, err := verification.ConsumeProviderDocument(result)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if consumed.Document != nil {
+				t.Fatal("raw observation survived consumption")
+			}
+			if !tt.wantDocument && len(consumed.Signals) != 1 {
+				t.Fatal("conflicting fields supplied derived assurance")
+			}
+			encoded, err := json.Marshal(consumed)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if bytes.Contains(encoded, []byte(sentinel)) || bytes.Contains(encoded, []byte(tt.first)) || bytes.Contains(encoded, []byte(tt.second)) {
+				t.Fatal("raw document data survived the persistence boundary")
+			}
+		})
+	}
+}
+
+func TestDocumentExtractionRejectsConflictingFields(t *testing.T) {
+	t.Parallel()
+	for _, tt := range []struct{ name, first, second string }{
+		{"document_number", "ID123", "ID456"},
+		{"sex", "M", "F"},
+		{"dob", "1990-08-01", "1991-08-01"},
+		{"expiry_date", "2031-01-15", "2040-01-01"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			for _, values := range [][2]string{{tt.first, tt.second}, {tt.second, tt.first}} {
+				body, err := json.Marshal(map[string]any{"entity": map[string]any{
+					"status": map[string]int{"overall_status": 1},
+					"text_data": []map[string]any{
+						{"field_key": tt.name, "status": 1, "value": values[0]},
+						{"field_key": tt.name, "status": 1, "value": values[1]},
+						{"field_key": tt.name, "status": 1, "value": values[0]},
+					},
+				}})
+				if err != nil {
+					t.Fatal(err)
+				}
+				adapter, err := dojah.New(secrets{}, inputs{}, evidence{}, &client{status: 200, body: string(body)}, func() time.Time { return fixedNow })
+				if err != nil {
+					t.Fatal(err)
+				}
+				request, _ := fixture(t, adapter, "idenqa.check.document_analysis")
+				request.Evidence[0].Variant = "document.front"
+				result, err := adapter.Execute(t.Context(), request)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if result.Document != nil {
+					t.Fatal("conflicting extraction was accepted")
+				}
+				if err := result.ValidateForRequest(request); err != nil {
+					t.Fatal(err)
+				}
+			}
+		})
 	}
 }

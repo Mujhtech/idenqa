@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	providerv1 "github.com/Mujhtech/idenqa/contracts/provider/v1"
 	"github.com/Mujhtech/idenqa/internal/provider"
 )
 
@@ -39,13 +40,19 @@ func (configuration ProviderHealthConfiguration) ProviderHealthPolicy() (provide
 		return provider.DefaultHealthPolicy(), nil
 	}
 	policy := provider.HealthPolicy{
-		Window: configuration.ProviderHealthWindow, MinimumSamples: configuration.ProviderHealthMinimumSamples,
-		DegradedFailureRatio: configuration.ProviderHealthDegradedRatio, NotReadyFailureRatio: configuration.ProviderHealthNotReadyRatio,
-		AsyncBacklog: configuration.ProviderHealthAsyncBacklog, StaleAfter: configuration.ProviderHealthStaleAfter,
-		CacheTTL: configuration.ProviderHealthCacheTTL, ProbeTimeout: configuration.ProviderHealthProbeTimeout,
+		Window:               configuration.ProviderHealthWindow,
+		MinimumSamples:       configuration.ProviderHealthMinimumSamples,
+		DegradedFailureRatio: configuration.ProviderHealthDegradedRatio,
+		NotReadyFailureRatio: configuration.ProviderHealthNotReadyRatio,
+		AsyncBacklog:         configuration.ProviderHealthAsyncBacklog,
+		StaleAfter:           configuration.ProviderHealthStaleAfter,
+		CacheTTL:             configuration.ProviderHealthCacheTTL,
+		ProbeTimeout:         configuration.ProviderHealthProbeTimeout,
 		Breaker: provider.BreakerPolicy{
-			Window: configuration.ProviderBreakerWindow, MinimumSamples: configuration.ProviderBreakerMinimumSamples,
-			FailureRatio: configuration.ProviderBreakerFailureRatio, OpenDuration: configuration.ProviderBreakerOpenDuration,
+			Window:         configuration.ProviderBreakerWindow,
+			MinimumSamples: configuration.ProviderBreakerMinimumSamples,
+			FailureRatio:   configuration.ProviderBreakerFailureRatio,
+			OpenDuration:   configuration.ProviderBreakerOpenDuration,
 			HalfOpenProbes: configuration.ProviderBreakerHalfOpenProbes,
 		},
 	}
@@ -103,7 +110,7 @@ func LoadProviderRuntime(path string) (ProviderRuntime, error) {
 	if err := ReadClosedFile(path, &value, 64<<10); err != nil {
 		return value, err
 	}
-	if value.Adapter != "" && value.Adapter != "dojah" && value.Adapter != "smileid" {
+	if value.Adapter != "" && value.Adapter != providerv1.AdapterDojah && value.Adapter != providerv1.AdapterSmileID {
 		return value, errors.New("unsupported provider runtime adapter")
 	}
 	if value.RunnerAddress == "" || value.RunnerCAFile == "" || value.RunnerServerName == "" || value.RunnerCredentialFile == "" || value.GatewayCredentialFile == "" {

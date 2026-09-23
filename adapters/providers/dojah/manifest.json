@@ -2,8 +2,8 @@
   "schema_version": "1.1",
   "package": {
     "adapter_id": "dojah",
-    "adapter_version": "0.1.1",
-    "package_digest": "sha256:7fb58659eab38742110fb3193890a8ca90ee5930bf47207bfb39bcb8acac10d6",
+    "adapter_version": "0.1.2",
+    "package_digest": "sha256:8fe2a2893b4d10e80561c556dfda0935bedc4bd5b15158697dec897ac8b2bca3",
     "contract": {
       "major": 1,
       "minor": 1

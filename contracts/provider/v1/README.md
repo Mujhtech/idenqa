@@ -20,3 +20,18 @@ requests at or below its supported minor version.
 The public conformance harness is in `conformance/provider`. The Protobuf/gRPC
 and HTTP-Protobuf mappings share the authoritative schema under
 `contracts/runner`; adapters remain transport independent.
+
+## Built-in adapter identifiers
+
+Go code that names an adapter shipped by Idenqa uses the canonical contract
+constants rather than repeating provider-name string literals:
+
+```go
+providerv1.AdapterDojah
+providerv1.AdapterSmileID
+```
+
+Their wire and configuration values are `dojah` and `smileid`, respectively.
+They are convenience constants for the built-in adapters, not a closed enum.
+Third-party adapters may continue to publish any identifier accepted by the v1
+contract validation rules.

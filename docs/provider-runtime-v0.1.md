@@ -12,6 +12,10 @@ The first runtime route executes Dojah document analysis using a completed publi
 - The API exposes private `POST /internal/v1/provider-evidence` only when configured. Its body contains exactly `attempt_id`, `grant_id` and `redemption_id`. A separate workload bearer credential identifies the configured tenant runner. The API matches the persisted dispatch and grant, locks and rechecks current session authority, authenticates encrypted content and commits the grant-use audit before releasing a bounded plaintext response. An exact successful redemption replay does not release bytes again.
 - The worker loads the exact request and credential version saved with the attempt. Changing deployment settings cannot rewrite an in-flight request. Discovery filters the configured route before applying its batch limit. Synthetic execution requires its own explicit opt-in and rejects real-provider provenance.
 
+## Adapter identifiers
+
+Runtime JSON uses the exact built-in adapter identifiers `dojah` and `smileid`. Go code must use `providerv1.AdapterDojah` and `providerv1.AdapterSmileID` from `contracts/provider/v1` for comparisons, manifest provenance and composition rather than repeating those string literals. The constants do not close the provider contract: a conforming third-party adapter may publish another validated identifier. Omitting `adapter` retains the documented Dojah compatibility path; it does not make Dojah a universal primary provider.
+
 ## Operator configuration
 
 Apply Core migration 36 and the existing Headgate migrations. In addition to existing runtime grants, grant the runtime role `SELECT, INSERT` on `idenqa.provider_requests`, `SELECT, INSERT, UPDATE` on `idenqa.provider_dispatches`, and `EXECUTE` on `idenqa.list_ready_provider_captures(timestamptz, integer, text, text, text)`. Both tables force tenant RLS. The discovery function is security-invoker and uses the same tenant scope.
@@ -83,11 +87,68 @@ A dispatch receipt permits one initial call per persisted attempt. A saved resul
 
 A failed grant response after the grant-use transaction commits is similarly ambiguous. Plaintext is held only in bounded process memory, not a durable delivery spool, so the grant cannot be transparently replayed. This intentionally favors preventing unauthorized rereads and duplicate submissions over transparent recovery. Cancellation prevents subsequent evidence release and consequential result commits; it cannot recall bytes already delivered to the provider.
 
-The provider response is bounded and only the explicit `entity.status.overall_status` values 1 and 0 map to satisfied and not-satisfied. Missing, unknown or incorrectly typed status is inconclusive. Extracted identity fields and images are discarded. The frozen Dojah catalogue is version 0.1.1 for this corrected mapping and request body.
+The provider response is bounded and only the explicit `entity.status.overall_status` values 1 and 0 map to satisfied and not-satisfied. Missing, unknown or incorrectly typed status is inconclusive. Extracted identity fields and images are discarded. The current Dojah catalogue is version 0.1.2; version 0.1.1 introduced the corrected mapping and request body.
 
 **Unresolved:** official sandbox account proof, external success reconciliation, dynamic secrets, broader route administration, provider budgets and fleet concurrency, provider-side deletion, production regional/recipient approval, hardened deployment evidence. Request and dispatch metadata are workflow records; their bounded retention and purge implementation must be completed before production activation. No new retention duration is selected here.
 
 ## Verification and source evidence
+
+**Explicit document sides — 22 September 2026:** Dojah adapter 0.1.2 accepts
+exactly one granted `document.front` and optionally one `document.back`, sending
+the documented `imagefrontside` and `imagebackside` fields in a single base64
+request. Duplicate sides, unrelated variants and missing fronts are rejected
+before evidence redemption. A failed side read or cancellation prevents a partial
+submission. Granted byte buffers are wiped on success and failure. Returned
+extraction remains one transient primary-document observation; this does not
+establish front/back correspondence or new assurance.
+
+Worker preparation now resolves Dojah sides from the session's immutable profile
+and durable document selection. It prepares a back grant only when the effective
+document branch requires back; a front-only selection never inherits the profile's
+union of available sides. The requirement's purpose and profile digest must match
+the route, and each required side must resolve to exactly one accepted, available,
+integrity-verified asset under the tenant, verification and region. Both grants
+retain the existing recipient, purpose, runner/version and one-use bounds. Missing
+or ambiguous required evidence aborts the planning transaction.
+
+Restricted-role PostgreSQL 16.8 race tests prove selected front-only/two-sided grant
+counts and exact artefact/recipient/runner/use bindings, unselected-branch rejection,
+missing-back rollback and downstream rollback. The composed two-sided public journey
+also passes: distinct front/back bytes traverse encrypted upload, exact one-use
+grants, the scoped runner and synthetic TLS provider, then decision and signed
+webhook retry across worker replacement. Both grants reject completed replay;
+raw extraction values remain absent from persisted results and events. The runner's
+former one-image-only guard now admits one or two images, leaving exact side
+validation to the pinned adapter. Official-account acceptance remains open.
+Existing prepared requests pinned to 0.1.1 must
+retain their matching runner or finish before replacing it; 0.1.2 rejects old
+manifest pins rather than silently changing their meaning.
+
+The 0.1.2 source pin hashes UTF-8 `adapter.go` then `document.go`, each prefixed
+by its filename and a newline, omitting the `packageDigest` declaration line
+to avoid self-reference. It is a source pin, not release-image provenance.
+
+**Result-time authorization — 22 September 2026:** A guarded check commit with a
+result receipt validates authority at that receipt's time and at the current
+observation time, not at a newly scheduled successor's future start time.
+A PostgreSQL regression reproduces the former rejection, proves the corrected
+commit and immutable replay, and still rejects future-dated result receipts.
+Execution must recheck authority when the successor runs. This fix does not
+authorize resubmission of ambiguous external operations or expand grant uses.
+Focused tests cover front-only compatibility, both side orders, invalid grants,
+read failures, cancellation and byte-buffer cleanup.
+
+**Dojah extraction hardening — 22 September 2026:** conflicting valid duplicate
+values for a mapped document field now suppress the transient document observation;
+response order cannot choose a document number, sex, birth date or expiry date.
+Identical trimmed duplicates are deduplicated and malformed individual values are
+still ignored. The provider's explicit quality signal is preserved; no derived
+document signals are produced from a suppressed observation. Response buffers are
+also wiped on oversized or partial-read rejection, not only on successful reads.
+Focused tests cover every mapped text-field conflict in both orders, repeated
+conflicts, partial/identical values, bounded failure diagnostics and consumption
+through Core's raw-field removal boundary. These tests do not establish official
+account acceptance, full OCR coverage or persistent structured identity ingestion.
 
 `TestDojahRuntimePublicCaptureThroughDecisionAndWebhook` starts from the public capture and authority APIs and proves encrypted storage, atomic planning rollback, exact plaintext delivery through TLS, swapped-grant denial, normalized completion, immutable receipts and signed webhook retry across worker restart. Unit tests cover simultaneous duplicate dispatch, stable ambiguity, document rejection and unknown status, and private-origin/redirect rejection. These are controlled local fixtures, not official-account evidence or Capture Web product acceptance.
 

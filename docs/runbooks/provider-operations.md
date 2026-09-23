@@ -3,6 +3,11 @@
 Smile ID and Dojah are optional tenant-credentialed adapters. Core remains
 usable with synthetic or alternative conforming adapters.
 
+The built-in runtime identifiers are exactly `smileid` and `dojah`. Go code
+uses `providerv1.AdapterSmileID` and `providerv1.AdapterDojah` from
+`contracts/provider/v1`; configuration files use their exact string values.
+These constants do not restrict conforming third-party adapter identifiers.
+
 ## Enablement
 
 Before enabling a route, record the tenant, environment, provider account,

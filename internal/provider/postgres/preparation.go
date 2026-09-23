@@ -67,7 +67,25 @@ func (preparation *Preparation) Prepare(ctx context.Context, tx pg.Transaction, 
 	}
 	type target struct{ requirement, evidenceType, artefact, variant string }
 	targets := []target{{plan.Binding.Requirement, "idenqa.evidence.document_image", "idenqa.artefact.document_front", "document.front"}}
-	if plan.Manifest.Package.AdapterID == "smileid" {
+	if plan.Manifest.Package.AdapterID == providerv1.AdapterDojah {
+		session, err := sessions.FindSession(ctx, scope, verificationID)
+		if err != nil {
+			return fail(err)
+		}
+		if session.ProfileDigest() != plan.Binding.ProfileDigest {
+			return fail(provider.ErrRequestUnavailable)
+		}
+		artefacts, err := documentArtefacts(session.Requirements(), session.DocumentSelections(), plan.Binding)
+		if err != nil {
+			return fail(err)
+		}
+		for _, artefact := range artefacts {
+			if artefact == evidence.ArtefactDocumentBack {
+				targets = append(targets, target{plan.Binding.Requirement, "idenqa.evidence.document_image", string(artefact), "document.back"})
+			}
+		}
+	}
+	if plan.Manifest.Package.AdapterID == providerv1.AdapterSmileID {
 		targets = append(targets, target{plan.Binding.SelfieRequirement, "idenqa.evidence.selfie_image", "idenqa.artefact.selfie_image", "selfie"})
 	}
 	var references []providerv1.EvidenceGrantReference

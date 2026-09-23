@@ -50,7 +50,7 @@ func NewPlan(binding Binding, manifest providerv1.Manifest) (*Plan, error) {
 		return nil, ErrRequestUnavailable
 	}
 	check := "idenqa.check.document_analysis"
-	if manifest.Package.AdapterID == "smileid" {
+	if manifest.Package.AdapterID == providerv1.AdapterSmileID {
 		check = "idenqa.check.document_biometric"
 		if binding.SelfieRequirement == "" || binding.SelfieRequirement == binding.Requirement || len(binding.Inputs) != 2 {
 			return nil, ErrRequestUnavailable
@@ -65,7 +65,7 @@ func NewPlan(binding Binding, manifest providerv1.Manifest) (*Plan, error) {
 			}
 			names[input.Name] = true
 		}
-	} else if manifest.Package.AdapterID != "dojah" || len(binding.Inputs) != 0 || binding.SelfieRequirement != "" {
+	} else if manifest.Package.AdapterID != providerv1.AdapterDojah || len(binding.Inputs) != 0 || binding.SelfieRequirement != "" {
 		return nil, ErrRequestUnavailable
 	}
 	for _, capability := range manifest.Capabilities {
@@ -99,7 +99,7 @@ func (plan *Plan) Plan(ctx context.Context, input verification.PlanInput) ([]ver
 	if input.TenantID.String() != plan.Binding.TenantID || input.PolicyID.String() != plan.Binding.PolicyID || input.ProfileDigest != plan.Binding.ProfileDigest {
 		return nil, verification.ErrPlanUnavailable
 	}
-	return []verification.PlannedCheck{{Asynchronous: plan.Manifest.Package.AdapterID == "smileid", Name: plan.Capability.Check, MaximumDuration: plan.Manifest.Restrictions.MaximumDuration, RunnerKind: verification.RunnerProvider, Provenance: verification.Provenance{RunnerID: plan.Manifest.Package.AdapterID, RunnerVersion: plan.Manifest.Package.AdapterVersion, PackageDigest: strings.TrimPrefix(plan.Manifest.Package.PackageDigest, "sha256:"), ContractMajor: plan.Manifest.Package.Contract.Major, ContractMinor: plan.Manifest.Package.Contract.Minor, RequestDigest: plan.configurationDigest, Configuration: plan.configurationDigest}}}, nil
+	return []verification.PlannedCheck{{Asynchronous: plan.Manifest.Package.AdapterID == providerv1.AdapterSmileID, Name: plan.Capability.Check, MaximumDuration: plan.Manifest.Restrictions.MaximumDuration, RunnerKind: verification.RunnerProvider, Provenance: verification.Provenance{RunnerID: plan.Manifest.Package.AdapterID, RunnerVersion: plan.Manifest.Package.AdapterVersion, PackageDigest: strings.TrimPrefix(plan.Manifest.Package.PackageDigest, "sha256:"), ContractMajor: plan.Manifest.Package.Contract.Major, ContractMinor: plan.Manifest.Package.Contract.Minor, RequestDigest: plan.configurationDigest, Configuration: plan.configurationDigest}}}, nil
 }
 
 // CaptureRoute supplies the exact reference-only discovery filter.
@@ -111,7 +111,7 @@ func (plan *Plan) CaptureRoute() (string, string, string) {
 // The provider v1 capability has no output-key catalogue; keep this in sync with
 // the reviewed adapter mappings when adding a new route.
 func (plan *Plan) OutputSignals() []string {
-	if plan.Manifest.Package.AdapterID == "smileid" {
+	if plan.Manifest.Package.AdapterID == providerv1.AdapterSmileID {
 		return []string{"idenqa.signal.provider_job", "idenqa.signal.liveness", "idenqa.signal.face_match_1to1", "idenqa.signal.document_authenticity"}
 	}
 	return []string{"idenqa.signal.document_quality"}
