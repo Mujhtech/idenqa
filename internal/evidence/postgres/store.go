@@ -49,6 +49,7 @@ func (store *Store) WithMetrics(metrics Metrics) *Store {
 
 var _ evidence.IntegrityQuarantiner = (*Store)(nil)
 var _ evidence.KeyRewrapPersister = (*Store)(nil)
+var _ evidence.LifecycleReader = (*Store)(nil)
 
 // QuarantineIntegrity atomically persists the optimistic integrity quarantine
 // and its audit record. A conflict or database failure returns an error.
@@ -143,6 +144,39 @@ func (store *Store) Find(
 	})
 
 	return asset, err
+}
+
+// Lifecycle returns bounded reference-only audit history for one asset.
+func (store *Store) Lifecycle(ctx context.Context, scope tenant.Scope, identifier id.Evidence, limit int) ([]evidence.LifecycleEvent, error) {
+	if scope.ID().IsZero() || identifier.IsZero() || limit < 1 || limit > 100 {
+		return nil, evidence.ErrNotFound
+	}
+	result := make([]evidence.LifecycleEvent, 0, limit)
+	err := store.pool.WithinTransaction(ctx, platformpostgres.TransactionOptions{ReadOnly: true}, func(ctx context.Context, tx platformpostgres.Transaction) error {
+		queries := sqlgen.New(tx)
+		if _, err := queries.SetTenantScope(ctx, scope.ID().String()); err != nil {
+			return fmt.Errorf("set tenant scope: %w", err)
+		}
+		if _, err := queries.FindEvidenceAsset(ctx, sqlgen.FindEvidenceAssetParams{TenantID: scope.ID().String(), ID: identifier.String()}); errors.Is(err, pgx.ErrNoRows) {
+			return evidence.ErrNotFound
+		} else if err != nil {
+			return fmt.Errorf("find evidence asset for lifecycle: %w", err)
+		}
+		// #nosec G115 -- limit is rejected above unless it is in the closed 1..100 range.
+		rows, err := queries.ListEvidenceAssetAudit(ctx, sqlgen.ListEvidenceAssetAuditParams{TenantID: scope.ID().String(), EvidenceID: identifier.String(), PageLimit: int32(limit)})
+		if err != nil {
+			return fmt.Errorf("list evidence lifecycle: %w", err)
+		}
+		for _, row := range rows {
+			reason := ""
+			if row.Reason != nil {
+				reason = *row.Reason
+			}
+			result = append(result, evidence.LifecycleEvent{Version: row.AggregateVersion, Action: row.Action, Reason: reason, OccurredAt: row.OccurredAt.Time.UTC()})
+		}
+		return nil
+	})
+	return result, err
 }
 
 // UpdateLifecycle persists a domain-authorised quarantine transition using

@@ -322,6 +322,12 @@ func (reader *gatewayReader) ReadModelEvidence(ctx context.Context, envelope mod
 
 func newEngine(ctx context.Context, settings Settings) (*onnx.Engine, error) {
 	p := settings.Model.Manifest.Provenance
+	if settings.Model.SelfieAnalysis {
+		if settings.Model.FacePreparation == nil {
+			return nil, onnx.ErrRuntime
+		}
+		return onnx.NewAnalysisEngine(ctx, settings.Python, p.RuntimeDigest, settings.DetectorFile, *settings.Model.FacePreparation)
+	}
 	if settings.Model.FaceMatching {
 		if settings.Model.FacePreparation == nil {
 			return nil, onnx.ErrRuntime

@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"slices"
+	"strings"
 	"time"
 
 	webhookv1 "github.com/Mujhtech/idenqa/contracts/webhook/v1"
@@ -75,12 +77,26 @@ func (store *Store) CreateUpload(
 		if err := store.lockUploadSession(ctx, queries, scope, record.VerificationID, record.CaptureTokenID); err != nil {
 			return err
 		}
+		if err := store.validateUploadBranch(ctx, queries, scope, record); err != nil {
+			return err
+		}
 		parameters, err := createUploadParameters(record)
 		if err != nil {
 			return err
 		}
 		if err := queries.CreateEvidenceUploadIntent(ctx, parameters); err != nil {
 			return fmt.Errorf("insert evidence upload intent: %w", err)
+		}
+		if frame := record.Sequence; frame != nil {
+			if err := queries.CreateEvidenceTemporalFrame(ctx, sqlgen.CreateEvidenceTemporalFrameParams{
+				TenantID: scope.ID().String(), VerificationID: record.VerificationID.String(),
+				UploadID: record.ID.String(), EvidenceID: record.EvidenceID.String(),
+				SequenceDigest: frame.SequenceDigest, FrameIndex: int32(frame.Index), FrameCount: int32(frame.Count),
+				ChallengeID: frame.ChallengeID, CapturedAt: timestamp(frame.CapturedAt),
+				PreviousDigest: nullableString(frame.PreviousDigest), ContentDigest: record.ExpectedDigest,
+			}); err != nil {
+				return fmt.Errorf("insert temporal evidence frame: %w", err)
+			}
 		}
 		if err := insertUploadAudit(ctx, queries, record, record.CaptureTokenID, "create", ""); err != nil {
 			return err
@@ -129,6 +145,9 @@ func (store *Store) FindUpload(
 				return fmt.Errorf("find evidence upload intent: %w", err)
 			}
 			upload, err = store.restoreUpload(row)
+			if err == nil {
+				upload, err = restoreTemporalFrame(ctx, queries, upload)
+			}
 
 			return err
 		},
@@ -172,6 +191,10 @@ func (store *Store) ListAcceptedUploads(
 			uploads = make([]evidence.Upload, len(rows))
 			for index, row := range rows {
 				upload, err := store.restoreUpload(row)
+				if err != nil {
+					return err
+				}
+				upload, err = restoreTemporalFrame(ctx, queries, upload)
 				if err != nil {
 					return err
 				}
@@ -287,6 +310,10 @@ func (store *Store) AcceptUpload(
 		if err != nil {
 			return err
 		}
+		current, err = restoreTemporalFrame(ctx, queries, current)
+		if err != nil {
+			return err
+		}
 		if current.Record().CaptureTokenID != mutation.CaptureTokenID ||
 			current.Record().VerificationID != record.VerificationID {
 			return evidence.ErrUploadNotFound
@@ -294,6 +321,9 @@ func (store *Store) AcceptUpload(
 		if err := authoritypostgres.ValidateUploadAcceptanceWithin(
 			ctx, queries, scope, current.Record(), mutation.OccurredAt, store.clock,
 		); err != nil {
+			return err
+		}
+		if err := store.validateUploadBranch(ctx, queries, scope, current.Record()); err != nil {
 			return err
 		}
 		accepted, err = current.Accept(
@@ -415,8 +445,12 @@ func (store *Store) AcceptUpload(
 		if err != nil {
 			return fmt.Errorf("parse capture progress requirements: %w", err)
 		}
-		totalSteps, completedSteps, err := captureProfileProgress(profile, publication.AcceptedBindings)
-		if err != nil || completedSteps < 1 || completedSteps > totalSteps {
+		var selections map[string]string
+		if err := json.Unmarshal(publication.DocumentSelections, &selections); err != nil {
+			return fmt.Errorf("decode progress document selections: %w", err)
+		}
+		totalSteps, completedSteps, err := captureProfileProgress(profile, publication.AcceptedBindings, selections)
+		if err != nil || completedSteps > totalSteps {
 			return errors.New("evidence postgres: capture progress count is invalid")
 		}
 		if completedSteps == totalSteps {
@@ -466,21 +500,36 @@ func (store *Store) AcceptUpload(
 }
 
 type acceptedCaptureBinding struct {
-	RequirementKey    string `json:"requirement_key"`
-	Artefact          string `json:"artefact"`
-	AcquisitionMethod string `json:"acquisition_method"`
+	RequirementKey    string     `json:"requirement_key"`
+	Artefact          string     `json:"artefact"`
+	AcquisitionMethod string     `json:"acquisition_method"`
+	SequenceDigest    *string    `json:"sequence_digest"`
+	FrameIndex        *uint16    `json:"frame_index"`
+	FrameCount        *uint16    `json:"frame_count"`
+	ChallengeID       *string    `json:"challenge_id"`
+	CapturedAt        *time.Time `json:"captured_at"`
+	PreviousDigest    *string    `json:"previous_digest"`
+	ContentDigest     *string    `json:"content_digest"`
 }
 
-func captureProfileProgress(profile verification.Profile, encoded string) (uint32, uint32, error) {
+func captureProfileProgress(profile verification.Profile, encoded string, selection ...map[string]string) (uint32, uint32, error) {
+	var selections map[string]string
+	if len(selection) > 0 {
+		selections = selection[0]
+	}
 	steps := 0
 	requirements := make(map[string]verification.Requirement, len(profile.Requirements))
 	for _, requirement := range profile.Requirements {
+		requirement.Artefacts = verification.EffectiveArtefacts(requirement, selections)
 		requirements[requirement.Key] = requirement
 		methods := 1
 		if requirement.Acquisition.Strategy == verification.StrategyAllOf {
 			methods = len(requirement.Acquisition.Methods)
 		}
 		steps += len(requirement.Artefacts) * methods
+		if len(requirement.Artefacts) == 0 {
+			steps++
+		} // An unselected branch can never be completed.
 		if uint64(steps) > math.MaxUint32 {
 			return 0, 0, errors.New("evidence postgres: capture profile has too many steps")
 		}
@@ -493,6 +542,7 @@ func captureProfileProgress(profile verification.Profile, encoded string) (uint3
 		return 0, 0, fmt.Errorf("decode accepted capture bindings: %w", err)
 	}
 	completed := make(map[string]struct{}, len(bindings))
+	sequences := map[string][]acceptedCaptureBinding{}
 	for _, binding := range bindings {
 		requirement, exists := requirements[binding.RequirementKey]
 		if !exists || !containsEvidenceName(requirement.Artefacts, binding.Artefact) {
@@ -502,7 +552,40 @@ func captureProfileProgress(profile verification.Profile, encoded string) (uint3
 		if requirement.Acquisition.Strategy == verification.StrategyAllOf {
 			key += "\x00" + binding.AcquisitionMethod
 		}
+		if binding.SequenceDigest != nil {
+			sequences[key+"\x00"+*binding.SequenceDigest] = append(sequences[key+"\x00"+*binding.SequenceDigest], binding)
+			continue
+		}
 		completed[key] = struct{}{}
+	}
+	for sequenceKey, frames := range sequences {
+		if len(frames) == 0 || frames[0].FrameCount == nil {
+			return 0, 0, errors.New("evidence postgres: temporal sequence metadata is incomplete")
+		}
+		count := *frames[0].FrameCount
+		if count < 2 || count > 32 || len(frames) > int(count) {
+			return 0, 0, errors.New("evidence postgres: temporal sequence count is invalid")
+		}
+		slices.SortFunc(frames, func(a, b acceptedCaptureBinding) int {
+			if a.FrameIndex == nil || b.FrameIndex == nil {
+				return 0
+			}
+			return int(*a.FrameIndex) - int(*b.FrameIndex)
+		})
+		challenges := map[string]bool{}
+		for index, frame := range frames {
+			if frame.FrameIndex == nil || frame.FrameCount == nil || frame.ChallengeID == nil || frame.CapturedAt == nil || frame.ContentDigest == nil ||
+				*frame.FrameCount != count || int(*frame.FrameIndex) != index || challenges[*frame.ChallengeID] ||
+				(index > 0 && (!frame.CapturedAt.After(*frames[index-1].CapturedAt) || frame.PreviousDigest == nil || *frame.PreviousDigest != *frames[index-1].ContentDigest)) ||
+				(index == 0 && frame.PreviousDigest != nil) {
+				return 0, 0, errors.New("evidence postgres: temporal sequence chain is invalid")
+			}
+			challenges[*frame.ChallengeID] = true
+		}
+		if len(frames) == int(count) {
+			parts := strings.Split(sequenceKey, "\x00")
+			completed[strings.Join(parts[:len(parts)-1], "\x00")] = struct{}{}
+		}
 	}
 	if len(completed) > steps {
 		return 0, 0, errors.New("evidence postgres: completed capture progress exceeds profile")
@@ -722,7 +805,34 @@ func (store *Store) restoreUploadReplay(
 		return evidence.Upload{}, fmt.Errorf("find replayed evidence upload intent: %w", err)
 	}
 
-	return store.restoreUpload(row)
+	upload, err := store.restoreUpload(row)
+	if err != nil {
+		return evidence.Upload{}, err
+	}
+	return restoreTemporalFrame(ctx, queries, upload)
+}
+
+func restoreTemporalFrame(ctx context.Context, queries *sqlgen.Queries, upload evidence.Upload) (evidence.Upload, error) {
+	record := upload.Record()
+	row, err := queries.FindEvidenceTemporalFrame(ctx, sqlgen.FindEvidenceTemporalFrameParams{TenantID: record.TenantID.String(), UploadID: record.ID.String()})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return upload, nil
+	}
+	if err != nil {
+		return evidence.Upload{}, fmt.Errorf("find temporal evidence frame: %w", err)
+	}
+	if row.VerificationID != record.VerificationID.String() || row.EvidenceID != record.EvidenceID.String() || row.ContentDigest != record.ExpectedDigest ||
+		row.FrameIndex < 0 || row.FrameIndex > math.MaxUint16 || row.FrameCount < 0 || row.FrameCount > math.MaxUint16 || !row.CapturedAt.Valid {
+		return evidence.Upload{}, errors.New("evidence postgres: temporal frame binding is invalid")
+	}
+	previous := ""
+	if row.PreviousDigest != nil {
+		previous = *row.PreviousDigest
+	}
+	return upload.WithTemporalFrame(evidence.TemporalFrame{
+		SequenceDigest: row.SequenceDigest, Index: uint16(row.FrameIndex), Count: uint16(row.FrameCount),
+		ChallengeID: row.ChallengeID, CapturedAt: row.CapturedAt.Time.UTC(), PreviousDigest: previous,
+	})
 }
 
 func (store *Store) restoreUpload(row sqlgen.IdenqaEvidenceUploadIntent) (evidence.Upload, error) {
@@ -827,6 +937,27 @@ func (store *Store) lockUploadSession(ctx context.Context, queries *sqlgen.Queri
 		return evidence.ErrUploadConflict
 	}
 	return nil
+}
+
+func (store *Store) validateUploadBranch(ctx context.Context, queries *sqlgen.Queries, scope tenant.Scope, upload evidence.UploadRecord) error {
+	row, err := queries.FindVerificationSession(ctx, sqlgen.FindVerificationSessionParams{TenantID: scope.ID().String(), ID: upload.VerificationID.String()})
+	if err != nil {
+		return fmt.Errorf("load upload document selection: %w", err)
+	}
+	profile, err := verification.ParseProfileFromCatalog(row.Requirements, store.catalog)
+	if err != nil {
+		return err
+	}
+	var selections map[string]string
+	if err := json.Unmarshal(row.DocumentSelections, &selections); err != nil {
+		return fmt.Errorf("decode upload document selection: %w", err)
+	}
+	for _, requirement := range profile.Requirements {
+		if requirement.Key == upload.RequirementKey && requirement.EvidenceType == upload.EvidenceType && slices.Contains(verification.EffectiveArtefacts(requirement, selections), upload.Artefact) {
+			return nil
+		}
+	}
+	return evidence.ErrUploadConflict
 }
 
 // AllowsRecoveredUpload requires an immutable retained binding and an unrevoked replacement credential.

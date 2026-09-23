@@ -171,7 +171,7 @@ func sameModelManifest(a, b modelv1.Manifest) bool {
 	}
 	for i, x := range a.Capabilities {
 		y := b.Capabilities[i]
-		if x.Evaluation != y.Evaluation || !slices.Equal(x.AcceptedEvidence, y.AcceptedEvidence) || !slices.Equal(x.RequiredAssurances, y.RequiredAssurances) || !slices.Equal(x.OutputSignals, y.OutputSignals) {
+		if x.Evaluation != y.Evaluation || x.TemporalEvidence != y.TemporalEvidence || !slices.Equal(x.AcceptedEvidence, y.AcceptedEvidence) || !slices.Equal(x.RequiredAssurances, y.RequiredAssurances) || !slices.Equal(x.OutputSignals, y.OutputSignals) {
 			return false
 		}
 	}

@@ -175,6 +175,18 @@ type UploadInput struct {
 	RetentionClass    string
 	CreatedAt         time.Time
 	SessionExpiresAt  time.Time
+	Sequence          *TemporalFrame
+}
+
+// TemporalFrame binds one still image into an ordered, digest-chained active
+// capture. It is metadata only; raw frame bytes remain ordinary evidence.
+type TemporalFrame struct {
+	SequenceDigest string
+	Index          uint16
+	Count          uint16
+	ChallengeID    string
+	CapturedAt     time.Time
+	PreviousDigest string
 }
 
 // UploadRecord is the complete durable, secret-free upload representation.
@@ -216,6 +228,7 @@ type UploadRecord struct {
 	ExpiresAt         time.Time
 	AcceptedAt        *time.Time
 	RejectionReason   string
+	Sequence          *TemporalFrame
 }
 
 // Upload is one requirement-bound evidence-upload intent.
@@ -284,6 +297,7 @@ func NewUpload(input UploadInput, registry Registry, policy UploadPolicy) (Uploa
 		MediaType: input.MediaType, Region: input.Region, RetentionClass: input.RetentionClass,
 		State: UploadStateIssued, Version: 1, AttemptTimeout: policy.attemptTimeout,
 		CreatedAt: createdAt, UpdatedAt: createdAt, ExpiresAt: expiresAt,
+		Sequence: cloneTemporalFrame(input.Sequence),
 	}
 
 	return RestoreUpload(record, registry)
@@ -307,6 +321,7 @@ func RestoreUpload(record UploadRecord, registry Registry) (Upload, error) {
 	}
 	record.Assurances = slices.Clone(record.Assurances)
 	record.AllowedMediaTypes = slices.Clone(record.AllowedMediaTypes)
+	record.Sequence = cloneTemporalFrame(record.Sequence)
 
 	return Upload{record: record}, nil
 }
@@ -316,6 +331,7 @@ func (upload Upload) Record() UploadRecord {
 	record := upload.record
 	record.Assurances = slices.Clone(record.Assurances)
 	record.AllowedMediaTypes = slices.Clone(record.AllowedMediaTypes)
+	record.Sequence = cloneTemporalFrame(record.Sequence)
 	if record.LeaseExpiresAt != nil {
 		value := *record.LeaseExpiresAt
 		record.LeaseExpiresAt = &value
@@ -326,6 +342,16 @@ func (upload Upload) Record() UploadRecord {
 	}
 
 	return record
+}
+
+// WithTemporalFrame restores separately persisted sequence metadata onto an
+// upload without changing the immutable content binding.
+func (upload Upload) WithTemporalFrame(frame TemporalFrame) (Upload, error) {
+	if upload.record.Sequence != nil || validateTemporalFrame(&frame) != nil {
+		return Upload{}, ErrUploadConflict
+	}
+	upload.record.Sequence = cloneTemporalFrame(&frame)
+	return upload, nil
 }
 
 // ID returns the upload-intent identifier.
@@ -522,6 +548,9 @@ func validateUploadRecord(record UploadRecord, registry Registry) error {
 	if _, err := platformcrypto.NewDigest(record.ExpectedDigest); err != nil {
 		return errors.New("evidence: upload content digest is invalid")
 	}
+	if err := validateTemporalFrame(record.Sequence); err != nil {
+		return err
+	}
 	assurances, err := validateAcquisition(
 		registry, record.EvidenceType, record.Artefact, record.AcquisitionMethod, record.Assurances,
 	)
@@ -552,6 +581,38 @@ func validateUploadRecord(record UploadRecord, registry Registry) error {
 		return err
 	}
 
+	return nil
+}
+
+func cloneTemporalFrame(frame *TemporalFrame) *TemporalFrame {
+	if frame == nil {
+		return nil
+	}
+	copy := *frame
+	copy.CapturedAt = copy.CapturedAt.UTC()
+	return &copy
+}
+
+func validateTemporalFrame(frame *TemporalFrame) error {
+	if frame == nil {
+		return nil
+	}
+	if _, err := platformcrypto.NewDigest(frame.SequenceDigest); err != nil {
+		return errors.New("evidence: temporal sequence digest is invalid")
+	}
+	if frame.Count < 2 || frame.Count > 32 || frame.Index >= frame.Count ||
+		!validClassification(frame.ChallengeID) || frame.CapturedAt.IsZero() || frame.CapturedAt.Location() != time.UTC {
+		return errors.New("evidence: temporal frame binding is invalid")
+	}
+	if frame.Index == 0 {
+		if frame.PreviousDigest != "" {
+			return errors.New("evidence: first temporal frame has a predecessor")
+		}
+		return nil
+	}
+	if _, err := platformcrypto.NewDigest(frame.PreviousDigest); err != nil {
+		return errors.New("evidence: temporal predecessor digest is invalid")
+	}
 	return nil
 }
 

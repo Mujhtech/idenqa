@@ -92,6 +92,16 @@ type GrantCreator interface {
 	CreateGrant(context.Context, tenant.Scope, Grant, CommandAttribution) error
 }
 
+// GrantFinder loads one tenant-scoped processing grant without redemption data.
+type GrantFinder interface {
+	FindGrant(context.Context, tenant.Scope, id.Grant) (Grant, error)
+}
+
+// LifecycleReader returns bounded reference-only evidence lifecycle history.
+type LifecycleReader interface {
+	Lifecycle(context.Context, tenant.Scope, id.Evidence, int) ([]LifecycleEvent, error)
+}
+
 // GrantClaimer atomically consumes one permitted grant use for an authenticated
 // runner. Repeating a redemption ID must return its existing pending or terminal
 // state without consuming another use.

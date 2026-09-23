@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
@@ -9,10 +10,19 @@ import (
 
 	"github.com/Mujhtech/idenqa/internal/evidence"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
+	"github.com/Mujhtech/idenqa/internal/platform/idempotency"
+	idempotencypostgres "github.com/Mujhtech/idenqa/internal/platform/idempotency/postgres"
+	platformpostgres "github.com/Mujhtech/idenqa/internal/platform/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/postgres/sqlgen"
 	"github.com/Mujhtech/idenqa/internal/tenant"
 	"github.com/jackc/pgx/v5"
 )
+
+type grantTransaction struct{ tx platformpostgres.Transaction }
+
+func (bound grantTransaction) WithinTransaction(ctx context.Context, _ platformpostgres.TransactionOptions, work func(context.Context, platformpostgres.Transaction) error) error {
+	return work(ctx, bound.tx)
+}
 
 const (
 	grantAuditCreate int32 = 1
@@ -21,10 +31,86 @@ const (
 
 var (
 	_ evidence.GrantCreator         = (*Store)(nil)
+	_ evidence.GrantFinder          = (*Store)(nil)
 	_ evidence.GrantClaimer         = (*Store)(nil)
 	_ evidence.GrantOutcomeRecorder = (*Store)(nil)
 	_ evidence.GrantRevoker         = (*Store)(nil)
 )
+
+// ApplyGrant atomically stores one grant and its exact retry receipt.
+func (store *Store) ApplyGrant(ctx context.Context, scope tenant.Scope, request idempotency.Request, issue func(evidence.GrantCommandStore) (evidence.Grant, error)) (evidence.Grant, error) {
+	if scope.ID().IsZero() || request.TenantID() != scope.ID() || issue == nil {
+		return evidence.Grant{}, evidence.ErrGrantDenied
+	}
+	var result evidence.Grant
+	err := store.pool.WithinTransaction(ctx, platformpostgres.TransactionOptions{}, func(ctx context.Context, tx platformpostgres.Transaction) error {
+		queries := sqlgen.New(tx)
+		if _, err := queries.SetTenantScope(ctx, scope.ID().String()); err != nil {
+			return err
+		}
+		reservation, err := idempotencypostgres.Reserve(ctx, queries, request)
+		if err != nil {
+			return err
+		}
+		if prior, ok := reservation.Result(); ok {
+			var receipt struct {
+				GrantID string `json:"grant_id"`
+			}
+			if err := json.Unmarshal(prior.Body(), &receipt); err != nil {
+				return err
+			}
+			identifier, err := id.ParseGrant(receipt.GrantID)
+			if err != nil {
+				return err
+			}
+			row, err := queries.FindEvidenceProcessingGrant(ctx, sqlgen.FindEvidenceProcessingGrantParams{TenantID: scope.ID().String(), ID: identifier.String()})
+			if err != nil {
+				return err
+			}
+			result, err = restoreGrant(row, nil)
+			return err
+		}
+		bound := &Store{pool: grantTransaction{tx}, catalog: store.catalog, clock: store.clock, wrapper: store.wrapper, metrics: store.metrics}
+		result, err = issue(bound)
+		if err != nil {
+			return err
+		}
+		encoded, err := json.Marshal(map[string]string{"grant_id": result.ID().String()})
+		if err != nil {
+			return err
+		}
+		receipt, err := idempotency.NewResult(201, encoded)
+		if err != nil {
+			return err
+		}
+		return idempotencypostgres.Complete(ctx, queries, request, receipt, store.clock.Now().UTC())
+	})
+	return result, err
+}
+
+// FindGrant loads one tenant-scoped grant without redemption details.
+func (store *Store) FindGrant(ctx context.Context, scope tenant.Scope, grantID id.Grant) (evidence.Grant, error) {
+	if scope.ID().IsZero() || grantID.IsZero() {
+		return evidence.Grant{}, evidence.ErrGrantDenied
+	}
+	var result evidence.Grant
+	err := store.pool.WithinTransaction(ctx, platformpostgres.TransactionOptions{ReadOnly: true}, func(ctx context.Context, tx platformpostgres.Transaction) error {
+		queries := sqlgen.New(tx)
+		if _, err := queries.SetTenantScope(ctx, scope.ID().String()); err != nil {
+			return fmt.Errorf("set tenant scope: %w", err)
+		}
+		row, err := queries.FindEvidenceProcessingGrant(ctx, sqlgen.FindEvidenceProcessingGrantParams{TenantID: scope.ID().String(), ID: grantID.String()})
+		if errors.Is(err, pgx.ErrNoRows) {
+			return evidence.ErrGrantDenied
+		}
+		if err != nil {
+			return fmt.Errorf("find evidence processing grant: %w", err)
+		}
+		result, err = restoreGrant(row, nil)
+		return err
+	})
+	return result, err
+}
 
 // CreateGrant atomically inserts one unredeemed grant and its creation audit.
 func (store *Store) CreateGrant(

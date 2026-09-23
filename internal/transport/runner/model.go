@@ -241,6 +241,7 @@ func modelCapabilityToProto(capability modelv1.Capability) *runnerv1.ModelCapabi
 	return &runnerv1.ModelCapability{
 		Evaluation: capability.Evaluation, AcceptedEvidence: capability.AcceptedEvidence,
 		RequiredAssurances: capability.RequiredAssurances, OutputSignals: capability.OutputSignals,
+		TemporalEvidence: capability.TemporalEvidence,
 	}
 }
 
@@ -251,6 +252,7 @@ func modelCapabilityFromProto(message *runnerv1.ModelCapability) modelv1.Capabil
 	return modelv1.Capability{
 		Evaluation: message.GetEvaluation(), AcceptedEvidence: message.GetAcceptedEvidence(),
 		RequiredAssurances: message.GetRequiredAssurances(), OutputSignals: message.GetOutputSignals(),
+		TemporalEvidence: message.GetTemporalEvidence(),
 	}
 }
 
@@ -258,7 +260,8 @@ func modelRestrictionsToProto(restrictions modelv1.Restrictions) *runnerv1.Model
 	return &runnerv1.ModelRestrictions{
 		NetworkAllowed: restrictions.NetworkAllowed, MaximumGrants: uint32(restrictions.MaximumGrants),
 		MaximumInputBytes: restrictions.MaximumInputBytes, MaximumResultSize: restrictions.MaximumResultSize,
-		MaximumDuration: durationpb.New(restrictions.MaximumDuration),
+		MaximumDuration:    durationpb.New(restrictions.MaximumDuration),
+		PersistDerivedData: restrictions.PersistDerivedData, DerivedRetention: durationpb.New(restrictions.DerivedRetention),
 	}
 }
 
@@ -266,10 +269,15 @@ func modelRestrictionsFromProto(message *runnerv1.ModelRestrictions) modelv1.Res
 	if message == nil {
 		return modelv1.Restrictions{}
 	}
+	derivedRetention := time.Duration(0)
+	if message.GetDerivedRetention() != nil {
+		derivedRetention = message.GetDerivedRetention().AsDuration()
+	}
 	return modelv1.Restrictions{
 		NetworkAllowed: message.GetNetworkAllowed(), MaximumGrants: boundedUint16(message.GetMaximumGrants()),
 		MaximumInputBytes: message.GetMaximumInputBytes(), MaximumResultSize: message.GetMaximumResultSize(),
-		MaximumDuration: message.GetMaximumDuration().AsDuration(),
+		MaximumDuration:    message.GetMaximumDuration().AsDuration(),
+		PersistDerivedData: message.GetPersistDerivedData(), DerivedRetention: derivedRetention,
 	}
 }
 
@@ -296,12 +304,16 @@ func modelRequestToProto(request modelv1.Request) *runnerv1.ModelRequest {
 	for index, grant := range request.Evidence {
 		evidence[index] = modelGrantToProto(grant)
 	}
+	sequences := make([]*runnerv1.ModelEvidenceSequence, len(request.Sequences))
+	for index, sequence := range request.Sequences {
+		sequences[index] = modelSequenceToProto(sequence)
+	}
 	return &runnerv1.ModelRequest{
 		Contract: versionToProto(request.Contract.Major, request.Contract.Minor), AttemptId: request.AttemptID,
 		ModelRegistrationId: request.ModelID, TenantId: request.TenantID, VerificationId: request.VerificationID,
 		Evaluation: request.Evaluation, IdempotencyKey: request.IdempotencyKey, Provenance: modelProvenanceToProto(request.Provenance),
 		Capability: modelCapabilityToProto(request.Capability), Restrictions: modelRestrictionsToProto(request.Restrictions),
-		Configuration: modelConfigurationToProto(request.Configuration), Evidence: evidence,
+		Configuration: modelConfigurationToProto(request.Configuration), Evidence: evidence, Sequences: sequences,
 		Deadline: timestamppb.New(request.Deadline), Trace: &runnerv1.TraceContext{Traceparent: request.Trace.Traceparent, Tracestate: request.Trace.Tracestate},
 	}
 }
@@ -316,14 +328,46 @@ func modelRequestFromProto(message *runnerv1.ModelRequest) (modelv1.Request, err
 	for index, grant := range message.GetEvidence() {
 		evidence[index] = modelGrantFromProto(grant)
 	}
+	sequences := make([]modelv1.EvidenceSequence, len(message.GetSequences()))
+	for index, sequence := range message.GetSequences() {
+		sequences[index] = modelSequenceFromProto(sequence)
+	}
 	request := modelv1.Request{
 		Contract: modelVersionFromProto(message.GetContract()), AttemptID: message.GetAttemptId(), ModelID: message.GetModelRegistrationId(),
 		TenantID: message.GetTenantId(), VerificationID: message.GetVerificationId(), Evaluation: message.GetEvaluation(), IdempotencyKey: message.GetIdempotencyKey(),
 		Provenance: modelProvenanceFromProto(message.GetProvenance()), Capability: modelCapabilityFromProto(message.GetCapability()),
-		Restrictions: modelRestrictionsFromProto(message.GetRestrictions()), Configuration: configuration, Evidence: evidence,
+		Restrictions: modelRestrictionsFromProto(message.GetRestrictions()), Configuration: configuration, Evidence: evidence, Sequences: sequences,
 		Deadline: message.GetDeadline().AsTime(), Trace: modelv1.TraceContext{Traceparent: message.GetTrace().GetTraceparent(), Tracestate: message.GetTrace().GetTracestate()},
 	}
 	return request, request.Validate()
+}
+
+func modelSequenceToProto(sequence modelv1.EvidenceSequence) *runnerv1.ModelEvidenceSequence {
+	frames := make([]*runnerv1.ModelEvidenceSequenceFrame, len(sequence.Frames))
+	for index, frame := range sequence.Frames {
+		frames[index] = &runnerv1.ModelEvidenceSequenceFrame{
+			GrantId: frame.GrantID, ChallengeId: frame.ChallengeID, Index: uint32(frame.Index),
+			CapturedAt: timestamppb.New(frame.CapturedAt), PreviousDigest: frame.PreviousDigest, ContentDigest: frame.ContentDigest,
+		}
+	}
+	return &runnerv1.ModelEvidenceSequence{SequenceDigest: sequence.SequenceDigest, Frames: frames}
+}
+
+func modelSequenceFromProto(message *runnerv1.ModelEvidenceSequence) modelv1.EvidenceSequence {
+	if message == nil {
+		return modelv1.EvidenceSequence{}
+	}
+	frames := make([]modelv1.EvidenceSequenceFrame, len(message.GetFrames()))
+	for index, frame := range message.GetFrames() {
+		if frame == nil || frame.GetCapturedAt() == nil {
+			continue
+		}
+		frames[index] = modelv1.EvidenceSequenceFrame{
+			GrantID: frame.GetGrantId(), ChallengeID: frame.GetChallengeId(), Index: boundedUint16(frame.GetIndex()),
+			CapturedAt: frame.GetCapturedAt().AsTime(), PreviousDigest: frame.GetPreviousDigest(), ContentDigest: frame.GetContentDigest(),
+		}
+	}
+	return modelv1.EvidenceSequence{SequenceDigest: message.GetSequenceDigest(), Frames: frames}
 }
 
 func modelGrantToProto(grant modelv1.EvidenceGrantReference) *runnerv1.EvidenceGrantReference {
@@ -346,7 +390,7 @@ func modelGrantFromProto(message *runnerv1.EvidenceGrantReference) modelv1.Evide
 func modelResultToProto(result modelv1.Result) *runnerv1.ModelResult {
 	signals := make([]*runnerv1.Signal, len(result.Signals))
 	for index, signal := range result.Signals {
-		signals[index] = &runnerv1.Signal{Name: signal.Name, Outcome: signalOutcomeToProto(string(signal.Outcome)), ReasonCodes: signal.ReasonCodes}
+		signals[index] = &runnerv1.Signal{Name: signal.Name, Outcome: signalOutcomeToProto(string(signal.Outcome)), ReasonCodes: signal.ReasonCodes, Quality: modelQualityToProto(signal.Quality)}
 	}
 	return &runnerv1.ModelResult{
 		Contract: versionToProto(result.Contract.Major, result.Contract.Minor), AttemptId: result.AttemptID,
@@ -361,7 +405,7 @@ func modelResultFromProto(message *runnerv1.ModelResult) (modelv1.Result, error)
 	}
 	signals := make([]modelv1.Signal, len(message.GetSignals()))
 	for index, signal := range message.GetSignals() {
-		signals[index] = modelv1.Signal{Name: signal.GetName(), Outcome: modelv1.SignalOutcome(signalOutcomeFromProto(signal.GetOutcome())), ReasonCodes: signal.GetReasonCodes()}
+		signals[index] = modelv1.Signal{Name: signal.GetName(), Outcome: modelv1.SignalOutcome(signalOutcomeFromProto(signal.GetOutcome())), ReasonCodes: signal.GetReasonCodes(), Quality: modelQualityFromProto(signal.GetQuality())}
 	}
 	result := modelv1.Result{
 		Contract: modelVersionFromProto(message.GetContract()), AttemptID: message.GetAttemptId(),
@@ -369,6 +413,20 @@ func modelResultFromProto(message *runnerv1.ModelResult) (modelv1.Result, error)
 		Failure: modelFailureFromProto(message.GetFailure()), CompletedAt: message.GetCompletedAt().AsTime(),
 	}
 	return result, result.Validate()
+}
+
+func modelQualityToProto(quality *modelv1.SignalQuality) *runnerv1.SignalQuality {
+	if quality == nil {
+		return nil
+	}
+	return &runnerv1.SignalQuality{Acceptable: quality.Acceptable, Codes: quality.Codes}
+}
+
+func modelQualityFromProto(quality *runnerv1.SignalQuality) *modelv1.SignalQuality {
+	if quality == nil {
+		return nil
+	}
+	return &modelv1.SignalQuality{Acceptable: quality.GetAcceptable(), Codes: quality.GetCodes()}
 }
 
 func modelFailureToProto(failure *modelv1.Failure) *runnerv1.Failure {

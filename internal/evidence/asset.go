@@ -46,6 +46,14 @@ const (
 	StateDeleted State = "deleted"
 )
 
+// LifecycleEvent is one safe, append-only evidence metadata transition.
+type LifecycleEvent struct {
+	Version    int64
+	Action     string
+	Reason     string
+	OccurredAt time.Time
+}
+
 // Integrity is the current content-integrity state.
 type Integrity string
 
