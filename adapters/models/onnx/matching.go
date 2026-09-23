@@ -12,9 +12,10 @@ type PairPredictor interface {
 	InferPair(context.Context, Image, Image) (Evaluation, error)
 }
 
-// MatchingPreprocessingDigest pins evaluation-only box extraction, not landmark alignment.
+// MatchingPreprocessingDigest pins whole-document portrait selection and the
+// model-specific five-landmark alignment transform.
 func MatchingPreprocessingDigest(preparation FacePreparation) string {
-	raw, _ := json.Marshal([]any{preparation, "bgr-linear-640-zero-pad", "confidence-0.8-nms-0.3-top5000", "min64-margin5", "single-box-crop-rgb-linear112-nchw-minus127.5-div127.5.v1"})
+	raw, _ := json.Marshal([]any{preparation, "bgr-linear-640-zero-pad", "confidence-0.8-nms-0.3-top5000", "min64-margin5", "single-document-portrait", "arcface-five-point-umeyama-rgb-linear112-nchw-minus127.5-div127.5.v1"})
 	return digest(raw)
 }
 
@@ -25,6 +26,9 @@ func MatchingOutputSchemaDigest() string {
 
 // NewMatchingEngine verifies a synthetic-compatible embedding schema and pinned detector.
 func NewMatchingEngine(ctx context.Context, python, modelPath, modelDigest, runtimeDigest, detectorPath string, preparation FacePreparation) (*Engine, error) {
+	if !preparation.matchingValid() {
+		return nil, ErrRuntime
+	}
 	engine, err := newEngine(ctx, python, modelPath, modelDigest, runtimeDigest, []int{1, 3, 112, 112}, "face_match")
 	if err != nil {
 		return nil, err
@@ -70,7 +74,7 @@ func validMatchingEvaluation(value Evaluation) bool {
 	for _, role := range []string{"document_", "selfie_"} {
 		if strings.HasPrefix(value.Reason, role) {
 			switch strings.TrimPrefix(value.Reason, role) {
-			case "face_not_found", "multiple_faces", "face_too_small", "face_at_edge":
+			case "face_not_found", "multiple_faces", "face_too_small", "face_at_edge", "landmarks_invalid":
 				return true
 			}
 		}

@@ -2,7 +2,7 @@
 import unittest
 import cv2
 import numpy as np
-from preparation import contextual_tensor, locate_face
+from preparation import analyze_image, contextual_tensor, locate_face
 
 
 class Output:
@@ -20,6 +20,11 @@ class Detector:
             self.values["cls_8"][0, index] = 0.99
             self.values["obj_8"][0, index] = 0.99
             self.values["bbox_8"][0, index] = [(x+w/2)/8-index, (y+h/2)/8, np.log(w/8), np.log(h/8)]
+            points = ((x + 0.32*w, y + 0.38*h), (x + 0.68*w, y + 0.38*h),
+                      (x + 0.50*w, y + 0.56*h), (x + 0.37*w, y + 0.76*h),
+                      (x + 0.63*w, y + 0.76*h))
+            self.values["kps_8"][0, index] = [coordinate for px, py in points
+                                                for coordinate in (px/8-index, py/8)]
         if invalid:
             self.values["bbox_8"][0, 0, 0] = np.nan
 
@@ -58,6 +63,23 @@ class PreparationTest(unittest.TestCase):
         actual=contextual_tensor(rgb,(60,60,160,160))
         expected=cv2.resize(rgb[20:260,20:260],(128,128),interpolation=cv2.INTER_AREA).transpose(2,0,1)[None].astype(np.float32)/255
         np.testing.assert_array_equal(actual,expected)
+
+    def test_analysis_returns_only_bounded_classifications(self):
+        import base64
+        rgb = np.zeros((640,640,3),dtype=np.uint8)
+        request = {"rgb":base64.b64encode(rgb.tobytes()).decode(),"image_width":640,"image_height":640}
+        codes = analyze_image(request, Detector([(100,100,200,200)]))
+        self.assertIn("brightness_out_of_range", codes)
+        self.assertIn("contrast_too_low", codes)
+        self.assertIn("sharpness_too_low", codes)
+        self.assertNotIn("face_not_found", codes)
+
+    def test_analysis_stops_when_face_selection_is_ambiguous(self):
+        import base64
+        rgb = np.zeros((640,640,3),dtype=np.uint8)
+        request = {"rgb":base64.b64encode(rgb.tobytes()).decode(),"image_width":640,"image_height":640}
+        self.assertEqual(analyze_image(request, Detector([])), ["face_not_found"])
+        self.assertEqual(analyze_image(request, Detector([(100,100,100,100),(400,400,100,100)])), ["multiple_faces"])
 
 if __name__ == "__main__":
     unittest.main()

@@ -67,8 +67,11 @@ func (adapter *Adapter) executeMatch(ctx context.Context, request modelv1.Reques
 		return adapter.failure(request, modelv1.FailureInternal, "model_output_invalid"), nil
 	}
 	reason := value.Reason
+	var quality *modelv1.SignalQuality
 	if reason == "" {
 		reason = "face_match_evaluation_only"
+	} else {
+		quality = &modelv1.SignalQuality{Acceptable: false, Codes: []string{reason}}
 	}
-	return modelv1.Result{Contract: request.Contract, AttemptID: request.AttemptID, Outcome: modelv1.ResultOutcomeCompleted, CompletedAt: adapter.now().UTC(), Signals: []modelv1.Signal{{Name: "idenqa.signal.face_match_1to1", Outcome: modelv1.SignalOutcomeInconclusive, ReasonCodes: []string{reason}}}}, nil
+	return modelv1.Result{Contract: request.Contract, AttemptID: request.AttemptID, Outcome: modelv1.ResultOutcomeCompleted, CompletedAt: adapter.now().UTC(), Signals: []modelv1.Signal{{Name: modelv1.SignalFaceMatch, Outcome: modelv1.SignalOutcomeInconclusive, ReasonCodes: []string{reason}, Quality: quality}}}, nil
 }

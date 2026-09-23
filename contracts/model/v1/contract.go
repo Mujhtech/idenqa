@@ -11,7 +11,7 @@ import (
 // Version and result-size bounds for the v1 model contract.
 const (
 	MajorVersion   uint16 = 1
-	MinorVersion   uint16 = 0
+	MinorVersion   uint16 = 1
 	MaxResultBytes        = 256 * 1024
 )
 
@@ -46,15 +46,21 @@ type Capability struct {
 	AcceptedEvidence   []string `json:"accepted_evidence"`
 	RequiredAssurances []string `json:"required_assurances"`
 	OutputSignals      []string `json:"output_signals"`
+	TemporalEvidence   bool     `json:"temporal_evidence"`
 }
 
 // Restrictions pins resource policy for one model execution.
 type Restrictions struct {
-	NetworkAllowed    bool          `json:"network_allowed"`
-	MaximumGrants     uint16        `json:"maximum_grants"`
-	MaximumInputBytes uint64        `json:"maximum_input_bytes"`
-	MaximumResultSize uint32        `json:"maximum_result_size"`
-	MaximumDuration   time.Duration `json:"maximum_duration"`
+	NetworkAllowed bool `json:"network_allowed"`
+	// PersistDerivedData must remain false in v1. Embeddings, extracted
+	// portraits, tensors, crops and model caches are workload-local transient
+	// values and may not cross the model result boundary.
+	PersistDerivedData bool          `json:"persist_derived_data"`
+	DerivedRetention   time.Duration `json:"derived_retention"`
+	MaximumGrants      uint16        `json:"maximum_grants"`
+	MaximumInputBytes  uint64        `json:"maximum_input_bytes"`
+	MaximumResultSize  uint32        `json:"maximum_result_size"`
+	MaximumDuration    time.Duration `json:"maximum_duration"`
 }
 
 // Manifest is the immutable model capability and resource advertisement.
@@ -101,8 +107,25 @@ type Request struct {
 	Restrictions   Restrictions             `json:"restrictions"`
 	Configuration  ConfigurationReference   `json:"configuration"`
 	Evidence       []EvidenceGrantReference `json:"evidence"`
+	Sequences      []EvidenceSequence       `json:"sequences,omitempty"`
 	Deadline       time.Time                `json:"deadline"`
 	Trace          TraceContext             `json:"trace"`
+}
+
+// EvidenceSequence binds an ordered digest chain to the exact grant used for
+// each frame. It is provenance metadata, not client-authored assurance.
+type EvidenceSequence struct {
+	SequenceDigest string                  `json:"sequence_digest"`
+	Frames         []EvidenceSequenceFrame `json:"frames"`
+}
+
+type EvidenceSequenceFrame struct {
+	GrantID        string    `json:"grant_id"`
+	ChallengeID    string    `json:"challenge_id"`
+	Index          uint16    `json:"index"`
+	CapturedAt     time.Time `json:"captured_at"`
+	PreviousDigest string    `json:"previous_digest,omitempty"`
+	ContentDigest  string    `json:"content_digest"`
 }
 
 // SignalOutcome classifies a bounded model observation.
@@ -117,9 +140,17 @@ const (
 
 // Signal is a stable model output. Threshold application remains pinned policy.
 type Signal struct {
-	Name        string        `json:"name"`
-	Outcome     SignalOutcome `json:"outcome"`
-	ReasonCodes []string      `json:"reason_codes"`
+	Name        string         `json:"name"`
+	Outcome     SignalOutcome  `json:"outcome"`
+	ReasonCodes []string       `json:"reason_codes"`
+	Quality     *SignalQuality `json:"quality,omitempty"`
+}
+
+// SignalQuality reports only bounded capture suitability. Unacceptable input
+// is always inconclusive; it is never a negative identity conclusion.
+type SignalQuality struct {
+	Acceptable bool     `json:"acceptable"`
+	Codes      []string `json:"codes"`
 }
 
 // ResultOutcome distinguishes completed inference from operational failure.

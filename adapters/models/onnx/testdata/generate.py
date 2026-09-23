@@ -30,6 +30,11 @@ for kind, size in (("cls", 1), ("obj", 1), ("bbox", 4), ("kps", 10)):
                 values[0, index, 0] = 0.99
             if kind == "bbox":
                 values[0, index, 2:] = np.log(50)
+            if kind == "kps":
+                # Five non-degenerate points within the synthetic 400x400 box.
+                points = ((248, 272), (392, 272), (320, 344), (268, 424), (372, 424))
+                values[0, index] = [coordinate for px, py in points
+                                    for coordinate in (px / 8 - 40, py / 8 - 40)]
         outputs.append(helper.make_tensor_value_info(name, TensorProto.FLOAT, list(values.shape)))
         nodes.append(helper.make_node("Constant", [], [name], value=numpy_helper.from_array(values)))
 graph = helper.make_graph(nodes, "idenqa-detector-runtime-fixture", [helper.make_tensor_value_info("input", TensorProto.FLOAT, [1,3,640,640])], outputs)

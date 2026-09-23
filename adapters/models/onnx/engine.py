@@ -50,11 +50,6 @@ def run():
         return {"runtime_digest": runtime_digest}
     if request["runtime_digest"] != runtime_digest:
         raise ValueError("runtime mismatch")
-    model = base64.b64decode(request["model"], validate=True)
-    if not model or len(model) > 64 * 1024 * 1024:
-        raise ValueError("model bound")
-    if "sha256:" + hashlib.sha256(model).hexdigest() != request["model_digest"]:
-        raise ValueError("model mismatch")
     options = ort.SessionOptions()
     options.intra_op_num_threads = 1
     options.inter_op_num_threads = 1
@@ -63,6 +58,18 @@ def run():
     options.enable_cpu_mem_arena = False
     options.enable_mem_pattern = False
     options.log_severity_level = 4
+    if request.get("mode") == "face_analysis":
+        detector = detector_session(request, options)
+        if request["operation"] == "validate":
+            return {"runtime_digest": runtime_digest}
+        if request["operation"] != "analysis":
+            raise ValueError("analysis operation")
+        return {"runtime_digest": runtime_digest, "codes": analyze_image(request, detector)}
+    model = base64.b64decode(request["model"], validate=True)
+    if not model or len(model) > 64 * 1024 * 1024:
+        raise ValueError("model bound")
+    if "sha256:" + hashlib.sha256(model).hexdigest() != request["model_digest"]:
+        raise ValueError("model mismatch")
     # Byte loading rejects filesystem-dependent external tensor data. No custom
     # operators, model downloads or execution-provider fallback are configured.
     session = ort.InferenceSession(model, sess_options=options, providers=["CPUExecutionProvider"])

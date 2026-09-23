@@ -113,6 +113,7 @@ type response struct {
 	RuntimeDigest string   `json:"runtime_digest"`
 	Score         *float64 `json:"score,omitempty"`
 	Reason        string   `json:"reason,omitempty"`
+	Codes         []string `json:"codes,omitempty"`
 }
 
 func invoke(ctx context.Context, python string, payload any) (response, error) {

@@ -26,7 +26,8 @@ func TestContractCompatibility(t *testing.T) {
 
 	if !modelv1.CurrentVersion.Accepts(modelv1.Version{Major: 1}) ||
 		modelv1.CurrentVersion.Accepts(modelv1.Version{Major: 2}) ||
-		modelv1.CurrentVersion.Accepts(modelv1.Version{Major: 1, Minor: 1}) {
+		!modelv1.CurrentVersion.Accepts(modelv1.Version{Major: 1, Minor: 1}) ||
+		modelv1.CurrentVersion.Accepts(modelv1.Version{Major: 1, Minor: 2}) {
 		t.Fatal("model contract compatibility is not major-stable and minor-monotonic")
 	}
 }

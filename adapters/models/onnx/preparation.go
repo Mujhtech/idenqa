@@ -18,6 +18,11 @@ import (
 type FacePreparation struct {
 	Algorithm      string `json:"algorithm"`
 	DetectorDigest string `json:"detector_digest"`
+	Alignment      string `json:"alignment,omitempty"`
+}
+
+func (preparation FacePreparation) matchingValid() bool {
+	return preparation.valid() && preparation.Alignment == "arcface-five-point-v1"
 }
 
 // FacePreprocessingDigest includes detector, crop, color and interpolation semantics.

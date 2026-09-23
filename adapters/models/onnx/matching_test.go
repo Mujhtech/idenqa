@@ -28,7 +28,7 @@ func matchingFixture(t *testing.T) (Configuration, modelv1.Request, []byte, time
 	c.FaceMatching = true
 	c.Width = 112
 	c.Height = 112
-	c.FacePreparation = &FacePreparation{Algorithm: "yunet-context-v1", DetectorDigest: c.Manifest.Provenance.ModelDigest}
+	c.FacePreparation = &FacePreparation{Algorithm: "yunet-context-v1", DetectorDigest: c.Manifest.Provenance.ModelDigest, Alignment: "arcface-five-point-v1"}
 	c.Manifest.Provenance.PreprocessingDigest = MatchingPreprocessingDigest(*c.FacePreparation)
 	c.Manifest.Provenance.OutputSchemaDigest = MatchingOutputSchemaDigest()
 	c.Manifest.Restrictions.MaximumGrants = 2
@@ -133,7 +133,7 @@ func TestNativeMatchingCosineAndSchema(t *testing.T) {
 	}
 	modelPath, _ := filepath.Abs("testdata/embedding_fixture.onnx")
 	detectorPath, _ := filepath.Abs("testdata/detector_fixture.onnx")
-	prep := FacePreparation{Algorithm: "yunet-context-v1", DetectorDigest: digest(detector)}
+	prep := FacePreparation{Algorithm: "yunet-context-v1", DetectorDigest: digest(detector), Alignment: "arcface-five-point-v1"}
 	engine, err := NewMatchingEngine(t.Context(), python, modelPath, digest(model), runtime, detectorPath, prep)
 	if err != nil {
 		t.Fatal(err)

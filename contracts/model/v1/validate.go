@@ -40,6 +40,9 @@ func (manifest Manifest) Validate() error {
 			return fmt.Errorf("model contract: capabilities[%d]: %w", index, err)
 		}
 		evaluations = append(evaluations, capability.Evaluation)
+		if capability.TemporalEvidence && manifest.Provenance.Contract.Minor < 1 {
+			return invalid("capabilities", "temporal evidence requires contract 1.1")
+		}
 	}
 	if !unique(evaluations) {
 		return invalid("capabilities", "contain duplicate evaluations")
@@ -71,7 +74,8 @@ func (capability Capability) validate() error {
 }
 
 func (restrictions Restrictions) validate() error {
-	if restrictions.MaximumGrants == 0 || restrictions.MaximumGrants > 32 ||
+	if restrictions.PersistDerivedData || restrictions.DerivedRetention != 0 ||
+		restrictions.MaximumGrants == 0 || restrictions.MaximumGrants > 32 ||
 		restrictions.MaximumInputBytes == 0 || restrictions.MaximumInputBytes > 64*1024*1024 ||
 		restrictions.MaximumResultSize == 0 || restrictions.MaximumResultSize > MaxResultBytes ||
 		restrictions.MaximumDuration <= 0 || restrictions.MaximumDuration > 10*time.Minute {
@@ -151,7 +155,47 @@ func (request Request) Validate() error {
 	if !unique(grants) {
 		return invalid("evidence", "contains duplicate grants")
 	}
+	if err := request.validateSequences(grants); err != nil {
+		return err
+	}
 	return request.Trace.validate()
+}
+
+func (request Request) validateSequences(grants []string) error {
+	if request.Contract.Minor < 1 && (request.Capability.TemporalEvidence || len(request.Sequences) != 0) {
+		return invalid("sequences", "require contract 1.1")
+	}
+	if !request.Capability.TemporalEvidence {
+		if len(request.Sequences) != 0 {
+			return invalid("sequences", "are not accepted by the capability")
+		}
+		return nil
+	}
+	if len(request.Sequences) != 1 || len(request.Sequences[0].Frames) < 2 || len(request.Sequences[0].Frames) > 32 ||
+		!digestPattern.MatchString(request.Sequences[0].SequenceDigest) {
+		return invalid("sequences", "must contain one bounded temporal sequence")
+	}
+	grantSet := make(map[string]bool, len(grants))
+	for _, grant := range grants {
+		grantSet[grant] = true
+	}
+	seenChallenges := map[string]bool{}
+	frames := request.Sequences[0].Frames
+	for index, frame := range frames {
+		if int(frame.Index) != index || !grantSet[frame.GrantID] || !validName(frame.ChallengeID) ||
+			seenChallenges[frame.ChallengeID] || !validUTC(frame.CapturedAt) || !digestPattern.MatchString(frame.ContentDigest) ||
+			(index == 0 && frame.PreviousDigest != "") ||
+			(index > 0 && frame.PreviousDigest != frames[index-1].ContentDigest) ||
+			(index > 0 && !frame.CapturedAt.After(frames[index-1].CapturedAt)) {
+			return invalid("sequences", "frame order or digest chain is invalid")
+		}
+		seenChallenges[frame.ChallengeID] = true
+		delete(grantSet, frame.GrantID)
+	}
+	if len(grantSet) != 0 {
+		return invalid("sequences", "must bind every evidence grant exactly once")
+	}
+	return nil
 }
 
 // Validate checks result binding, classifications, and encoded size.
@@ -176,6 +220,9 @@ func (result Result) Validate() error {
 		return invalid("result.outcome", "is invalid")
 	}
 	for _, signal := range result.Signals {
+		if result.Contract.Minor < 1 && signal.Quality != nil {
+			return invalid("signal.quality", "requires contract 1.1")
+		}
 		if err := signal.validate(); err != nil {
 			return err
 		}
@@ -208,6 +255,17 @@ func (signal Signal) validate() error {
 	if !validName(signal.Name) || len(signal.ReasonCodes) > 32 ||
 		!validNames(signal.ReasonCodes) || !unique(signal.ReasonCodes) {
 		return invalid("signal", "is invalid")
+	}
+	if signal.Quality != nil {
+		if len(signal.Quality.Codes) > 16 || !validNames(signal.Quality.Codes) || !unique(signal.Quality.Codes) ||
+			(!signal.Quality.Acceptable && (len(signal.Quality.Codes) == 0 || signal.Outcome != SignalOutcomeInconclusive)) {
+			return invalid("signal.quality", "is invalid")
+		}
+		for _, code := range signal.Quality.Codes {
+			if !slices.Contains(signal.ReasonCodes, code) {
+				return invalid("signal.quality", "code is absent from reason_codes")
+			}
+		}
 	}
 	switch signal.Outcome {
 	case SignalOutcomeSatisfied, SignalOutcomeNotSatisfied, SignalOutcomeInconclusive:

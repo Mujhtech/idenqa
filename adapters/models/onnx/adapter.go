@@ -19,6 +19,7 @@ import (
 // EvaluationOnly is mandatory until a trained model completes its acceptance review.
 type Configuration struct {
 	FaceMatching    bool                           `json:"face_matching,omitempty"`
+	SelfieAnalysis  bool                           `json:"selfie_analysis,omitempty"`
 	FacePreparation *FacePreparation               `json:"face_preparation,omitempty"`
 	TenantID        string                         `json:"tenant_id"`
 	Registration    modelv1.ConfigurationReference `json:"registration"`
@@ -38,7 +39,7 @@ type Predictor interface {
 	Infer(context.Context, []float32) (float64, error)
 }
 
-// Adapter implements evaluation-only PAD or document/selfie matching.
+// Adapter implements evaluation-only PAD, selfie analysis, or document/selfie matching.
 type Adapter struct {
 	configuration Configuration
 	predictor     Predictor
@@ -67,36 +68,68 @@ func OutputSchemaDigest() string {
 // New constructs an exact tenant-bound evaluation-only model adapter.
 func New(configuration Configuration, predictor Predictor, evidence EvidenceReader, now func() time.Time) (*Adapter, error) {
 	m := configuration.Manifest
+	if m.Validate() != nil || len(m.Capabilities) != 1 || configuration.FaceMatching && configuration.SelfieAnalysis {
+		return nil, ErrRuntime
+	}
 	size, grants := 128, uint16(1)
-	check, signal := "idenqa.check.passive_pad", "idenqa.signal.passive_pad"
+	check := modelv1.EvaluationPassivePAD
+	signals := []string{modelv1.SignalPassivePAD}
 	accepted := []string{"idenqa.evidence.selfie_image"}
 	output := OutputSchemaDigest()
 	if configuration.FaceMatching {
 		size, grants = 112, 2
-		check, signal = "idenqa.check.face_match_1to1", "idenqa.signal.face_match_1to1"
+		check, signals = modelv1.EvaluationFaceMatch, []string{modelv1.SignalFaceMatch}
 		accepted = []string{"idenqa.evidence.document_image", "idenqa.evidence.selfie_image"}
 		output = MatchingOutputSchemaDigest()
 		if configuration.FacePreparation == nil {
+			return nil, ErrRuntime
+		}
+		if !configuration.FacePreparation.matchingValid() {
 			return nil, ErrRuntime
 		}
 		if _, ok := predictor.(PairPredictor); !ok {
 			return nil, ErrRuntime
 		}
 	}
+	if configuration.SelfieAnalysis {
+		check = modelv1.EvaluationSelfieAnalysis
+		signals = modelv1.SelfieAnalysisSignals(m.Capabilities[0].TemporalEvidence)
+		output = AnalysisOutputSchemaDigest(m.Capabilities[0].TemporalEvidence)
+		if configuration.FacePreparation == nil || !configuration.FacePreparation.valid() ||
+			m.Provenance.ModelDigest != configuration.FacePreparation.DetectorDigest {
+			return nil, ErrRuntime
+		}
+		if _, ok := predictor.(AnalysisPredictor); !ok {
+			return nil, ErrRuntime
+		}
+	}
+	// Temporal evidence must be consumed as a sequence. The PAD predictor still
+	// accepts one image, so advertising temporal PAD here would silently ignore
+	// frames and overstate what the workload evaluated.
+	if m.Capabilities[0].TemporalEvidence && !configuration.SelfieAnalysis {
+		return nil, ErrRuntime
+	}
 	preprocessing := PreprocessingDigest(configuration.Width, configuration.Height)
 	if configuration.FacePreparation != nil {
 		if !configuration.FacePreparation.valid() {
 			return nil, ErrRuntime
 		}
-		if _, ok := predictor.(ImagePredictor); !ok && !configuration.FaceMatching {
+		if _, ok := predictor.(ImagePredictor); !ok && !configuration.FaceMatching && !configuration.SelfieAnalysis {
 			return nil, ErrRuntime
 		}
 		preprocessing = FacePreprocessingDigest(*configuration.FacePreparation)
 		if configuration.FaceMatching {
 			preprocessing = MatchingPreprocessingDigest(*configuration.FacePreparation)
 		}
+		if configuration.SelfieAnalysis {
+			preprocessing = AnalysisPreprocessingDigest(*configuration.FacePreparation)
+		}
 	}
-	if predictor == nil || evidence == nil || now == nil || !configuration.EvaluationOnly || configuration.TenantID == "" || configuration.Registration.Validate() != nil || m.Validate() != nil || m.Provenance.ModelID != configuration.Registration.ModelID || configuration.Width != size || configuration.Height != size || ConfigurationDigest(configuration) != configuration.Registration.ConfigurationDigest || m.Provenance.PreprocessingDigest != preprocessing || m.Provenance.OutputSchemaDigest != output || m.Restrictions.NetworkAllowed || m.Restrictions.MaximumGrants != grants || m.Restrictions.MaximumInputBytes > 10<<20 || m.Restrictions.MaximumDuration > 30*time.Second || len(m.Capabilities) != 1 || m.Capabilities[0].Evaluation != check || len(m.Capabilities[0].RequiredAssurances) != 0 || !reflect.DeepEqual(m.Capabilities[0].AcceptedEvidence, accepted) || !reflect.DeepEqual(m.Capabilities[0].OutputSignals, []string{signal}) {
+	validGrants := m.Restrictions.MaximumGrants == grants
+	if m.Capabilities[0].TemporalEvidence && configuration.SelfieAnalysis {
+		validGrants = m.Restrictions.MaximumGrants >= 2 && m.Restrictions.MaximumGrants <= 32
+	}
+	if predictor == nil || evidence == nil || now == nil || !configuration.EvaluationOnly || configuration.TenantID == "" || configuration.Registration.Validate() != nil || m.Provenance.ModelID != configuration.Registration.ModelID || configuration.Width != size || configuration.Height != size || ConfigurationDigest(configuration) != configuration.Registration.ConfigurationDigest || m.Provenance.PreprocessingDigest != preprocessing || m.Provenance.OutputSchemaDigest != output || m.Restrictions.NetworkAllowed || !validGrants || m.Restrictions.MaximumInputBytes > 10<<20 || m.Restrictions.MaximumDuration > 30*time.Second || m.Capabilities[0].Evaluation != check || len(m.Capabilities[0].RequiredAssurances) != 0 || !reflect.DeepEqual(m.Capabilities[0].AcceptedEvidence, accepted) || !reflect.DeepEqual(m.Capabilities[0].OutputSignals, signals) {
 		return nil, ErrRuntime
 	}
 	raw, _ := json.Marshal(configuration)
@@ -133,7 +166,14 @@ func (adapter *Adapter) Health(ctx context.Context) (modelv1.Health, error) {
 // Execute consumes capability-bound images without asserting biometric assurance.
 func (adapter *Adapter) Execute(ctx context.Context, request modelv1.Request) (modelv1.Result, error) {
 	m := adapter.configuration.Manifest
-	if request.Validate() != nil || request.TenantID != adapter.configuration.TenantID || request.Configuration != adapter.configuration.Registration || request.Provenance != m.Provenance || request.Restrictions != m.Restrictions || !reflect.DeepEqual(request.Capability, m.Capabilities[0]) || len(request.Evidence) != int(m.Restrictions.MaximumGrants) {
+	validEvidenceCount := len(request.Evidence) == int(m.Restrictions.MaximumGrants)
+	if !request.Capability.TemporalEvidence && !adapter.configuration.FaceMatching {
+		validEvidenceCount = len(request.Evidence) == 1
+	}
+	if request.Capability.TemporalEvidence {
+		validEvidenceCount = len(request.Evidence) >= 2 && len(request.Evidence) <= int(m.Restrictions.MaximumGrants)
+	}
+	if request.Validate() != nil || request.TenantID != adapter.configuration.TenantID || request.Configuration != adapter.configuration.Registration || request.Provenance != m.Provenance || request.Restrictions != m.Restrictions || !reflect.DeepEqual(request.Capability, m.Capabilities[0]) || !validEvidenceCount {
 		return modelv1.Result{}, ErrRuntime
 	}
 	ctx, cancel := context.WithDeadline(ctx, request.Deadline)
@@ -145,6 +185,9 @@ func (adapter *Adapter) Execute(ctx context.Context, request modelv1.Request) (m
 	}
 	if adapter.configuration.FaceMatching {
 		return adapter.executeMatch(ctx, request)
+	}
+	if adapter.configuration.SelfieAnalysis {
+		return adapter.executeAnalysis(ctx, request)
 	}
 	// The constructor caps this immutable value at 10 MiB.
 	//nolint:gosec // MaximumInputBytes is validated before the adapter is constructed.
@@ -198,7 +241,11 @@ func (adapter *Adapter) Execute(ctx context.Context, request modelv1.Request) (m
 	// Candidate scores are not approved assurance. Until crop provenance and
 	// model-specific evaluation are accepted, every native result is inconclusive.
 	outcome := modelv1.SignalOutcomeInconclusive
-	return modelv1.Result{Contract: request.Contract, AttemptID: request.AttemptID, Outcome: modelv1.ResultOutcomeCompleted, CompletedAt: adapter.now().UTC(), Signals: []modelv1.Signal{{Name: "idenqa.signal.passive_pad", Outcome: outcome, ReasonCodes: []string{reason}}}}, nil
+	var quality *modelv1.SignalQuality
+	if reason != "pad_evaluation_only" {
+		quality = &modelv1.SignalQuality{Acceptable: false, Codes: []string{reason}}
+	}
+	return modelv1.Result{Contract: request.Contract, AttemptID: request.AttemptID, Outcome: modelv1.ResultOutcomeCompleted, CompletedAt: adapter.now().UTC(), Signals: []modelv1.Signal{{Name: modelv1.SignalPassivePAD, Outcome: outcome, ReasonCodes: []string{reason}, Quality: quality}}}, nil
 }
 func (adapter *Adapter) failure(request modelv1.Request, class modelv1.FailureClass, code string) modelv1.Result {
 	at := adapter.now().UTC()

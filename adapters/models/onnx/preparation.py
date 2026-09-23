@@ -35,7 +35,7 @@ def locate_face(rgb, session):
     padded = np.zeros((640, 640, 3), dtype=np.uint8)
     padded[:scaled_h, :scaled_w] = resized
     outputs = dict(zip((o.name for o in session.get_outputs()), session.run(None, {"input": padded.transpose(2, 0, 1)[None].astype(np.float32)})))
-    boxes, scores = [], []
+    boxes, scores, landmarks = [], [], []
     for stride in (8, 16, 32):
         side = 640 // stride
         for kind, size in (("cls", 1), ("obj", 1), ("bbox", 4), ("kps", 10)):
@@ -52,26 +52,34 @@ def locate_face(rgb, session):
             y = (index // side + float(dy)) * stride - h / 2
             boxes.append([int(x), int(y), int(w), int(h)])
             scores.append(float(score[index]))
+            points = outputs[f"kps_{stride}"][0, index]
+            landmarks.append([[((index % side) + float(points[2 * point])) * stride,
+                               ((index // side) + float(points[2 * point + 1])) * stride]
+                              for point in range(5)])
     if not boxes:
         return None, "face_not_found"
     # OpenCV's YuNet wrapper uses integer-box NMS; stable input order breaks ties.
     keep = cv2.dnn.NMSBoxes(boxes, scores, 0.8, 0.3, top_k=5000)
     if len(keep) != 1:
         return None, "multiple_faces" if len(keep) > 1 else "face_not_found"
-    x, y, w, h = boxes[int(np.asarray(keep).reshape(-1)[0])]
+    selected = int(np.asarray(keep).reshape(-1)[0])
+    x, y, w, h = boxes[selected]
     # Separate effective scales account for integer resize dimensions.
     x, y, w, h = int(x * width / scaled_w), int(y * height / scaled_h), int(w * width / scaled_w), int(h * height / scaled_h)
     if min(w, h) < 64:
         return None, "face_too_small"
     if min(x, y, width - x - w, height - y - h) < 5:
         return None, "face_at_edge"
-    return (x, y, w, h), ""
+    points = np.asarray(landmarks[selected], dtype=np.float64)
+    points[:, 0] *= width / scaled_w
+    points[:, 1] *= height / scaled_h
+    return (x, y, w, h, points), ""
 
 
 def contextual_tensor(rgb, face):
     import cv2
     import numpy as np
-    x, y, w, h = face
+    x, y, w, h = face[:4]
     height, width = rgb.shape[:2]
     side = int(max(w, h) * 1.5)
     left, top = int(x + w / 2 - max(w, h) * 1.5 / 2), int(y + h / 2 - max(w, h) * 1.5 / 2)
@@ -104,6 +112,51 @@ def prepare_image(request, detector):
     return contextual_tensor(rgb, face), ""
 
 
+def analyze_image(request, detector):
+    import base64
+    import cv2
+    import math
+    import numpy as np
+    width, height = request["image_width"], request["image_height"]
+    if not isinstance(width, int) or not isinstance(height, int) or not 1 <= width <= 4096 or not 1 <= height <= 4096 or width * height > 4_000_000:
+        raise ValueError("analysis image bounds")
+    raw = base64.b64decode(request["rgb"], validate=True)
+    if len(raw) != width * height * 3:
+        raise ValueError("analysis image length")
+    rgb = np.frombuffer(raw, dtype=np.uint8).reshape(height, width, 3)
+    face, reason = locate_face(rgb, detector)
+    if reason:
+        return [reason]
+    x, y, w, h, landmarks = face
+    codes = []
+    if landmarks.shape != (5, 2) or not np.isfinite(landmarks).all():
+        codes.append("landmarks_invalid")
+    else:
+        eye_distance = float(np.linalg.norm(landmarks[0] - landmarks[1]))
+        if eye_distance < max(8, w * 0.12):
+            codes.append("landmarks_invalid")
+        else:
+            eye_delta = landmarks[1] - landmarks[0]
+            roll = abs(math.degrees(math.atan2(float(eye_delta[1]), float(eye_delta[0]))))
+            eye_midpoint = (landmarks[0] + landmarks[1]) / 2
+            yaw_ratio = abs(float(landmarks[2][0] - eye_midpoint[0])) / eye_distance
+            if roll > 15 or yaw_ratio > 0.22:
+                codes.append("pose_out_of_range")
+    gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
+    brightness, contrast = float(gray.mean()), float(gray.std())
+    sharpness = float(cv2.Laplacian(gray, cv2.CV_64F).var())
+    glare = float(np.mean(np.all(rgb >= 245, axis=2)))
+    if brightness < 40 or brightness > 220:
+        codes.append("brightness_out_of_range")
+    if contrast < 20:
+        codes.append("contrast_too_low")
+    if sharpness < 50:
+        codes.append("sharpness_too_low")
+    if glare > 0.10:
+        codes.append("glare_too_high")
+    return codes
+
+
 def matching_tensor(request, detector):
     import base64
     import cv2
@@ -118,12 +171,30 @@ def matching_tensor(request, detector):
     face, reason = locate_face(rgb, detector)
     if reason:
         return None, reason
-    # Evaluation-only bounding-box portrait extraction. No landmark alignment or
-    # document template inference is claimed. Multiple faces fail closed.
-    x, y, w, h = face
-    crop = rgb[y:y+h, x:x+w]
-    resized = cv2.resize(crop, (112, 112), interpolation=cv2.INTER_LINEAR)
-    return (resized.transpose(2, 0, 1)[None].astype(np.float32) - 127.5) / 127.5, ""
+    # Select exactly one portrait from the whole input (including a document
+    # image), then align it to the embedding model's pinned ArcFace geometry.
+    x, y, w, h, landmarks = face
+    if landmarks.shape != (5, 2) or not np.isfinite(landmarks).all() or np.linalg.norm(landmarks[0] - landmarks[1]) < max(8, w * 0.12):
+        return None, "landmarks_invalid"
+    if np.any(landmarks[:, 0] < x - w * 0.2) or np.any(landmarks[:, 0] > x + w * 1.2) or np.any(landmarks[:, 1] < y - h * 0.2) or np.any(landmarks[:, 1] > y + h * 1.2):
+        return None, "landmarks_invalid"
+    target = np.asarray([[38.2946, 51.6963], [73.5318, 51.5014], [56.0252, 71.7366],
+                         [41.5493, 92.3655], [70.7299, 92.2041]], dtype=np.float64)
+    source_mean, target_mean = landmarks.mean(axis=0), target.mean(axis=0)
+    source_centered, target_centered = landmarks - source_mean, target - target_mean
+    covariance = target_centered.T @ source_centered / landmarks.shape[0]
+    u, singular, vt = np.linalg.svd(covariance)
+    direction = np.ones(2, dtype=np.float64)
+    if np.linalg.det(covariance) < 0:
+        direction[-1] = -1
+    rotation = u @ np.diag(direction) @ vt
+    variance = np.mean(np.sum(source_centered * source_centered, axis=1))
+    if not np.isfinite(variance) or variance < 1e-9:
+        return None, "landmarks_invalid"
+    scale = float(np.dot(singular, direction) / variance)
+    transform = np.concatenate(((scale * rotation), (target_mean - scale * rotation @ source_mean)[:, None]), axis=1)
+    aligned = cv2.warpAffine(rgb, transform, (112, 112), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT)
+    return (aligned.transpose(2, 0, 1)[None].astype(np.float32) - 127.5) / 127.5, ""
 
 
 def match_pair(request, detector, session, runtime_digest):
