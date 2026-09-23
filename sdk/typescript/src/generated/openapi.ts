@@ -354,6 +354,52 @@ export interface paths {
         readonly patch?: never;
         readonly trace?: never;
     };
+    readonly "/v1/verifications/{verificationID}/decisions": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Stable verification-session identifier. */
+                readonly verificationID: components["parameters"]["VerificationID"];
+            };
+            readonly cookie?: never;
+        };
+        /**
+         * List immutable decision history for a verification
+         * @description Returns a bounded newest-first page. The before cursor is an opaque tenant-scoped decision identifier.
+         */
+        readonly get: operations["listVerificationDecisions"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/verifications/{verificationID}/reconsiderations": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Stable verification-session identifier. */
+                readonly verificationID: components["parameters"]["VerificationID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Open an independent correction workflow for a decision
+         * @description Reconsideration reuses the existing versioned review-correction lifecycle; it never mutates an immutable decision in place.
+         */
+        readonly post: operations["createVerificationReconsideration"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
     readonly "/v1/decisions/{decisionID}": {
         readonly parameters: {
             readonly query?: never;
@@ -570,6 +616,83 @@ export interface paths {
         readonly patch?: never;
         readonly trace?: never;
     };
+    readonly "/v1/consent-receipts": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Record an explicit session-bound subject response
+         * @description Uses the capture credential and the exact notice bound to the active verification; tenant API credentials cannot invent subject consent.
+         */
+        readonly post: operations["createConsentReceipt"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/consent-receipts/{consentID}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** Inspect one immutable consent receipt */
+        readonly get: operations["getConsentReceipt"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/consent-receipts/{consentID}/revoke": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Append a refusal that withdraws an immutable consent receipt
+         * @description The original consent remains immutable; successful withdrawal creates a new refusal receipt.
+         */
+        readonly post: operations["revokeConsentReceipt"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/capture/document-selection": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Select a profile-pinned document branch
+         * @description Activates pinned artefacts without changing requirements. Switching is rejected after any upload intent for the requirement. Exact retries return the original session result.
+         */
+        readonly post: operations["selectCaptureDocument"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
     readonly "/v1/capture/session": {
         readonly parameters: {
             readonly query?: never;
@@ -679,6 +802,97 @@ export interface paths {
          *     to analytics, or reused. Request a new ticket after expiry or failure.
          */
         readonly post: operations["createCaptureConnection"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/evidence/{evidenceID}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Inspect safe evidence metadata
+         * @description Returns reference-only lifecycle metadata. Object keys, wrapped keys, digests, and evidence bytes are never exposed.
+         */
+        readonly get: operations["getEvidence"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/evidence/{evidenceID}/lifecycle": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** List safe evidence lifecycle events */
+        readonly get: operations["listEvidenceLifecycle"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/evidence-access-grants/{grantID}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** Inspect a purpose-bound evidence-processing grant */
+        readonly get: operations["getEvidenceAccessGrant"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/evidence/{evidenceID}/access-grants": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Issue a purpose-bound evidence-processing grant
+         * @description Live processing authority is re-evaluated before an idempotent, short-lived capability is committed.
+         */
+        readonly post: operations["createEvidenceAccessGrant"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/evidence-access-grants/{grantID}/revoke": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /** Irreversibly revoke an evidence-processing grant */
+        readonly post: operations["revokeEvidenceAccessGrant"];
         readonly delete?: never;
         readonly options?: never;
         readonly head?: never;
@@ -2363,6 +2577,184 @@ export interface paths {
         };
         /** Get prompt version */
         readonly get: operations["getPrompt"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/proposal-models": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /** Register an immutable generative-model revision */
+        readonly post: operations["createProposalModel"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/proposal-models/{modelID}/{version}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Generative-model registry identifier. */
+                readonly modelID: string;
+                /** @description Immutable model registry version. */
+                readonly version: number;
+            };
+            readonly cookie?: never;
+        };
+        /** Get an immutable generative-model revision */
+        readonly get: operations["getProposalModel"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/proposal-activations/{workflow}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant workflow whose route is activated. */
+                readonly workflow: string;
+            };
+            readonly cookie?: never;
+        };
+        /** Get the current model route activation */
+        readonly get: operations["getProposalActivation"];
+        /** Activate an exact model and prompt route */
+        readonly put: operations["activateProposalRoute"];
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/proposal-activations/{workflow}/history": {
+        readonly parameters: {
+            readonly query?: {
+                /** @description Maximum newest-first revisions to return. */
+                readonly limit?: number;
+            };
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant workflow whose activation history is requested. */
+                readonly workflow: string;
+            };
+            readonly cookie?: never;
+        };
+        /** List immutable activation history newest first */
+        readonly get: operations["listProposalActivationHistory"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/proposal-activations/{workflow}/retire": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant workflow whose current route is retired. */
+                readonly workflow: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /** Retire the current model route */
+        readonly post: operations["retireProposalActivation"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/proposal-activations/{workflow}/rollback": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant workflow whose prior active route is republished. */
+                readonly workflow: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /** Republish a prior active route as a new revision */
+        readonly post: operations["rollbackProposalActivation"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/proposal-usage": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** Get content-free generation usage totals */
+        readonly get: operations["getProposalUsage"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/proposal-impact-assessments": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** List immutable AI impact assessments */
+        readonly get: operations["listProposalImpactAssessments"];
+        readonly put?: never;
+        /** Record an immutable AI impact assessment */
+        readonly post: operations["createProposalImpactAssessment"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/proposal-impact-assessments/{assessmentID}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Immutable impact assessment identifier. */
+                readonly assessmentID: string;
+            };
+            readonly cookie?: never;
+        };
+        /** Get one immutable AI impact assessment */
+        readonly get: operations["getProposalImpactAssessment"];
         readonly put?: never;
         readonly post?: never;
         readonly delete?: never;
@@ -6645,6 +7037,14 @@ export interface components {
             /** @constant */
             readonly reproduced: true;
         };
+        /** @description Bounded newest-first immutable decision lineage. */
+        readonly PolicyDecisionList: {
+            readonly data: readonly components["schemas"]["PolicyDecisionReport"][];
+            readonly next_before?: components["schemas"]["PolicyDecisionID"];
+        };
+        readonly VerificationReconsiderationCreate: {
+            readonly decision_id: components["schemas"]["PolicyDecisionID"];
+        };
         /** @description Byte-canonical, self-checking decision reproduction envelope; it never contains raw evidence bytes. */
         readonly PolicyDecisionBundle: {
             /** @constant */
@@ -6994,6 +7394,10 @@ export interface components {
              */
             readonly recorded_at: string;
         };
+        /** @description Bounded audit reason for append-only consent withdrawal. */
+        readonly ConsentReceiptRevoke: {
+            readonly reason: string;
+        };
         /** @description Capture-visible current authority, exact notice, and optional latest response. */
         readonly CaptureAuthoritySnapshot: {
             readonly authority: components["schemas"]["ProcessingAuthority"];
@@ -7105,6 +7509,18 @@ export interface components {
                 readonly sdk_version?: string;
             };
         };
+        /** @description An expected-version command selecting one pinned document option. */
+        readonly CaptureDocumentSelection: {
+            /** @example document */
+            readonly requirement_key: string;
+            /** @example passport */
+            readonly document_type: string;
+            /**
+             * Format: int64
+             * @example 1
+             */
+            readonly expected_version: number;
+        };
         /** @description Immutable capture requirements and current lifecycle metadata for one verification. */
         readonly VerificationSession: {
             readonly id: components["schemas"]["VerificationSessionID"];
@@ -7146,6 +7562,15 @@ export interface components {
              */
             readonly requested_input?: components["schemas"]["VerificationInputRequest"];
             readonly requirements: components["schemas"]["profile.schema"];
+            /**
+             * @description Core-recorded document option ID by requirement key, separate from immutable requirements.
+             * @example {
+             *       "document": "passport"
+             *     }
+             */
+            readonly document_selections?: {
+                readonly [key: string]: string;
+            };
             /**
              * Format: date-time
              * @example 2026-08-27T12:00:00Z
@@ -7316,11 +7741,107 @@ export interface components {
          * @example evd_01M11HEQG00000000000000000
          */
         readonly EvidenceID: string;
+        /** @example grt_01M11HEQG00000000000000000 */
+        readonly EvidenceAccessGrantID: string;
+        /** @description Safe reference-only evidence metadata; storage and cryptographic material are absent. */
+        readonly EvidenceMetadata: {
+            readonly id: components["schemas"]["EvidenceID"];
+            readonly subject_id: components["schemas"]["SubjectID"];
+            readonly verification_id: components["schemas"]["VerificationSessionID"];
+            readonly requirement_key: string;
+            readonly evidence_type: string;
+            readonly artefact: string;
+            readonly acquisition_method: string;
+            readonly assurances: readonly string[];
+            readonly registry_revision: number;
+            readonly region: string;
+            readonly retention_class: string;
+            readonly content_revision: number;
+            /** @enum {string} */
+            readonly integrity: "verified" | "failed";
+            /** @enum {string} */
+            readonly state: "available" | "quarantined" | "deleted";
+            /** Format: int64 */
+            readonly version: number;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+            readonly quarantine_reason?: string;
+            /** Format: date-time */
+            readonly quarantined_at?: string;
+        };
+        readonly EvidenceLifecycleEvent: {
+            /** Format: int64 */
+            readonly version: number;
+            readonly action: string;
+            readonly reason?: string;
+            /** Format: date-time */
+            readonly occurred_at: string;
+        };
+        readonly EvidenceLifecycleList: {
+            readonly data: readonly components["schemas"]["EvidenceLifecycleEvent"][];
+        };
+        readonly EvidenceAccessGrantCreate: {
+            readonly check_reference: string;
+            readonly runner_identity: string;
+            readonly workload_version: string;
+            readonly purpose: string;
+            readonly permitted_variants: readonly string[];
+            readonly recipient_reference: string;
+            readonly output_destination: string;
+            readonly maximum_uses: number;
+            /** Format: int64 */
+            readonly ttl_seconds: number;
+            readonly reason: string;
+        };
+        /** @description Safe purpose-bound grant metadata; redemption attempts are absent. */
+        readonly EvidenceAccessGrant: {
+            readonly id: components["schemas"]["EvidenceAccessGrantID"];
+            readonly subject_id: components["schemas"]["SubjectID"];
+            readonly verification_id: components["schemas"]["VerificationSessionID"];
+            readonly evidence_id: components["schemas"]["EvidenceID"];
+            readonly authority_id: components["schemas"]["ProcessingAuthorityID"];
+            readonly response_id: components["schemas"]["SubjectResponseID"];
+            readonly requirement_key: string;
+            readonly check_reference: string;
+            readonly runner_identity: string;
+            readonly workload_version: string;
+            readonly purpose: string;
+            /** @enum {string} */
+            readonly operation: "evidence.plaintext.read";
+            readonly permitted_variants: readonly string[];
+            readonly region: string;
+            readonly recipient_reference: string;
+            readonly output_destination: string;
+            readonly policy_reference: string;
+            readonly maximum_uses: number;
+            readonly uses: number;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly expires_at: string;
+            /** Format: date-time */
+            readonly revoked_at?: string;
+        };
+        readonly EvidenceAccessGrantRevoke: {
+            readonly reason: string;
+        };
         /**
          * @description Policy-approved reason for selecting a fallback acquisition branch.
          * @enum {string}
          */
         readonly CaptureFallbackCondition: "capability_unavailable" | "method_unavailable" | "capture_failed";
+        /** @description Metadata binding one image into an ordered digest-chained active-capture sequence. It makes no assurance claim. */
+        readonly TemporalEvidenceFrame: {
+            readonly sequence_digest: string;
+            readonly index: number;
+            readonly count: number;
+            readonly challenge_id: string;
+            /** Format: date-time */
+            readonly captured_at: string;
+            readonly previous_digest?: string;
+        };
         /** @description Minimal immutable binding for one accepted capture step. */
         readonly CaptureCompletion: {
             readonly upload_id: components["schemas"]["EvidenceUploadID"];
@@ -7442,6 +7963,7 @@ export interface components {
             readonly acquisition_method: string;
             /** @example capability_unavailable */
             readonly fallback_condition?: components["schemas"]["CaptureFallbackCondition"];
+            readonly sequence?: components["schemas"]["TemporalEvidenceFrame"];
             /**
              * Format: int64
              * @example 245760
@@ -7483,6 +8005,7 @@ export interface components {
             readonly acquisition_method: string;
             /** @example capture_failed */
             readonly fallback_condition?: components["schemas"]["CaptureFallbackCondition"];
+            readonly sequence?: components["schemas"]["TemporalEvidenceFrame"];
             /** @example [] */
             readonly assurances: readonly string[];
             /**
@@ -8319,6 +8842,21 @@ export interface components {
              *     ]
              */
             readonly allowed_kinds?: readonly components["schemas"]["ProposalActionKind"][];
+            /** @example mdl_01M11HEQG00000000000000000 */
+            readonly model_registry_id?: string;
+            /** @example 1 */
+            readonly model_registry_version?: number;
+            /** @example prm_01M11HEQG00000000000000000 */
+            readonly prompt_id?: string;
+            /** @example 1 */
+            readonly prompt_registry_version?: number;
+            /** @example 1 */
+            readonly activation_revision?: number;
+            /**
+             * @description Write precondition; omitted from read responses.
+             * @example 0
+             */
+            readonly expected_version?: number;
             /** @example 1 */
             readonly version: number;
         };
@@ -8341,6 +8879,168 @@ export interface components {
             readonly digest: string;
             /** @example model.test */
             readonly model_id: string;
+        };
+        /** @description Registration input for one immutable provider-neutral generative-model revision. */
+        readonly ProposalModelCreate: {
+            /** @example ai.review */
+            readonly model_id: string;
+            /** @example 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef */
+            readonly digest: string;
+        };
+        /** @description Tenant-owned immutable generative-model registry revision. */
+        readonly ProposalModel: {
+            /** @example mdl_01M11HEQG00000000000000000 */
+            readonly model_registry_id: string;
+            /** @example 1 */
+            readonly version: number;
+            /** @example ai.review */
+            readonly model_id: string;
+            /** @example 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef */
+            readonly digest: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-21T12:00:00Z
+             */
+            readonly created_at: string;
+        };
+        /** @description Exact immutable registry and provider route selected for a workflow. */
+        readonly ProposalActivationRequest: {
+            /** @example mdl_01M11HEQG00000000000000000 */
+            readonly model_registry_id: string;
+            /** @example 1 */
+            readonly model_registry_version: number;
+            /** @example prm_01M11HEQG00000000000000000 */
+            readonly prompt_registry_id: string;
+            /** @example 1 */
+            readonly prompt_registry_version: number;
+            /** @example gpt-4o-2024-08-06 */
+            readonly model_version: string;
+            /** @example review-p1 */
+            readonly prompt_version: string;
+            /** @example 0 */
+            readonly expected_revision: number;
+            /** @example approved evaluation candidate */
+            readonly reason?: string;
+        };
+        /** @description CAS-protected retirement request with an auditable reason. */
+        readonly ProposalActivationLifecycleRequest: {
+            /** @example 1 */
+            readonly expected_revision: number;
+            /** @example provider contract ended */
+            readonly reason?: string;
+        };
+        /** @description CAS-protected request to republish one prior active route. */
+        readonly ProposalActivationRollbackRequest: {
+            /** @example 2 */
+            readonly expected_revision: number;
+            /** @example 1 */
+            readonly target_revision: number;
+            /** @example evaluation regression */
+            readonly reason?: string;
+        };
+        /** @description Current or historical audited workflow route revision. */
+        readonly ProposalActivation: {
+            /** @example default */
+            readonly workflow: string;
+            /** @example 1 */
+            readonly revision: number;
+            /**
+             * @example active
+             * @enum {string}
+             */
+            readonly state: "active" | "retired";
+            /** @example mdl_01M11HEQG00000000000000000 */
+            readonly model_registry_id: string;
+            /** @example 1 */
+            readonly model_registry_version: number;
+            /** @example prm_01M11HEQG00000000000000000 */
+            readonly prompt_registry_id: string;
+            /** @example 1 */
+            readonly prompt_registry_version: number;
+            /** @example ai.review */
+            readonly model_id: string;
+            /** @example gpt-4o-2024-08-06 */
+            readonly model_version: string;
+            /** @example review-p1 */
+            readonly prompt_version: string;
+            /**
+             * @example activated
+             * @enum {string}
+             */
+            readonly action: "activated" | "retired" | "rolled_back";
+            /** @example 1 */
+            readonly source_revision?: number;
+            /** @example approved evaluation candidate */
+            readonly reason?: string;
+            /** @example key_01M11HEQG00000000000000000 */
+            readonly actor_id: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-21T12:00:00Z
+             */
+            readonly occurred_at: string;
+        };
+        /** @description Bounded newest-first immutable activation history. */
+        readonly ProposalActivationHistory: {
+            /** @example [] */
+            readonly activations: readonly components["schemas"]["ProposalActivation"][];
+        };
+        /** @description Content-free tenant generation accounting over a bounded half-open interval. */
+        readonly ProposalUsageReport: {
+            /**
+             * Format: date-time
+             * @example 2026-09-01T00:00:00Z
+             */
+            readonly from: string;
+            /**
+             * Format: date-time
+             * @example 2026-10-01T00:00:00Z
+             */
+            readonly to: string;
+            /** @example 120 */
+            readonly attempts: number;
+            /** @example 110 */
+            readonly succeeded: number;
+            /** @example 4 */
+            readonly failed: number;
+            /** @example 3 */
+            readonly rejected: number;
+            /** @example 3 */
+            readonly invalid_output: number;
+            /** @example 4 */
+            readonly unreported_usage: number;
+            /** @example 120000 */
+            readonly input_tokens: number;
+            /** @example 30000 */
+            readonly output_tokens: number;
+            /** @example 600000 */
+            readonly estimated_cost_micros: number;
+        };
+        /** @description One reviewed assessment for a bounded proposal action kind. */
+        readonly ProposalImpactAssessmentCreate: {
+            readonly kind: components["schemas"]["ProposalActionKind"];
+            /** @example Human approval remains mandatory for this action. */
+            readonly assessment: string;
+            /**
+             * @example high
+             * @enum {string}
+             */
+            readonly risk_level: "low" | "medium" | "high" | "critical";
+        };
+        readonly ProposalImpactAssessment: components["schemas"]["ProposalImpactAssessmentCreate"] & {
+            /** @example imp_1790000000000000000 */
+            readonly id: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-21T12:00:00Z
+             */
+            readonly created_at: string;
+            /** @example key_01M11HEQG00000000000000000 */
+            readonly actor_id: string;
+        };
+        /** @description Bounded newest-first immutable impact assessments. */
+        readonly ProposalImpactAssessmentList: {
+            readonly data: readonly components["schemas"]["ProposalImpactAssessment"][];
         };
         /**
          * @description Stable Idenqa deletion-workflow identifier.
@@ -11006,6 +11706,11 @@ export interface components {
             readonly strategy: "any_of" | "all_of";
             readonly methods: readonly components["schemas"]["method"][];
         };
+        readonly document_option: {
+            readonly id: string;
+            readonly label: string;
+            readonly artefacts: readonly ("idenqa.artefact.document_front" | "idenqa.artefact.document_back")[];
+        };
         readonly "$defs-constraint": {
             readonly name: components["schemas"]["constraint"];
             readonly value: string | number | boolean | readonly string[];
@@ -11022,6 +11727,8 @@ export interface components {
         };
         readonly requirement: {
             readonly key: string;
+            /** @description Only document_image requirements may offer options. IDs must be unique and the artefact union must equal the requirement artefacts; Core validates these cross-field invariants. */
+            readonly document_options?: readonly components["schemas"]["document_option"][];
             readonly purpose: components["schemas"]["purpose"];
             readonly evidence_type: components["schemas"]["evidence"];
             readonly artefacts: readonly components["schemas"]["artefact"][];
@@ -11084,8 +11791,15 @@ export interface components {
                     readonly on: readonly ("capability_unavailable" | "method_unavailable" | "capture_failed")[];
                     readonly acquisition: components["schemas"]["acquisition"];
                 };
+                readonly document_option: {
+                    readonly id: string;
+                    readonly label: string;
+                    readonly artefacts: readonly ("idenqa.artefact.document_front" | "idenqa.artefact.document_back")[];
+                };
                 readonly requirement: {
                     readonly key: string;
+                    /** @description Only document_image requirements may offer options. IDs must be unique and the artefact union must equal the requirement artefacts; Core validates these cross-field invariants. */
+                    readonly document_options?: readonly components["schemas"]["document_option"][];
                     readonly purpose: components["schemas"]["purpose"];
                     readonly evidence_type: components["schemas"]["evidence"];
                     readonly artefacts: readonly components["schemas"]["artefact"][];
@@ -12185,6 +12899,85 @@ export interface operations {
             readonly 503: components["responses"]["ServiceUnavailable"];
         };
     };
+    readonly listVerificationDecisions: {
+        readonly parameters: {
+            readonly query?: {
+                /** @description Exclude this decision and every newer decision. */
+                readonly before?: components["schemas"]["PolicyDecisionID"];
+                /** @description Maximum collection items to return. The default is 25. */
+                readonly limit?: components["parameters"]["Limit"];
+            };
+            readonly header?: never;
+            readonly path: {
+                /** @description Stable verification-session identifier. */
+                readonly verificationID: components["parameters"]["VerificationID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description A bounded decision-history page. */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["PolicyDecisionList"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly createVerificationReconsideration: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                /** @description Stable verification-session identifier. */
+                readonly verificationID: components["parameters"]["VerificationID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["VerificationReconsiderationCreate"];
+            };
+        };
+        readonly responses: {
+            /** @description The correction workflow was opened or exactly replayed. */
+            readonly 201: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["ReviewFollowup"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     readonly getDecision: {
         readonly parameters: {
             readonly query?: never;
@@ -12792,6 +13585,179 @@ export interface operations {
             readonly 500: components["responses"]["InternalError"];
         };
     };
+    readonly createConsentReceipt: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["SubjectResponseCreate"];
+            };
+        };
+        readonly responses: {
+            /** @description The append-only response was recorded or exactly replayed. */
+            readonly 201: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["SubjectResponse"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["ProcessingAuthorityRequired"];
+            readonly 409: components["responses"]["Conflict"];
+        };
+    };
+    readonly getConsentReceipt: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly consentID: components["schemas"]["SubjectResponseID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The immutable consent receipt. */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["SubjectResponse"];
+                };
+            };
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+        };
+    };
+    readonly revokeConsentReceipt: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                readonly consentID: components["schemas"]["SubjectResponseID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["ConsentReceiptRevoke"];
+            };
+        };
+        readonly responses: {
+            /** @description A new append-only refusal receipt was recorded or replayed. */
+            readonly 201: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["SubjectResponse"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+        };
+    };
+    readonly selectCaptureDocument: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** @description The pinned document option and last observed session version. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "requirement_key": "document",
+                 *       "document_type": "passport",
+                 *       "expected_version": 1
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["CaptureDocumentSelection"];
+            };
+        };
+        readonly responses: {
+            /** @description The selected branch and unchanged requirements. */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "ver_01M11HEQG00000000000000000",
+                     *       "state": "collecting",
+                     *       "version": 2,
+                     *       "profile_id": "prf_01M11HEQG00000000000000000",
+                     *       "profile_revision": 1,
+                     *       "profile_digest": "sha256:284a4418399974a7d1ce691f96ea534e1cd97ee1a9bc0d09de25d4a3b9d48969",
+                     *       "policy_id": "pol_01M11HEQG00000000000000000",
+                     *       "region": "ng-1",
+                     *       "document_selections": {
+                     *         "document": "passport"
+                     *       },
+                     *       "requirements": {
+                     *         "schema_version": 1,
+                     *         "registry": {
+                     *           "schema_version": 1,
+                     *           "revision": 1,
+                     *           "digest": "sha256:71ef9df77044f9bf5eeb7ae448da3d98811ff4cb3f2541f459e60b4628a5364f"
+                     *         },
+                     *         "requirements": []
+                     *       },
+                     *       "created_at": "2026-08-27T12:00:00Z",
+                     *       "updated_at": "2026-08-27T12:01:00Z",
+                     *       "expires_at": "2026-08-28T12:00:00Z"
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["VerificationSession"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 409: components["responses"]["Conflict"];
+        };
+    };
     readonly getCaptureSession: {
         readonly parameters: {
             readonly query?: never;
@@ -13006,6 +13972,163 @@ export interface operations {
             readonly 401: components["responses"]["Unauthenticated"];
             readonly 403: components["responses"]["CaptureOriginNotAllowed"];
             readonly 500: components["responses"]["InternalError"];
+        };
+    };
+    readonly getEvidence: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly evidenceID: components["schemas"]["EvidenceID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description Safe evidence metadata. */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["EvidenceMetadata"];
+                };
+            };
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+        };
+    };
+    readonly listEvidenceLifecycle: {
+        readonly parameters: {
+            readonly query?: {
+                readonly limit?: number;
+            };
+            readonly header?: never;
+            readonly path: {
+                readonly evidenceID: components["schemas"]["EvidenceID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description Bounded append-only lifecycle history. */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["EvidenceLifecycleList"];
+                };
+            };
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+        };
+    };
+    readonly getEvidenceAccessGrant: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                readonly grantID: components["schemas"]["EvidenceAccessGrantID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description Safe grant metadata without redemption details. */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["EvidenceAccessGrant"];
+                };
+            };
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+        };
+    };
+    readonly createEvidenceAccessGrant: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                readonly evidenceID: components["schemas"]["EvidenceID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["EvidenceAccessGrantCreate"];
+            };
+        };
+        readonly responses: {
+            /** @description The grant was created or exactly replayed. */
+            readonly 201: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["EvidenceAccessGrant"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+        };
+    };
+    readonly revokeEvidenceAccessGrant: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header: {
+                /**
+                 * @description An RFC 9651 String used to deduplicate a consequential request. It is
+                 *     scoped to the authenticated tenant and operation. Reusing a key with a
+                 *     different canonical request fingerprint is a conflict. Keys are not
+                 *     credentials and clients must not place secrets or identity data in them.
+                 * @example "vs_01M11HEQG00000000000000000"
+                 */
+                readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
+            };
+            readonly path: {
+                readonly grantID: components["schemas"]["EvidenceAccessGrantID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["EvidenceAccessGrantRevoke"];
+            };
+        };
+        readonly responses: {
+            /** @description The grant was revoked. */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["EvidenceAccessGrant"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
         };
     };
     readonly createEvidenceUpload: {
@@ -17899,6 +19022,338 @@ export interface operations {
                 };
                 content: {
                     readonly "application/json": components["schemas"]["Prompt"];
+                };
+            };
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 500: components["responses"]["InternalError"];
+        };
+    };
+    readonly createProposalModel: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** @description Provider-neutral logical identifier and reviewed immutable model digest. */
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["ProposalModelCreate"];
+            };
+        };
+        readonly responses: {
+            /** @description Model registered */
+            readonly 201: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["ProposalModel"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 500: components["responses"]["InternalError"];
+        };
+    };
+    readonly getProposalModel: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Generative-model registry identifier. */
+                readonly modelID: string;
+                /** @description Immutable model registry version. */
+                readonly version: number;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description Model revision */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["ProposalModel"];
+                };
+            };
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 500: components["responses"]["InternalError"];
+        };
+    };
+    readonly getProposalActivation: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant workflow whose route is activated. */
+                readonly workflow: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description Current activation */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["ProposalActivation"];
+                };
+            };
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 500: components["responses"]["InternalError"];
+        };
+    };
+    readonly activateProposalRoute: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant workflow whose route is activated. */
+                readonly workflow: string;
+            };
+            readonly cookie?: never;
+        };
+        /** @description Exact immutable registry records, provider route versions, and CAS precondition. */
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["ProposalActivationRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description Active route */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["ProposalActivation"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 500: components["responses"]["InternalError"];
+        };
+    };
+    readonly listProposalActivationHistory: {
+        readonly parameters: {
+            readonly query?: {
+                /** @description Maximum newest-first revisions to return. */
+                readonly limit?: number;
+            };
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant workflow whose activation history is requested. */
+                readonly workflow: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description Activation history */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["ProposalActivationHistory"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 500: components["responses"]["InternalError"];
+        };
+    };
+    readonly retireProposalActivation: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant workflow whose current route is retired. */
+                readonly workflow: string;
+            };
+            readonly cookie?: never;
+        };
+        /** @description Current revision precondition and bounded audit reason. */
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["ProposalActivationLifecycleRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description Retired route */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["ProposalActivation"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 500: components["responses"]["InternalError"];
+        };
+    };
+    readonly rollbackProposalActivation: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Tenant workflow whose prior active route is republished. */
+                readonly workflow: string;
+            };
+            readonly cookie?: never;
+        };
+        /** @description Current and target revisions plus bounded audit reason. */
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["ProposalActivationRollbackRequest"];
+            };
+        };
+        readonly responses: {
+            /** @description Rolled-back route */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["ProposalActivation"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 500: components["responses"]["InternalError"];
+        };
+    };
+    readonly getProposalUsage: {
+        readonly parameters: {
+            readonly query: {
+                /** @description Inclusive UTC report boundary. */
+                readonly from: string;
+                /** @description Exclusive UTC report boundary, at most 366 days after from. */
+                readonly to: string;
+            };
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description Usage totals */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["ProposalUsageReport"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 500: components["responses"]["InternalError"];
+        };
+    };
+    readonly listProposalImpactAssessments: {
+        readonly parameters: {
+            readonly query?: {
+                /** @description Exclusive RFC3339 creation-time cursor. */
+                readonly before?: string;
+                /** @description Maximum collection items to return. The default is 25. */
+                readonly limit?: components["parameters"]["Limit"];
+            };
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description Bounded newest-first assessments. */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["ProposalImpactAssessmentList"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 500: components["responses"]["InternalError"];
+        };
+    };
+    readonly createProposalImpactAssessment: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody: {
+            readonly content: {
+                readonly "application/json": components["schemas"]["ProposalImpactAssessmentCreate"];
+            };
+        };
+        readonly responses: {
+            /** @description Assessment recorded. */
+            readonly 201: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["ProposalImpactAssessment"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 500: components["responses"]["InternalError"];
+        };
+    };
+    readonly getProposalImpactAssessment: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Immutable impact assessment identifier. */
+                readonly assessmentID: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description Assessment returned. */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["ProposalImpactAssessment"];
                 };
             };
             readonly 401: components["responses"]["Unauthenticated"];

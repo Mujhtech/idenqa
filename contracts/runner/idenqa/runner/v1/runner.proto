@@ -171,6 +171,12 @@ message Signal {
   string name = 1 [(buf.validate.field).string = {min_len: 1, max_len: 128}];
   SignalOutcome outcome = 2 [(buf.validate.field).enum.defined_only = true];
   repeated string reason_codes = 3 [(buf.validate.field).repeated = {max_items: 32, unique: true, items: {string: {min_len: 1, max_len: 128}}}];
+  SignalQuality quality = 4;
+}
+
+message SignalQuality {
+  bool acceptable = 1;
+  repeated string codes = 2 [(buf.validate.field).repeated = {max_items: 16, unique: true, items: {string: {min_len: 1, max_len: 128}}}];
 }
 
 // ResultOutcome separates completed work from operational failure.
@@ -307,6 +313,7 @@ message ModelCapability {
   repeated string accepted_evidence = 2 [(buf.validate.field).repeated = {min_items: 1, max_items: 32, unique: true}];
   repeated string required_assurances = 3 [(buf.validate.field).repeated = {max_items: 32, unique: true}];
   repeated string output_signals = 4 [(buf.validate.field).repeated = {min_items: 1, max_items: 64, unique: true}];
+  bool temporal_evidence = 5;
 }
 
 // ModelRestrictions pins resource policy for one model execution.
@@ -316,6 +323,8 @@ message ModelRestrictions {
   uint64 maximum_input_bytes = 3 [(buf.validate.field).uint64.gt = 0];
   uint32 maximum_result_size = 4 [(buf.validate.field).uint32 = {gt: 0, lte: 262144}];
   google.protobuf.Duration maximum_duration = 5 [(buf.validate.field).required = true];
+  bool persist_derived_data = 6;
+  google.protobuf.Duration derived_retention = 7;
 }
 
 // ModelManifest is the immutable model advertisement.
@@ -330,6 +339,20 @@ message ModelConfigurationReference {
   string model_registration_id = 1 [(buf.validate.field).string = {prefix: "mdl_", max_len: 64}];
   string configuration_digest = 2 [(buf.validate.field).string = {min_len: 1, max_len: 128}];
   string configuration_reference = 3 [(buf.validate.field).string = {min_len: 1, max_len: 512}];
+}
+
+message ModelEvidenceSequenceFrame {
+  string grant_id = 1 [(buf.validate.field).string = {prefix: "grt_", max_len: 64}];
+  string challenge_id = 2 [(buf.validate.field).string = {min_len: 1, max_len: 160}];
+  uint32 index = 3 [(buf.validate.field).uint32.lte = 31];
+  google.protobuf.Timestamp captured_at = 4 [(buf.validate.field).required = true];
+  string previous_digest = 5 [(buf.validate.field).string.max_len = 71];
+  string content_digest = 6 [(buf.validate.field).string.len = 71];
+}
+
+message ModelEvidenceSequence {
+  string sequence_digest = 1 [(buf.validate.field).string.len = 71];
+  repeated ModelEvidenceSequenceFrame frames = 2 [(buf.validate.field).repeated = {min_items: 2, max_items: 32}];
 }
 
 // ModelRequest is the immutable retry-safe model attempt envelope.
@@ -348,6 +371,7 @@ message ModelRequest {
   repeated EvidenceGrantReference evidence = 12 [(buf.validate.field).repeated.max_items = 64];
   google.protobuf.Timestamp deadline = 13 [(buf.validate.field).required = true];
   TraceContext trace = 14 [(buf.validate.field).required = true];
+  repeated ModelEvidenceSequence sequences = 15 [(buf.validate.field).repeated.max_items = 1];
 }
 
 // ModelResult is the bounded terminal model result.

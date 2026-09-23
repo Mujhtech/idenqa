@@ -437,6 +437,60 @@ func (e DecisionReferenceKind) Valid() bool {
 	}
 }
 
+// Defines values for EvidenceAccessGrantOperation.
+const (
+	EvidencePlaintextRead EvidenceAccessGrantOperation = "evidence.plaintext.read"
+)
+
+// Valid indicates whether the value is a known member of the EvidenceAccessGrantOperation enum.
+func (e EvidenceAccessGrantOperation) Valid() bool {
+	switch e {
+	case EvidencePlaintextRead:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for EvidenceMetadataIntegrity.
+const (
+	EvidenceMetadataIntegrityFailed   EvidenceMetadataIntegrity = "failed"
+	EvidenceMetadataIntegrityVerified EvidenceMetadataIntegrity = "verified"
+)
+
+// Valid indicates whether the value is a known member of the EvidenceMetadataIntegrity enum.
+func (e EvidenceMetadataIntegrity) Valid() bool {
+	switch e {
+	case EvidenceMetadataIntegrityFailed:
+		return true
+	case EvidenceMetadataIntegrityVerified:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for EvidenceMetadataState.
+const (
+	EvidenceMetadataStateAvailable   EvidenceMetadataState = "available"
+	EvidenceMetadataStateDeleted     EvidenceMetadataState = "deleted"
+	EvidenceMetadataStateQuarantined EvidenceMetadataState = "quarantined"
+)
+
+// Valid indicates whether the value is a known member of the EvidenceMetadataState enum.
+func (e EvidenceMetadataState) Valid() bool {
+	switch e {
+	case EvidenceMetadataStateAvailable:
+		return true
+	case EvidenceMetadataStateDeleted:
+		return true
+	case EvidenceMetadataStateQuarantined:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for EvidenceUploadAllowedMediaTypes.
 const (
 	EvidenceUploadAllowedMediaTypesImageJpeg EvidenceUploadAllowedMediaTypes = "image/jpeg"
@@ -3077,6 +3131,93 @@ func (e ProposalActionKind) Valid() bool {
 	}
 }
 
+// Defines values for ProposalActivationAction.
+const (
+	ProposalActivationActionActivated  ProposalActivationAction = "activated"
+	ProposalActivationActionRetired    ProposalActivationAction = "retired"
+	ProposalActivationActionRolledBack ProposalActivationAction = "rolled_back"
+)
+
+// Valid indicates whether the value is a known member of the ProposalActivationAction enum.
+func (e ProposalActivationAction) Valid() bool {
+	switch e {
+	case ProposalActivationActionActivated:
+		return true
+	case ProposalActivationActionRetired:
+		return true
+	case ProposalActivationActionRolledBack:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ProposalActivationState.
+const (
+	ProposalActivationStateActive  ProposalActivationState = "active"
+	ProposalActivationStateRetired ProposalActivationState = "retired"
+)
+
+// Valid indicates whether the value is a known member of the ProposalActivationState enum.
+func (e ProposalActivationState) Valid() bool {
+	switch e {
+	case ProposalActivationStateActive:
+		return true
+	case ProposalActivationStateRetired:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ProposalImpactAssessmentRiskLevel.
+const (
+	ProposalImpactAssessmentRiskLevelCritical ProposalImpactAssessmentRiskLevel = "critical"
+	ProposalImpactAssessmentRiskLevelHigh     ProposalImpactAssessmentRiskLevel = "high"
+	ProposalImpactAssessmentRiskLevelLow      ProposalImpactAssessmentRiskLevel = "low"
+	ProposalImpactAssessmentRiskLevelMedium   ProposalImpactAssessmentRiskLevel = "medium"
+)
+
+// Valid indicates whether the value is a known member of the ProposalImpactAssessmentRiskLevel enum.
+func (e ProposalImpactAssessmentRiskLevel) Valid() bool {
+	switch e {
+	case ProposalImpactAssessmentRiskLevelCritical:
+		return true
+	case ProposalImpactAssessmentRiskLevelHigh:
+		return true
+	case ProposalImpactAssessmentRiskLevelLow:
+		return true
+	case ProposalImpactAssessmentRiskLevelMedium:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ProposalImpactAssessmentCreateRiskLevel.
+const (
+	ProposalImpactAssessmentCreateRiskLevelCritical ProposalImpactAssessmentCreateRiskLevel = "critical"
+	ProposalImpactAssessmentCreateRiskLevelHigh     ProposalImpactAssessmentCreateRiskLevel = "high"
+	ProposalImpactAssessmentCreateRiskLevelLow      ProposalImpactAssessmentCreateRiskLevel = "low"
+	ProposalImpactAssessmentCreateRiskLevelMedium   ProposalImpactAssessmentCreateRiskLevel = "medium"
+)
+
+// Valid indicates whether the value is a known member of the ProposalImpactAssessmentCreateRiskLevel enum.
+func (e ProposalImpactAssessmentCreateRiskLevel) Valid() bool {
+	switch e {
+	case ProposalImpactAssessmentCreateRiskLevelCritical:
+		return true
+	case ProposalImpactAssessmentCreateRiskLevelHigh:
+		return true
+	case ProposalImpactAssessmentCreateRiskLevelLow:
+		return true
+	case ProposalImpactAssessmentCreateRiskLevelMedium:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ProposalRequestMode.
 const (
 	ProposalRequestModeAssist          ProposalRequestMode = "assist"
@@ -4034,6 +4175,13 @@ type CaptureConnection struct {
 // CaptureConnectionProtocol defines model for CaptureConnection.Protocol.
 type CaptureConnectionProtocol string
 
+// CaptureDocumentSelection An expected-version command selecting one pinned document option.
+type CaptureDocumentSelection struct {
+	DocumentType    string `json:"document_type"`
+	ExpectedVersion int64  `json:"expected_version"`
+	RequirementKey  string `json:"requirement_key"`
+}
+
 // CaptureFallbackCondition Policy-approved reason for selecting a fallback acquisition branch.
 type CaptureFallbackCondition string
 
@@ -4177,6 +4325,11 @@ type CaptureProgressExperienceSource string
 // CaptureToken Display-once bearer credential bound to one verification session.
 type CaptureToken = string
 
+// ConsentReceiptRevoke Bounded audit reason for append-only consent withdrawal.
+type ConsentReceiptRevoke struct {
+	Reason string `json:"reason"`
+}
+
 // Cursor Opaque, integrity-protected continuation state. Clients must not parse it.
 type Cursor = string
 
@@ -4252,8 +4405,116 @@ type DocumentSupport struct {
 	SupportedFields []PackFieldName  `json:"supported_fields"`
 }
 
+// EvidenceAccessGrant Safe purpose-bound grant metadata; redemption attempts are absent.
+type EvidenceAccessGrant struct {
+	// AuthorityID Stable identifier for one tenant-declared processing authority.
+	AuthorityID    ProcessingAuthorityID `json:"authority_id"`
+	CheckReference string                `json:"check_reference"`
+	CreatedAt      time.Time             `json:"created_at"`
+
+	// EvidenceID Stable opaque identifier preallocated for the accepted evidence artefact.
+	EvidenceID         EvidenceID                   `json:"evidence_id"`
+	ExpiresAt          time.Time                    `json:"expires_at"`
+	ID                 EvidenceAccessGrantID        `json:"id"`
+	MaximumUses        int                          `json:"maximum_uses"`
+	Operation          EvidenceAccessGrantOperation `json:"operation"`
+	OutputDestination  string                       `json:"output_destination"`
+	PermittedVariants  []string                     `json:"permitted_variants"`
+	PolicyReference    string                       `json:"policy_reference"`
+	Purpose            string                       `json:"purpose"`
+	RecipientReference string                       `json:"recipient_reference"`
+	Region             string                       `json:"region"`
+	RequirementKey     string                       `json:"requirement_key"`
+
+	// ResponseID Stable identifier for one append-only subject response.
+	ResponseID     SubjectResponseID `json:"response_id"`
+	RevokedAt      *time.Time        `json:"revoked_at,omitempty"`
+	RunnerIdentity string            `json:"runner_identity"`
+
+	// SubjectID Verification-local PII-free subject identifier.
+	SubjectID SubjectID `json:"subject_id"`
+	Uses      int       `json:"uses"`
+
+	// VerificationID Stable Idenqa verification-session identifier.
+	VerificationID  VerificationSessionID `json:"verification_id"`
+	WorkloadVersion string                `json:"workload_version"`
+}
+
+// EvidenceAccessGrantOperation defines model for EvidenceAccessGrant.Operation.
+type EvidenceAccessGrantOperation string
+
+// EvidenceAccessGrantCreate defines model for EvidenceAccessGrantCreate.
+type EvidenceAccessGrantCreate struct {
+	CheckReference     string   `json:"check_reference"`
+	MaximumUses        int      `json:"maximum_uses"`
+	OutputDestination  string   `json:"output_destination"`
+	PermittedVariants  []string `json:"permitted_variants"`
+	Purpose            string   `json:"purpose"`
+	Reason             string   `json:"reason"`
+	RecipientReference string   `json:"recipient_reference"`
+	RunnerIdentity     string   `json:"runner_identity"`
+	TTLSeconds         int64    `json:"ttl_seconds"`
+	WorkloadVersion    string   `json:"workload_version"`
+}
+
+// EvidenceAccessGrantID defines model for EvidenceAccessGrantID.
+type EvidenceAccessGrantID = string
+
+// EvidenceAccessGrantRevoke defines model for EvidenceAccessGrantRevoke.
+type EvidenceAccessGrantRevoke struct {
+	Reason string `json:"reason"`
+}
+
 // EvidenceID Stable opaque identifier preallocated for the accepted evidence artefact.
 type EvidenceID = string
+
+// EvidenceLifecycleEvent defines model for EvidenceLifecycleEvent.
+type EvidenceLifecycleEvent struct {
+	Action     string    `json:"action"`
+	OccurredAt time.Time `json:"occurred_at"`
+	Reason     *string   `json:"reason,omitempty"`
+	Version    int64     `json:"version"`
+}
+
+// EvidenceLifecycleList defines model for EvidenceLifecycleList.
+type EvidenceLifecycleList struct {
+	Data []EvidenceLifecycleEvent `json:"data"`
+}
+
+// EvidenceMetadata Safe reference-only evidence metadata; storage and cryptographic material are absent.
+type EvidenceMetadata struct {
+	AcquisitionMethod string    `json:"acquisition_method"`
+	Artefact          string    `json:"artefact"`
+	Assurances        []string  `json:"assurances"`
+	ContentRevision   int       `json:"content_revision"`
+	CreatedAt         time.Time `json:"created_at"`
+	EvidenceType      string    `json:"evidence_type"`
+
+	// ID Stable opaque identifier preallocated for the accepted evidence artefact.
+	ID               EvidenceID                `json:"id"`
+	Integrity        EvidenceMetadataIntegrity `json:"integrity"`
+	QuarantineReason *string                   `json:"quarantine_reason,omitempty"`
+	QuarantinedAt    *time.Time                `json:"quarantined_at,omitempty"`
+	Region           string                    `json:"region"`
+	RegistryRevision int                       `json:"registry_revision"`
+	RequirementKey   string                    `json:"requirement_key"`
+	RetentionClass   string                    `json:"retention_class"`
+	State            EvidenceMetadataState     `json:"state"`
+
+	// SubjectID Verification-local PII-free subject identifier.
+	SubjectID SubjectID `json:"subject_id"`
+	UpdatedAt time.Time `json:"updated_at"`
+
+	// VerificationID Stable Idenqa verification-session identifier.
+	VerificationID VerificationSessionID `json:"verification_id"`
+	Version        int64                 `json:"version"`
+}
+
+// EvidenceMetadataIntegrity defines model for EvidenceMetadata.Integrity.
+type EvidenceMetadataIntegrity string
+
+// EvidenceMetadataState defines model for EvidenceMetadata.State.
+type EvidenceMetadataState string
 
 // EvidenceUpload Safe upload lifecycle and immutable capture binding; integrity digests are intentionally absent.
 type EvidenceUpload struct {
@@ -4280,9 +4541,12 @@ type EvidenceUpload struct {
 	MediaType      EvidenceUploadMediaType `json:"media_type"`
 	Region         string                  `json:"region"`
 	RequirementKey string                  `json:"requirement_key"`
-	State          EvidenceUploadState     `json:"state"`
-	UpdatedAt      time.Time               `json:"updated_at"`
-	Version        int64                   `json:"version"`
+
+	// Sequence Metadata binding one image into an ordered digest-chained active-capture sequence. It makes no assurance claim.
+	Sequence  *TemporalEvidenceFrame `json:"sequence,omitempty"`
+	State     EvidenceUploadState    `json:"state"`
+	UpdatedAt time.Time              `json:"updated_at"`
+	Version   int64                  `json:"version"`
 }
 
 // EvidenceUploadAllowedMediaTypes defines model for EvidenceUpload.AllowedMediaTypes.
@@ -4306,6 +4570,9 @@ type EvidenceUploadCreate struct {
 	MediaType         EvidenceUploadCreateMediaType `json:"media_type"`
 	Region            string                        `json:"region"`
 	RequirementKey    string                        `json:"requirement_key"`
+
+	// Sequence Metadata binding one image into an ordered digest-chained active-capture sequence. It makes no assurance claim.
+	Sequence *TemporalEvidenceFrame `json:"sequence,omitempty"`
 }
 
 // EvidenceUploadCreateMediaType defines model for EvidenceUploadCreate.MediaType.
@@ -5184,10 +5451,18 @@ type KeyRewrapStatus struct {
 
 // ModeConfig Versioned per-workflow automation mode and permitted action kinds.
 type ModeConfig struct {
-	AllowedKinds *[]ProposalActionKind `json:"allowed_kinds,omitempty"`
-	Mode         ModeConfigMode        `json:"mode"`
-	Version      int                   `json:"version"`
-	Workflow     string                `json:"workflow"`
+	ActivationRevision *int                  `json:"activation_revision,omitempty"`
+	AllowedKinds       *[]ProposalActionKind `json:"allowed_kinds,omitempty"`
+
+	// ExpectedVersion Write precondition; omitted from read responses.
+	ExpectedVersion       *int           `json:"expected_version,omitempty"`
+	Mode                  ModeConfigMode `json:"mode"`
+	ModelRegistryID       *string        `json:"model_registry_id,omitempty"`
+	ModelRegistryVersion  *int           `json:"model_registry_version,omitempty"`
+	PromptID              *string        `json:"prompt_id,omitempty"`
+	PromptRegistryVersion *int           `json:"prompt_registry_version,omitempty"`
+	Version               int            `json:"version"`
+	Workflow              string         `json:"workflow"`
 }
 
 // ModeConfigMode defines model for ModeConfig.Mode.
@@ -5963,6 +6238,14 @@ type PolicyDecisionBundleSchemaMinor int
 
 // PolicyDecisionID Stable identifier for one immutable policy decision.
 type PolicyDecisionID = string
+
+// PolicyDecisionList Bounded newest-first immutable decision lineage.
+type PolicyDecisionList struct {
+	Data []PolicyDecisionReport `json:"data"`
+
+	// NextBefore Stable identifier for one immutable policy decision.
+	NextBefore *PolicyDecisionID `json:"next_before,omitempty"`
+}
 
 // PolicyDecisionReport Bounded reproduction summary that omits facts, reason codes, canonical JSON, and evidence references.
 type PolicyDecisionReport struct {
@@ -6942,10 +7225,112 @@ type ProposalAction struct {
 // ProposalActionKind Closed allow-list of non-authoritative proposal action kinds.
 type ProposalActionKind string
 
+// ProposalActivation Current or historical audited workflow route revision.
+type ProposalActivation struct {
+	Action                ProposalActivationAction `json:"action"`
+	ActorID               string                   `json:"actor_id"`
+	ModelID               string                   `json:"model_id"`
+	ModelRegistryID       string                   `json:"model_registry_id"`
+	ModelRegistryVersion  int                      `json:"model_registry_version"`
+	ModelVersion          string                   `json:"model_version"`
+	OccurredAt            time.Time                `json:"occurred_at"`
+	PromptRegistryID      string                   `json:"prompt_registry_id"`
+	PromptRegistryVersion int                      `json:"prompt_registry_version"`
+	PromptVersion         string                   `json:"prompt_version"`
+	Reason                *string                  `json:"reason,omitempty"`
+	Revision              int                      `json:"revision"`
+	SourceRevision        *int                     `json:"source_revision,omitempty"`
+	State                 ProposalActivationState  `json:"state"`
+	Workflow              string                   `json:"workflow"`
+}
+
+// ProposalActivationAction defines model for ProposalActivation.Action.
+type ProposalActivationAction string
+
+// ProposalActivationState defines model for ProposalActivation.State.
+type ProposalActivationState string
+
+// ProposalActivationHistory Bounded newest-first immutable activation history.
+type ProposalActivationHistory struct {
+	Activations []ProposalActivation `json:"activations"`
+}
+
+// ProposalActivationLifecycleRequest CAS-protected retirement request with an auditable reason.
+type ProposalActivationLifecycleRequest struct {
+	ExpectedRevision int     `json:"expected_revision"`
+	Reason           *string `json:"reason,omitempty"`
+}
+
+// ProposalActivationRequest Exact immutable registry and provider route selected for a workflow.
+type ProposalActivationRequest struct {
+	ExpectedRevision      int     `json:"expected_revision"`
+	ModelRegistryID       string  `json:"model_registry_id"`
+	ModelRegistryVersion  int     `json:"model_registry_version"`
+	ModelVersion          string  `json:"model_version"`
+	PromptRegistryID      string  `json:"prompt_registry_id"`
+	PromptRegistryVersion int     `json:"prompt_registry_version"`
+	PromptVersion         string  `json:"prompt_version"`
+	Reason                *string `json:"reason,omitempty"`
+}
+
+// ProposalActivationRollbackRequest CAS-protected request to republish one prior active route.
+type ProposalActivationRollbackRequest struct {
+	ExpectedRevision int     `json:"expected_revision"`
+	Reason           *string `json:"reason,omitempty"`
+	TargetRevision   int     `json:"target_revision"`
+}
+
 // ProposalApproveRequest Human approval of one pending proposal under an expected version.
 type ProposalApproveRequest struct {
 	ExpectedVersion int  `json:"expected_version"`
 	HumanApproved   bool `json:"human_approved"`
+}
+
+// ProposalImpactAssessment defines model for ProposalImpactAssessment.
+type ProposalImpactAssessment struct {
+	ActorID    string    `json:"actor_id"`
+	Assessment string    `json:"assessment"`
+	CreatedAt  time.Time `json:"created_at"`
+	ID         string    `json:"id"`
+
+	// Kind Closed allow-list of non-authoritative proposal action kinds.
+	Kind      ProposalActionKind                `json:"kind"`
+	RiskLevel ProposalImpactAssessmentRiskLevel `json:"risk_level"`
+}
+
+// ProposalImpactAssessmentRiskLevel defines model for ProposalImpactAssessment.RiskLevel.
+type ProposalImpactAssessmentRiskLevel string
+
+// ProposalImpactAssessmentCreate One reviewed assessment for a bounded proposal action kind.
+type ProposalImpactAssessmentCreate struct {
+	Assessment string `json:"assessment"`
+
+	// Kind Closed allow-list of non-authoritative proposal action kinds.
+	Kind      ProposalActionKind                      `json:"kind"`
+	RiskLevel ProposalImpactAssessmentCreateRiskLevel `json:"risk_level"`
+}
+
+// ProposalImpactAssessmentCreateRiskLevel defines model for ProposalImpactAssessmentCreate.RiskLevel.
+type ProposalImpactAssessmentCreateRiskLevel string
+
+// ProposalImpactAssessmentList Bounded newest-first immutable impact assessments.
+type ProposalImpactAssessmentList struct {
+	Data []ProposalImpactAssessment `json:"data"`
+}
+
+// ProposalModel Tenant-owned immutable generative-model registry revision.
+type ProposalModel struct {
+	CreatedAt       time.Time `json:"created_at"`
+	Digest          string    `json:"digest"`
+	ModelID         string    `json:"model_id"`
+	ModelRegistryID string    `json:"model_registry_id"`
+	Version         int       `json:"version"`
+}
+
+// ProposalModelCreate Registration input for one immutable provider-neutral generative-model revision.
+type ProposalModelCreate struct {
+	Digest  string `json:"digest"`
+	ModelID string `json:"model_id"`
 }
 
 // ProposalRequest Create one proposal for a verification or a policy under the session mode.
@@ -6966,6 +7351,21 @@ type ProposalRequest struct {
 
 // ProposalRequestMode defines model for ProposalRequest.Mode.
 type ProposalRequestMode string
+
+// ProposalUsageReport Content-free tenant generation accounting over a bounded half-open interval.
+type ProposalUsageReport struct {
+	Attempts            int       `json:"attempts"`
+	EstimatedCostMicros int       `json:"estimated_cost_micros"`
+	Failed              int       `json:"failed"`
+	From                time.Time `json:"from"`
+	InputTokens         int       `json:"input_tokens"`
+	InvalidOutput       int       `json:"invalid_output"`
+	OutputTokens        int       `json:"output_tokens"`
+	Rejected            int       `json:"rejected"`
+	Succeeded           int       `json:"succeeded"`
+	To                  time.Time `json:"to"`
+	UnreportedUsage     int       `json:"unreported_usage"`
+}
 
 // ProposalVersionRequest Version precondition for reject or cancel of one pending proposal.
 type ProposalVersionRequest struct {
@@ -7742,6 +8142,16 @@ type SupportVersionedCommand struct {
 	Reason          string `json:"reason"`
 }
 
+// TemporalEvidenceFrame Metadata binding one image into an ordered digest-chained active-capture sequence. It makes no assurance claim.
+type TemporalEvidenceFrame struct {
+	CapturedAt     time.Time `json:"captured_at"`
+	ChallengeID    string    `json:"challenge_id"`
+	Count          int       `json:"count"`
+	Index          int       `json:"index"`
+	PreviousDigest *string   `json:"previous_digest,omitempty"`
+	SequenceDigest string    `json:"sequence_digest"`
+}
+
 // Tenant Safe lifecycle metadata for the authenticated tenant.
 type Tenant struct {
 	CreatedAt time.Time `json:"created_at"`
@@ -7885,6 +8295,12 @@ type VerificationInputRequest struct {
 	RequestedAt time.Time `json:"requested_at"`
 }
 
+// VerificationReconsiderationCreate defines model for VerificationReconsiderationCreate.
+type VerificationReconsiderationCreate struct {
+	// DecisionID Stable identifier for one immutable policy decision.
+	DecisionID PolicyDecisionID `json:"decision_id"`
+}
+
 // VerificationResume Optimistic precondition for an awaiting-input resume command.
 type VerificationResume struct {
 	ExpectedVersion int64 `json:"expected_version"`
@@ -7916,7 +8332,10 @@ type VerificationSession struct {
 	// `decisions:read` and a current decision exists for the verification; omitted
 	// otherwise.
 	CurrentDecision *VerificationDecisionReference `json:"current_decision,omitempty"`
-	ExpiresAt       time.Time                      `json:"expires_at"`
+
+	// DocumentSelections Core-recorded document option ID by requirement key, separate from immutable requirements.
+	DocumentSelections *map[string]string `json:"document_selections,omitempty"`
+	ExpiresAt          time.Time          `json:"expires_at"`
 
 	// Failure Operational failure projection. Present only for the terminal `failed`
 	// state and omitted for every other state and for the subject-safe
@@ -8299,6 +8718,15 @@ type CancelCaptureVerificationParams struct {
 	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
 }
 
+// SelectCaptureDocumentParams defines parameters for SelectCaptureDocument.
+type SelectCaptureDocumentParams struct {
+	// IdempotencyKey An RFC 9651 String used to deduplicate a consequential request. It is
+	// scoped to the authenticated tenant and operation. Reusing a key with a
+	// different canonical request fingerprint is a conflict. Keys are not
+	// credentials and clients must not place secrets or identity data in them.
+	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
+}
+
 // ResolveCaptureExperienceParams defines parameters for ResolveCaptureExperience.
 type ResolveCaptureExperienceParams struct {
 	// Workflow Bounded workflow identifier used only when no pin exists yet.
@@ -8324,6 +8752,24 @@ type ResolveCaptureExperienceParams struct {
 type GetCaptureProgressParams struct {
 	// IfNoneMatch Strong opaque ETag returned by a previous capture-progress response.
 	IfNoneMatch *string `json:"If-None-Match,omitempty"`
+}
+
+// CreateConsentReceiptParams defines parameters for CreateConsentReceipt.
+type CreateConsentReceiptParams struct {
+	// IdempotencyKey An RFC 9651 String used to deduplicate a consequential request. It is
+	// scoped to the authenticated tenant and operation. Reusing a key with a
+	// different canonical request fingerprint is a conflict. Keys are not
+	// credentials and clients must not place secrets or identity data in them.
+	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
+}
+
+// RevokeConsentReceiptParams defines parameters for RevokeConsentReceipt.
+type RevokeConsentReceiptParams struct {
+	// IdempotencyKey An RFC 9651 String used to deduplicate a consequential request. It is
+	// scoped to the authenticated tenant and operation. Reusing a key with a
+	// different canonical request fingerprint is a conflict. Keys are not
+	// credentials and clients must not place secrets or identity data in them.
+	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
 }
 
 // GetDecisionParams defines parameters for GetDecision.
@@ -8368,6 +8814,15 @@ type GetDocumentSupportParams struct {
 	Type PackDocumentType `form:"type" json:"type"`
 }
 
+// RevokeEvidenceAccessGrantParams defines parameters for RevokeEvidenceAccessGrant.
+type RevokeEvidenceAccessGrantParams struct {
+	// IdempotencyKey An RFC 9651 String used to deduplicate a consequential request. It is
+	// scoped to the authenticated tenant and operation. Reusing a key with a
+	// different canonical request fingerprint is a conflict. Keys are not
+	// credentials and clients must not place secrets or identity data in them.
+	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
+}
+
 // CreateEvidenceUploadParams defines parameters for CreateEvidenceUpload.
 type CreateEvidenceUploadParams struct {
 	// IdempotencyKey An RFC 9651 String used to deduplicate a consequential request. It is
@@ -8384,6 +8839,20 @@ type UploadEvidenceParams struct {
 
 	// ContentDigest Canonical RFC 9530 SHA-256 digest of the complete plaintext body.
 	ContentDigest ContentDigest `json:"Content-Digest"`
+}
+
+// CreateEvidenceAccessGrantParams defines parameters for CreateEvidenceAccessGrant.
+type CreateEvidenceAccessGrantParams struct {
+	// IdempotencyKey An RFC 9651 String used to deduplicate a consequential request. It is
+	// scoped to the authenticated tenant and operation. Reusing a key with a
+	// different canonical request fingerprint is a conflict. Keys are not
+	// credentials and clients must not place secrets or identity data in them.
+	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
+}
+
+// ListEvidenceLifecycleParams defines parameters for ListEvidenceLifecycle.
+type ListEvidenceLifecycleParams struct {
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
 // ListExperiencesParams defines parameters for ListExperiences.
@@ -8682,6 +9151,30 @@ type ListPrivacyRestrictionsParams struct {
 
 	// Limit Maximum collection items to return. The default is 25.
 	Limit *Limit `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListProposalActivationHistoryParams defines parameters for ListProposalActivationHistory.
+type ListProposalActivationHistoryParams struct {
+	// Limit Maximum newest-first revisions to return.
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListProposalImpactAssessmentsParams defines parameters for ListProposalImpactAssessments.
+type ListProposalImpactAssessmentsParams struct {
+	// Before Exclusive RFC3339 creation-time cursor.
+	Before *time.Time `form:"before,omitempty" json:"before,omitempty"`
+
+	// Limit Maximum collection items to return. The default is 25.
+	Limit *Limit `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// GetProposalUsageParams defines parameters for GetProposalUsage.
+type GetProposalUsageParams struct {
+	// From Inclusive UTC report boundary.
+	From time.Time `form:"from" json:"from"`
+
+	// To Exclusive UTC report boundary, at most 366 days after from.
+	To time.Time `form:"to" json:"to"`
 }
 
 // ListProposalsParams defines parameters for ListProposals.
@@ -9168,6 +9661,24 @@ type GetLatestDecisionParams struct {
 	IfNoneMatch *IfNoneMatch `json:"If-None-Match,omitempty"`
 }
 
+// ListVerificationDecisionsParams defines parameters for ListVerificationDecisions.
+type ListVerificationDecisionsParams struct {
+	// Before Exclude this decision and every newer decision.
+	Before *PolicyDecisionID `form:"before,omitempty" json:"before,omitempty"`
+
+	// Limit Maximum collection items to return. The default is 25.
+	Limit *Limit `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// CreateVerificationReconsiderationParams defines parameters for CreateVerificationReconsideration.
+type CreateVerificationReconsiderationParams struct {
+	// IdempotencyKey An RFC 9651 String used to deduplicate a consequential request. It is
+	// scoped to the authenticated tenant and operation. Reusing a key with a
+	// different canonical request fingerprint is a conflict. Keys are not
+	// credentials and clients must not place secrets or identity data in them.
+	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
+}
+
 // ResumeVerificationParams defines parameters for ResumeVerification.
 type ResumeVerificationParams struct {
 	// IdempotencyKey An RFC 9651 String used to deduplicate a consequential request. It is
@@ -9291,14 +9802,29 @@ type CreateSubjectResponseJSONRequestBody = SubjectResponseCreate
 // CancelCaptureVerificationJSONRequestBody defines body for CancelCaptureVerification for application/json ContentType.
 type CancelCaptureVerificationJSONRequestBody = VerificationCancel
 
+// SelectCaptureDocumentJSONRequestBody defines body for SelectCaptureDocument for application/json ContentType.
+type SelectCaptureDocumentJSONRequestBody = CaptureDocumentSelection
+
 // BootstrapNativeCaptureJSONRequestBody defines body for BootstrapNativeCapture for application/json ContentType.
 type BootstrapNativeCaptureJSONRequestBody = NativeBootstrapRequest
 
 // CreateSubjectPrivacyRequestJSONRequestBody defines body for CreateSubjectPrivacyRequest for application/json ContentType.
 type CreateSubjectPrivacyRequestJSONRequestBody = SubjectPrivacyRequestCreate
 
+// CreateConsentReceiptJSONRequestBody defines body for CreateConsentReceipt for application/json ContentType.
+type CreateConsentReceiptJSONRequestBody = SubjectResponseCreate
+
+// RevokeConsentReceiptJSONRequestBody defines body for RevokeConsentReceipt for application/json ContentType.
+type RevokeConsentReceiptJSONRequestBody = ConsentReceiptRevoke
+
+// RevokeEvidenceAccessGrantJSONRequestBody defines body for RevokeEvidenceAccessGrant for application/json ContentType.
+type RevokeEvidenceAccessGrantJSONRequestBody = EvidenceAccessGrantRevoke
+
 // CreateEvidenceUploadJSONRequestBody defines body for CreateEvidenceUpload for application/json ContentType.
 type CreateEvidenceUploadJSONRequestBody = EvidenceUploadCreate
+
+// CreateEvidenceAccessGrantJSONRequestBody defines body for CreateEvidenceAccessGrant for application/json ContentType.
+type CreateEvidenceAccessGrantJSONRequestBody = EvidenceAccessGrantCreate
 
 // CreateExperienceJSONRequestBody defines body for CreateExperience for application/json ContentType.
 type CreateExperienceJSONRequestBody = ExperienceMutation
@@ -9444,6 +9970,21 @@ type LiftPrivacyRestrictionJSONRequestBody = PrivacyRestrictionLift
 // CreatePromptJSONRequestBody defines body for CreatePrompt for application/json ContentType.
 type CreatePromptJSONRequestBody = PromptCreate
 
+// ActivateProposalRouteJSONRequestBody defines body for ActivateProposalRoute for application/json ContentType.
+type ActivateProposalRouteJSONRequestBody = ProposalActivationRequest
+
+// RetireProposalActivationJSONRequestBody defines body for RetireProposalActivation for application/json ContentType.
+type RetireProposalActivationJSONRequestBody = ProposalActivationLifecycleRequest
+
+// RollbackProposalActivationJSONRequestBody defines body for RollbackProposalActivation for application/json ContentType.
+type RollbackProposalActivationJSONRequestBody = ProposalActivationRollbackRequest
+
+// CreateProposalImpactAssessmentJSONRequestBody defines body for CreateProposalImpactAssessment for application/json ContentType.
+type CreateProposalImpactAssessmentJSONRequestBody = ProposalImpactAssessmentCreate
+
+// CreateProposalModelJSONRequestBody defines body for CreateProposalModel for application/json ContentType.
+type CreateProposalModelJSONRequestBody = ProposalModelCreate
+
 // PutProposalModeJSONRequestBody defines body for PutProposalMode for application/json ContentType.
 type PutProposalModeJSONRequestBody = ModeConfig
 
@@ -9572,6 +10113,9 @@ type DeclareProcessingAuthorityJSONRequestBody = ProcessingAuthorityDeclare
 
 // CancelVerificationJSONRequestBody defines body for CancelVerification for application/json ContentType.
 type CancelVerificationJSONRequestBody = VerificationCancel
+
+// CreateVerificationReconsiderationJSONRequestBody defines body for CreateVerificationReconsideration for application/json ContentType.
+type CreateVerificationReconsiderationJSONRequestBody = VerificationReconsiderationCreate
 
 // ResumeVerificationJSONRequestBody defines body for ResumeVerification for application/json ContentType.
 type ResumeVerificationJSONRequestBody = VerificationResume
@@ -10195,6 +10739,24 @@ type ClientInterface interface {
 	// Corresponds with POST /v1/capture/connections (the `CreateCaptureConnection` operationId).
 	CreateCaptureConnection(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// SelectCaptureDocumentWithBody Select a profile-pinned document branch
+	//
+	// Activates pinned artefacts without changing requirements. Switching is rejected after any upload intent for the requirement. Exact retries return the original session result.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/capture/document-selection (the `SelectCaptureDocument` operationId).
+	SelectCaptureDocumentWithBody(ctx context.Context, params *SelectCaptureDocumentParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SelectCaptureDocument Select a profile-pinned document branch
+	//
+	// Activates pinned artefacts without changing requirements. Switching is rejected after any upload intent for the requirement. Exact retries return the original session result.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/capture/document-selection (the `SelectCaptureDocument` operationId).
+	SelectCaptureDocument(ctx context.Context, params *SelectCaptureDocumentParams, body SelectCaptureDocumentJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ResolveCaptureExperience Resolve the session's pinned capture experience
 	//
 	// Returns the immutable signed experience document pinned to the
@@ -10290,6 +10852,47 @@ type ClientInterface interface {
 	// Corresponds with GET /v1/capture/session (the `GetCaptureSession` operationId).
 	GetCaptureSession(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// CreateConsentReceiptWithBody Record an explicit session-bound subject response
+	//
+	// Uses the capture credential and the exact notice bound to the active verification; tenant API credentials cannot invent subject consent.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/consent-receipts (the `CreateConsentReceipt` operationId).
+	CreateConsentReceiptWithBody(ctx context.Context, params *CreateConsentReceiptParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateConsentReceipt Record an explicit session-bound subject response
+	//
+	// Uses the capture credential and the exact notice bound to the active verification; tenant API credentials cannot invent subject consent.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/consent-receipts (the `CreateConsentReceipt` operationId).
+	CreateConsentReceipt(ctx context.Context, params *CreateConsentReceiptParams, body CreateConsentReceiptJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetConsentReceipt Inspect one immutable consent receipt
+	//
+	// Corresponds with GET /v1/consent-receipts/{consentID} (the `GetConsentReceipt` operationId).
+	GetConsentReceipt(ctx context.Context, consentID SubjectResponseID, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RevokeConsentReceiptWithBody Append a refusal that withdraws an immutable consent receipt
+	//
+	// The original consent remains immutable; successful withdrawal creates a new refusal receipt.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/consent-receipts/{consentID}/revoke (the `RevokeConsentReceipt` operationId).
+	RevokeConsentReceiptWithBody(ctx context.Context, consentID SubjectResponseID, params *RevokeConsentReceiptParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RevokeConsentReceipt Append a refusal that withdraws an immutable consent receipt
+	//
+	// The original consent remains immutable; successful withdrawal creates a new refusal receipt.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/consent-receipts/{consentID}/revoke (the `RevokeConsentReceipt` operationId).
+	RevokeConsentReceipt(ctx context.Context, consentID SubjectResponseID, params *RevokeConsentReceiptParams, body RevokeConsentReceiptJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetDecision Get an exact immutable decision
 	//
 	// Returns a safe reproduction report without fact details, reason codes, or canonical payloads.
@@ -10340,6 +10943,25 @@ type ClientInterface interface {
 	// Corresponds with GET /v1/document-support (the `GetDocumentSupport` operationId).
 	GetDocumentSupport(ctx context.Context, params *GetDocumentSupportParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetEvidenceAccessGrant Inspect a purpose-bound evidence-processing grant
+	//
+	// Corresponds with GET /v1/evidence-access-grants/{grantID} (the `GetEvidenceAccessGrant` operationId).
+	GetEvidenceAccessGrant(ctx context.Context, grantID EvidenceAccessGrantID, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RevokeEvidenceAccessGrantWithBody Irreversibly revoke an evidence-processing grant
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/evidence-access-grants/{grantID}/revoke (the `RevokeEvidenceAccessGrant` operationId).
+	RevokeEvidenceAccessGrantWithBody(ctx context.Context, grantID EvidenceAccessGrantID, params *RevokeEvidenceAccessGrantParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RevokeEvidenceAccessGrant Irreversibly revoke an evidence-processing grant
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/evidence-access-grants/{grantID}/revoke (the `RevokeEvidenceAccessGrant` operationId).
+	RevokeEvidenceAccessGrant(ctx context.Context, grantID EvidenceAccessGrantID, params *RevokeEvidenceAccessGrantParams, body RevokeEvidenceAccessGrantJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// CreateEvidenceUploadWithBody Issue a requirement-bound evidence-upload intent
 	//
 	// Takes any type of body and a specified content type.
@@ -10374,6 +10996,36 @@ type ClientInterface interface {
 	//
 	// Corresponds with PUT /v1/evidence-uploads/{uploadID} (the `UploadEvidence` operationId).
 	UploadEvidenceWithBody(ctx context.Context, uploadID UploadID, params *UploadEvidenceParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetEvidence Inspect safe evidence metadata
+	//
+	// Returns reference-only lifecycle metadata. Object keys, wrapped keys, digests, and evidence bytes are never exposed.
+	//
+	// Corresponds with GET /v1/evidence/{evidenceID} (the `GetEvidence` operationId).
+	GetEvidence(ctx context.Context, evidenceID EvidenceID, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateEvidenceAccessGrantWithBody Issue a purpose-bound evidence-processing grant
+	//
+	// Live processing authority is re-evaluated before an idempotent, short-lived capability is committed.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/evidence/{evidenceID}/access-grants (the `CreateEvidenceAccessGrant` operationId).
+	CreateEvidenceAccessGrantWithBody(ctx context.Context, evidenceID EvidenceID, params *CreateEvidenceAccessGrantParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateEvidenceAccessGrant Issue a purpose-bound evidence-processing grant
+	//
+	// Live processing authority is re-evaluated before an idempotent, short-lived capability is committed.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/evidence/{evidenceID}/access-grants (the `CreateEvidenceAccessGrant` operationId).
+	CreateEvidenceAccessGrant(ctx context.Context, evidenceID EvidenceID, params *CreateEvidenceAccessGrantParams, body CreateEvidenceAccessGrantJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListEvidenceLifecycle List safe evidence lifecycle events
+	//
+	// Corresponds with GET /v1/evidence/{evidenceID}/lifecycle (the `ListEvidenceLifecycle` operationId).
+	ListEvidenceLifecycle(ctx context.Context, evidenceID EvidenceID, params *ListEvidenceLifecycleParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetExperienceDefault Get the signed accessible safe default
 	//
@@ -11577,6 +12229,101 @@ type ClientInterface interface {
 	// Corresponds with GET /v1/prompts/{promptID}/{version} (the `GetPrompt` operationId).
 	GetPrompt(ctx context.Context, promptID string, version int, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetProposalActivation Get the current model route activation
+	//
+	// Corresponds with GET /v1/proposal-activations/{workflow} (the `GetProposalActivation` operationId).
+	GetProposalActivation(ctx context.Context, workflow string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ActivateProposalRouteWithBody Activate an exact model and prompt route
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with PUT /v1/proposal-activations/{workflow} (the `ActivateProposalRoute` operationId).
+	ActivateProposalRouteWithBody(ctx context.Context, workflow string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ActivateProposalRoute Activate an exact model and prompt route
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with PUT /v1/proposal-activations/{workflow} (the `ActivateProposalRoute` operationId).
+	ActivateProposalRoute(ctx context.Context, workflow string, body ActivateProposalRouteJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListProposalActivationHistory List immutable activation history newest first
+	//
+	// Corresponds with GET /v1/proposal-activations/{workflow}/history (the `ListProposalActivationHistory` operationId).
+	ListProposalActivationHistory(ctx context.Context, workflow string, params *ListProposalActivationHistoryParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RetireProposalActivationWithBody Retire the current model route
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/proposal-activations/{workflow}/retire (the `RetireProposalActivation` operationId).
+	RetireProposalActivationWithBody(ctx context.Context, workflow string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RetireProposalActivation Retire the current model route
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/proposal-activations/{workflow}/retire (the `RetireProposalActivation` operationId).
+	RetireProposalActivation(ctx context.Context, workflow string, body RetireProposalActivationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RollbackProposalActivationWithBody Republish a prior active route as a new revision
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/proposal-activations/{workflow}/rollback (the `RollbackProposalActivation` operationId).
+	RollbackProposalActivationWithBody(ctx context.Context, workflow string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RollbackProposalActivation Republish a prior active route as a new revision
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/proposal-activations/{workflow}/rollback (the `RollbackProposalActivation` operationId).
+	RollbackProposalActivation(ctx context.Context, workflow string, body RollbackProposalActivationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListProposalImpactAssessments List immutable AI impact assessments
+	//
+	// Corresponds with GET /v1/proposal-impact-assessments (the `ListProposalImpactAssessments` operationId).
+	ListProposalImpactAssessments(ctx context.Context, params *ListProposalImpactAssessmentsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateProposalImpactAssessmentWithBody Record an immutable AI impact assessment
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/proposal-impact-assessments (the `CreateProposalImpactAssessment` operationId).
+	CreateProposalImpactAssessmentWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateProposalImpactAssessment Record an immutable AI impact assessment
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/proposal-impact-assessments (the `CreateProposalImpactAssessment` operationId).
+	CreateProposalImpactAssessment(ctx context.Context, body CreateProposalImpactAssessmentJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetProposalImpactAssessment Get one immutable AI impact assessment
+	//
+	// Corresponds with GET /v1/proposal-impact-assessments/{assessmentID} (the `GetProposalImpactAssessment` operationId).
+	GetProposalImpactAssessment(ctx context.Context, assessmentID string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateProposalModelWithBody Register an immutable generative-model revision
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/proposal-models (the `CreateProposalModel` operationId).
+	CreateProposalModelWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateProposalModel Register an immutable generative-model revision
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/proposal-models (the `CreateProposalModel` operationId).
+	CreateProposalModel(ctx context.Context, body CreateProposalModelJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetProposalModel Get an immutable generative-model revision
+	//
+	// Corresponds with GET /v1/proposal-models/{modelID}/{version} (the `GetProposalModel` operationId).
+	GetProposalModel(ctx context.Context, modelID string, version int, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetProposalMode Get mode config
 	//
 	// Corresponds with GET /v1/proposal-modes/{workflow} (the `GetProposalMode` operationId).
@@ -11595,6 +12342,11 @@ type ClientInterface interface {
 	//
 	// Corresponds with PUT /v1/proposal-modes/{workflow} (the `PutProposalMode` operationId).
 	PutProposalMode(ctx context.Context, workflow string, body PutProposalModeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetProposalUsage Get content-free generation usage totals
+	//
+	// Corresponds with GET /v1/proposal-usage (the `GetProposalUsage` operationId).
+	GetProposalUsage(ctx context.Context, params *GetProposalUsageParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListProposals List proposals for a verification (filtered)
 	//
@@ -12615,6 +13367,31 @@ type ClientInterface interface {
 	// Corresponds with GET /v1/verifications/{verificationID}/decision (the `GetLatestDecision` operationId).
 	GetLatestDecision(ctx context.Context, verificationID VerificationID, params *GetLatestDecisionParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ListVerificationDecisions List immutable decision history for a verification
+	//
+	// Returns a bounded newest-first page. The before cursor is an opaque tenant-scoped decision identifier.
+	//
+	// Corresponds with GET /v1/verifications/{verificationID}/decisions (the `ListVerificationDecisions` operationId).
+	ListVerificationDecisions(ctx context.Context, verificationID VerificationID, params *ListVerificationDecisionsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateVerificationReconsiderationWithBody Open an independent correction workflow for a decision
+	//
+	// Reconsideration reuses the existing versioned review-correction lifecycle; it never mutates an immutable decision in place.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/verifications/{verificationID}/reconsiderations (the `CreateVerificationReconsideration` operationId).
+	CreateVerificationReconsiderationWithBody(ctx context.Context, verificationID VerificationID, params *CreateVerificationReconsiderationParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateVerificationReconsideration Open an independent correction workflow for a decision
+	//
+	// Reconsideration reuses the existing versioned review-correction lifecycle; it never mutates an immutable decision in place.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/verifications/{verificationID}/reconsiderations (the `CreateVerificationReconsideration` operationId).
+	CreateVerificationReconsideration(ctx context.Context, verificationID VerificationID, params *CreateVerificationReconsiderationParams, body CreateVerificationReconsiderationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ResumeVerificationWithBody Resume a verification awaiting subject input
 	//
 	// Requires verification_sessions:resume and a fresh subject authorisation
@@ -13361,6 +14138,44 @@ func (c *Client) CreateCaptureConnection(ctx context.Context, reqEditors ...Requ
 	return c.Client.Do(req)
 }
 
+// SelectCaptureDocumentWithBody Select a profile-pinned document branch
+//
+// Activates pinned artefacts without changing requirements. Switching is rejected after any upload intent for the requirement. Exact retries return the original session result.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/capture/document-selection (the `SelectCaptureDocument` operationId).
+func (c *Client) SelectCaptureDocumentWithBody(ctx context.Context, params *SelectCaptureDocumentParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSelectCaptureDocumentRequestWithBody(c.Server, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// SelectCaptureDocument Select a profile-pinned document branch
+//
+// Activates pinned artefacts without changing requirements. Switching is rejected after any upload intent for the requirement. Exact retries return the original session result.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/capture/document-selection (the `SelectCaptureDocument` operationId).
+func (c *Client) SelectCaptureDocument(ctx context.Context, params *SelectCaptureDocumentParams, body SelectCaptureDocumentJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSelectCaptureDocumentRequest(c.Server, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // ResolveCaptureExperience Resolve the session's pinned capture experience
 //
 // Returns the immutable signed experience document pinned to the
@@ -13546,6 +14361,97 @@ func (c *Client) GetCaptureSession(ctx context.Context, reqEditors ...RequestEdi
 	return c.Client.Do(req)
 }
 
+// CreateConsentReceiptWithBody Record an explicit session-bound subject response
+//
+// Uses the capture credential and the exact notice bound to the active verification; tenant API credentials cannot invent subject consent.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/consent-receipts (the `CreateConsentReceipt` operationId).
+func (c *Client) CreateConsentReceiptWithBody(ctx context.Context, params *CreateConsentReceiptParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateConsentReceiptRequestWithBody(c.Server, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateConsentReceipt Record an explicit session-bound subject response
+//
+// Uses the capture credential and the exact notice bound to the active verification; tenant API credentials cannot invent subject consent.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/consent-receipts (the `CreateConsentReceipt` operationId).
+func (c *Client) CreateConsentReceipt(ctx context.Context, params *CreateConsentReceiptParams, body CreateConsentReceiptJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateConsentReceiptRequest(c.Server, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetConsentReceipt Inspect one immutable consent receipt
+//
+// Corresponds with GET /v1/consent-receipts/{consentID} (the `GetConsentReceipt` operationId).
+func (c *Client) GetConsentReceipt(ctx context.Context, consentID SubjectResponseID, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetConsentReceiptRequest(c.Server, consentID)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// RevokeConsentReceiptWithBody Append a refusal that withdraws an immutable consent receipt
+//
+// The original consent remains immutable; successful withdrawal creates a new refusal receipt.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/consent-receipts/{consentID}/revoke (the `RevokeConsentReceipt` operationId).
+func (c *Client) RevokeConsentReceiptWithBody(ctx context.Context, consentID SubjectResponseID, params *RevokeConsentReceiptParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRevokeConsentReceiptRequestWithBody(c.Server, consentID, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// RevokeConsentReceipt Append a refusal that withdraws an immutable consent receipt
+//
+// The original consent remains immutable; successful withdrawal creates a new refusal receipt.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/consent-receipts/{consentID}/revoke (the `RevokeConsentReceipt` operationId).
+func (c *Client) RevokeConsentReceipt(ctx context.Context, consentID SubjectResponseID, params *RevokeConsentReceiptParams, body RevokeConsentReceiptJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRevokeConsentReceiptRequest(c.Server, consentID, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // GetDecision Get an exact immutable decision
 //
 // Returns a safe reproduction report without fact details, reason codes, or canonical payloads.
@@ -13656,6 +14562,55 @@ func (c *Client) GetDocumentSupport(ctx context.Context, params *GetDocumentSupp
 	return c.Client.Do(req)
 }
 
+// GetEvidenceAccessGrant Inspect a purpose-bound evidence-processing grant
+//
+// Corresponds with GET /v1/evidence-access-grants/{grantID} (the `GetEvidenceAccessGrant` operationId).
+func (c *Client) GetEvidenceAccessGrant(ctx context.Context, grantID EvidenceAccessGrantID, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetEvidenceAccessGrantRequest(c.Server, grantID)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// RevokeEvidenceAccessGrantWithBody Irreversibly revoke an evidence-processing grant
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/evidence-access-grants/{grantID}/revoke (the `RevokeEvidenceAccessGrant` operationId).
+func (c *Client) RevokeEvidenceAccessGrantWithBody(ctx context.Context, grantID EvidenceAccessGrantID, params *RevokeEvidenceAccessGrantParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRevokeEvidenceAccessGrantRequestWithBody(c.Server, grantID, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// RevokeEvidenceAccessGrant Irreversibly revoke an evidence-processing grant
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/evidence-access-grants/{grantID}/revoke (the `RevokeEvidenceAccessGrant` operationId).
+func (c *Client) RevokeEvidenceAccessGrant(ctx context.Context, grantID EvidenceAccessGrantID, params *RevokeEvidenceAccessGrantParams, body RevokeEvidenceAccessGrantJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRevokeEvidenceAccessGrantRequest(c.Server, grantID, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // CreateEvidenceUploadWithBody Issue a requirement-bound evidence-upload intent
 //
 // Takes any type of body and a specified content type.
@@ -13721,6 +14676,76 @@ func (c *Client) GetEvidenceUpload(ctx context.Context, uploadID UploadID, reqEd
 // Corresponds with PUT /v1/evidence-uploads/{uploadID} (the `UploadEvidence` operationId).
 func (c *Client) UploadEvidenceWithBody(ctx context.Context, uploadID UploadID, params *UploadEvidenceParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUploadEvidenceRequestWithBody(c.Server, uploadID, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetEvidence Inspect safe evidence metadata
+//
+// Returns reference-only lifecycle metadata. Object keys, wrapped keys, digests, and evidence bytes are never exposed.
+//
+// Corresponds with GET /v1/evidence/{evidenceID} (the `GetEvidence` operationId).
+func (c *Client) GetEvidence(ctx context.Context, evidenceID EvidenceID, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetEvidenceRequest(c.Server, evidenceID)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateEvidenceAccessGrantWithBody Issue a purpose-bound evidence-processing grant
+//
+// Live processing authority is re-evaluated before an idempotent, short-lived capability is committed.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/evidence/{evidenceID}/access-grants (the `CreateEvidenceAccessGrant` operationId).
+func (c *Client) CreateEvidenceAccessGrantWithBody(ctx context.Context, evidenceID EvidenceID, params *CreateEvidenceAccessGrantParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateEvidenceAccessGrantRequestWithBody(c.Server, evidenceID, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateEvidenceAccessGrant Issue a purpose-bound evidence-processing grant
+//
+// Live processing authority is re-evaluated before an idempotent, short-lived capability is committed.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/evidence/{evidenceID}/access-grants (the `CreateEvidenceAccessGrant` operationId).
+func (c *Client) CreateEvidenceAccessGrant(ctx context.Context, evidenceID EvidenceID, params *CreateEvidenceAccessGrantParams, body CreateEvidenceAccessGrantJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateEvidenceAccessGrantRequest(c.Server, evidenceID, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListEvidenceLifecycle List safe evidence lifecycle events
+//
+// Corresponds with GET /v1/evidence/{evidenceID}/lifecycle (the `ListEvidenceLifecycle` operationId).
+func (c *Client) ListEvidenceLifecycle(ctx context.Context, evidenceID EvidenceID, params *ListEvidenceLifecycleParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListEvidenceLifecycleRequest(c.Server, evidenceID, params)
 	if err != nil {
 		return nil, err
 	}
@@ -16253,6 +17278,251 @@ func (c *Client) GetPrompt(ctx context.Context, promptID string, version int, re
 	return c.Client.Do(req)
 }
 
+// GetProposalActivation Get the current model route activation
+//
+// Corresponds with GET /v1/proposal-activations/{workflow} (the `GetProposalActivation` operationId).
+func (c *Client) GetProposalActivation(ctx context.Context, workflow string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetProposalActivationRequest(c.Server, workflow)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ActivateProposalRouteWithBody Activate an exact model and prompt route
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with PUT /v1/proposal-activations/{workflow} (the `ActivateProposalRoute` operationId).
+func (c *Client) ActivateProposalRouteWithBody(ctx context.Context, workflow string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewActivateProposalRouteRequestWithBody(c.Server, workflow, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ActivateProposalRoute Activate an exact model and prompt route
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with PUT /v1/proposal-activations/{workflow} (the `ActivateProposalRoute` operationId).
+func (c *Client) ActivateProposalRoute(ctx context.Context, workflow string, body ActivateProposalRouteJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewActivateProposalRouteRequest(c.Server, workflow, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListProposalActivationHistory List immutable activation history newest first
+//
+// Corresponds with GET /v1/proposal-activations/{workflow}/history (the `ListProposalActivationHistory` operationId).
+func (c *Client) ListProposalActivationHistory(ctx context.Context, workflow string, params *ListProposalActivationHistoryParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListProposalActivationHistoryRequest(c.Server, workflow, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// RetireProposalActivationWithBody Retire the current model route
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/proposal-activations/{workflow}/retire (the `RetireProposalActivation` operationId).
+func (c *Client) RetireProposalActivationWithBody(ctx context.Context, workflow string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRetireProposalActivationRequestWithBody(c.Server, workflow, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// RetireProposalActivation Retire the current model route
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/proposal-activations/{workflow}/retire (the `RetireProposalActivation` operationId).
+func (c *Client) RetireProposalActivation(ctx context.Context, workflow string, body RetireProposalActivationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRetireProposalActivationRequest(c.Server, workflow, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// RollbackProposalActivationWithBody Republish a prior active route as a new revision
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/proposal-activations/{workflow}/rollback (the `RollbackProposalActivation` operationId).
+func (c *Client) RollbackProposalActivationWithBody(ctx context.Context, workflow string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRollbackProposalActivationRequestWithBody(c.Server, workflow, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// RollbackProposalActivation Republish a prior active route as a new revision
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/proposal-activations/{workflow}/rollback (the `RollbackProposalActivation` operationId).
+func (c *Client) RollbackProposalActivation(ctx context.Context, workflow string, body RollbackProposalActivationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRollbackProposalActivationRequest(c.Server, workflow, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListProposalImpactAssessments List immutable AI impact assessments
+//
+// Corresponds with GET /v1/proposal-impact-assessments (the `ListProposalImpactAssessments` operationId).
+func (c *Client) ListProposalImpactAssessments(ctx context.Context, params *ListProposalImpactAssessmentsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListProposalImpactAssessmentsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateProposalImpactAssessmentWithBody Record an immutable AI impact assessment
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/proposal-impact-assessments (the `CreateProposalImpactAssessment` operationId).
+func (c *Client) CreateProposalImpactAssessmentWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateProposalImpactAssessmentRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateProposalImpactAssessment Record an immutable AI impact assessment
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/proposal-impact-assessments (the `CreateProposalImpactAssessment` operationId).
+func (c *Client) CreateProposalImpactAssessment(ctx context.Context, body CreateProposalImpactAssessmentJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateProposalImpactAssessmentRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetProposalImpactAssessment Get one immutable AI impact assessment
+//
+// Corresponds with GET /v1/proposal-impact-assessments/{assessmentID} (the `GetProposalImpactAssessment` operationId).
+func (c *Client) GetProposalImpactAssessment(ctx context.Context, assessmentID string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetProposalImpactAssessmentRequest(c.Server, assessmentID)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateProposalModelWithBody Register an immutable generative-model revision
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/proposal-models (the `CreateProposalModel` operationId).
+func (c *Client) CreateProposalModelWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateProposalModelRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateProposalModel Register an immutable generative-model revision
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/proposal-models (the `CreateProposalModel` operationId).
+func (c *Client) CreateProposalModel(ctx context.Context, body CreateProposalModelJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateProposalModelRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetProposalModel Get an immutable generative-model revision
+//
+// Corresponds with GET /v1/proposal-models/{modelID}/{version} (the `GetProposalModel` operationId).
+func (c *Client) GetProposalModel(ctx context.Context, modelID string, version int, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetProposalModelRequest(c.Server, modelID, version)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // GetProposalMode Get mode config
 //
 // Corresponds with GET /v1/proposal-modes/{workflow} (the `GetProposalMode` operationId).
@@ -16292,6 +17562,21 @@ func (c *Client) PutProposalModeWithBody(ctx context.Context, workflow string, c
 // Corresponds with PUT /v1/proposal-modes/{workflow} (the `PutProposalMode` operationId).
 func (c *Client) PutProposalMode(ctx context.Context, workflow string, body PutProposalModeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPutProposalModeRequest(c.Server, workflow, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetProposalUsage Get content-free generation usage totals
+//
+// Corresponds with GET /v1/proposal-usage (the `GetProposalUsage` operationId).
+func (c *Client) GetProposalUsage(ctx context.Context, params *GetProposalUsageParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetProposalUsageRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -18471,6 +19756,61 @@ func (c *Client) GetLatestDecision(ctx context.Context, verificationID Verificat
 	return c.Client.Do(req)
 }
 
+// ListVerificationDecisions List immutable decision history for a verification
+//
+// Returns a bounded newest-first page. The before cursor is an opaque tenant-scoped decision identifier.
+//
+// Corresponds with GET /v1/verifications/{verificationID}/decisions (the `ListVerificationDecisions` operationId).
+func (c *Client) ListVerificationDecisions(ctx context.Context, verificationID VerificationID, params *ListVerificationDecisionsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListVerificationDecisionsRequest(c.Server, verificationID, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateVerificationReconsiderationWithBody Open an independent correction workflow for a decision
+//
+// Reconsideration reuses the existing versioned review-correction lifecycle; it never mutates an immutable decision in place.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/verifications/{verificationID}/reconsiderations (the `CreateVerificationReconsideration` operationId).
+func (c *Client) CreateVerificationReconsiderationWithBody(ctx context.Context, verificationID VerificationID, params *CreateVerificationReconsiderationParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateVerificationReconsiderationRequestWithBody(c.Server, verificationID, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CreateVerificationReconsideration Open an independent correction workflow for a decision
+//
+// Reconsideration reuses the existing versioned review-correction lifecycle; it never mutates an immutable decision in place.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/verifications/{verificationID}/reconsiderations (the `CreateVerificationReconsideration` operationId).
+func (c *Client) CreateVerificationReconsideration(ctx context.Context, verificationID VerificationID, params *CreateVerificationReconsiderationParams, body CreateVerificationReconsiderationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateVerificationReconsiderationRequest(c.Server, verificationID, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // ResumeVerificationWithBody Resume a verification awaiting subject input
 //
 // Requires verification_sessions:resume and a fresh subject authorisation
@@ -19891,6 +21231,59 @@ func NewCreateCaptureConnectionRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
+// NewSelectCaptureDocumentRequest calls the generic SelectCaptureDocument builder with application/json body
+func NewSelectCaptureDocumentRequest(server string, params *SelectCaptureDocumentParams, body SelectCaptureDocumentJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewSelectCaptureDocumentRequestWithBody(server, params, "application/json", bodyReader)
+}
+
+// NewSelectCaptureDocumentRequestWithBody constructs an http.Request for the SelectCaptureDocument method, with any body, and a specified content type
+func NewSelectCaptureDocumentRequestWithBody(server string, params *SelectCaptureDocumentParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/capture/document-selection")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithOptions("simple", false, "Idempotency-Key", params.IdempotencyKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam0)
+
+	}
+
+	return req, nil
+}
+
 // NewResolveCaptureExperienceRequest constructs an http.Request for the ResolveCaptureExperience method
 func NewResolveCaptureExperienceRequest(server string, params *ResolveCaptureExperienceParams) (*http.Request, error) {
 	var err error
@@ -20203,6 +21596,153 @@ func NewGetCaptureSessionRequest(server string) (*http.Request, error) {
 	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreateConsentReceiptRequest calls the generic CreateConsentReceipt builder with application/json body
+func NewCreateConsentReceiptRequest(server string, params *CreateConsentReceiptParams, body CreateConsentReceiptJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateConsentReceiptRequestWithBody(server, params, "application/json", bodyReader)
+}
+
+// NewCreateConsentReceiptRequestWithBody constructs an http.Request for the CreateConsentReceipt method, with any body, and a specified content type
+func NewCreateConsentReceiptRequestWithBody(server string, params *CreateConsentReceiptParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/consent-receipts")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithOptions("simple", false, "Idempotency-Key", params.IdempotencyKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam0)
+
+	}
+
+	return req, nil
+}
+
+// NewGetConsentReceiptRequest constructs an http.Request for the GetConsentReceipt method
+func NewGetConsentReceiptRequest(server string, consentID SubjectResponseID) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "consentID", consentID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/consent-receipts/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewRevokeConsentReceiptRequest calls the generic RevokeConsentReceipt builder with application/json body
+func NewRevokeConsentReceiptRequest(server string, consentID SubjectResponseID, params *RevokeConsentReceiptParams, body RevokeConsentReceiptJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewRevokeConsentReceiptRequestWithBody(server, consentID, params, "application/json", bodyReader)
+}
+
+// NewRevokeConsentReceiptRequestWithBody constructs an http.Request for the RevokeConsentReceipt method, with any body, and a specified content type
+func NewRevokeConsentReceiptRequestWithBody(server string, consentID SubjectResponseID, params *RevokeConsentReceiptParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "consentID", consentID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/consent-receipts/%s/revoke", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithOptions("simple", false, "Idempotency-Key", params.IdempotencyKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam0)
+
 	}
 
 	return req, nil
@@ -20523,6 +22063,100 @@ func NewGetDocumentSupportRequest(server string, params *GetDocumentSupportParam
 	return req, nil
 }
 
+// NewGetEvidenceAccessGrantRequest constructs an http.Request for the GetEvidenceAccessGrant method
+func NewGetEvidenceAccessGrantRequest(server string, grantID EvidenceAccessGrantID) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "grantID", grantID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/evidence-access-grants/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewRevokeEvidenceAccessGrantRequest calls the generic RevokeEvidenceAccessGrant builder with application/json body
+func NewRevokeEvidenceAccessGrantRequest(server string, grantID EvidenceAccessGrantID, params *RevokeEvidenceAccessGrantParams, body RevokeEvidenceAccessGrantJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewRevokeEvidenceAccessGrantRequestWithBody(server, grantID, params, "application/json", bodyReader)
+}
+
+// NewRevokeEvidenceAccessGrantRequestWithBody constructs an http.Request for the RevokeEvidenceAccessGrant method, with any body, and a specified content type
+func NewRevokeEvidenceAccessGrantRequestWithBody(server string, grantID EvidenceAccessGrantID, params *RevokeEvidenceAccessGrantParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "grantID", grantID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/evidence-access-grants/%s/revoke", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithOptions("simple", false, "Idempotency-Key", params.IdempotencyKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam0)
+
+	}
+
+	return req, nil
+}
+
 // NewCreateEvidenceUploadRequest calls the generic CreateEvidenceUpload builder with application/json body
 func NewCreateEvidenceUploadRequest(server string, params *CreateEvidenceUploadParams, body CreateEvidenceUploadJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -20663,6 +22297,161 @@ func NewUploadEvidenceRequestWithBody(server string, uploadID UploadID, params *
 
 		req.Header.Set("Content-Digest", headerParam1)
 
+	}
+
+	return req, nil
+}
+
+// NewGetEvidenceRequest constructs an http.Request for the GetEvidence method
+func NewGetEvidenceRequest(server string, evidenceID EvidenceID) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "evidenceID", evidenceID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/evidence/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreateEvidenceAccessGrantRequest calls the generic CreateEvidenceAccessGrant builder with application/json body
+func NewCreateEvidenceAccessGrantRequest(server string, evidenceID EvidenceID, params *CreateEvidenceAccessGrantParams, body CreateEvidenceAccessGrantJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateEvidenceAccessGrantRequestWithBody(server, evidenceID, params, "application/json", bodyReader)
+}
+
+// NewCreateEvidenceAccessGrantRequestWithBody constructs an http.Request for the CreateEvidenceAccessGrant method, with any body, and a specified content type
+func NewCreateEvidenceAccessGrantRequestWithBody(server string, evidenceID EvidenceID, params *CreateEvidenceAccessGrantParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "evidenceID", evidenceID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/evidence/%s/access-grants", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithOptions("simple", false, "Idempotency-Key", params.IdempotencyKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam0)
+
+	}
+
+	return req, nil
+}
+
+// NewListEvidenceLifecycleRequest constructs an http.Request for the ListEvidenceLifecycle method
+func NewListEvidenceLifecycleRequest(server string, evidenceID EvidenceID, params *ListEvidenceLifecycleParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "evidenceID", evidenceID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/evidence/%s/lifecycle", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
 	}
 
 	return req, nil
@@ -24669,6 +26458,463 @@ func NewGetPromptRequest(server string, promptID string, version int) (*http.Req
 	return req, nil
 }
 
+// NewGetProposalActivationRequest constructs an http.Request for the GetProposalActivation method
+func NewGetProposalActivationRequest(server string, workflow string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "workflow", workflow, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/proposal-activations/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewActivateProposalRouteRequest calls the generic ActivateProposalRoute builder with application/json body
+func NewActivateProposalRouteRequest(server string, workflow string, body ActivateProposalRouteJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewActivateProposalRouteRequestWithBody(server, workflow, "application/json", bodyReader)
+}
+
+// NewActivateProposalRouteRequestWithBody constructs an http.Request for the ActivateProposalRoute method, with any body, and a specified content type
+func NewActivateProposalRouteRequestWithBody(server string, workflow string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "workflow", workflow, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/proposal-activations/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPut, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewListProposalActivationHistoryRequest constructs an http.Request for the ListProposalActivationHistory method
+func NewListProposalActivationHistoryRequest(server string, workflow string, params *ListProposalActivationHistoryParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "workflow", workflow, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/proposal-activations/%s/history", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewRetireProposalActivationRequest calls the generic RetireProposalActivation builder with application/json body
+func NewRetireProposalActivationRequest(server string, workflow string, body RetireProposalActivationJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewRetireProposalActivationRequestWithBody(server, workflow, "application/json", bodyReader)
+}
+
+// NewRetireProposalActivationRequestWithBody constructs an http.Request for the RetireProposalActivation method, with any body, and a specified content type
+func NewRetireProposalActivationRequestWithBody(server string, workflow string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "workflow", workflow, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/proposal-activations/%s/retire", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewRollbackProposalActivationRequest calls the generic RollbackProposalActivation builder with application/json body
+func NewRollbackProposalActivationRequest(server string, workflow string, body RollbackProposalActivationJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewRollbackProposalActivationRequestWithBody(server, workflow, "application/json", bodyReader)
+}
+
+// NewRollbackProposalActivationRequestWithBody constructs an http.Request for the RollbackProposalActivation method, with any body, and a specified content type
+func NewRollbackProposalActivationRequestWithBody(server string, workflow string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "workflow", workflow, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/proposal-activations/%s/rollback", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewListProposalImpactAssessmentsRequest constructs an http.Request for the ListProposalImpactAssessments method
+func NewListProposalImpactAssessmentsRequest(server string, params *ListProposalImpactAssessmentsParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/proposal-impact-assessments")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Before != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "before", *params.Before, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "date-time"}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreateProposalImpactAssessmentRequest calls the generic CreateProposalImpactAssessment builder with application/json body
+func NewCreateProposalImpactAssessmentRequest(server string, body CreateProposalImpactAssessmentJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateProposalImpactAssessmentRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewCreateProposalImpactAssessmentRequestWithBody constructs an http.Request for the CreateProposalImpactAssessment method, with any body, and a specified content type
+func NewCreateProposalImpactAssessmentRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/proposal-impact-assessments")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetProposalImpactAssessmentRequest constructs an http.Request for the GetProposalImpactAssessment method
+func NewGetProposalImpactAssessmentRequest(server string, assessmentID string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "assessmentID", assessmentID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/proposal-impact-assessments/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreateProposalModelRequest calls the generic CreateProposalModel builder with application/json body
+func NewCreateProposalModelRequest(server string, body CreateProposalModelJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateProposalModelRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewCreateProposalModelRequestWithBody constructs an http.Request for the CreateProposalModel method, with any body, and a specified content type
+func NewCreateProposalModelRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/proposal-models")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetProposalModelRequest constructs an http.Request for the GetProposalModel method
+func NewGetProposalModelRequest(server string, modelID string, version int) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "modelID", modelID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "version", version, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "integer", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/proposal-models/%s/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewGetProposalModeRequest constructs an http.Request for the GetProposalMode method
 func NewGetProposalModeRequest(server string, workflow string) (*http.Request, error) {
 	var err error
@@ -24746,6 +26992,64 @@ func NewPutProposalModeRequestWithBody(server string, workflow string, contentTy
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetProposalUsageRequest constructs an http.Request for the GetProposalUsage method
+func NewGetProposalUsageRequest(server string, params *GetProposalUsageParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/proposal-usage")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if queryFrag, err := runtime.StyleParamWithOptions("form", true, "from", params.From, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "date-time"}); err != nil {
+			return nil, err
+		} else {
+			for _, qp := range strings.Split(queryFrag, "&") {
+				rawQueryFragments = append(rawQueryFragments, qp)
+			}
+		}
+
+		if queryFrag, err := runtime.StyleParamWithOptions("form", true, "to", params.To, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: "date-time"}); err != nil {
+			return nil, err
+		} else {
+			for _, qp := range strings.Split(queryFrag, "&") {
+				rawQueryFragments = append(rawQueryFragments, qp)
+			}
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	return req, nil
 }
@@ -28724,6 +31028,139 @@ func NewGetLatestDecisionRequest(server string, verificationID VerificationID, p
 	return req, nil
 }
 
+// NewListVerificationDecisionsRequest constructs an http.Request for the ListVerificationDecisions method
+func NewListVerificationDecisionsRequest(server string, verificationID VerificationID, params *ListVerificationDecisionsParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "verificationID", verificationID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/verifications/%s/decisions", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Before != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "before", *params.Before, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreateVerificationReconsiderationRequest calls the generic CreateVerificationReconsideration builder with application/json body
+func NewCreateVerificationReconsiderationRequest(server string, verificationID VerificationID, params *CreateVerificationReconsiderationParams, body CreateVerificationReconsiderationJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateVerificationReconsiderationRequestWithBody(server, verificationID, params, "application/json", bodyReader)
+}
+
+// NewCreateVerificationReconsiderationRequestWithBody constructs an http.Request for the CreateVerificationReconsideration method, with any body, and a specified content type
+func NewCreateVerificationReconsiderationRequestWithBody(server string, verificationID VerificationID, params *CreateVerificationReconsiderationParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "verificationID", verificationID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/verifications/%s/reconsiderations", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithOptions("simple", false, "Idempotency-Key", params.IdempotencyKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("Idempotency-Key", headerParam0)
+
+	}
+
+	return req, nil
+}
+
 // NewResumeVerificationRequest calls the generic ResumeVerification builder with application/json body
 func NewResumeVerificationRequest(server string, verificationID VerificationID, params *ResumeVerificationParams, body ResumeVerificationJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -29785,6 +32222,24 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with POST /v1/capture/connections (the `CreateCaptureConnection` operationId).
 	CreateCaptureConnectionWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*CreateCaptureConnectionResponse, error)
 
+	// SelectCaptureDocumentWithBodyWithResponse Select a profile-pinned document branch
+	//
+	// Activates pinned artefacts without changing requirements. Switching is rejected after any upload intent for the requirement. Exact retries return the original session result.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/capture/document-selection (the `SelectCaptureDocument` operationId).
+	SelectCaptureDocumentWithBodyWithResponse(ctx context.Context, params *SelectCaptureDocumentParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SelectCaptureDocumentResponse, error)
+
+	// SelectCaptureDocumentWithResponse Select a profile-pinned document branch
+	//
+	// Activates pinned artefacts without changing requirements. Switching is rejected after any upload intent for the requirement. Exact retries return the original session result.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/capture/document-selection (the `SelectCaptureDocument` operationId).
+	SelectCaptureDocumentWithResponse(ctx context.Context, params *SelectCaptureDocumentParams, body SelectCaptureDocumentJSONRequestBody, reqEditors ...RequestEditorFn) (*SelectCaptureDocumentResponse, error)
+
 	// ResolveCaptureExperienceWithResponse Resolve the session's pinned capture experience
 	//
 	// Returns the immutable signed experience document pinned to the
@@ -29890,6 +32345,49 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with GET /v1/capture/session (the `GetCaptureSession` operationId).
 	GetCaptureSessionWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetCaptureSessionResponse, error)
 
+	// CreateConsentReceiptWithBodyWithResponse Record an explicit session-bound subject response
+	//
+	// Uses the capture credential and the exact notice bound to the active verification; tenant API credentials cannot invent subject consent.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/consent-receipts (the `CreateConsentReceipt` operationId).
+	CreateConsentReceiptWithBodyWithResponse(ctx context.Context, params *CreateConsentReceiptParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateConsentReceiptResponse, error)
+
+	// CreateConsentReceiptWithResponse Record an explicit session-bound subject response
+	//
+	// Uses the capture credential and the exact notice bound to the active verification; tenant API credentials cannot invent subject consent.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/consent-receipts (the `CreateConsentReceipt` operationId).
+	CreateConsentReceiptWithResponse(ctx context.Context, params *CreateConsentReceiptParams, body CreateConsentReceiptJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateConsentReceiptResponse, error)
+
+	// GetConsentReceiptWithResponse Inspect one immutable consent receipt
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/consent-receipts/{consentID} (the `GetConsentReceipt` operationId).
+	GetConsentReceiptWithResponse(ctx context.Context, consentID SubjectResponseID, reqEditors ...RequestEditorFn) (*GetConsentReceiptResponse, error)
+
+	// RevokeConsentReceiptWithBodyWithResponse Append a refusal that withdraws an immutable consent receipt
+	//
+	// The original consent remains immutable; successful withdrawal creates a new refusal receipt.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/consent-receipts/{consentID}/revoke (the `RevokeConsentReceipt` operationId).
+	RevokeConsentReceiptWithBodyWithResponse(ctx context.Context, consentID SubjectResponseID, params *RevokeConsentReceiptParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RevokeConsentReceiptResponse, error)
+
+	// RevokeConsentReceiptWithResponse Append a refusal that withdraws an immutable consent receipt
+	//
+	// The original consent remains immutable; successful withdrawal creates a new refusal receipt.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/consent-receipts/{consentID}/revoke (the `RevokeConsentReceipt` operationId).
+	RevokeConsentReceiptWithResponse(ctx context.Context, consentID SubjectResponseID, params *RevokeConsentReceiptParams, body RevokeConsentReceiptJSONRequestBody, reqEditors ...RequestEditorFn) (*RevokeConsentReceiptResponse, error)
+
 	// GetDecisionWithResponse Get an exact immutable decision
 	//
 	// Returns a safe reproduction report without fact details, reason codes, or canonical payloads.
@@ -29952,6 +32450,27 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with GET /v1/document-support (the `GetDocumentSupport` operationId).
 	GetDocumentSupportWithResponse(ctx context.Context, params *GetDocumentSupportParams, reqEditors ...RequestEditorFn) (*GetDocumentSupportResponse, error)
 
+	// GetEvidenceAccessGrantWithResponse Inspect a purpose-bound evidence-processing grant
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/evidence-access-grants/{grantID} (the `GetEvidenceAccessGrant` operationId).
+	GetEvidenceAccessGrantWithResponse(ctx context.Context, grantID EvidenceAccessGrantID, reqEditors ...RequestEditorFn) (*GetEvidenceAccessGrantResponse, error)
+
+	// RevokeEvidenceAccessGrantWithBodyWithResponse Irreversibly revoke an evidence-processing grant
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/evidence-access-grants/{grantID}/revoke (the `RevokeEvidenceAccessGrant` operationId).
+	RevokeEvidenceAccessGrantWithBodyWithResponse(ctx context.Context, grantID EvidenceAccessGrantID, params *RevokeEvidenceAccessGrantParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RevokeEvidenceAccessGrantResponse, error)
+
+	// RevokeEvidenceAccessGrantWithResponse Irreversibly revoke an evidence-processing grant
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/evidence-access-grants/{grantID}/revoke (the `RevokeEvidenceAccessGrant` operationId).
+	RevokeEvidenceAccessGrantWithResponse(ctx context.Context, grantID EvidenceAccessGrantID, params *RevokeEvidenceAccessGrantParams, body RevokeEvidenceAccessGrantJSONRequestBody, reqEditors ...RequestEditorFn) (*RevokeEvidenceAccessGrantResponse, error)
+
 	// CreateEvidenceUploadWithBodyWithResponse Issue a requirement-bound evidence-upload intent
 	//
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
@@ -29988,6 +32507,40 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with PUT /v1/evidence-uploads/{uploadID} (the `UploadEvidence` operationId).
 	UploadEvidenceWithBodyWithResponse(ctx context.Context, uploadID UploadID, params *UploadEvidenceParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UploadEvidenceResponse, error)
+
+	// GetEvidenceWithResponse Inspect safe evidence metadata
+	//
+	// Returns reference-only lifecycle metadata. Object keys, wrapped keys, digests, and evidence bytes are never exposed.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/evidence/{evidenceID} (the `GetEvidence` operationId).
+	GetEvidenceWithResponse(ctx context.Context, evidenceID EvidenceID, reqEditors ...RequestEditorFn) (*GetEvidenceResponse, error)
+
+	// CreateEvidenceAccessGrantWithBodyWithResponse Issue a purpose-bound evidence-processing grant
+	//
+	// Live processing authority is re-evaluated before an idempotent, short-lived capability is committed.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/evidence/{evidenceID}/access-grants (the `CreateEvidenceAccessGrant` operationId).
+	CreateEvidenceAccessGrantWithBodyWithResponse(ctx context.Context, evidenceID EvidenceID, params *CreateEvidenceAccessGrantParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateEvidenceAccessGrantResponse, error)
+
+	// CreateEvidenceAccessGrantWithResponse Issue a purpose-bound evidence-processing grant
+	//
+	// Live processing authority is re-evaluated before an idempotent, short-lived capability is committed.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/evidence/{evidenceID}/access-grants (the `CreateEvidenceAccessGrant` operationId).
+	CreateEvidenceAccessGrantWithResponse(ctx context.Context, evidenceID EvidenceID, params *CreateEvidenceAccessGrantParams, body CreateEvidenceAccessGrantJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateEvidenceAccessGrantResponse, error)
+
+	// ListEvidenceLifecycleWithResponse List safe evidence lifecycle events
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/evidence/{evidenceID}/lifecycle (the `ListEvidenceLifecycle` operationId).
+	ListEvidenceLifecycleWithResponse(ctx context.Context, evidenceID EvidenceID, params *ListEvidenceLifecycleParams, reqEditors ...RequestEditorFn) (*ListEvidenceLifecycleResponse, error)
 
 	// GetExperienceDefaultWithResponse Get the signed accessible safe default
 	//
@@ -31263,6 +33816,111 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with GET /v1/prompts/{promptID}/{version} (the `GetPrompt` operationId).
 	GetPromptWithResponse(ctx context.Context, promptID string, version int, reqEditors ...RequestEditorFn) (*GetPromptResponse, error)
 
+	// GetProposalActivationWithResponse Get the current model route activation
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/proposal-activations/{workflow} (the `GetProposalActivation` operationId).
+	GetProposalActivationWithResponse(ctx context.Context, workflow string, reqEditors ...RequestEditorFn) (*GetProposalActivationResponse, error)
+
+	// ActivateProposalRouteWithBodyWithResponse Activate an exact model and prompt route
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PUT /v1/proposal-activations/{workflow} (the `ActivateProposalRoute` operationId).
+	ActivateProposalRouteWithBodyWithResponse(ctx context.Context, workflow string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ActivateProposalRouteResponse, error)
+
+	// ActivateProposalRouteWithResponse Activate an exact model and prompt route
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PUT /v1/proposal-activations/{workflow} (the `ActivateProposalRoute` operationId).
+	ActivateProposalRouteWithResponse(ctx context.Context, workflow string, body ActivateProposalRouteJSONRequestBody, reqEditors ...RequestEditorFn) (*ActivateProposalRouteResponse, error)
+
+	// ListProposalActivationHistoryWithResponse List immutable activation history newest first
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/proposal-activations/{workflow}/history (the `ListProposalActivationHistory` operationId).
+	ListProposalActivationHistoryWithResponse(ctx context.Context, workflow string, params *ListProposalActivationHistoryParams, reqEditors ...RequestEditorFn) (*ListProposalActivationHistoryResponse, error)
+
+	// RetireProposalActivationWithBodyWithResponse Retire the current model route
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/proposal-activations/{workflow}/retire (the `RetireProposalActivation` operationId).
+	RetireProposalActivationWithBodyWithResponse(ctx context.Context, workflow string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RetireProposalActivationResponse, error)
+
+	// RetireProposalActivationWithResponse Retire the current model route
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/proposal-activations/{workflow}/retire (the `RetireProposalActivation` operationId).
+	RetireProposalActivationWithResponse(ctx context.Context, workflow string, body RetireProposalActivationJSONRequestBody, reqEditors ...RequestEditorFn) (*RetireProposalActivationResponse, error)
+
+	// RollbackProposalActivationWithBodyWithResponse Republish a prior active route as a new revision
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/proposal-activations/{workflow}/rollback (the `RollbackProposalActivation` operationId).
+	RollbackProposalActivationWithBodyWithResponse(ctx context.Context, workflow string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RollbackProposalActivationResponse, error)
+
+	// RollbackProposalActivationWithResponse Republish a prior active route as a new revision
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/proposal-activations/{workflow}/rollback (the `RollbackProposalActivation` operationId).
+	RollbackProposalActivationWithResponse(ctx context.Context, workflow string, body RollbackProposalActivationJSONRequestBody, reqEditors ...RequestEditorFn) (*RollbackProposalActivationResponse, error)
+
+	// ListProposalImpactAssessmentsWithResponse List immutable AI impact assessments
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/proposal-impact-assessments (the `ListProposalImpactAssessments` operationId).
+	ListProposalImpactAssessmentsWithResponse(ctx context.Context, params *ListProposalImpactAssessmentsParams, reqEditors ...RequestEditorFn) (*ListProposalImpactAssessmentsResponse, error)
+
+	// CreateProposalImpactAssessmentWithBodyWithResponse Record an immutable AI impact assessment
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/proposal-impact-assessments (the `CreateProposalImpactAssessment` operationId).
+	CreateProposalImpactAssessmentWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateProposalImpactAssessmentResponse, error)
+
+	// CreateProposalImpactAssessmentWithResponse Record an immutable AI impact assessment
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/proposal-impact-assessments (the `CreateProposalImpactAssessment` operationId).
+	CreateProposalImpactAssessmentWithResponse(ctx context.Context, body CreateProposalImpactAssessmentJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateProposalImpactAssessmentResponse, error)
+
+	// GetProposalImpactAssessmentWithResponse Get one immutable AI impact assessment
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/proposal-impact-assessments/{assessmentID} (the `GetProposalImpactAssessment` operationId).
+	GetProposalImpactAssessmentWithResponse(ctx context.Context, assessmentID string, reqEditors ...RequestEditorFn) (*GetProposalImpactAssessmentResponse, error)
+
+	// CreateProposalModelWithBodyWithResponse Register an immutable generative-model revision
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/proposal-models (the `CreateProposalModel` operationId).
+	CreateProposalModelWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateProposalModelResponse, error)
+
+	// CreateProposalModelWithResponse Register an immutable generative-model revision
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/proposal-models (the `CreateProposalModel` operationId).
+	CreateProposalModelWithResponse(ctx context.Context, body CreateProposalModelJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateProposalModelResponse, error)
+
+	// GetProposalModelWithResponse Get an immutable generative-model revision
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/proposal-models/{modelID}/{version} (the `GetProposalModel` operationId).
+	GetProposalModelWithResponse(ctx context.Context, modelID string, version int, reqEditors ...RequestEditorFn) (*GetProposalModelResponse, error)
+
 	// GetProposalModeWithResponse Get mode config
 	//
 	// Returns a wrapper object for the known response body format(s).
@@ -31283,6 +33941,13 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with PUT /v1/proposal-modes/{workflow} (the `PutProposalMode` operationId).
 	PutProposalModeWithResponse(ctx context.Context, workflow string, body PutProposalModeJSONRequestBody, reqEditors ...RequestEditorFn) (*PutProposalModeResponse, error)
+
+	// GetProposalUsageWithResponse Get content-free generation usage totals
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/proposal-usage (the `GetProposalUsage` operationId).
+	GetProposalUsageWithResponse(ctx context.Context, params *GetProposalUsageParams, reqEditors ...RequestEditorFn) (*GetProposalUsageResponse, error)
 
 	// ListProposalsWithResponse List proposals for a verification (filtered)
 	//
@@ -32364,6 +35029,33 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with GET /v1/verifications/{verificationID}/decision (the `GetLatestDecision` operationId).
 	GetLatestDecisionWithResponse(ctx context.Context, verificationID VerificationID, params *GetLatestDecisionParams, reqEditors ...RequestEditorFn) (*GetLatestDecisionResponse, error)
+
+	// ListVerificationDecisionsWithResponse List immutable decision history for a verification
+	//
+	// Returns a bounded newest-first page. The before cursor is an opaque tenant-scoped decision identifier.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/verifications/{verificationID}/decisions (the `ListVerificationDecisions` operationId).
+	ListVerificationDecisionsWithResponse(ctx context.Context, verificationID VerificationID, params *ListVerificationDecisionsParams, reqEditors ...RequestEditorFn) (*ListVerificationDecisionsResponse, error)
+
+	// CreateVerificationReconsiderationWithBodyWithResponse Open an independent correction workflow for a decision
+	//
+	// Reconsideration reuses the existing versioned review-correction lifecycle; it never mutates an immutable decision in place.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/verifications/{verificationID}/reconsiderations (the `CreateVerificationReconsideration` operationId).
+	CreateVerificationReconsiderationWithBodyWithResponse(ctx context.Context, verificationID VerificationID, params *CreateVerificationReconsiderationParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateVerificationReconsiderationResponse, error)
+
+	// CreateVerificationReconsiderationWithResponse Open an independent correction workflow for a decision
+	//
+	// Reconsideration reuses the existing versioned review-correction lifecycle; it never mutates an immutable decision in place.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/verifications/{verificationID}/reconsiderations (the `CreateVerificationReconsideration` operationId).
+	CreateVerificationReconsiderationWithResponse(ctx context.Context, verificationID VerificationID, params *CreateVerificationReconsiderationParams, body CreateVerificationReconsiderationJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateVerificationReconsiderationResponse, error)
 
 	// ResumeVerificationWithBodyWithResponse Resume a verification awaiting subject input
 	//
@@ -35933,6 +38625,91 @@ func (r CreateCaptureConnectionResponse) ContentType() string {
 	return ""
 }
 
+// SelectCaptureDocumentResponse400Headers the declared response headers of an HTTP 400 response for SelectCaptureDocument
+type SelectCaptureDocumentResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// SelectCaptureDocumentResponse401Headers the declared response headers of an HTTP 401 response for SelectCaptureDocument
+type SelectCaptureDocumentResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// SelectCaptureDocumentResponse409Headers the declared response headers of an HTTP 409 response for SelectCaptureDocument
+type SelectCaptureDocumentResponse409Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type SelectCaptureDocumentResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *VerificationSession
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationProblemJSON409 *Conflict
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *SelectCaptureDocumentResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *SelectCaptureDocumentResponse401Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *SelectCaptureDocumentResponse409Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r SelectCaptureDocumentResponse) GetJSON200() *VerificationSession {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r SelectCaptureDocumentResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r SelectCaptureDocumentResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r SelectCaptureDocumentResponse) GetApplicationProblemJSON409() *Conflict {
+	return r.ApplicationProblemJSON409
+}
+
+// GetBody returns the raw response body bytes
+func (r SelectCaptureDocumentResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r SelectCaptureDocumentResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r SelectCaptureDocumentResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r SelectCaptureDocumentResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // ResolveCaptureExperienceResponse200Headers the declared response headers of an HTTP 200 response for ResolveCaptureExperience
 type ResolveCaptureExperienceResponse200Headers struct {
 	CacheControl *string
@@ -36673,6 +39450,302 @@ func (r GetCaptureSessionResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r GetCaptureSessionResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// CreateConsentReceiptResponse400Headers the declared response headers of an HTTP 400 response for CreateConsentReceipt
+type CreateConsentReceiptResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// CreateConsentReceiptResponse401Headers the declared response headers of an HTTP 401 response for CreateConsentReceipt
+type CreateConsentReceiptResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// CreateConsentReceiptResponse403Headers the declared response headers of an HTTP 403 response for CreateConsentReceipt
+type CreateConsentReceiptResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// CreateConsentReceiptResponse409Headers the declared response headers of an HTTP 409 response for CreateConsentReceipt
+type CreateConsentReceiptResponse409Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type CreateConsentReceiptResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON201 the response for an HTTP 201 `application/json` response
+	JSON201 *SubjectResponse
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *ProcessingAuthorityRequired
+	// ApplicationProblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationProblemJSON409 *Conflict
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *CreateConsentReceiptResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *CreateConsentReceiptResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *CreateConsentReceiptResponse403Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *CreateConsentReceiptResponse409Headers
+}
+
+// GetJSON201 returns the response for an HTTP 201 `application/json` response
+func (r CreateConsentReceiptResponse) GetJSON201() *SubjectResponse {
+	return r.JSON201
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r CreateConsentReceiptResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r CreateConsentReceiptResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r CreateConsentReceiptResponse) GetApplicationProblemJSON403() *ProcessingAuthorityRequired {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r CreateConsentReceiptResponse) GetApplicationProblemJSON409() *Conflict {
+	return r.ApplicationProblemJSON409
+}
+
+// GetBody returns the raw response body bytes
+func (r CreateConsentReceiptResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateConsentReceiptResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateConsentReceiptResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CreateConsentReceiptResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetConsentReceiptResponse401Headers the declared response headers of an HTTP 401 response for GetConsentReceipt
+type GetConsentReceiptResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// GetConsentReceiptResponse403Headers the declared response headers of an HTTP 403 response for GetConsentReceipt
+type GetConsentReceiptResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// GetConsentReceiptResponse404Headers the declared response headers of an HTTP 404 response for GetConsentReceipt
+type GetConsentReceiptResponse404Headers struct {
+	XRequestID RequestID
+}
+
+type GetConsentReceiptResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *SubjectResponse
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *GetConsentReceiptResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetConsentReceiptResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetConsentReceiptResponse404Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetConsentReceiptResponse) GetJSON200() *SubjectResponse {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetConsentReceiptResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetConsentReceiptResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetConsentReceiptResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetBody returns the raw response body bytes
+func (r GetConsentReceiptResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetConsentReceiptResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetConsentReceiptResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetConsentReceiptResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// RevokeConsentReceiptResponse400Headers the declared response headers of an HTTP 400 response for RevokeConsentReceipt
+type RevokeConsentReceiptResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// RevokeConsentReceiptResponse401Headers the declared response headers of an HTTP 401 response for RevokeConsentReceipt
+type RevokeConsentReceiptResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// RevokeConsentReceiptResponse403Headers the declared response headers of an HTTP 403 response for RevokeConsentReceipt
+type RevokeConsentReceiptResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// RevokeConsentReceiptResponse404Headers the declared response headers of an HTTP 404 response for RevokeConsentReceipt
+type RevokeConsentReceiptResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// RevokeConsentReceiptResponse409Headers the declared response headers of an HTTP 409 response for RevokeConsentReceipt
+type RevokeConsentReceiptResponse409Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type RevokeConsentReceiptResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON201 the response for an HTTP 201 `application/json` response
+	JSON201 *SubjectResponse
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationProblemJSON409 *Conflict
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *RevokeConsentReceiptResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *RevokeConsentReceiptResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *RevokeConsentReceiptResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *RevokeConsentReceiptResponse404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *RevokeConsentReceiptResponse409Headers
+}
+
+// GetJSON201 returns the response for an HTTP 201 `application/json` response
+func (r RevokeConsentReceiptResponse) GetJSON201() *SubjectResponse {
+	return r.JSON201
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r RevokeConsentReceiptResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r RevokeConsentReceiptResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r RevokeConsentReceiptResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r RevokeConsentReceiptResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r RevokeConsentReceiptResponse) GetApplicationProblemJSON409() *Conflict {
+	return r.ApplicationProblemJSON409
+}
+
+// GetBody returns the raw response body bytes
+func (r RevokeConsentReceiptResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r RevokeConsentReceiptResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r RevokeConsentReceiptResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r RevokeConsentReceiptResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -37576,6 +40649,203 @@ func (r GetDocumentSupportResponse) ContentType() string {
 	return ""
 }
 
+// GetEvidenceAccessGrantResponse401Headers the declared response headers of an HTTP 401 response for GetEvidenceAccessGrant
+type GetEvidenceAccessGrantResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// GetEvidenceAccessGrantResponse403Headers the declared response headers of an HTTP 403 response for GetEvidenceAccessGrant
+type GetEvidenceAccessGrantResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// GetEvidenceAccessGrantResponse404Headers the declared response headers of an HTTP 404 response for GetEvidenceAccessGrant
+type GetEvidenceAccessGrantResponse404Headers struct {
+	XRequestID RequestID
+}
+
+type GetEvidenceAccessGrantResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *EvidenceAccessGrant
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *GetEvidenceAccessGrantResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetEvidenceAccessGrantResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetEvidenceAccessGrantResponse404Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetEvidenceAccessGrantResponse) GetJSON200() *EvidenceAccessGrant {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetEvidenceAccessGrantResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetEvidenceAccessGrantResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetEvidenceAccessGrantResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetBody returns the raw response body bytes
+func (r GetEvidenceAccessGrantResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetEvidenceAccessGrantResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetEvidenceAccessGrantResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetEvidenceAccessGrantResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// RevokeEvidenceAccessGrantResponse400Headers the declared response headers of an HTTP 400 response for RevokeEvidenceAccessGrant
+type RevokeEvidenceAccessGrantResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// RevokeEvidenceAccessGrantResponse401Headers the declared response headers of an HTTP 401 response for RevokeEvidenceAccessGrant
+type RevokeEvidenceAccessGrantResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// RevokeEvidenceAccessGrantResponse403Headers the declared response headers of an HTTP 403 response for RevokeEvidenceAccessGrant
+type RevokeEvidenceAccessGrantResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// RevokeEvidenceAccessGrantResponse404Headers the declared response headers of an HTTP 404 response for RevokeEvidenceAccessGrant
+type RevokeEvidenceAccessGrantResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// RevokeEvidenceAccessGrantResponse409Headers the declared response headers of an HTTP 409 response for RevokeEvidenceAccessGrant
+type RevokeEvidenceAccessGrantResponse409Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type RevokeEvidenceAccessGrantResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *EvidenceAccessGrant
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationProblemJSON409 *Conflict
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *RevokeEvidenceAccessGrantResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *RevokeEvidenceAccessGrantResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *RevokeEvidenceAccessGrantResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *RevokeEvidenceAccessGrantResponse404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *RevokeEvidenceAccessGrantResponse409Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r RevokeEvidenceAccessGrantResponse) GetJSON200() *EvidenceAccessGrant {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r RevokeEvidenceAccessGrantResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r RevokeEvidenceAccessGrantResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r RevokeEvidenceAccessGrantResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r RevokeEvidenceAccessGrantResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r RevokeEvidenceAccessGrantResponse) GetApplicationProblemJSON409() *Conflict {
+	return r.ApplicationProblemJSON409
+}
+
+// GetBody returns the raw response body bytes
+func (r RevokeEvidenceAccessGrantResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r RevokeEvidenceAccessGrantResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r RevokeEvidenceAccessGrantResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r RevokeEvidenceAccessGrantResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // CreateEvidenceUploadResponse201Headers the declared response headers of an HTTP 201 response for CreateEvidenceUpload
 type CreateEvidenceUploadResponse201Headers struct {
 	ETag       *string
@@ -37962,6 +41232,287 @@ func (r UploadEvidenceResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r UploadEvidenceResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetEvidenceResponse401Headers the declared response headers of an HTTP 401 response for GetEvidence
+type GetEvidenceResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// GetEvidenceResponse403Headers the declared response headers of an HTTP 403 response for GetEvidence
+type GetEvidenceResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// GetEvidenceResponse404Headers the declared response headers of an HTTP 404 response for GetEvidence
+type GetEvidenceResponse404Headers struct {
+	XRequestID RequestID
+}
+
+type GetEvidenceResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *EvidenceMetadata
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *GetEvidenceResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetEvidenceResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetEvidenceResponse404Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetEvidenceResponse) GetJSON200() *EvidenceMetadata {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetEvidenceResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetEvidenceResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetEvidenceResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetBody returns the raw response body bytes
+func (r GetEvidenceResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetEvidenceResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetEvidenceResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetEvidenceResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// CreateEvidenceAccessGrantResponse400Headers the declared response headers of an HTTP 400 response for CreateEvidenceAccessGrant
+type CreateEvidenceAccessGrantResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// CreateEvidenceAccessGrantResponse401Headers the declared response headers of an HTTP 401 response for CreateEvidenceAccessGrant
+type CreateEvidenceAccessGrantResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// CreateEvidenceAccessGrantResponse403Headers the declared response headers of an HTTP 403 response for CreateEvidenceAccessGrant
+type CreateEvidenceAccessGrantResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// CreateEvidenceAccessGrantResponse404Headers the declared response headers of an HTTP 404 response for CreateEvidenceAccessGrant
+type CreateEvidenceAccessGrantResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// CreateEvidenceAccessGrantResponse409Headers the declared response headers of an HTTP 409 response for CreateEvidenceAccessGrant
+type CreateEvidenceAccessGrantResponse409Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type CreateEvidenceAccessGrantResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON201 the response for an HTTP 201 `application/json` response
+	JSON201 *EvidenceAccessGrant
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationProblemJSON409 *Conflict
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *CreateEvidenceAccessGrantResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *CreateEvidenceAccessGrantResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *CreateEvidenceAccessGrantResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *CreateEvidenceAccessGrantResponse404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *CreateEvidenceAccessGrantResponse409Headers
+}
+
+// GetJSON201 returns the response for an HTTP 201 `application/json` response
+func (r CreateEvidenceAccessGrantResponse) GetJSON201() *EvidenceAccessGrant {
+	return r.JSON201
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r CreateEvidenceAccessGrantResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r CreateEvidenceAccessGrantResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r CreateEvidenceAccessGrantResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r CreateEvidenceAccessGrantResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r CreateEvidenceAccessGrantResponse) GetApplicationProblemJSON409() *Conflict {
+	return r.ApplicationProblemJSON409
+}
+
+// GetBody returns the raw response body bytes
+func (r CreateEvidenceAccessGrantResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateEvidenceAccessGrantResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateEvidenceAccessGrantResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CreateEvidenceAccessGrantResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ListEvidenceLifecycleResponse401Headers the declared response headers of an HTTP 401 response for ListEvidenceLifecycle
+type ListEvidenceLifecycleResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// ListEvidenceLifecycleResponse403Headers the declared response headers of an HTTP 403 response for ListEvidenceLifecycle
+type ListEvidenceLifecycleResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// ListEvidenceLifecycleResponse404Headers the declared response headers of an HTTP 404 response for ListEvidenceLifecycle
+type ListEvidenceLifecycleResponse404Headers struct {
+	XRequestID RequestID
+}
+
+type ListEvidenceLifecycleResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *EvidenceLifecycleList
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ListEvidenceLifecycleResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListEvidenceLifecycleResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *ListEvidenceLifecycleResponse404Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListEvidenceLifecycleResponse) GetJSON200() *EvidenceLifecycleList {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListEvidenceLifecycleResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListEvidenceLifecycleResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r ListEvidenceLifecycleResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetBody returns the raw response body bytes
+func (r ListEvidenceLifecycleResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListEvidenceLifecycleResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListEvidenceLifecycleResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListEvidenceLifecycleResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -50388,6 +53939,1103 @@ func (r GetPromptResponse) ContentType() string {
 	return ""
 }
 
+// GetProposalActivationResponse401Headers the declared response headers of an HTTP 401 response for GetProposalActivation
+type GetProposalActivationResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// GetProposalActivationResponse403Headers the declared response headers of an HTTP 403 response for GetProposalActivation
+type GetProposalActivationResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// GetProposalActivationResponse404Headers the declared response headers of an HTTP 404 response for GetProposalActivation
+type GetProposalActivationResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// GetProposalActivationResponse500Headers the declared response headers of an HTTP 500 response for GetProposalActivation
+type GetProposalActivationResponse500Headers struct {
+	XRequestID RequestID
+}
+
+type GetProposalActivationResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ProposalActivation
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *GetProposalActivationResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetProposalActivationResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetProposalActivationResponse404Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *GetProposalActivationResponse500Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetProposalActivationResponse) GetJSON200() *ProposalActivation {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetProposalActivationResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetProposalActivationResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetProposalActivationResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r GetProposalActivationResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r GetProposalActivationResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetProposalActivationResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetProposalActivationResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetProposalActivationResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ActivateProposalRouteResponse400Headers the declared response headers of an HTTP 400 response for ActivateProposalRoute
+type ActivateProposalRouteResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// ActivateProposalRouteResponse401Headers the declared response headers of an HTTP 401 response for ActivateProposalRoute
+type ActivateProposalRouteResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// ActivateProposalRouteResponse403Headers the declared response headers of an HTTP 403 response for ActivateProposalRoute
+type ActivateProposalRouteResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// ActivateProposalRouteResponse404Headers the declared response headers of an HTTP 404 response for ActivateProposalRoute
+type ActivateProposalRouteResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// ActivateProposalRouteResponse409Headers the declared response headers of an HTTP 409 response for ActivateProposalRoute
+type ActivateProposalRouteResponse409Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+// ActivateProposalRouteResponse500Headers the declared response headers of an HTTP 500 response for ActivateProposalRoute
+type ActivateProposalRouteResponse500Headers struct {
+	XRequestID RequestID
+}
+
+type ActivateProposalRouteResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ProposalActivation
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationProblemJSON409 *Conflict
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ActivateProposalRouteResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ActivateProposalRouteResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ActivateProposalRouteResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *ActivateProposalRouteResponse404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *ActivateProposalRouteResponse409Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ActivateProposalRouteResponse500Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ActivateProposalRouteResponse) GetJSON200() *ProposalActivation {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ActivateProposalRouteResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ActivateProposalRouteResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ActivateProposalRouteResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r ActivateProposalRouteResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r ActivateProposalRouteResponse) GetApplicationProblemJSON409() *Conflict {
+	return r.ApplicationProblemJSON409
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ActivateProposalRouteResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r ActivateProposalRouteResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ActivateProposalRouteResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ActivateProposalRouteResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ActivateProposalRouteResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ListProposalActivationHistoryResponse400Headers the declared response headers of an HTTP 400 response for ListProposalActivationHistory
+type ListProposalActivationHistoryResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// ListProposalActivationHistoryResponse401Headers the declared response headers of an HTTP 401 response for ListProposalActivationHistory
+type ListProposalActivationHistoryResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// ListProposalActivationHistoryResponse403Headers the declared response headers of an HTTP 403 response for ListProposalActivationHistory
+type ListProposalActivationHistoryResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// ListProposalActivationHistoryResponse500Headers the declared response headers of an HTTP 500 response for ListProposalActivationHistory
+type ListProposalActivationHistoryResponse500Headers struct {
+	XRequestID RequestID
+}
+
+type ListProposalActivationHistoryResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ProposalActivationHistory
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ListProposalActivationHistoryResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ListProposalActivationHistoryResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListProposalActivationHistoryResponse403Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListProposalActivationHistoryResponse500Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListProposalActivationHistoryResponse) GetJSON200() *ProposalActivationHistory {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ListProposalActivationHistoryResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListProposalActivationHistoryResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListProposalActivationHistoryResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListProposalActivationHistoryResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r ListProposalActivationHistoryResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListProposalActivationHistoryResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListProposalActivationHistoryResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListProposalActivationHistoryResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// RetireProposalActivationResponse400Headers the declared response headers of an HTTP 400 response for RetireProposalActivation
+type RetireProposalActivationResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// RetireProposalActivationResponse401Headers the declared response headers of an HTTP 401 response for RetireProposalActivation
+type RetireProposalActivationResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// RetireProposalActivationResponse403Headers the declared response headers of an HTTP 403 response for RetireProposalActivation
+type RetireProposalActivationResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// RetireProposalActivationResponse404Headers the declared response headers of an HTTP 404 response for RetireProposalActivation
+type RetireProposalActivationResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// RetireProposalActivationResponse409Headers the declared response headers of an HTTP 409 response for RetireProposalActivation
+type RetireProposalActivationResponse409Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+// RetireProposalActivationResponse500Headers the declared response headers of an HTTP 500 response for RetireProposalActivation
+type RetireProposalActivationResponse500Headers struct {
+	XRequestID RequestID
+}
+
+type RetireProposalActivationResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ProposalActivation
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationProblemJSON409 *Conflict
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *RetireProposalActivationResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *RetireProposalActivationResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *RetireProposalActivationResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *RetireProposalActivationResponse404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *RetireProposalActivationResponse409Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *RetireProposalActivationResponse500Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r RetireProposalActivationResponse) GetJSON200() *ProposalActivation {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r RetireProposalActivationResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r RetireProposalActivationResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r RetireProposalActivationResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r RetireProposalActivationResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r RetireProposalActivationResponse) GetApplicationProblemJSON409() *Conflict {
+	return r.ApplicationProblemJSON409
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r RetireProposalActivationResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r RetireProposalActivationResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r RetireProposalActivationResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r RetireProposalActivationResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r RetireProposalActivationResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// RollbackProposalActivationResponse400Headers the declared response headers of an HTTP 400 response for RollbackProposalActivation
+type RollbackProposalActivationResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// RollbackProposalActivationResponse401Headers the declared response headers of an HTTP 401 response for RollbackProposalActivation
+type RollbackProposalActivationResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// RollbackProposalActivationResponse403Headers the declared response headers of an HTTP 403 response for RollbackProposalActivation
+type RollbackProposalActivationResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// RollbackProposalActivationResponse404Headers the declared response headers of an HTTP 404 response for RollbackProposalActivation
+type RollbackProposalActivationResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// RollbackProposalActivationResponse409Headers the declared response headers of an HTTP 409 response for RollbackProposalActivation
+type RollbackProposalActivationResponse409Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+// RollbackProposalActivationResponse500Headers the declared response headers of an HTTP 500 response for RollbackProposalActivation
+type RollbackProposalActivationResponse500Headers struct {
+	XRequestID RequestID
+}
+
+type RollbackProposalActivationResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ProposalActivation
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationProblemJSON409 *Conflict
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *RollbackProposalActivationResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *RollbackProposalActivationResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *RollbackProposalActivationResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *RollbackProposalActivationResponse404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *RollbackProposalActivationResponse409Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *RollbackProposalActivationResponse500Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r RollbackProposalActivationResponse) GetJSON200() *ProposalActivation {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r RollbackProposalActivationResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r RollbackProposalActivationResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r RollbackProposalActivationResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r RollbackProposalActivationResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r RollbackProposalActivationResponse) GetApplicationProblemJSON409() *Conflict {
+	return r.ApplicationProblemJSON409
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r RollbackProposalActivationResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r RollbackProposalActivationResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r RollbackProposalActivationResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r RollbackProposalActivationResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r RollbackProposalActivationResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ListProposalImpactAssessmentsResponse400Headers the declared response headers of an HTTP 400 response for ListProposalImpactAssessments
+type ListProposalImpactAssessmentsResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// ListProposalImpactAssessmentsResponse401Headers the declared response headers of an HTTP 401 response for ListProposalImpactAssessments
+type ListProposalImpactAssessmentsResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// ListProposalImpactAssessmentsResponse403Headers the declared response headers of an HTTP 403 response for ListProposalImpactAssessments
+type ListProposalImpactAssessmentsResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// ListProposalImpactAssessmentsResponse500Headers the declared response headers of an HTTP 500 response for ListProposalImpactAssessments
+type ListProposalImpactAssessmentsResponse500Headers struct {
+	XRequestID RequestID
+}
+
+type ListProposalImpactAssessmentsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ProposalImpactAssessmentList
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ListProposalImpactAssessmentsResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ListProposalImpactAssessmentsResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListProposalImpactAssessmentsResponse403Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListProposalImpactAssessmentsResponse500Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListProposalImpactAssessmentsResponse) GetJSON200() *ProposalImpactAssessmentList {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ListProposalImpactAssessmentsResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListProposalImpactAssessmentsResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListProposalImpactAssessmentsResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListProposalImpactAssessmentsResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r ListProposalImpactAssessmentsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListProposalImpactAssessmentsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListProposalImpactAssessmentsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListProposalImpactAssessmentsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// CreateProposalImpactAssessmentResponse400Headers the declared response headers of an HTTP 400 response for CreateProposalImpactAssessment
+type CreateProposalImpactAssessmentResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// CreateProposalImpactAssessmentResponse401Headers the declared response headers of an HTTP 401 response for CreateProposalImpactAssessment
+type CreateProposalImpactAssessmentResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// CreateProposalImpactAssessmentResponse403Headers the declared response headers of an HTTP 403 response for CreateProposalImpactAssessment
+type CreateProposalImpactAssessmentResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// CreateProposalImpactAssessmentResponse409Headers the declared response headers of an HTTP 409 response for CreateProposalImpactAssessment
+type CreateProposalImpactAssessmentResponse409Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+// CreateProposalImpactAssessmentResponse500Headers the declared response headers of an HTTP 500 response for CreateProposalImpactAssessment
+type CreateProposalImpactAssessmentResponse500Headers struct {
+	XRequestID RequestID
+}
+
+type CreateProposalImpactAssessmentResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON201 the response for an HTTP 201 `application/json` response
+	JSON201 *ProposalImpactAssessment
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationProblemJSON409 *Conflict
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *CreateProposalImpactAssessmentResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *CreateProposalImpactAssessmentResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *CreateProposalImpactAssessmentResponse403Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *CreateProposalImpactAssessmentResponse409Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *CreateProposalImpactAssessmentResponse500Headers
+}
+
+// GetJSON201 returns the response for an HTTP 201 `application/json` response
+func (r CreateProposalImpactAssessmentResponse) GetJSON201() *ProposalImpactAssessment {
+	return r.JSON201
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r CreateProposalImpactAssessmentResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r CreateProposalImpactAssessmentResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r CreateProposalImpactAssessmentResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r CreateProposalImpactAssessmentResponse) GetApplicationProblemJSON409() *Conflict {
+	return r.ApplicationProblemJSON409
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r CreateProposalImpactAssessmentResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r CreateProposalImpactAssessmentResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateProposalImpactAssessmentResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateProposalImpactAssessmentResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CreateProposalImpactAssessmentResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetProposalImpactAssessmentResponse401Headers the declared response headers of an HTTP 401 response for GetProposalImpactAssessment
+type GetProposalImpactAssessmentResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// GetProposalImpactAssessmentResponse403Headers the declared response headers of an HTTP 403 response for GetProposalImpactAssessment
+type GetProposalImpactAssessmentResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// GetProposalImpactAssessmentResponse404Headers the declared response headers of an HTTP 404 response for GetProposalImpactAssessment
+type GetProposalImpactAssessmentResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// GetProposalImpactAssessmentResponse500Headers the declared response headers of an HTTP 500 response for GetProposalImpactAssessment
+type GetProposalImpactAssessmentResponse500Headers struct {
+	XRequestID RequestID
+}
+
+type GetProposalImpactAssessmentResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ProposalImpactAssessment
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *GetProposalImpactAssessmentResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetProposalImpactAssessmentResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetProposalImpactAssessmentResponse404Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *GetProposalImpactAssessmentResponse500Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetProposalImpactAssessmentResponse) GetJSON200() *ProposalImpactAssessment {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetProposalImpactAssessmentResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetProposalImpactAssessmentResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetProposalImpactAssessmentResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r GetProposalImpactAssessmentResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r GetProposalImpactAssessmentResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetProposalImpactAssessmentResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetProposalImpactAssessmentResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetProposalImpactAssessmentResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// CreateProposalModelResponse400Headers the declared response headers of an HTTP 400 response for CreateProposalModel
+type CreateProposalModelResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// CreateProposalModelResponse401Headers the declared response headers of an HTTP 401 response for CreateProposalModel
+type CreateProposalModelResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// CreateProposalModelResponse403Headers the declared response headers of an HTTP 403 response for CreateProposalModel
+type CreateProposalModelResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// CreateProposalModelResponse409Headers the declared response headers of an HTTP 409 response for CreateProposalModel
+type CreateProposalModelResponse409Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+// CreateProposalModelResponse500Headers the declared response headers of an HTTP 500 response for CreateProposalModel
+type CreateProposalModelResponse500Headers struct {
+	XRequestID RequestID
+}
+
+type CreateProposalModelResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON201 the response for an HTTP 201 `application/json` response
+	JSON201 *ProposalModel
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationProblemJSON409 *Conflict
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *CreateProposalModelResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *CreateProposalModelResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *CreateProposalModelResponse403Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *CreateProposalModelResponse409Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *CreateProposalModelResponse500Headers
+}
+
+// GetJSON201 returns the response for an HTTP 201 `application/json` response
+func (r CreateProposalModelResponse) GetJSON201() *ProposalModel {
+	return r.JSON201
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r CreateProposalModelResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r CreateProposalModelResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r CreateProposalModelResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r CreateProposalModelResponse) GetApplicationProblemJSON409() *Conflict {
+	return r.ApplicationProblemJSON409
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r CreateProposalModelResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r CreateProposalModelResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateProposalModelResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateProposalModelResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CreateProposalModelResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetProposalModelResponse401Headers the declared response headers of an HTTP 401 response for GetProposalModel
+type GetProposalModelResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// GetProposalModelResponse403Headers the declared response headers of an HTTP 403 response for GetProposalModel
+type GetProposalModelResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// GetProposalModelResponse404Headers the declared response headers of an HTTP 404 response for GetProposalModel
+type GetProposalModelResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// GetProposalModelResponse500Headers the declared response headers of an HTTP 500 response for GetProposalModel
+type GetProposalModelResponse500Headers struct {
+	XRequestID RequestID
+}
+
+type GetProposalModelResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ProposalModel
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *GetProposalModelResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetProposalModelResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetProposalModelResponse404Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *GetProposalModelResponse500Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetProposalModelResponse) GetJSON200() *ProposalModel {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetProposalModelResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetProposalModelResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetProposalModelResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r GetProposalModelResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r GetProposalModelResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetProposalModelResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetProposalModelResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetProposalModelResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // GetProposalModeResponse200Headers the declared response headers of an HTTP 200 response for GetProposalMode
 type GetProposalModeResponse200Headers struct {
 	XRequestID RequestID
@@ -50607,6 +55255,104 @@ func (r PutProposalModeResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r PutProposalModeResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetProposalUsageResponse400Headers the declared response headers of an HTTP 400 response for GetProposalUsage
+type GetProposalUsageResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// GetProposalUsageResponse401Headers the declared response headers of an HTTP 401 response for GetProposalUsage
+type GetProposalUsageResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// GetProposalUsageResponse403Headers the declared response headers of an HTTP 403 response for GetProposalUsage
+type GetProposalUsageResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// GetProposalUsageResponse500Headers the declared response headers of an HTTP 500 response for GetProposalUsage
+type GetProposalUsageResponse500Headers struct {
+	XRequestID RequestID
+}
+
+type GetProposalUsageResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ProposalUsageReport
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *GetProposalUsageResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *GetProposalUsageResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetProposalUsageResponse403Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *GetProposalUsageResponse500Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetProposalUsageResponse) GetJSON200() *ProposalUsageReport {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r GetProposalUsageResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetProposalUsageResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetProposalUsageResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r GetProposalUsageResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r GetProposalUsageResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetProposalUsageResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetProposalUsageResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetProposalUsageResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -62116,6 +66862,309 @@ func (r GetLatestDecisionResponse) ContentType() string {
 	return ""
 }
 
+// ListVerificationDecisionsResponse400Headers the declared response headers of an HTTP 400 response for ListVerificationDecisions
+type ListVerificationDecisionsResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// ListVerificationDecisionsResponse401Headers the declared response headers of an HTTP 401 response for ListVerificationDecisions
+type ListVerificationDecisionsResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// ListVerificationDecisionsResponse403Headers the declared response headers of an HTTP 403 response for ListVerificationDecisions
+type ListVerificationDecisionsResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// ListVerificationDecisionsResponse404Headers the declared response headers of an HTTP 404 response for ListVerificationDecisions
+type ListVerificationDecisionsResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// ListVerificationDecisionsResponse429Headers the declared response headers of an HTTP 429 response for ListVerificationDecisions
+type ListVerificationDecisionsResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// ListVerificationDecisionsResponse500Headers the declared response headers of an HTTP 500 response for ListVerificationDecisions
+type ListVerificationDecisionsResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// ListVerificationDecisionsResponse503Headers the declared response headers of an HTTP 503 response for ListVerificationDecisions
+type ListVerificationDecisionsResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type ListVerificationDecisionsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *PolicyDecisionList
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ListVerificationDecisionsResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ListVerificationDecisionsResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListVerificationDecisionsResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *ListVerificationDecisionsResponse404Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *ListVerificationDecisionsResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListVerificationDecisionsResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ListVerificationDecisionsResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListVerificationDecisionsResponse) GetJSON200() *PolicyDecisionList {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ListVerificationDecisionsResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListVerificationDecisionsResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListVerificationDecisionsResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r ListVerificationDecisionsResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r ListVerificationDecisionsResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListVerificationDecisionsResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ListVerificationDecisionsResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListVerificationDecisionsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListVerificationDecisionsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListVerificationDecisionsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListVerificationDecisionsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// CreateVerificationReconsiderationResponse400Headers the declared response headers of an HTTP 400 response for CreateVerificationReconsideration
+type CreateVerificationReconsiderationResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// CreateVerificationReconsiderationResponse401Headers the declared response headers of an HTTP 401 response for CreateVerificationReconsideration
+type CreateVerificationReconsiderationResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// CreateVerificationReconsiderationResponse403Headers the declared response headers of an HTTP 403 response for CreateVerificationReconsideration
+type CreateVerificationReconsiderationResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// CreateVerificationReconsiderationResponse404Headers the declared response headers of an HTTP 404 response for CreateVerificationReconsideration
+type CreateVerificationReconsiderationResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// CreateVerificationReconsiderationResponse409Headers the declared response headers of an HTTP 409 response for CreateVerificationReconsideration
+type CreateVerificationReconsiderationResponse409Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+// CreateVerificationReconsiderationResponse429Headers the declared response headers of an HTTP 429 response for CreateVerificationReconsideration
+type CreateVerificationReconsiderationResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// CreateVerificationReconsiderationResponse500Headers the declared response headers of an HTTP 500 response for CreateVerificationReconsideration
+type CreateVerificationReconsiderationResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// CreateVerificationReconsiderationResponse503Headers the declared response headers of an HTTP 503 response for CreateVerificationReconsideration
+type CreateVerificationReconsiderationResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type CreateVerificationReconsiderationResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON201 the response for an HTTP 201 `application/json` response
+	JSON201 *ReviewFollowup
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationProblemJSON409 *Conflict
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *CreateVerificationReconsiderationResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *CreateVerificationReconsiderationResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *CreateVerificationReconsiderationResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *CreateVerificationReconsiderationResponse404Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *CreateVerificationReconsiderationResponse409Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *CreateVerificationReconsiderationResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *CreateVerificationReconsiderationResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *CreateVerificationReconsiderationResponse503Headers
+}
+
+// GetJSON201 returns the response for an HTTP 201 `application/json` response
+func (r CreateVerificationReconsiderationResponse) GetJSON201() *ReviewFollowup {
+	return r.JSON201
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r CreateVerificationReconsiderationResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r CreateVerificationReconsiderationResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r CreateVerificationReconsiderationResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r CreateVerificationReconsiderationResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r CreateVerificationReconsiderationResponse) GetApplicationProblemJSON409() *Conflict {
+	return r.ApplicationProblemJSON409
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r CreateVerificationReconsiderationResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r CreateVerificationReconsiderationResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r CreateVerificationReconsiderationResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r CreateVerificationReconsiderationResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateVerificationReconsiderationResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateVerificationReconsiderationResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CreateVerificationReconsiderationResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // ResumeVerificationResponse200Headers the declared response headers of an HTTP 200 response for ResumeVerification
 type ResumeVerificationResponse200Headers struct {
 	XRequestID RequestID
@@ -64666,6 +69715,36 @@ func (c *ClientWithResponses) CreateCaptureConnectionWithResponse(ctx context.Co
 	return ParseCreateCaptureConnectionResponse(rsp)
 }
 
+// SelectCaptureDocumentWithBodyWithResponse Select a profile-pinned document branch
+//
+// Activates pinned artefacts without changing requirements. Switching is rejected after any upload intent for the requirement. Exact retries return the original session result.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/capture/document-selection (the `SelectCaptureDocument` operationId).
+func (c *ClientWithResponses) SelectCaptureDocumentWithBodyWithResponse(ctx context.Context, params *SelectCaptureDocumentParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SelectCaptureDocumentResponse, error) {
+	rsp, err := c.SelectCaptureDocumentWithBody(ctx, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSelectCaptureDocumentResponse(rsp)
+}
+
+// SelectCaptureDocumentWithResponse Select a profile-pinned document branch
+//
+// Activates pinned artefacts without changing requirements. Switching is rejected after any upload intent for the requirement. Exact retries return the original session result.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/capture/document-selection (the `SelectCaptureDocument` operationId).
+func (c *ClientWithResponses) SelectCaptureDocumentWithResponse(ctx context.Context, params *SelectCaptureDocumentParams, body SelectCaptureDocumentJSONRequestBody, reqEditors ...RequestEditorFn) (*SelectCaptureDocumentResponse, error) {
+	rsp, err := c.SelectCaptureDocument(ctx, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSelectCaptureDocumentResponse(rsp)
+}
+
 // ResolveCaptureExperienceWithResponse Resolve the session's pinned capture experience
 //
 // Returns the immutable signed experience document pinned to the
@@ -64825,6 +69904,79 @@ func (c *ClientWithResponses) GetCaptureSessionWithResponse(ctx context.Context,
 	return ParseGetCaptureSessionResponse(rsp)
 }
 
+// CreateConsentReceiptWithBodyWithResponse Record an explicit session-bound subject response
+//
+// Uses the capture credential and the exact notice bound to the active verification; tenant API credentials cannot invent subject consent.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/consent-receipts (the `CreateConsentReceipt` operationId).
+func (c *ClientWithResponses) CreateConsentReceiptWithBodyWithResponse(ctx context.Context, params *CreateConsentReceiptParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateConsentReceiptResponse, error) {
+	rsp, err := c.CreateConsentReceiptWithBody(ctx, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateConsentReceiptResponse(rsp)
+}
+
+// CreateConsentReceiptWithResponse Record an explicit session-bound subject response
+//
+// Uses the capture credential and the exact notice bound to the active verification; tenant API credentials cannot invent subject consent.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/consent-receipts (the `CreateConsentReceipt` operationId).
+func (c *ClientWithResponses) CreateConsentReceiptWithResponse(ctx context.Context, params *CreateConsentReceiptParams, body CreateConsentReceiptJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateConsentReceiptResponse, error) {
+	rsp, err := c.CreateConsentReceipt(ctx, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateConsentReceiptResponse(rsp)
+}
+
+// GetConsentReceiptWithResponse Inspect one immutable consent receipt
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/consent-receipts/{consentID} (the `GetConsentReceipt` operationId).
+func (c *ClientWithResponses) GetConsentReceiptWithResponse(ctx context.Context, consentID SubjectResponseID, reqEditors ...RequestEditorFn) (*GetConsentReceiptResponse, error) {
+	rsp, err := c.GetConsentReceipt(ctx, consentID, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetConsentReceiptResponse(rsp)
+}
+
+// RevokeConsentReceiptWithBodyWithResponse Append a refusal that withdraws an immutable consent receipt
+//
+// The original consent remains immutable; successful withdrawal creates a new refusal receipt.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/consent-receipts/{consentID}/revoke (the `RevokeConsentReceipt` operationId).
+func (c *ClientWithResponses) RevokeConsentReceiptWithBodyWithResponse(ctx context.Context, consentID SubjectResponseID, params *RevokeConsentReceiptParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RevokeConsentReceiptResponse, error) {
+	rsp, err := c.RevokeConsentReceiptWithBody(ctx, consentID, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRevokeConsentReceiptResponse(rsp)
+}
+
+// RevokeConsentReceiptWithResponse Append a refusal that withdraws an immutable consent receipt
+//
+// The original consent remains immutable; successful withdrawal creates a new refusal receipt.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/consent-receipts/{consentID}/revoke (the `RevokeConsentReceipt` operationId).
+func (c *ClientWithResponses) RevokeConsentReceiptWithResponse(ctx context.Context, consentID SubjectResponseID, params *RevokeConsentReceiptParams, body RevokeConsentReceiptJSONRequestBody, reqEditors ...RequestEditorFn) (*RevokeConsentReceiptResponse, error) {
+	rsp, err := c.RevokeConsentReceipt(ctx, consentID, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRevokeConsentReceiptResponse(rsp)
+}
+
 // GetDecisionWithResponse Get an exact immutable decision
 //
 // Returns a safe reproduction report without fact details, reason codes, or canonical payloads.
@@ -64923,6 +70075,45 @@ func (c *ClientWithResponses) GetDocumentSupportWithResponse(ctx context.Context
 	return ParseGetDocumentSupportResponse(rsp)
 }
 
+// GetEvidenceAccessGrantWithResponse Inspect a purpose-bound evidence-processing grant
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/evidence-access-grants/{grantID} (the `GetEvidenceAccessGrant` operationId).
+func (c *ClientWithResponses) GetEvidenceAccessGrantWithResponse(ctx context.Context, grantID EvidenceAccessGrantID, reqEditors ...RequestEditorFn) (*GetEvidenceAccessGrantResponse, error) {
+	rsp, err := c.GetEvidenceAccessGrant(ctx, grantID, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetEvidenceAccessGrantResponse(rsp)
+}
+
+// RevokeEvidenceAccessGrantWithBodyWithResponse Irreversibly revoke an evidence-processing grant
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/evidence-access-grants/{grantID}/revoke (the `RevokeEvidenceAccessGrant` operationId).
+func (c *ClientWithResponses) RevokeEvidenceAccessGrantWithBodyWithResponse(ctx context.Context, grantID EvidenceAccessGrantID, params *RevokeEvidenceAccessGrantParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RevokeEvidenceAccessGrantResponse, error) {
+	rsp, err := c.RevokeEvidenceAccessGrantWithBody(ctx, grantID, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRevokeEvidenceAccessGrantResponse(rsp)
+}
+
+// RevokeEvidenceAccessGrantWithResponse Irreversibly revoke an evidence-processing grant
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/evidence-access-grants/{grantID}/revoke (the `RevokeEvidenceAccessGrant` operationId).
+func (c *ClientWithResponses) RevokeEvidenceAccessGrantWithResponse(ctx context.Context, grantID EvidenceAccessGrantID, params *RevokeEvidenceAccessGrantParams, body RevokeEvidenceAccessGrantJSONRequestBody, reqEditors ...RequestEditorFn) (*RevokeEvidenceAccessGrantResponse, error) {
+	rsp, err := c.RevokeEvidenceAccessGrant(ctx, grantID, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRevokeEvidenceAccessGrantResponse(rsp)
+}
+
 // CreateEvidenceUploadWithBodyWithResponse Issue a requirement-bound evidence-upload intent
 //
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
@@ -64982,6 +70173,64 @@ func (c *ClientWithResponses) UploadEvidenceWithBodyWithResponse(ctx context.Con
 		return nil, err
 	}
 	return ParseUploadEvidenceResponse(rsp)
+}
+
+// GetEvidenceWithResponse Inspect safe evidence metadata
+//
+// Returns reference-only lifecycle metadata. Object keys, wrapped keys, digests, and evidence bytes are never exposed.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/evidence/{evidenceID} (the `GetEvidence` operationId).
+func (c *ClientWithResponses) GetEvidenceWithResponse(ctx context.Context, evidenceID EvidenceID, reqEditors ...RequestEditorFn) (*GetEvidenceResponse, error) {
+	rsp, err := c.GetEvidence(ctx, evidenceID, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetEvidenceResponse(rsp)
+}
+
+// CreateEvidenceAccessGrantWithBodyWithResponse Issue a purpose-bound evidence-processing grant
+//
+// Live processing authority is re-evaluated before an idempotent, short-lived capability is committed.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/evidence/{evidenceID}/access-grants (the `CreateEvidenceAccessGrant` operationId).
+func (c *ClientWithResponses) CreateEvidenceAccessGrantWithBodyWithResponse(ctx context.Context, evidenceID EvidenceID, params *CreateEvidenceAccessGrantParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateEvidenceAccessGrantResponse, error) {
+	rsp, err := c.CreateEvidenceAccessGrantWithBody(ctx, evidenceID, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateEvidenceAccessGrantResponse(rsp)
+}
+
+// CreateEvidenceAccessGrantWithResponse Issue a purpose-bound evidence-processing grant
+//
+// Live processing authority is re-evaluated before an idempotent, short-lived capability is committed.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/evidence/{evidenceID}/access-grants (the `CreateEvidenceAccessGrant` operationId).
+func (c *ClientWithResponses) CreateEvidenceAccessGrantWithResponse(ctx context.Context, evidenceID EvidenceID, params *CreateEvidenceAccessGrantParams, body CreateEvidenceAccessGrantJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateEvidenceAccessGrantResponse, error) {
+	rsp, err := c.CreateEvidenceAccessGrant(ctx, evidenceID, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateEvidenceAccessGrantResponse(rsp)
+}
+
+// ListEvidenceLifecycleWithResponse List safe evidence lifecycle events
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/evidence/{evidenceID}/lifecycle (the `ListEvidenceLifecycle` operationId).
+func (c *ClientWithResponses) ListEvidenceLifecycleWithResponse(ctx context.Context, evidenceID EvidenceID, params *ListEvidenceLifecycleParams, reqEditors ...RequestEditorFn) (*ListEvidenceLifecycleResponse, error) {
+	rsp, err := c.ListEvidenceLifecycle(ctx, evidenceID, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListEvidenceLifecycleResponse(rsp)
 }
 
 // GetExperienceDefaultWithResponse Get the signed accessible safe default
@@ -67050,6 +72299,201 @@ func (c *ClientWithResponses) GetPromptWithResponse(ctx context.Context, promptI
 	return ParseGetPromptResponse(rsp)
 }
 
+// GetProposalActivationWithResponse Get the current model route activation
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/proposal-activations/{workflow} (the `GetProposalActivation` operationId).
+func (c *ClientWithResponses) GetProposalActivationWithResponse(ctx context.Context, workflow string, reqEditors ...RequestEditorFn) (*GetProposalActivationResponse, error) {
+	rsp, err := c.GetProposalActivation(ctx, workflow, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetProposalActivationResponse(rsp)
+}
+
+// ActivateProposalRouteWithBodyWithResponse Activate an exact model and prompt route
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PUT /v1/proposal-activations/{workflow} (the `ActivateProposalRoute` operationId).
+func (c *ClientWithResponses) ActivateProposalRouteWithBodyWithResponse(ctx context.Context, workflow string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ActivateProposalRouteResponse, error) {
+	rsp, err := c.ActivateProposalRouteWithBody(ctx, workflow, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseActivateProposalRouteResponse(rsp)
+}
+
+// ActivateProposalRouteWithResponse Activate an exact model and prompt route
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PUT /v1/proposal-activations/{workflow} (the `ActivateProposalRoute` operationId).
+func (c *ClientWithResponses) ActivateProposalRouteWithResponse(ctx context.Context, workflow string, body ActivateProposalRouteJSONRequestBody, reqEditors ...RequestEditorFn) (*ActivateProposalRouteResponse, error) {
+	rsp, err := c.ActivateProposalRoute(ctx, workflow, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseActivateProposalRouteResponse(rsp)
+}
+
+// ListProposalActivationHistoryWithResponse List immutable activation history newest first
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/proposal-activations/{workflow}/history (the `ListProposalActivationHistory` operationId).
+func (c *ClientWithResponses) ListProposalActivationHistoryWithResponse(ctx context.Context, workflow string, params *ListProposalActivationHistoryParams, reqEditors ...RequestEditorFn) (*ListProposalActivationHistoryResponse, error) {
+	rsp, err := c.ListProposalActivationHistory(ctx, workflow, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListProposalActivationHistoryResponse(rsp)
+}
+
+// RetireProposalActivationWithBodyWithResponse Retire the current model route
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/proposal-activations/{workflow}/retire (the `RetireProposalActivation` operationId).
+func (c *ClientWithResponses) RetireProposalActivationWithBodyWithResponse(ctx context.Context, workflow string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RetireProposalActivationResponse, error) {
+	rsp, err := c.RetireProposalActivationWithBody(ctx, workflow, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRetireProposalActivationResponse(rsp)
+}
+
+// RetireProposalActivationWithResponse Retire the current model route
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/proposal-activations/{workflow}/retire (the `RetireProposalActivation` operationId).
+func (c *ClientWithResponses) RetireProposalActivationWithResponse(ctx context.Context, workflow string, body RetireProposalActivationJSONRequestBody, reqEditors ...RequestEditorFn) (*RetireProposalActivationResponse, error) {
+	rsp, err := c.RetireProposalActivation(ctx, workflow, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRetireProposalActivationResponse(rsp)
+}
+
+// RollbackProposalActivationWithBodyWithResponse Republish a prior active route as a new revision
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/proposal-activations/{workflow}/rollback (the `RollbackProposalActivation` operationId).
+func (c *ClientWithResponses) RollbackProposalActivationWithBodyWithResponse(ctx context.Context, workflow string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RollbackProposalActivationResponse, error) {
+	rsp, err := c.RollbackProposalActivationWithBody(ctx, workflow, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRollbackProposalActivationResponse(rsp)
+}
+
+// RollbackProposalActivationWithResponse Republish a prior active route as a new revision
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/proposal-activations/{workflow}/rollback (the `RollbackProposalActivation` operationId).
+func (c *ClientWithResponses) RollbackProposalActivationWithResponse(ctx context.Context, workflow string, body RollbackProposalActivationJSONRequestBody, reqEditors ...RequestEditorFn) (*RollbackProposalActivationResponse, error) {
+	rsp, err := c.RollbackProposalActivation(ctx, workflow, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRollbackProposalActivationResponse(rsp)
+}
+
+// ListProposalImpactAssessmentsWithResponse List immutable AI impact assessments
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/proposal-impact-assessments (the `ListProposalImpactAssessments` operationId).
+func (c *ClientWithResponses) ListProposalImpactAssessmentsWithResponse(ctx context.Context, params *ListProposalImpactAssessmentsParams, reqEditors ...RequestEditorFn) (*ListProposalImpactAssessmentsResponse, error) {
+	rsp, err := c.ListProposalImpactAssessments(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListProposalImpactAssessmentsResponse(rsp)
+}
+
+// CreateProposalImpactAssessmentWithBodyWithResponse Record an immutable AI impact assessment
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/proposal-impact-assessments (the `CreateProposalImpactAssessment` operationId).
+func (c *ClientWithResponses) CreateProposalImpactAssessmentWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateProposalImpactAssessmentResponse, error) {
+	rsp, err := c.CreateProposalImpactAssessmentWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateProposalImpactAssessmentResponse(rsp)
+}
+
+// CreateProposalImpactAssessmentWithResponse Record an immutable AI impact assessment
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/proposal-impact-assessments (the `CreateProposalImpactAssessment` operationId).
+func (c *ClientWithResponses) CreateProposalImpactAssessmentWithResponse(ctx context.Context, body CreateProposalImpactAssessmentJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateProposalImpactAssessmentResponse, error) {
+	rsp, err := c.CreateProposalImpactAssessment(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateProposalImpactAssessmentResponse(rsp)
+}
+
+// GetProposalImpactAssessmentWithResponse Get one immutable AI impact assessment
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/proposal-impact-assessments/{assessmentID} (the `GetProposalImpactAssessment` operationId).
+func (c *ClientWithResponses) GetProposalImpactAssessmentWithResponse(ctx context.Context, assessmentID string, reqEditors ...RequestEditorFn) (*GetProposalImpactAssessmentResponse, error) {
+	rsp, err := c.GetProposalImpactAssessment(ctx, assessmentID, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetProposalImpactAssessmentResponse(rsp)
+}
+
+// CreateProposalModelWithBodyWithResponse Register an immutable generative-model revision
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/proposal-models (the `CreateProposalModel` operationId).
+func (c *ClientWithResponses) CreateProposalModelWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateProposalModelResponse, error) {
+	rsp, err := c.CreateProposalModelWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateProposalModelResponse(rsp)
+}
+
+// CreateProposalModelWithResponse Register an immutable generative-model revision
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/proposal-models (the `CreateProposalModel` operationId).
+func (c *ClientWithResponses) CreateProposalModelWithResponse(ctx context.Context, body CreateProposalModelJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateProposalModelResponse, error) {
+	rsp, err := c.CreateProposalModel(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateProposalModelResponse(rsp)
+}
+
+// GetProposalModelWithResponse Get an immutable generative-model revision
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/proposal-models/{modelID}/{version} (the `GetProposalModel` operationId).
+func (c *ClientWithResponses) GetProposalModelWithResponse(ctx context.Context, modelID string, version int, reqEditors ...RequestEditorFn) (*GetProposalModelResponse, error) {
+	rsp, err := c.GetProposalModel(ctx, modelID, version, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetProposalModelResponse(rsp)
+}
+
 // GetProposalModeWithResponse Get mode config
 //
 // Returns a wrapper object for the known response body format(s).
@@ -67087,6 +72531,19 @@ func (c *ClientWithResponses) PutProposalModeWithResponse(ctx context.Context, w
 		return nil, err
 	}
 	return ParsePutProposalModeResponse(rsp)
+}
+
+// GetProposalUsageWithResponse Get content-free generation usage totals
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/proposal-usage (the `GetProposalUsage` operationId).
+func (c *ClientWithResponses) GetProposalUsageWithResponse(ctx context.Context, params *GetProposalUsageParams, reqEditors ...RequestEditorFn) (*GetProposalUsageResponse, error) {
+	rsp, err := c.GetProposalUsage(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetProposalUsageResponse(rsp)
 }
 
 // ListProposalsWithResponse List proposals for a verification (filtered)
@@ -68858,6 +74315,51 @@ func (c *ClientWithResponses) GetLatestDecisionWithResponse(ctx context.Context,
 		return nil, err
 	}
 	return ParseGetLatestDecisionResponse(rsp)
+}
+
+// ListVerificationDecisionsWithResponse List immutable decision history for a verification
+//
+// Returns a bounded newest-first page. The before cursor is an opaque tenant-scoped decision identifier.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/verifications/{verificationID}/decisions (the `ListVerificationDecisions` operationId).
+func (c *ClientWithResponses) ListVerificationDecisionsWithResponse(ctx context.Context, verificationID VerificationID, params *ListVerificationDecisionsParams, reqEditors ...RequestEditorFn) (*ListVerificationDecisionsResponse, error) {
+	rsp, err := c.ListVerificationDecisions(ctx, verificationID, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListVerificationDecisionsResponse(rsp)
+}
+
+// CreateVerificationReconsiderationWithBodyWithResponse Open an independent correction workflow for a decision
+//
+// Reconsideration reuses the existing versioned review-correction lifecycle; it never mutates an immutable decision in place.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/verifications/{verificationID}/reconsiderations (the `CreateVerificationReconsideration` operationId).
+func (c *ClientWithResponses) CreateVerificationReconsiderationWithBodyWithResponse(ctx context.Context, verificationID VerificationID, params *CreateVerificationReconsiderationParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateVerificationReconsiderationResponse, error) {
+	rsp, err := c.CreateVerificationReconsiderationWithBody(ctx, verificationID, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateVerificationReconsiderationResponse(rsp)
+}
+
+// CreateVerificationReconsiderationWithResponse Open an independent correction workflow for a decision
+//
+// Reconsideration reuses the existing versioned review-correction lifecycle; it never mutates an immutable decision in place.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/verifications/{verificationID}/reconsiderations (the `CreateVerificationReconsideration` operationId).
+func (c *ClientWithResponses) CreateVerificationReconsiderationWithResponse(ctx context.Context, verificationID VerificationID, params *CreateVerificationReconsiderationParams, body CreateVerificationReconsiderationJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateVerificationReconsiderationResponse, error) {
+	rsp, err := c.CreateVerificationReconsideration(ctx, verificationID, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateVerificationReconsiderationResponse(rsp)
 }
 
 // ResumeVerificationWithBodyWithResponse Resume a verification awaiting subject input
@@ -73366,6 +78868,100 @@ func ParseCreateCaptureConnectionResponse(rsp *http.Response) (*CreateCaptureCon
 	return response, nil
 }
 
+// ParseSelectCaptureDocumentResponse parses an HTTP response from a SelectCaptureDocumentWithResponse call
+func ParseSelectCaptureDocumentResponse(rsp *http.Response) (*SelectCaptureDocumentResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &SelectCaptureDocumentResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest VerificationSession
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON409 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 400:
+		var headers SelectCaptureDocumentResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers SelectCaptureDocumentResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 409:
+		var headers SelectCaptureDocumentResponse409Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers409 = &headers
+	}
+
+	return response, nil
+}
+
 // ParseResolveCaptureExperienceResponse parses an HTTP response from a ResolveCaptureExperienceWithResponse call
 func ParseResolveCaptureExperienceResponse(rsp *http.Response) (*ResolveCaptureExperienceResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -74281,6 +79877,332 @@ func ParseGetCaptureSessionResponse(rsp *http.Response) (*GetCaptureSessionRespo
 			headers.XRequestID = value
 		}
 		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseCreateConsentReceiptResponse parses an HTTP response from a CreateConsentReceiptWithResponse call
+func ParseCreateConsentReceiptResponse(rsp *http.Response) (*CreateConsentReceiptResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateConsentReceiptResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest SubjectResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest ProcessingAuthorityRequired
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON409 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 400:
+		var headers CreateConsentReceiptResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers CreateConsentReceiptResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers CreateConsentReceiptResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 409:
+		var headers CreateConsentReceiptResponse409Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers409 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetConsentReceiptResponse parses an HTTP response from a GetConsentReceiptWithResponse call
+func ParseGetConsentReceiptResponse(rsp *http.Response) (*GetConsentReceiptResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetConsentReceiptResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest SubjectResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 401:
+		var headers GetConsentReceiptResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetConsentReceiptResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetConsentReceiptResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseRevokeConsentReceiptResponse parses an HTTP response from a RevokeConsentReceiptWithResponse call
+func ParseRevokeConsentReceiptResponse(rsp *http.Response) (*RevokeConsentReceiptResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &RevokeConsentReceiptResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest SubjectResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON409 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 400:
+		var headers RevokeConsentReceiptResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers RevokeConsentReceiptResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers RevokeConsentReceiptResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers RevokeConsentReceiptResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers RevokeConsentReceiptResponse409Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers409 = &headers
 	}
 
 	return response, nil
@@ -75471,6 +81393,221 @@ func ParseGetDocumentSupportResponse(rsp *http.Response) (*GetDocumentSupportRes
 	return response, nil
 }
 
+// ParseGetEvidenceAccessGrantResponse parses an HTTP response from a GetEvidenceAccessGrantWithResponse call
+func ParseGetEvidenceAccessGrantResponse(rsp *http.Response) (*GetEvidenceAccessGrantResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetEvidenceAccessGrantResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest EvidenceAccessGrant
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 401:
+		var headers GetEvidenceAccessGrantResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetEvidenceAccessGrantResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetEvidenceAccessGrantResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseRevokeEvidenceAccessGrantResponse parses an HTTP response from a RevokeEvidenceAccessGrantWithResponse call
+func ParseRevokeEvidenceAccessGrantResponse(rsp *http.Response) (*RevokeEvidenceAccessGrantResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &RevokeEvidenceAccessGrantResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest EvidenceAccessGrant
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON409 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 400:
+		var headers RevokeEvidenceAccessGrantResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers RevokeEvidenceAccessGrantResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers RevokeEvidenceAccessGrantResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers RevokeEvidenceAccessGrantResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers RevokeEvidenceAccessGrantResponse409Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers409 = &headers
+	}
+
+	return response, nil
+}
+
 // ParseCreateEvidenceUploadResponse parses an HTTP response from a CreateEvidenceUploadWithResponse call
 func ParseCreateEvidenceUploadResponse(rsp *http.Response) (*CreateEvidenceUploadResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -75942,6 +82079,308 @@ func ParseUploadEvidenceResponse(rsp *http.Response) (*UploadEvidenceResponse, e
 			headers.XRequestID = value
 		}
 		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetEvidenceResponse parses an HTTP response from a GetEvidenceWithResponse call
+func ParseGetEvidenceResponse(rsp *http.Response) (*GetEvidenceResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetEvidenceResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest EvidenceMetadata
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 401:
+		var headers GetEvidenceResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetEvidenceResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetEvidenceResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseCreateEvidenceAccessGrantResponse parses an HTTP response from a CreateEvidenceAccessGrantWithResponse call
+func ParseCreateEvidenceAccessGrantResponse(rsp *http.Response) (*CreateEvidenceAccessGrantResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateEvidenceAccessGrantResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest EvidenceAccessGrant
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON409 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 400:
+		var headers CreateEvidenceAccessGrantResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers CreateEvidenceAccessGrantResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers CreateEvidenceAccessGrantResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers CreateEvidenceAccessGrantResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers CreateEvidenceAccessGrantResponse409Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers409 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseListEvidenceLifecycleResponse parses an HTTP response from a ListEvidenceLifecycleWithResponse call
+func ParseListEvidenceLifecycleResponse(rsp *http.Response) (*ListEvidenceLifecycleResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListEvidenceLifecycleResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest EvidenceLifecycleList
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 401:
+		var headers ListEvidenceLifecycleResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListEvidenceLifecycleResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers ListEvidenceLifecycleResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
 	}
 
 	return response, nil
@@ -91961,6 +98400,1217 @@ func ParseGetPromptResponse(rsp *http.Response) (*GetPromptResponse, error) {
 	return response, nil
 }
 
+// ParseGetProposalActivationResponse parses an HTTP response from a GetProposalActivationWithResponse call
+func ParseGetProposalActivationResponse(rsp *http.Response) (*GetProposalActivationResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetProposalActivationResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ProposalActivation
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 401:
+		var headers GetProposalActivationResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetProposalActivationResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetProposalActivationResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 500:
+		var headers GetProposalActivationResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseActivateProposalRouteResponse parses an HTTP response from a ActivateProposalRouteWithResponse call
+func ParseActivateProposalRouteResponse(rsp *http.Response) (*ActivateProposalRouteResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ActivateProposalRouteResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ProposalActivation
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 400:
+		var headers ActivateProposalRouteResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ActivateProposalRouteResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ActivateProposalRouteResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers ActivateProposalRouteResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers ActivateProposalRouteResponse409Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 500:
+		var headers ActivateProposalRouteResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseListProposalActivationHistoryResponse parses an HTTP response from a ListProposalActivationHistoryWithResponse call
+func ParseListProposalActivationHistoryResponse(rsp *http.Response) (*ListProposalActivationHistoryResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListProposalActivationHistoryResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ProposalActivationHistory
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 400:
+		var headers ListProposalActivationHistoryResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ListProposalActivationHistoryResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListProposalActivationHistoryResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListProposalActivationHistoryResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseRetireProposalActivationResponse parses an HTTP response from a RetireProposalActivationWithResponse call
+func ParseRetireProposalActivationResponse(rsp *http.Response) (*RetireProposalActivationResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &RetireProposalActivationResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ProposalActivation
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 400:
+		var headers RetireProposalActivationResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers RetireProposalActivationResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers RetireProposalActivationResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers RetireProposalActivationResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers RetireProposalActivationResponse409Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 500:
+		var headers RetireProposalActivationResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseRollbackProposalActivationResponse parses an HTTP response from a RollbackProposalActivationWithResponse call
+func ParseRollbackProposalActivationResponse(rsp *http.Response) (*RollbackProposalActivationResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &RollbackProposalActivationResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ProposalActivation
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 400:
+		var headers RollbackProposalActivationResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers RollbackProposalActivationResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers RollbackProposalActivationResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers RollbackProposalActivationResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers RollbackProposalActivationResponse409Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 500:
+		var headers RollbackProposalActivationResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseListProposalImpactAssessmentsResponse parses an HTTP response from a ListProposalImpactAssessmentsWithResponse call
+func ParseListProposalImpactAssessmentsResponse(rsp *http.Response) (*ListProposalImpactAssessmentsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListProposalImpactAssessmentsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ProposalImpactAssessmentList
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 400:
+		var headers ListProposalImpactAssessmentsResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ListProposalImpactAssessmentsResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListProposalImpactAssessmentsResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListProposalImpactAssessmentsResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseCreateProposalImpactAssessmentResponse parses an HTTP response from a CreateProposalImpactAssessmentWithResponse call
+func ParseCreateProposalImpactAssessmentResponse(rsp *http.Response) (*CreateProposalImpactAssessmentResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateProposalImpactAssessmentResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest ProposalImpactAssessment
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 400:
+		var headers CreateProposalImpactAssessmentResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers CreateProposalImpactAssessmentResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers CreateProposalImpactAssessmentResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 409:
+		var headers CreateProposalImpactAssessmentResponse409Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 500:
+		var headers CreateProposalImpactAssessmentResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetProposalImpactAssessmentResponse parses an HTTP response from a GetProposalImpactAssessmentWithResponse call
+func ParseGetProposalImpactAssessmentResponse(rsp *http.Response) (*GetProposalImpactAssessmentResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetProposalImpactAssessmentResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ProposalImpactAssessment
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 401:
+		var headers GetProposalImpactAssessmentResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetProposalImpactAssessmentResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetProposalImpactAssessmentResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 500:
+		var headers GetProposalImpactAssessmentResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseCreateProposalModelResponse parses an HTTP response from a CreateProposalModelWithResponse call
+func ParseCreateProposalModelResponse(rsp *http.Response) (*CreateProposalModelResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateProposalModelResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest ProposalModel
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 400:
+		var headers CreateProposalModelResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers CreateProposalModelResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers CreateProposalModelResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 409:
+		var headers CreateProposalModelResponse409Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 500:
+		var headers CreateProposalModelResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetProposalModelResponse parses an HTTP response from a GetProposalModelWithResponse call
+func ParseGetProposalModelResponse(rsp *http.Response) (*GetProposalModelResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetProposalModelResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ProposalModel
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 401:
+		var headers GetProposalModelResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetProposalModelResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetProposalModelResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 500:
+		var headers GetProposalModelResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
 // ParseGetProposalModeResponse parses an HTTP response from a GetProposalModeWithResponse call
 func ParseGetProposalModeResponse(rsp *http.Response) (*GetProposalModeResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -92200,6 +99850,110 @@ func ParsePutProposalModeResponse(rsp *http.Response) (*PutProposalModeResponse,
 		response.Headers409 = &headers
 	case rsp.StatusCode == 500:
 		var headers PutProposalModeResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetProposalUsageResponse parses an HTTP response from a GetProposalUsageWithResponse call
+func ParseGetProposalUsageResponse(rsp *http.Response) (*GetProposalUsageResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetProposalUsageResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ProposalUsageReport
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 400:
+		var headers GetProposalUsageResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers GetProposalUsageResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetProposalUsageResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 500:
+		var headers GetProposalUsageResponse500Headers
 		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
 			var value RequestID
 			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
@@ -107017,6 +114771,396 @@ func ParseGetLatestDecisionResponse(rsp *http.Response) (*GetLatestDecisionRespo
 		response.Headers500 = &headers
 	case rsp.StatusCode == 503:
 		var headers GetLatestDecisionResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseListVerificationDecisionsResponse parses an HTTP response from a ListVerificationDecisionsWithResponse call
+func ParseListVerificationDecisionsResponse(rsp *http.Response) (*ListVerificationDecisionsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListVerificationDecisionsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest PolicyDecisionList
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 400:
+		var headers ListVerificationDecisionsResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ListVerificationDecisionsResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListVerificationDecisionsResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers ListVerificationDecisionsResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 429:
+		var headers ListVerificationDecisionsResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListVerificationDecisionsResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ListVerificationDecisionsResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseCreateVerificationReconsiderationResponse parses an HTTP response from a CreateVerificationReconsiderationWithResponse call
+func ParseCreateVerificationReconsiderationResponse(rsp *http.Response) (*CreateVerificationReconsiderationResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateVerificationReconsiderationResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest ReviewFollowup
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 400:
+		var headers CreateVerificationReconsiderationResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers CreateVerificationReconsiderationResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers CreateVerificationReconsiderationResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers CreateVerificationReconsiderationResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 409:
+		var headers CreateVerificationReconsiderationResponse409Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 429:
+		var headers CreateVerificationReconsiderationResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers CreateVerificationReconsiderationResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers CreateVerificationReconsiderationResponse503Headers
 		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
 			var value int
 			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {

@@ -814,6 +814,67 @@ paths:
           $ref: "#/components/responses/InternalError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /v1/verifications/{verificationID}/decisions:
+    parameters:
+      - $ref: "#/components/parameters/VerificationID"
+    get:
+      operationId: listVerificationDecisions
+      summary: List immutable decision history for a verification
+      description: Returns a bounded newest-first page. The before cursor is an opaque tenant-scoped decision identifier.
+      tags: [Decisions]
+      security: [TenantAPIKey: []]
+      x-required-scopes: [decisions:read]
+      parameters:
+        - name: before
+          in: query
+          required: false
+          description: Exclude this decision and every newer decision.
+          schema: { $ref: "#/components/schemas/PolicyDecisionID" }
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: A bounded decision-history page.
+          content: { application/json: { schema: { $ref: "#/components/schemas/PolicyDecisionList" } } }
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/InsufficientScope" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
+  /v1/verifications/{verificationID}/reconsiderations:
+    parameters:
+      - $ref: "#/components/parameters/VerificationID"
+    post:
+      operationId: createVerificationReconsideration
+      summary: Open an independent correction workflow for a decision
+      description: Reconsideration reuses the existing versioned review-correction lifecycle; it never mutates an immutable decision in place.
+      tags: [Decisions, Review]
+      security: [TenantAPIKey: []]
+      x-required-scopes: [appeals:write]
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerificationReconsiderationCreate"
+      responses:
+        "201":
+          description: The correction workflow was opened or exactly replayed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReviewFollowup"
+        "400": { $ref: "#/components/responses/InvalidRequest" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/InsufficientScope" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/InternalError" }
+        "503": { $ref: "#/components/responses/ServiceUnavailable" }
   /v1/decisions/{decisionID}:
     parameters:
       - $ref: "#/components/parameters/DecisionID"
@@ -1333,6 +1394,152 @@ paths:
           $ref: "#/components/responses/Conflict"
         "500":
           $ref: "#/components/responses/InternalError"
+  /v1/consent-receipts:
+    post:
+      operationId: createConsentReceipt
+      summary: Record an explicit session-bound subject response
+      description: Uses the capture credential and the exact notice bound to the active verification; tenant API credentials cannot invent subject consent.
+      tags: [Capture, Processing authority]
+      security:
+        - CaptureToken: []
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubjectResponseCreate"
+      responses:
+        "201":
+          description: The append-only response was recorded or exactly replayed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubjectResponse"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/ProcessingAuthorityRequired"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /v1/consent-receipts/{consentID}:
+    get:
+      operationId: getConsentReceipt
+      summary: Inspect one immutable consent receipt
+      tags: [Processing authority]
+      security:
+        - TenantAPIKey: []
+      parameters:
+        - name: consentID
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/SubjectResponseID"
+      responses:
+        "200":
+          description: The immutable consent receipt.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubjectResponse"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /v1/consent-receipts/{consentID}/revoke:
+    post:
+      operationId: revokeConsentReceipt
+      summary: Append a refusal that withdraws an immutable consent receipt
+      description: The original consent remains immutable; successful withdrawal creates a new refusal receipt.
+      tags: [Processing authority]
+      security:
+        - TenantAPIKey: []
+      parameters:
+        - name: consentID
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/SubjectResponseID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConsentReceiptRevoke"
+      responses:
+        "201":
+          description: A new append-only refusal receipt was recorded or replayed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubjectResponse"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /v1/capture/document-selection:
+    post:
+      operationId: selectCaptureDocument
+      summary: Select a profile-pinned document branch
+      description: Activates pinned artefacts without changing requirements. Switching is rejected after any upload intent for the requirement. Exact retries return the original session result.
+      tags: [Capture]
+      security:
+        - CaptureToken: []
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        description: The pinned document option and last observed session version.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CaptureDocumentSelection"
+            example: { requirement_key: document, document_type: passport, expected_version: 1 }
+      responses:
+        "200":
+          description: The selected branch and unchanged requirements.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerificationSession"
+              example:
+                id: ver_01M11HEQG00000000000000000
+                state: collecting
+                version: 2
+                profile_id: prf_01M11HEQG00000000000000000
+                profile_revision: 1
+                profile_digest: sha256:284a4418399974a7d1ce691f96ea534e1cd97ee1a9bc0d09de25d4a3b9d48969
+                policy_id: pol_01M11HEQG00000000000000000
+                region: ng-1
+                document_selections: { document: passport }
+                requirements:
+                  schema_version: 1
+                  registry:
+                    schema_version: 1
+                    revision: 1
+                    digest: sha256:71ef9df77044f9bf5eeb7ae448da3d98811ff4cb3f2541f459e60b4628a5364f
+                  requirements: []
+                created_at: "2026-08-27T12:00:00Z"
+                updated_at: "2026-08-27T12:01:00Z"
+                expires_at: "2026-08-28T12:00:00Z"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "409":
+          $ref: "#/components/responses/Conflict"
   /v1/capture/session:
     get:
       operationId: getCaptureSession
@@ -1556,6 +1763,168 @@ paths:
           $ref: "#/components/responses/CaptureOriginNotAllowed"
         "500":
           $ref: "#/components/responses/InternalError"
+  /v1/evidence/{evidenceID}:
+    get:
+      operationId: getEvidence
+      summary: Inspect safe evidence metadata
+      description: Returns reference-only lifecycle metadata. Object keys, wrapped keys, digests, and evidence bytes are never exposed.
+      tags: [Evidence]
+      security:
+        - TenantAPIKey: []
+      parameters:
+        - name: evidenceID
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/EvidenceID"
+      responses:
+        "200":
+          description: Safe evidence metadata.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EvidenceMetadata"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /v1/evidence/{evidenceID}/lifecycle:
+    get:
+      operationId: listEvidenceLifecycle
+      summary: List safe evidence lifecycle events
+      tags: [Evidence]
+      security:
+        - TenantAPIKey: []
+      parameters:
+        - name: evidenceID
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/EvidenceID"
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        "200":
+          description: Bounded append-only lifecycle history.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EvidenceLifecycleList"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /v1/evidence-access-grants/{grantID}:
+    get:
+      operationId: getEvidenceAccessGrant
+      summary: Inspect a purpose-bound evidence-processing grant
+      tags: [Evidence]
+      security:
+        - TenantAPIKey: []
+      parameters:
+        - name: grantID
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/EvidenceAccessGrantID"
+      responses:
+        "200":
+          description: Safe grant metadata without redemption details.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EvidenceAccessGrant"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /v1/evidence/{evidenceID}/access-grants:
+    post:
+      operationId: createEvidenceAccessGrant
+      summary: Issue a purpose-bound evidence-processing grant
+      description: Live processing authority is re-evaluated before an idempotent, short-lived capability is committed.
+      tags: [Evidence]
+      security:
+        - TenantAPIKey: []
+      parameters:
+        - name: evidenceID
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/EvidenceID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EvidenceAccessGrantCreate"
+      responses:
+        "201":
+          description: The grant was created or exactly replayed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EvidenceAccessGrant"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /v1/evidence-access-grants/{grantID}/revoke:
+    post:
+      operationId: revokeEvidenceAccessGrant
+      summary: Irreversibly revoke an evidence-processing grant
+      tags: [Evidence]
+      security:
+        - TenantAPIKey: []
+      parameters:
+        - name: grantID
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/EvidenceAccessGrantID"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EvidenceAccessGrantRevoke"
+      responses:
+        "200":
+          description: The grant was revoked.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EvidenceAccessGrant"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
   /v1/evidence-uploads:
     post:
       operationId: createEvidenceUpload
@@ -6903,6 +7272,177 @@ paths:
         '404': { $ref: '#/components/responses/NotFound' }
         '401': { $ref: '#/components/responses/Unauthenticated' }
         '403': { $ref: '#/components/responses/InsufficientScope' }
+        '500': { $ref: '#/components/responses/InternalError' }
+  /v1/proposal-models:
+    post:
+      tags: [Proposals]
+      operationId: createProposalModel
+      summary: Register an immutable generative-model revision
+      security: [TenantAPIKey: []]
+      x-required-scopes: [proposals:configure]
+      requestBody: { description: Provider-neutral logical identifier and reviewed immutable model digest., required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ProposalModelCreate' } } } }
+      responses:
+        '201': { description: Model registered, content: { application/json: { schema: { $ref: '#/components/schemas/ProposalModel' } } } }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+  /v1/proposal-models/{modelID}/{version}:
+    parameters:
+      - { name: modelID, in: path, required: true, description: Generative-model registry identifier., schema: { type: string, pattern: '^mdl_[0-9A-HJKMNP-TV-Z]{26}$', example: mdl_01M11HEQG00000000000000000 } }
+      - { name: version, in: path, required: true, description: Immutable model registry version., schema: { type: integer, minimum: 1, example: 1 } }
+    get:
+      tags: [Proposals]
+      operationId: getProposalModel
+      summary: Get an immutable generative-model revision
+      security: [TenantAPIKey: []]
+      x-required-scopes: [proposals:configure]
+      responses:
+        '200': { description: Model revision, content: { application/json: { schema: { $ref: '#/components/schemas/ProposalModel' } } } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalError' }
+  /v1/proposal-activations/{workflow}:
+    parameters: [{ name: workflow, in: path, required: true, description: Tenant workflow whose route is activated., schema: { type: string, minLength: 1, maxLength: 64, example: default } }]
+    put:
+      tags: [Proposals]
+      operationId: activateProposalRoute
+      summary: Activate an exact model and prompt route
+      security: [TenantAPIKey: []]
+      x-required-scopes: [proposals:configure]
+      requestBody: { description: 'Exact immutable registry records, provider route versions, and CAS precondition.', required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ProposalActivationRequest' } } } }
+      responses:
+        '200': { description: Active route, content: { application/json: { schema: { $ref: '#/components/schemas/ProposalActivation' } } } }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+    get:
+      tags: [Proposals]
+      operationId: getProposalActivation
+      summary: Get the current model route activation
+      security: [TenantAPIKey: []]
+      x-required-scopes: [proposals:configure]
+      responses:
+        '200': { description: Current activation, content: { application/json: { schema: { $ref: '#/components/schemas/ProposalActivation' } } } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '500': { $ref: '#/components/responses/InternalError' }
+  /v1/proposal-activations/{workflow}/history:
+    parameters:
+      - { name: workflow, in: path, required: true, description: Tenant workflow whose activation history is requested., schema: { type: string, minLength: 1, maxLength: 64, example: default } }
+      - { name: limit, in: query, required: false, description: Maximum newest-first revisions to return., schema: { type: integer, minimum: 1, maximum: 100, default: 50, example: 50 } }
+    get:
+      tags: [Proposals]
+      operationId: listProposalActivationHistory
+      summary: List immutable activation history newest first
+      security: [TenantAPIKey: []]
+      x-required-scopes: [proposals:configure]
+      responses:
+        '200': { description: Activation history, content: { application/json: { schema: { $ref: '#/components/schemas/ProposalActivationHistory' } } } }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '500': { $ref: '#/components/responses/InternalError' }
+  /v1/proposal-activations/{workflow}/retire:
+    parameters: [{ name: workflow, in: path, required: true, description: Tenant workflow whose current route is retired., schema: { type: string, minLength: 1, maxLength: 64, example: default } }]
+    post:
+      tags: [Proposals]
+      operationId: retireProposalActivation
+      summary: Retire the current model route
+      security: [TenantAPIKey: []]
+      x-required-scopes: [proposals:configure]
+      requestBody: { description: Current revision precondition and bounded audit reason., required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ProposalActivationLifecycleRequest' } } } }
+      responses:
+        '200': { description: Retired route, content: { application/json: { schema: { $ref: '#/components/schemas/ProposalActivation' } } } }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+  /v1/proposal-activations/{workflow}/rollback:
+    parameters: [{ name: workflow, in: path, required: true, description: Tenant workflow whose prior active route is republished., schema: { type: string, minLength: 1, maxLength: 64, example: default } }]
+    post:
+      tags: [Proposals]
+      operationId: rollbackProposalActivation
+      summary: Republish a prior active route as a new revision
+      security: [TenantAPIKey: []]
+      x-required-scopes: [proposals:configure]
+      requestBody: { description: Current and target revisions plus bounded audit reason., required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ProposalActivationRollbackRequest' } } } }
+      responses:
+        '200': { description: Rolled-back route, content: { application/json: { schema: { $ref: '#/components/schemas/ProposalActivation' } } } }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+  /v1/proposal-usage:
+    get:
+      tags: [Proposals]
+      operationId: getProposalUsage
+      summary: Get content-free generation usage totals
+      security: [TenantAPIKey: []]
+      x-required-scopes: [proposals:read]
+      parameters:
+        - { name: from, in: query, required: true, description: Inclusive UTC report boundary., schema: { type: string, format: date-time, example: '2026-09-01T00:00:00Z' } }
+        - { name: to, in: query, required: true, description: 'Exclusive UTC report boundary, at most 366 days after from.', schema: { type: string, format: date-time, example: '2026-10-01T00:00:00Z' } }
+      responses:
+        '200': { description: Usage totals, content: { application/json: { schema: { $ref: '#/components/schemas/ProposalUsageReport' } } } }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '500': { $ref: '#/components/responses/InternalError' }
+  /v1/proposal-impact-assessments:
+    get:
+      tags: [Proposals]
+      operationId: listProposalImpactAssessments
+      summary: List immutable AI impact assessments
+      security: [TenantAPIKey: []]
+      x-required-scopes: [proposals:read]
+      parameters:
+        - { name: before, in: query, required: false, description: Exclusive RFC3339 creation-time cursor., schema: { type: string, format: date-time, example: '2026-09-21T12:00:00Z' } }
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200': { description: Bounded newest-first assessments., content: { application/json: { schema: { $ref: '#/components/schemas/ProposalImpactAssessmentList' } } } }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '500': { $ref: '#/components/responses/InternalError' }
+    post:
+      tags: [Proposals]
+      operationId: createProposalImpactAssessment
+      summary: Record an immutable AI impact assessment
+      security: [TenantAPIKey: []]
+      x-required-scopes: [proposals:configure]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ProposalImpactAssessmentCreate' } } } }
+      responses:
+        '201': { description: Assessment recorded., content: { application/json: { schema: { $ref: '#/components/schemas/ProposalImpactAssessment' } } } }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '500': { $ref: '#/components/responses/InternalError' }
+  /v1/proposal-impact-assessments/{assessmentID}:
+    parameters:
+      - { name: assessmentID, in: path, required: true, description: Immutable impact assessment identifier., schema: { type: string, pattern: '^imp_[0-9]+$', example: imp_1790000000000000000 } }
+    get:
+      tags: [Proposals]
+      operationId: getProposalImpactAssessment
+      summary: Get one immutable AI impact assessment
+      security: [TenantAPIKey: []]
+      x-required-scopes: [proposals:read]
+      responses:
+        '200': { description: Assessment returned., content: { application/json: { schema: { $ref: '#/components/schemas/ProposalImpactAssessment' } } } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
         '500': { $ref: '#/components/responses/InternalError' }
   /v1/deletions:
     get:
@@ -13717,6 +14257,25 @@ components:
         reproduced:
           type: boolean
           const: true
+    PolicyDecisionList:
+      type: object
+      description: Bounded newest-first immutable decision lineage.
+      additionalProperties: false
+      required: [data]
+      properties:
+        data:
+          type: array
+          maxItems: 100
+          items: { $ref: "#/components/schemas/PolicyDecisionReport" }
+        next_before:
+          $ref: "#/components/schemas/PolicyDecisionID"
+    VerificationReconsiderationCreate:
+      type: object
+      additionalProperties: false
+      required: [decision_id]
+      properties:
+        decision_id:
+          $ref: "#/components/schemas/PolicyDecisionID"
     PolicyDecisionBundle:
       type: object
       description: Byte-canonical, self-checking decision reproduction envelope; it never contains raw evidence bytes.
@@ -14636,6 +15195,16 @@ components:
           type: string
           format: date-time
           example: "2026-08-27T12:05:00Z"
+    ConsentReceiptRevoke:
+      type: object
+      description: Bounded audit reason for append-only consent withdrawal.
+      additionalProperties: false
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
     CaptureAuthoritySnapshot:
       description: Capture-visible current authority, exact notice, and optional latest response.
       type: object
@@ -14793,6 +15362,25 @@ components:
               type: string
               pattern: ^[0-9]+\.[0-9]+\.[0-9]+$
               example: 1.4.0
+    CaptureDocumentSelection:
+      description: An expected-version command selecting one pinned document option.
+      type: object
+      additionalProperties: false
+      required: [requirement_key, document_type, expected_version]
+      properties:
+        requirement_key:
+          type: string
+          pattern: ^[a-z][a-z0-9_]{0,63}$
+          example: document
+        document_type:
+          type: string
+          pattern: ^[a-z][a-z0-9_]{0,63}$
+          example: passport
+        expected_version:
+          type: integer
+          format: int64
+          minimum: 1
+          example: 1
     VerificationSession:
       description: Immutable capture requirements and current lifecycle metadata for one verification.
       type: object
@@ -14868,6 +15456,13 @@ components:
           $ref: "#/components/schemas/VerificationInputRequest"
         requirements:
           $ref: "#/components/schemas/CaptureProfileDocument"
+        document_selections:
+          description: Core-recorded document option ID by requirement key, separate from immutable requirements.
+          example: { document: passport }
+          type: object
+          additionalProperties:
+            type: string
+            pattern: ^[a-z][a-z0-9_]{0,63}$
         created_at:
           type: string
           format: date-time
@@ -15073,10 +15668,226 @@ components:
       description: Stable opaque identifier preallocated for the accepted evidence artefact.
       pattern: ^evd_[0-9A-HJKMNP-TV-Z]{26}$
       example: evd_01M11HEQG00000000000000000
+    EvidenceAccessGrantID:
+      type: string
+      pattern: ^grt_[0-9A-HJKMNP-TV-Z]{26}$
+      example: grt_01M11HEQG00000000000000000
+    EvidenceMetadata:
+      type: object
+      description: Safe reference-only evidence metadata; storage and cryptographic material are absent.
+      additionalProperties: false
+      required: [id, subject_id, verification_id, requirement_key, evidence_type, artefact, acquisition_method, assurances, registry_revision, region, retention_class, content_revision, integrity, state, version, created_at, updated_at]
+      properties:
+        id:
+          $ref: "#/components/schemas/EvidenceID"
+        subject_id:
+          $ref: "#/components/schemas/SubjectID"
+        verification_id:
+          $ref: "#/components/schemas/VerificationSessionID"
+        requirement_key:
+          type: string
+        evidence_type:
+          type: string
+        artefact:
+          type: string
+        acquisition_method:
+          type: string
+        assurances:
+          type: array
+          items:
+            type: string
+        registry_revision:
+          type: integer
+          minimum: 1
+        region:
+          type: string
+        retention_class:
+          type: string
+        content_revision:
+          type: integer
+          minimum: 1
+        integrity:
+          type: string
+          enum: [verified, failed]
+        state:
+          type: string
+          enum: [available, quarantined, deleted]
+        version:
+          type: integer
+          format: int64
+          minimum: 1
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        quarantine_reason:
+          type: string
+        quarantined_at:
+          type: string
+          format: date-time
+    EvidenceLifecycleEvent:
+      type: object
+      additionalProperties: false
+      required: [version, action, occurred_at]
+      properties:
+        version:
+          type: integer
+          format: int64
+          minimum: 1
+        action:
+          type: string
+        reason:
+          type: string
+        occurred_at:
+          type: string
+          format: date-time
+    EvidenceLifecycleList:
+      type: object
+      additionalProperties: false
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/EvidenceLifecycleEvent"
+    EvidenceAccessGrantCreate:
+      type: object
+      additionalProperties: false
+      required: [check_reference, runner_identity, workload_version, purpose, permitted_variants, recipient_reference, output_destination, maximum_uses, ttl_seconds, reason]
+      properties:
+        check_reference:
+          type: string
+        runner_identity:
+          type: string
+        workload_version:
+          type: string
+        purpose:
+          type: string
+        permitted_variants:
+          type: array
+          minItems: 1
+          maxItems: 16
+          items:
+            type: string
+        recipient_reference:
+          type: string
+        output_destination:
+          type: string
+        maximum_uses:
+          type: integer
+          minimum: 1
+          maximum: 32
+        ttl_seconds:
+          type: integer
+          format: int64
+          minimum: 1
+          maximum: 3600
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+    EvidenceAccessGrant:
+      type: object
+      description: Safe purpose-bound grant metadata; redemption attempts are absent.
+      additionalProperties: false
+      required: [id, subject_id, verification_id, evidence_id, requirement_key, authority_id, response_id, check_reference, runner_identity, workload_version, purpose, operation, permitted_variants, region, recipient_reference, output_destination, policy_reference, maximum_uses, uses, created_at, expires_at]
+      properties:
+        id:
+          $ref: "#/components/schemas/EvidenceAccessGrantID"
+        subject_id:
+          $ref: "#/components/schemas/SubjectID"
+        verification_id:
+          $ref: "#/components/schemas/VerificationSessionID"
+        evidence_id:
+          $ref: "#/components/schemas/EvidenceID"
+        authority_id:
+          $ref: "#/components/schemas/ProcessingAuthorityID"
+        response_id:
+          $ref: "#/components/schemas/SubjectResponseID"
+        requirement_key:
+          type: string
+        check_reference:
+          type: string
+        runner_identity:
+          type: string
+        workload_version:
+          type: string
+        purpose:
+          type: string
+        operation:
+          type: string
+          enum: [evidence.plaintext.read]
+        permitted_variants:
+          type: array
+          items:
+            type: string
+        region:
+          type: string
+        recipient_reference:
+          type: string
+        output_destination:
+          type: string
+        policy_reference:
+          type: string
+        maximum_uses:
+          type: integer
+          minimum: 1
+          maximum: 32
+        uses:
+          type: integer
+          minimum: 0
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        revoked_at:
+          type: string
+          format: date-time
+    EvidenceAccessGrantRevoke:
+      type: object
+      additionalProperties: false
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
     CaptureFallbackCondition:
       type: string
       description: Policy-approved reason for selecting a fallback acquisition branch.
       enum: [capability_unavailable, method_unavailable, capture_failed]
+    TemporalEvidenceFrame:
+      type: object
+      description: Metadata binding one image into an ordered digest-chained active-capture sequence. It makes no assurance claim.
+      additionalProperties: false
+      required: [sequence_digest, index, count, challenge_id, captured_at]
+      properties:
+        sequence_digest:
+          type: string
+          pattern: '^sha256:[0-9a-f]{64}$'
+        index:
+          type: integer
+          minimum: 0
+          maximum: 31
+        count:
+          type: integer
+          minimum: 2
+          maximum: 32
+        challenge_id:
+          type: string
+          minLength: 3
+          maxLength: 160
+          pattern: '^[a-z][a-z0-9]*([._-][a-z0-9]+)+$'
+        captured_at:
+          type: string
+          format: date-time
+        previous_digest:
+          type: string
+          pattern: '^sha256:[0-9a-f]{64}$'
     CaptureCompletion:
       type: object
       description: Minimal immutable binding for one accepted capture step.
@@ -15282,6 +16093,8 @@ components:
           type: string
           $ref: "#/components/schemas/CaptureFallbackCondition"
           example: capability_unavailable
+        sequence:
+          $ref: "#/components/schemas/TemporalEvidenceFrame"
         expected_bytes:
           type: integer
           format: int64
@@ -15358,6 +16171,8 @@ components:
           type: string
           $ref: "#/components/schemas/CaptureFallbackCondition"
           example: capture_failed
+        sequence:
+          $ref: "#/components/schemas/TemporalEvidenceFrame"
         assurances:
           type: array
           example: []
@@ -16982,6 +17797,12 @@ components:
         workflow: { type: string, minLength: 1, maxLength: 64, example: verification }
         mode: { type: string, enum: [disabled, assist, recommend, guardrailed_auto, human_required], example: assist }
         allowed_kinds: { type: array, maxItems: 8, items: { $ref: '#/components/schemas/ProposalActionKind' }, example: [review.copilot.summarize] }
+        model_registry_id: { type: string, pattern: '^mdl_[0-9A-HJKMNP-TV-Z]{26}$', example: mdl_01M11HEQG00000000000000000 }
+        model_registry_version: { type: integer, minimum: 1, example: 1 }
+        prompt_id: { type: string, pattern: '^prm_[0-9A-HJKMNP-TV-Z]{26}$', example: prm_01M11HEQG00000000000000000 }
+        prompt_registry_version: { type: integer, minimum: 1, example: 1 }
+        activation_revision: { type: integer, minimum: 1, example: 1 }
+        expected_version: { type: integer, minimum: 0, description: Write precondition; omitted from read responses., example: 0 }
         version: { type: integer, minimum: 1, example: 1 }
     PromptCreate:
       type: object
@@ -17000,6 +17821,127 @@ components:
         content: { type: string, example: Summarise the review findings. }
         digest: { type: string, pattern: '^[0-9a-f]{64}$', example: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef }
         model_id: { type: string, example: model.test }
+    ProposalModelCreate:
+      type: object
+      description: Registration input for one immutable provider-neutral generative-model revision.
+      additionalProperties: false
+      required: [model_id, digest]
+      properties:
+        model_id: { type: string, pattern: '^[a-z][a-z0-9._:-]{0,63}$', example: ai.review }
+        digest: { type: string, pattern: '^[0-9a-f]{64}$', example: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef }
+    ProposalModel:
+      type: object
+      description: Tenant-owned immutable generative-model registry revision.
+      additionalProperties: false
+      required: [model_registry_id, version, model_id, digest, created_at]
+      properties:
+        model_registry_id: { type: string, pattern: '^mdl_[0-9A-HJKMNP-TV-Z]{26}$', example: mdl_01M11HEQG00000000000000000 }
+        version: { type: integer, minimum: 1, example: 1 }
+        model_id: { type: string, pattern: '^[a-z][a-z0-9._:-]{0,63}$', example: ai.review }
+        digest: { type: string, pattern: '^[0-9a-f]{64}$', example: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef }
+        created_at: { type: string, format: date-time, example: '2026-09-21T12:00:00Z' }
+    ProposalActivationRequest:
+      type: object
+      description: Exact immutable registry and provider route selected for a workflow.
+      additionalProperties: false
+      required: [model_registry_id, model_registry_version, prompt_registry_id, prompt_registry_version, model_version, prompt_version, expected_revision]
+      properties:
+        model_registry_id: { type: string, pattern: '^mdl_[0-9A-HJKMNP-TV-Z]{26}$', example: mdl_01M11HEQG00000000000000000 }
+        model_registry_version: { type: integer, minimum: 1, example: 1 }
+        prompt_registry_id: { type: string, pattern: '^prm_[0-9A-HJKMNP-TV-Z]{26}$', example: prm_01M11HEQG00000000000000000 }
+        prompt_registry_version: { type: integer, minimum: 1, example: 1 }
+        model_version: { type: string, minLength: 1, maxLength: 64, example: gpt-4o-2024-08-06 }
+        prompt_version: { type: string, minLength: 1, maxLength: 64, example: review-p1 }
+        expected_revision: { type: integer, minimum: 0, example: 0 }
+        reason: { type: string, maxLength: 256, example: approved evaluation candidate }
+    ProposalActivationLifecycleRequest:
+      type: object
+      description: CAS-protected retirement request with an auditable reason.
+      additionalProperties: false
+      required: [expected_revision]
+      properties:
+        expected_revision: { type: integer, minimum: 1, example: 1 }
+        reason: { type: string, maxLength: 256, example: provider contract ended }
+    ProposalActivationRollbackRequest:
+      type: object
+      description: CAS-protected request to republish one prior active route.
+      additionalProperties: false
+      required: [expected_revision, target_revision]
+      properties:
+        expected_revision: { type: integer, minimum: 1, example: 2 }
+        target_revision: { type: integer, minimum: 1, example: 1 }
+        reason: { type: string, maxLength: 256, example: evaluation regression }
+    ProposalActivation:
+      type: object
+      description: Current or historical audited workflow route revision.
+      additionalProperties: false
+      required: [workflow, revision, state, model_registry_id, model_registry_version, prompt_registry_id, prompt_registry_version, model_id, model_version, prompt_version, action, actor_id, occurred_at]
+      properties:
+        workflow: { type: string, minLength: 1, maxLength: 64, example: default }
+        revision: { type: integer, minimum: 1, example: 1 }
+        state: { type: string, enum: [active, retired], example: active }
+        model_registry_id: { type: string, pattern: '^mdl_[0-9A-HJKMNP-TV-Z]{26}$', example: mdl_01M11HEQG00000000000000000 }
+        model_registry_version: { type: integer, minimum: 1, example: 1 }
+        prompt_registry_id: { type: string, pattern: '^prm_[0-9A-HJKMNP-TV-Z]{26}$', example: prm_01M11HEQG00000000000000000 }
+        prompt_registry_version: { type: integer, minimum: 1, example: 1 }
+        model_id: { type: string, maxLength: 64, example: ai.review }
+        model_version: { type: string, maxLength: 64, example: gpt-4o-2024-08-06 }
+        prompt_version: { type: string, maxLength: 64, example: review-p1 }
+        action: { type: string, enum: [activated, retired, rolled_back], example: activated }
+        source_revision: { type: integer, minimum: 1, example: 1 }
+        reason: { type: string, maxLength: 256, example: approved evaluation candidate }
+        actor_id: { type: string, maxLength: 200, example: key_01M11HEQG00000000000000000 }
+        occurred_at: { type: string, format: date-time, example: '2026-09-21T12:00:00Z' }
+    ProposalActivationHistory:
+      type: object
+      description: Bounded newest-first immutable activation history.
+      additionalProperties: false
+      required: [activations]
+      properties:
+        activations: { type: array, maxItems: 100, items: { $ref: '#/components/schemas/ProposalActivation' }, example: [] }
+    ProposalUsageReport:
+      type: object
+      description: Content-free tenant generation accounting over a bounded half-open interval.
+      additionalProperties: false
+      required: [from, to, attempts, succeeded, failed, rejected, invalid_output, unreported_usage, input_tokens, output_tokens, estimated_cost_micros]
+      properties:
+        from: { type: string, format: date-time, example: '2026-09-01T00:00:00Z' }
+        to: { type: string, format: date-time, example: '2026-10-01T00:00:00Z' }
+        attempts: { type: integer, minimum: 0, example: 120 }
+        succeeded: { type: integer, minimum: 0, example: 110 }
+        failed: { type: integer, minimum: 0, example: 4 }
+        rejected: { type: integer, minimum: 0, example: 3 }
+        invalid_output: { type: integer, minimum: 0, example: 3 }
+        unreported_usage: { type: integer, minimum: 0, example: 4 }
+        input_tokens: { type: integer, minimum: 0, example: 120000 }
+        output_tokens: { type: integer, minimum: 0, example: 30000 }
+        estimated_cost_micros: { type: integer, minimum: 0, example: 600000 }
+    ProposalImpactAssessmentCreate:
+      type: object
+      description: One reviewed assessment for a bounded proposal action kind.
+      additionalProperties: false
+      required: [kind, assessment, risk_level]
+      properties:
+        kind: { $ref: '#/components/schemas/ProposalActionKind' }
+        assessment: { type: string, minLength: 1, maxLength: 8192, example: Human approval remains mandatory for this action. }
+        risk_level: { type: string, enum: [low, medium, high, critical], example: high }
+    ProposalImpactAssessment:
+      allOf:
+        - $ref: '#/components/schemas/ProposalImpactAssessmentCreate'
+        - type: object
+          additionalProperties: false
+          required: [id, created_at, actor_id]
+          properties:
+            id: { type: string, pattern: '^imp_[0-9]+$', example: imp_1790000000000000000 }
+            created_at: { type: string, format: date-time, example: '2026-09-21T12:00:00Z' }
+            actor_id: { type: string, minLength: 1, maxLength: 200, example: key_01M11HEQG00000000000000000 }
+    ProposalImpactAssessmentList:
+      type: object
+      description: Bounded newest-first immutable impact assessments.
+      additionalProperties: false
+      required: [data]
+      properties:
+        data: { type: array, maxItems: 100, items: { $ref: '#/components/schemas/ProposalImpactAssessment' } }
     PrivacyDeletionID:
       type: string
       description: Stable Idenqa deletion-workflow identifier.
