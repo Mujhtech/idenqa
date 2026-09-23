@@ -18,10 +18,10 @@
 #   docker compose -f deploy/self-hosted/compose.yaml up -d --wait
 #   deploy/self-hosted/smoke.sh
 #
-# The S3-backed API distribution is optional because the current worker has no
-# S3 evidence adapter: the complete worker-backed gate uses the root API's
-# local evidence volume. Enable the distribution with `--profile s3` against
-# the same MinIO service.
+# The S3-backed API and worker distribution is optional. Start the named
+# `api-s3` and `worker-s3` services together so evidence ingress and deletion
+# use the same MinIO bucket and prefix; do not run them beside the local
+# `api`/`worker` pair for the same installation.
 
 name: idenqa-self-hosted
 
@@ -303,9 +303,8 @@ services:
       timeout: 5s
       retries: 30
 
-  # Optional S3-backed API distribution. It shares the MinIO service and the
-  # local KEK keyring; the worker does not currently have an S3 evidence
-  # adapter, so the default worker-backed gate uses the root `api` service.
+  # Optional S3-backed distribution. The API and worker share the MinIO bucket,
+  # prefix and local KEK keyring while provider SDK types remain outside core.
   api-s3:
     <<: *core-image
     profiles: ["s3"]
@@ -339,6 +338,45 @@ services:
       interval: 5s
       timeout: 5s
       retries: 30
+
+  worker-s3:
+    <<: *core-image
+    profiles: ["s3"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+      provision:
+        condition: service_completed_successfully
+      migrate:
+        condition: service_completed_successfully
+    command: ["worker-s3"]
+    environment:
+      <<: *core-environment
+      IDENQA_EVIDENCE_LOCAL_KEYRING_FILE: /run/idenqa/evidence-keyring.json
+      IDENQA_S3_BUCKET: ${IDENQA_S3_BUCKET:-idenqa-evidence}
+      IDENQA_S3_PREFIX: ${IDENQA_S3_PREFIX:-self-hosted/evidence}
+      IDENQA_S3_REGION: ${IDENQA_S3_REGION:-us-east-1}
+      IDENQA_S3_ENDPOINT: http://minio:9000
+      IDENQA_S3_FORCE_PATH_STYLE: "true"
+      IDENQA_S3_ALLOW_HTTP: "true"
+      AWS_ACCESS_KEY_ID: ${IDENQA_MINIO_ROOT_USER:-idenqa}
+      AWS_SECRET_ACCESS_KEY: ${IDENQA_MINIO_ROOT_PASSWORD:-idenqa_dev_minio}
+      SSL_CERT_FILE: /run/idenqa/tls/ca.crt
+      IDENQA_WORKER_SYNTHETIC_PROCESSING: "true"
+      IDENQA_WORKER_ID: ${IDENQA_S3_WORKER_ID:-self-hosted-s3-worker}
+      IDENQA_WORKER_LEASE_DURATION: 10s
+      IDENQA_WORKER_RECONCILIATION_SWEEP_INTERVAL: 5s
+      IDENQA_WORKER_PROGRESS_POLL_INTERVAL: 500ms
+    volumes:
+      - run-data:/run/idenqa:ro
+      - state-data:/state
+    healthcheck:
+      test: ["CMD-SHELL", "kill -0 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
 volumes:
   postgres-data:

@@ -3,8 +3,8 @@
 # Self-hosted Idenqa Core images.
 #
 # Targets:
-#   core          api, worker, adapter-runner, model-runner, idenqa, and the
-#                 deployment fixtures (webhook-receiver, audit-export)
+#   core          api, worker, api-s3, worker-s3, adapter-runner, model-runner,
+#                 idenqa, and the deployment fixtures
 #   capture-web   Capture Web demo bootstrap served by Vite
 #   model-runner  isolated ONNX model runner with the hash-locked Python
 #                 runtime and the repository's evaluation fixture
@@ -26,6 +26,7 @@ ENV GOTOOLCHAIN=local
 WORKDIR /src
 
 COPY go.mod go.sum go.work go.work.sum ./
+COPY adapters/kms/aws/go.mod adapters/kms/aws/go.sum adapters/kms/aws/
 COPY adapters/objectstore/s3/go.mod adapters/objectstore/s3/go.sum adapters/objectstore/s3/
 COPY distributions/s3/go.mod distributions/s3/
 COPY sdk/go/go.mod sdk/go/
@@ -48,7 +49,8 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     && go build -trimpath -ldflags "$LDFLAGS" -o /out/adapter-runner-fixture ./examples/adapter-runner-fixture \
     && go build -trimpath -ldflags "$LDFLAGS" -o /out/model-runner-fixture ./examples/model-runner-fixture \
     && cd distributions/s3 \
-    && go build -trimpath -ldflags "$LDFLAGS" -o /out/api-s3 ./cmd/api
+    && go build -trimpath -ldflags "$LDFLAGS" -o /out/api-s3 ./cmd/api \
+    && go build -trimpath -ldflags "$LDFLAGS" -o /out/worker-s3 ./cmd/worker
 
 FROM debian:bookworm-slim@sha256:3783cc01769c7b2b1b83a5c5ad96c815348e28ed7da68e2e3687004faa906251 AS core
 

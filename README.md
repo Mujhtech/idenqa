@@ -84,7 +84,7 @@ are `IDENQA_WORKER_RECONCILIATION_SWEEP_INTERVAL=1m`,
 least two connections because one connection is dedicated to the optional
 notification hint while durable queries remain the correctness path.
 
-The core `api` enables evidence-upload routes only when both local evidence paths are configured. It then owns the filesystem ciphertext store and mounted keyring lifecycle. Production S3 deployments use the independently versioned `github.com/Mujhtech/idenqa/distributions/s3` composition module, which injects the same owned object and key ports without adding cloud SDKs to the root module.
+The core `api` enables evidence-upload routes only when both local evidence paths are configured. It then owns the filesystem ciphertext store and mounted keyring lifecycle. The root `worker` uses the same local object namespace for worker-owned exact deletion. Production S3 deployments use the independently versioned `github.com/Mujhtech/idenqa/distributions/s3` composition module, whose `api` and `worker` binaries inject the same owned object, key, deletion, and lifecycle ports without adding cloud SDKs to the root module. Run those two binaries with the same S3 bucket, prefix, region, and endpoint; do not mix the S3 pair with the local pair for one database.
 
 Create the local keyring once before starting an evidence-enabled API:
 
@@ -96,7 +96,7 @@ The parent directory must already exist and be writable by the setup operator. I
 
 ### Public HTTP contract
 
-The OpenAPI 3.1 source for v1 is [`contracts/api/openapi/v1/openapi.yaml`](contracts/api/openapi/v1/openapi.yaml). It currently describes the protected tenant walking resource and the reusable problem, pagination, idempotency, conditional-mutation, request-correlation, rate-limit, and deprecation conventions. Generated Go code under `internal/gen/openapi/v1` is a transport contract, not a domain model or an SDK implementation.
+The OpenAPI 3.1 source for v1 is [`contracts/api/openapi/v1/openapi.yaml`](contracts/api/openapi/v1/openapi.yaml). It describes the published tenant, verification, capture, decision, evidence, consent, review, policy, webhook, identity, fraud, assurance, proposal, provider/model-administration and privacy resources, plus shared problem, pagination, idempotency, conditional-mutation, request-correlation, rate-limit and deprecation conventions. Generated Go code under `internal/gen/openapi/v1` is a transport contract, not a domain model or a public SDK implementation. Public SDK coverage is tracked separately in the [resource guide](docs/public-sdk-resources-v0.1.md).
 
 ```sh
 make contract-lint
@@ -108,7 +108,9 @@ make proto-breaking PROTO_BASE='.git#branch=main'
 
 Vacuum and Buf linting plus reproducible OpenAPI and Protobuf generation run as part of `make verify`. Pull requests compare the proposed OpenAPI and runner Protobuf documents to the base revision with oasdiff and Buf. Shared synthetic payloads live under `contracts/api/openapi/v1/fixtures` for handler and SDK conformance tests. Behaviour that OpenAPI cannot fully express is documented in [`contracts/api/openapi/v1/conventions.md`](contracts/api/openapi/v1/conventions.md).
 
-### TypeScript SDK
+### Public SDKs and Capture Web
+
+The [TypeScript SDK](sdk/typescript/README.md) and dependency-free [Go SDK](sdk/go/README.md) expose 30 typed administration operations for decisions, evidence/grants, consent, impact assessments and privacy. The [SDK resource guide](docs/public-sdk-resources-v0.1.md) lists exact methods, retry contracts, passing verification evidence and remaining work. This increment does not imply all-endpoint Go parity or production acceptance.
 
 The open-source TypeScript SDK lives in [`sdk/typescript`](sdk/typescript/) and is published as `@idenqa/sdk`. It provides a zero-runtime-dependency tenant client for capture-profile, verification, notice, and processing-authority operations; a capture-token client for retrieving immutable session requirements, displaying the exact authority notice, recording acknowledgement, consent, or refusal, issuing requirement-bound upload intents, and sending raw JPEG/PNG `Blob` evidence directly to ingress; and a separate outcome-token client restricted to the subject-safe outcome projection. Its public API uses `Promise`, `AbortSignal`, Fetch, stable errors, request IDs, and explicit idempotency keys; it does not require Effect.
 
@@ -128,13 +130,15 @@ The canonical OpenAPI document generates private committed types under `sdk/type
 
 The portable v1 profile and evidence-registry schemas live under [`contracts/capture-profile/v1`](contracts/capture-profile/v1/). Profiles keep evidence types separate from acquisition methods, support `any_of` choices and `all_of` requirements, pin an immutable registry revision and digest, and validate namespaced extensions fail closed. The companion contract document defines canonical serialization, assurance-preserving fallbacks, and why SDK capability advertisements guide selection without proving assurance.
 
-The initial registry supports document-front, document-back, and selfie images through file upload or live camera. Uploads cannot establish freshness, live-capture, passive-liveness, or active-liveness assurance. The mobile acquisition-plan schema and synthetic launch fixture live under [`contracts/capture/acquisition/v1`](contracts/capture/acquisition/v1/); local quality measurements and challenge transcripts remain capture metadata rather than biometric assurance.
+The initial registry supports document-front, document-back, and selfie images through file upload or live camera. Uploads cannot establish freshness, live-capture, passive-liveness, or active-liveness assurance. The acquisition-plan schema and synthetic launch fixture live under [`contracts/capture/acquisition/v1`](contracts/capture/acquisition/v1/). Web active-liveness uploads may persist a complete ordered, digest-chained frame sequence for a temporal-capable model, but local quality measurements and challenge transcripts remain capture metadata rather than biometric assurance.
+
+The first-party predictive path is the primary biometric engineering direction; external provider adapters remain optional. The ONNX runner currently supports evaluation-only PAD, document/selfie face matching, and explicit selfie analysis. Selfie analysis consumes a still image or complete temporal sequence and returns separate inconclusive face-count, framing, head-pose, image-quality and temporal-integrity signals. These repository mechanics do not constitute accepted liveness or fraud detection; see [`docs/onnx-runtime-v0.1.md`](docs/onnx-runtime-v0.1.md).
 
 ### Native SDKs and provider adapters
 
 The open-source [Swift SDK](sdk/swift/) and [Kotlin SDK](sdk/kotlin/) provide native session, transport, secure bootstrap, camera, and bounded acquisition foundations. Run `swift test` in `sdk/swift` and `./gradlew :idenqa:test` in `sdk/kotlin`; CI runs both on their supported host platforms.
 
-The public provider contract and conformance harness are under [`contracts/provider/v1`](contracts/provider/v1/) and [`conformance/provider`](conformance/provider/). The reviewed pre-release Dojah and Smile ID implementations live under [`adapters/providers`](adapters/providers/) and require tenant-owned credentials, purpose-bound input/evidence resolvers, and isolated runner composition. Their manifests are catalogue records, not production entitlement or certification. See the [provider runbook](docs/runbooks/provider-operations.md) and [external-beta checklist](docs/releases/external-beta-checklist.md) before enabling real processing.
+The public provider contract and conformance harness are under [`contracts/provider/v1`](contracts/provider/v1/) and [`conformance/provider`](conformance/provider/). Go integrations use its `AdapterDojah` and `AdapterSmileID` constants for the built-in adapter identifiers; the identifier field remains open to conforming third-party adapters. The reviewed pre-release Dojah and Smile ID implementations live under [`adapters/providers`](adapters/providers/) and require tenant-owned credentials, purpose-bound input/evidence resolvers, and isolated runner composition. Their manifests are catalogue records, not production entitlement or certification. See the [provider runbook](docs/runbooks/provider-operations.md) and [external-beta checklist](docs/releases/external-beta-checklist.md) before enabling real processing.
 
 ### PostgreSQL and migrations
 
@@ -149,12 +153,16 @@ make db-down
 ```
 
 `make integration-s3` builds and starts the independently versioned S3 API
-distribution, then proves the complete public evidence-upload flow against
+binary, then proves the complete public evidence-upload flow against
 PostgreSQL and an owned loopback, filesystem-backed S3 protocol fixture. The
 production process still exercises the real AWS SDK adapter, SigV4 request
 signing, immutable conditional writes, and encrypted object persistence; the
 fixture keeps a third-party S3 emulator out of the repository and the AWS SDK
-dependency graph out of the root module.
+dependency graph out of the root module. The same distribution also publishes
+the S3-backed `worker` binary for privacy deletion and other worker-owned exact
+object deletion. Its composition and packaging are implemented; live S3 worker
+deletion remains production acceptance evidence rather than missing repository
+wiring.
 
 If port 5432 is already occupied, select another local port consistently:
 

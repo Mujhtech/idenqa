@@ -60,6 +60,9 @@ services:
   api-s3:
     image: *published-core-image
     build: !reset null
+  worker-s3:
+    image: *published-core-image
+    build: !reset null
   capture-web:
     image: *published-capture-web-image
     build: !reset null

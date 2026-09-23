@@ -9,7 +9,7 @@ written threat-based justification.
 - [ ] The tag is signed, protected, immutable, and matches the reviewed commit.
 - [ ] `make verify` passes from a clean checkout with Go 1.27.1 and the pinned Node/pnpm toolchain.
 - [ ] Generated OpenAPI, Protobuf, SQL, TypeScript, and lock files are unchanged.
-- [ ] Root, S3 adapter, S3 distribution, and SDK dependency graphs are verified.
+- [ ] Root, S3 adapter, both S3 distribution binaries (`api` and `worker`), and SDK dependency graphs are verified.
 - [ ] Reachable vulnerability, SAST, secret, and licence-policy gates pass.
 - [ ] Release archives, checksums, SPDX SBOMs, and GitHub/Sigstore provenance are published.
 - [ ] A second clean environment verifies checksums and provenance before install.

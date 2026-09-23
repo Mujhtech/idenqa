@@ -28,7 +28,7 @@ func TestLoad(t *testing.T) {
 		t.Fatalf("Load() error = %v", err)
 	}
 	if configuration.DatabaseURL != testDatabaseURL || configuration.Bucket != "idenqa-evidence" ||
-		configuration.Region != "eu-west-1" || configuration.Prefix != "production/evidence" ||
+		configuration.S3Region != "eu-west-1" || configuration.Prefix != "production/evidence" ||
 		configuration.Endpoint != "https://objects.example.test" || !configuration.ForcePathStyle ||
 		configuration.AllowHTTP || configuration.CleanupTimeout != 45*time.Second ||
 		configuration.EvidenceLocalKeyringFile != "/run/secrets/idenqa-keyring.json" {

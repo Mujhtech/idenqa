@@ -61,6 +61,24 @@ func LoadWorker(envFile string) (Worker, error) {
 	return configuration, nil
 }
 
+// LoadWorkerInto loads and validates the core worker fields embedded in a
+// larger deployment-owned configuration. Provider distributions use this seam
+// to add settings without introducing provider dependencies into the root
+// worker module.
+func LoadWorkerInto(envFile string, target any, configuration *Worker) error {
+	if target == nil || configuration == nil {
+		return errors.New("worker configuration target is required")
+	}
+	if err := loadAPIInto(envFile, target, &configuration.API, true); err != nil {
+		return err
+	}
+	if err := configuration.validateWorker(); err != nil {
+		return fmt.Errorf("validate worker configuration: %w", err)
+	}
+
+	return nil
+}
+
 func (configuration Worker) validateWorker() error {
 	if configuration.DatabaseMaxConnections < 2 {
 		return errors.New("worker database pool requires one query connection plus one notification connection")

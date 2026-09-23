@@ -1,4 +1,4 @@
-// Package bootstrap composes and runs the S3-backed Idenqa API distribution.
+// Package bootstrap composes and runs the S3-backed Idenqa API and worker.
 package bootstrap
 
 import (
@@ -19,13 +19,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Run executes the distribution command with explicit arguments.
+// Run executes the API distribution command with explicit arguments.
 func Run(args []string, stdout, stderr io.Writer, info buildinfo.Info) int {
 	return cli.ExecuteArgs(context.Background(), newCommand(info), args, stdout, stderr)
 }
 
-// RunContext executes the distribution command with Cobra-owned arguments and
-// process cancellation supplied by the entry point.
+// RunContext executes the API distribution command with Cobra-owned arguments
+// and process cancellation supplied by the entry point.
 func RunContext(ctx context.Context, stdout, stderr io.Writer, info buildinfo.Info) int {
 	return cli.Execute(ctx, newCommand(info), stdout, stderr)
 }
