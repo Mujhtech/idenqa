@@ -10,6 +10,7 @@ import (
 	"time"
 )
 
+// Public v1 signature headers and the bounded webhook body limit.
 const (
 	WebhookSignatureHeader = "Idenqa-Signature"
 	WebhookTimestampHeader = "Idenqa-Timestamp"
@@ -17,6 +18,7 @@ const (
 	MaximumWebhookBody     = 1 << 20
 )
 
+// ErrInvalidWebhook reports an invalid signature, envelope or verifier configuration.
 var ErrInvalidWebhook = errors.New("idenqa: invalid webhook signature")
 
 // WebhookVerifier accepts active and overlapping rotation secrets.
@@ -26,6 +28,7 @@ type WebhookVerifier struct {
 	now       func() time.Time
 }
 
+// NewWebhookVerifier constructs a verifier with active and optional overlap secrets.
 func NewWebhookVerifier(secrets [][]byte, tolerance time.Duration) (*WebhookVerifier, error) {
 	if len(secrets) == 0 || len(secrets) > 3 || tolerance <= 0 || tolerance > 24*time.Hour {
 		return nil, ErrInvalidWebhook

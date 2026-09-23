@@ -222,10 +222,20 @@ export interface CaptureRequirement {
   readonly purpose: string;
   readonly evidence_type: string;
   readonly artefacts: readonly string[];
+  /** Profile-pinned alternatives; Core owns the durable per-requirement choice. */
+  readonly document_options?: readonly CaptureDocumentOption[];
   readonly acquisition: CaptureAcquisition;
   readonly required_assurances: readonly string[];
   readonly constraints: readonly CaptureConstraint[];
   readonly fallbacks: readonly CaptureFallback[];
+}
+
+export interface CaptureDocumentOption {
+  readonly id: string;
+  readonly label: string;
+  readonly artefacts: readonly (
+    "idenqa.artefact.document_front" | "idenqa.artefact.document_back"
+  )[];
 }
 
 /**
@@ -315,6 +325,8 @@ export interface VerificationSession {
   readonly policyId: PolicyID;
   readonly region: string;
   readonly requirements: CaptureProfileDocument;
+  /** Core-recorded document type keyed by requirement; never a client assertion. */
+  readonly documentSelections?: Readonly<Record<string, string>>;
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly expiresAt: string;
@@ -428,11 +440,21 @@ export interface CaptureAuthoritySnapshot {
 export type EvidenceMediaType = "image/jpeg" | "image/png";
 export type EvidenceUploadState = "issued" | "uploading" | "accepted" | "rejected" | "expired";
 
+export interface TemporalEvidenceFrame {
+  readonly sequenceDigest: string;
+  readonly index: number;
+  readonly count: number;
+  readonly challengeId: string;
+  readonly capturedAt: string;
+  readonly previousDigest?: string;
+}
+
 export interface EvidenceUploadCreate {
   readonly requirementKey: string;
   readonly artefact: string;
   readonly acquisitionMethod: string;
   readonly fallbackCondition?: CaptureFallbackReason;
+  readonly sequence?: TemporalEvidenceFrame;
   readonly expectedBytes: number;
   readonly expectedDigest: string;
   readonly mediaType: EvidenceMediaType;
@@ -450,6 +472,7 @@ export interface EvidenceUpload {
   readonly artefact: string;
   readonly acquisitionMethod: string;
   readonly fallbackCondition?: CaptureFallbackReason;
+  readonly sequence?: TemporalEvidenceFrame;
   readonly assurances: readonly string[];
   readonly allowedMediaTypes: readonly EvidenceMediaType[];
   readonly maximumBytes: number;

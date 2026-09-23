@@ -158,6 +158,9 @@ export function verificationSession(value: WireVerificationSession): Verificatio
     policyId: value.policy_id,
     region: value.region,
     requirements: value.requirements,
+    ...(value.document_selections === undefined
+      ? {}
+      : { documentSelections: value.document_selections }),
     createdAt: value.created_at,
     updatedAt: value.updated_at,
     expiresAt: value.expires_at,
@@ -270,6 +273,20 @@ export function evidenceUpload(value: WireEvidenceUpload): EvidenceUpload {
     ...(value.fallback_condition === undefined
       ? {}
       : { fallbackCondition: value.fallback_condition }),
+    ...(value.sequence === undefined
+      ? {}
+      : {
+          sequence: {
+            sequenceDigest: value.sequence.sequence_digest,
+            index: value.sequence.index,
+            count: value.sequence.count,
+            challengeId: value.sequence.challenge_id,
+            capturedAt: value.sequence.captured_at,
+            ...(value.sequence.previous_digest === undefined
+              ? {}
+              : { previousDigest: value.sequence.previous_digest }),
+          },
+        }),
     assurances: value.assurances,
     allowedMediaTypes: value.allowed_media_types,
     maximumBytes: value.maximum_bytes,

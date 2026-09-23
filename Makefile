@@ -13,6 +13,7 @@ OPENAPI_WARN_IGNORE := contracts/api/openapi/v1/lifecycle-alpha-warnings.txt
 KMS_ADAPTER := ./adapters/kms/aws
 S3_ADAPTER := ./adapters/objectstore/s3
 S3_DISTRIBUTION := ./distributions/s3
+GO_SDK := ./sdk/go
 
 BUILDINFO_PACKAGE := github.com/Mujhtech/idenqa/internal/buildinfo
 LDFLAGS := -X $(BUILDINFO_PACKAGE).version=$(VERSION) -X $(BUILDINFO_PACKAGE).commit=$(COMMIT) -X $(BUILDINFO_PACKAGE).date=$(BUILD_DATE)
@@ -39,6 +40,7 @@ fmt:
 	$(GO) tool golangci-lint fmt $(KMS_ADAPTER)/...
 	$(GO) tool golangci-lint fmt $(S3_ADAPTER)/...
 	$(GO) tool golangci-lint fmt $(S3_DISTRIBUTION)/...
+	$(GO) tool golangci-lint fmt $(GO_SDK)/...
 	$(PNPM) format
 
 fmt-check:
@@ -46,16 +48,18 @@ fmt-check:
 	$(GO) tool golangci-lint fmt --diff $(KMS_ADAPTER)/...
 	$(GO) tool golangci-lint fmt --diff $(S3_ADAPTER)/...
 	$(GO) tool golangci-lint fmt --diff $(S3_DISTRIBUTION)/...
+	$(GO) tool golangci-lint fmt --diff $(GO_SDK)/...
 	$(PNPM) format:check
 
 generate:
 	$(GO) tool buf generate
 	$(GO) tool sqlc generate
 	$(GO) tool oapi-codegen -config $(OPENAPI_CONFIG) $(OPENAPI_SPEC)
+	$(GO) tool oapi-codegen -config sdk/go/oapi-codegen.yaml $(OPENAPI_SPEC)
 	$(PNPM) generate
 
 generate-check: generate
-	git diff --exit-code -- internal/platform/postgres/sqlgen internal/gen/openapi/v1 internal/gen/proto
+	git diff --exit-code -- internal/platform/postgres/sqlgen internal/gen/openapi/v1 internal/gen/proto sdk/go/resource.gen.go
 	$(PNPM) generate:check
 
 contract-lint:
@@ -75,6 +79,7 @@ lint:
 	$(GO) tool golangci-lint run $(KMS_ADAPTER)/...
 	$(GO) tool golangci-lint run $(S3_ADAPTER)/...
 	$(GO) tool golangci-lint run $(S3_DISTRIBUTION)/...
+	$(GO) tool golangci-lint run $(GO_SDK)/...
 	$(PNPM) typecheck
 
 mod-check:
@@ -84,6 +89,7 @@ mod-check:
 	$(GO) -C $(KMS_ADAPTER) mod verify
 	$(GO) -C $(S3_ADAPTER) mod verify
 	$(GO) -C $(S3_DISTRIBUTION) mod verify
+	$(GO) -C $(GO_SDK) mod verify
 
 test:
 	GO=$(GO) node --test test/conformance/openapi-compatibility.test.mjs
@@ -91,6 +97,7 @@ test:
 	$(GO) test -race -shuffle=on $(KMS_ADAPTER)/...
 	$(GO) test -race -shuffle=on $(S3_ADAPTER)/...
 	$(GO) test -race -shuffle=on $(S3_DISTRIBUTION)/...
+	$(GO) test -race -shuffle=on $(GO_SDK)/...
 	$(PNPM) test
 
 integration:
@@ -118,6 +125,7 @@ vuln:
 	$(GO) tool govulncheck $(KMS_ADAPTER)/...
 	$(GO) tool govulncheck $(S3_ADAPTER)/...
 	$(GO) tool govulncheck $(S3_DISTRIBUTION)/...
+	$(GO) tool govulncheck $(GO_SDK)/...
 	$(PNPM) audit
 
 package-check:

@@ -1,5 +1,42 @@
 # `@idenqa/sdk`
 
+Tenant administration is available through `client.evidence`, `client.consents`,
+and `client.privacy`, plus `client.decisions.history/reconsider` and
+`client.proposals.createImpactAssessment/getImpactAssessment/listImpactAssessments`.
+These additions cover public decision, evidence, consent, privacy and impact
+resources; they do not add administration to capture or outcome clients.
+See the [public SDK resource guide](../../docs/public-sdk-resources-v0.1.md) for
+the exact 30-operation increment, Go equivalents, verification evidence and
+remaining work. These additions do not imply complete coverage of every Core endpoint.
+
+```ts
+const receipt = await client.consents.get(consentId);
+await client.consents.revoke(consentId, "subject withdrawal", {
+  idempotencyKey: persistedRetryKey,
+});
+const page = await client.privacy.listRequests({ limit: 20, state: "approved" });
+if (page.data.page.has_more) {
+  await client.privacy.listRequests({
+    limit: 20,
+    state: "approved",
+    cursor: page.data.page.next_cursor,
+  });
+}
+```
+
+Evidence, consent, privacy, reconsideration and impact documents use published
+snake_case field names. Decision-history reports use the existing camelCase mapping
+and expose `nextBefore`. Every operation accepts an `AbortSignal` and returns
+`SDKResponse` with request ID and available ETag/Location metadata. Follow cursors
+with the same filters and limit; lifecycle and impact lists are bounded histories.
+
+Only operations with a public idempotency-key contract accept a retry key. Privacy
+transitions preserve the API's expected-version semantics. Creation of privacy
+requests, disclosures, processors and impact assessments has no retry-key contract;
+reconcile an ambiguous failure before retrying. The SDK performs no automatic retries.
+Consent withdrawal appends a refusal while preserving the original consent; subject
+consent creation remains bound to the capture credential and exact notice.
+
 The public, zero-runtime-dependency TypeScript client for self-hosted Idenqa Core. It supports Node.js 22+ and modern browsers through the standard Fetch and Abort APIs. Effect is not required.
 
 The 6 September 2026 alpha contract expands `VerificationState` from `collecting`
@@ -200,6 +237,32 @@ const cancelled = await client.verifications.cancel(verificationId, current.data
 ```
 
 Subjects use `capture.cancel(expectedVersion, { idempotencyKey })` on their `CaptureClient`. The token must still be valid and bound to that verification. Exact retries return the original receipt; normal capture operations fail after cancellation. An elapsed deadline or another terminal state rejects a fresh cancellation. Cancellation is a workflow result, separate from identity outcome, consent withdrawal and evidence deletion.
+
+## Select a profile-pinned document type
+
+Requirements may include `document_options`, each containing a bounded `id`,
+subject-facing `label`, and required `artefacts`. The immutable requirement keeps
+the union of its options; `session.documentSelections` records the active branch.
+Before uploading for such a requirement, use the capture credential to select
+one of those pinned options:
+
+```ts
+const current = await capture.getSession();
+const selected = await capture.selectDocument(
+  {
+    requirementKey: "identity_document",
+    documentType: "passport",
+    expectedVersion: current.data.version,
+  },
+  { idempotencyKey: createIdempotencyKey("document_selection") },
+);
+```
+
+Preserve the input and key for a retry. Recovery reads the selection from Core;
+it does not trust a locally stored document ID. Once an upload intent exists for
+that requirement, Core rejects switching to another option. Selecting a
+front-only passport branch cannot waive a back required by a different selected
+branch, alter the immutable snapshot, or assert assurance.
 
 ## Manage webhooks from a tenant backend
 

@@ -1,0 +1,58 @@
+# Generate only the published administration resource types; no server internals.
+package: idenqa
+output: sdk/go/resource.gen.go
+generate:
+  models: true
+output-options:
+  name-normalizer: ToCamelCaseWithInitialisms
+  additional-initialisms: [ID]
+  include-operation-ids:
+    - listVerificationDecisions
+    - createVerificationReconsideration
+    - getEvidence
+    - listEvidenceLifecycle
+    - getEvidenceAccessGrant
+    - createEvidenceAccessGrant
+    - revokeEvidenceAccessGrant
+    - getConsentReceipt
+    - revokeConsentReceipt
+    - createProposalImpactAssessment
+    - getProposalImpactAssessment
+    - listProposalImpactAssessments
+    - listDeletions
+    - getDeletionStatus
+    - getRetentionResolution
+    - createPrivacyRequest
+    - listPrivacyRequests
+    - getPrivacyRequest
+    - approvePrivacyRequest
+    - denyPrivacyRequest
+    - withdrawPrivacyRequest
+    - executePrivacyRequest
+    - listPrivacyRestrictions
+    - liftPrivacyRestriction
+    - createPrivacyDisclosure
+    - listPrivacyDisclosures
+    - createPrivacyProcessor
+    - getPrivacyProcessor
+    - listPrivacyProcessors
+    - updatePrivacyProcessor
+    - getModel
+    - getModelRevision
+    - listModelHistory
+    - registerModel
+    - setModelThreshold
+    - activateModel
+    - rollbackModel
+    - retireModel
+    - validateModel
+    - listProviderRegistrations
+    - createProviderRegistration
+    - getProviderRegistration
+    - updateProviderRegistration
+    - validateProviderRegistration
+    - enableProviderRegistration
+    - disableProviderRegistration
+    - rotateProviderRegistrationCredential
+    - getProviderRegistrationHealth
+    - simulateProviderFailure

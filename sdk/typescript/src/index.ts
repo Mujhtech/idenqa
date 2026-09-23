@@ -9,6 +9,34 @@ export {
   VerificationsClient,
   createIdempotencyKey,
 } from "./client.js";
+export type { DecisionHistory, DecisionReconsideration } from "./client.js";
+export { EvidenceClient, ConsentsClient, PrivacyClient } from "./administration.js";
+export type {
+  EvidenceMetadata,
+  EvidenceLifecycleList,
+  EvidenceAccessGrant,
+  EvidenceAccessGrantCreate,
+  ConsentReceipt,
+  PrivacyRequestCreate,
+  PrivacyRequestSummary,
+  PrivacyRequestStatus,
+  PrivacyRequestList,
+  PrivacyRequestDecision,
+  PrivacyRestriction,
+  PrivacyRestrictionList,
+  PrivacyRestrictionLift,
+  PrivacyDisclosure,
+  PrivacyDisclosureCreate,
+  PrivacyDisclosureList,
+  PrivacyProcessor,
+  PrivacyProcessorPut,
+  PrivacyProcessorList,
+  PrivacyDeletionStatus,
+  PrivacyDeletionList,
+  PrivacyRetentionResolution,
+  ResourceListOptions,
+  PrivacyRequestListOptions,
+} from "./administration.js";
 export {
   IdenqaAPIError,
   IdenqaError,
@@ -65,6 +93,7 @@ export type {
   EvidenceUploadID,
   EvidenceUploadOptions,
   EvidenceUploadState,
+  TemporalEvidenceFrame,
   IdempotentRequestOptions,
   NoticeCopy,
   NoticeID,
@@ -195,7 +224,15 @@ export type {
   ProposalRequestOptions,
   ProposalMutationOptions,
   ModeConfig,
+  ModePinsInput,
   Prompt,
+  ProposalActivation,
+  ProposalActivationHistory,
+  ProposalModel,
+  ProposalUsageReport,
+  ProposalImpactAssessment,
+  ProposalImpactAssessmentCreate,
+  ProposalImpactAssessmentList,
 } from "./proposals.js";
 
 export {
@@ -230,3 +267,4 @@ export type {
   ExperienceTarget,
   ExperienceTheme,
 } from "./experience.js";
+export type { CaptureDocumentOption } from "./types.js";

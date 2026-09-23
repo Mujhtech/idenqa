@@ -34,6 +34,52 @@ const document: CaptureProfileDocument = {
 };
 
 describe("IdenqaClient", () => {
+  it("persists a capture document choice with expected version and a stable idempotency key", async () => {
+    const capture = new CaptureClient({
+      baseUrl: "https://core.example.test/",
+      captureToken: "idq_capture.synthetic",
+      fetch: async (input, init) => {
+        expect(String(input)).toBe("https://core.example.test/v1/capture/document-selection");
+        expect(init?.method).toBe("POST");
+        expect(new Headers(init?.headers).get("Authorization")).toBe(
+          "Bearer idq_capture.synthetic",
+        );
+        expect(new Headers(init?.headers).get("Idempotency-Key")).toBe(
+          '"document_selection_retry"',
+        );
+        expect(JSON.parse(String(init?.body))).toEqual({
+          requirement_key: "identity_document",
+          document_type: "passport",
+          expected_version: 2,
+        });
+        return jsonResponse(
+          {
+            id: "ver_01M11HEQG00000000000000000",
+            state: "collecting",
+            version: 3,
+            profile_id: "prf_01M11HEQG00000000000000000",
+            profile_revision: 1,
+            profile_digest: document.registry.digest,
+            policy_id: "pol_01M11HEQG00000000000000000",
+            region: "tenant.region.ng",
+            requirements: document,
+            document_selections: { identity_document: "passport" },
+            created_at: "2026-09-22T00:00:00Z",
+            updated_at: "2026-09-22T00:01:00Z",
+            expires_at: "2026-09-22T01:00:00Z",
+          },
+          200,
+          { "X-Request-ID": "req_document_selection" },
+        );
+      },
+    });
+    const result = await capture.selectDocument(
+      { requirementKey: "identity_document", documentType: "passport", expectedVersion: 2 },
+      { idempotencyKey: "document_selection_retry" },
+    );
+    expect(result.data.documentSelections).toEqual({ identity_document: "passport" });
+    expect(result.data.version).toBe(3);
+  });
   it.each([
     "created",
     "collecting",

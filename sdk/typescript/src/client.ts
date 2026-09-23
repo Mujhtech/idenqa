@@ -1,5 +1,13 @@
 import { AssuranceClient } from "./assurance.js";
 import {
+  EvidenceClient,
+  ConsentsClient,
+  PrivacyClient,
+  resourceID,
+  resourceQuery,
+} from "./administration.js";
+import type { components } from "./generated/openapi.js";
+import {
   validateExperienceResolution,
   type ExperienceRequestOptions,
   type ExperienceResolution,
@@ -169,6 +177,9 @@ import type {
 } from "./wire.js";
 
 export class IdenqaClient {
+  readonly evidence: EvidenceClient;
+  readonly consents: ConsentsClient;
+  readonly privacy: PrivacyClient;
   readonly reviews: ReviewsClient;
   readonly fraud: FraudClient;
   readonly identity: IdentityClient;
@@ -185,6 +196,9 @@ export class IdenqaClient {
   constructor(options: TenantClientOptions) {
     const token = requiredToken(options.apiKey, "apiKey");
     const transport = new JSONTransport(options);
+    this.evidence = new EvidenceClient(transport, token);
+    this.consents = new ConsentsClient(transport, token);
+    this.privacy = new PrivacyClient(transport, token);
     this.reviews = new ReviewsClient(transport, token);
     this.fraud = new FraudClient(transport, token);
     this.identity = new IdentityClient(transport, token);
@@ -207,6 +221,39 @@ export class DecisionsClient {
   constructor(transport: JSONTransport, token: string) {
     this.#transport = transport;
     this.#token = token;
+  }
+
+  /** Newest-first immutable history. Reuse nextBefore to fetch the next page. */
+  async history(
+    verificationId: VerificationID,
+    options: RequestOptions & { readonly limit?: number; readonly before?: DecisionID } = {},
+  ): Promise<SDKResponse<DecisionHistory>> {
+    const response = await this.#transport.request<components["schemas"]["PolicyDecisionList"]>({
+      method: "GET",
+      path: `v1/verifications/${resourceID(verificationId, "ver")}/decisions${resourceQuery({ limit: options.limit, before: options.before })}`,
+      bearerToken: this.#token,
+      ...signal(options),
+    });
+    return mapResponse(response, (value) => ({
+      data: value.data.map(policyDecisionReport),
+      ...(value.next_before === undefined ? {} : { nextBefore: value.next_before }),
+    }));
+  }
+
+  /** Opens an independent correction workflow; never edits the original decision. */
+  reconsider(
+    verificationId: VerificationID,
+    decisionId: DecisionID,
+    options: IdempotentRequestOptions,
+  ): Promise<SDKResponse<DecisionReconsideration>> {
+    return this.#transport.request({
+      method: "POST",
+      path: `v1/verifications/${resourceID(verificationId, "ver")}/reconsiderations`,
+      body: { decision_id: resourceID(decisionId, "dec") },
+      bearerToken: this.#token,
+      headers: idempotencyHeaders(options.idempotencyKey),
+      ...signal(options),
+    });
   }
 
   async get(
@@ -352,6 +399,30 @@ export class CaptureClient {
     return mapResponse(response, verificationSession);
   }
 
+  /** Select a profile-pinned document branch before evidence collection starts. */
+  async selectDocument(
+    input: {
+      readonly requirementKey: string;
+      readonly documentType: string;
+      readonly expectedVersion: number;
+    },
+    options: IdempotentRequestOptions,
+  ): Promise<SDKResponse<VerificationSession>> {
+    const response = await this.#transport.request<WireVerificationSession>({
+      method: "POST",
+      path: "v1/capture/document-selection",
+      bearerToken: this.#token,
+      body: {
+        requirement_key: input.requirementKey,
+        document_type: input.documentType,
+        expected_version: positiveInteger(input.expectedVersion, "expectedVersion"),
+      },
+      headers: idempotencyHeaders(options.idempotencyKey),
+      ...signal(options),
+    });
+    return mapResponse(response, verificationSession);
+  }
+
   async getAuthority(options: RequestOptions = {}): Promise<SDKResponse<CaptureAuthoritySnapshot>> {
     const response = await this.#transport.request<WireCaptureAuthoritySnapshot>({
       method: "GET",
@@ -471,6 +542,20 @@ export class CaptureClient {
       ...(input.fallbackCondition === undefined
         ? {}
         : { fallback_condition: input.fallbackCondition }),
+      ...(input.sequence === undefined
+        ? {}
+        : {
+            sequence: {
+              sequence_digest: digest(input.sequence.sequenceDigest),
+              index: boundedInteger(input.sequence.index, 0, 31, "sequence.index"),
+              count: boundedInteger(input.sequence.count, 2, 32, "sequence.count"),
+              challenge_id: input.sequence.challengeId,
+              captured_at: input.sequence.capturedAt,
+              ...(input.sequence.previousDigest === undefined
+                ? {}
+                : { previous_digest: digest(input.sequence.previousDigest) }),
+            },
+          }),
       expected_bytes: positiveInteger(input.expectedBytes, "expectedBytes"),
       expected_digest: digest(input.expectedDigest),
       media_type: input.mediaType,
@@ -920,6 +1005,12 @@ export class VerificationsClient {
   }
 }
 
+export interface DecisionHistory {
+  readonly data: readonly PolicyDecisionReport[];
+  readonly nextBefore?: DecisionID;
+}
+export type DecisionReconsideration = components["schemas"]["ReviewFollowup"];
+
 /** Creates a non-secret retry key. Persist and reuse it with the same operation input. */
 export function createIdempotencyKey(prefix = "sdk"): string {
   if (!/^[A-Za-z0-9_-]{1,32}$/.test(prefix)) {
@@ -996,6 +1087,13 @@ function pathSegment(value: string, name: string): string {
 function positiveInteger(value: number, name: string): number {
   if (!Number.isSafeInteger(value) || value <= 0) {
     throw new TypeError(`${name} must be a positive safe integer.`);
+  }
+  return value;
+}
+
+function boundedInteger(value: number, minimum: number, maximum: number, name: string): number {
+  if (!Number.isInteger(value) || value < minimum || value > maximum) {
+    throw new TypeError(`${name} must be an integer from ${minimum} to ${maximum}.`);
   }
   return value;
 }
