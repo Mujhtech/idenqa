@@ -32,12 +32,12 @@ type PrivacyService interface {
 
 // PrivacyRoutes exposes safe observable lifecycle administration.
 type PrivacyRoutes struct {
+	handlerBase
 	access   *AccessMiddleware
 	service  PrivacyService
 	requests PrivacyRequestService
 	outcome  *OutcomeAccessMiddleware
 	cursors  ProfileCursor
-	logger   *slog.Logger
 }
 
 // NewPrivacyRoutes constructs privacy administration routes. The request
@@ -46,14 +46,21 @@ func NewPrivacyRoutes(accessMiddleware *AccessMiddleware, service PrivacyService
 	if accessMiddleware == nil || service == nil || cursors == nil || logger == nil {
 		return nil, errors.New("privacy route dependencies are required")
 	}
-	return &PrivacyRoutes{access: accessMiddleware, service: service, requests: requests, outcome: outcome, cursors: cursors, logger: logger}, nil
+	return &PrivacyRoutes{
+		access:      accessMiddleware,
+		service:     service,
+		requests:    requests,
+		outcome:     outcome,
+		cursors:     cursors,
+		handlerBase: newHandlerBase(logger, "privacy"),
+	}, nil
 }
 
 // Register mounts privacy administration endpoints on router.
 func (routes *PrivacyRoutes) Register(router chi.Router) {
-	deletions := []func(http.Handler) http.Handler{routes.access.Authenticate, routes.access.Require(access.PermissionDeletionsWrite)}
-	holds := []func(http.Handler) http.Handler{routes.access.Authenticate, routes.access.Require(access.PermissionLegalHoldsWrite)}
-	reads := []func(http.Handler) http.Handler{routes.access.Authenticate, routes.access.Require(access.PermissionDeletionsRead)}
+	deletions := []func(http.Handler) http.Handler{routes.access.Authorize(access.PermissionDeletionsWrite)}
+	holds := []func(http.Handler) http.Handler{routes.access.Authorize(access.PermissionLegalHoldsWrite)}
+	reads := []func(http.Handler) http.Handler{routes.access.Authorize(access.PermissionDeletionsRead)}
 	router.With(deletions...).Post("/deletions", routes.requestDeletion)
 	router.With(deletions...).Post("/deletions/{deletionID}/run", routes.runDeletion)
 	router.With(reads...).Get("/deletions", routes.listDeletions)
@@ -369,10 +376,5 @@ func (routes *PrivacyRoutes) write(writer http.ResponseWriter, request *http.Req
 	writer.Header().Set("Cache-Control", "no-store")
 	if err := respond.JSON(writer, request, status, value); err != nil {
 		routes.logger.ErrorContext(request.Context(), "write privacy response")
-	}
-}
-func (routes *PrivacyRoutes) problem(writer http.ResponseWriter, request *http.Request, err error) {
-	if writeErr := respond.WriteProblem(writer, request, err, requestIDString(request.Context())); writeErr != nil {
-		routes.logger.ErrorContext(request.Context(), "write privacy failure response")
 	}
 }

@@ -28,12 +28,12 @@ type ReviewService interface {
 
 // ReviewRoutes exposes safe tenant administration without evidence bytes.
 type ReviewRoutes struct {
+	handlerBase
 	queue     ReviewQueue
 	cursors   ProfileCursor
 	recapture RecaptureService
 	access    *AccessMiddleware
 	service   ReviewService
-	logger    *slog.Logger
 }
 
 // NewReviewRoutes constructs the review HTTP boundary.
@@ -41,7 +41,11 @@ func NewReviewRoutes(accessMiddleware *AccessMiddleware, service ReviewService, 
 	if accessMiddleware == nil || service == nil || logger == nil {
 		return nil, errors.New("review route dependencies are required")
 	}
-	return &ReviewRoutes{access: accessMiddleware, service: service, logger: logger}, nil
+	return &ReviewRoutes{
+		access:      accessMiddleware,
+		service:     service,
+		handlerBase: newHandlerBase(logger, "review"),
+	}, nil
 }
 
 // Register adds authenticated review and appeal routes.
@@ -50,9 +54,9 @@ func (routes *ReviewRoutes) Register(router chi.Router) {
 	if routes.queue != nil {
 		routes.RegisterQueue(router, routes.queue, routes.cursors)
 	}
-	read := []func(http.Handler) http.Handler{routes.access.Authenticate, routes.access.Require(access.PermissionReviewsRead)}
-	write := []func(http.Handler) http.Handler{routes.access.Authenticate, routes.access.Require(access.PermissionReviewsWrite)}
-	appeal := []func(http.Handler) http.Handler{routes.access.Authenticate, routes.access.Require(access.PermissionAppealsWrite)}
+	read := []func(http.Handler) http.Handler{routes.access.Authorize(access.PermissionReviewsRead)}
+	write := []func(http.Handler) http.Handler{routes.access.Authorize(access.PermissionReviewsWrite)}
+	appeal := []func(http.Handler) http.Handler{routes.access.Authorize(access.PermissionAppealsWrite)}
 	if routes.recapture != nil {
 		if _, ok := routes.recapture.(recaptureReevaluator); ok {
 			router.With(write...).Post("/review-cases/{caseID}/recaptures/reevaluations", routes.reevaluateRecapture)
@@ -64,9 +68,9 @@ func (routes *ReviewRoutes) Register(router chi.Router) {
 		if _, ok := routes.recapture.(recaptureReader); ok {
 			router.With(read...).Get("/review-cases/{caseID}/recaptures", routes.listRecaptures)
 		}
-		router.With(routes.access.Authenticate, routes.access.Require(access.PermissionReviewsWrite), routes.access.Require(access.PermissionVerificationSessionsCreate)).Post("/review-cases/{caseID}/recaptures", routes.createRecapture)
+		router.With(routes.access.Authorize(access.PermissionReviewsWrite), routes.access.Require(access.PermissionVerificationSessionsCreate)).Post("/review-cases/{caseID}/recaptures", routes.createRecapture)
 		if _, ok := routes.recapture.(recaptureRenewer); ok {
-			router.With(routes.access.Authenticate, routes.access.Require(access.PermissionReviewsWrite), routes.access.Require(access.PermissionVerificationSessionsCreate)).Post("/review-cases/{caseID}/recaptures/renew", routes.renewRecapture)
+			router.With(routes.access.Authorize(access.PermissionReviewsWrite), routes.access.Require(access.PermissionVerificationSessionsCreate)).Post("/review-cases/{caseID}/recaptures/renew", routes.renewRecapture)
 		}
 	}
 	router.With(read...).Get("/review-cases/{caseID}", routes.find)
@@ -342,11 +346,6 @@ func (routes *ReviewRoutes) write(writer http.ResponseWriter, request *http.Requ
 	writer.Header().Set("Cache-Control", "no-store")
 	if err := respond.JSON(writer, request, status, value); err != nil {
 		routes.logger.ErrorContext(request.Context(), "write review response")
-	}
-}
-func (routes *ReviewRoutes) problem(writer http.ResponseWriter, request *http.Request, err error) {
-	if writeErr := respond.WriteProblem(writer, request, err, requestIDString(request.Context())); writeErr != nil {
-		routes.logger.ErrorContext(request.Context(), "write review failure response")
 	}
 }
 

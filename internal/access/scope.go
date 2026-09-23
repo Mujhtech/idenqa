@@ -86,6 +86,16 @@ const (
 	PermissionAuthoritiesRead Permission = "authorities:read"
 	// PermissionAuthoritiesWrite permits declaring and transitioning processing authority.
 	PermissionAuthoritiesWrite Permission = "authorities:write"
+	// PermissionEvidenceRead permits safe evidence metadata and lifecycle inspection.
+	PermissionEvidenceRead Permission = "evidence:read"
+	// PermissionEvidenceGrantsRead permits safe evidence-processing grant inspection.
+	PermissionEvidenceGrantsRead Permission = "evidence_grants:read"
+	// PermissionEvidenceGrantsWrite permits issuing and revoking purpose-bound evidence-processing grants.
+	PermissionEvidenceGrantsWrite Permission = "evidence_grants:write"
+	// PermissionConsentsRead permits immutable consent-receipt inspection.
+	PermissionConsentsRead Permission = "consents:read"
+	// PermissionConsentsWrite permits append-only consent withdrawal.
+	PermissionConsentsWrite Permission = "consents:write"
 	// PermissionDecisionsRead permits reading safe immutable decision summaries.
 	PermissionDecisionsRead Permission = "decisions:read"
 	// PermissionDecisionsExport permits exporting portable decision bundles.
@@ -226,6 +236,11 @@ func TenantRegistry() Registry {
 		PermissionModelsActivate,
 		PermissionAuthoritiesRead,
 		PermissionAuthoritiesWrite,
+		PermissionEvidenceRead,
+		PermissionEvidenceGrantsRead,
+		PermissionEvidenceGrantsWrite,
+		PermissionConsentsRead,
+		PermissionConsentsWrite,
 		PermissionCaptureProfilesRead,
 		PermissionCaptureProfilesWrite,
 		PermissionDecisionsExport,

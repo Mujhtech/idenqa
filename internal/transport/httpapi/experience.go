@@ -49,11 +49,11 @@ type ExperienceService interface {
 
 // ExperienceRoutes adapts portable-experience use cases to HTTP.
 type ExperienceRoutes struct {
+	handlerBase
 	access  *AccessMiddleware
 	capture *CaptureAccessMiddleware
 	service ExperienceService
 	cursors ProfileCursor
-	logger  *slog.Logger
 }
 
 // NewExperienceRoutes constructs the experience administration and capture
@@ -68,14 +68,20 @@ func NewExperienceRoutes(
 	if accessMiddleware == nil || captureMiddleware == nil || service == nil || cursors == nil || logger == nil {
 		return nil, errors.New("experience route dependencies are required")
 	}
-	return &ExperienceRoutes{access: accessMiddleware, capture: captureMiddleware, service: service, cursors: cursors, logger: logger}, nil
+	return &ExperienceRoutes{
+		access:      accessMiddleware,
+		capture:     captureMiddleware,
+		service:     service,
+		cursors:     cursors,
+		handlerBase: newHandlerBase(logger, "experience"),
+	}, nil
 }
 
 // Register mounts the tenant administration and capture-token resolution routes.
 func (routes *ExperienceRoutes) Register(router chi.Router) {
-	read := []func(http.Handler) http.Handler{routes.access.Authenticate, routes.access.Require(access.PermissionExperiencesRead)}
-	write := []func(http.Handler) http.Handler{routes.access.Authenticate, routes.access.Require(access.PermissionExperiencesWrite)}
-	publish := []func(http.Handler) http.Handler{routes.access.Authenticate, routes.access.Require(access.PermissionExperiencesPublish)}
+	read := []func(http.Handler) http.Handler{routes.access.Authorize(access.PermissionExperiencesRead)}
+	write := []func(http.Handler) http.Handler{routes.access.Authorize(access.PermissionExperiencesWrite)}
+	publish := []func(http.Handler) http.Handler{routes.access.Authorize(access.PermissionExperiencesPublish)}
 
 	router.With(read...).Get("/experience-default", routes.safeDefault)
 	router.With(read...).Get("/experiences", routes.list)
@@ -488,10 +494,4 @@ func (routes *ExperienceRoutes) identifier(request *http.Request) (id.Experience
 		return id.Experience{}, experience.ErrNotFound
 	}
 	return identifier, nil
-}
-
-func (routes *ExperienceRoutes) problem(writer http.ResponseWriter, request *http.Request, err error) {
-	if writeErr := respond.WriteProblem(writer, request, err, requestIDString(request.Context())); writeErr != nil {
-		routes.logger.ErrorContext(request.Context(), "write experience problem response")
-	}
 }

@@ -150,6 +150,63 @@ func TestAccessMiddlewareDistinguishesScopeOnlyAfterAuthentication(t *testing.T)
 	}
 }
 
+func TestAccessMiddlewareAuthorizeCombinesAuthenticationAndScope(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		pattern    access.Pattern
+		credential bool
+		wantStatus int
+		wantCode   string
+	}{
+		{
+			name: "missing credential", pattern: access.Pattern("tenant:read"),
+			wantStatus: http.StatusUnauthorized, wantCode: apierror.CodeUnauthenticated,
+		},
+		{
+			name: "missing permission", pattern: access.Pattern("capture_profiles:read"), credential: true,
+			wantStatus: http.StatusForbidden, wantCode: apierror.CodeInsufficientScope,
+		},
+		{
+			name: "authorized", pattern: access.Pattern("tenant:read"), credential: true,
+			wantStatus: http.StatusOK,
+		},
+	}
+	for _, test := range tests {
+		test := test
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			fixture := newHTTPAccessFixture(t, nil, test.pattern)
+			called := false
+			router := chi.NewRouter()
+			router.With(fixture.middleware.Authorize(access.PermissionTenantRead)).Get("/authorized",
+				func(writer http.ResponseWriter, _ *http.Request) {
+					called = true
+					writer.WriteHeader(http.StatusOK)
+				})
+			request := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/authorized", nil)
+			if test.credential {
+				request.Header.Set("Authorization", "Bearer "+fixture.encoded)
+			}
+			response := httptest.NewRecorder()
+			router.ServeHTTP(response, request)
+
+			if wantCalled := test.wantStatus == http.StatusOK; called != wantCalled {
+				t.Fatalf("handler called = %v, want %v", called, wantCalled)
+			}
+			if test.wantCode == "" {
+				if response.Code != test.wantStatus {
+					t.Fatalf("status = %d, want %d", response.Code, test.wantStatus)
+				}
+				return
+			}
+			assertAccessProblem(t, response, test.wantStatus, test.wantCode)
+		})
+	}
+}
+
 func TestAccessMiddlewareCrossTenantProbeIsNotFound(t *testing.T) {
 	t.Parallel()
 

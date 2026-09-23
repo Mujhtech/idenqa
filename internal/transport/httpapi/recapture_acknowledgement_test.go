@@ -50,7 +50,7 @@ func TestRecaptureAcknowledgementRechecksReviewerAuthority(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	routes := &ReviewRoutes{access: fixture.middleware, logger: fixture.logger, recapture: service}
+	routes := &ReviewRoutes{access: fixture.middleware, handlerBase: newHandlerBase(fixture.logger, "review"), recapture: service}
 	router := versionedRouter(t, routes)
 	for _, scenario := range []struct {
 		body   string
@@ -90,7 +90,7 @@ func TestRecaptureReevaluationRechecksReviewerAuthority(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	routes := &ReviewRoutes{access: fixture.middleware, logger: fixture.logger, recapture: service}
+	routes := &ReviewRoutes{access: fixture.middleware, handlerBase: newHandlerBase(fixture.logger, "review"), recapture: service}
 	router := versionedRouter(t, routes)
 	for _, scenario := range []struct {
 		body   string

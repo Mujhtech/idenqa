@@ -2,7 +2,6 @@ package httpapi
 
 import (
 	"bytes"
-	"errors"
 	"io"
 	"log/slog"
 	"net/http"
@@ -13,16 +12,14 @@ import (
 
 	"github.com/Mujhtech/idenqa/internal/access"
 	"github.com/Mujhtech/idenqa/internal/model"
-	"github.com/Mujhtech/idenqa/internal/transport/httpapi/apierror"
-	"github.com/Mujhtech/idenqa/internal/transport/httpapi/respond"
 	"github.com/go-chi/chi/v5"
 )
 
 // ModelRoutes exposes core evaluation registry operations to tenant API keys.
 type ModelRoutes struct {
+	handlerBase
 	access  *AccessMiddleware
 	service *model.Management
-	logger  *slog.Logger
 }
 
 // NewModelRoutes composes the authenticated registry surface.
@@ -30,21 +27,25 @@ func NewModelRoutes(middleware *AccessMiddleware, service *model.Management, log
 	if middleware == nil || service == nil || logger == nil {
 		return nil, model.ErrRegistryInvalid
 	}
-	return &ModelRoutes{middleware, service, logger}, nil
+	return &ModelRoutes{
+		handlerBase: newHandlerBase(logger, "model registry"),
+		access:      middleware,
+		service:     service,
+	}, nil
 }
 
 // Register adds closed model commands and immutable revision/history inspection.
 func (routes *ModelRoutes) Register(router chi.Router) {
-	router.With(routes.access.Authenticate, routes.access.Require(access.PermissionModelsRead)).Get("/models/{modelName}", routes.get)
-	router.With(routes.access.Authenticate, routes.access.Require(access.PermissionModelsRead)).Get("/models/{modelName}/revisions/{kind}/{revision}", routes.revision)
-	router.With(routes.access.Authenticate, routes.access.Require(access.PermissionModelsRead)).Get("/models/{modelName}/history", routes.history)
-	router.With(routes.access.Authenticate, routes.access.Require(access.PermissionModelsWrite)).Post("/models/{modelName}/validate", routes.validate)
+	router.With(routes.access.Authorize(access.PermissionModelsRead)).Get("/models/{modelName}", routes.get)
+	router.With(routes.access.Authorize(access.PermissionModelsRead)).Get("/models/{modelName}/revisions/{kind}/{revision}", routes.revision)
+	router.With(routes.access.Authorize(access.PermissionModelsRead)).Get("/models/{modelName}/history", routes.history)
+	router.With(routes.access.Authorize(access.PermissionModelsWrite)).Post("/models/{modelName}/validate", routes.validate)
 	for _, operation := range []string{"register", "threshold", "activate", "rollback", "retire"} {
 		permission := access.PermissionModelsWrite
 		if operation == "activate" || operation == "rollback" || operation == "retire" {
 			permission = access.PermissionModelsActivate
 		}
-		router.With(routes.access.Authenticate, routes.access.Require(permission)).Post("/models/{modelName}/"+operation, func(w http.ResponseWriter, r *http.Request) { routes.mutate(w, r, operation) })
+		router.With(routes.access.Authorize(permission)).Post("/models/{modelName}/"+operation, func(w http.ResponseWriter, r *http.Request) { routes.mutate(w, r, operation) })
 	}
 }
 func (routes *ModelRoutes) mutate(w http.ResponseWriter, r *http.Request, operation string) {
@@ -155,24 +156,4 @@ func decodeModelValidationJSON(request *http.Request) (model.ValidationRequest, 
 	cloned := request.Clone(request.Context())
 	cloned.Body = io.NopCloser(bytes.NewReader(raw))
 	return decodeJSONBody[model.ValidationRequest](cloned)
-}
-func (routes *ModelRoutes) reply(w http.ResponseWriter, r *http.Request, value any, err error) {
-	w.Header().Set("Cache-Control", "no-store")
-	if err != nil {
-		switch {
-		case errors.Is(err, model.ErrRegistryInvalid):
-			err = invalidRequest(err)
-		case errors.Is(err, model.ErrRegistryNotFound):
-			err = apierror.New(404, apierror.CodeNotFound, "Not found", "The model resource was not found.", err)
-		case errors.Is(err, model.ErrRegistryConflict):
-			err = apierror.New(409, apierror.CodeConflict, "Conflict", "The model registry version conflicts with current state.", err)
-		}
-		if e := respond.WriteProblem(w, r, err, requestIDString(r.Context())); e != nil {
-			routes.logger.ErrorContext(r.Context(), "write model registry problem")
-		}
-		return
-	}
-	if e := respond.JSON(w, r, 200, value); e != nil {
-		routes.logger.ErrorContext(r.Context(), "write model registry response")
-	}
 }

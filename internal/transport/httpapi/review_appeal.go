@@ -20,7 +20,7 @@ func (routes *ReviewRoutes) registerAppealLifecycle(router chi.Router) {
 	if !ok {
 		return
 	}
-	router.With(routes.access.Authenticate, routes.access.Require(access.PermissionAppealsWrite)).Post("/appeals/{appealID}/withdraw", func(w http.ResponseWriter, req *http.Request) {
+	router.With(routes.access.Authorize(access.PermissionAppealsWrite)).Post("/appeals/{appealID}/withdraw", func(w http.ResponseWriter, req *http.Request) {
 		auth, _, ok := routes.authority(req)
 		if !ok {
 			routes.problem(w, req, access.ErrInvalidCredential)
@@ -43,7 +43,7 @@ func (routes *ReviewRoutes) registerAppealLifecycle(router chi.Router) {
 		}
 		routes.writeAppeal(w, req, http.StatusOK, value)
 	})
-	router.With(routes.access.Authenticate, routes.access.Require(access.PermissionReviewsRead)).Get("/appeals/{appealID}", func(w http.ResponseWriter, req *http.Request) {
+	router.With(routes.access.Authorize(access.PermissionReviewsRead)).Get("/appeals/{appealID}", func(w http.ResponseWriter, req *http.Request) {
 		auth, _, ok := routes.authority(req)
 		if !ok {
 			routes.problem(w, req, access.ErrInvalidCredential)

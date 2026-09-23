@@ -22,12 +22,15 @@ func NewReviewManagementRoutes(auth *AccessMiddleware, service *review.Managemen
 	if auth == nil || service == nil || logger == nil {
 		return nil, review.ErrInvalid
 	}
-	return &ReviewManagementRoutes{&ReviewRoutes{access: auth, logger: logger}, service}, nil
+	return &ReviewManagementRoutes{
+		base:    &ReviewRoutes{handlerBase: newHandlerBase(logger, "review"), access: auth},
+		service: service,
+	}, nil
 }
 
 // Register mounts authenticated review endpoints.
 func (r *ReviewManagementRoutes) Register(router chi.Router) {
-	mw := []func(http.Handler) http.Handler{r.base.access.Authenticate, r.base.access.Require(access.PermissionReviewsAdmin)}
+	mw := []func(http.Handler) http.Handler{r.base.access.Authorize(access.PermissionReviewsAdmin)}
 	router.With(mw...).Put("/review-cases/{caseID}/queue", r.queue)
 	router.With(mw...).Put("/review-cases/{caseID}/settings", r.bindCase)
 

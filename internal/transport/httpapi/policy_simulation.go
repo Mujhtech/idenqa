@@ -2,7 +2,6 @@ package httpapi
 
 import (
 	"context"
-	"errors"
 	"io"
 	"log/slog"
 	"net/http"
@@ -11,7 +10,6 @@ import (
 	"github.com/Mujhtech/idenqa/internal/access"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/policy"
-	"github.com/Mujhtech/idenqa/internal/transport/httpapi/apierror"
 	"github.com/Mujhtech/idenqa/internal/transport/httpapi/respond"
 	"github.com/go-chi/chi/v5"
 )
@@ -25,11 +23,11 @@ type policyRevisionDiffer interface {
 // revision diff. None of these operations creates policy meaning, activation,
 // decision, task, or audit effects.
 type PolicySimulationRoutes struct {
+	handlerBase
 	access    *AccessMiddleware
 	differ    policyRevisionDiffer
 	simulator *policy.Simulator
 	suite     *policy.ScenarioSuite
-	logger    *slog.Logger
 }
 
 // NewPolicySimulationRoutes constructs read-only policy computation routes.
@@ -43,7 +41,13 @@ func NewPolicySimulationRoutes(
 	if middleware == nil || differ == nil || simulator == nil || suite == nil || logger == nil {
 		return nil, policy.ErrInvalid
 	}
-	return &PolicySimulationRoutes{middleware, differ, simulator, suite, logger}, nil
+	return &PolicySimulationRoutes{
+		handlerBase: newHandlerBase(logger, "policy computation"),
+		access:      middleware,
+		differ:      differ,
+		simulator:   simulator,
+		suite:       suite,
+	}, nil
 }
 
 // Register adds policy simulation, regression, and revision diff. All three
@@ -57,7 +61,7 @@ func (routes *PolicySimulationRoutes) Register(router chi.Router) {
 		{"POST", "/policy-regressions", routes.regress},
 		{"GET", "/policies/{policyID}/diff", routes.diff},
 	} {
-		router.With(routes.access.Authenticate, routes.access.Require(access.PermissionPoliciesRead)).MethodFunc(route.method, route.path, route.handler)
+		router.With(routes.access.Authorize(access.PermissionPoliciesRead)).MethodFunc(route.method, route.path, route.handler)
 	}
 }
 
@@ -165,19 +169,5 @@ func (routes *PolicySimulationRoutes) json(w http.ResponseWriter, r *http.Reques
 	w.Header().Set("Cache-Control", "no-store")
 	if err := respond.JSON(w, r, 200, value); err != nil {
 		routes.logger.ErrorContext(r.Context(), "write policy computation response")
-	}
-}
-
-func (routes *PolicySimulationRoutes) problem(w http.ResponseWriter, r *http.Request, err error) {
-	switch {
-	case errors.Is(err, policy.ErrRevisionNotFound), errors.Is(err, policy.ErrActivationNotFound):
-		err = apierror.New(404, apierror.CodeNotFound, "Not found", "The policy resource was not found.", err)
-	case errors.Is(err, policy.ErrConflict), errors.Is(err, policy.ErrRevisionConflict):
-		err = apierror.New(409, apierror.CodeConflict, "Conflict", "The policy operation conflicts with current state.", err)
-	case errors.Is(err, policy.ErrInvalid):
-		err = invalidRequest(err)
-	}
-	if writeErr := respond.WriteProblem(w, r, err, requestIDString(r.Context())); writeErr != nil {
-		routes.logger.ErrorContext(r.Context(), "write policy computation problem")
 	}
 }

@@ -2,7 +2,6 @@ package httpapi
 
 import (
 	"encoding/json"
-	"errors"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -11,18 +10,16 @@ import (
 	"github.com/Mujhtech/idenqa/internal/access"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/provider"
-	"github.com/Mujhtech/idenqa/internal/transport/httpapi/apierror"
-	"github.com/Mujhtech/idenqa/internal/transport/httpapi/respond"
 	"github.com/go-chi/chi/v5"
 )
 
 // ProviderRoutes exposes tenant provider registration administration. Routes
 // stay reference-only: credentials are named, never accepted.
 type ProviderRoutes struct {
+	handlerBase
 	access  *AccessMiddleware
 	service *provider.RegistrationManagement
 	cursors ProfileCursor
-	logger  *slog.Logger
 }
 
 // NewProviderRoutes composes the authenticated provider registration surface.
@@ -30,22 +27,27 @@ func NewProviderRoutes(middleware *AccessMiddleware, service *provider.Registrat
 	if middleware == nil || service == nil || cursors == nil || logger == nil {
 		return nil, provider.ErrRegistrationInvalid
 	}
-	return &ProviderRoutes{middleware, service, cursors, logger}, nil
+	return &ProviderRoutes{
+		handlerBase: newHandlerBase(logger, "provider registration"),
+		access:      middleware,
+		service:     service,
+		cursors:     cursors,
+	}, nil
 }
 
 // Register adds closed registration commands, bounded reads and the pure
 // failure-classification preview.
 func (routes *ProviderRoutes) Register(router chi.Router) {
-	router.With(routes.access.Authenticate, routes.access.Require(access.PermissionProvidersRead)).Get("/providers", routes.list)
-	router.With(routes.access.Authenticate, routes.access.Require(access.PermissionProvidersWrite)).Post("/providers", routes.create)
-	router.With(routes.access.Authenticate, routes.access.Require(access.PermissionProvidersRead)).Get("/providers/{providerID}", routes.get)
-	router.With(routes.access.Authenticate, routes.access.Require(access.PermissionProvidersWrite)).Put("/providers/{providerID}", routes.update)
-	router.With(routes.access.Authenticate, routes.access.Require(access.PermissionProvidersWrite)).Post("/providers/{providerID}/validate", routes.validate)
-	router.With(routes.access.Authenticate, routes.access.Require(access.PermissionProvidersWrite)).Post("/providers/{providerID}/enable", routes.mutateEnabled(true))
-	router.With(routes.access.Authenticate, routes.access.Require(access.PermissionProvidersWrite)).Post("/providers/{providerID}/disable", routes.mutateEnabled(false))
-	router.With(routes.access.Authenticate, routes.access.Require(access.PermissionProvidersWrite)).Post("/providers/{providerID}/rotate-credential", routes.rotateCredential)
-	router.With(routes.access.Authenticate, routes.access.Require(access.PermissionProvidersRead)).Get("/providers/{providerID}/health", routes.health)
-	router.With(routes.access.Authenticate, routes.access.Require(access.PermissionProvidersRead)).Post("/providers/{providerID}/failure-simulations", routes.simulateFailure)
+	router.With(routes.access.Authorize(access.PermissionProvidersRead)).Get("/providers", routes.list)
+	router.With(routes.access.Authorize(access.PermissionProvidersWrite)).Post("/providers", routes.create)
+	router.With(routes.access.Authorize(access.PermissionProvidersRead)).Get("/providers/{providerID}", routes.get)
+	router.With(routes.access.Authorize(access.PermissionProvidersWrite)).Put("/providers/{providerID}", routes.update)
+	router.With(routes.access.Authorize(access.PermissionProvidersWrite)).Post("/providers/{providerID}/validate", routes.validate)
+	router.With(routes.access.Authorize(access.PermissionProvidersWrite)).Post("/providers/{providerID}/enable", routes.mutateEnabled(true))
+	router.With(routes.access.Authorize(access.PermissionProvidersWrite)).Post("/providers/{providerID}/disable", routes.mutateEnabled(false))
+	router.With(routes.access.Authorize(access.PermissionProvidersWrite)).Post("/providers/{providerID}/rotate-credential", routes.rotateCredential)
+	router.With(routes.access.Authorize(access.PermissionProvidersRead)).Get("/providers/{providerID}/health", routes.health)
+	router.With(routes.access.Authorize(access.PermissionProvidersRead)).Post("/providers/{providerID}/failure-simulations", routes.simulateFailure)
 }
 
 type providerRegistrationCreate struct {
@@ -233,25 +235,4 @@ func (routes *ProviderRoutes) simulateFailure(w http.ResponseWriter, r *http.Req
 	actor, _ := AccessContext(r.Context())
 	result, err := routes.service.SimulateFailure(r.Context(), actor, chi.URLParam(r, "providerID"), body.Class, body.Code)
 	routes.reply(w, r, result, err)
-}
-
-func (routes *ProviderRoutes) reply(w http.ResponseWriter, r *http.Request, value any, err error) {
-	w.Header().Set("Cache-Control", "no-store")
-	if err != nil {
-		switch {
-		case errors.Is(err, provider.ErrRegistrationInvalid):
-			err = invalidRequest(err)
-		case errors.Is(err, provider.ErrRegistrationNotFound):
-			err = apierror.New(404, apierror.CodeNotFound, "Not found", "The provider registration was not found.", err)
-		case errors.Is(err, provider.ErrRegistrationConflict):
-			err = apierror.New(409, apierror.CodeConflict, "Conflict", "The provider registration version conflicts with current state.", err)
-		}
-		if writeErr := respond.WriteProblem(w, r, err, requestIDString(r.Context())); writeErr != nil {
-			routes.logger.ErrorContext(r.Context(), "write provider registration problem")
-		}
-		return
-	}
-	if err := respond.JSON(w, r, http.StatusOK, value); err != nil {
-		routes.logger.ErrorContext(r.Context(), "write provider registration response")
-	}
 }

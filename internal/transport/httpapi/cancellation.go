@@ -21,10 +21,10 @@ type CancellationService interface {
 
 // CancellationRoutes exposes only authorised cancellation, never arbitrary state changes.
 type CancellationRoutes struct {
+	handlerBase
 	access  *AccessMiddleware
 	capture *CaptureAccessMiddleware
 	service CancellationService
-	logger  *slog.Logger
 }
 
 // NewCancellationRoutes constructs independently authenticated cancellation routes.
@@ -32,12 +32,17 @@ func NewCancellationRoutes(accessMiddleware *AccessMiddleware, captureMiddleware
 	if accessMiddleware == nil || captureMiddleware == nil || service == nil || logger == nil {
 		return nil, errors.New("cancellation route dependencies are required")
 	}
-	return &CancellationRoutes{access: accessMiddleware, capture: captureMiddleware, service: service, logger: logger}, nil
+	return &CancellationRoutes{
+		access:      accessMiddleware,
+		capture:     captureMiddleware,
+		service:     service,
+		handlerBase: newHandlerBase(logger, "cancellation"),
+	}, nil
 }
 
 // Register adds tenant and session-bound subject cancellation operations.
 func (routes *CancellationRoutes) Register(router chi.Router) {
-	router.With(routes.access.Authenticate, routes.access.Require(access.PermissionVerificationSessionsCancel)).Post("/verifications/{verificationID}/cancel", routes.cancel)
+	router.With(routes.access.Authorize(access.PermissionVerificationSessionsCancel)).Post("/verifications/{verificationID}/cancel", routes.cancel)
 	router.With(routes.capture.Authenticate).Post("/capture/cancel", routes.cancel)
 }
 
@@ -80,7 +85,5 @@ func (routes *CancellationRoutes) problem(writer http.ResponseWriter, request *h
 	if errors.Is(err, access.ErrInvalidCaptureToken) {
 		err = captureUnauthenticated(err)
 	}
-	if err := respond.WriteProblem(writer, request, err, requestIDString(request.Context())); err != nil {
-		routes.logger.ErrorContext(request.Context(), "write cancellation problem")
-	}
+	routes.handlerBase.problem(writer, request, err)
 }

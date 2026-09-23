@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -13,7 +12,6 @@ import (
 	"github.com/Mujhtech/idenqa/internal/delivery"
 	openapiv1 "github.com/Mujhtech/idenqa/internal/gen/openapi/v1"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
-	"github.com/Mujhtech/idenqa/internal/transport/httpapi/apierror"
 	"github.com/Mujhtech/idenqa/internal/transport/httpapi/respond"
 	"github.com/go-chi/chi/v5"
 )
@@ -26,12 +24,12 @@ type WebhookEventWakeups interface {
 
 // WebhookRoutes exposes safe webhook administration using tenant API credentials.
 type WebhookRoutes struct {
+	handlerBase
 	access  *AccessMiddleware
 	service *delivery.Management
 	stream  *delivery.Stream
 	wakeups WebhookEventWakeups
 	cursors ProfileCursor
-	logger  *slog.Logger
 }
 
 // NewWebhookRoutes constructs public webhook routes. A nil wake-ups port keeps
@@ -40,7 +38,14 @@ func NewWebhookRoutes(middleware *AccessMiddleware, service *delivery.Management
 	if middleware == nil || service == nil || stream == nil || cursors == nil || logger == nil {
 		return nil, delivery.ErrInvalid
 	}
-	return &WebhookRoutes{access: middleware, service: service, stream: stream, wakeups: wakeups, cursors: cursors, logger: logger}, nil
+	return &WebhookRoutes{
+		access:      middleware,
+		service:     service,
+		stream:      stream,
+		wakeups:     wakeups,
+		cursors:     cursors,
+		handlerBase: newHandlerBase(logger, "webhook"),
+	}, nil
 }
 
 // Register adds administration, payload-free inspection and the read-only
@@ -64,7 +69,7 @@ func (routes *WebhookRoutes) Register(router chi.Router) {
 		{"GET", "/webhook-events", access.PermissionWebhooksRead, routes.events},
 		{"GET", "/webhook-events/stream", access.PermissionWebhooksRead, routes.eventStream},
 	} {
-		router.With(routes.access.Authenticate, routes.access.Require(route.permission)).MethodFunc(route.method, route.path, route.handler)
+		router.With(routes.access.Authorize(route.permission)).MethodFunc(route.method, route.path, route.handler)
 	}
 }
 
@@ -274,24 +279,5 @@ func (routes *WebhookRoutes) json(writer http.ResponseWriter, request *http.Requ
 	writer.Header().Set("Cache-Control", "no-store")
 	if err := respond.JSON(writer, request, http.StatusOK, value); err != nil {
 		routes.logger.ErrorContext(request.Context(), "write webhook response")
-	}
-}
-func (routes *WebhookRoutes) problem(writer http.ResponseWriter, request *http.Request, err error) {
-	switch {
-	case errors.Is(err, delivery.ErrNotFound):
-		err = apierror.New(404, apierror.CodeNotFound, "Not found", "The webhook resource was not found.", err)
-	case errors.Is(err, delivery.ErrDisabled), errors.Is(err, delivery.ErrConflict):
-		err = apierror.New(409, apierror.CodeConflict, "Conflict", "The webhook operation conflicts with current state.", err)
-	case errors.Is(err, delivery.ErrExpired):
-		err = apierror.New(410, apierror.CodeGone, "Gone", "The webhook payload retention window has closed.", err)
-	case errors.Is(err, delivery.ErrInvalid):
-		err = invalidRequest(err)
-	case errors.Is(err, delivery.ErrQueueUnavailable):
-		err = apierror.New(503, apierror.CodeServiceUnavailable, "Unavailable", "Webhook replay configuration is unavailable.", err)
-	case errors.Is(err, delivery.ErrSigningUnavailable):
-		err = apierror.New(503, apierror.CodeServiceUnavailable, "Unavailable", "Webhook signing configuration is unavailable.", err)
-	}
-	if writeErr := respond.WriteProblem(writer, request, err, requestIDString(request.Context())); writeErr != nil {
-		routes.logger.ErrorContext(request.Context(), "write webhook problem")
 	}
 }

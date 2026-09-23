@@ -43,14 +43,8 @@ func NewTenantRoutes(
 
 // Register adds the authenticated tenant metadata and export routes.
 func (routes *TenantRoutes) Register(router chi.Router) {
-	router.With(
-		routes.access.Authenticate,
-		routes.access.Require(access.PermissionTenantRead),
-	).Get("/tenant", routes.current)
-	router.With(
-		routes.access.Authenticate,
-		routes.access.Require(access.PermissionTenantExport),
-	).Get("/tenant/export", routes.export)
+	router.With(routes.access.Authorize(access.PermissionTenantRead)).Get("/tenant", routes.current)
+	router.With(routes.access.Authorize(access.PermissionTenantExport)).Get("/tenant/export", routes.export)
 }
 
 func (routes *TenantRoutes) current(writer http.ResponseWriter, request *http.Request) {

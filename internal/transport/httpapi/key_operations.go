@@ -9,19 +9,17 @@ import (
 	"github.com/Mujhtech/idenqa/internal/access"
 	"github.com/Mujhtech/idenqa/internal/keycustody"
 	"github.com/Mujhtech/idenqa/internal/keyrewrap"
-	"github.com/Mujhtech/idenqa/internal/transport/httpapi/apierror"
-	"github.com/Mujhtech/idenqa/internal/transport/httpapi/respond"
 	"github.com/go-chi/chi/v5"
 )
 
 // KeyOperationsRoutes is the authenticated fleet rewrap, verified destruction,
 // and dual-control recovery ceremony surface.
 type KeyOperationsRoutes struct {
+	handlerBase
 	access      *AccessMiddleware
 	rewrap      *keyrewrap.Service
 	destruction *keycustody.DestructionService
 	recovery    *keycustody.RecoveryService
-	logger      *slog.Logger
 }
 
 // NewKeyOperationsRoutes constructs API-key protected key-operation routes.
@@ -36,32 +34,38 @@ func NewKeyOperationsRoutes(
 		return nil, keycustody.ErrInvalid
 	}
 
-	return &KeyOperationsRoutes{access: accessMiddleware, rewrap: rewrap, destruction: destruction, recovery: recovery, logger: logger}, nil
+	return &KeyOperationsRoutes{
+		access:      accessMiddleware,
+		rewrap:      rewrap,
+		destruction: destruction,
+		recovery:    recovery,
+		handlerBase: newHandlerBase(logger, "key operations"),
+	}, nil
 }
 
 // Register mounts bounded status reads and audited operations.
 func (r *KeyOperationsRoutes) Register(router chi.Router) {
-	router.With(r.access.Authenticate, r.access.Require(access.PermissionKMSRead)).
+	router.With(r.access.Authorize(access.PermissionKMSRead)).
 		Get("/kms/rewrap", r.rewrapStatus)
-	router.With(r.access.Authenticate, r.access.Require(access.PermissionKMSWrite)).
+	router.With(r.access.Authorize(access.PermissionKMSWrite)).
 		Post("/kms/rewrap/run", r.rewrapRun)
 
-	router.With(r.access.Authenticate, r.access.Require(access.PermissionKMSWrite)).
+	router.With(r.access.Authorize(access.PermissionKMSWrite)).
 		Post("/kms/destruction-verifications", r.verifyDestruction)
-	router.With(r.access.Authenticate, r.access.Require(access.PermissionKMSRead)).
+	router.With(r.access.Authorize(access.PermissionKMSRead)).
 		Get("/kms/destruction-verifications/{id}", r.readDestruction)
-	router.With(r.access.Authenticate, r.access.Require(access.PermissionKMSWrite)).
+	router.With(r.access.Authorize(access.PermissionKMSWrite)).
 		Post("/kms/destruction-verifications/{id}/schedule", r.scheduleDestruction)
 
-	router.With(r.access.Authenticate, r.access.Require(access.PermissionKMSWrite)).
+	router.With(r.access.Authorize(access.PermissionKMSWrite)).
 		Post("/kms/recovery-ceremonies", r.startRecovery)
-	router.With(r.access.Authenticate, r.access.Require(access.PermissionKMSRead)).
+	router.With(r.access.Authorize(access.PermissionKMSRead)).
 		Get("/kms/recovery-ceremonies/{id}", r.readRecovery)
-	router.With(r.access.Authenticate, r.access.Require(access.PermissionKMSWrite)).
+	router.With(r.access.Authorize(access.PermissionKMSWrite)).
 		Post("/kms/recovery-ceremonies/{id}/approve", r.approveRecovery)
-	router.With(r.access.Authenticate, r.access.Require(access.PermissionKMSWrite)).
+	router.With(r.access.Authorize(access.PermissionKMSWrite)).
 		Post("/kms/recovery-ceremonies/{id}/complete", r.completeRecovery)
-	router.With(r.access.Authenticate, r.access.Require(access.PermissionKMSWrite)).
+	router.With(r.access.Authorize(access.PermissionKMSWrite)).
 		Post("/kms/recovery-ceremonies/{id}/abort", r.abortRecovery)
 }
 
@@ -406,38 +410,4 @@ func recoveryResponse(ceremony keycustody.RecoveryCeremony) recoveryCeremonyResp
 	}
 
 	return response
-}
-
-func (r *KeyOperationsRoutes) reply(w http.ResponseWriter, q *http.Request, value any, err error) {
-	w.Header().Set("Cache-Control", "no-store")
-	if err != nil {
-		switch {
-		case errors.Is(err, keycustody.ErrInvalid), errors.Is(err, keyrewrap.ErrInvalid):
-			err = invalidRequest(err)
-		case errors.Is(err, keycustody.ErrNotFound):
-			err = apierror.New(404, apierror.CodeNotFound, "Not found", "The key record was not found.", err)
-		case errors.Is(err, keycustody.ErrRecoveryForbidden):
-			err = apierror.New(403, apierror.CodeInsufficientScope, "Forbidden", "The key operation is not permitted.", err)
-		case errors.Is(err, keycustody.ErrDestructionBlocked):
-			err = apierror.New(409, apierror.CodeConflict, "Conflict", "Live references still target the key material.", err)
-		case errors.Is(err, keycustody.ErrDestructionUnverified):
-			err = apierror.New(409, apierror.CodeConflict, "Conflict", "An unexpired verified receipt is required.", err)
-		case errors.Is(err, keycustody.ErrRecoveryExpired):
-			err = apierror.New(409, apierror.CodeConflict, "Conflict", "The recovery ceremony validity window has elapsed.", err)
-		case errors.Is(err, keycustody.ErrRecoveryState):
-			err = apierror.New(409, apierror.CodeConflict, "Conflict", "The recovery ceremony state does not permit this operation.", err)
-		case errors.Is(err, keycustody.ErrConflict), errors.Is(err, keyrewrap.ErrConflict):
-			err = apierror.New(409, apierror.CodeConflict, "Conflict", "The key record changed since it was read.", err)
-		case errors.Is(err, keycustody.ErrUnavailable), errors.Is(err, keyrewrap.ErrUnavailable):
-			err = apierror.New(503, apierror.CodeServiceUnavailable, "Unavailable", "Key operations are unavailable.", err)
-		}
-		if writeErr := respond.WriteProblem(w, q, err, requestIDString(q.Context())); writeErr != nil {
-			r.logger.ErrorContext(q.Context(), "write key operations problem")
-		}
-
-		return
-	}
-	if err := respond.JSON(w, q, 200, value); err != nil {
-		r.logger.ErrorContext(q.Context(), "write key operations response")
-	}
 }

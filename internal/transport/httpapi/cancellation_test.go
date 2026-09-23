@@ -11,7 +11,8 @@ import (
 )
 
 func TestCancellationLateCredentialFailureIsUnauthenticated(t *testing.T) {
-	routes := CancellationRoutes{logger: slog.New(slog.NewJSONHandler(io.Discard, nil))}
+	logger := slog.New(slog.NewJSONHandler(io.Discard, nil))
+	routes := CancellationRoutes{handlerBase: newHandlerBase(logger, "cancellation")}
 	response := httptest.NewRecorder()
 	request := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/v1/capture/cancel", nil)
 	routes.problem(response, request, access.ErrInvalidCaptureToken)

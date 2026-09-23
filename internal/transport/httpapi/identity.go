@@ -9,16 +9,14 @@ import (
 	"github.com/Mujhtech/idenqa/internal/access"
 	"github.com/Mujhtech/idenqa/internal/identity"
 	"github.com/Mujhtech/idenqa/internal/privacy"
-	"github.com/Mujhtech/idenqa/internal/transport/httpapi/apierror"
-	"github.com/Mujhtech/idenqa/internal/transport/httpapi/respond"
 	"github.com/go-chi/chi/v5"
 )
 
 // IdentityRoutes exposes the public tenant subject and immutable identity record APIs.
 type IdentityRoutes struct {
+	handlerBase
 	access  *AccessMiddleware
 	service *identity.Service
-	logger  *slog.Logger
 }
 
 // NewIdentityRoutes constructs explicit authenticated tenant routes.
@@ -26,20 +24,24 @@ func NewIdentityRoutes(a *AccessMiddleware, s *identity.Service, l *slog.Logger)
 	if a == nil || s == nil || l == nil {
 		return nil, identity.ErrInvalid
 	}
-	return &IdentityRoutes{a, s, l}, nil
+	return &IdentityRoutes{
+		handlerBase: newHandlerBase(l, "identity"),
+		access:      a,
+		service:     s,
+	}, nil
 }
 
 // Register mounts subject, record, lookup and configuration operations.
 func (r *IdentityRoutes) Register(router chi.Router) {
-	router.With(r.access.Authenticate, r.access.Require(access.PermissionSubjectsWrite)).Post("/subjects", r.create)
-	router.With(r.access.Authenticate, r.access.Require(access.PermissionSubjectsWrite)).Put("/subjects/{subjectID}", r.update)
-	router.With(r.access.Authenticate, r.access.Require(access.PermissionSubjectsDelete)).Delete("/subjects/{subjectID}", r.remove)
-	router.With(r.access.Authenticate, r.access.Require(access.PermissionSubjectsWrite)).Put("/subjects/{subjectID}/verifications/{verificationID}", r.link)
-	router.With(r.access.Authenticate, r.access.Require(access.PermissionIdentityWrite)).Post("/subjects/{subjectID}/records", r.record)
-	router.With(r.access.Authenticate, r.access.Require(access.PermissionSubjectsWrite)).Post("/subjects/{subjectID}/projection/rebuild", r.rebuild)
-	router.With(r.access.Authenticate, r.access.Require(access.PermissionSubjectsRead)).Post("/subjects/lookup", r.externalLookup)
-	router.With(r.access.Authenticate, r.access.Require(access.PermissionIdentityRead)).Post("/identity/identifiers/lookup", r.identifierLookup)
-	router.With(r.access.Authenticate, r.access.Require(access.PermissionIdentityConfigure)).Put("/identity/configuration", r.configure)
+	router.With(r.access.Authorize(access.PermissionSubjectsWrite)).Post("/subjects", r.create)
+	router.With(r.access.Authorize(access.PermissionSubjectsWrite)).Put("/subjects/{subjectID}", r.update)
+	router.With(r.access.Authorize(access.PermissionSubjectsDelete)).Delete("/subjects/{subjectID}", r.remove)
+	router.With(r.access.Authorize(access.PermissionSubjectsWrite)).Put("/subjects/{subjectID}/verifications/{verificationID}", r.link)
+	router.With(r.access.Authorize(access.PermissionIdentityWrite)).Post("/subjects/{subjectID}/records", r.record)
+	router.With(r.access.Authorize(access.PermissionSubjectsWrite)).Post("/subjects/{subjectID}/projection/rebuild", r.rebuild)
+	router.With(r.access.Authorize(access.PermissionSubjectsRead)).Post("/subjects/lookup", r.externalLookup)
+	router.With(r.access.Authorize(access.PermissionIdentityRead)).Post("/identity/identifiers/lookup", r.identifierLookup)
+	router.With(r.access.Authorize(access.PermissionIdentityConfigure)).Put("/identity/configuration", r.configure)
 	for _, route := range []struct{ path, kind string }{
 		{"/subjects", "subjects"}, {"/subjects/{subjectID}", "subject"}, {"/subjects/{subjectID}/verifications", "verifications"},
 		{"/subjects/{subjectID}/records", "records"}, {"/subjects/{subjectID}/records/{recordID}", "record"},
@@ -203,22 +205,14 @@ func (r *IdentityRoutes) query(w http.ResponseWriter, q *http.Request, query ide
 func (r *IdentityRoutes) reply(w http.ResponseWriter, q *http.Request, status int, value any, e error) {
 	w.Header().Set("Cache-Control", "no-store")
 	if e != nil {
-		switch {
-		case errors.Is(e, identity.ErrInvalid), errors.Is(e, privacy.ErrInvalid):
+		// The shared table maps privacy.ErrInvalid to the lifecycle not-found
+		// response; identity reads raise it for request validation instead.
+		if errors.Is(e, privacy.ErrInvalid) {
 			e = invalidRequest(e)
-		case errors.Is(e, identity.ErrNotFound):
-			e = apierror.New(404, apierror.CodeNotFound, "Not found", "The identity resource was not found.", e)
-		case errors.Is(e, identity.ErrConflict):
-			e = apierror.New(409, apierror.CodeConflict, "Conflict", "The identity version, source or lifecycle conflicts with current state.", e)
-		case errors.Is(e, identity.ErrUnavailable):
-			e = apierror.New(503, apierror.CodeServiceUnavailable, "Unavailable", "Identity data or complete projection coverage is unavailable.", e)
 		}
-		if err := respond.WriteProblem(w, q, e, requestIDString(q.Context())); err != nil {
-			r.logger.ErrorContext(q.Context(), "write identity problem")
-		}
+		r.problem(w, q, e)
+
 		return
 	}
-	if err := respond.JSON(w, q, status, value); err != nil {
-		r.logger.ErrorContext(q.Context(), "write identity response")
-	}
+	r.writeJSON(w, q, status, value)
 }

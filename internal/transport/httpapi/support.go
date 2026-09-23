@@ -9,16 +9,14 @@ import (
 
 	"github.com/Mujhtech/idenqa/internal/access"
 	"github.com/Mujhtech/idenqa/internal/support"
-	"github.com/Mujhtech/idenqa/internal/transport/httpapi/apierror"
-	"github.com/Mujhtech/idenqa/internal/transport/httpapi/respond"
 	"github.com/go-chi/chi/v5"
 )
 
 // SupportRoutes is the authenticated delegated and emergency access surface.
 type SupportRoutes struct {
+	handlerBase
 	access  *AccessMiddleware
 	service *support.Service
-	logger  *slog.Logger
 }
 
 // NewSupportRoutes constructs API-key protected support-access routes.
@@ -27,31 +25,35 @@ func NewSupportRoutes(a *AccessMiddleware, s *support.Service, l *slog.Logger) (
 		return nil, support.ErrInvalid
 	}
 
-	return &SupportRoutes{access: a, service: s, logger: l}, nil
+	return &SupportRoutes{
+		access:      a,
+		service:     s,
+		handlerBase: newHandlerBase(l, "support"),
+	}, nil
 }
 
 // Register mounts delegated-grant and break-glass commands with safe reads.
 func (r *SupportRoutes) Register(router chi.Router) {
-	router.With(r.access.Authenticate, r.access.Require(access.PermissionSupportAccessRead)).
+	router.With(r.access.Authorize(access.PermissionSupportAccessRead)).
 		Get("/support/grants", r.listGrants)
-	router.With(r.access.Authenticate, r.access.Require(access.PermissionSupportAccessRead)).
+	router.With(r.access.Authorize(access.PermissionSupportAccessRead)).
 		Get("/support/grants/{id}", r.readGrant)
-	router.With(r.access.Authenticate, r.access.Require(access.PermissionSupportAccessWrite)).
+	router.With(r.access.Authorize(access.PermissionSupportAccessWrite)).
 		Post("/support/grants", r.grant)
-	router.With(r.access.Authenticate, r.access.Require(access.PermissionSupportAccessWrite)).
+	router.With(r.access.Authorize(access.PermissionSupportAccessWrite)).
 		Post("/support/grants/{id}/revoke", r.revokeGrant)
 
-	router.With(r.access.Authenticate, r.access.Require(access.PermissionSupportAccessRead)).
+	router.With(r.access.Authorize(access.PermissionSupportAccessRead)).
 		Get("/support/break-glass/{id}", r.readEmergency)
-	router.With(r.access.Authenticate, r.access.Require(access.PermissionBreakGlassRequest)).
+	router.With(r.access.Authorize(access.PermissionBreakGlassRequest)).
 		Post("/support/break-glass", r.requestEmergency)
-	router.With(r.access.Authenticate, r.access.Require(access.PermissionBreakGlassApprove)).
+	router.With(r.access.Authorize(access.PermissionBreakGlassApprove)).
 		Post("/support/break-glass/{id}/approve", r.approveEmergency)
-	router.With(r.access.Authenticate, r.access.Require(access.PermissionBreakGlassApprove)).
+	router.With(r.access.Authorize(access.PermissionBreakGlassApprove)).
 		Post("/support/break-glass/{id}/deny", r.denyEmergency)
-	router.With(r.access.Authenticate, r.access.Require(access.PermissionSupportAccessWrite)).
+	router.With(r.access.Authorize(access.PermissionSupportAccessWrite)).
 		Post("/support/break-glass/{id}/revoke", r.revokeEmergency)
-	router.With(r.access.Authenticate, r.access.Require(access.PermissionBreakGlassUse)).
+	router.With(r.access.Authorize(access.PermissionBreakGlassUse)).
 		Post("/support/break-glass/{id}/uses", r.useEmergency)
 }
 
@@ -180,32 +182,4 @@ func (r *SupportRoutes) execute(w http.ResponseWriter, q *http.Request, command 
 	auth, _ := AccessContext(q.Context())
 	result, err := r.service.Execute(q.Context(), auth, key, command)
 	r.reply(w, q, result, err)
-}
-
-func (r *SupportRoutes) reply(w http.ResponseWriter, q *http.Request, value any, err error) {
-	w.Header().Set("Cache-Control", "no-store")
-	if err != nil {
-		switch {
-		case errors.Is(err, support.ErrInvalid):
-			err = invalidRequest(err)
-		case errors.Is(err, support.ErrForbidden):
-			err = apierror.New(403, apierror.CodeInsufficientScope, "Forbidden", "The support operation is not permitted.", err)
-		case errors.Is(err, support.ErrNotFound):
-			err = apierror.New(404, apierror.CodeNotFound, "Not found", "The support record was not found.", err)
-		case errors.Is(err, support.ErrConflict):
-			err = apierror.New(409, apierror.CodeConflict, "Conflict", "The support record changed since it was read.", err)
-		case errors.Is(err, support.ErrExpired):
-			err = apierror.New(409, apierror.CodeConflict, "Conflict", "The support access window has expired.", err)
-		case errors.Is(err, support.ErrUnavailable):
-			err = apierror.New(503, apierror.CodeServiceUnavailable, "Unavailable", "Support access is unavailable.", err)
-		}
-		if writeErr := respond.WriteProblem(w, q, err, requestIDString(q.Context())); writeErr != nil {
-			r.logger.ErrorContext(q.Context(), "write support problem")
-		}
-
-		return
-	}
-	if err := respond.JSON(w, q, 200, value); err != nil {
-		r.logger.ErrorContext(q.Context(), "write support response")
-	}
 }

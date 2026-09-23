@@ -42,7 +42,7 @@ func TestRecaptureRouteRequiresBothScopesAndClosedBody(t *testing.T) {
 		t.Run(scenario.name, func(t *testing.T) {
 			fixture := newHTTPAccessFixture(t, nil, scenario.scopes...)
 			probe := &recaptureProbe{}
-			routes := &ReviewRoutes{access: fixture.middleware, logger: fixture.logger, recapture: probe}
+			routes := &ReviewRoutes{access: fixture.middleware, handlerBase: newHandlerBase(fixture.logger, "review"), recapture: probe}
 			router := versionedRouter(t, routes)
 			request := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/v1/review-cases/rvc_01K4AR9V8FQ2G7ZXCPNM5T6JWH/recaptures", strings.NewReader(scenario.body))
 			request.Header.Set("Authorization", "Bearer "+fixture.encoded)
@@ -79,7 +79,7 @@ func (probe *recaptureProbe) List(_ context.Context, _ access.Context, _ id.Revi
 func TestRecaptureStatusContainsOutcomeWithoutBearer(t *testing.T) {
 	fixture := newHTTPAccessFixture(t, nil, access.Pattern("reviews:read"))
 	probe := &recaptureProbe{}
-	routes := &ReviewRoutes{access: fixture.middleware, logger: fixture.logger, recapture: probe}
+	routes := &ReviewRoutes{access: fixture.middleware, handlerBase: newHandlerBase(fixture.logger, "review"), recapture: probe}
 	router := versionedRouter(t, routes)
 	request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/v1/review-cases/rvc_01K4AR9V8FQ2G7ZXCPNM5T6JWH/recaptures", nil)
 	request.Header.Set("Authorization", "Bearer "+fixture.encoded)

@@ -8,16 +8,14 @@ import (
 
 	"github.com/Mujhtech/idenqa/internal/access"
 	"github.com/Mujhtech/idenqa/internal/keycustody"
-	"github.com/Mujhtech/idenqa/internal/transport/httpapi/apierror"
-	"github.com/Mujhtech/idenqa/internal/transport/httpapi/respond"
 	"github.com/go-chi/chi/v5"
 )
 
 // KMSRoutes is the authenticated tenant HMAC key lifecycle surface.
 type KMSRoutes struct {
+	handlerBase
 	access  *AccessMiddleware
 	service *keycustody.Service
-	logger  *slog.Logger
 }
 
 // NewKMSRoutes constructs API-key protected key lifecycle routes.
@@ -26,20 +24,24 @@ func NewKMSRoutes(a *AccessMiddleware, s *keycustody.Service, l *slog.Logger) (*
 		return nil, keycustody.ErrInvalid
 	}
 
-	return &KMSRoutes{access: a, service: s, logger: l}, nil
+	return &KMSRoutes{
+		access:      a,
+		service:     s,
+		handlerBase: newHandlerBase(l, "kms"),
+	}, nil
 }
 
 // Register mounts closed lifecycle commands and safe metadata reads.
 func (r *KMSRoutes) Register(router chi.Router) {
-	router.With(r.access.Authenticate, r.access.Require(access.PermissionKMSRead)).
+	router.With(r.access.Authorize(access.PermissionKMSRead)).
 		Get("/kms/domains/{domain}", r.read)
-	router.With(r.access.Authenticate, r.access.Require(access.PermissionKMSWrite)).
+	router.With(r.access.Authorize(access.PermissionKMSWrite)).
 		Post("/kms/domains", r.create)
-	router.With(r.access.Authenticate, r.access.Require(access.PermissionKMSWrite)).
+	router.With(r.access.Authorize(access.PermissionKMSWrite)).
 		Post("/kms/domains/{domain}/rotate", r.rotate)
-	router.With(r.access.Authenticate, r.access.Require(access.PermissionKMSWrite)).
+	router.With(r.access.Authorize(access.PermissionKMSWrite)).
 		Post("/kms/domains/{domain}/versions/{version}/disable", r.disable)
-	router.With(r.access.Authenticate, r.access.Require(access.PermissionKMSWrite)).
+	router.With(r.access.Authorize(access.PermissionKMSWrite)).
 		Post("/kms/domains/{domain}/versions/{version}/retire", r.retire)
 }
 
@@ -118,30 +120,4 @@ func (r *KMSRoutes) execute(w http.ResponseWriter, q *http.Request, command keyc
 	auth, _ := AccessContext(q.Context())
 	result, err := r.service.Execute(q.Context(), auth, key, command)
 	r.reply(w, q, result, err)
-}
-
-func (r *KMSRoutes) reply(w http.ResponseWriter, q *http.Request, value any, err error) {
-	w.Header().Set("Cache-Control", "no-store")
-	if err != nil {
-		switch {
-		case errors.Is(err, keycustody.ErrInvalid):
-			err = invalidRequest(err)
-		case errors.Is(err, keycustody.ErrNotFound):
-			err = apierror.New(404, apierror.CodeNotFound, "Not found", "The key domain or version was not found.", err)
-		case errors.Is(err, keycustody.ErrConflict):
-			err = apierror.New(409, apierror.CodeConflict, "Conflict", "The key domain changed since it was read.", err)
-		case errors.Is(err, keycustody.ErrReferenced):
-			err = apierror.New(409, apierror.CodeConflict, "Conflict", "The key version is still referenced and cannot be retired.", err)
-		case errors.Is(err, keycustody.ErrUnavailable):
-			err = apierror.New(503, apierror.CodeServiceUnavailable, "Unavailable", "Key custody is unavailable.", err)
-		}
-		if writeErr := respond.WriteProblem(w, q, err, requestIDString(q.Context())); writeErr != nil {
-			r.logger.ErrorContext(q.Context(), "write kms problem")
-		}
-
-		return
-	}
-	if err := respond.JSON(w, q, 200, value); err != nil {
-		r.logger.ErrorContext(q.Context(), "write kms response")
-	}
 }

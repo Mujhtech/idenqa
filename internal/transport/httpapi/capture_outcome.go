@@ -8,7 +8,6 @@ import (
 
 	"github.com/Mujhtech/idenqa/internal/access"
 	openapiv1 "github.com/Mujhtech/idenqa/internal/gen/openapi/v1"
-	"github.com/Mujhtech/idenqa/internal/transport/httpapi/respond"
 	"github.com/Mujhtech/idenqa/internal/verification"
 	"github.com/go-chi/chi/v5"
 )
@@ -20,9 +19,9 @@ type CaptureOutcomeService interface {
 
 // CaptureOutcomeRoutes exposes the safe authoritative result to Capture Web.
 type CaptureOutcomeRoutes struct {
+	handlerBase
 	outcome *OutcomeAccessMiddleware
 	service CaptureOutcomeService
-	logger  *slog.Logger
 }
 
 // NewCaptureOutcomeRoutes constructs the read-only subject-outcome route.
@@ -34,7 +33,11 @@ func NewCaptureOutcomeRoutes(
 	if outcome == nil || service == nil || logger == nil {
 		return nil, errors.New("capture outcome route dependencies are required")
 	}
-	return &CaptureOutcomeRoutes{outcome: outcome, service: service, logger: logger}, nil
+	return &CaptureOutcomeRoutes{
+		outcome:     outcome,
+		service:     service,
+		handlerBase: newHandlerBase(logger, "capture outcome"),
+	}, nil
 }
 
 // Register adds the outcome-token-scoped authoritative outcome read.
@@ -59,21 +62,4 @@ func (routes *CaptureOutcomeRoutes) find(writer http.ResponseWriter, request *ht
 		SessionVersion: outcome.SessionVersion,
 		UpdatedAt:      outcome.UpdatedAt,
 	})
-}
-
-func (routes *CaptureOutcomeRoutes) writeJSON(
-	writer http.ResponseWriter,
-	request *http.Request,
-	status int,
-	value any,
-) {
-	if err := respond.JSON(writer, request, status, value); err != nil {
-		requestID, _ := RequestID(request.Context())
-		routes.logger.ErrorContext(
-			request.Context(),
-			"write capture outcome response",
-			"request_id", requestID.String(),
-			"error", err,
-		)
-	}
 }

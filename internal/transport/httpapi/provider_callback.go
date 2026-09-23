@@ -38,9 +38,9 @@ type ProviderCallbackService interface {
 // ProviderCallbackRoutes owns the unauthenticated provider callback ingress.
 // The opaque reference is the capability; provider crypto stays in the runner.
 type ProviderCallbackRoutes struct {
+	handlerBase
 	service ProviderCallbackService
 	limiter *callbackLimiter
-	logger  *slog.Logger
 }
 
 // NewProviderCallbackRoutes constructs the provider callback ingress.
@@ -49,9 +49,9 @@ func NewProviderCallbackRoutes(service ProviderCallbackService, logger *slog.Log
 		return nil, errors.New("provider callback route dependencies are required")
 	}
 	return &ProviderCallbackRoutes{
-		service: service,
-		limiter: newCallbackLimiter(callbackLimiterWindow, callbackLimiterBurst, callbackLimiterMaximum, time.Now),
-		logger:  logger,
+		service:     service,
+		limiter:     newCallbackLimiter(callbackLimiterWindow, callbackLimiterBurst, callbackLimiterMaximum, time.Now),
+		handlerBase: newHandlerBase(logger, "provider callback"),
 	}, nil
 }
 
@@ -177,9 +177,7 @@ func (routes *ProviderCallbackRoutes) problem(writer http.ResponseWriter, reques
 			err = apierror.New(http.StatusServiceUnavailable, apierror.CodeServiceUnavailable, "Service unavailable", "Provider callback verification is unavailable.", err)
 		}
 	}
-	if writeErr := respond.WriteProblem(writer, request, err, requestIDString(request.Context())); writeErr != nil {
-		routes.logger.ErrorContext(request.Context(), "write provider callback problem")
-	}
+	routes.handlerBase.problem(writer, request, err)
 }
 
 // callbackLimiter is a bounded in-process fixed-window limiter. It is the

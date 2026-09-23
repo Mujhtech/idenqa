@@ -38,9 +38,9 @@ func (routes *PrivacyRoutes) registerRequests(router chi.Router) {
 	if routes.requests == nil {
 		return
 	}
-	write := []func(http.Handler) http.Handler{routes.access.Authenticate, routes.access.Require(access.PermissionPrivacyRequestsWrite)}
-	read := []func(http.Handler) http.Handler{routes.access.Authenticate, routes.access.Require(access.PermissionPrivacyRequestsRead)}
-	approve := []func(http.Handler) http.Handler{routes.access.Authenticate, routes.access.Require(access.PermissionPrivacyRequestsApprove)}
+	write := []func(http.Handler) http.Handler{routes.access.Authorize(access.PermissionPrivacyRequestsWrite)}
+	read := []func(http.Handler) http.Handler{routes.access.Authorize(access.PermissionPrivacyRequestsRead)}
+	approve := []func(http.Handler) http.Handler{routes.access.Authorize(access.PermissionPrivacyRequestsApprove)}
 	router.With(write...).Post("/privacy-requests", routes.createRequest)
 	router.With(read...).Get("/privacy-requests", routes.listRequests)
 	router.With(read...).Get("/privacy-requests/{requestID}", routes.getRequest)

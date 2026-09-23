@@ -87,6 +87,8 @@ func (middleware *AccessMiddleware) Authenticate(next http.Handler) http.Handler
 
 // Require rejects a successfully authenticated request that lacks permission.
 // It is defence in depth and does not replace application-service checks.
+// Routes normally use Authorize instead; Require remains for callers that have
+// already authenticated in an outer middleware.
 func (middleware *AccessMiddleware) Require(permission access.Permission) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
@@ -109,6 +111,15 @@ func (middleware *AccessMiddleware) Require(permission access.Permission) func(h
 
 			next.ServeHTTP(writer, request)
 		})
+	}
+}
+
+// Authorize authenticates the request and rejects a credential that lacks
+// permission before the handler runs. Pairing both checks in one middleware
+// makes it impossible to register a permission check without authentication.
+func (middleware *AccessMiddleware) Authorize(permission access.Permission) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return middleware.Authenticate(middleware.Require(permission)(next))
 	}
 }
 

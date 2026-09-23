@@ -9,17 +9,15 @@ import (
 
 	"github.com/Mujhtech/idenqa/internal/access"
 	"github.com/Mujhtech/idenqa/internal/pack"
-	"github.com/Mujhtech/idenqa/internal/transport/httpapi/apierror"
-	"github.com/Mujhtech/idenqa/internal/transport/httpapi/respond"
 	"github.com/go-chi/chi/v5"
 )
 
 // PackRoutes exposes immutable pack inspection and the support-level
 // projection. It never activates, deprecates, or retires a pack.
 type PackRoutes struct {
+	handlerBase
 	access   *AccessMiddleware
 	registry *pack.Registry
-	logger   *slog.Logger
 }
 
 // NewPackRoutes constructs authenticated read-only pack routes.
@@ -27,12 +25,16 @@ func NewPackRoutes(middleware *AccessMiddleware, registry *pack.Registry, logger
 	if middleware == nil || registry == nil || logger == nil {
 		return nil, pack.ErrInvalid
 	}
-	return &PackRoutes{access: middleware, registry: registry, logger: logger}, nil
+	return &PackRoutes{
+		access:      middleware,
+		registry:    registry,
+		handlerBase: newHandlerBase(logger, "pack"),
+	}, nil
 }
 
 // Register mounts the public pack inspection routes.
 func (routes *PackRoutes) Register(router chi.Router) {
-	read := router.With(routes.access.Authenticate, routes.access.Require(access.PermissionPacksRead))
+	read := router.With(routes.access.Authorize(access.PermissionPacksRead))
 	read.Get("/packs", routes.list)
 	read.Get("/packs/{country}", routes.country)
 	read.Get("/packs/{country}/revisions/{revision}", routes.revision)
@@ -106,23 +108,4 @@ func packEntryResponse(entry pack.Entry) packEntryResponseValue {
 		response.UpdatedAt = &updated
 	}
 	return response
-}
-
-func (routes *PackRoutes) reply(writer http.ResponseWriter, request *http.Request, value any, err error) {
-	writer.Header().Set("Cache-Control", "no-store")
-	if err != nil {
-		switch {
-		case errors.Is(err, pack.ErrNotFound):
-			err = apierror.New(404, apierror.CodeNotFound, "Not found", "The pack resource was not found.", err)
-		case errors.Is(err, pack.ErrInvalid), errors.Is(err, pack.ErrConflict):
-			err = invalidRequest(err)
-		}
-		if writeErr := respond.WriteProblem(writer, request, err, requestIDString(request.Context())); writeErr != nil {
-			routes.logger.ErrorContext(request.Context(), "write pack problem")
-		}
-		return
-	}
-	if writeErr := respond.JSON(writer, request, http.StatusOK, value); writeErr != nil {
-		routes.logger.ErrorContext(request.Context(), "write pack response")
-	}
 }

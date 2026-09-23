@@ -3,7 +3,6 @@ package httpapi
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"io"
 	"log/slog"
 	"net/http"
@@ -18,17 +17,16 @@ import (
 	openapiv1 "github.com/Mujhtech/idenqa/internal/gen/openapi/v1"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/policy"
-	"github.com/Mujhtech/idenqa/internal/transport/httpapi/apierror"
 	"github.com/Mujhtech/idenqa/internal/transport/httpapi/respond"
 	"github.com/go-chi/chi/v5"
 )
 
 // PolicyRoutes exposes tenant policy administration without a commercial control plane.
 type PolicyRoutes struct {
+	handlerBase
 	access  *AccessMiddleware
 	service *policy.Management
 	cursors ProfileCursor
-	logger  *slog.Logger
 }
 
 // NewPolicyRoutes constructs strict public policy administration routes.
@@ -36,7 +34,12 @@ func NewPolicyRoutes(middleware *AccessMiddleware, service *policy.Management, c
 	if middleware == nil || service == nil || cursors == nil || logger == nil {
 		return nil, policy.ErrInvalid
 	}
-	return &PolicyRoutes{middleware, service, cursors, logger}, nil
+	return &PolicyRoutes{
+		handlerBase: newHandlerBase(logger, "policy administration"),
+		access:      middleware,
+		service:     service,
+		cursors:     cursors,
+	}, nil
 }
 
 // Register adds policy catalog, validation, revision and activation operations.
@@ -57,7 +60,7 @@ func (routes *PolicyRoutes) Register(router chi.Router) {
 		{"POST", "/policies/{policyID}/activate", access.PermissionPoliciesActivate, routes.mutate},
 		{"POST", "/policies/{policyID}/rollback", access.PermissionPoliciesActivate, routes.mutate},
 	} {
-		router.With(routes.access.Authenticate, routes.access.Require(route.permission)).MethodFunc(route.method, route.path, route.handler)
+		router.With(routes.access.Authorize(route.permission)).MethodFunc(route.method, route.path, route.handler)
 	}
 }
 func (routes *PolicyRoutes) mutate(w http.ResponseWriter, r *http.Request) {
@@ -281,19 +284,6 @@ func (routes *PolicyRoutes) json(w http.ResponseWriter, r *http.Request, value a
 	w.Header().Set("Cache-Control", "no-store")
 	if err := respond.JSON(w, r, 200, value); err != nil {
 		routes.logger.ErrorContext(r.Context(), "write policy administration response")
-	}
-}
-func (routes *PolicyRoutes) problem(w http.ResponseWriter, r *http.Request, err error) {
-	switch {
-	case errors.Is(err, policy.ErrRevisionNotFound), errors.Is(err, policy.ErrActivationNotFound):
-		err = apierror.New(404, apierror.CodeNotFound, "Not found", "The policy resource was not found.", err)
-	case errors.Is(err, policy.ErrRevisionConflict), errors.Is(err, policy.ErrActivationConflict):
-		err = apierror.New(409, apierror.CodeConflict, "Conflict", "The policy operation conflicts with current state.", err)
-	case errors.Is(err, policy.ErrInvalid):
-		err = invalidRequest(err)
-	}
-	if writeErr := respond.WriteProblem(w, r, err, requestIDString(r.Context())); writeErr != nil {
-		routes.logger.ErrorContext(r.Context(), "write policy administration problem")
 	}
 }
 

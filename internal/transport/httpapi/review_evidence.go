@@ -35,12 +35,15 @@ func NewReviewEvidenceRoutes(auth *AccessMiddleware, service *review.EvidenceSer
 	if auth == nil || service == nil || logger == nil {
 		return nil, review.ErrInvalid
 	}
-	return &ReviewEvidenceRoutes{&ReviewRoutes{access: auth, logger: logger}, service}, nil
+	return &ReviewEvidenceRoutes{
+		base:    &ReviewRoutes{handlerBase: newHandlerBase(logger, "review"), access: auth},
+		service: service,
+	}, nil
 }
 
 // Register mounts authenticated review endpoints.
 func (r *ReviewEvidenceRoutes) Register(router chi.Router) {
-	middleware := []func(http.Handler) http.Handler{r.base.access.Authenticate, r.base.access.Require(access.PermissionReviewsWrite)}
+	middleware := []func(http.Handler) http.Handler{r.base.access.Authorize(access.PermissionReviewsWrite)}
 	router.With(middleware...).Get("/review-cases/{caseID}/evidence", r.list)
 	router.With(middleware...).Post("/review-cases/{caseID}/evidence-grants", r.issue)
 	router.With(middleware...).Post("/review-evidence-grants/{grantID}/content", r.read)

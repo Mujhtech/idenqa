@@ -20,7 +20,7 @@ type ReviewQueue interface {
 
 // RegisterQueue mounts a tenant-scoped queue with bound continuation cursors.
 func (routes *ReviewRoutes) RegisterQueue(router chi.Router, queue ReviewQueue, cursors ProfileCursor) {
-	router.With(routes.access.Authenticate, routes.access.Require(access.PermissionReviewsRead)).Get("/review-cases", func(w http.ResponseWriter, req *http.Request) {
+	router.With(routes.access.Authorize(access.PermissionReviewsRead)).Get("/review-cases", func(w http.ResponseWriter, req *http.Request) {
 		auth, _, ok := routes.authority(req)
 		if !ok {
 			routes.problem(w, req, access.ErrInvalidCredential)

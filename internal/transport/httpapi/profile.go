@@ -19,7 +19,6 @@ import (
 	"github.com/Mujhtech/idenqa/internal/platform/cursor"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/transport/httpapi/apierror"
-	"github.com/Mujhtech/idenqa/internal/transport/httpapi/respond"
 	"github.com/Mujhtech/idenqa/internal/verification"
 	"github.com/go-chi/chi/v5"
 )
@@ -61,11 +60,11 @@ type ProfileCursor interface {
 
 // ProfileRoutes adapts capture-profile application use cases to HTTP.
 type ProfileRoutes struct {
+	handlerBase
 	access  *AccessMiddleware
 	service CaptureProfileService
 	catalog evidence.Catalog
 	cursors ProfileCursor
-	logger  *slog.Logger
 }
 
 // NewProfileRoutes constructs the protected capture-profile HTTP surface.
@@ -81,33 +80,27 @@ func NewProfileRoutes(
 	}
 
 	return &ProfileRoutes{
-		access:  accessMiddleware,
-		service: service,
-		catalog: catalog,
-		cursors: cursors,
-		logger:  logger,
+		access:      accessMiddleware,
+		service:     service,
+		catalog:     catalog,
+		cursors:     cursors,
+		handlerBase: newHandlerBase(logger, "capture profile"),
 	}, nil
 }
 
 // Register adds the authenticated capture-profile routes.
 func (routes *ProfileRoutes) Register(router chi.Router) {
-	read := []func(http.Handler) http.Handler{
-		routes.access.Authenticate,
-		routes.access.Require(access.PermissionCaptureProfilesRead),
-	}
-	write := []func(http.Handler) http.Handler{
-		routes.access.Authenticate,
-		routes.access.Require(access.PermissionCaptureProfilesWrite),
-	}
-	router.With(read...).Get("/capture-profiles", routes.list)
-	router.With(write...).Post("/capture-profiles", routes.create)
-	router.With(read...).Get("/capture-profiles/{profileID}", routes.find)
-	router.With(write...).Put("/capture-profiles/{profileID}/draft", routes.updateDraft)
-	router.With(write...).Post("/capture-profiles/{profileID}/validate", routes.validateDraft)
-	router.With(write...).Post("/capture-profiles/{profileID}/publish", routes.publish)
-	router.With(write...).Post("/capture-profiles/{profileID}/supersede", routes.supersede)
-	router.With(write...).Post("/capture-profiles/{profileID}/deactivate", routes.deactivate)
-	router.With(read...).Get("/capture-profiles/{profileID}/revisions/{revision}", routes.findRevision)
+	read := routes.access.Authorize(access.PermissionCaptureProfilesRead)
+	write := routes.access.Authorize(access.PermissionCaptureProfilesWrite)
+	router.With(read).Get("/capture-profiles", routes.list)
+	router.With(write).Post("/capture-profiles", routes.create)
+	router.With(read).Get("/capture-profiles/{profileID}", routes.find)
+	router.With(write).Put("/capture-profiles/{profileID}/draft", routes.updateDraft)
+	router.With(write).Post("/capture-profiles/{profileID}/validate", routes.validateDraft)
+	router.With(write).Post("/capture-profiles/{profileID}/publish", routes.publish)
+	router.With(write).Post("/capture-profiles/{profileID}/supersede", routes.supersede)
+	router.With(write).Post("/capture-profiles/{profileID}/deactivate", routes.deactivate)
+	router.With(read).Get("/capture-profiles/{profileID}/revisions/{revision}", routes.findRevision)
 }
 
 func (routes *ProfileRoutes) create(writer http.ResponseWriter, request *http.Request) {
@@ -434,23 +427,6 @@ func (routes *ProfileRoutes) commandHeaders(
 	}
 
 	return expected, key, true
-}
-
-func (routes *ProfileRoutes) problem(writer http.ResponseWriter, request *http.Request, err error) {
-	if writeErr := respond.WriteProblem(writer, request, err, requestIDString(request.Context())); writeErr != nil {
-		routes.logger.ErrorContext(request.Context(), "write capture profile problem response")
-	}
-}
-
-func (routes *ProfileRoutes) writeJSON(
-	writer http.ResponseWriter,
-	request *http.Request,
-	status int,
-	value any,
-) {
-	if err := respond.JSON(writer, request, status, value); err != nil {
-		routes.logger.ErrorContext(request.Context(), "write capture profile response")
-	}
 }
 
 func decodeJSONBody[T any](request *http.Request) (T, error) {
