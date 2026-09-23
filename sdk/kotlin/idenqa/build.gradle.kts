@@ -24,7 +24,7 @@ dependencies {
     // MediaPipe's published POM requests older vulnerable transitive versions.
     implementation("com.google.guava:guava:33.7.1-android")
     implementation("com.google.protobuf:protobuf-javalite:4.36.2")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:2.3.21")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:2.4.20")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
 }
 
@@ -34,9 +34,9 @@ dependencies {
 configurations.configureEach {
     resolutionStrategy {
         force(
-            "org.jetbrains.kotlin:kotlin-stdlib:2.3.21",
-            "org.jetbrains.kotlin:kotlin-test:2.3.21",
-            "org.jetbrains.kotlin:kotlin-test-junit:2.3.21",
+            "org.jetbrains.kotlin:kotlin-stdlib:2.4.20",
+            "org.jetbrains.kotlin:kotlin-test:2.4.20",
+            "org.jetbrains.kotlin:kotlin-test-junit:2.4.20",
         )
     }
 }
