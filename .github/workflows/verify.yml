@@ -17,7 +17,9 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # One job covers Go race tests, golangci-lint, govulncheck, the TypeScript
+    # workspace, and the capture browser suite; 15 minutes cut it too close.
+    timeout-minutes: 30
 
     services:
       postgres:
@@ -56,6 +58,12 @@ jobs:
 
       - name: Install TypeScript workspace
         run: corepack pnpm install --frozen-lockfile
+
+      # The capture browser suite needs Playwright's own Chromium build. The
+      # playwright package has no install script and the runner image only
+      # ships system Chrome/Chromium, so install it explicitly.
+      - name: Install Playwright Chromium
+        run: corepack pnpm --filter @idenqa/capture exec playwright install --with-deps chromium
 
       - name: Install evaluation ONNX runtime
         run: |
