@@ -30,14 +30,20 @@
   "publishConfig": {
     "access": "public"
   },
+  "//": "capture/web imports @idenqa/sdk through its exported dist files, so the build:sdk step runs before build, typecheck, and tests rather than relying on a prior workspace build.",
   "scripts": {
+    "build:sdk": "pnpm --filter @idenqa/sdk build",
     "build": "tsdown",
+    "prebuild": "pnpm run build:sdk",
     "demo:hosted": "vite ./demo --config ./vite.config.mjs --host 127.0.0.1 --port 4173 --strictPort --open /hosted.html",
     "package:check": "publint && attw --pack .",
+    "pretest": "pnpm run build:sdk",
+    "pretest:unit": "pnpm run build:sdk",
     "test": "vitest run && playwright test",
     "test:browser": "playwright test",
     "test:real-core": "../../test/conformance/capture-web.sh",
     "test:unit": "vitest run",
+    "pretypecheck": "pnpm run build:sdk",
     "typecheck": "tsc --project tsconfig.json"
   },
   "dependencies": {
