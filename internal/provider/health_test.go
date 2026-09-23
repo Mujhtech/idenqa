@@ -240,7 +240,7 @@ func TestHealthServiceObservesBreakerTransitionOnce(t *testing.T) {
 		t.Fatal(err)
 	}
 	key := provider.BreakerKey{TenantID: "ten_01K4AR9V8FQ2G7ZXCPNM5T6JWH", AdapterID: "dojah", ProviderID: "pvd_01K4AR9V8FQ2G7ZXCPNM5T6JWH"}
-	transition := provider.BreakerTransition{Key: key, From: provider.BreakerClosed, To: provider.BreakerOpen, At: clock.Now(), Changed: true}
+	transition := provider.BreakerTransition{From: provider.BreakerClosed, To: provider.BreakerOpen, At: clock.Now(), Changed: true}
 	if err := service.ObserveBreaker(t.Context(), key, transition); err != nil {
 		t.Fatal(err)
 	}
@@ -256,7 +256,7 @@ func TestHealthServiceObservesBreakerTransitionOnce(t *testing.T) {
 		t.Fatal(err)
 	}
 	// Unchanged transitions are ignored entirely.
-	if err := service.ObserveBreaker(t.Context(), key, provider.BreakerTransition{Key: key, Changed: false}); err != nil {
+	if err := service.ObserveBreaker(t.Context(), key, provider.BreakerTransition{Changed: false}); err != nil {
 		t.Fatal(err)
 	}
 	if store.applies != 2 {
