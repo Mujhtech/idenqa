@@ -122,10 +122,7 @@ describe("CaptureFlowController", () => {
               {
                 id: "driver_license",
                 label: "driver license",
-                artefacts: [
-                  "idenqa.artefact.document_front",
-                  "idenqa.artefact.document_back",
-                ],
+                artefacts: ["idenqa.artefact.document_front", "idenqa.artefact.document_back"],
               },
             ],
           },
