@@ -42,7 +42,7 @@
     "package:check": "publint && attw --pack .",
     "pretest": "pnpm run build:sdk",
     "pretest:unit": "pnpm run build:sdk",
-    "test": "vitest run && playwright test",
+    "test": "vitest run",
     "test:browser": "playwright test",
     "test:real-core": "../../test/conformance/capture-web.sh",
     "test:unit": "vitest run",

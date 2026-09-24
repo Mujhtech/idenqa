@@ -205,6 +205,14 @@ and the document review action. Portable theme colours live in the shadow
 cascade, beneath host stylesheet and inline overrides, and are cleared when a
 new journey has no portable theme.
 
+Unit tests and browser tests run separately: `pnpm --filter @idenqa/capture test`
+runs Vitest, and `pnpm --filter @idenqa/capture test:browser` runs Playwright.
+Visual snapshots are rendered by the pinned
+`mcr.microsoft.com/playwright:v1.62.1-noble` image (keep the tag in sync with
+`@playwright/test`). Regenerate them from that image with
+`playwright test --update-snapshots`; other environments resolve different fonts
+and produce spurious diffs.
+
 ## Styling and theming
 
 `<idenqa-capture>` exposes a public CSS custom-property surface on the host

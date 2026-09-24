@@ -17,8 +17,8 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    # One job covers Go race tests, golangci-lint, govulncheck, the TypeScript
-    # workspace, and the capture browser suite; 15 minutes cut it too close.
+    # One job covers Go race tests, golangci-lint, govulncheck and the
+    # TypeScript workspace; 15 minutes cut it too close.
     timeout-minutes: 30
 
     services:
@@ -59,12 +59,6 @@ jobs:
       - name: Install TypeScript workspace
         run: corepack pnpm install --frozen-lockfile
 
-      # The capture browser suite needs Playwright's own Chromium build. The
-      # playwright package has no install script and the runner image only
-      # ships system Chrome/Chromium, so install it explicitly.
-      - name: Install Playwright Chromium
-        run: corepack pnpm --filter @idenqa/capture exec playwright install --with-deps chromium
-
       - name: Install evaluation ONNX runtime
         run: |
           python3 -m venv "$RUNNER_TEMP/idenqa-onnx"
@@ -99,3 +93,26 @@ jobs:
         env:
           DATABASE_TEST_URL: postgres://idenqa:idenqa_dev@127.0.0.1:5432/idenqa?sslmode=disable
         run: make sdk-conformance
+
+  # Visual snapshots are rendered by the exact Chromium build and font set of
+  # this pinned image. Keep the tag in sync with @playwright/test in
+  # capture/web/package.json: the ubuntu-latest image resolves different fonts
+  # and would produce spurious snapshot failures.
+  capture-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    container:
+      image: mcr.microsoft.com/playwright:v1.62.1-noble
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7.0.1
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install TypeScript workspace
+        run: corepack pnpm install --frozen-lockfile
+
+      - name: Run capture browser suite
+        run: corepack pnpm --filter @idenqa/capture test:browser
