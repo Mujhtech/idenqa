@@ -119,6 +119,7 @@ type EvidenceSequence struct {
 	Frames         []EvidenceSequenceFrame `json:"frames"`
 }
 
+// EvidenceSequenceFrame binds one ordered frame to its exact evidence grant.
 type EvidenceSequenceFrame struct {
 	GrantID        string    `json:"grant_id"`
 	ChallengeID    string    `json:"challenge_id"`

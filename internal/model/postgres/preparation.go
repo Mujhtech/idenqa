@@ -68,10 +68,9 @@ func (preparation *Preparation) Prepare(ctx context.Context, tx pg.Transaction, 
 	if err != nil {
 		return fail(err)
 	}
-	type target struct{ requirement, evidenceType, artefact, variant string }
-	targets := []target{{plan.Binding.Requirement, "idenqa.evidence.selfie_image", "idenqa.artefact.selfie_image", "selfie"}}
+	targets := []evidenceTarget{{plan.Binding.Requirement, "idenqa.evidence.selfie_image", "idenqa.artefact.selfie_image", "selfie"}}
 	if plan.Binding.DocumentRequirement != "" {
-		targets = append(targets, target{plan.Binding.DocumentRequirement, "idenqa.evidence.document_image", "idenqa.artefact.document_front", "document.front"})
+		targets = append(targets, evidenceTarget{plan.Binding.DocumentRequirement, "idenqa.evidence.document_image", "idenqa.artefact.document_front", "document.front"})
 	}
 	var references []modelv1.EvidenceGrantReference
 	var sequence *modelv1.EvidenceSequence
@@ -176,7 +175,7 @@ type selectedEvidence struct {
 	capturedAt                                                             time.Time
 }
 
-func selectEvidence(ctx context.Context, tx pg.Transaction, scope tenant.Scope, verificationID id.Verification, plan *model.Plan, target struct{ requirement, evidenceType, artefact, variant string }) ([]selectedEvidence, error) {
+func selectEvidence(ctx context.Context, tx pg.Transaction, scope tenant.Scope, verificationID id.Verification, plan *model.Plan, target evidenceTarget) ([]selectedEvidence, error) {
 	base := []any{scope.ID().String(), verificationID.String(), target.requirement, plan.Binding.Region, target.evidenceType, target.artefact}
 	if !plan.Capability.TemporalEvidence || target.variant != "selfie" {
 		rows, err := tx.Query(ctx, `SELECT assets.id FROM idenqa.evidence_assets assets JOIN idenqa.evidence_upload_intents uploads ON uploads.tenant_id=assets.tenant_id AND uploads.evidence_id=assets.id WHERE assets.tenant_id=$1 AND assets.verification_id=$2 AND assets.requirement_key=$3 AND assets.region=$4 AND assets.evidence_type=$5 AND uploads.state='accepted' AND uploads.artefact=$6 AND assets.state='available' AND assets.integrity='verified' ORDER BY assets.id LIMIT 2`, base...)

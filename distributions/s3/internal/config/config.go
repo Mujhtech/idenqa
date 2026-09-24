@@ -81,12 +81,12 @@ func LoadWorker(envFile string) (WorkerConfiguration, error) {
 // ObjectStoreConfig maps validated deployment settings to the provider adapter
 // without exposing its types to core configuration or application packages.
 func (configuration Configuration) ObjectStoreConfig(maximumPlaintextBytes int64) s3objects.Config {
-	return configuration.ObjectStoreConfiguration.objectStoreConfig(maximumPlaintextBytes)
+	return configuration.objectStoreConfig(maximumPlaintextBytes)
 }
 
 // ObjectStoreConfig maps worker settings to the provider adapter.
 func (configuration WorkerConfiguration) ObjectStoreConfig(maximumPlaintextBytes int64) s3objects.Config {
-	return configuration.ObjectStoreConfiguration.objectStoreConfig(maximumPlaintextBytes)
+	return configuration.objectStoreConfig(maximumPlaintextBytes)
 }
 
 func (configuration ObjectStoreConfiguration) objectStoreConfig(maximumPlaintextBytes int64) s3objects.Config {

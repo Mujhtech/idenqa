@@ -275,8 +275,8 @@ func temporalFrameResponse(value *evidence.TemporalFrame) *openapiv1.TemporalEvi
 	}
 	var previous *string
 	if value.PreviousDigest != "" {
-		copy := value.PreviousDigest
-		previous = &copy
+		previousDigest := value.PreviousDigest
+		previous = &previousDigest
 	}
 	return &openapiv1.TemporalEvidenceFrame{
 		SequenceDigest: value.SequenceDigest, Index: int(value.Index), Count: int(value.Count),

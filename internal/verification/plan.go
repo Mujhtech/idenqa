@@ -36,6 +36,7 @@ type CheckRoute struct {
 // RouteAdmission is the durable decision made immediately before execution.
 type RouteAdmission string
 
+// Durable route-admission decisions.
 const (
 	RouteRun  RouteAdmission = "run"
 	RouteWait RouteAdmission = "wait"

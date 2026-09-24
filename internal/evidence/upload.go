@@ -588,9 +588,9 @@ func cloneTemporalFrame(frame *TemporalFrame) *TemporalFrame {
 	if frame == nil {
 		return nil
 	}
-	copy := *frame
-	copy.CapturedAt = copy.CapturedAt.UTC()
-	return &copy
+	clone := *frame
+	clone.CapturedAt = clone.CapturedAt.UTC()
+	return &clone
 }
 
 func validateTemporalFrame(frame *TemporalFrame) error {

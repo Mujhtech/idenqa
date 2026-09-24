@@ -98,6 +98,7 @@ func (adapter *Adapter) executeAnalysis(ctx context.Context, request modelv1.Req
 		raw, err := adapter.evidence.ReadModelEvidence(ctx, request, ref, int64(remaining))
 		if err != nil {
 			clear(raw)
+			//nolint:nilerr // Operational failures are surfaced as typed failure results.
 			return adapter.failure(request, modelv1.FailureUnauthorized, "evidence_unavailable"), nil
 		}
 		if len(raw) == 0 || uint64(len(raw)) > remaining {
@@ -108,6 +109,7 @@ func (adapter *Adapter) executeAnalysis(ctx context.Context, request modelv1.Req
 		picture, err := DecodeImage(ctx, raw)
 		clear(raw)
 		if err != nil {
+			//nolint:nilerr // Decode failures are surfaced as typed failure results.
 			return adapter.failure(request, modelv1.FailureInvalidInput, "image_invalid"), nil
 		}
 		value, inferErr := predictor.InferAnalysis(ctx, picture)
@@ -128,6 +130,7 @@ func (adapter *Adapter) executeAnalysis(ctx context.Context, request modelv1.Req
 		}
 	}
 	if ctx.Err() != nil || !adapter.now().Before(request.Deadline) {
+		//nolint:nilerr // Deadline failures are surfaced as typed failure results.
 		return adapter.failure(request, modelv1.FailureDeadline, "analysis_deadline"), nil
 	}
 	signals := []modelv1.Signal{
