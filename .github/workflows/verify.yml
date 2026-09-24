@@ -79,6 +79,11 @@ jobs:
           make contract-breaking OPENAPI_BASE="${BASE_SHA}:contracts/api/openapi/v1/openapi.yaml"
           make proto-breaking PROTO_BASE=".git#ref=${BASE_SHA}"
 
+      # The CLI and API binaries read their default dotenv file and fail closed
+      # when it is absent; provide an empty file, as the runtime image does.
+      - name: Provide empty dotenv for CLI commands
+        run: touch .env
+
       - name: Apply embedded migrations
         env:
           IDENQA_DATABASE_URL: postgres://idenqa:idenqa_dev@127.0.0.1:5432/idenqa?sslmode=disable
