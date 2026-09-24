@@ -6,6 +6,7 @@ import {
   OutcomeClient,
   createIdempotencyKey,
   type CaptureProfileDocument,
+  type PolicyDefinition,
 } from "../src/index.js";
 
 const baseUrl = process.env.IDENQA_SDK_CONFORMANCE_BASE_URL;
@@ -30,10 +31,21 @@ conformance("running Idenqa Core", () => {
     });
     expect(publishedProfile.data.state).toBe("active");
 
+    const createdPolicy = await tenant.policies.create(policyDefinition, {
+      idempotencyKey: createIdempotencyKey("policy"),
+    });
+    const policyId = createdPolicy.data.policy.id;
+    const activatedPolicy = await tenant.policies.activate(
+      policyId,
+      { revision: 1, expectedVersion: 0, reason: "sdk_conformance_activation" },
+      { idempotencyKey: createIdempotencyKey("policy-activation") },
+    );
+    expect(activatedPolicy.data.policy.activeRevision).toBe(1);
+
     const verificationKey = createIdempotencyKey("verification");
     const input = {
       captureProfileId: createdProfile.data.profileId,
-      policyId: "pol_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+      policyId,
     } as const;
     const first = await tenant.verifications.create(input, { idempotencyKey: verificationKey });
     const replay = await tenant.verifications.create(input, { idempotencyKey: verificationKey });
@@ -76,6 +88,25 @@ const selfieUploadDocument: CaptureProfileDocument = {
       required_assurances: [],
       constraints: [],
       fallbacks: [],
+    },
+  ],
+};
+
+const policyDefinition: PolicyDefinition = {
+  schema_major: 1,
+  schema_minor: 0,
+  verified_assurance: "synthetic.fixture",
+  rules: [
+    {
+      name: "conformance",
+      when: 'facts["synthetic.document"] == "satisfied"',
+      result: {
+        state: "satisfied",
+        directive: "complete_verified",
+        priority: 1,
+        contributing_facts: ["synthetic.document"],
+        reason_codes: [],
+      },
     },
   ],
 };

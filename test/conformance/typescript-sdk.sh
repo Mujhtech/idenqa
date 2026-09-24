@@ -9,6 +9,13 @@ api_port=${IDENQA_SDK_CONFORMANCE_PORT:-18080}
 unset IDENQA_SDK_CONFORMANCE_PORT
 base_url="http://127.0.0.1:${api_port}"
 
+# Webhook event bodies are wrapped with the evidence KEK, so the conformance
+# deployment provisions an isolated local keyring and ciphertext directory.
+runtime_directory=$(mktemp -d -t idenqa-sdk-conformance.XXXXXX)
+keyring_file="$runtime_directory/keyring.json"
+mkdir -p "$runtime_directory/evidence"
+./bin/idenqa evidence-key init --keyring-file "$keyring_file" >/dev/null
+
 # Fixed synthetic keys are confined to this isolated conformance deployment.
 pepper=QkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkI
 cursor_key=Q0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0M
@@ -32,6 +39,11 @@ export IDENQA_OUTCOME_TOKEN_KEYS="1=${outcome_key}"
 export IDENQA_HTTP_HOST=127.0.0.1
 export IDENQA_HTTP_PORT=$api_port
 export IDENQA_LOG_LEVEL=error
+export IDENQA_REGION=local
+export IDENQA_REALTIME_WEBSOCKET_URL="ws://127.0.0.1:${api_port}/v1/capture/socket"
+export IDENQA_HTTP_CORS_ALLOWED_ORIGINS="http://127.0.0.1:${api_port}"
+export IDENQA_EVIDENCE_LOCAL_DIRECTORY="$runtime_directory/evidence"
+export IDENQA_EVIDENCE_LOCAL_KEYRING_FILE=$keyring_file
 
 ./bin/idenqa migrate up >/dev/null
 
@@ -49,6 +61,7 @@ key_output=$(./bin/idenqa api-key create \
   --label sdk-conformance \
   --scope 'capture_profiles:*' \
   --scope 'verification_sessions:*' \
+  --scope 'policies:*' \
   --expires-at 2099-01-01T00:00:00Z \
   --actor sdk-conformance \
   --reason "create synthetic SDK conformance credential")
@@ -66,6 +79,7 @@ cleanup() {
     wait "$api_pid" 2>/dev/null || true
   fi
   rm -f "$api_log"
+  rm -rf "$runtime_directory"
 }
 trap cleanup EXIT INT TERM
 
