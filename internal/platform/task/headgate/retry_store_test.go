@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/Mujhtech/idenqa/internal/platform/task"
 	"github.com/jackc/pgx/v5"
@@ -33,6 +34,30 @@ func TestRuntimeTransactionRejectsUnusableIsolation(t *testing.T) {
 				t.Fatal("unusable transaction was not rolled back")
 			}
 		})
+	}
+}
+
+func TestRetryDelayRetriesSerializationConflictsPromptly(t *testing.T) {
+	t.Parallel()
+	policy := task.RetryPolicy{MaxAttempts: 8, InitialBackoff: time.Second, MaximumBackoff: time.Hour, JitterPercent: 20}
+	store := newRetryStore(nil)
+	store.claims["tsk_conflict"] = retryClaim{policy: policy, attempt: 2, seed: "conflict-seed"}
+	store.claims["tsk_unavailable"] = retryClaim{policy: policy, attempt: 2, seed: "unavailable-seed"}
+
+	delay := store.retryDelay("tsk_conflict", libheadgate.OutcomeRetry, 0,
+		"advance webhook fanout: ERROR: could not serialize access due to read/write dependencies among transactions (SQLSTATE 40001)")
+	if minimum, maximum := conflictInitialBackoff.Milliseconds(), (conflictInitialBackoff + conflictJitterBackoff).Milliseconds(); delay < minimum || delay >= maximum {
+		t.Fatalf("serialization conflict delay = %dms, want [%d,%d)", delay, minimum, maximum)
+	}
+	if again := store.retryDelay("tsk_conflict", libheadgate.OutcomeRetry, 0, "ERROR: (SQLSTATE 40001)"); again != delay {
+		t.Fatalf("serialization conflict delay = %dms then %dms, want deterministic", delay, again)
+	}
+	unavailable := store.retryDelay("tsk_unavailable", libheadgate.OutcomeRetry, 0, "dial tcp: connection refused")
+	if minimum, maximum := int64(1600), int64(2400); unavailable < minimum || unavailable > maximum {
+		t.Fatalf("unavailable delay = %dms, want policy backoff in [%d,%d]", unavailable, minimum, maximum)
+	}
+	if supplied := store.retryDelay("tsk_unavailable", libheadgate.OutcomeRetry, 5000, "dial tcp: connection refused"); supplied != 5000 {
+		t.Fatalf("supplied delay = %dms, want 5000ms", supplied)
 	}
 }
 

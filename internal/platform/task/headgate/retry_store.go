@@ -2,14 +2,26 @@ package headgate
 
 import (
 	"context"
+	"encoding/binary"
 	"errors"
 	"fmt"
+	"hash/fnv"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/Mujhtech/idenqa/internal/platform/task"
 	"github.com/jackc/pgx/v5"
 	libheadgate "github.com/mujhtech/headgate/go"
+)
+
+// Serialization failures are transient SSI conflicts: PostgreSQL itself
+// advises retrying them. The exponential task schedule would wait seconds for
+// a transaction that has usually already committed, so conflicts retry
+// promptly with bounded deterministic jitter.
+const (
+	conflictInitialBackoff = 50 * time.Millisecond
+	conflictJitterBackoff  = 100 * time.Millisecond
 )
 
 // retryStore supplies the task-specific delay that Headgate's PostgreSQL Ack
@@ -194,7 +206,7 @@ func (store *retryStore) Ack(
 	errMsg string,
 	delayMs int64,
 ) error {
-	delayMs = store.retryDelay(lease.JobID, outcome, delayMs)
+	delayMs = store.retryDelay(lease.JobID, outcome, delayMs, errMsg)
 	err := store.Store.Ack(ctx, lease, outcome, errMsg, delayMs)
 	store.releaseClaim(lease.JobID, err)
 	return err
@@ -208,7 +220,7 @@ func (store *retryStore) AckAttempt(
 	delayMs int64,
 	logs []string,
 ) error {
-	delayMs = store.retryDelay(lease.JobID, outcome, delayMs)
+	delayMs = store.retryDelay(lease.JobID, outcome, delayMs, errMsg)
 	err := store.Store.AckAttempt(ctx, lease, outcome, errMsg, delayMs, logs)
 	store.releaseClaim(lease.JobID, err)
 	return err
@@ -223,7 +235,7 @@ func (store *retryStore) AckAttemptWithActualWeight(
 	logs []string,
 	actualWeight *uint32,
 ) error {
-	delayMs = store.retryDelay(lease.JobID, outcome, delayMs)
+	delayMs = store.retryDelay(lease.JobID, outcome, delayMs, errMsg)
 	err := store.Store.AckAttemptWithActualWeight(
 		ctx, lease, outcome, errMsg, delayMs, logs, actualWeight,
 	)
@@ -258,13 +270,19 @@ func (store *retryStore) ReclaimExpired(
 	return reclaimed, err
 }
 
-func (store *retryStore) retryDelay(jobID string, outcome libheadgate.Outcome, supplied int64) int64 {
-	if outcome != libheadgate.OutcomeRetry || supplied != 0 {
+func (store *retryStore) retryDelay(jobID string, outcome libheadgate.Outcome, supplied int64, errMsg string) int64 {
+	if outcome != libheadgate.OutcomeRetry {
 		return supplied
 	}
 	store.mu.Lock()
 	claim, exists := store.claims[jobID]
 	store.mu.Unlock()
+	if exists && strings.Contains(errMsg, "SQLSTATE 40001") {
+		return conflictBackoff(claim.seed, claim.attempt).Milliseconds()
+	}
+	if supplied != 0 {
+		return supplied
+	}
 	if !exists {
 		return supplied
 	}
@@ -273,6 +291,16 @@ func (store *retryStore) retryDelay(jobID string, outcome libheadgate.Outcome, s
 		return supplied
 	}
 	return delay.Milliseconds()
+}
+
+func conflictBackoff(seed string, attempt uint32) time.Duration {
+	hasher := fnv.New64a()
+	_, _ = hasher.Write([]byte(seed))
+	var encodedAttempt [4]byte
+	binary.BigEndian.PutUint32(encodedAttempt[:], attempt)
+	_, _ = hasher.Write(encodedAttempt[:])
+	fraction := float64(hasher.Sum64()%1000) / 1000
+	return conflictInitialBackoff + time.Duration(float64(conflictJitterBackoff)*fraction)
 }
 
 func (store *retryStore) releaseClaim(jobID string, ackErr error) {
