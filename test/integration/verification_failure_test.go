@@ -186,8 +186,9 @@ func TestVerificationFailureBackfill(t *testing.T) {
 	}()
 	// Roll back every migration applied after the failure migration, then the
 	// failure migration itself, so the legacy row is written on the prior schema
-	// even when later migrations have been added.
-	for attempt := 0; attempt < 10; attempt++ {
+	// even when later migrations have been added. The bound only guards against
+	// an unbounded loop; the presence check below is the exit condition.
+	for attempt := 0; attempt < 64; attempt++ {
 		var present bool
 		if err := f.admin.Native().QueryRow(t.Context(), `SELECT EXISTS (SELECT 1 FROM information_schema.columns
 WHERE table_schema='idenqa' AND table_name='verification_sessions' AND column_name='failure_class')`).Scan(&present); err != nil {
