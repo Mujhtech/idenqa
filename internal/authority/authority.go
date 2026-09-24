@@ -69,8 +69,8 @@ type Notice struct{ record NoticeRecord }
 
 // NewNotice validates and content-addresses an immutable notice version.
 func NewNotice(record NoticeRecord) (Notice, error) {
-	record.EffectiveAt = record.EffectiveAt.UTC()
-	record.CreatedAt = record.CreatedAt.UTC()
+	record.EffectiveAt = record.EffectiveAt.UTC().Truncate(time.Microsecond)
+	record.CreatedAt = record.CreatedAt.UTC().Truncate(time.Microsecond)
 	record.Digest = ""
 	if record.ID.IsZero() || record.TenantID.IsZero() || record.CreatedBy.IsZero() ||
 		record.EffectiveAt.IsZero() || record.CreatedAt.IsZero() {

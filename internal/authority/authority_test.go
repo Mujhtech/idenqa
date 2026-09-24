@@ -35,6 +35,39 @@ func TestNotice_ContentAddressedAndImmutable(t *testing.T) {
 	}
 }
 
+func TestNotice_DigestUsesDurableMicrosecondPrecision(t *testing.T) {
+	t.Parallel()
+	fixture := newFixture(t, false)
+	record := authority.NoticeRecord{
+		ID: fixture.notice.ID(), TenantID: fixture.notice.TenantID(),
+		Key: fixture.notice.Key(), Locale: fixture.notice.Locale(),
+		Controller: fixture.notice.Controller(), Recipient: fixture.notice.Recipient(),
+		Copy:      fixture.notice.Copy(),
+		CreatedBy: fixture.notice.CreatedBy(),
+		// Linux clocks deliver sub-microsecond precision; PostgreSQL timestamptz
+		// stores microseconds, so content addressing must use durable precision.
+		EffectiveAt: fixture.notice.EffectiveAt().Add(789 * time.Nanosecond),
+		CreatedAt:   fixture.notice.CreatedAt().Add(123 * time.Nanosecond),
+	}
+	notice, err := authority.NewNotice(record)
+	if err != nil {
+		t.Fatalf("NewNotice() error = %v", err)
+	}
+	if !notice.EffectiveAt().Equal(notice.EffectiveAt().Truncate(time.Microsecond)) ||
+		!notice.CreatedAt().Equal(notice.CreatedAt().Truncate(time.Microsecond)) {
+		t.Fatalf("notice times retained sub-microsecond precision: %v %v", notice.EffectiveAt(), notice.CreatedAt())
+	}
+	durable := record
+	durable.EffectiveAt, durable.CreatedAt, durable.Digest = notice.EffectiveAt(), notice.CreatedAt(), notice.Digest()
+	restored, err := authority.RestoreNotice(durable)
+	if err != nil {
+		t.Fatalf("RestoreNotice() error = %v", err)
+	}
+	if restored.Digest() != notice.Digest() {
+		t.Fatalf("RestoreNotice().Digest() = %q, want %q", restored.Digest(), notice.Digest())
+	}
+}
+
 func TestEvaluate(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
