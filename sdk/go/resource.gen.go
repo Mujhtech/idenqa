@@ -1294,8 +1294,10 @@ type EvidenceAccessGrant struct {
 	CreatedAt      time.Time             `json:"created_at"`
 
 	// EvidenceID Stable opaque identifier preallocated for the accepted evidence artefact.
-	EvidenceID         EvidenceID                   `json:"evidence_id"`
-	ExpiresAt          time.Time                    `json:"expires_at"`
+	EvidenceID EvidenceID `json:"evidence_id"`
+	ExpiresAt  time.Time  `json:"expires_at"`
+
+	// ID Stable identifier for one purpose-bound evidence-processing grant.
 	ID                 EvidenceAccessGrantID        `json:"id"`
 	MaximumUses        int                          `json:"maximum_uses"`
 	Operation          EvidenceAccessGrantOperation `json:"operation"`
@@ -1324,7 +1326,7 @@ type EvidenceAccessGrant struct {
 // EvidenceAccessGrantOperation defines model for EvidenceAccessGrant.Operation.
 type EvidenceAccessGrantOperation string
 
-// EvidenceAccessGrantCreate defines model for EvidenceAccessGrantCreate.
+// EvidenceAccessGrantCreate Exact purpose-bound processing grant requested for one evidence artefact.
 type EvidenceAccessGrantCreate struct {
 	CheckReference     string   `json:"check_reference"`
 	MaximumUses        int      `json:"maximum_uses"`
@@ -1338,10 +1340,10 @@ type EvidenceAccessGrantCreate struct {
 	WorkloadVersion    string   `json:"workload_version"`
 }
 
-// EvidenceAccessGrantID defines model for EvidenceAccessGrantID.
+// EvidenceAccessGrantID Stable identifier for one purpose-bound evidence-processing grant.
 type EvidenceAccessGrantID = string
 
-// EvidenceAccessGrantRevoke defines model for EvidenceAccessGrantRevoke.
+// EvidenceAccessGrantRevoke Bounded audit reason for irreversibly revoking one processing grant.
 type EvidenceAccessGrantRevoke struct {
 	Reason string `json:"reason"`
 }
@@ -1349,7 +1351,7 @@ type EvidenceAccessGrantRevoke struct {
 // EvidenceID Stable opaque identifier preallocated for the accepted evidence artefact.
 type EvidenceID = string
 
-// EvidenceLifecycleEvent defines model for EvidenceLifecycleEvent.
+// EvidenceLifecycleEvent One append-only evidence metadata transition without object locations or bytes.
 type EvidenceLifecycleEvent struct {
 	Action     string    `json:"action"`
 	OccurredAt time.Time `json:"occurred_at"`
@@ -1357,7 +1359,7 @@ type EvidenceLifecycleEvent struct {
 	Version    int64     `json:"version"`
 }
 
-// EvidenceLifecycleList defines model for EvidenceLifecycleList.
+// EvidenceLifecycleList Bounded append-only evidence lifecycle history.
 type EvidenceLifecycleList struct {
 	Data []EvidenceLifecycleEvent `json:"data"`
 }
@@ -2151,7 +2153,7 @@ type ProcessingAuthorityID = string
 // ProposalActionKind Closed allow-list of non-authoritative proposal action kinds.
 type ProposalActionKind string
 
-// ProposalImpactAssessment defines model for ProposalImpactAssessment.
+// ProposalImpactAssessment One immutable reviewed and actor-attributed impact assessment.
 type ProposalImpactAssessment struct {
 	ActorID    string    `json:"actor_id"`
 	Assessment string    `json:"assessment"`
@@ -2484,7 +2486,7 @@ type SubjectResponseID = string
 // TenantID Stable Idenqa tenant identifier.
 type TenantID = string
 
-// VerificationReconsiderationCreate defines model for VerificationReconsiderationCreate.
+// VerificationReconsiderationCreate Exact decision selected for an independent correction workflow.
 type VerificationReconsiderationCreate struct {
 	// DecisionID Stable identifier for one immutable policy decision.
 	DecisionID PolicyDecisionID `json:"decision_id"`
@@ -2588,6 +2590,7 @@ type CreateEvidenceAccessGrantParams struct {
 
 // ListEvidenceLifecycleParams defines parameters for ListEvidenceLifecycle.
 type ListEvidenceLifecycleParams struct {
+	// Limit Maximum lifecycle events to return. The default is 50.
 	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
 }
 

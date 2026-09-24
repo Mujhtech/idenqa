@@ -7039,9 +7039,11 @@ export interface components {
         };
         /** @description Bounded newest-first immutable decision lineage. */
         readonly PolicyDecisionList: {
+            /** @example [] */
             readonly data: readonly components["schemas"]["PolicyDecisionReport"][];
             readonly next_before?: components["schemas"]["PolicyDecisionID"];
         };
+        /** @description Exact decision selected for an independent correction workflow. */
         readonly VerificationReconsiderationCreate: {
             readonly decision_id: components["schemas"]["PolicyDecisionID"];
         };
@@ -7396,6 +7398,7 @@ export interface components {
         };
         /** @description Bounded audit reason for append-only consent withdrawal. */
         readonly ConsentReceiptRevoke: {
+            /** @example Subject withdrew consent for continued processing. */
             readonly reason: string;
         };
         /** @description Capture-visible current authority, exact notice, and optional latest response. */
@@ -7741,58 +7744,117 @@ export interface components {
          * @example evd_01M11HEQG00000000000000000
          */
         readonly EvidenceID: string;
-        /** @example grt_01M11HEQG00000000000000000 */
+        /**
+         * @description Stable identifier for one purpose-bound evidence-processing grant.
+         * @example grt_01M11HEQG00000000000000000
+         */
         readonly EvidenceAccessGrantID: string;
         /** @description Safe reference-only evidence metadata; storage and cryptographic material are absent. */
         readonly EvidenceMetadata: {
             readonly id: components["schemas"]["EvidenceID"];
             readonly subject_id: components["schemas"]["SubjectID"];
             readonly verification_id: components["schemas"]["VerificationSessionID"];
+            /** @example selfie */
             readonly requirement_key: string;
+            /** @example idenqa.evidence.selfie_image */
             readonly evidence_type: string;
+            /** @example idenqa.artefact.selfie_image */
             readonly artefact: string;
+            /** @example idenqa.method.file_upload */
             readonly acquisition_method: string;
+            /** @example [] */
             readonly assurances: readonly string[];
+            /** @example 3 */
             readonly registry_revision: number;
+            /** @example idenqa.region.synthetic */
             readonly region: string;
+            /** @example idenqa.retention.standard */
             readonly retention_class: string;
+            /** @example 1 */
             readonly content_revision: number;
-            /** @enum {string} */
+            /**
+             * @example verified
+             * @enum {string}
+             */
             readonly integrity: "verified" | "failed";
-            /** @enum {string} */
+            /**
+             * @example available
+             * @enum {string}
+             */
             readonly state: "available" | "quarantined" | "deleted";
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @example 1
+             */
             readonly version: number;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @example 2026-08-27T12:05:00Z
+             */
             readonly created_at: string;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @example 2026-08-27T12:06:00Z
+             */
             readonly updated_at: string;
+            /** @example integrity_digest_mismatch */
             readonly quarantine_reason?: string;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @example 2026-08-27T12:10:00Z
+             */
             readonly quarantined_at?: string;
         };
+        /** @description One append-only evidence metadata transition without object locations or bytes. */
         readonly EvidenceLifecycleEvent: {
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @example 1
+             */
             readonly version: number;
+            /** @example create */
             readonly action: string;
+            /** @example Evidence accepted after integrity verification. */
             readonly reason?: string;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @example 2026-08-27T12:05:00Z
+             */
             readonly occurred_at: string;
         };
+        /** @description Bounded append-only evidence lifecycle history. */
         readonly EvidenceLifecycleList: {
+            /** @example [] */
             readonly data: readonly components["schemas"]["EvidenceLifecycleEvent"][];
         };
+        /** @description Exact purpose-bound processing grant requested for one evidence artefact. */
         readonly EvidenceAccessGrantCreate: {
+            /** @example idenqa.check.face_match_1to1 */
             readonly check_reference: string;
+            /** @example idenqa.runner.model */
             readonly runner_identity: string;
+            /** @example 1.0.0 */
             readonly workload_version: string;
+            /** @example identity.verification */
             readonly purpose: string;
+            /**
+             * @example [
+             *       "selfie"
+             *     ]
+             */
             readonly permitted_variants: readonly string[];
+            /** @example tenant.recipient.primary */
             readonly recipient_reference: string;
+            /** @example idenqa.destination.transient */
             readonly output_destination: string;
+            /** @example 1 */
             readonly maximum_uses: number;
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @example 300
+             */
             readonly ttl_seconds: number;
+            /** @example Authorised one processing read for the active verification. */
             readonly reason: string;
         };
         /** @description Safe purpose-bound grant metadata; redemption attempts are absent. */
@@ -7803,28 +7865,58 @@ export interface components {
             readonly evidence_id: components["schemas"]["EvidenceID"];
             readonly authority_id: components["schemas"]["ProcessingAuthorityID"];
             readonly response_id: components["schemas"]["SubjectResponseID"];
+            /** @example selfie */
             readonly requirement_key: string;
+            /** @example idenqa.check.face_match_1to1 */
             readonly check_reference: string;
+            /** @example idenqa.runner.model */
             readonly runner_identity: string;
+            /** @example 1.0.0 */
             readonly workload_version: string;
+            /** @example identity.verification */
             readonly purpose: string;
-            /** @enum {string} */
+            /**
+             * @example evidence.plaintext.read
+             * @enum {string}
+             */
             readonly operation: "evidence.plaintext.read";
+            /**
+             * @example [
+             *       "selfie"
+             *     ]
+             */
             readonly permitted_variants: readonly string[];
+            /** @example idenqa.region.synthetic */
             readonly region: string;
+            /** @example tenant.recipient.primary */
             readonly recipient_reference: string;
+            /** @example idenqa.destination.transient */
             readonly output_destination: string;
+            /** @example pol_01M11HEQG00000000000000000 */
             readonly policy_reference: string;
+            /** @example 1 */
             readonly maximum_uses: number;
+            /** @example 0 */
             readonly uses: number;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @example 2026-08-27T12:15:00Z
+             */
             readonly created_at: string;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @example 2026-08-27T12:20:00Z
+             */
             readonly expires_at: string;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @example 2026-08-27T12:18:00Z
+             */
             readonly revoked_at?: string;
         };
+        /** @description Bounded audit reason for irreversibly revoking one processing grant. */
         readonly EvidenceAccessGrantRevoke: {
+            /** @example Subject requested immediate grant withdrawal. */
             readonly reason: string;
         };
         /**
@@ -7834,12 +7926,20 @@ export interface components {
         readonly CaptureFallbackCondition: "capability_unavailable" | "method_unavailable" | "capture_failed";
         /** @description Metadata binding one image into an ordered digest-chained active-capture sequence. It makes no assurance claim. */
         readonly TemporalEvidenceFrame: {
+            /** @example sha256:284a4418399974a7d1ce691f96ea534e1cd97ee1a9bc0d09de25d4a3b9d48969 */
             readonly sequence_digest: string;
+            /** @example 0 */
             readonly index: number;
+            /** @example 3 */
             readonly count: number;
+            /** @example idenqa.challenge.turn_left */
             readonly challenge_id: string;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @example 2026-08-30T12:00:01Z
+             */
             readonly captured_at: string;
+            /** @example sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa */
             readonly previous_digest?: string;
         };
         /** @description Minimal immutable binding for one accepted capture step. */
@@ -9027,7 +9127,16 @@ export interface components {
              */
             readonly risk_level: "low" | "medium" | "high" | "critical";
         };
-        readonly ProposalImpactAssessment: components["schemas"]["ProposalImpactAssessmentCreate"] & {
+        /** @description One immutable reviewed and actor-attributed impact assessment. */
+        readonly ProposalImpactAssessment: {
+            readonly kind: components["schemas"]["ProposalActionKind"];
+            /** @example Human approval remains mandatory for this action. */
+            readonly assessment: string;
+            /**
+             * @example high
+             * @enum {string}
+             */
+            readonly risk_level: "low" | "medium" | "high" | "critical";
             /** @example imp_1790000000000000000 */
             readonly id: string;
             /**
@@ -9040,6 +9149,7 @@ export interface components {
         };
         /** @description Bounded newest-first immutable impact assessments. */
         readonly ProposalImpactAssessmentList: {
+            /** @example [] */
             readonly data: readonly components["schemas"]["ProposalImpactAssessment"][];
         };
         /**
@@ -12953,6 +13063,7 @@ export interface operations {
             };
             readonly cookie?: never;
         };
+        /** @description The exact immutable decision to open an independent correction workflow for. */
         readonly requestBody: {
             readonly content: {
                 readonly "application/json": components["schemas"]["VerificationReconsiderationCreate"];
@@ -13601,6 +13712,7 @@ export interface operations {
             readonly path?: never;
             readonly cookie?: never;
         };
+        /** @description The exact notice-bound subject response to append. */
         readonly requestBody: {
             readonly content: {
                 readonly "application/json": components["schemas"]["SubjectResponseCreate"];
@@ -13627,6 +13739,7 @@ export interface operations {
             readonly query?: never;
             readonly header?: never;
             readonly path: {
+                /** @description Identifier of the immutable consent receipt. */
                 readonly consentID: components["schemas"]["SubjectResponseID"];
             };
             readonly cookie?: never;
@@ -13661,10 +13774,12 @@ export interface operations {
                 readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
             };
             readonly path: {
+                /** @description Identifier of the immutable consent receipt. */
                 readonly consentID: components["schemas"]["SubjectResponseID"];
             };
             readonly cookie?: never;
         };
+        /** @description Bounded audit reason for withdrawing the consent receipt. */
         readonly requestBody: {
             readonly content: {
                 readonly "application/json": components["schemas"]["ConsentReceiptRevoke"];
@@ -13979,6 +14094,7 @@ export interface operations {
             readonly query?: never;
             readonly header?: never;
             readonly path: {
+                /** @description Identifier of the safe evidence metadata record. */
                 readonly evidenceID: components["schemas"]["EvidenceID"];
             };
             readonly cookie?: never;
@@ -14002,10 +14118,12 @@ export interface operations {
     readonly listEvidenceLifecycle: {
         readonly parameters: {
             readonly query?: {
+                /** @description Maximum lifecycle events to return. The default is 50. */
                 readonly limit?: number;
             };
             readonly header?: never;
             readonly path: {
+                /** @description Identifier of the safe evidence metadata record. */
                 readonly evidenceID: components["schemas"]["EvidenceID"];
             };
             readonly cookie?: never;
@@ -14031,6 +14149,7 @@ export interface operations {
             readonly query?: never;
             readonly header?: never;
             readonly path: {
+                /** @description Identifier of the purpose-bound processing grant. */
                 readonly grantID: components["schemas"]["EvidenceAccessGrantID"];
             };
             readonly cookie?: never;
@@ -14065,10 +14184,12 @@ export interface operations {
                 readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
             };
             readonly path: {
+                /** @description Identifier of the safe evidence metadata record. */
                 readonly evidenceID: components["schemas"]["EvidenceID"];
             };
             readonly cookie?: never;
         };
+        /** @description The exact runner-bound processing grant to issue. */
         readonly requestBody: {
             readonly content: {
                 readonly "application/json": components["schemas"]["EvidenceAccessGrantCreate"];
@@ -14105,10 +14226,12 @@ export interface operations {
                 readonly "Idempotency-Key": components["parameters"]["IdempotencyKey"];
             };
             readonly path: {
+                /** @description Identifier of the purpose-bound processing grant. */
                 readonly grantID: components["schemas"]["EvidenceAccessGrantID"];
             };
             readonly cookie?: never;
         };
+        /** @description Bounded audit reason for the irreversible revocation. */
         readonly requestBody: {
             readonly content: {
                 readonly "application/json": components["schemas"]["EvidenceAccessGrantRevoke"];
@@ -19313,6 +19436,7 @@ export interface operations {
             readonly path?: never;
             readonly cookie?: never;
         };
+        /** @description The reviewed assessment for one bounded proposal action kind. */
         readonly requestBody: {
             readonly content: {
                 readonly "application/json": components["schemas"]["ProposalImpactAssessmentCreate"];
@@ -19325,6 +19449,16 @@ export interface operations {
                     readonly [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "id": "imp_1790000000000000000",
+                     *       "kind": "policy.draft.generate",
+                     *       "assessment": "Human approval remains mandatory for this action.",
+                     *       "risk_level": "high",
+                     *       "created_at": "2026-09-21T12:00:00Z",
+                     *       "actor_id": "key_01M11HEQG00000000000000000"
+                     *     }
+                     */
                     readonly "application/json": components["schemas"]["ProposalImpactAssessment"];
                 };
             };
@@ -19353,6 +19487,16 @@ export interface operations {
                     readonly [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "id": "imp_1790000000000000000",
+                     *       "kind": "policy.draft.generate",
+                     *       "assessment": "Human approval remains mandatory for this action.",
+                     *       "risk_level": "high",
+                     *       "created_at": "2026-09-21T12:00:00Z",
+                     *       "actor_id": "key_01M11HEQG00000000000000000"
+                     *     }
+                     */
                     readonly "application/json": components["schemas"]["ProposalImpactAssessment"];
                 };
             };

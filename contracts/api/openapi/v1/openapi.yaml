@@ -56,6 +56,10 @@ tags:
     description: Portable tenant-owned capture experiences with immutable signed revisions, approval-gated publication, kill switch, rollback, export and import, and the Core-shipped signed safe default.
   - name: Key custody
     description: Tenant predictable-identifier key lifecycles, bounded KMS material rewraps, verified key destruction, and dual-control recovery ceremonies. Wrapped material is never returned.
+  - name: Review
+    description: Independent correction workflows that supersede an immutable decision without mutating it.
+  - name: Evidence
+    description: Reference-only evidence metadata, lifecycle history and purpose-bound processing grants.
   - name: Support access
     description: Time-bounded delegated support grants and dual-control emergency break-glass requests with an append-only use ledger.
 paths:
@@ -855,6 +859,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
+        description: The exact immutable decision to open an independent correction workflow for.
         required: true
         content:
           application/json:
@@ -1405,6 +1410,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
+        description: The exact notice-bound subject response to append.
         required: true
         content:
           application/json:
@@ -1436,6 +1442,7 @@ paths:
         - name: consentID
           in: path
           required: true
+          description: Identifier of the immutable consent receipt.
           schema:
             $ref: "#/components/schemas/SubjectResponseID"
       responses:
@@ -1463,10 +1470,12 @@ paths:
         - name: consentID
           in: path
           required: true
+          description: Identifier of the immutable consent receipt.
           schema:
             $ref: "#/components/schemas/SubjectResponseID"
         - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
+        description: Bounded audit reason for withdrawing the consent receipt.
         required: true
         content:
           application/json:
@@ -1775,6 +1784,7 @@ paths:
         - name: evidenceID
           in: path
           required: true
+          description: Identifier of the safe evidence metadata record.
           schema:
             $ref: "#/components/schemas/EvidenceID"
       responses:
@@ -1801,11 +1811,13 @@ paths:
         - name: evidenceID
           in: path
           required: true
+          description: Identifier of the safe evidence metadata record.
           schema:
             $ref: "#/components/schemas/EvidenceID"
         - name: limit
           in: query
           required: false
+          description: Maximum lifecycle events to return. The default is 50.
           schema:
             type: integer
             minimum: 1
@@ -1835,6 +1847,7 @@ paths:
         - name: grantID
           in: path
           required: true
+          description: Identifier of the purpose-bound processing grant.
           schema:
             $ref: "#/components/schemas/EvidenceAccessGrantID"
       responses:
@@ -1862,10 +1875,12 @@ paths:
         - name: evidenceID
           in: path
           required: true
+          description: Identifier of the safe evidence metadata record.
           schema:
             $ref: "#/components/schemas/EvidenceID"
         - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
+        description: The exact runner-bound processing grant to issue.
         required: true
         content:
           application/json:
@@ -1899,10 +1914,12 @@ paths:
         - name: grantID
           in: path
           required: true
+          description: Identifier of the purpose-bound processing grant.
           schema:
             $ref: "#/components/schemas/EvidenceAccessGrantID"
         - $ref: "#/components/parameters/IdempotencyKey"
       requestBody:
+        description: Bounded audit reason for the irreversible revocation.
         required: true
         content:
           application/json:
@@ -7421,9 +7438,25 @@ paths:
       summary: Record an immutable AI impact assessment
       security: [TenantAPIKey: []]
       x-required-scopes: [proposals:configure]
-      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ProposalImpactAssessmentCreate' } } } }
+      requestBody:
+        description: The reviewed assessment for one bounded proposal action kind.
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProposalImpactAssessmentCreate' }
       responses:
-        '201': { description: Assessment recorded., content: { application/json: { schema: { $ref: '#/components/schemas/ProposalImpactAssessment' } } } }
+        '201':
+          description: Assessment recorded.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProposalImpactAssessment' }
+              example:
+                id: imp_1790000000000000000
+                kind: policy.draft.generate
+                assessment: "Human approval remains mandatory for this action."
+                risk_level: high
+                created_at: "2026-09-21T12:00:00Z"
+                actor_id: key_01M11HEQG00000000000000000
         '400': { $ref: '#/components/responses/InvalidRequest' }
         '401': { $ref: '#/components/responses/Unauthenticated' }
         '403': { $ref: '#/components/responses/InsufficientScope' }
@@ -7439,7 +7472,18 @@ paths:
       security: [TenantAPIKey: []]
       x-required-scopes: [proposals:read]
       responses:
-        '200': { description: Assessment returned., content: { application/json: { schema: { $ref: '#/components/schemas/ProposalImpactAssessment' } } } }
+        '200':
+          description: Assessment returned.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProposalImpactAssessment' }
+              example:
+                id: imp_1790000000000000000
+                kind: policy.draft.generate
+                assessment: "Human approval remains mandatory for this action."
+                risk_level: high
+                created_at: "2026-09-21T12:00:00Z"
+                actor_id: key_01M11HEQG00000000000000000
         '401': { $ref: '#/components/responses/Unauthenticated' }
         '403': { $ref: '#/components/responses/InsufficientScope' }
         '404': { $ref: '#/components/responses/NotFound' }
@@ -14266,11 +14310,13 @@ components:
         data:
           type: array
           maxItems: 100
+          example: []
           items: { $ref: "#/components/schemas/PolicyDecisionReport" }
         next_before:
           $ref: "#/components/schemas/PolicyDecisionID"
     VerificationReconsiderationCreate:
       type: object
+      description: Exact decision selected for an independent correction workflow.
       additionalProperties: false
       required: [decision_id]
       properties:
@@ -15205,6 +15251,7 @@ components:
           type: string
           minLength: 1
           maxLength: 500
+          example: Subject withdrew consent for continued processing.
     CaptureAuthoritySnapshot:
       description: Capture-visible current authority, exact notice, and optional latest response.
       type: object
@@ -15670,6 +15717,7 @@ components:
       example: evd_01M11HEQG00000000000000000
     EvidenceAccessGrantID:
       type: string
+      description: Stable identifier for one purpose-bound evidence-processing grant.
       pattern: ^grt_[0-9A-HJKMNP-TV-Z]{26}$
       example: grt_01M11HEQG00000000000000000
     EvidenceMetadata:
@@ -15686,49 +15734,66 @@ components:
           $ref: "#/components/schemas/VerificationSessionID"
         requirement_key:
           type: string
+          example: selfie
         evidence_type:
           type: string
+          example: idenqa.evidence.selfie_image
         artefact:
           type: string
+          example: idenqa.artefact.selfie_image
         acquisition_method:
           type: string
+          example: idenqa.method.file_upload
         assurances:
           type: array
+          example: []
           items:
             type: string
         registry_revision:
           type: integer
           minimum: 1
+          example: 3
         region:
           type: string
+          example: idenqa.region.synthetic
         retention_class:
           type: string
+          example: idenqa.retention.standard
         content_revision:
           type: integer
           minimum: 1
+          example: 1
         integrity:
           type: string
           enum: [verified, failed]
+          example: verified
         state:
           type: string
           enum: [available, quarantined, deleted]
+          example: available
         version:
           type: integer
           format: int64
           minimum: 1
+          example: 1
         created_at:
           type: string
           format: date-time
+          example: "2026-08-27T12:05:00Z"
         updated_at:
           type: string
           format: date-time
+          example: "2026-08-27T12:06:00Z"
         quarantine_reason:
           type: string
+          example: integrity_digest_mismatch
         quarantined_at:
           type: string
           format: date-time
+          example: "2026-08-27T12:10:00Z"
     EvidenceLifecycleEvent:
       type: object
+      description: One append-only evidence metadata transition without object locations or bytes.
       additionalProperties: false
       required: [version, action, occurred_at]
       properties:
@@ -15736,58 +15801,75 @@ components:
           type: integer
           format: int64
           minimum: 1
+          example: 1
         action:
           type: string
+          example: create
         reason:
           type: string
+          example: Evidence accepted after integrity verification.
         occurred_at:
           type: string
           format: date-time
+          example: "2026-08-27T12:05:00Z"
     EvidenceLifecycleList:
       type: object
+      description: Bounded append-only evidence lifecycle history.
       additionalProperties: false
       required: [data]
       properties:
         data:
           type: array
+          example: []
           items:
             $ref: "#/components/schemas/EvidenceLifecycleEvent"
     EvidenceAccessGrantCreate:
       type: object
+      description: Exact purpose-bound processing grant requested for one evidence artefact.
       additionalProperties: false
       required: [check_reference, runner_identity, workload_version, purpose, permitted_variants, recipient_reference, output_destination, maximum_uses, ttl_seconds, reason]
       properties:
         check_reference:
           type: string
+          example: idenqa.check.face_match_1to1
         runner_identity:
           type: string
+          example: idenqa.runner.model
         workload_version:
           type: string
+          example: 1.0.0
         purpose:
           type: string
+          example: identity.verification
         permitted_variants:
           type: array
           minItems: 1
           maxItems: 16
+          example: [selfie]
           items:
             type: string
         recipient_reference:
           type: string
+          example: tenant.recipient.primary
         output_destination:
           type: string
+          example: idenqa.destination.transient
         maximum_uses:
           type: integer
           minimum: 1
           maximum: 32
+          example: 1
         ttl_seconds:
           type: integer
           format: int64
           minimum: 1
           maximum: 3600
+          example: 300
         reason:
           type: string
           minLength: 1
           maxLength: 500
+          example: Authorised one processing read for the active verification.
     EvidenceAccessGrant:
       type: object
       description: Safe purpose-bound grant metadata; redemption attempts are absent.
@@ -15808,47 +15890,64 @@ components:
           $ref: "#/components/schemas/SubjectResponseID"
         requirement_key:
           type: string
+          example: selfie
         check_reference:
           type: string
+          example: idenqa.check.face_match_1to1
         runner_identity:
           type: string
+          example: idenqa.runner.model
         workload_version:
           type: string
+          example: 1.0.0
         purpose:
           type: string
+          example: identity.verification
         operation:
           type: string
           enum: [evidence.plaintext.read]
+          example: evidence.plaintext.read
         permitted_variants:
           type: array
+          example: [selfie]
           items:
             type: string
         region:
           type: string
+          example: idenqa.region.synthetic
         recipient_reference:
           type: string
+          example: tenant.recipient.primary
         output_destination:
           type: string
+          example: idenqa.destination.transient
         policy_reference:
           type: string
+          example: pol_01M11HEQG00000000000000000
         maximum_uses:
           type: integer
           minimum: 1
           maximum: 32
+          example: 1
         uses:
           type: integer
           minimum: 0
+          example: 0
         created_at:
           type: string
           format: date-time
+          example: "2026-08-27T12:15:00Z"
         expires_at:
           type: string
           format: date-time
+          example: "2026-08-27T12:20:00Z"
         revoked_at:
           type: string
           format: date-time
+          example: "2026-08-27T12:18:00Z"
     EvidenceAccessGrantRevoke:
       type: object
+      description: Bounded audit reason for irreversibly revoking one processing grant.
       additionalProperties: false
       required: [reason]
       properties:
@@ -15856,6 +15955,7 @@ components:
           type: string
           minLength: 1
           maxLength: 500
+          example: Subject requested immediate grant withdrawal.
     CaptureFallbackCondition:
       type: string
       description: Policy-approved reason for selecting a fallback acquisition branch.
@@ -15869,25 +15969,31 @@ components:
         sequence_digest:
           type: string
           pattern: '^sha256:[0-9a-f]{64}$'
+          example: sha256:284a4418399974a7d1ce691f96ea534e1cd97ee1a9bc0d09de25d4a3b9d48969
         index:
           type: integer
           minimum: 0
           maximum: 31
+          example: 0
         count:
           type: integer
           minimum: 2
           maximum: 32
+          example: 3
         challenge_id:
           type: string
           minLength: 3
           maxLength: 160
           pattern: '^[a-z][a-z0-9]*([._-][a-z0-9]+)+$'
+          example: idenqa.challenge.turn_left
         captured_at:
           type: string
           format: date-time
+          example: "2026-08-30T12:00:01Z"
         previous_digest:
           type: string
           pattern: '^sha256:[0-9a-f]{64}$'
+          example: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
     CaptureCompletion:
       type: object
       description: Minimal immutable binding for one accepted capture step.
@@ -17926,22 +18032,24 @@ components:
         assessment: { type: string, minLength: 1, maxLength: 8192, example: Human approval remains mandatory for this action. }
         risk_level: { type: string, enum: [low, medium, high, critical], example: high }
     ProposalImpactAssessment:
-      allOf:
-        - $ref: '#/components/schemas/ProposalImpactAssessmentCreate'
-        - type: object
-          additionalProperties: false
-          required: [id, created_at, actor_id]
-          properties:
-            id: { type: string, pattern: '^imp_[0-9]+$', example: imp_1790000000000000000 }
-            created_at: { type: string, format: date-time, example: '2026-09-21T12:00:00Z' }
-            actor_id: { type: string, minLength: 1, maxLength: 200, example: key_01M11HEQG00000000000000000 }
+      type: object
+      description: One immutable reviewed and actor-attributed impact assessment.
+      additionalProperties: false
+      required: [kind, assessment, risk_level, id, created_at, actor_id]
+      properties:
+        kind: { $ref: '#/components/schemas/ProposalActionKind' }
+        assessment: { type: string, minLength: 1, maxLength: 8192, example: Human approval remains mandatory for this action. }
+        risk_level: { type: string, enum: [low, medium, high, critical], example: high }
+        id: { type: string, pattern: '^imp_[0-9]+$', example: imp_1790000000000000000 }
+        created_at: { type: string, format: date-time, example: '2026-09-21T12:00:00Z' }
+        actor_id: { type: string, minLength: 1, maxLength: 200, example: key_01M11HEQG00000000000000000 }
     ProposalImpactAssessmentList:
       type: object
       description: Bounded newest-first immutable impact assessments.
       additionalProperties: false
       required: [data]
       properties:
-        data: { type: array, maxItems: 100, items: { $ref: '#/components/schemas/ProposalImpactAssessment' } }
+        data: { type: array, maxItems: 100, example: [], items: { $ref: '#/components/schemas/ProposalImpactAssessment' } }
     PrivacyDeletionID:
       type: string
       description: Stable Idenqa deletion-workflow identifier.
