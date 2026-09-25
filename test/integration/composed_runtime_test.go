@@ -111,7 +111,7 @@ func startComposedRunners(t *testing.T, primary config.ModelRuntime, settings mo
 	if err != nil {
 		t.Fatal(err)
 	}
-	reference := providerv1.ConfigurationReference{ProviderID: providerID.String(), SchemaDigest: dojah.Description().Configuration.Digest, SecretReference: "secret://provider/dojah/fixture", CredentialVersion: "v1"}
+	reference := providerv1.ConfigurationReference{ProviderID: providerID.String(), SchemaDigest: dojah.Description().Configuration.Digest, SecretReference: "secret://file/provider/fixture", CredentialVersion: "v1"}
 	providerProcess, err := adapterrunner.NewProcess(t.Context(), adapterrunner.Settings{ListenAddress: "127.0.0.1:0", CertificateFile: ca, PrivateKeyFile: key, CredentialFile: runnerKey, TenantID: scope.ID().String(), Configuration: reference, BaseURL: fixture.URL, ProviderCAFile: fixtureCA, AppIDFile: write("app.key", []byte("fixture-app")), APIKeyFile: write("api.key", []byte("fixture-key")), GatewayURL: proxy.URL, GatewayCAFile: proxyCA, GatewayCredentialFile: gatewayKey, Fixture: true})
 	if err != nil {
 		t.Fatal(err)
