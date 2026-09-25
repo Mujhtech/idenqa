@@ -387,6 +387,14 @@ func (journey *providerPublicJourney) run(t *testing.T, admin, runtime *pg.Pool,
 		smileFixture.waitPending(t, admin, verificationValue)
 		stop()
 		assertSmilePollingFences(t, admin, runtime)
+		// A worker stopped between a pending retry and its acknowledgement leaves
+		// the job leased until expiry. Release it here so the restarted worker
+		// resumes the poll deterministically.
+		if _, err := admin.Native().Exec(t.Context(), `UPDATE headgate.headgate_job
+SET state='retryable', lease_id=NULL, lease_expires_at_ms=NULL, claimed_by=NULL, scheduled_at_ms=$1
+WHERE kind='idenqa:verification' AND state='running'`, time.Now().UnixMilli()); err != nil {
+			t.Fatal(err)
+		}
 		smileFixture.complete.Store(true)
 		stop = startWorker()
 	}
