@@ -1,6 +1,8 @@
 package experience
 
 import (
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
+
 	"context"
 	"crypto/ed25519"
 	"encoding/hex"
@@ -29,6 +31,8 @@ type Deps struct {
 // Service authorises and coordinates portable-experience use cases. It never
 // exposes private keys or writes raw evidence.
 type Service struct {
+	tracer observability.Tracer
+
 	repository  Repository
 	pins        PinRepository
 	signer      Signer
@@ -91,7 +95,10 @@ func NewService(deps Deps) (*Service, error) {
 func (service *Service) ActiveKeyID() string { return service.defaultManifest.KeyID }
 
 // Create creates one draft experience and its signed first revision.
-func (service *Service) Create(ctx context.Context, authority access.Context, request DraftRequest) (Experience, error) {
+func (service *Service) Create(ctx context.Context, authority access.Context, request DraftRequest) (spanResult0 Experience, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "experience.Service.Create")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := authority.Require(access.PermissionExperiencesWrite); err != nil {
 		return Experience{}, err
 	}
@@ -128,7 +135,10 @@ func (service *Service) UpdateDraft(
 	identifier id.Experience,
 	expectedRevision int64,
 	request DraftRequest,
-) (Experience, error) {
+) (spanResult0 Experience, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "experience.Service.UpdateDraft")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := authority.Require(access.PermissionExperiencesWrite); err != nil {
 		return Experience{}, err
 	}
@@ -173,7 +183,10 @@ func (service *Service) Approve(
 	authority access.Context,
 	identifier id.Experience,
 	expectedRevision int64,
-) (Experience, error) {
+) (spanResult0 Experience, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "experience.Service.Approve")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	return service.transition(ctx, authority, identifier, expectedRevision, OperationApprove, 0, "")
 }
 
@@ -184,7 +197,10 @@ func (service *Service) Publish(
 	authority access.Context,
 	identifier id.Experience,
 	expectedRevision int64,
-) (Experience, error) {
+) (spanResult0 Experience, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "experience.Service.Publish")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	return service.transition(ctx, authority, identifier, expectedRevision, OperationPublish, 0, "")
 }
 
@@ -196,7 +212,10 @@ func (service *Service) Revoke(
 	identifier id.Experience,
 	expectedRevision int64,
 	reason string,
-) (Experience, error) {
+) (spanResult0 Experience, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "experience.Service.Revoke")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	return service.transition(ctx, authority, identifier, expectedRevision, OperationRevoke, 0, reason)
 }
 
@@ -208,7 +227,10 @@ func (service *Service) Rollback(
 	expectedRevision int64,
 	targetVersion uint32,
 	reason string,
-) (Experience, error) {
+) (spanResult0 Experience, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "experience.Service.Rollback")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	return service.transition(ctx, authority, identifier, expectedRevision, OperationRollback, targetVersion, reason)
 }
 
@@ -289,7 +311,10 @@ func (service *Service) transitionDigest(
 }
 
 // Get returns one tenant-owned experience.
-func (service *Service) Get(ctx context.Context, authority access.Context, identifier id.Experience) (Experience, error) {
+func (service *Service) Get(ctx context.Context, authority access.Context, identifier id.Experience) (spanResult0 Experience, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "experience.Service.Get")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := authority.Require(access.PermissionExperiencesRead); err != nil {
 		return Experience{}, err
 	}
@@ -297,7 +322,10 @@ func (service *Service) Get(ctx context.Context, authority access.Context, ident
 }
 
 // List returns one bounded page of tenant-owned experiences.
-func (service *Service) List(ctx context.Context, authority access.Context, position *Position, limit int) (Page, error) {
+func (service *Service) List(ctx context.Context, authority access.Context, position *Position, limit int) (spanResult0 Page, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "experience.Service.List")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := authority.Require(access.PermissionExperiencesRead); err != nil {
 		return Page{}, err
 	}
@@ -308,7 +336,10 @@ func (service *Service) List(ctx context.Context, authority access.Context, posi
 }
 
 // Changes returns the append-only lifecycle history of one experience.
-func (service *Service) Changes(ctx context.Context, authority access.Context, identifier id.Experience) ([]Change, error) {
+func (service *Service) Changes(ctx context.Context, authority access.Context, identifier id.Experience) (spanResult0 []Change, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "experience.Service.Changes")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := authority.Require(access.PermissionExperiencesRead); err != nil {
 		return nil, err
 	}
@@ -317,7 +348,10 @@ func (service *Service) Changes(ctx context.Context, authority access.Context, i
 
 // Export returns the signed canonical manifest of the live published revision,
 // or the latest revision when nothing is published.
-func (service *Service) Export(ctx context.Context, authority access.Context, identifier id.Experience) (contract.Manifest, error) {
+func (service *Service) Export(ctx context.Context, authority access.Context, identifier id.Experience) (spanResult0 contract.Manifest, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "experience.Service.Export")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := authority.Require(access.PermissionExperiencesRead); err != nil {
 		return contract.Manifest{}, err
 	}
@@ -338,7 +372,10 @@ func (service *Service) Export(ctx context.Context, authority access.Context, id
 
 // Import validates one exported manifest, verifies its digest and signature,
 // and creates a draft revision without Console or Cloud.
-func (service *Service) Import(ctx context.Context, authority access.Context, raw []byte) (Experience, error) {
+func (service *Service) Import(ctx context.Context, authority access.Context, raw []byte) (spanResult0 Experience, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "experience.Service.Import")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := authority.Require(access.PermissionExperiencesWrite); err != nil {
 		return Experience{}, err
 	}
@@ -409,15 +446,18 @@ func (service *Service) Import(ctx context.Context, authority access.Context, ra
 
 // Resolve returns the newest published most-specific match or the signed safe
 // default. It never returns unsigned or unbranded tenant content.
-func (service *Service) Resolve(ctx context.Context, scope tenant.Scope, request ResolutionRequest) (contract.Resolution, error) {
+func (service *Service) Resolve(ctx context.Context, scope tenant.Scope, request ResolutionRequest) (spanResult0 contract.Resolution, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "experience.Service.Resolve")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	now := service.clock.Now().UTC().Truncate(time.Microsecond)
 	candidates, err := service.repository.LoadPublished(ctx, scope)
 	if err != nil {
-		return service.defaultResolution(now), nil //nolint:nilerr // Resolution failure always falls back to the signed safe default.
+		return service.defaultResolution(now), nil // Resolution failure always falls back to the signed safe default.
 	}
 	candidate, matched, err := Resolve(candidates, request)
 	if err != nil || !matched {
-		return service.defaultResolution(now), nil //nolint:nilerr // Resolution failure always falls back to the signed safe default.
+		return service.defaultResolution(now), nil // Resolution failure always falls back to the signed safe default.
 	}
 	return service.resolutionFor(candidate, request.Locale, PinSourcePublished, false, now)
 }
@@ -430,7 +470,10 @@ func (service *Service) ResolveForSession(
 	scope tenant.Scope,
 	verificationID id.Verification,
 	request ResolutionRequest,
-) (contract.Resolution, error) {
+) (spanResult0 contract.Resolution, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "experience.Service.ResolveForSession")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	now := service.clock.Now().UTC().Truncate(time.Microsecond)
 	if verificationID.IsZero() {
 		return service.defaultResolution(now), nil
@@ -444,15 +487,15 @@ func (service *Service) ResolveForSession(
 	}
 	candidates, err := service.repository.LoadPublished(ctx, scope)
 	if err != nil {
-		return service.defaultResolution(now), nil //nolint:nilerr // Resolution failure always falls back to the signed safe default.
+		return service.defaultResolution(now), nil // Resolution failure always falls back to the signed safe default.
 	}
 	candidate, matched, err := Resolve(candidates, request)
 	if err != nil || !matched {
-		return service.defaultResolution(now), nil //nolint:nilerr // Resolution failure always falls back to the signed safe default.
+		return service.defaultResolution(now), nil // Resolution failure always falls back to the signed safe default.
 	}
 	resolution, err := service.resolutionFor(candidate, request.Locale, PinSourcePublished, false, now)
 	if err != nil {
-		return service.defaultResolution(now), nil //nolint:nilerr // Resolution failure always falls back to the signed safe default.
+		return service.defaultResolution(now), nil // Resolution failure always falls back to the signed safe default.
 	}
 	pin := pinFromResolution(scope, verificationID, resolution, PinSourcePublished, now)
 	stored, saveErr := service.pins.SavePin(ctx, scope, pin)
@@ -494,7 +537,10 @@ func (service *Service) PinForSession(
 	scope tenant.Scope,
 	verificationID id.Verification,
 	request ResolutionRequest,
-) (Pin, error) {
+) (spanResult0 Pin, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "experience.Service.PinForSession")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	resolution, err := service.ResolveForSession(ctx, scope, verificationID, request)
 	if err != nil {
 		return Pin{}, err
@@ -640,4 +686,19 @@ func isNotFound(err error) bool {
 
 func digestOf(canonical []byte) string {
 	return contract.DigestCanonical(canonical)
+}
+
+// WithTracer injects operation tracing during composition, before concurrent use.
+func (service *Service) WithTracer(tracer observability.Tracer) *Service {
+	if service != nil {
+		service.tracer = tracer
+	}
+	return service
+}
+
+func (service *Service) operationTracer() observability.Tracer {
+	if service == nil {
+		return nil
+	}
+	return service.tracer
 }
