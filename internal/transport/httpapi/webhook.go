@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 
+	webhookv1 "github.com/Mujhtech/idenqa/contracts/webhook/v1"
 	"github.com/Mujhtech/idenqa/internal/access"
 	"github.com/Mujhtech/idenqa/internal/delivery"
 	openapiv1 "github.com/Mujhtech/idenqa/internal/gen/openapi/v1"
@@ -57,6 +58,7 @@ func (routes *WebhookRoutes) Register(router chi.Router) {
 		handler      http.HandlerFunc
 	}{
 		{"GET", "/webhook-endpoints", access.PermissionWebhooksRead, routes.endpoints},
+		{"GET", "/webhook-event-types", access.PermissionWebhooksRead, routes.eventTypes},
 		{"POST", "/webhook-endpoints", access.PermissionWebhooksConfigure, routes.mutate},
 		{"GET", "/webhook-endpoints/{endpointID}", access.PermissionWebhooksRead, routes.endpoint},
 		{"POST", "/webhook-endpoints/{endpointID}/rotate", access.PermissionWebhooksConfigure, routes.mutate},
@@ -71,6 +73,29 @@ func (routes *WebhookRoutes) Register(router chi.Router) {
 	} {
 		router.With(routes.access.Authorize(route.permission)).MethodFunc(route.method, route.path, route.handler)
 	}
+}
+
+type webhookEventType struct {
+	Type          webhookv1.Type `json:"type"`
+	SchemaVersion string         `json:"schema_version"`
+	RequiredData  []string       `json:"required_data"`
+	OptionalData  []string       `json:"optional_data"`
+}
+
+func (routes *WebhookRoutes) eventTypes(writer http.ResponseWriter, request *http.Request) {
+	definitions := webhookv1.Catalogue()
+	eventTypes := make([]webhookEventType, len(definitions))
+	for index, definition := range definitions {
+		eventTypes[index] = webhookEventType{
+			Type:          definition.Type,
+			SchemaVersion: definition.SchemaVersion,
+			RequiredData:  append([]string{}, definition.RequiredData...),
+			OptionalData:  append([]string{}, definition.OptionalData...),
+		}
+	}
+	routes.json(writer, request, struct {
+		Data []webhookEventType `json:"data"`
+	}{eventTypes})
 }
 
 func (routes *WebhookRoutes) mutate(writer http.ResponseWriter, request *http.Request) {

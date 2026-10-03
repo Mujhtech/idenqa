@@ -148,6 +148,8 @@ func TestVerificationRoutesCreateAndCaptureSnapshot(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewVerificationRoutes() error = %v", err)
 	}
+	timelineService := &verificationTimelineServiceStub{}
+	routes.WithTimeline(timelineService)
 	outcomeRoutes, err := NewCaptureOutcomeRoutes(
 		outcomeMiddleware,
 		captureOutcomeHTTPServiceStub{outcome: verification.CaptureOutcome{
@@ -222,6 +224,19 @@ func TestVerificationRoutesCreateAndCaptureSnapshot(t *testing.T) {
 	}
 	if snapshot.ID != verificationID.String() || !bytes.Equal(snapshot.Requirements, created.Session.Requirements) {
 		t.Fatalf("capture snapshot = %+v", snapshot)
+	}
+
+	journeyBody := []byte(`{"event_id":"journey_71d7207f-6935-4d75-8f30-5bd35c8ee231","event_type":"navigation_back","screen":"preparation","action":"back","sequence":4,"client_occurred_at":"2026-08-27T20:01:00Z"}`)
+	journeyRequest := httptest.NewRequestWithContext(context.Background(), http.MethodPost, "/v1/capture/journey-events", bytes.NewReader(journeyBody))
+	journeyRequest.Header.Set("Authorization", "Bearer "+presented.Reveal())
+	journeyRequest.Header.Set("Content-Type", "application/json")
+	journeyResponse := httptest.NewRecorder()
+	router.ServeHTTP(journeyResponse, journeyRequest)
+	if journeyResponse.Code != http.StatusAccepted {
+		t.Fatalf("journey status = %d, want %d; body=%s", journeyResponse.Code, http.StatusAccepted, journeyResponse.Body)
+	}
+	if timelineService.recorded.EventType != "navigation_back" || timelineService.recorded.Action != "back" || timelineService.recorded.Sequence != 4 {
+		t.Fatalf("journey input = %+v", timelineService.recorded)
 	}
 
 	outcomeRequest := httptest.NewRequestWithContext(
@@ -381,6 +396,31 @@ func TestVerificationRoutesProjectCurrentDecisionAndCase(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewVerificationRoutes() error = %v", err)
 	}
+	eventID, err := id.ParseEvent("evt_01K3P4NQF00000000000000000")
+	if err != nil {
+		t.Fatalf("ParseEvent() error = %v", err)
+	}
+	history := &verificationHistoryReaderStub{value: verification.LifecycleHistory{
+		Origin: verification.LifecycleOrigin{
+			State: verification.SessionStateCollecting, Version: 1, OccurredAt: now.Add(-time.Minute),
+		},
+		Transitions: []verification.LifecycleTransition{{
+			EventID: eventID, From: verification.SessionStateCollecting,
+			To: verification.SessionStateProcessing, Version: 2, OccurredAt: now,
+		}},
+	}}
+	routes.WithHistory(history)
+	routes.WithSignals(&verificationSignalReaderStub{value: verification.SignalPage{Items: []verification.SignalRead{{
+		ID: "obs_01ARZ3NDEKTSV4RRFFQ69G5FAV", CheckID: "chk_01ARZ3NDEKTSV4RRFFQ69G5FAV",
+		AttemptID: "att_01ARZ3NDEKTSV4RRFFQ69G5FAV", RunnerKind: "provider",
+		RunnerID: "synthetic.document", RunnerVersion: "1.0.0", ContractMajor: 1,
+		Name: "document.authenticity", Outcome: "satisfied", ReasonCodes: []string{"document.valid"}, RecordedAt: now,
+	}}}})
+	timelineService := &verificationTimelineServiceStub{timeline: verification.Timeline{Events: []verification.TimelineEvent{{
+		ID: "journey_71d7207f-6935-4d75-8f30-5bd35c8ee231", Category: "interaction",
+		Source: "capture_client", Name: "navigation_back", OccurredAt: now, Authoritative: false,
+	}}}}
+	routes.WithTimeline(timelineService)
 	router := versionedRouter(t, routes)
 
 	readRequest := httptest.NewRequestWithContext(
@@ -412,6 +452,60 @@ func TestVerificationRoutesProjectCurrentDecisionAndCase(t *testing.T) {
 	}
 	if decisions.calls != 1 || cases.calls != 1 {
 		t.Fatalf("reader calls = decisions:%d cases:%d, want 1 and 1", decisions.calls, cases.calls)
+	}
+
+	historyRequest := httptest.NewRequestWithContext(
+		context.Background(), http.MethodGet,
+		"/v1/verifications/"+verificationID.String()+"/history", nil,
+	)
+	historyRequest.Header.Set("Authorization", "Bearer "+fixture.encoded)
+	historyResponse := httptest.NewRecorder()
+	router.ServeHTTP(historyResponse, historyRequest)
+	if historyResponse.Code != http.StatusOK {
+		t.Fatalf("history status = %d, want %d; body=%s", historyResponse.Code, http.StatusOK, historyResponse.Body)
+	}
+	var lifecycle openapiv1.VerificationLifecycleHistory
+	if err := json.Unmarshal(historyResponse.Body.Bytes(), &lifecycle); err != nil {
+		t.Fatalf("decode history response: %v", err)
+	}
+	if lifecycle.Origin.State != openapiv1.VerificationLifecycleOriginStateCollecting || lifecycle.Origin.Version != 1 ||
+		len(lifecycle.Transitions) != 1 || lifecycle.Transitions[0].EventID != eventID.String() ||
+		lifecycle.Transitions[0].FromState != openapiv1.VerificationLifecycleTransitionFromStateCollecting ||
+		lifecycle.Transitions[0].ToState != openapiv1.VerificationLifecycleTransitionToStateProcessing ||
+		lifecycle.Transitions[0].Version != 2 {
+		t.Fatalf("lifecycle history = %+v", lifecycle)
+	}
+
+	signalRequest := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/v1/verifications/"+verificationID.String()+"/signals", nil)
+	signalRequest.Header.Set("Authorization", "Bearer "+fixture.encoded)
+	signalResponse := httptest.NewRecorder()
+	router.ServeHTTP(signalResponse, signalRequest)
+	if signalResponse.Code != http.StatusOK {
+		t.Fatalf("signal status = %d, want %d; body=%s", signalResponse.Code, http.StatusOK, signalResponse.Body)
+	}
+	var signals openapiv1.VerificationSignalPage
+	if err := json.Unmarshal(signalResponse.Body.Bytes(), &signals); err != nil {
+		t.Fatalf("decode signals: %v", err)
+	}
+	if len(signals.Items) != 1 || signals.Items[0].Name != "document.authenticity" || signals.Items[0].Outcome != openapiv1.VerificationSignalOutcomeSatisfied {
+		t.Fatalf("signals = %+v", signals)
+	}
+	timelineRequest := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/v1/verifications/"+verificationID.String()+"/timeline", nil)
+	timelineRequest.Header.Set("Authorization", "Bearer "+fixture.encoded)
+	timelineResponse := httptest.NewRecorder()
+	router.ServeHTTP(timelineResponse, timelineRequest)
+	if timelineResponse.Code != http.StatusOK {
+		t.Fatalf("timeline status = %d, want %d; body=%s", timelineResponse.Code, http.StatusOK, timelineResponse.Body)
+	}
+	var timeline openapiv1.VerificationTimeline
+	if err := json.Unmarshal(timelineResponse.Body.Bytes(), &timeline); err != nil {
+		t.Fatalf("decode timeline: %v", err)
+	}
+	if len(timeline.Events) != 1 || timeline.Events[0].Authoritative || timeline.Events[0].Source != openapiv1.VerificationTimelineEventSource("capture_client") {
+		t.Fatalf("timeline = %+v", timeline)
+	}
+	if history.calls != 1 {
+		t.Fatalf("history reader calls = %d, want 1", history.calls)
 	}
 
 	limited := newHTTPAccessFixture(t, nil, access.Pattern("verification_sessions:read"))
@@ -678,6 +772,43 @@ type verificationCaseReaderStub struct {
 	value review.Case
 	err   error
 	calls int
+}
+
+type verificationHistoryReaderStub struct {
+	value verification.LifecycleHistory
+	err   error
+	calls int
+}
+
+type verificationSignalReaderStub struct {
+	value verification.SignalPage
+}
+
+type verificationTimelineServiceStub struct {
+	timeline verification.Timeline
+	recorded verification.JourneyEventInput
+}
+
+func (service *verificationTimelineServiceStub) Find(context.Context, access.Context, id.Verification) (verification.Timeline, error) {
+	return service.timeline, nil
+}
+
+func (service *verificationTimelineServiceStub) Record(_ context.Context, _ verification.CaptureContext, input verification.JourneyEventInput) (verification.JourneyEvent, error) {
+	service.recorded = input
+	return verification.JourneyEvent{JourneyEventInput: input, ReceivedAt: time.Date(2026, 10, 2, 8, 0, 0, 0, time.UTC)}, nil
+}
+
+func (reader *verificationSignalReaderStub) Find(context.Context, access.Context, id.Verification) (verification.SignalPage, error) {
+	return reader.value, nil
+}
+
+func (reader *verificationHistoryReaderStub) Find(
+	context.Context,
+	access.Context,
+	id.Verification,
+) (verification.LifecycleHistory, error) {
+	reader.calls++
+	return reader.value, reader.err
 }
 
 func (reader *verificationCaseReaderStub) FindCaseForVerification(

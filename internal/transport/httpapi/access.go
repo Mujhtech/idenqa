@@ -79,6 +79,7 @@ func (middleware *AccessMiddleware) Authenticate(next http.Handler) http.Handler
 
 			return
 		}
+		bindRequestLogAuthority(request.Context(), accessContext)
 
 		ctx := context.WithValue(request.Context(), accessContextKey{}, accessContext)
 		next.ServeHTTP(writer, request.WithContext(ctx))

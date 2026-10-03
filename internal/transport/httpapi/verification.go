@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"math"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/Mujhtech/idenqa/internal/access"
@@ -34,6 +35,36 @@ type VerificationSessionService interface {
 	Resume(context.Context, access.Context, id.Verification, int64, string) (verification.ResumedSession, error)
 }
 
+// VerificationSessionLister is the bounded collection capability consumed by
+// the optional list route.
+type VerificationSessionLister interface {
+	List(context.Context, access.Context, *verification.SessionListPosition, int) (verification.SessionPage, error)
+}
+
+// VerificationInspector is the safe operational read capability consumed by
+// the optional inspection route.
+type VerificationInspector interface {
+	Inspect(context.Context, access.Context, id.Verification) (verification.Inspection, error)
+}
+
+// VerificationHistoryReader is the authoritative lifecycle-history capability
+// consumed by the optional history route.
+type VerificationHistoryReader interface {
+	Find(context.Context, access.Context, id.Verification) (verification.LifecycleHistory, error)
+}
+
+// VerificationSignalReader is the provider-independent observation capability.
+type VerificationSignalReader interface {
+	Find(context.Context, access.Context, id.Verification) (verification.SignalPage, error)
+}
+
+// VerificationTimelineService records closed capture interactions and reads the
+// normalized tenant timeline without exposing provider or evidence payloads.
+type VerificationTimelineService interface {
+	Record(context.Context, verification.CaptureContext, verification.JourneyEventInput) (verification.JourneyEvent, error)
+	Find(context.Context, access.Context, id.Verification) (verification.Timeline, error)
+}
+
 // VerificationDecisionReader is the optional current-decision projection capability.
 type VerificationDecisionReader interface {
 	FindLatest(context.Context, access.Context, id.Verification) (policy.ReproductionReport, error)
@@ -54,6 +85,36 @@ type VerificationRoutes struct {
 	catalog   evidence.Catalog
 	decisions VerificationDecisionReader
 	cases     VerificationCaseReader
+	lister    VerificationSessionLister
+	inspector VerificationInspector
+	history   VerificationHistoryReader
+	signals   VerificationSignalReader
+	timeline  VerificationTimelineService
+	cursors   ProfileCursor
+}
+
+// WithInspection enables the metadata-only verification inspection route.
+func (routes *VerificationRoutes) WithInspection(inspector VerificationInspector) *VerificationRoutes {
+	routes.inspector = inspector
+	return routes
+}
+
+// WithHistory enables the authoritative verification lifecycle-history route.
+func (routes *VerificationRoutes) WithHistory(history VerificationHistoryReader) *VerificationRoutes {
+	routes.history = history
+	return routes
+}
+
+// WithSignals enables the provider-independent verification signal route.
+func (routes *VerificationRoutes) WithSignals(signals VerificationSignalReader) *VerificationRoutes {
+	routes.signals = signals
+	return routes
+}
+
+// WithTimeline enables capture interaction ingestion and unified tenant reads.
+func (routes *VerificationRoutes) WithTimeline(timeline VerificationTimelineService) *VerificationRoutes {
+	routes.timeline = timeline
+	return routes
 }
 
 // NewVerificationRoutes constructs verification and capture routes. Nil decision
@@ -78,15 +139,244 @@ func NewVerificationRoutes(
 	}, nil
 }
 
+// WithList enables the bounded verification collection route.
+func (routes *VerificationRoutes) WithList(lister VerificationSessionLister, cursors ProfileCursor) *VerificationRoutes {
+	routes.lister = lister
+	routes.cursors = cursors
+	return routes
+}
+
 // Register adds tenant session and capture-token bootstrap routes.
 func (routes *VerificationRoutes) Register(router chi.Router) {
 	if routes.selection != nil {
 		router.With(routes.capture.Authenticate).Post("/capture/document-selection", routes.selectDocument)
 	}
 	router.With(routes.access.Authorize(access.PermissionVerificationSessionsCreate)).Post("/verifications", routes.create)
+	if routes.lister != nil && routes.cursors != nil {
+		router.With(routes.access.Authorize(access.PermissionVerificationSessionsRead)).Get("/verifications", routes.list)
+	}
 	router.With(routes.access.Authorize(access.PermissionVerificationSessionsRead)).Get("/verifications/{verificationID}", routes.find)
+	if routes.inspector != nil {
+		router.With(routes.access.Authorize(access.PermissionVerificationSessionsRead)).Get("/verifications/{verificationID}/inspection", routes.inspect)
+	}
+	if routes.history != nil {
+		router.With(routes.access.Authorize(access.PermissionVerificationSessionsRead)).Get("/verifications/{verificationID}/history", routes.findHistory)
+	}
+	if routes.signals != nil {
+		router.With(routes.access.Authorize(access.PermissionVerificationSessionsRead)).Get("/verifications/{verificationID}/signals", routes.findSignals)
+	}
+	if routes.timeline != nil {
+		router.With(routes.access.Authorize(access.PermissionVerificationSessionsRead)).Get("/verifications/{verificationID}/timeline", routes.findTimeline)
+		router.With(routes.capture.Authenticate).Post("/capture/journey-events", routes.recordJourneyEvent)
+	}
 	router.With(routes.access.Authorize(access.PermissionVerificationSessionsResume)).Post("/verifications/{verificationID}/resume", routes.resume)
 	router.With(routes.capture.Authenticate).Get("/capture/session", routes.captureSession)
+}
+
+func (routes *VerificationRoutes) findSignals(writer http.ResponseWriter, request *http.Request) {
+	authority, ok := AccessContext(request.Context())
+	if !ok {
+		routes.problem(writer, request, access.ErrInvalidCredential)
+		return
+	}
+	identifier, err := id.ParseVerification(chi.URLParam(request, "verificationID"))
+	if err != nil {
+		routes.problem(writer, request, verification.ErrSessionNotFound)
+		return
+	}
+	page, err := routes.signals.Find(request.Context(), authority, identifier)
+	if err != nil {
+		routes.problem(writer, request, err)
+		return
+	}
+	response := openapiv1.VerificationSignalPage{Items: make([]openapiv1.VerificationSignal, 0, len(page.Items)), Truncated: page.Truncated}
+	for _, item := range page.Items {
+		response.Items = append(response.Items, openapiv1.VerificationSignal{
+			ID: item.ID, CheckID: item.CheckID, AttemptID: item.AttemptID,
+			RunnerKind: openapiv1.VerificationSignalRunnerKind(item.RunnerKind), RunnerID: item.RunnerID,
+			RunnerVersion: item.RunnerVersion, ContractMajor: item.ContractMajor, ContractMinor: item.ContractMinor,
+			Name: item.Name, Outcome: openapiv1.VerificationSignalOutcome(item.Outcome),
+			ReasonCodes: item.ReasonCodes, RecordedAt: item.RecordedAt,
+		})
+	}
+	routes.writeJSON(writer, request, http.StatusOK, response)
+}
+
+func (routes *VerificationRoutes) findHistory(writer http.ResponseWriter, request *http.Request) {
+	authority, ok := AccessContext(request.Context())
+	if !ok {
+		routes.problem(writer, request, access.ErrInvalidCredential)
+		return
+	}
+	identifier, err := id.ParseVerification(chi.URLParam(request, "verificationID"))
+	if err != nil {
+		routes.problem(writer, request, verification.ErrSessionNotFound)
+		return
+	}
+	history, err := routes.history.Find(request.Context(), authority, identifier)
+	if err != nil {
+		routes.problem(writer, request, err)
+		return
+	}
+	response := openapiv1.VerificationLifecycleHistory{
+		Origin: openapiv1.VerificationLifecycleOrigin{
+			State:   openapiv1.VerificationLifecycleOriginState(history.Origin.State),
+			Version: openapiv1.VerificationLifecycleOriginVersion(history.Origin.Version), OccurredAt: history.Origin.OccurredAt,
+		},
+		Transitions: make([]openapiv1.VerificationLifecycleTransition, 0, len(history.Transitions)),
+		Truncated:   history.Truncated,
+	}
+	for _, transition := range history.Transitions {
+		var decisionID *string
+		if !transition.DecisionID.IsZero() {
+			value := transition.DecisionID.String()
+			decisionID = &value
+		}
+		response.Transitions = append(response.Transitions, openapiv1.VerificationLifecycleTransition{
+			EventID:   transition.EventID.String(),
+			FromState: openapiv1.VerificationLifecycleTransitionFromState(transition.From),
+			ToState:   openapiv1.VerificationLifecycleTransitionToState(transition.To),
+			Version:   transition.Version, DecisionID: decisionID, OccurredAt: transition.OccurredAt,
+		})
+	}
+	routes.writeJSON(writer, request, http.StatusOK, response)
+}
+
+func (routes *VerificationRoutes) inspect(writer http.ResponseWriter, request *http.Request) {
+	authority, ok := AccessContext(request.Context())
+	if !ok {
+		routes.problem(writer, request, access.ErrInvalidCredential)
+		return
+	}
+	identifier, err := id.ParseVerification(chi.URLParam(request, "verificationID"))
+	if err != nil {
+		routes.problem(writer, request, verification.ErrSessionNotFound)
+		return
+	}
+	inspection, err := routes.inspector.Inspect(request.Context(), authority, identifier)
+	if err != nil {
+		routes.problem(writer, request, err)
+		return
+	}
+	response := openapiv1.VerificationInspection{
+		Evidence:  make([]openapiv1.VerificationInspectionEvidence, 0, len(inspection.Evidence)),
+		Checks:    make([]openapiv1.VerificationInspectionCheck, 0, len(inspection.Checks)),
+		Attempts:  make([]openapiv1.VerificationInspectionAttempt, 0, len(inspection.Attempts)),
+		Decisions: make([]openapiv1.VerificationInspectionDecision, 0, len(inspection.Decisions)),
+		Retention: make([]openapiv1.VerificationInspectionRetention, 0, len(inspection.Retention)),
+		Webhooks:  make([]openapiv1.VerificationInspectionWebhook, 0, len(inspection.Webhooks)),
+		LegalHold: inspection.LegalHold,
+	}
+	for _, item := range inspection.Evidence {
+		response.Evidence = append(response.Evidence, openapiv1.VerificationInspectionEvidence{
+			ID: item.ID, RequirementKey: item.RequirementKey, EvidenceType: item.EvidenceType,
+			Artefact: item.Artefact, AcquisitionMethod: item.AcquisitionMethod, Assurances: item.Assurances,
+			State: openapiv1.VerificationInspectionEvidenceState(item.State), Integrity: openapiv1.VerificationInspectionEvidenceIntegrity(item.Integrity),
+			RetentionClass: item.RetentionClass, CreatedAt: item.CreatedAt, UpdatedAt: item.UpdatedAt,
+		})
+	}
+	for _, item := range inspection.Checks {
+		var outcome *openapiv1.VerificationInspectionCheckOutcome
+		if item.Outcome != nil {
+			value := openapiv1.VerificationInspectionCheckOutcome(*item.Outcome)
+			outcome = &value
+		}
+		response.Checks = append(response.Checks, openapiv1.VerificationInspectionCheck{ID: item.ID, Name: item.Name, State: item.State, Outcome: outcome, AttemptCount: item.AttemptCount, CreatedAt: item.CreatedAt, UpdatedAt: item.UpdatedAt})
+	}
+	for _, item := range inspection.Attempts {
+		var retryDisposition *openapiv1.VerificationInspectionAttemptRetryDisposition
+		if item.RetryDisposition != nil {
+			value := openapiv1.VerificationInspectionAttemptRetryDisposition(*item.RetryDisposition)
+			retryDisposition = &value
+		}
+		response.Attempts = append(response.Attempts, openapiv1.VerificationInspectionAttempt{
+			ID: item.ID, CheckID: item.CheckID, AttemptNumber: item.Number,
+			RunnerKind: openapiv1.VerificationInspectionAttemptRunnerKind(item.RunnerKind), RunnerID: item.RunnerID, RunnerVersion: item.RunnerVersion,
+			PackageDigest: item.PackageDigest, ContractMajor: item.ContractMajor, ContractMinor: item.ContractMinor,
+			RequestDigest: item.RequestDigest, ConfigurationDigest: item.ConfigurationDigest,
+			State: openapiv1.VerificationInspectionAttemptState(item.State), StartedAt: item.StartedAt, Deadline: item.Deadline,
+			FinishedAt: item.FinishedAt, FailureClass: item.FailureClass, FailureCode: item.FailureCode,
+			RetryDisposition: retryDisposition, RetryAfterMilliseconds: item.RetryAfterMilliseconds, ResultDigest: item.ResultDigest,
+		})
+	}
+	for _, item := range inspection.Decisions {
+		response.Decisions = append(response.Decisions, openapiv1.VerificationInspectionDecision{
+			ID: item.ID, DecisionDigest: item.DecisionDigest, Selected: openapiv1.VerificationInspectionDecisionSelected(item.Selected),
+			Outcome: openapiv1.VerificationInspectionDecisionOutcome(item.Outcome), Actor: openapiv1.VerificationInspectionDecisionActor(item.Actor),
+			SupersedesID: item.SupersedesID, DecidedAt: item.DecidedAt,
+		})
+	}
+	for _, item := range inspection.Retention {
+		response.Retention = append(response.Retention, openapiv1.VerificationInspectionRetention{DataClass: item.DataClass, Region: item.Region, PolicyDigest: item.PolicyDigest, ExpiresAt: item.ExpiresAt})
+	}
+	for _, item := range inspection.Webhooks {
+		var deliveryState *openapiv1.VerificationInspectionWebhookDeliveryState
+		if item.DeliveryState != nil {
+			value := openapiv1.VerificationInspectionWebhookDeliveryState(*item.DeliveryState)
+			deliveryState = &value
+		}
+		response.Webhooks = append(response.Webhooks, openapiv1.VerificationInspectionWebhook{EventID: item.EventID, EventType: item.EventType, EventState: openapiv1.VerificationInspectionWebhookEventState(item.EventState), DeliveryID: item.DeliveryID, DeliveryState: deliveryState, CreatedAt: item.CreatedAt})
+	}
+	routes.writeJSON(writer, request, http.StatusOK, response)
+}
+
+func (routes *VerificationRoutes) list(writer http.ResponseWriter, request *http.Request) {
+	authority, ok := AccessContext(request.Context())
+	if !ok {
+		routes.problem(writer, request, access.ErrInvalidCredential)
+		return
+	}
+	limit, encodedCursor, err := parseListQuery(request)
+	if err != nil {
+		routes.problem(writer, request, invalidRequest(err))
+		return
+	}
+	bound := "verification_sessions:list;limit=" + strconv.Itoa(limit)
+	var after *verification.SessionListPosition
+	if encodedCursor != "" {
+		claims, decodeErr := routes.cursors.Decode(encodedCursor, authority.TenantScope().ID(), bound)
+		if decodeErr != nil {
+			routes.problem(writer, request, invalidRequest(decodeErr))
+			return
+		}
+		var position verification.SessionListPosition
+		if decodeErr = decodeStrictJSON(claims.Position, &position); decodeErr != nil {
+			routes.problem(writer, request, invalidRequest(decodeErr))
+			return
+		}
+		after = &position
+	}
+	page, err := routes.lister.List(request.Context(), authority, after, limit)
+	if err != nil {
+		routes.problem(writer, request, err)
+		return
+	}
+	response := openapiv1.VerificationSessionList{
+		Data: make([]openapiv1.VerificationSession, 0, len(page.Sessions)),
+		Page: openapiv1.Page{HasMore: page.Next != nil},
+	}
+	for _, session := range page.Sessions {
+		projected, projectErr := routes.projectedSessionResponse(request.Context(), authority, session)
+		if projectErr != nil {
+			routes.problem(writer, request, projectErr)
+			return
+		}
+		response.Data = append(response.Data, projected)
+	}
+	if page.Next != nil {
+		position, encodeErr := json.Marshal(page.Next)
+		if encodeErr != nil {
+			routes.problem(writer, request, encodeErr)
+			return
+		}
+		next, encodeErr := routes.cursors.Encode(authority.TenantScope().ID(), bound, position)
+		if encodeErr != nil {
+			routes.problem(writer, request, encodeErr)
+			return
+		}
+		response.Page.NextCursor = &next
+	}
+	routes.writeJSON(writer, request, http.StatusOK, response)
 }
 
 func (routes *VerificationRoutes) resume(writer http.ResponseWriter, request *http.Request) {

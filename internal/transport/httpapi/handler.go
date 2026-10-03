@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/Mujhtech/idenqa/internal/transport/httpapi/apierror"
 	"github.com/Mujhtech/idenqa/internal/transport/httpapi/respond"
 )
 
@@ -22,8 +23,20 @@ func newHandlerBase(logger *slog.Logger, name string) handlerBase {
 
 // problem writes the safe problem-details response for err.
 func (base handlerBase) problem(writer http.ResponseWriter, request *http.Request, err error) {
+	failure := apierror.Map(err)
+	attributes := []any{
+		"request_id", requestIDString(request.Context()),
+		"status", failure.Status(),
+		"code", failure.Code(),
+		"error", err,
+	}
+	if failure.Status() >= http.StatusInternalServerError {
+		base.logger.ErrorContext(request.Context(), base.name+" request failed", attributes...)
+	} else {
+		base.logger.WarnContext(request.Context(), base.name+" request rejected", attributes...)
+	}
 	if writeErr := respond.WriteProblem(writer, request, err, requestIDString(request.Context())); writeErr != nil {
-		base.logger.ErrorContext(request.Context(), "write "+base.name+" problem response")
+		base.logger.ErrorContext(request.Context(), "write "+base.name+" problem response", "error", writeErr)
 	}
 }
 

@@ -87,6 +87,80 @@ func TestProfileRoutesCreateStrictDraft(t *testing.T) {
 	}
 }
 
+func TestProfileRoutesListRegistryCatalogue(t *testing.T) {
+	t.Parallel()
+
+	fixture := newHTTPAccessFixture(t, nil, access.Pattern("capture_profiles:read"))
+	_, catalog, _ := profileHTTPDocument(t)
+	routes, err := NewProfileRoutes(
+		fixture.middleware,
+		&profileHTTPServiceStub{},
+		catalog,
+		profileHTTPCursor(t, time.Now()),
+		fixture.logger,
+	)
+	if err != nil {
+		t.Fatalf("NewProfileRoutes() error = %v", err)
+	}
+	request := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/v1/capture-profile-registries", nil)
+	request.Header.Set("Authorization", "Bearer "+fixture.encoded)
+	response := httptest.NewRecorder()
+	versionedRouter(t, routes).ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d; body=%s", response.Code, http.StatusOK, response.Body)
+	}
+	var catalogue openapiv1.CaptureProfileRegistryList
+	if err := json.Unmarshal(response.Body.Bytes(), &catalogue); err != nil {
+		t.Fatalf("decode catalogue: %v", err)
+	}
+	if len(catalogue.Data) != 1 || catalogue.Data[0].Reference.Revision == 0 || len(catalogue.Data[0].Document) == 0 {
+		t.Fatalf("catalogue = %+v", catalogue)
+	}
+}
+
+func TestProfileRoutesRevisionCursorIsBoundAndRecovered(t *testing.T) {
+	t.Parallel()
+
+	fixture := newHTTPAccessFixture(t, nil, access.Pattern("capture_profiles:read"))
+	_, catalog, _ := profileHTTPDocument(t)
+	service := &profileHTTPServiceStub{
+		revisionPage: verification.RevisionPage{HasMore: true, NextBefore: 7},
+	}
+	routes, err := NewProfileRoutes(
+		fixture.middleware,
+		service,
+		catalog,
+		profileHTTPCursor(t, time.Date(2026, time.August, 27, 20, 0, 0, 0, time.UTC)),
+		fixture.logger,
+	)
+	if err != nil {
+		t.Fatalf("NewProfileRoutes() error = %v", err)
+	}
+	router := versionedRouter(t, routes)
+	target := "/v1/capture-profiles/prf_01K3P4NQF00000000000000000/revisions?limit=2"
+	request := httptest.NewRequestWithContext(context.Background(), http.MethodGet, target, nil)
+	request.Header.Set("Authorization", "Bearer "+fixture.encoded)
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, request)
+	if response.Code != http.StatusOK {
+		t.Fatalf("first status = %d; body=%s", response.Code, response.Body)
+	}
+	var page openapiv1.CaptureProfileRevisionList
+	if err := json.Unmarshal(response.Body.Bytes(), &page); err != nil || page.Page.NextCursor == nil {
+		t.Fatalf("decode first page = %+v, %v", page, err)
+	}
+
+	service.revisionPage = verification.RevisionPage{}
+	request = httptest.NewRequestWithContext(context.Background(), http.MethodGet, target+"&cursor="+*page.Page.NextCursor, nil)
+	request.Header.Set("Authorization", "Bearer "+fixture.encoded)
+	response = httptest.NewRecorder()
+	router.ServeHTTP(response, request)
+	if response.Code != http.StatusOK || service.revisionBefore != 7 || service.revisionLimit != 2 {
+		t.Fatalf("second status=%d before=%d limit=%d; body=%s", response.Code, service.revisionBefore, service.revisionLimit, response.Body)
+	}
+}
+
 func TestProfileRoutesRejectInvalidHeadersAndBodies(t *testing.T) {
 	t.Parallel()
 
@@ -210,6 +284,9 @@ type profileHTTPServiceStub struct {
 	idempotencyKey string
 	tenantID       string
 	document       verification.Profile
+	revisionPage   verification.RevisionPage
+	revisionBefore uint32
+	revisionLimit  int
 }
 
 func (service *profileHTTPServiceStub) Create(
@@ -296,6 +373,20 @@ func (service *profileHTTPServiceStub) FindRevision(
 	service.calls++
 
 	return verification.Revision{}, service.err
+}
+
+func (service *profileHTTPServiceStub) ListRevisions(
+	_ context.Context,
+	_ access.Context,
+	_ id.Profile,
+	before uint32,
+	limit int,
+) (verification.RevisionPage, error) {
+	service.calls++
+	service.revisionBefore = before
+	service.revisionLimit = limit
+
+	return service.revisionPage, service.err
 }
 
 func (service *profileHTTPServiceStub) List(

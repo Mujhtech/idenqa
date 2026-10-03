@@ -25,6 +25,8 @@ import (
 
 const profileListQuery = "capture_profiles:list"
 
+const profileRevisionListQuery = "capture_profiles:revisions"
+
 // CaptureProfileService is the application capability consumed by profile routes.
 type CaptureProfileService interface {
 	Create(context.Context, access.Context, string, string, verification.Profile) (verification.MutationResult, error)
@@ -48,6 +50,7 @@ type CaptureProfileService interface {
 	Deactivate(context.Context, access.Context, id.Profile, int64, string) (verification.MutationResult, error)
 	Find(context.Context, access.Context, id.Profile) (verification.CaptureProfile, error)
 	FindRevision(context.Context, access.Context, id.Profile, uint32) (verification.Revision, error)
+	ListRevisions(context.Context, access.Context, id.Profile, uint32, int) (verification.RevisionPage, error)
 	List(context.Context, access.Context, *verification.ListPosition, int) (verification.Page, error)
 	ValidateDraft(context.Context, access.Context, id.Profile) (string, error)
 }
@@ -92,6 +95,7 @@ func NewProfileRoutes(
 func (routes *ProfileRoutes) Register(router chi.Router) {
 	read := routes.access.Authorize(access.PermissionCaptureProfilesRead)
 	write := routes.access.Authorize(access.PermissionCaptureProfilesWrite)
+	router.With(read).Get("/capture-profile-registries", routes.listRegistries)
 	router.With(read).Get("/capture-profiles", routes.list)
 	router.With(write).Post("/capture-profiles", routes.create)
 	router.With(read).Get("/capture-profiles/{profileID}", routes.find)
@@ -100,7 +104,29 @@ func (routes *ProfileRoutes) Register(router chi.Router) {
 	router.With(write).Post("/capture-profiles/{profileID}/publish", routes.publish)
 	router.With(write).Post("/capture-profiles/{profileID}/supersede", routes.supersede)
 	router.With(write).Post("/capture-profiles/{profileID}/deactivate", routes.deactivate)
+	router.With(read).Get("/capture-profiles/{profileID}/revisions", routes.listRevisions)
 	router.With(read).Get("/capture-profiles/{profileID}/revisions/{revision}", routes.findRevision)
+}
+
+func (routes *ProfileRoutes) listRegistries(writer http.ResponseWriter, request *http.Request) {
+	snapshots, err := routes.catalog.Snapshots()
+	if err != nil {
+		routes.problem(writer, request, err)
+
+		return
+	}
+	items := make([]openapiv1.CaptureProfileRegistry, 0, len(snapshots))
+	for _, snapshot := range snapshots {
+		items = append(items, openapiv1.CaptureProfileRegistry{
+			Reference: openapiv1.CaptureProfileRegistryReference{
+				SchemaVersion: snapshot.Reference.SchemaVersion,
+				Revision:      snapshot.Reference.Revision,
+				Digest:        snapshot.Reference.Digest,
+			},
+			Document: snapshot.Document,
+		})
+	}
+	routes.writeJSON(writer, request, http.StatusOK, openapiv1.CaptureProfileRegistryList{Data: items})
 }
 
 func (routes *ProfileRoutes) create(writer http.ResponseWriter, request *http.Request) {
@@ -285,6 +311,63 @@ func (routes *ProfileRoutes) findRevision(writer http.ResponseWriter, request *h
 		return
 	}
 	routes.writeJSON(writer, request, http.StatusOK, revisionResponse(revision, document))
+}
+
+func (routes *ProfileRoutes) listRevisions(writer http.ResponseWriter, request *http.Request) {
+	authority, identifier, ok := routes.authorityAndProfile(writer, request)
+	if !ok {
+		return
+	}
+	limit, encodedCursor, err := parseListQuery(request)
+	if err != nil {
+		routes.problem(writer, request, invalidRequest(err))
+
+		return
+	}
+	query := profileRevisionListQuery + ";profile=" + identifier.String() + ";limit=" + strconv.Itoa(limit)
+	var before uint32
+	if encodedCursor != "" {
+		claims, err := routes.cursors.Decode(encodedCursor, authority.TenantScope().ID(), query)
+		if err != nil {
+			routes.problem(writer, request, invalidRequest(err))
+
+			return
+		}
+		if err := decodeStrictJSON(claims.Position, &before); err != nil || before == 0 {
+			routes.problem(writer, request, invalidRequest(errors.New("invalid revision cursor position")))
+
+			return
+		}
+	}
+	page, err := routes.service.ListRevisions(request.Context(), authority, identifier, before, limit)
+	if err != nil {
+		routes.problem(writer, request, err)
+
+		return
+	}
+	response := openapiv1.CaptureProfileRevisionList{
+		Data: make([]openapiv1.CaptureProfileRevisionSummary, 0, len(page.Revisions)),
+		Page: openapiv1.Page{HasMore: page.HasMore},
+	}
+	for _, revision := range page.Revisions {
+		response.Data = append(response.Data, revisionSummaryResponse(revision))
+	}
+	if page.HasMore {
+		position, err := json.Marshal(page.NextBefore)
+		if err != nil {
+			routes.problem(writer, request, err)
+
+			return
+		}
+		next, err := routes.cursors.Encode(authority.TenantScope().ID(), query, position)
+		if err != nil {
+			routes.problem(writer, request, err)
+
+			return
+		}
+		response.Page.NextCursor = &next
+	}
+	routes.writeJSON(writer, request, http.StatusOK, response)
 }
 
 func (routes *ProfileRoutes) list(writer http.ResponseWriter, request *http.Request) {
@@ -576,6 +659,19 @@ func revisionResponse(revision verification.Revision, document []byte) openapiv1
 		Revision:    int(revision.Number()),
 		State:       openapiv1.CaptureProfileRevisionState(revision.State()),
 		Document:    append(json.RawMessage(nil), document...),
+		Digest:      revision.Digest(),
+		CreatedAt:   revision.CreatedAt(),
+		UpdatedAt:   revision.UpdatedAt(),
+		PublishedAt: revision.PublishedAt(),
+		EndedAt:     revision.EndedAt(),
+	}
+}
+
+func revisionSummaryResponse(revision verification.Revision) openapiv1.CaptureProfileRevisionSummary {
+	return openapiv1.CaptureProfileRevisionSummary{
+		ProfileID:   revision.ProfileID().String(),
+		Revision:    int(revision.Number()),
+		State:       openapiv1.CaptureProfileRevisionSummaryState(revision.State()),
 		Digest:      revision.Digest(),
 		CreatedAt:   revision.CreatedAt(),
 		UpdatedAt:   revision.UpdatedAt(),

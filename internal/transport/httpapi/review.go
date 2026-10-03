@@ -108,17 +108,36 @@ type appealResolutionRequest struct {
 }
 
 type reviewResource struct {
-	ID                    string           `json:"id"`
-	VerificationID        string           `json:"verification_id"`
-	ChallengedDecisionID  string           `json:"challenged_decision_id,omitempty"`
-	RoutingRequestID      string           `json:"routing_request_id,omitempty"`
-	SupersedingDecisionID string           `json:"superseding_decision_id,omitempty"`
-	Region                string           `json:"region"`
-	Oversight             review.Oversight `json:"oversight"`
-	State                 review.CaseState `json:"state"`
-	AssignedReviewer      string           `json:"assigned_reviewer,omitempty"`
-	FindingCount          int              `json:"finding_count"`
-	Version               int64            `json:"version"`
+	ID                    string                     `json:"id"`
+	VerificationID        string                     `json:"verification_id"`
+	ChallengedDecisionID  string                     `json:"challenged_decision_id,omitempty"`
+	RoutingRequestID      string                     `json:"routing_request_id,omitempty"`
+	SupersedingDecisionID string                     `json:"superseding_decision_id,omitempty"`
+	Region                string                     `json:"region"`
+	Oversight             review.Oversight           `json:"oversight"`
+	State                 review.CaseState           `json:"state"`
+	AssignedReviewer      string                     `json:"assigned_reviewer,omitempty"`
+	RequiredCertificate   string                     `json:"required_certificate"`
+	FindingCount          int                        `json:"finding_count"`
+	PermittedFindings     []permittedFindingResource `json:"permitted_findings"`
+	Findings              []findingResource          `json:"findings"`
+	Version               int64                      `json:"version"`
+	CreatedAt             time.Time                  `json:"created_at"`
+	UpdatedAt             time.Time                  `json:"updated_at"`
+}
+
+type permittedFindingResource struct {
+	Resolution review.Resolution `json:"resolution"`
+	ReasonCode string            `json:"reason_code"`
+}
+
+type findingResource struct {
+	ID               string            `json:"id"`
+	ReviewerID       string            `json:"reviewer_id"`
+	Resolution       review.Resolution `json:"resolution"`
+	ReasonCode       string            `json:"reason_code"`
+	EvidenceGrantIDs []string          `json:"evidence_grant_ids"`
+	RecordedAt       time.Time         `json:"recorded_at"`
 }
 type appealResource struct {
 	Deadline              time.Time            `json:"deadline"`
@@ -337,7 +356,26 @@ func (routes *ReviewRoutes) resolveAppeal(writer http.ResponseWriter, request *h
 	routes.writeAppeal(writer, request, http.StatusOK, value)
 }
 func (routes *ReviewRoutes) writeCase(writer http.ResponseWriter, request *http.Request, value review.Case) {
-	routes.write(writer, request, http.StatusOK, reviewResource{ID: value.ID.String(), VerificationID: value.VerificationID.String(), ChallengedDecisionID: value.ChallengedDecision.String(), RoutingRequestID: value.RoutingRequest.String(), SupersedingDecisionID: value.SupersedesDecision.String(), Region: value.Region, Oversight: value.Oversight, State: value.State, AssignedReviewer: value.AssignedReviewer, FindingCount: len(value.Findings), Version: value.Version})
+	permitted := make([]permittedFindingResource, 0, len(value.PermittedFindings))
+	for _, item := range value.PermittedFindings {
+		permitted = append(permitted, permittedFindingResource{Resolution: item.Resolution, ReasonCode: item.ReasonCode})
+	}
+	findings := make([]findingResource, 0, len(value.Findings))
+	for _, item := range value.Findings {
+		grantIDs := make([]string, 0, len(item.GrantIDs))
+		for _, grantID := range item.GrantIDs {
+			grantIDs = append(grantIDs, grantID.String())
+		}
+		findings = append(findings, findingResource{
+			ID: item.ID.String(), ReviewerID: item.ReviewerID, Resolution: item.Resolution,
+			ReasonCode: item.ReasonCode, EvidenceGrantIDs: grantIDs, RecordedAt: item.RecordedAt,
+		})
+	}
+	routes.write(writer, request, http.StatusOK, reviewResource{
+		ID: value.ID.String(), VerificationID: value.VerificationID.String(), ChallengedDecisionID: value.ChallengedDecision.String(), RoutingRequestID: value.RoutingRequest.String(), SupersedingDecisionID: value.SupersedesDecision.String(),
+		Region: value.Region, Oversight: value.Oversight, State: value.State, AssignedReviewer: value.AssignedReviewer, RequiredCertificate: value.RequiredCertificate,
+		FindingCount: len(value.Findings), PermittedFindings: permitted, Findings: findings, Version: value.Version, CreatedAt: value.CreatedAt, UpdatedAt: value.UpdatedAt,
+	})
 }
 func (routes *ReviewRoutes) writeAppeal(writer http.ResponseWriter, request *http.Request, status int, value review.Appeal) {
 	routes.write(writer, request, status, appealResource{Deadline: value.Deadline, ReasonCode: value.ReasonCode, SupersedingDecisionID: nullableDecisionString(value.SupersedingDecision), ID: value.ID.String(), CaseID: value.CaseID.String(), State: value.State, Outcome: value.Outcome, AssignedReviewer: value.AssignedReviewer, Version: value.Version})

@@ -31,6 +31,7 @@ type Dependencies struct {
 	// body and attempt limits. Nil keeps the larger upload exception disabled.
 	EvidenceUploadPolicy *evidence.UploadPolicy
 	AllowedOrigins       []string
+	RequestLogRecorder   requestLogRecorder
 }
 
 // VersionPrefix is the public API major-version path boundary. Public route
@@ -96,6 +97,9 @@ func New(dependencies Dependencies, register RegisterRoutes) (http.Handler, erro
 		dependencies.EvidenceUploadPolicy,
 		dependencies.Logger,
 	))
+	if dependencies.RequestLogRecorder != nil {
+		router.Use(operationalRequestJournal(dependencies.RequestLogRecorder, dependencies.Logger))
+	}
 
 	router.NotFound(problemHandler(dependencies.Logger, apierror.New(
 		http.StatusNotFound,
