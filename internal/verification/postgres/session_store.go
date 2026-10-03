@@ -26,6 +26,7 @@ import (
 	"github.com/Mujhtech/idenqa/internal/tenant"
 	"github.com/Mujhtech/idenqa/internal/verification"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const (
@@ -224,6 +225,61 @@ func (store *SessionStore) FindSession(
 	)
 
 	return session, err
+}
+
+// ListSessions returns a tenant-scoped newest-first page and fetches one extra
+// row solely to determine whether a protected continuation cursor is needed.
+func (store *SessionStore) ListSessions(
+	ctx context.Context,
+	scope tenant.Scope,
+	after *verification.SessionListPosition,
+	limit int,
+) (verification.SessionPage, error) {
+	if scope.ID().IsZero() || limit < 1 || limit > 100 {
+		return verification.SessionPage{}, verification.ErrSessionConflict
+	}
+	params := sqlgen.ListVerificationSessionsParams{
+		TenantID: scope.ID().String(),
+		PageSize: int32(limit + 1),
+	}
+	if after != nil {
+		if after.CreatedAt.IsZero() || after.ID == "" {
+			return verification.SessionPage{}, verification.ErrSessionConflict
+		}
+		params.HasAfter = true
+		params.AfterCreatedAt = pgtype.Timestamptz{Time: after.CreatedAt.UTC(), Valid: true}
+		params.AfterID = after.ID
+	}
+	var page verification.SessionPage
+	err := store.pool.WithinTransaction(
+		ctx,
+		platformpostgres.TransactionOptions{ReadOnly: true},
+		func(ctx context.Context, tx platformpostgres.Transaction) error {
+			queries := sqlgen.New(tx)
+			if _, err := queries.SetTenantScope(ctx, scope.ID().String()); err != nil {
+				return fmt.Errorf("set verification session tenant scope: %w", err)
+			}
+			rows, err := queries.ListVerificationSessions(ctx, params)
+			if err != nil {
+				return fmt.Errorf("list verification sessions: %w", err)
+			}
+			page.Sessions = make([]verification.Session, 0, min(len(rows), limit))
+			for index, row := range rows {
+				if index == limit {
+					last := page.Sessions[len(page.Sessions)-1]
+					page.Next = &verification.SessionListPosition{CreatedAt: last.CreatedAt(), ID: last.ID().String()}
+					break
+				}
+				session, restoreErr := store.restoreSession(row)
+				if restoreErr != nil {
+					return restoreErr
+				}
+				page.Sessions = append(page.Sessions, session)
+			}
+			return nil
+		},
+	)
+	return page, err
 }
 
 // FindCaptureOutcome retrieves the minimum lifecycle and terminal-decision state

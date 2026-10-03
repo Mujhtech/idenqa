@@ -32,6 +32,8 @@ type RequestRepository interface {
 // DurableExecutor prevents blind resubmission after an ambiguous external call.
 // A pending claim is reconciliation evidence, not permission to redeem evidence again.
 type DurableExecutor struct {
+	tracer observability.Tracer
+
 	repository RequestRepository
 	executor   modelv1.Executor
 	now        func() time.Time
@@ -43,7 +45,7 @@ func NewDurableExecutor(repository RequestRepository, executor modelv1.Executor,
 	if repository == nil || executor == nil || now == nil {
 		return nil, ErrRequestUnavailable
 	}
-	return &DurableExecutor{repository, executor, now, nil}, nil
+	return &DurableExecutor{repository: repository, executor: executor, now: now, metrics: nil}, nil
 }
 
 // WithMetrics attaches the bounded model metric receiver.
@@ -55,7 +57,10 @@ func (executor *DurableExecutor) WithMetrics(metrics Metrics) *DurableExecutor {
 }
 
 // Execute sends one exact request, or recovers its stored result without a new call.
-func (executor *DurableExecutor) Execute(ctx context.Context, request modelv1.Request) (modelv1.Result, error) {
+func (executor *DurableExecutor) Execute(ctx context.Context, request modelv1.Request) (spanResult0 modelv1.Result, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, executor.operationTracer(), "model.DurableExecutor.Execute")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := request.Validate(); err != nil {
 		return modelv1.Result{}, ErrRequestUnavailable
 	}
@@ -184,4 +189,19 @@ func RequestScope(request modelv1.Request) (tenant.Scope, id.Attempt, error) {
 	}
 	scope, err := tenant.NewScope(tenantID)
 	return scope, attempt, err
+}
+
+// WithTracer injects operation tracing during composition, before concurrent use.
+func (executor *DurableExecutor) WithTracer(tracer observability.Tracer) *DurableExecutor {
+	if executor != nil {
+		executor.tracer = tracer
+	}
+	return executor
+}
+
+func (executor *DurableExecutor) operationTracer() observability.Tracer {
+	if executor == nil {
+		return nil
+	}
+	return executor.tracer
 }

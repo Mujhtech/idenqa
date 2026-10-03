@@ -142,6 +142,56 @@ func TestCaptureProfileDeactivationWithdrawsUnpublishedDraft(t *testing.T) {
 	}
 }
 
+func TestCaptureProfileCanDraftAndRepublishAfterDeactivation(t *testing.T) {
+	t.Parallel()
+
+	registry := builtInRegistry(t)
+	document := captureProfileDocument(t, registry, evidence.MethodFileUpload)
+	profile, draft, err := NewCaptureProfile(
+		mustProfileID(t),
+		mustTenantID(t),
+		"Standard identity",
+		document,
+		registry,
+		profileTime(0),
+	)
+	if err != nil {
+		t.Fatalf("NewCaptureProfile() error = %v", err)
+	}
+	profile, published, _, err := profile.PublishDraft(1, draft, nil, profileTime(1))
+	if err != nil {
+		t.Fatalf("PublishDraft() error = %v", err)
+	}
+	profile, _, err = profile.Deactivate(2, nil, profileTime(2))
+	if err != nil {
+		t.Fatalf("Deactivate() error = %v", err)
+	}
+
+	replacement := captureProfileDocument(t, registry, evidence.MethodLiveCamera)
+	profile, replacementDraft, err := profile.BeginSupersession(3, replacement, registry, profileTime(3))
+	if err != nil {
+		t.Fatalf("BeginSupersession(deactivated) error = %v", err)
+	}
+	if profile.State() != ProfileStateDeactivated || profile.DeactivatedAt() == nil || profile.DraftRevision() == nil {
+		t.Fatalf("deactivated profile with draft = %+v", profile)
+	}
+
+	profile, replacementPublished, superseded, err := profile.PublishDraft(
+		4,
+		replacementDraft,
+		&published,
+		profileTime(4),
+	)
+	if err != nil {
+		t.Fatalf("PublishDraft(deactivated) error = %v", err)
+	}
+	if profile.State() != ProfileStateActive || profile.DeactivatedAt() != nil ||
+		replacementPublished.State() != RevisionStatePublished || superseded == nil ||
+		superseded.State() != RevisionStateSuperseded {
+		t.Fatalf("republished profile = %+v, revision = %+v, superseded = %+v", profile, replacementPublished, superseded)
+	}
+}
+
 func captureProfileDocument(t *testing.T, registry evidence.Registry, method evidence.Name) Profile {
 	t.Helper()
 

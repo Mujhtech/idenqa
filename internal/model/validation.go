@@ -1,6 +1,8 @@
 package model
 
 import (
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
+
 	"context"
 	"errors"
 	"slices"
@@ -61,7 +63,10 @@ func (report *ValidationReport) reject(code ValidationCode) {
 
 // Validate reports whether the supplied command would be accepted, checking the
 // domain document and the current registry state without persisting anything.
-func (service *Management) Validate(ctx context.Context, actor access.Context, name string, request ValidationRequest) (ValidationReport, error) {
+func (service *Management) Validate(ctx context.Context, actor access.Context, name string, request ValidationRequest) (spanResult0 ValidationReport, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.tracer, "model.Management.Validate")
+	defer func() { completeSpan(spanErr) }()
+
 	if err := actor.Require(access.PermissionModelsWrite); err != nil {
 		return ValidationReport{}, err
 	}
@@ -75,7 +80,7 @@ func (service *Management) Validate(ctx context.Context, actor access.Context, n
 	}
 	if err := command.validateEnvelope(); err != nil {
 		report.reject(ValidationCommandInvalid)
-		return report, nil //nolint:nilerr // A rejected document is a bounded validation report, not an operational error.
+		return report, nil // A rejected document is a bounded validation report, not an operational error.
 	}
 	switch command.Operation {
 	case "register":

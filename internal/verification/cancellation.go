@@ -1,6 +1,8 @@
 package verification
 
 import (
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
+
 	"context"
 	"encoding/json"
 	"errors"
@@ -37,6 +39,8 @@ type CancellationRepository interface {
 
 // CancellationService owns tenant and subject cancellation authorisation.
 type CancellationService struct {
+	tracer observability.Tracer
+
 	repository CancellationRepository
 	clock      clock.Clock
 	retention  time.Duration
@@ -51,7 +55,10 @@ func NewCancellationService(repository CancellationRepository, source clock.Cloc
 }
 
 // CancelTenant requires the dedicated immutable API-key permission snapshot.
-func (service *CancellationService) CancelTenant(ctx context.Context, actor access.Context, verificationID id.Verification, version int64, key string) (CancellationResult, error) {
+func (service *CancellationService) CancelTenant(ctx context.Context, actor access.Context, verificationID id.Verification, version int64, key string) (spanResult0 CancellationResult, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "verification.CancellationService.CancelTenant")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := actor.Require(access.PermissionVerificationSessionsCancel); err != nil {
 		return CancellationResult{}, err
 	}
@@ -60,7 +67,10 @@ func (service *CancellationService) CancelTenant(ctx context.Context, actor acce
 
 // CancelSubject addresses only the session authenticated by the capture credential.
 // Cancellation does not require consent to further processing.
-func (service *CancellationService) CancelSubject(ctx context.Context, actor CaptureContext, version int64, key string) (CancellationResult, error) {
+func (service *CancellationService) CancelSubject(ctx context.Context, actor CaptureContext, version int64, key string) (spanResult0 CancellationResult, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "verification.CancellationService.CancelSubject")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if actor.TokenID().IsZero() || actor.Session().ID().IsZero() || actor.Session().TenantID() != actor.TenantScope().ID() {
 		return CancellationResult{}, access.ErrInvalidCaptureToken
 	}
@@ -83,4 +93,19 @@ func (service *CancellationService) cancel(ctx context.Context, scope tenant.Sco
 		return CancellationResult{}, err
 	}
 	return service.repository.Cancel(ctx, scope, CancellationMutation{VerificationID: verificationID, ExpectedVersion: version, Retry: retry})
+}
+
+// WithTracer injects operation tracing during composition, before concurrent use.
+func (service *CancellationService) WithTracer(tracer observability.Tracer) *CancellationService {
+	if service != nil {
+		service.tracer = tracer
+	}
+	return service
+}
+
+func (service *CancellationService) operationTracer() observability.Tracer {
+	if service == nil {
+		return nil
+	}
+	return service.tracer
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/Mujhtech/idenqa/internal/access"
 	"github.com/Mujhtech/idenqa/internal/experience"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
 	"github.com/Mujhtech/idenqa/internal/tenant"
 )
 
@@ -23,6 +24,29 @@ func TestSessionServiceCreateRequiresPermission(t *testing.T) {
 	}
 	if repository.createCalls != 0 {
 		t.Fatal("unauthorised create reached persistence")
+	}
+}
+
+func TestSessionServiceListRequiresReadPermissionAndBoundsPage(t *testing.T) {
+	t.Parallel()
+
+	service, repository := newSessionServiceFixture(t)
+	if _, err := service.List(t.Context(), access.Context{}, nil, 25); !errors.Is(err, access.ErrInsufficientScope) {
+		t.Fatalf("List() unauthorised error = %v, want ErrInsufficientScope", err)
+	}
+	if repository.listCalls != 0 {
+		t.Fatal("unauthorised list reached persistence")
+	}
+	authority := newProfileServiceAuthority(t, access.Pattern("verification_sessions:read"))
+	if _, err := service.List(t.Context(), authority, nil, 101); !errors.Is(err, ErrSessionConflict) {
+		t.Fatalf("List() oversized error = %v, want ErrSessionConflict", err)
+	}
+	position := &SessionListPosition{CreatedAt: time.Date(2026, 9, 28, 12, 0, 0, 0, time.UTC), ID: "ver_01ARZ3NDEKTSV4RRFFQ69G5FAV"}
+	if _, err := service.List(t.Context(), authority, position, 25); err != nil {
+		t.Fatalf("List() error = %v", err)
+	}
+	if repository.listCalls != 1 || repository.listLimit != 25 || repository.listAfter != position {
+		t.Fatalf("list calls = %d, limit = %d, after = %#v", repository.listCalls, repository.listLimit, repository.listAfter)
 	}
 }
 
@@ -85,6 +109,9 @@ func TestSessionServiceRejectsTenantLifetimeOutsideDeploymentBounds(t *testing.T
 type sessionServiceRepositoryStub struct {
 	mutation    SessionCreateMutation
 	createCalls int
+	listCalls   int
+	listLimit   int
+	listAfter   *SessionListPosition
 }
 
 func (repository *sessionServiceRepositoryStub) Create(
@@ -119,6 +146,13 @@ func (repository *sessionServiceRepositoryStub) Create(
 
 func (*sessionServiceRepositoryStub) FindSession(context.Context, tenant.Scope, id.Verification) (Session, error) {
 	return Session{}, ErrSessionNotFound
+}
+
+func (repository *sessionServiceRepositoryStub) ListSessions(_ context.Context, _ tenant.Scope, after *SessionListPosition, limit int) (SessionPage, error) {
+	repository.listCalls++
+	repository.listAfter = after
+	repository.listLimit = limit
+	return SessionPage{}, nil
 }
 
 func (*sessionServiceRepositoryStub) Resume(context.Context, tenant.Scope, ResumeMutation) (ResumeResult, error) {
@@ -264,5 +298,73 @@ func TestSessionServicePinsExperienceAtCreation(t *testing.T) {
 	}
 	if pinner.request.Workflow != "capture.identity" || pinner.request.Country != "NG" || pinner.request.Locale != "fr" {
 		t.Fatalf("resolution request = %+v", pinner.request)
+	}
+}
+
+type sessionSpanContextKey struct{}
+type sessionTracer struct {
+	name string
+	err  error
+}
+
+func (tracer *sessionTracer) Start(ctx context.Context, name string) (context.Context, func(error)) {
+	tracer.name = name
+	return context.WithValue(ctx, sessionSpanContextKey{}, true), func(err error) { tracer.err = err }
+}
+
+type tracedSessionRepository struct {
+	SessionRepository
+	err        error
+	panicValue any
+	sawSpan    bool
+}
+
+func (repository *tracedSessionRepository) FindSession(ctx context.Context, _ tenant.Scope, _ id.Verification) (Session, error) {
+	repository.sawSpan = ctx.Value(sessionSpanContextKey{}) == true
+	if repository.panicValue != nil {
+		panic(repository.panicValue)
+	}
+	return Session{}, repository.err
+}
+
+func TestSessionServiceTracingPreservesContextErrorAndPanic(t *testing.T) {
+	t.Parallel()
+	for _, panicked := range []bool{false, true} {
+		t.Run(map[bool]string{false: "repository error", true: "repository panic"}[panicked], func(t *testing.T) {
+			t.Parallel()
+			service, _ := newSessionServiceFixture(t)
+			tracer := &sessionTracer{}
+			cause := errors.New("private repository cause")
+			repository := &tracedSessionRepository{err: cause}
+			if panicked {
+				repository.panicValue = "private panic cause"
+			}
+			service.repository = repository
+			service.WithTracer(tracer)
+			authority := newProfileServiceAuthority(t, "verification_sessions:read")
+			func() {
+				if panicked {
+					defer func() {
+						if recover() != repository.panicValue {
+							t.Fatal("panic value changed")
+						}
+					}()
+				}
+				_, err := service.Find(t.Context(), authority, id.Verification{})
+				if !panicked && !errors.Is(err, cause) {
+					t.Fatal("repository error changed")
+				}
+			}()
+			if !repository.sawSpan || tracer.name != "verification.SessionService.Find" {
+				t.Fatal("service failed to pass its span context")
+			}
+			if panicked {
+				if !errors.Is(tracer.err, observability.ErrOperationPanic) {
+					t.Fatal("panic diagnostic not recorded")
+				}
+			} else if !errors.Is(tracer.err, cause) {
+				t.Fatal("returned error missing from span completion")
+			}
+		})
 	}
 }

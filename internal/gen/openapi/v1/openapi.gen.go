@@ -188,6 +188,144 @@ func (e CaptureFallbackCondition) Valid() bool {
 	}
 }
 
+// Defines values for CaptureJourneyEventCreateAction.
+const (
+	CaptureJourneyEventCreateActionAcceptCapture  CaptureJourneyEventCreateAction = "accept_capture"
+	CaptureJourneyEventCreateActionAcceptNotice   CaptureJourneyEventCreateAction = "accept_notice"
+	CaptureJourneyEventCreateActionBack           CaptureJourneyEventCreateAction = "back"
+	CaptureJourneyEventCreateActionContinue       CaptureJourneyEventCreateAction = "continue"
+	CaptureJourneyEventCreateActionRefuseNotice   CaptureJourneyEventCreateAction = "refuse_notice"
+	CaptureJourneyEventCreateActionRetake         CaptureJourneyEventCreateAction = "retake"
+	CaptureJourneyEventCreateActionRetry          CaptureJourneyEventCreateAction = "retry"
+	CaptureJourneyEventCreateActionSelectCountry  CaptureJourneyEventCreateAction = "select_country"
+	CaptureJourneyEventCreateActionSelectDocument CaptureJourneyEventCreateAction = "select_document"
+	CaptureJourneyEventCreateActionSelectMethod   CaptureJourneyEventCreateAction = "select_method"
+	CaptureJourneyEventCreateActionStartCapture   CaptureJourneyEventCreateAction = "start_capture"
+	CaptureJourneyEventCreateActionSubmit         CaptureJourneyEventCreateAction = "submit"
+)
+
+// Valid indicates whether the value is a known member of the CaptureJourneyEventCreateAction enum.
+func (e CaptureJourneyEventCreateAction) Valid() bool {
+	switch e {
+	case CaptureJourneyEventCreateActionAcceptCapture:
+		return true
+	case CaptureJourneyEventCreateActionAcceptNotice:
+		return true
+	case CaptureJourneyEventCreateActionBack:
+		return true
+	case CaptureJourneyEventCreateActionContinue:
+		return true
+	case CaptureJourneyEventCreateActionRefuseNotice:
+		return true
+	case CaptureJourneyEventCreateActionRetake:
+		return true
+	case CaptureJourneyEventCreateActionRetry:
+		return true
+	case CaptureJourneyEventCreateActionSelectCountry:
+		return true
+	case CaptureJourneyEventCreateActionSelectDocument:
+		return true
+	case CaptureJourneyEventCreateActionSelectMethod:
+		return true
+	case CaptureJourneyEventCreateActionStartCapture:
+		return true
+	case CaptureJourneyEventCreateActionSubmit:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CaptureJourneyEventCreateEventType.
+const (
+	ActionSelected    CaptureJourneyEventCreateEventType = "action_selected"
+	CaptureAccepted   CaptureJourneyEventCreateEventType = "capture_accepted"
+	CaptureRetake     CaptureJourneyEventCreateEventType = "capture_retake"
+	CaptureRetried    CaptureJourneyEventCreateEventType = "capture_retried"
+	CaptureStarted    CaptureJourneyEventCreateEventType = "capture_started"
+	CompletionShown   CaptureJourneyEventCreateEventType = "completion_shown"
+	ErrorShown        CaptureJourneyEventCreateEventType = "error_shown"
+	NavigationBack    CaptureJourneyEventCreateEventType = "navigation_back"
+	ProcessingStarted CaptureJourneyEventCreateEventType = "processing_started"
+	RecoveryStarted   CaptureJourneyEventCreateEventType = "recovery_started"
+	ScreenViewed      CaptureJourneyEventCreateEventType = "screen_viewed"
+)
+
+// Valid indicates whether the value is a known member of the CaptureJourneyEventCreateEventType enum.
+func (e CaptureJourneyEventCreateEventType) Valid() bool {
+	switch e {
+	case ActionSelected:
+		return true
+	case CaptureAccepted:
+		return true
+	case CaptureRetake:
+		return true
+	case CaptureRetried:
+		return true
+	case CaptureStarted:
+		return true
+	case CompletionShown:
+		return true
+	case ErrorShown:
+		return true
+	case NavigationBack:
+		return true
+	case ProcessingStarted:
+		return true
+	case RecoveryStarted:
+		return true
+	case ScreenViewed:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CaptureJourneyEventCreateScreen.
+const (
+	CaptureJourneyEventCreateScreenCapture     CaptureJourneyEventCreateScreen = "capture"
+	CaptureJourneyEventCreateScreenCompletion  CaptureJourneyEventCreateScreen = "completion"
+	CaptureJourneyEventCreateScreenCountry     CaptureJourneyEventCreateScreen = "country"
+	CaptureJourneyEventCreateScreenError       CaptureJourneyEventCreateScreen = "error"
+	CaptureJourneyEventCreateScreenIntro       CaptureJourneyEventCreateScreen = "intro"
+	CaptureJourneyEventCreateScreenMethod      CaptureJourneyEventCreateScreen = "method"
+	CaptureJourneyEventCreateScreenNotice      CaptureJourneyEventCreateScreen = "notice"
+	CaptureJourneyEventCreateScreenPreparation CaptureJourneyEventCreateScreen = "preparation"
+	CaptureJourneyEventCreateScreenProcessing  CaptureJourneyEventCreateScreen = "processing"
+	CaptureJourneyEventCreateScreenRecovery    CaptureJourneyEventCreateScreen = "recovery"
+	CaptureJourneyEventCreateScreenReview      CaptureJourneyEventCreateScreen = "review"
+)
+
+// Valid indicates whether the value is a known member of the CaptureJourneyEventCreateScreen enum.
+func (e CaptureJourneyEventCreateScreen) Valid() bool {
+	switch e {
+	case CaptureJourneyEventCreateScreenCapture:
+		return true
+	case CaptureJourneyEventCreateScreenCompletion:
+		return true
+	case CaptureJourneyEventCreateScreenCountry:
+		return true
+	case CaptureJourneyEventCreateScreenError:
+		return true
+	case CaptureJourneyEventCreateScreenIntro:
+		return true
+	case CaptureJourneyEventCreateScreenMethod:
+		return true
+	case CaptureJourneyEventCreateScreenNotice:
+		return true
+	case CaptureJourneyEventCreateScreenPreparation:
+		return true
+	case CaptureJourneyEventCreateScreenProcessing:
+		return true
+	case CaptureJourneyEventCreateScreenRecovery:
+		return true
+	case CaptureJourneyEventCreateScreenReview:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CaptureOutcomeState.
 const (
 	CaptureOutcomeStateActionRequired  CaptureOutcomeState = "action_required"
@@ -287,6 +425,30 @@ func (e CaptureProfileRevisionState) Valid() bool {
 	case CaptureProfileRevisionStateSuperseded:
 		return true
 	case CaptureProfileRevisionStateWithdrawn:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CaptureProfileRevisionSummaryState.
+const (
+	CaptureProfileRevisionSummaryStateDraft      CaptureProfileRevisionSummaryState = "draft"
+	CaptureProfileRevisionSummaryStatePublished  CaptureProfileRevisionSummaryState = "published"
+	CaptureProfileRevisionSummaryStateSuperseded CaptureProfileRevisionSummaryState = "superseded"
+	CaptureProfileRevisionSummaryStateWithdrawn  CaptureProfileRevisionSummaryState = "withdrawn"
+)
+
+// Valid indicates whether the value is a known member of the CaptureProfileRevisionSummaryState enum.
+func (e CaptureProfileRevisionSummaryState) Valid() bool {
+	switch e {
+	case CaptureProfileRevisionSummaryStateDraft:
+		return true
+	case CaptureProfileRevisionSummaryStatePublished:
+		return true
+	case CaptureProfileRevisionSummaryStateSuperseded:
+		return true
+	case CaptureProfileRevisionSummaryStateWithdrawn:
 		return true
 	default:
 		return false
@@ -1963,16 +2125,16 @@ func (e PackSecurityCheck) Valid() bool {
 
 // Defines values for PackSide.
 const (
-	Back  PackSide = "back"
-	Front PackSide = "front"
+	PackSideBack  PackSide = "back"
+	PackSideFront PackSide = "front"
 )
 
 // Valid indicates whether the value is a known member of the PackSide enum.
 func (e PackSide) Valid() bool {
 	switch e {
-	case Back:
+	case PackSideBack:
 		return true
-	case Front:
+	case PackSideFront:
 		return true
 	default:
 		return false
@@ -2006,18 +2168,33 @@ func (e PackSupportLevel) Valid() bool {
 	}
 }
 
+// Defines values for PermissionCatalogVersion.
+const (
+	IdenqaCoreAccessPermissionsV1 PermissionCatalogVersion = "idenqa.core/access-permissions/v1"
+)
+
+// Valid indicates whether the value is a known member of the PermissionCatalogVersion enum.
+func (e PermissionCatalogVersion) Valid() bool {
+	switch e {
+	case IdenqaCoreAccessPermissionsV1:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for PolicyActor.
 const (
-	Human   PolicyActor = "human"
-	Machine PolicyActor = "machine"
+	PolicyActorHuman   PolicyActor = "human"
+	PolicyActorMachine PolicyActor = "machine"
 )
 
 // Valid indicates whether the value is a known member of the PolicyActor enum.
 func (e PolicyActor) Valid() bool {
 	switch e {
-	case Human:
+	case PolicyActorHuman:
 		return true
-	case Machine:
+	case PolicyActorMachine:
 		return true
 	default:
 		return false
@@ -2968,6 +3145,10 @@ const (
 	REQUESTCANCELLED            ProblemCode = "REQUEST_CANCELLED"
 	REQUESTTIMEOUT              ProblemCode = "REQUEST_TIMEOUT"
 	REQUESTTOOLARGE             ProblemCode = "REQUEST_TOO_LARGE"
+	REVIEWAUTHORITYREVOKED      ProblemCode = "REVIEW_AUTHORITY_REVOKED"
+	REVIEWCASESTALE             ProblemCode = "REVIEW_CASE_STALE"
+	REVIEWSESSIONEXPIRED        ProblemCode = "REVIEW_SESSION_EXPIRED"
+	REVIEWSESSIONREPLAYED       ProblemCode = "REVIEW_SESSION_REPLAYED"
 	SERVICEUNAVAILABLE          ProblemCode = "SERVICE_UNAVAILABLE"
 	UNAUTHENTICATED             ProblemCode = "UNAUTHENTICATED"
 )
@@ -3004,6 +3185,14 @@ func (e ProblemCode) Valid() bool {
 	case REQUESTTIMEOUT:
 		return true
 	case REQUESTTOOLARGE:
+		return true
+	case REVIEWAUTHORITYREVOKED:
+		return true
+	case REVIEWCASESTALE:
+		return true
+	case REVIEWSESSIONEXPIRED:
+		return true
+	case REVIEWSESSIONREPLAYED:
 		return true
 	case SERVICEUNAVAILABLE:
 		return true
@@ -3436,19 +3625,19 @@ func (e ProviderRegistrationOperation) Valid() bool {
 
 // Defines values for ProviderRetryDisposition.
 const (
-	Backoff   ProviderRetryDisposition = "backoff"
-	Never     ProviderRetryDisposition = "never"
-	Reconcile ProviderRetryDisposition = "reconcile"
+	ProviderRetryDispositionBackoff   ProviderRetryDisposition = "backoff"
+	ProviderRetryDispositionNever     ProviderRetryDisposition = "never"
+	ProviderRetryDispositionReconcile ProviderRetryDisposition = "reconcile"
 )
 
 // Valid indicates whether the value is a known member of the ProviderRetryDisposition enum.
 func (e ProviderRetryDisposition) Valid() bool {
 	switch e {
-	case Backoff:
+	case ProviderRetryDispositionBackoff:
 		return true
-	case Never:
+	case ProviderRetryDispositionNever:
 		return true
-	case Reconcile:
+	case ProviderRetryDispositionReconcile:
 		return true
 	default:
 		return false
@@ -3497,6 +3686,33 @@ func (e ProviderValidationReasonCode) Valid() bool {
 	}
 }
 
+// Defines values for RequestAnalyticsStatusesClass.
+const (
+	N1Xx RequestAnalyticsStatusesClass = "1xx"
+	N2Xx RequestAnalyticsStatusesClass = "2xx"
+	N3Xx RequestAnalyticsStatusesClass = "3xx"
+	N4Xx RequestAnalyticsStatusesClass = "4xx"
+	N5Xx RequestAnalyticsStatusesClass = "5xx"
+)
+
+// Valid indicates whether the value is a known member of the RequestAnalyticsStatusesClass enum.
+func (e RequestAnalyticsStatusesClass) Valid() bool {
+	switch e {
+	case N1Xx:
+		return true
+	case N2Xx:
+		return true
+	case N3Xx:
+		return true
+	case N4Xx:
+		return true
+	case N5Xx:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ReviewAppealResolutionRequestOutcome.
 const (
 	MoreInput  ReviewAppealResolutionRequestOutcome = "more_input"
@@ -3539,6 +3755,27 @@ func (e ReviewArbitrationRequestResolution) Valid() bool {
 	}
 }
 
+// Defines values for ReviewFindingResolution.
+const (
+	ReviewFindingResolutionNotSatisfy   ReviewFindingResolution = "not_satisfy"
+	ReviewFindingResolutionRequestInput ReviewFindingResolution = "request_input"
+	ReviewFindingResolutionSatisfy      ReviewFindingResolution = "satisfy"
+)
+
+// Valid indicates whether the value is a known member of the ReviewFindingResolution enum.
+func (e ReviewFindingResolution) Valid() bool {
+	switch e {
+	case ReviewFindingResolutionNotSatisfy:
+		return true
+	case ReviewFindingResolutionRequestInput:
+		return true
+	case ReviewFindingResolutionSatisfy:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ReviewFindingRequestResolution.
 const (
 	ReviewFindingRequestResolutionNotSatisfy   ReviewFindingRequestResolution = "not_satisfy"
@@ -3554,6 +3791,27 @@ func (e ReviewFindingRequestResolution) Valid() bool {
 	case ReviewFindingRequestResolutionRequestInput:
 		return true
 	case ReviewFindingRequestResolutionSatisfy:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ReviewPermittedFindingResolution.
+const (
+	ReviewPermittedFindingResolutionNotSatisfy   ReviewPermittedFindingResolution = "not_satisfy"
+	ReviewPermittedFindingResolutionRequestInput ReviewPermittedFindingResolution = "request_input"
+	ReviewPermittedFindingResolutionSatisfy      ReviewPermittedFindingResolution = "satisfy"
+)
+
+// Valid indicates whether the value is a known member of the ReviewPermittedFindingResolution enum.
+func (e ReviewPermittedFindingResolution) Valid() bool {
+	switch e {
+	case ReviewPermittedFindingResolutionNotSatisfy:
+		return true
+	case ReviewPermittedFindingResolutionRequestInput:
+		return true
+	case ReviewPermittedFindingResolutionSatisfy:
 		return true
 	default:
 		return false
@@ -3755,6 +4013,330 @@ func (e VerificationCancellationState) Valid() bool {
 	}
 }
 
+// Defines values for VerificationInspectionAttemptRetryDisposition.
+const (
+	VerificationInspectionAttemptRetryDispositionBackoff   VerificationInspectionAttemptRetryDisposition = "backoff"
+	VerificationInspectionAttemptRetryDispositionNever     VerificationInspectionAttemptRetryDisposition = "never"
+	VerificationInspectionAttemptRetryDispositionReconcile VerificationInspectionAttemptRetryDisposition = "reconcile"
+)
+
+// Valid indicates whether the value is a known member of the VerificationInspectionAttemptRetryDisposition enum.
+func (e VerificationInspectionAttemptRetryDisposition) Valid() bool {
+	switch e {
+	case VerificationInspectionAttemptRetryDispositionBackoff:
+		return true
+	case VerificationInspectionAttemptRetryDispositionNever:
+		return true
+	case VerificationInspectionAttemptRetryDispositionReconcile:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for VerificationInspectionAttemptRunnerKind.
+const (
+	VerificationInspectionAttemptRunnerKindModel    VerificationInspectionAttemptRunnerKind = "model"
+	VerificationInspectionAttemptRunnerKindProvider VerificationInspectionAttemptRunnerKind = "provider"
+)
+
+// Valid indicates whether the value is a known member of the VerificationInspectionAttemptRunnerKind enum.
+func (e VerificationInspectionAttemptRunnerKind) Valid() bool {
+	switch e {
+	case VerificationInspectionAttemptRunnerKindModel:
+		return true
+	case VerificationInspectionAttemptRunnerKindProvider:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for VerificationInspectionAttemptState.
+const (
+	VerificationInspectionAttemptStateCancelled VerificationInspectionAttemptState = "cancelled"
+	VerificationInspectionAttemptStateCompleted VerificationInspectionAttemptState = "completed"
+	VerificationInspectionAttemptStateFailed    VerificationInspectionAttemptState = "failed"
+	VerificationInspectionAttemptStateRunning   VerificationInspectionAttemptState = "running"
+	VerificationInspectionAttemptStateTimedOut  VerificationInspectionAttemptState = "timed_out"
+)
+
+// Valid indicates whether the value is a known member of the VerificationInspectionAttemptState enum.
+func (e VerificationInspectionAttemptState) Valid() bool {
+	switch e {
+	case VerificationInspectionAttemptStateCancelled:
+		return true
+	case VerificationInspectionAttemptStateCompleted:
+		return true
+	case VerificationInspectionAttemptStateFailed:
+		return true
+	case VerificationInspectionAttemptStateRunning:
+		return true
+	case VerificationInspectionAttemptStateTimedOut:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for VerificationInspectionCheckOutcome.
+const (
+	VerificationInspectionCheckOutcomeInconclusive VerificationInspectionCheckOutcome = "inconclusive"
+	VerificationInspectionCheckOutcomeNotPassed    VerificationInspectionCheckOutcome = "not_passed"
+	VerificationInspectionCheckOutcomePassed       VerificationInspectionCheckOutcome = "passed"
+)
+
+// Valid indicates whether the value is a known member of the VerificationInspectionCheckOutcome enum.
+func (e VerificationInspectionCheckOutcome) Valid() bool {
+	switch e {
+	case VerificationInspectionCheckOutcomeInconclusive:
+		return true
+	case VerificationInspectionCheckOutcomeNotPassed:
+		return true
+	case VerificationInspectionCheckOutcomePassed:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for VerificationInspectionDecisionActor.
+const (
+	VerificationInspectionDecisionActorHuman   VerificationInspectionDecisionActor = "human"
+	VerificationInspectionDecisionActorMachine VerificationInspectionDecisionActor = "machine"
+)
+
+// Valid indicates whether the value is a known member of the VerificationInspectionDecisionActor enum.
+func (e VerificationInspectionDecisionActor) Valid() bool {
+	switch e {
+	case VerificationInspectionDecisionActorHuman:
+		return true
+	case VerificationInspectionDecisionActorMachine:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for VerificationInspectionDecisionOutcome.
+const (
+	VerificationInspectionDecisionOutcomeInconclusive VerificationInspectionDecisionOutcome = "inconclusive"
+	VerificationInspectionDecisionOutcomeNotVerified  VerificationInspectionDecisionOutcome = "not_verified"
+	VerificationInspectionDecisionOutcomeVerified     VerificationInspectionDecisionOutcome = "verified"
+)
+
+// Valid indicates whether the value is a known member of the VerificationInspectionDecisionOutcome enum.
+func (e VerificationInspectionDecisionOutcome) Valid() bool {
+	switch e {
+	case VerificationInspectionDecisionOutcomeInconclusive:
+		return true
+	case VerificationInspectionDecisionOutcomeNotVerified:
+		return true
+	case VerificationInspectionDecisionOutcomeVerified:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for VerificationInspectionDecisionSelected.
+const (
+	VerificationInspectionDecisionSelectedCompleteInconclusive VerificationInspectionDecisionSelected = "complete_inconclusive"
+	VerificationInspectionDecisionSelectedCompleteNotVerified  VerificationInspectionDecisionSelected = "complete_not_verified"
+	VerificationInspectionDecisionSelectedCompleteVerified     VerificationInspectionDecisionSelected = "complete_verified"
+)
+
+// Valid indicates whether the value is a known member of the VerificationInspectionDecisionSelected enum.
+func (e VerificationInspectionDecisionSelected) Valid() bool {
+	switch e {
+	case VerificationInspectionDecisionSelectedCompleteInconclusive:
+		return true
+	case VerificationInspectionDecisionSelectedCompleteNotVerified:
+		return true
+	case VerificationInspectionDecisionSelectedCompleteVerified:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for VerificationInspectionEvidenceIntegrity.
+const (
+	VerificationInspectionEvidenceIntegrityFailed   VerificationInspectionEvidenceIntegrity = "failed"
+	VerificationInspectionEvidenceIntegrityVerified VerificationInspectionEvidenceIntegrity = "verified"
+)
+
+// Valid indicates whether the value is a known member of the VerificationInspectionEvidenceIntegrity enum.
+func (e VerificationInspectionEvidenceIntegrity) Valid() bool {
+	switch e {
+	case VerificationInspectionEvidenceIntegrityFailed:
+		return true
+	case VerificationInspectionEvidenceIntegrityVerified:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for VerificationInspectionEvidenceState.
+const (
+	VerificationInspectionEvidenceStateAvailable   VerificationInspectionEvidenceState = "available"
+	VerificationInspectionEvidenceStateQuarantined VerificationInspectionEvidenceState = "quarantined"
+)
+
+// Valid indicates whether the value is a known member of the VerificationInspectionEvidenceState enum.
+func (e VerificationInspectionEvidenceState) Valid() bool {
+	switch e {
+	case VerificationInspectionEvidenceStateAvailable:
+		return true
+	case VerificationInspectionEvidenceStateQuarantined:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for VerificationInspectionWebhookDeliveryState.
+const (
+	VerificationInspectionWebhookDeliveryStateCancelled VerificationInspectionWebhookDeliveryState = "cancelled"
+	VerificationInspectionWebhookDeliveryStateDelivered VerificationInspectionWebhookDeliveryState = "delivered"
+	VerificationInspectionWebhookDeliveryStateExhausted VerificationInspectionWebhookDeliveryState = "exhausted"
+	VerificationInspectionWebhookDeliveryStatePending   VerificationInspectionWebhookDeliveryState = "pending"
+)
+
+// Valid indicates whether the value is a known member of the VerificationInspectionWebhookDeliveryState enum.
+func (e VerificationInspectionWebhookDeliveryState) Valid() bool {
+	switch e {
+	case VerificationInspectionWebhookDeliveryStateCancelled:
+		return true
+	case VerificationInspectionWebhookDeliveryStateDelivered:
+		return true
+	case VerificationInspectionWebhookDeliveryStateExhausted:
+		return true
+	case VerificationInspectionWebhookDeliveryStatePending:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for VerificationInspectionWebhookEventState.
+const (
+	VerificationInspectionWebhookEventStateCompleted VerificationInspectionWebhookEventState = "completed"
+	VerificationInspectionWebhookEventStatePending   VerificationInspectionWebhookEventState = "pending"
+)
+
+// Valid indicates whether the value is a known member of the VerificationInspectionWebhookEventState enum.
+func (e VerificationInspectionWebhookEventState) Valid() bool {
+	switch e {
+	case VerificationInspectionWebhookEventStateCompleted:
+		return true
+	case VerificationInspectionWebhookEventStatePending:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for VerificationLifecycleOriginState.
+const (
+	VerificationLifecycleOriginStateCollecting VerificationLifecycleOriginState = "collecting"
+)
+
+// Valid indicates whether the value is a known member of the VerificationLifecycleOriginState enum.
+func (e VerificationLifecycleOriginState) Valid() bool {
+	switch e {
+	case VerificationLifecycleOriginStateCollecting:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for VerificationLifecycleOriginVersion.
+const (
+	VerificationLifecycleOriginVersionN1 VerificationLifecycleOriginVersion = 1
+)
+
+// Valid indicates whether the value is a known member of the VerificationLifecycleOriginVersion enum.
+func (e VerificationLifecycleOriginVersion) Valid() bool {
+	switch e {
+	case VerificationLifecycleOriginVersionN1:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for VerificationLifecycleTransitionFromState.
+const (
+	VerificationLifecycleTransitionFromStateAwaitingExternal VerificationLifecycleTransitionFromState = "awaiting_external"
+	VerificationLifecycleTransitionFromStateAwaitingInput    VerificationLifecycleTransitionFromState = "awaiting_input"
+	VerificationLifecycleTransitionFromStateCollecting       VerificationLifecycleTransitionFromState = "collecting"
+	VerificationLifecycleTransitionFromStateCreated          VerificationLifecycleTransitionFromState = "created"
+	VerificationLifecycleTransitionFromStateManualReview     VerificationLifecycleTransitionFromState = "manual_review"
+	VerificationLifecycleTransitionFromStateProcessing       VerificationLifecycleTransitionFromState = "processing"
+)
+
+// Valid indicates whether the value is a known member of the VerificationLifecycleTransitionFromState enum.
+func (e VerificationLifecycleTransitionFromState) Valid() bool {
+	switch e {
+	case VerificationLifecycleTransitionFromStateAwaitingExternal:
+		return true
+	case VerificationLifecycleTransitionFromStateAwaitingInput:
+		return true
+	case VerificationLifecycleTransitionFromStateCollecting:
+		return true
+	case VerificationLifecycleTransitionFromStateCreated:
+		return true
+	case VerificationLifecycleTransitionFromStateManualReview:
+		return true
+	case VerificationLifecycleTransitionFromStateProcessing:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for VerificationLifecycleTransitionToState.
+const (
+	VerificationLifecycleTransitionToStateAwaitingExternal VerificationLifecycleTransitionToState = "awaiting_external"
+	VerificationLifecycleTransitionToStateAwaitingInput    VerificationLifecycleTransitionToState = "awaiting_input"
+	VerificationLifecycleTransitionToStateCancelled        VerificationLifecycleTransitionToState = "cancelled"
+	VerificationLifecycleTransitionToStateCollecting       VerificationLifecycleTransitionToState = "collecting"
+	VerificationLifecycleTransitionToStateCompleted        VerificationLifecycleTransitionToState = "completed"
+	VerificationLifecycleTransitionToStateExpired          VerificationLifecycleTransitionToState = "expired"
+	VerificationLifecycleTransitionToStateFailed           VerificationLifecycleTransitionToState = "failed"
+	VerificationLifecycleTransitionToStateManualReview     VerificationLifecycleTransitionToState = "manual_review"
+	VerificationLifecycleTransitionToStateProcessing       VerificationLifecycleTransitionToState = "processing"
+)
+
+// Valid indicates whether the value is a known member of the VerificationLifecycleTransitionToState enum.
+func (e VerificationLifecycleTransitionToState) Valid() bool {
+	switch e {
+	case VerificationLifecycleTransitionToStateAwaitingExternal:
+		return true
+	case VerificationLifecycleTransitionToStateAwaitingInput:
+		return true
+	case VerificationLifecycleTransitionToStateCancelled:
+		return true
+	case VerificationLifecycleTransitionToStateCollecting:
+		return true
+	case VerificationLifecycleTransitionToStateCompleted:
+		return true
+	case VerificationLifecycleTransitionToStateExpired:
+		return true
+	case VerificationLifecycleTransitionToStateFailed:
+		return true
+	case VerificationLifecycleTransitionToStateManualReview:
+		return true
+	case VerificationLifecycleTransitionToStateProcessing:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for VerificationSessionState.
 const (
 	VerificationSessionStateAwaitingExternal VerificationSessionState = "awaiting_external"
@@ -3791,6 +4373,93 @@ func (e VerificationSessionState) Valid() bool {
 	case VerificationSessionStateManualReview:
 		return true
 	case VerificationSessionStateProcessing:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for VerificationSignalOutcome.
+const (
+	VerificationSignalOutcomeInconclusive VerificationSignalOutcome = "inconclusive"
+	VerificationSignalOutcomeNotSatisfied VerificationSignalOutcome = "not_satisfied"
+	VerificationSignalOutcomeSatisfied    VerificationSignalOutcome = "satisfied"
+)
+
+// Valid indicates whether the value is a known member of the VerificationSignalOutcome enum.
+func (e VerificationSignalOutcome) Valid() bool {
+	switch e {
+	case VerificationSignalOutcomeInconclusive:
+		return true
+	case VerificationSignalOutcomeNotSatisfied:
+		return true
+	case VerificationSignalOutcomeSatisfied:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for VerificationSignalRunnerKind.
+const (
+	VerificationSignalRunnerKindModel    VerificationSignalRunnerKind = "model"
+	VerificationSignalRunnerKindProvider VerificationSignalRunnerKind = "provider"
+)
+
+// Valid indicates whether the value is a known member of the VerificationSignalRunnerKind enum.
+func (e VerificationSignalRunnerKind) Valid() bool {
+	switch e {
+	case VerificationSignalRunnerKindModel:
+		return true
+	case VerificationSignalRunnerKindProvider:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for VerificationTimelineEventCategory.
+const (
+	VerificationTimelineEventCategoryDecision    VerificationTimelineEventCategory = "decision"
+	VerificationTimelineEventCategoryEvidence    VerificationTimelineEventCategory = "evidence"
+	VerificationTimelineEventCategoryInteraction VerificationTimelineEventCategory = "interaction"
+	VerificationTimelineEventCategoryLifecycle   VerificationTimelineEventCategory = "lifecycle"
+	VerificationTimelineEventCategoryProcessing  VerificationTimelineEventCategory = "processing"
+	VerificationTimelineEventCategorySignal      VerificationTimelineEventCategory = "signal"
+)
+
+// Valid indicates whether the value is a known member of the VerificationTimelineEventCategory enum.
+func (e VerificationTimelineEventCategory) Valid() bool {
+	switch e {
+	case VerificationTimelineEventCategoryDecision:
+		return true
+	case VerificationTimelineEventCategoryEvidence:
+		return true
+	case VerificationTimelineEventCategoryInteraction:
+		return true
+	case VerificationTimelineEventCategoryLifecycle:
+		return true
+	case VerificationTimelineEventCategoryProcessing:
+		return true
+	case VerificationTimelineEventCategorySignal:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for VerificationTimelineEventSource.
+const (
+	CaptureClient VerificationTimelineEventSource = "capture_client"
+	Core          VerificationTimelineEventSource = "core"
+)
+
+// Valid indicates whether the value is a known member of the VerificationTimelineEventSource enum.
+func (e VerificationTimelineEventSource) Valid() bool {
+	switch e {
+	case CaptureClient:
+		return true
+	case Core:
 		return true
 	default:
 		return false
@@ -3845,6 +4514,21 @@ const (
 func (e WebhookEndpointSchemaVersion) Valid() bool {
 	switch e {
 	case WebhookEndpointSchemaVersionN10:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for WebhookEventTypeSchemaVersion.
+const (
+	WebhookEventTypeSchemaVersionN10 WebhookEventTypeSchemaVersion = "1.0"
+)
+
+// Valid indicates whether the value is a known member of the WebhookEventTypeSchemaVersion enum.
+func (e WebhookEventTypeSchemaVersion) Valid() bool {
+	switch e {
+	case WebhookEventTypeSchemaVersionN10:
 		return true
 	default:
 		return false
@@ -3932,6 +4616,27 @@ func (e ListPrivacyRequestsParamsType) Valid() bool {
 	case ListPrivacyRequestsParamsTypePortability:
 		return true
 	case ListPrivacyRequestsParamsTypeRestriction:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetRequestAnalyticsParamsWindow.
+const (
+	N30D GetRequestAnalyticsParamsWindow = "30d"
+	N7D  GetRequestAnalyticsParamsWindow = "7d"
+	N90D GetRequestAnalyticsParamsWindow = "90d"
+)
+
+// Valid indicates whether the value is a known member of the GetRequestAnalyticsParamsWindow enum.
+func (e GetRequestAnalyticsParamsWindow) Valid() bool {
+	switch e {
+	case N30D:
+		return true
+	case N7D:
+		return true
+	case N90D:
 		return true
 	default:
 		return false
@@ -4134,6 +4839,22 @@ type AssuranceSummary struct {
 	Requested *AssuranceSelection `json:"requested,omitempty"`
 }
 
+// AuditRecord Content-free reference metadata for one immutable tenant audit event.
+type AuditRecord struct {
+	ActorID     string    `json:"actor_id"`
+	AggregateID string    `json:"aggregate_id"`
+	EventID     string    `json:"event_id"`
+	EventType   string    `json:"event_type"`
+	OccurredAt  time.Time `json:"occurred_at"`
+	Sequence    int64     `json:"sequence"`
+}
+
+// AuditRecordPage A bounded newest-first page of audit-record metadata.
+type AuditRecordPage struct {
+	Data       []AuditRecord `json:"data"`
+	NextBefore *string       `json:"next_before,omitempty"`
+}
+
 // CaptureAuthoritySnapshot Capture-visible current authority, exact notice, and optional latest response.
 type CaptureAuthoritySnapshot struct {
 	// Authority Current lifecycle projection of one immutable processing-authority declaration.
@@ -4184,6 +4905,34 @@ type CaptureDocumentSelection struct {
 
 // CaptureFallbackCondition Policy-approved reason for selecting a fallback acquisition branch.
 type CaptureFallbackCondition string
+
+// CaptureJourneyEventCreate Closed, privacy-safe capture interaction reported by the client.
+type CaptureJourneyEventCreate struct {
+	AcquisitionMethod *string                            `json:"acquisition_method,omitempty"`
+	Action            *CaptureJourneyEventCreateAction   `json:"action,omitempty"`
+	Artefact          *string                            `json:"artefact,omitempty"`
+	ClientOccurredAt  time.Time                          `json:"client_occurred_at"`
+	EventID           string                             `json:"event_id"`
+	EventType         CaptureJourneyEventCreateEventType `json:"event_type"`
+	RequirementKey    *string                            `json:"requirement_key,omitempty"`
+	Screen            CaptureJourneyEventCreateScreen    `json:"screen"`
+	Sequence          int                                `json:"sequence"`
+}
+
+// CaptureJourneyEventCreateAction defines model for CaptureJourneyEventCreate.Action.
+type CaptureJourneyEventCreateAction string
+
+// CaptureJourneyEventCreateEventType defines model for CaptureJourneyEventCreate.EventType.
+type CaptureJourneyEventCreateEventType string
+
+// CaptureJourneyEventCreateScreen defines model for CaptureJourneyEventCreate.Screen.
+type CaptureJourneyEventCreateScreen string
+
+// CaptureJourneyEventReceipt Server receipt for one immutable capture interaction.
+type CaptureJourneyEventReceipt struct {
+	EventID    string    `json:"event_id"`
+	ReceivedAt time.Time `json:"received_at"`
+}
 
 // CaptureOutcome Minimal outcome-token-scoped workflow or terminal-decision projection.
 // The state is authoritative, but deliberately carries no diagnostic or
@@ -4254,6 +5003,30 @@ type CaptureProfileMutation struct {
 // CaptureProfileMutationState defines model for CaptureProfileMutation.State.
 type CaptureProfileMutationState string
 
+// CaptureProfileRegistry A deployed immutable registry reference and its canonical vocabulary document.
+type CaptureProfileRegistry struct {
+	// Document One canonical immutable evidence-registry document.
+	Document CaptureProfileRegistryDocument `json:"document"`
+
+	// Reference Exact immutable evidence-registry pin used by a capture profile.
+	Reference CaptureProfileRegistryReference `json:"reference"`
+}
+
+// CaptureProfileRegistryDocument One canonical immutable evidence-registry document.
+type CaptureProfileRegistryDocument = json.RawMessage
+
+// CaptureProfileRegistryList Deployed registry revisions ordered from newest to oldest.
+type CaptureProfileRegistryList struct {
+	Data []CaptureProfileRegistry `json:"data"`
+}
+
+// CaptureProfileRegistryReference Exact immutable evidence-registry pin used by a capture profile.
+type CaptureProfileRegistryReference struct {
+	Digest        string `json:"digest"`
+	Revision      uint32 `json:"revision"`
+	SchemaVersion uint32 `json:"schema_version"`
+}
+
 // CaptureProfileRevision One numbered capture-profile revision and its immutable document after publication.
 type CaptureProfileRevision struct {
 	CreatedAt time.Time `json:"created_at"`
@@ -4273,6 +5046,31 @@ type CaptureProfileRevision struct {
 
 // CaptureProfileRevisionState defines model for CaptureProfileRevision.State.
 type CaptureProfileRevisionState string
+
+// CaptureProfileRevisionList A bounded newest-first page of capture-profile revision metadata.
+type CaptureProfileRevisionList struct {
+	Data []CaptureProfileRevisionSummary `json:"data"`
+
+	// Page Opaque cursor pagination metadata.
+	Page Page `json:"page"`
+}
+
+// CaptureProfileRevisionSummary Metadata for one numbered capture-profile revision; retrieve the revision to inspect its document.
+type CaptureProfileRevisionSummary struct {
+	CreatedAt time.Time  `json:"created_at"`
+	Digest    string     `json:"digest"`
+	EndedAt   *time.Time `json:"ended_at,omitempty"`
+
+	// ProfileID Stable Idenqa capture-profile identifier.
+	ProfileID   CaptureProfileID                   `json:"profile_id"`
+	PublishedAt *time.Time                         `json:"published_at,omitempty"`
+	Revision    int                                `json:"revision"`
+	State       CaptureProfileRevisionSummaryState `json:"state"`
+	UpdatedAt   time.Time                          `json:"updated_at"`
+}
+
+// CaptureProfileRevisionSummaryState defines model for CaptureProfileRevisionSummary.State.
+type CaptureProfileRevisionSummaryState string
 
 // CaptureProfileSupersede A complete document from which to create the next draft revision.
 type CaptureProfileSupersede struct {
@@ -5986,6 +6784,22 @@ type Page struct {
 	NextCursor *Cursor `json:"next_cursor,omitempty"`
 }
 
+// PermissionCatalog The exact tenant-assignable permission catalog advertised by this Core revision.
+type PermissionCatalog struct {
+	Data    []PermissionCatalogEntry `json:"data"`
+	Version PermissionCatalogVersion `json:"version"`
+}
+
+// PermissionCatalogVersion defines model for PermissionCatalog.Version.
+type PermissionCatalogVersion string
+
+// PermissionCatalogEntry One exact resource-action permission that may be assigned to a tenant credential.
+type PermissionCatalogEntry struct {
+	Action   string `json:"action"`
+	ID       string `json:"id"`
+	Resource string `json:"resource"`
+}
+
 // PolicyActivationInfo An immutable switch of the active pointer, including operational rollback.
 type PolicyActivationInfo struct {
 	ActivatedAt      time.Time `json:"activated_at"`
@@ -7629,8 +8443,65 @@ type ProviderRetryDisposition string
 // ProviderValidationReasonCode Stable bounded registration-validation reason code.
 type ProviderValidationReasonCode string
 
+// RequestAnalytics Content-free request metrics for one bounded UTC window and its immediately preceding comparison window.
+type RequestAnalytics struct {
+	Endpoints []struct {
+		Method        string `json:"method"`
+		P95LatencyMs  int64  `json:"p95_latency_ms"`
+		Requests      int64  `json:"requests"`
+		RouteTemplate string `json:"route_template"`
+		Successes     int64  `json:"successes"`
+	} `json:"endpoints"`
+	Errors           int64 `json:"errors"`
+	P95LatencyMs     int64 `json:"p95_latency_ms"`
+	PreviousRequests int64 `json:"previous_requests"`
+	Requests         int64 `json:"requests"`
+	Statuses         []struct {
+		Class RequestAnalyticsStatusesClass `json:"class"`
+		Count int64                         `json:"count"`
+	} `json:"statuses"`
+	Successes int64 `json:"successes"`
+	Volume    []struct {
+		Day      time.Time `json:"day"`
+		Errors   int64     `json:"errors"`
+		Requests int64     `json:"requests"`
+	} `json:"volume"`
+	Window struct {
+		From time.Time `json:"from"`
+		To   time.Time `json:"to"`
+	} `json:"window"`
+}
+
+// RequestAnalyticsStatusesClass defines model for RequestAnalytics.Statuses.Class.
+type RequestAnalyticsStatusesClass string
+
 // RequestID Stable server-issued request correlation identifier.
 type RequestID = string
+
+// RequestLog Operational metadata and bounded redacted debug parameters for one API request.
+type RequestLog struct {
+	ActorKeyID string `json:"actor_key_id"`
+
+	// BodyParameters Bounded JSON request-body parameters with sensitive fields replaced by `[REDACTED]`; absent for non-JSON, empty, or unread bodies.
+	BodyParameters  *map[string]interface{} `json:"body_parameters,omitempty"`
+	ClientIPAddress string                  `json:"client_ip_address"`
+	DurationMs      int64                   `json:"duration_ms"`
+	Method          string                  `json:"method"`
+	OccurredAt      time.Time               `json:"occurred_at"`
+
+	// QueryParameters Bounded query parameter values with sensitive fields replaced by `[REDACTED]`.
+	QueryParameters map[string]interface{} `json:"query_parameters"`
+	RequestID       string                 `json:"request_id"`
+	RouteTemplate   string                 `json:"route_template"`
+	StatusCode      int                    `json:"status_code"`
+	TraceReference  *string                `json:"trace_reference,omitempty"`
+}
+
+// RequestLogPage A bounded newest-first page of content-free API request metadata.
+type RequestLogPage struct {
+	Data       []RequestLog `json:"data"`
+	NextBefore *string      `json:"next_before,omitempty"`
+}
 
 // ReviewAcknowledgement Published review Acknowledgement representation for tenant-scoped manual review operations.
 type ReviewAcknowledgement struct {
@@ -7696,17 +8567,22 @@ type ReviewAssignment struct {
 
 // ReviewCase Published review Case representation for tenant-scoped manual review operations.
 type ReviewCase struct {
-	AssignedReviewer      *string `json:"assigned_reviewer,omitempty"`
-	ChallengedDecisionID  *string `json:"challenged_decision_id,omitempty"`
-	FindingCount          int64   `json:"finding_count"`
-	ID                    string  `json:"id"`
-	Oversight             string  `json:"oversight"`
-	Region                string  `json:"region"`
-	RoutingRequestID      *string `json:"routing_request_id,omitempty"`
-	State                 string  `json:"state"`
-	SupersedingDecisionID *string `json:"superseding_decision_id,omitempty"`
-	VerificationID        string  `json:"verification_id"`
-	Version               int64   `json:"version"`
+	AssignedReviewer      *string                  `json:"assigned_reviewer,omitempty"`
+	ChallengedDecisionID  *string                  `json:"challenged_decision_id,omitempty"`
+	CreatedAt             time.Time                `json:"created_at"`
+	FindingCount          int64                    `json:"finding_count"`
+	Findings              []ReviewFinding          `json:"findings"`
+	ID                    string                   `json:"id"`
+	Oversight             string                   `json:"oversight"`
+	PermittedFindings     []ReviewPermittedFinding `json:"permitted_findings"`
+	Region                string                   `json:"region"`
+	RequiredCertificate   string                   `json:"required_certificate"`
+	RoutingRequestID      *string                  `json:"routing_request_id,omitempty"`
+	State                 string                   `json:"state"`
+	SupersedingDecisionID *string                  `json:"superseding_decision_id,omitempty"`
+	UpdatedAt             time.Time                `json:"updated_at"`
+	VerificationID        string                   `json:"verification_id"`
+	Version               int64                    `json:"version"`
 }
 
 // ReviewChildOutcomeRequest Published review ChildOutcomeRequest representation for tenant-scoped manual review operations.
@@ -7757,6 +8633,19 @@ type ReviewEvidenceRequest struct {
 	ExpectedVersion int64  `json:"expected_version"`
 }
 
+// ReviewFinding Immutable finding metadata. Evidence content and grant redemption material are excluded.
+type ReviewFinding struct {
+	EvidenceGrantIds []string                `json:"evidence_grant_ids"`
+	ID               string                  `json:"id"`
+	ReasonCode       string                  `json:"reason_code"`
+	RecordedAt       time.Time               `json:"recorded_at"`
+	Resolution       ReviewFindingResolution `json:"resolution"`
+	ReviewerID       string                  `json:"reviewer_id"`
+}
+
+// ReviewFindingResolution defines model for ReviewFinding.Resolution.
+type ReviewFindingResolution string
+
 // ReviewFindingRequest Published review FindingRequest representation for tenant-scoped manual review operations.
 type ReviewFindingRequest struct {
 	ExpectedVersion int64                          `json:"expected_version"`
@@ -7801,9 +8690,12 @@ type ReviewOperatorWrite struct {
 
 // ReviewPermittedFinding Published review PermittedFinding representation for tenant-scoped manual review operations.
 type ReviewPermittedFinding struct {
-	ReasonCode string `json:"reason_code"`
-	Resolution string `json:"resolution"`
+	ReasonCode string                           `json:"reason_code"`
+	Resolution ReviewPermittedFindingResolution `json:"resolution"`
 }
+
+// ReviewPermittedFindingResolution defines model for ReviewPermittedFinding.Resolution.
+type ReviewPermittedFindingResolution string
 
 // ReviewPolicyRecord Published review PolicyRecord representation for tenant-scoped manual review operations.
 type ReviewPolicyRecord struct {
@@ -8297,6 +9189,173 @@ type VerificationInputRequest struct {
 	RequestedAt time.Time `json:"requested_at"`
 }
 
+// VerificationInspection Bounded tenant-safe operational metadata for one verification.
+type VerificationInspection struct {
+	// Attempts Reference-only execution history without provider payloads or evidence.
+	Attempts []VerificationInspectionAttempt `json:"attempts"`
+	Checks   []VerificationInspectionCheck   `json:"checks"`
+
+	// Decisions Immutable decision lineage without canonical policy inputs.
+	Decisions []VerificationInspectionDecision `json:"decisions"`
+
+	// Evidence Safe evidence metadata, excluding bytes and storage or encryption references.
+	Evidence  []VerificationInspectionEvidence  `json:"evidence"`
+	LegalHold bool                              `json:"legal_hold"`
+	Retention []VerificationInspectionRetention `json:"retention"`
+	Webhooks  []VerificationInspectionWebhook   `json:"webhooks"`
+}
+
+// VerificationInspectionAttempt Reference-only execution state for one semantic check attempt.
+type VerificationInspectionAttempt struct {
+	AttemptNumber          int                                            `json:"attempt_number"`
+	CheckID                string                                         `json:"check_id"`
+	ConfigurationDigest    string                                         `json:"configuration_digest"`
+	ContractMajor          int                                            `json:"contract_major"`
+	ContractMinor          int                                            `json:"contract_minor"`
+	Deadline               time.Time                                      `json:"deadline"`
+	FailureClass           *string                                        `json:"failure_class,omitempty"`
+	FailureCode            *string                                        `json:"failure_code,omitempty"`
+	FinishedAt             *time.Time                                     `json:"finished_at,omitempty"`
+	ID                     string                                         `json:"id"`
+	PackageDigest          string                                         `json:"package_digest"`
+	RequestDigest          string                                         `json:"request_digest"`
+	ResultDigest           *string                                        `json:"result_digest,omitempty"`
+	RetryAfterMilliseconds *int64                                         `json:"retry_after_milliseconds,omitempty"`
+	RetryDisposition       *VerificationInspectionAttemptRetryDisposition `json:"retry_disposition,omitempty"`
+	RunnerID               string                                         `json:"runner_id"`
+	RunnerKind             VerificationInspectionAttemptRunnerKind        `json:"runner_kind"`
+	RunnerVersion          string                                         `json:"runner_version"`
+	StartedAt              time.Time                                      `json:"started_at"`
+	State                  VerificationInspectionAttemptState             `json:"state"`
+}
+
+// VerificationInspectionAttemptRetryDisposition defines model for VerificationInspectionAttempt.RetryDisposition.
+type VerificationInspectionAttemptRetryDisposition string
+
+// VerificationInspectionAttemptRunnerKind defines model for VerificationInspectionAttempt.RunnerKind.
+type VerificationInspectionAttemptRunnerKind string
+
+// VerificationInspectionAttemptState defines model for VerificationInspectionAttempt.State.
+type VerificationInspectionAttemptState string
+
+// VerificationInspectionCheck Current operational state and attempt count for one check.
+type VerificationInspectionCheck struct {
+	AttemptCount int                                 `json:"attempt_count"`
+	CreatedAt    time.Time                           `json:"created_at"`
+	ID           string                              `json:"id"`
+	Name         string                              `json:"name"`
+	Outcome      *VerificationInspectionCheckOutcome `json:"outcome,omitempty"`
+	State        string                              `json:"state"`
+	UpdatedAt    time.Time                           `json:"updated_at"`
+}
+
+// VerificationInspectionCheckOutcome defines model for VerificationInspectionCheck.Outcome.
+type VerificationInspectionCheckOutcome string
+
+// VerificationInspectionDecision Immutable terminal decision reference and supersession lineage.
+type VerificationInspectionDecision struct {
+	Actor          VerificationInspectionDecisionActor    `json:"actor"`
+	DecidedAt      time.Time                              `json:"decided_at"`
+	DecisionDigest string                                 `json:"decision_digest"`
+	ID             string                                 `json:"id"`
+	Outcome        VerificationInspectionDecisionOutcome  `json:"outcome"`
+	Selected       VerificationInspectionDecisionSelected `json:"selected"`
+	SupersedesID   *string                                `json:"supersedes_id,omitempty"`
+}
+
+// VerificationInspectionDecisionActor defines model for VerificationInspectionDecision.Actor.
+type VerificationInspectionDecisionActor string
+
+// VerificationInspectionDecisionOutcome defines model for VerificationInspectionDecision.Outcome.
+type VerificationInspectionDecisionOutcome string
+
+// VerificationInspectionDecisionSelected defines model for VerificationInspectionDecision.Selected.
+type VerificationInspectionDecisionSelected string
+
+// VerificationInspectionEvidence Metadata for one accepted or quarantined evidence artefact.
+type VerificationInspectionEvidence struct {
+	AcquisitionMethod string                                  `json:"acquisition_method"`
+	Artefact          string                                  `json:"artefact"`
+	Assurances        []string                                `json:"assurances"`
+	CreatedAt         time.Time                               `json:"created_at"`
+	EvidenceType      string                                  `json:"evidence_type"`
+	ID                string                                  `json:"id"`
+	Integrity         VerificationInspectionEvidenceIntegrity `json:"integrity"`
+	RequirementKey    string                                  `json:"requirement_key"`
+	RetentionClass    string                                  `json:"retention_class"`
+	State             VerificationInspectionEvidenceState     `json:"state"`
+	UpdatedAt         time.Time                               `json:"updated_at"`
+}
+
+// VerificationInspectionEvidenceIntegrity defines model for VerificationInspectionEvidence.Integrity.
+type VerificationInspectionEvidenceIntegrity string
+
+// VerificationInspectionEvidenceState defines model for VerificationInspectionEvidence.State.
+type VerificationInspectionEvidenceState string
+
+// VerificationInspectionRetention Immutable retention binding applied to the verification aggregate.
+type VerificationInspectionRetention struct {
+	DataClass    string    `json:"data_class"`
+	ExpiresAt    time.Time `json:"expires_at"`
+	PolicyDigest string    `json:"policy_digest"`
+	Region       string    `json:"region"`
+}
+
+// VerificationInspectionWebhook Webhook event and optional delivery reference without payload content.
+type VerificationInspectionWebhook struct {
+	CreatedAt     time.Time                                   `json:"created_at"`
+	DeliveryID    *string                                     `json:"delivery_id,omitempty"`
+	DeliveryState *VerificationInspectionWebhookDeliveryState `json:"delivery_state,omitempty"`
+	EventID       string                                      `json:"event_id"`
+	EventState    VerificationInspectionWebhookEventState     `json:"event_state"`
+	EventType     string                                      `json:"event_type"`
+}
+
+// VerificationInspectionWebhookDeliveryState defines model for VerificationInspectionWebhook.DeliveryState.
+type VerificationInspectionWebhookDeliveryState string
+
+// VerificationInspectionWebhookEventState defines model for VerificationInspectionWebhook.EventState.
+type VerificationInspectionWebhookEventState string
+
+// VerificationLifecycleHistory Authoritative creation state and immutable lifecycle transition receipts.
+type VerificationLifecycleHistory struct {
+	// Origin Authoritative version-one session creation state.
+	Origin      VerificationLifecycleOrigin       `json:"origin"`
+	Transitions []VerificationLifecycleTransition `json:"transitions"`
+
+	// Truncated True when more transition receipts exist than this bounded response contains.
+	Truncated bool `json:"truncated"`
+}
+
+// VerificationLifecycleOrigin Authoritative version-one session creation state.
+type VerificationLifecycleOrigin struct {
+	OccurredAt time.Time                          `json:"occurred_at"`
+	State      VerificationLifecycleOriginState   `json:"state"`
+	Version    VerificationLifecycleOriginVersion `json:"version"`
+}
+
+// VerificationLifecycleOriginState defines model for VerificationLifecycleOrigin.State.
+type VerificationLifecycleOriginState string
+
+// VerificationLifecycleOriginVersion defines model for VerificationLifecycleOrigin.Version.
+type VerificationLifecycleOriginVersion int64
+
+// VerificationLifecycleTransition One immutable post-creation state transition in aggregate-version order.
+type VerificationLifecycleTransition struct {
+	DecisionID *string                                  `json:"decision_id,omitempty"`
+	EventID    string                                   `json:"event_id"`
+	FromState  VerificationLifecycleTransitionFromState `json:"from_state"`
+	OccurredAt time.Time                                `json:"occurred_at"`
+	ToState    VerificationLifecycleTransitionToState   `json:"to_state"`
+	Version    int64                                    `json:"version"`
+}
+
+// VerificationLifecycleTransitionFromState defines model for VerificationLifecycleTransition.FromState.
+type VerificationLifecycleTransitionFromState string
+
+// VerificationLifecycleTransitionToState defines model for VerificationLifecycleTransition.ToState.
+type VerificationLifecycleTransitionToState string
+
 // VerificationReconsiderationCreate Exact decision selected for an independent correction workflow.
 type VerificationReconsiderationCreate struct {
 	// DecisionID Stable identifier for one immutable policy decision.
@@ -8384,6 +9443,70 @@ type VerificationSessionState string
 
 // VerificationSessionID Stable Idenqa verification-session identifier.
 type VerificationSessionID = string
+
+// VerificationSessionList A bounded newest-first page of verification sessions.
+type VerificationSessionList struct {
+	Data []VerificationSession `json:"data"`
+
+	// Page Opaque cursor pagination metadata.
+	Page Page `json:"page"`
+}
+
+// VerificationSignal An immutable normalised observation, not an identity claim or final decision.
+type VerificationSignal struct {
+	AttemptID     string                       `json:"attempt_id"`
+	CheckID       string                       `json:"check_id"`
+	ContractMajor int                          `json:"contract_major"`
+	ContractMinor int                          `json:"contract_minor"`
+	ID            string                       `json:"id"`
+	Name          string                       `json:"name"`
+	Outcome       VerificationSignalOutcome    `json:"outcome"`
+	ReasonCodes   []string                     `json:"reason_codes"`
+	RecordedAt    time.Time                    `json:"recorded_at"`
+	RunnerID      string                       `json:"runner_id"`
+	RunnerKind    VerificationSignalRunnerKind `json:"runner_kind"`
+	RunnerVersion string                       `json:"runner_version"`
+}
+
+// VerificationSignalOutcome defines model for VerificationSignal.Outcome.
+type VerificationSignalOutcome string
+
+// VerificationSignalRunnerKind defines model for VerificationSignal.RunnerKind.
+type VerificationSignalRunnerKind string
+
+// VerificationSignalPage Bounded chronological provider-independent observations.
+type VerificationSignalPage struct {
+	Items []VerificationSignal `json:"items"`
+
+	// Truncated True when more observations exist than this bounded response contains.
+	Truncated bool `json:"truncated"`
+}
+
+// VerificationTimeline Bounded chronological view across Core and capture-client events.
+type VerificationTimeline struct {
+	Events []VerificationTimelineEvent `json:"events"`
+
+	// Truncated True when more events exist than this bounded projection contains.
+	Truncated bool `json:"truncated"`
+}
+
+// VerificationTimelineEvent One normalized timeline event. Client-reported interactions are never authoritative.
+type VerificationTimelineEvent struct {
+	Authoritative bool                              `json:"authoritative"`
+	Category      VerificationTimelineEventCategory `json:"category"`
+	Detail        *string                           `json:"detail,omitempty"`
+	ID            string                            `json:"id"`
+	Name          string                            `json:"name"`
+	OccurredAt    time.Time                         `json:"occurred_at"`
+	Source        VerificationTimelineEventSource   `json:"source"`
+	Status        *string                           `json:"status,omitempty"`
+}
+
+// VerificationTimelineEventCategory defines model for VerificationTimelineEvent.Category.
+type VerificationTimelineEventCategory string
+
+// VerificationTimelineEventSource defines model for VerificationTimelineEvent.Source.
+type VerificationTimelineEventSource string
 
 // WebhookAttempt Bounded callback diagnostics with an optional sanitised response excerpt; no signature or event body.
 type WebhookAttempt struct {
@@ -8516,6 +9639,29 @@ type WebhookEventList struct {
 	Page Page `json:"page"`
 }
 
+// WebhookEventType One event type from the authoritative closed webhook catalogue.
+type WebhookEventType struct {
+	// OptionalData Closed data fields that may be present in the event envelope.
+	OptionalData []string `json:"optional_data"`
+
+	// RequiredData Closed data fields required in the event envelope.
+	RequiredData []string `json:"required_data"`
+
+	// SchemaVersion Exact webhook envelope version used for this event type.
+	SchemaVersion WebhookEventTypeSchemaVersion `json:"schema_version"`
+
+	// Type Exact dotted event type accepted in a webhook subscription.
+	Type string `json:"type"`
+}
+
+// WebhookEventTypeSchemaVersion Exact webhook envelope version used for this event type.
+type WebhookEventTypeSchemaVersion string
+
+// WebhookEventTypeList The closed webhook event-type catalogue supported by this Core deployment.
+type WebhookEventTypeList struct {
+	Data []WebhookEventType `json:"data"`
+}
+
 // WebhookReplay Replay an exhausted delivery with a distinct delivery ID and unchanged event ID and exact body. Applies to webhook Replay.
 type WebhookReplay struct {
 	Reason string `json:"reason"`
@@ -8642,6 +9788,15 @@ type PublishAssuranceProfileParams struct {
 	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
 }
 
+// ListAuditRecordsParams defines parameters for ListAuditRecords.
+type ListAuditRecordsParams struct {
+	// Before Exclusive sequence cursor returned by the previous page.
+	Before *string `form:"before,omitempty" json:"before,omitempty"`
+
+	// Limit Maximum number of records to return.
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
 // ListCaptureProfilesParams defines parameters for ListCaptureProfiles.
 type ListCaptureProfilesParams struct {
 	// Cursor Opaque continuation cursor returned by the preceding page.
@@ -8688,6 +9843,15 @@ type PublishCaptureProfileDraftParams struct {
 	// different canonical request fingerprint is a conflict. Keys are not
 	// credentials and clients must not place secrets or identity data in them.
 	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
+}
+
+// ListCaptureProfileRevisionsParams defines parameters for ListCaptureProfileRevisions.
+type ListCaptureProfileRevisionsParams struct {
+	// Cursor Opaque continuation cursor returned by the preceding page.
+	Cursor *Cursor `form:"cursor,omitempty" json:"cursor,omitempty"`
+
+	// Limit Maximum collection items to return. The default is 25.
+	Limit *Limit `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
 // SupersedeCaptureProfileParams defines parameters for SupersedeCaptureProfile.
@@ -9219,6 +10383,24 @@ type CreateProviderRegistrationParams struct {
 	IdempotencyKey IdempotencyKey `json:"Idempotency-Key"`
 }
 
+// GetRequestAnalyticsParams defines parameters for GetRequestAnalytics.
+type GetRequestAnalyticsParams struct {
+	// Window Bounded trailing UTC window and equally sized preceding comparison window.
+	Window GetRequestAnalyticsParamsWindow `form:"window" json:"window"`
+}
+
+// GetRequestAnalyticsParamsWindow defines parameters for GetRequestAnalytics.
+type GetRequestAnalyticsParamsWindow string
+
+// ListRequestLogsParams defines parameters for ListRequestLogs.
+type ListRequestLogsParams struct {
+	// Before Opaque exclusive cursor returned by the previous page.
+	Before *string `form:"before,omitempty" json:"before,omitempty"`
+
+	// Limit Maximum number of records to return.
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
 // GetRetentionResolutionParams defines parameters for GetRetentionResolution.
 type GetRetentionResolutionParams struct {
 	// AggregateID Exact aggregate whose retained records are resolved.
@@ -9595,6 +10777,15 @@ type ExportTenantParams struct {
 	Collections *string `form:"collections,omitempty" json:"collections,omitempty"`
 }
 
+// ListVerificationsParams defines parameters for ListVerifications.
+type ListVerificationsParams struct {
+	// Cursor Opaque continuation cursor returned by the preceding page.
+	Cursor *Cursor `form:"cursor,omitempty" json:"cursor,omitempty"`
+
+	// Limit Maximum collection items to return. The default is 25.
+	Limit *Limit `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
 // CreateVerificationParams defines parameters for CreateVerification.
 type CreateVerificationParams struct {
 	// IdempotencyKey An RFC 9651 String used to deduplicate a consequential request. It is
@@ -9807,6 +10998,9 @@ type CancelCaptureVerificationJSONRequestBody = VerificationCancel
 
 // SelectCaptureDocumentJSONRequestBody defines body for SelectCaptureDocument for application/json ContentType.
 type SelectCaptureDocumentJSONRequestBody = CaptureDocumentSelection
+
+// RecordCaptureJourneyEventJSONRequestBody defines body for RecordCaptureJourneyEvent for application/json ContentType.
+type RecordCaptureJourneyEventJSONRequestBody = CaptureJourneyEventCreate
 
 // BootstrapNativeCaptureJSONRequestBody defines body for BootstrapNativeCapture for application/json ContentType.
 type BootstrapNativeCaptureJSONRequestBody = NativeBootstrapRequest
@@ -10497,6 +11691,15 @@ type ClientInterface interface {
 	// Corresponds with POST /v1/accepted-commands/{commandID}/execute (the `ExecuteAcceptedCommand` operationId).
 	ExecuteAcceptedCommand(ctx context.Context, commandID string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ListAccessPermissions List tenant-assignable permissions
+	//
+	// Returns the exact permissions understood by this Core revision. The
+	// catalog excludes platform-administration and internal permissions and
+	// requires `tenant:read`.
+	//
+	// Corresponds with GET /v1/access/permissions (the `ListAccessPermissions` operationId).
+	ListAccessPermissions(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetReviewAppeal Get review appeal
 	//
 	// Read the current tenant-scoped appeal status, deadline, reason and successor reference. Prior transition records remain immutable.
@@ -10615,6 +11818,20 @@ type ClientInterface interface {
 	// Corresponds with GET /v1/assurance-profiles/{name}/revisions/{revision} (the `GetAssuranceProfileRevision` operationId).
 	GetAssuranceProfileRevision(ctx context.Context, name string, revision int, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ListAuditRecords List immutable tenant audit records
+	//
+	// Returns a bounded newest-first page without event payloads, digests, or chain hashes.
+	//
+	// Corresponds with GET /v1/audit-records (the `ListAuditRecords` operationId).
+	ListAuditRecords(ctx context.Context, params *ListAuditRecordsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListCaptureProfileRegistries List deployed capture-profile registries
+	//
+	// Returns immutable registry revisions from newest to oldest so profile authors can pin exact compatible vocabulary.
+	//
+	// Corresponds with GET /v1/capture-profile-registries (the `ListCaptureProfileRegistries` operationId).
+	ListCaptureProfileRegistries(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListCaptureProfiles List capture profiles
 	//
 	// Corresponds with GET /v1/capture-profiles (the `ListCaptureProfiles` operationId).
@@ -10641,6 +11858,8 @@ type ClientInterface interface {
 
 	// DeactivateCaptureProfile Deactivate a capture profile
 	//
+	// Prevents new sessions from using the profile and withdraws any open draft. A superseding draft may subsequently be created, edited, and published to reactivate the profile without rewriting published revision history.
+	//
 	// Corresponds with POST /v1/capture-profiles/{profileID}/deactivate (the `DeactivateCaptureProfile` operationId).
 	DeactivateCaptureProfile(ctx context.Context, profileID ProfileID, params *DeactivateCaptureProfileParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -10662,6 +11881,13 @@ type ClientInterface interface {
 	//
 	// Corresponds with POST /v1/capture-profiles/{profileID}/publish (the `PublishCaptureProfileDraft` operationId).
 	PublishCaptureProfileDraft(ctx context.Context, profileID ProfileID, params *PublishCaptureProfileDraftParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListCaptureProfileRevisions List capture-profile revision history
+	//
+	// Returns a bounded newest-first page without repeating immutable revision documents.
+	//
+	// Corresponds with GET /v1/capture-profiles/{profileID}/revisions (the `ListCaptureProfileRevisions` operationId).
+	ListCaptureProfileRevisions(ctx context.Context, profileID ProfileID, params *ListCaptureProfileRevisionsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetCaptureProfileRevision Get a capture-profile revision
 	//
@@ -10772,6 +11998,34 @@ type ClientInterface interface {
 	//
 	// Corresponds with GET /v1/capture/experience (the `ResolveCaptureExperience` operationId).
 	ResolveCaptureExperience(ctx context.Context, params *ResolveCaptureExperienceParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RecordCaptureJourneyEventWithBody Record a privacy-safe capture interaction
+	//
+	// Records one best-effort client interaction against the verification bound to
+	// this capture credential. The schema is deliberately closed: it accepts only
+	// bounded workflow vocabulary and cannot carry subject-entered values, raw
+	// evidence, secrets, provider payloads, DOM snapshots, or free-form metadata.
+	// Reusing an event ID with identical input is idempotent; conflicting reuse is
+	// rejected. These events are not authoritative evidence of user behaviour.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /v1/capture/journey-events (the `RecordCaptureJourneyEvent` operationId).
+	RecordCaptureJourneyEventWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RecordCaptureJourneyEvent Record a privacy-safe capture interaction
+	//
+	// Records one best-effort client interaction against the verification bound to
+	// this capture credential. The schema is deliberately closed: it accepts only
+	// bounded workflow vocabulary and cannot carry subject-entered values, raw
+	// evidence, secrets, provider payloads, DOM snapshots, or free-form metadata.
+	// Reusing an event ID with identical input is idempotent; conflicting reuse is
+	// rejected. These events are not authoritative evidence of user behaviour.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /v1/capture/journey-events (the `RecordCaptureJourneyEvent` operationId).
+	RecordCaptureJourneyEvent(ctx context.Context, body RecordCaptureJourneyEventJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// BootstrapNativeCaptureWithBody Bind a native application proof key and recover the capture session
 	//
@@ -12639,6 +13893,27 @@ type ClientInterface interface {
 	// Corresponds with POST /v1/providers/{providerID}/validate (the `ValidateProviderRegistration` operationId).
 	ValidateProviderRegistration(ctx context.Context, providerID ProviderID, body ValidateProviderRegistrationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetRequestAnalytics Get privacy-safe API request analytics
+	//
+	// Aggregates tenant-scoped route templates, status classes, and server duration. Request bodies, raw paths, query strings, addresses, credentials, evidence, and subject identifiers are excluded.
+	//
+	// Corresponds with GET /v1/request-analytics (the `GetRequestAnalytics` operationId).
+	GetRequestAnalytics(ctx context.Context, params *GetRequestAnalyticsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListRequestLogs List API request logs
+	//
+	// Returns bounded newest-first operational metadata using route templates, the transport-peer IP address, and bounded redacted query and JSON body parameters. Raw paths, forwarded-address headers, credentials, other headers, evidence bytes, and non-JSON bodies are excluded.
+	//
+	// Corresponds with GET /v1/request-logs (the `ListRequestLogs` operationId).
+	ListRequestLogs(ctx context.Context, params *ListRequestLogsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetRequestLog Get API request log
+	//
+	// Returns one tenant-scoped request-log record by its public request identifier, including bounded redacted debug parameters.
+	//
+	// Corresponds with GET /v1/request-logs/{requestID} (the `GetRequestLog` operationId).
+	GetRequestLog(ctx context.Context, requestID string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetRetentionResolution Resolve typed retention for one aggregate
 	//
 	// Requires deletions:read. Read-only inspection recomputes each retained evidence record with the selected typed retention resolution and returns active holds. It does not extend, shorten, or otherwise invent retention meaning.
@@ -13261,6 +14536,15 @@ type ClientInterface interface {
 	// Corresponds with GET /v1/tenant/export (the `ExportTenant` operationId).
 	ExportTenant(ctx context.Context, params *ExportTenantParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ListVerifications List verification sessions
+	//
+	// Returns a bounded newest-first page of tenant-owned verification sessions.
+	// The opaque continuation cursor is integrity protected and bound to the
+	// authenticated tenant and page size. Requires `verification_sessions:read`.
+	//
+	// Corresponds with GET /v1/verifications (the `ListVerifications` operationId).
+	ListVerifications(ctx context.Context, params *ListVerificationsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// CreateVerificationWithBody Create a verification session
 	//
 	// Creates a collecting verification from the active published revision of
@@ -13377,6 +14661,26 @@ type ClientInterface interface {
 	// Corresponds with GET /v1/verifications/{verificationID}/decisions (the `ListVerificationDecisions` operationId).
 	ListVerificationDecisions(ctx context.Context, verificationID VerificationID, params *ListVerificationDecisionsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetVerificationLifecycleHistory Get authoritative verification lifecycle history
+	//
+	// Requires verification_sessions:read. Returns the authoritative version-one
+	// creation state separately from immutable post-creation transition receipts,
+	// ordered by aggregate version. Actor identifiers, command digests, evidence,
+	// provider payloads, and webhook payloads are never returned.
+	//
+	// Corresponds with GET /v1/verifications/{verificationID}/history (the `GetVerificationLifecycleHistory` operationId).
+	GetVerificationLifecycleHistory(ctx context.Context, verificationID VerificationID, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// InspectVerification Inspect safe operational metadata for a verification
+	//
+	// Requires verification_sessions:read, evidence:read, and webhooks:read.
+	// Returns bounded evidence, check, attempt, decision-lineage, retention, legal-hold, and webhook
+	// metadata. Evidence bytes, object-store references, encryption material,
+	// provider payloads, and webhook payloads are never returned.
+	//
+	// Corresponds with GET /v1/verifications/{verificationID}/inspection (the `InspectVerification` operationId).
+	InspectVerification(ctx context.Context, verificationID VerificationID, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// CreateVerificationReconsiderationWithBody Open an independent correction workflow for a decision
 	//
 	// Reconsideration reuses the existing versioned review-correction lifecycle; it never mutates an immutable decision in place.
@@ -13420,6 +14724,27 @@ type ClientInterface interface {
 	//
 	// Corresponds with POST /v1/verifications/{verificationID}/resume (the `ResumeVerification` operationId).
 	ResumeVerification(ctx context.Context, verificationID VerificationID, params *ResumeVerificationParams, body ResumeVerificationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetVerificationSignals Get provider-independent verification signals
+	//
+	// Requires verification_sessions:read. Returns bounded immutable observations
+	// using Core's provider-independent signal vocabulary. Provider payloads,
+	// extracted identity values, evidence, and assurance assertions are never returned.
+	//
+	// Corresponds with GET /v1/verifications/{verificationID}/signals (the `GetVerificationSignals` operationId).
+	GetVerificationSignals(ctx context.Context, verificationID VerificationID, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetVerificationTimeline Get the unified verification event timeline
+	//
+	// Requires verification_sessions:read. Returns a bounded chronological projection
+	// of authoritative Core lifecycle, evidence, processing, signal, and decision events
+	// together with explicitly non-authoritative capture-client interactions. Client events
+	// are best effort and ordered by Core receipt time; absence is not proof that an action
+	// did not occur. Raw evidence, subject-entered values, secrets, provider payloads, and
+	// free-form client metadata are never returned.
+	//
+	// Corresponds with GET /v1/verifications/{verificationID}/timeline (the `GetVerificationTimeline` operationId).
+	GetVerificationTimeline(ctx context.Context, verificationID VerificationID, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetWebhookDelivery Get delivery metadata
 	//
@@ -13546,6 +14871,13 @@ type ClientInterface interface {
 	// Corresponds with POST /v1/webhook-endpoints/{endpointID}/subscriptions (the `UpdateWebhookSubscriptions` operationId).
 	UpdateWebhookSubscriptions(ctx context.Context, endpointID string, params *UpdateWebhookSubscriptionsParams, body UpdateWebhookSubscriptionsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ListWebhookEventTypes List supported webhook event types
+	//
+	// Requires webhooks:read. Returns the authoritative closed catalogue of webhook event types supported by this Core deployment, including their envelope schema version and closed data fields.
+	//
+	// Corresponds with GET /v1/webhook-event-types (the `ListWebhookEventTypes` operationId).
+	ListWebhookEventTypes(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListWebhookEvents List catalogue events
 	//
 	// Requires webhooks:read. Ascending insertion-order page of decrypted canonical catalogue envelopes with a tenant-, collection-, filter- and limit-bound cursor. Delivery and attempt inspection remain payload-free.
@@ -13566,6 +14898,25 @@ type ClientInterface interface {
 // Corresponds with POST /v1/accepted-commands/{commandID}/execute (the `ExecuteAcceptedCommand` operationId).
 func (c *Client) ExecuteAcceptedCommand(ctx context.Context, commandID string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewExecuteAcceptedCommandRequest(c.Server, commandID)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListAccessPermissions List tenant-assignable permissions
+//
+// Returns the exact permissions understood by this Core revision. The
+// catalog excludes platform-administration and internal permissions and
+// requires `tenant:read`.
+//
+// Corresponds with GET /v1/access/permissions (the `ListAccessPermissions` operationId).
+func (c *Client) ListAccessPermissions(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListAccessPermissionsRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -13834,6 +15185,40 @@ func (c *Client) GetAssuranceProfileRevision(ctx context.Context, name string, r
 	return c.Client.Do(req)
 }
 
+// ListAuditRecords List immutable tenant audit records
+//
+// Returns a bounded newest-first page without event payloads, digests, or chain hashes.
+//
+// Corresponds with GET /v1/audit-records (the `ListAuditRecords` operationId).
+func (c *Client) ListAuditRecords(ctx context.Context, params *ListAuditRecordsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListAuditRecordsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListCaptureProfileRegistries List deployed capture-profile registries
+//
+// Returns immutable registry revisions from newest to oldest so profile authors can pin exact compatible vocabulary.
+//
+// Corresponds with GET /v1/capture-profile-registries (the `ListCaptureProfileRegistries` operationId).
+func (c *Client) ListCaptureProfileRegistries(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListCaptureProfileRegistriesRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // ListCaptureProfiles List capture profiles
 //
 // Corresponds with GET /v1/capture-profiles (the `ListCaptureProfiles` operationId).
@@ -13900,6 +15285,8 @@ func (c *Client) GetCaptureProfile(ctx context.Context, profileID ProfileID, req
 
 // DeactivateCaptureProfile Deactivate a capture profile
 //
+// Prevents new sessions from using the profile and withdraws any open draft. A superseding draft may subsequently be created, edited, and published to reactivate the profile without rewriting published revision history.
+//
 // Corresponds with POST /v1/capture-profiles/{profileID}/deactivate (the `DeactivateCaptureProfile` operationId).
 func (c *Client) DeactivateCaptureProfile(ctx context.Context, profileID ProfileID, params *DeactivateCaptureProfileParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewDeactivateCaptureProfileRequest(c.Server, profileID, params)
@@ -13952,6 +15339,23 @@ func (c *Client) UpdateCaptureProfileDraft(ctx context.Context, profileID Profil
 // Corresponds with POST /v1/capture-profiles/{profileID}/publish (the `PublishCaptureProfileDraft` operationId).
 func (c *Client) PublishCaptureProfileDraft(ctx context.Context, profileID ProfileID, params *PublishCaptureProfileDraftParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPublishCaptureProfileDraftRequest(c.Server, profileID, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListCaptureProfileRevisions List capture-profile revision history
+//
+// Returns a bounded newest-first page without repeating immutable revision documents.
+//
+// Corresponds with GET /v1/capture-profiles/{profileID}/revisions (the `ListCaptureProfileRevisions` operationId).
+func (c *Client) ListCaptureProfileRevisions(ctx context.Context, profileID ProfileID, params *ListCaptureProfileRevisionsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListCaptureProfileRevisionsRequest(c.Server, profileID, params)
 	if err != nil {
 		return nil, err
 	}
@@ -14192,6 +15596,54 @@ func (c *Client) SelectCaptureDocument(ctx context.Context, params *SelectCaptur
 // Corresponds with GET /v1/capture/experience (the `ResolveCaptureExperience` operationId).
 func (c *Client) ResolveCaptureExperience(ctx context.Context, params *ResolveCaptureExperienceParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewResolveCaptureExperienceRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// RecordCaptureJourneyEventWithBody Record a privacy-safe capture interaction
+//
+// Records one best-effort client interaction against the verification bound to
+// this capture credential. The schema is deliberately closed: it accepts only
+// bounded workflow vocabulary and cannot carry subject-entered values, raw
+// evidence, secrets, provider payloads, DOM snapshots, or free-form metadata.
+// Reusing an event ID with identical input is idempotent; conflicting reuse is
+// rejected. These events are not authoritative evidence of user behaviour.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /v1/capture/journey-events (the `RecordCaptureJourneyEvent` operationId).
+func (c *Client) RecordCaptureJourneyEventWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRecordCaptureJourneyEventRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// RecordCaptureJourneyEvent Record a privacy-safe capture interaction
+//
+// Records one best-effort client interaction against the verification bound to
+// this capture credential. The schema is deliberately closed: it accepts only
+// bounded workflow vocabulary and cannot carry subject-entered values, raw
+// evidence, secrets, provider payloads, DOM snapshots, or free-form metadata.
+// Reusing an event ID with identical input is idempotent; conflicting reuse is
+// rejected. These events are not authoritative evidence of user behaviour.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /v1/capture/journey-events (the `RecordCaptureJourneyEvent` operationId).
+func (c *Client) RecordCaptureJourneyEvent(ctx context.Context, body RecordCaptureJourneyEventJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRecordCaptureJourneyEventRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -18148,6 +19600,57 @@ func (c *Client) ValidateProviderRegistration(ctx context.Context, providerID Pr
 	return c.Client.Do(req)
 }
 
+// GetRequestAnalytics Get privacy-safe API request analytics
+//
+// Aggregates tenant-scoped route templates, status classes, and server duration. Request bodies, raw paths, query strings, addresses, credentials, evidence, and subject identifiers are excluded.
+//
+// Corresponds with GET /v1/request-analytics (the `GetRequestAnalytics` operationId).
+func (c *Client) GetRequestAnalytics(ctx context.Context, params *GetRequestAnalyticsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetRequestAnalyticsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListRequestLogs List API request logs
+//
+// Returns bounded newest-first operational metadata using route templates, the transport-peer IP address, and bounded redacted query and JSON body parameters. Raw paths, forwarded-address headers, credentials, other headers, evidence bytes, and non-JSON bodies are excluded.
+//
+// Corresponds with GET /v1/request-logs (the `ListRequestLogs` operationId).
+func (c *Client) ListRequestLogs(ctx context.Context, params *ListRequestLogsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListRequestLogsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetRequestLog Get API request log
+//
+// Returns one tenant-scoped request-log record by its public request identifier, including bounded redacted debug parameters.
+//
+// Corresponds with GET /v1/request-logs/{requestID} (the `GetRequestLog` operationId).
+func (c *Client) GetRequestLog(ctx context.Context, requestID string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetRequestLogRequest(c.Server, requestID)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // GetRetentionResolution Resolve typed retention for one aggregate
 //
 // Requires deletions:read. Read-only inspection recomputes each retained evidence record with the selected typed retention resolution and returns active holds. It does not extend, shorten, or otherwise invent retention meaning.
@@ -19520,6 +21023,25 @@ func (c *Client) ExportTenant(ctx context.Context, params *ExportTenantParams, r
 	return c.Client.Do(req)
 }
 
+// ListVerifications List verification sessions
+//
+// Returns a bounded newest-first page of tenant-owned verification sessions.
+// The opaque continuation cursor is integrity protected and bound to the
+// authenticated tenant and page size. Requires `verification_sessions:read`.
+//
+// Corresponds with GET /v1/verifications (the `ListVerifications` operationId).
+func (c *Client) ListVerifications(ctx context.Context, params *ListVerificationsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListVerificationsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // CreateVerificationWithBody Create a verification session
 //
 // Creates a collecting verification from the active published revision of
@@ -19776,6 +21298,46 @@ func (c *Client) ListVerificationDecisions(ctx context.Context, verificationID V
 	return c.Client.Do(req)
 }
 
+// GetVerificationLifecycleHistory Get authoritative verification lifecycle history
+//
+// Requires verification_sessions:read. Returns the authoritative version-one
+// creation state separately from immutable post-creation transition receipts,
+// ordered by aggregate version. Actor identifiers, command digests, evidence,
+// provider payloads, and webhook payloads are never returned.
+//
+// Corresponds with GET /v1/verifications/{verificationID}/history (the `GetVerificationLifecycleHistory` operationId).
+func (c *Client) GetVerificationLifecycleHistory(ctx context.Context, verificationID VerificationID, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetVerificationLifecycleHistoryRequest(c.Server, verificationID)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// InspectVerification Inspect safe operational metadata for a verification
+//
+// Requires verification_sessions:read, evidence:read, and webhooks:read.
+// Returns bounded evidence, check, attempt, decision-lineage, retention, legal-hold, and webhook
+// metadata. Evidence bytes, object-store references, encryption material,
+// provider payloads, and webhook payloads are never returned.
+//
+// Corresponds with GET /v1/verifications/{verificationID}/inspection (the `InspectVerification` operationId).
+func (c *Client) InspectVerification(ctx context.Context, verificationID VerificationID, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewInspectVerificationRequest(c.Server, verificationID)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // CreateVerificationReconsiderationWithBody Open an independent correction workflow for a decision
 //
 // Reconsideration reuses the existing versioned review-correction lifecycle; it never mutates an immutable decision in place.
@@ -19850,6 +21412,47 @@ func (c *Client) ResumeVerificationWithBody(ctx context.Context, verificationID 
 // Corresponds with POST /v1/verifications/{verificationID}/resume (the `ResumeVerification` operationId).
 func (c *Client) ResumeVerification(ctx context.Context, verificationID VerificationID, params *ResumeVerificationParams, body ResumeVerificationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewResumeVerificationRequest(c.Server, verificationID, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetVerificationSignals Get provider-independent verification signals
+//
+// Requires verification_sessions:read. Returns bounded immutable observations
+// using Core's provider-independent signal vocabulary. Provider payloads,
+// extracted identity values, evidence, and assurance assertions are never returned.
+//
+// Corresponds with GET /v1/verifications/{verificationID}/signals (the `GetVerificationSignals` operationId).
+func (c *Client) GetVerificationSignals(ctx context.Context, verificationID VerificationID, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetVerificationSignalsRequest(c.Server, verificationID)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetVerificationTimeline Get the unified verification event timeline
+//
+// Requires verification_sessions:read. Returns a bounded chronological projection
+// of authoritative Core lifecycle, evidence, processing, signal, and decision events
+// together with explicitly non-authoritative capture-client interactions. Client events
+// are best effort and ordered by Core receipt time; absence is not proof that an action
+// did not occur. Raw evidence, subject-entered values, secrets, provider payloads, and
+// free-form client metadata are never returned.
+//
+// Corresponds with GET /v1/verifications/{verificationID}/timeline (the `GetVerificationTimeline` operationId).
+func (c *Client) GetVerificationTimeline(ctx context.Context, verificationID VerificationID, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetVerificationTimelineRequest(c.Server, verificationID)
 	if err != nil {
 		return nil, err
 	}
@@ -20135,6 +21738,23 @@ func (c *Client) UpdateWebhookSubscriptions(ctx context.Context, endpointID stri
 	return c.Client.Do(req)
 }
 
+// ListWebhookEventTypes List supported webhook event types
+//
+// Requires webhooks:read. Returns the authoritative closed catalogue of webhook event types supported by this Core deployment, including their envelope schema version and closed data fields.
+//
+// Corresponds with GET /v1/webhook-event-types (the `ListWebhookEventTypes` operationId).
+func (c *Client) ListWebhookEventTypes(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListWebhookEventTypesRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // ListWebhookEvents List catalogue events
 //
 // Requires webhooks:read. Ascending insertion-order page of decrypted canonical catalogue envelopes with a tenant-, collection-, filter- and limit-bound cursor. Delivery and attempt inspection remain payload-free.
@@ -20196,6 +21816,33 @@ func NewExecuteAcceptedCommandRequest(server string, commandID string) (*http.Re
 	}
 
 	req, err := http.NewRequest(http.MethodPost, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewListAccessPermissionsRequest constructs an http.Request for the ListAccessPermissions method
+func NewListAccessPermissionsRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/access/permissions")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -20605,6 +22252,99 @@ func NewGetAssuranceProfileRevisionRequest(server string, name string, revision 
 	return req, nil
 }
 
+// NewListAuditRecordsRequest constructs an http.Request for the ListAuditRecords method
+func NewListAuditRecordsRequest(server string, params *ListAuditRecordsParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/audit-records")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Before != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "before", *params.Before, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewListCaptureProfileRegistriesRequest constructs an http.Request for the ListCaptureProfileRegistries method
+func NewListCaptureProfileRegistriesRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/capture-profile-registries")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewListCaptureProfilesRequest constructs an http.Request for the ListCaptureProfiles method
 func NewListCaptureProfilesRequest(server string, params *ListCaptureProfilesParams) (*http.Request, error) {
 	var err error
@@ -20925,6 +22665,79 @@ func NewPublishCaptureProfileDraftRequest(server string, profileID ProfileID, pa
 
 		req.Header.Set("Idempotency-Key", headerParam1)
 
+	}
+
+	return req, nil
+}
+
+// NewListCaptureProfileRevisionsRequest constructs an http.Request for the ListCaptureProfileRevisions method
+func NewListCaptureProfileRevisionsRequest(server string, profileID ProfileID, params *ListCaptureProfileRevisionsParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "profileID", profileID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/capture-profiles/%s/revisions", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Cursor != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "cursor", *params.Cursor, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
 	}
 
 	return req, nil
@@ -21397,6 +23210,46 @@ func NewResolveCaptureExperienceRequest(server string, params *ResolveCaptureExp
 	if err != nil {
 		return nil, err
 	}
+
+	return req, nil
+}
+
+// NewRecordCaptureJourneyEventRequest calls the generic RecordCaptureJourneyEvent builder with application/json body
+func NewRecordCaptureJourneyEventRequest(server string, body RecordCaptureJourneyEventJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewRecordCaptureJourneyEventRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewRecordCaptureJourneyEventRequestWithBody constructs an http.Request for the RecordCaptureJourneyEvent method, with any body, and a specified content type
+func NewRecordCaptureJourneyEventRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/capture/journey-events")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
 }
@@ -27832,6 +29685,156 @@ func NewValidateProviderRegistrationRequestWithBody(server string, providerID Pr
 	return req, nil
 }
 
+// NewGetRequestAnalyticsRequest constructs an http.Request for the GetRequestAnalytics method
+func NewGetRequestAnalyticsRequest(server string, params *GetRequestAnalyticsParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/request-analytics")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if queryFrag, err := runtime.StyleParamWithOptions("form", true, "window", params.Window, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+			return nil, err
+		} else {
+			for _, qp := range strings.Split(queryFrag, "&") {
+				rawQueryFragments = append(rawQueryFragments, qp)
+			}
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewListRequestLogsRequest constructs an http.Request for the ListRequestLogs method
+func NewListRequestLogsRequest(server string, params *ListRequestLogsParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/request-logs")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Before != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "before", *params.Before, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetRequestLogRequest constructs an http.Request for the GetRequestLog method
+func NewGetRequestLogRequest(server string, requestID string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "requestID", requestID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/request-logs/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewGetRetentionResolutionRequest constructs an http.Request for the GetRetentionResolution method
 func NewGetRetentionResolutionRequest(server string, params *GetRetentionResolutionParams) (*http.Request, error) {
 	var err error
@@ -30539,6 +32542,72 @@ func NewExportTenantRequest(server string, params *ExportTenantParams) (*http.Re
 	return req, nil
 }
 
+// NewListVerificationsRequest constructs an http.Request for the ListVerifications method
+func NewListVerificationsRequest(server string, params *ListVerificationsParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/verifications")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Cursor != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "cursor", *params.Cursor, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "limit", *params.Limit, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewCreateVerificationRequest calls the generic CreateVerification builder with application/json body
 func NewCreateVerificationRequest(server string, params *CreateVerificationParams, body CreateVerificationJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -31104,6 +33173,74 @@ func NewListVerificationDecisionsRequest(server string, verificationID Verificat
 	return req, nil
 }
 
+// NewGetVerificationLifecycleHistoryRequest constructs an http.Request for the GetVerificationLifecycleHistory method
+func NewGetVerificationLifecycleHistoryRequest(server string, verificationID VerificationID) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "verificationID", verificationID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/verifications/%s/history", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewInspectVerificationRequest constructs an http.Request for the InspectVerification method
+func NewInspectVerificationRequest(server string, verificationID VerificationID) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "verificationID", verificationID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/verifications/%s/inspection", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewCreateVerificationReconsiderationRequest calls the generic CreateVerificationReconsideration builder with application/json body
 func NewCreateVerificationReconsiderationRequest(server string, verificationID VerificationID, params *CreateVerificationReconsiderationParams, body CreateVerificationReconsiderationJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -31219,6 +33356,74 @@ func NewResumeVerificationRequestWithBody(server string, verificationID Verifica
 
 		req.Header.Set("Idempotency-Key", headerParam0)
 
+	}
+
+	return req, nil
+}
+
+// NewGetVerificationSignalsRequest constructs an http.Request for the GetVerificationSignals method
+func NewGetVerificationSignalsRequest(server string, verificationID VerificationID) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "verificationID", verificationID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/verifications/%s/signals", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetVerificationTimelineRequest constructs an http.Request for the GetVerificationTimeline method
+func NewGetVerificationTimelineRequest(server string, verificationID VerificationID) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "verificationID", verificationID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/verifications/%s/timeline", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
 	}
 
 	return req, nil
@@ -31758,6 +33963,33 @@ func NewUpdateWebhookSubscriptionsRequestWithBody(server string, endpointID stri
 	return req, nil
 }
 
+// NewListWebhookEventTypesRequest constructs an http.Request for the ListWebhookEventTypes method
+func NewListWebhookEventTypesRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/webhook-event-types")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewListWebhookEventsRequest constructs an http.Request for the ListWebhookEvents method
 func NewListWebhookEventsRequest(server string, params *ListWebhookEventsParams) (*http.Request, error) {
 	var err error
@@ -31956,6 +34188,17 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with POST /v1/accepted-commands/{commandID}/execute (the `ExecuteAcceptedCommand` operationId).
 	ExecuteAcceptedCommandWithResponse(ctx context.Context, commandID string, reqEditors ...RequestEditorFn) (*ExecuteAcceptedCommandResponse, error)
 
+	// ListAccessPermissionsWithResponse List tenant-assignable permissions
+	//
+	// Returns the exact permissions understood by this Core revision. The
+	// catalog excludes platform-administration and internal permissions and
+	// requires `tenant:read`.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/access/permissions (the `ListAccessPermissions` operationId).
+	ListAccessPermissionsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListAccessPermissionsResponse, error)
+
 	// GetReviewAppealWithResponse Get review appeal
 	//
 	// Read the current tenant-scoped appeal status, deadline, reason and successor reference. Prior transition records remain immutable.
@@ -32082,6 +34325,24 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with GET /v1/assurance-profiles/{name}/revisions/{revision} (the `GetAssuranceProfileRevision` operationId).
 	GetAssuranceProfileRevisionWithResponse(ctx context.Context, name string, revision int, reqEditors ...RequestEditorFn) (*GetAssuranceProfileRevisionResponse, error)
 
+	// ListAuditRecordsWithResponse List immutable tenant audit records
+	//
+	// Returns a bounded newest-first page without event payloads, digests, or chain hashes.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/audit-records (the `ListAuditRecords` operationId).
+	ListAuditRecordsWithResponse(ctx context.Context, params *ListAuditRecordsParams, reqEditors ...RequestEditorFn) (*ListAuditRecordsResponse, error)
+
+	// ListCaptureProfileRegistriesWithResponse List deployed capture-profile registries
+	//
+	// Returns immutable registry revisions from newest to oldest so profile authors can pin exact compatible vocabulary.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/capture-profile-registries (the `ListCaptureProfileRegistries` operationId).
+	ListCaptureProfileRegistriesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListCaptureProfileRegistriesResponse, error)
+
 	// ListCaptureProfilesWithResponse List capture profiles
 	//
 	// Returns a wrapper object for the known response body format(s).
@@ -32112,6 +34373,8 @@ type ClientWithResponsesInterface interface {
 
 	// DeactivateCaptureProfileWithResponse Deactivate a capture profile
 	//
+	// Prevents new sessions from using the profile and withdraws any open draft. A superseding draft may subsequently be created, edited, and published to reactivate the profile without rewriting published revision history.
+	//
 	// Returns a wrapper object for the known response body format(s).
 	//
 	// Corresponds with POST /v1/capture-profiles/{profileID}/deactivate (the `DeactivateCaptureProfile` operationId).
@@ -32137,6 +34400,15 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with POST /v1/capture-profiles/{profileID}/publish (the `PublishCaptureProfileDraft` operationId).
 	PublishCaptureProfileDraftWithResponse(ctx context.Context, profileID ProfileID, params *PublishCaptureProfileDraftParams, reqEditors ...RequestEditorFn) (*PublishCaptureProfileDraftResponse, error)
+
+	// ListCaptureProfileRevisionsWithResponse List capture-profile revision history
+	//
+	// Returns a bounded newest-first page without repeating immutable revision documents.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/capture-profiles/{profileID}/revisions (the `ListCaptureProfileRevisions` operationId).
+	ListCaptureProfileRevisionsWithResponse(ctx context.Context, profileID ProfileID, params *ListCaptureProfileRevisionsParams, reqEditors ...RequestEditorFn) (*ListCaptureProfileRevisionsResponse, error)
 
 	// GetCaptureProfileRevisionWithResponse Get a capture-profile revision
 	//
@@ -32257,6 +34529,34 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with GET /v1/capture/experience (the `ResolveCaptureExperience` operationId).
 	ResolveCaptureExperienceWithResponse(ctx context.Context, params *ResolveCaptureExperienceParams, reqEditors ...RequestEditorFn) (*ResolveCaptureExperienceResponse, error)
+
+	// RecordCaptureJourneyEventWithBodyWithResponse Record a privacy-safe capture interaction
+	//
+	// Records one best-effort client interaction against the verification bound to
+	// this capture credential. The schema is deliberately closed: it accepts only
+	// bounded workflow vocabulary and cannot carry subject-entered values, raw
+	// evidence, secrets, provider payloads, DOM snapshots, or free-form metadata.
+	// Reusing an event ID with identical input is idempotent; conflicting reuse is
+	// rejected. These events are not authoritative evidence of user behaviour.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/capture/journey-events (the `RecordCaptureJourneyEvent` operationId).
+	RecordCaptureJourneyEventWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RecordCaptureJourneyEventResponse, error)
+
+	// RecordCaptureJourneyEventWithResponse Record a privacy-safe capture interaction
+	//
+	// Records one best-effort client interaction against the verification bound to
+	// this capture credential. The schema is deliberately closed: it accepts only
+	// bounded workflow vocabulary and cannot carry subject-entered values, raw
+	// evidence, secrets, provider payloads, DOM snapshots, or free-form metadata.
+	// Reusing an event ID with identical input is idempotent; conflicting reuse is
+	// rejected. These events are not authoritative evidence of user behaviour.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /v1/capture/journey-events (the `RecordCaptureJourneyEvent` operationId).
+	RecordCaptureJourneyEventWithResponse(ctx context.Context, body RecordCaptureJourneyEventJSONRequestBody, reqEditors ...RequestEditorFn) (*RecordCaptureJourneyEventResponse, error)
 
 	// BootstrapNativeCaptureWithBodyWithResponse Bind a native application proof key and recover the capture session
 	//
@@ -34250,6 +36550,33 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with POST /v1/providers/{providerID}/validate (the `ValidateProviderRegistration` operationId).
 	ValidateProviderRegistrationWithResponse(ctx context.Context, providerID ProviderID, body ValidateProviderRegistrationJSONRequestBody, reqEditors ...RequestEditorFn) (*ValidateProviderRegistrationResponse, error)
 
+	// GetRequestAnalyticsWithResponse Get privacy-safe API request analytics
+	//
+	// Aggregates tenant-scoped route templates, status classes, and server duration. Request bodies, raw paths, query strings, addresses, credentials, evidence, and subject identifiers are excluded.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/request-analytics (the `GetRequestAnalytics` operationId).
+	GetRequestAnalyticsWithResponse(ctx context.Context, params *GetRequestAnalyticsParams, reqEditors ...RequestEditorFn) (*GetRequestAnalyticsResponse, error)
+
+	// ListRequestLogsWithResponse List API request logs
+	//
+	// Returns bounded newest-first operational metadata using route templates, the transport-peer IP address, and bounded redacted query and JSON body parameters. Raw paths, forwarded-address headers, credentials, other headers, evidence bytes, and non-JSON bodies are excluded.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/request-logs (the `ListRequestLogs` operationId).
+	ListRequestLogsWithResponse(ctx context.Context, params *ListRequestLogsParams, reqEditors ...RequestEditorFn) (*ListRequestLogsResponse, error)
+
+	// GetRequestLogWithResponse Get API request log
+	//
+	// Returns one tenant-scoped request-log record by its public request identifier, including bounded redacted debug parameters.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/request-logs/{requestID} (the `GetRequestLog` operationId).
+	GetRequestLogWithResponse(ctx context.Context, requestID string, reqEditors ...RequestEditorFn) (*GetRequestLogResponse, error)
+
 	// GetRetentionResolutionWithResponse Resolve typed retention for one aggregate
 	//
 	// Requires deletions:read. Read-only inspection recomputes each retained evidence record with the selected typed retention resolution and returns active holds. It does not extend, shorten, or otherwise invent retention meaning.
@@ -34910,6 +37237,17 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with GET /v1/tenant/export (the `ExportTenant` operationId).
 	ExportTenantWithResponse(ctx context.Context, params *ExportTenantParams, reqEditors ...RequestEditorFn) (*ExportTenantResponse, error)
 
+	// ListVerificationsWithResponse List verification sessions
+	//
+	// Returns a bounded newest-first page of tenant-owned verification sessions.
+	// The opaque continuation cursor is integrity protected and bound to the
+	// authenticated tenant and page size. Requires `verification_sessions:read`.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/verifications (the `ListVerifications` operationId).
+	ListVerificationsWithResponse(ctx context.Context, params *ListVerificationsParams, reqEditors ...RequestEditorFn) (*ListVerificationsResponse, error)
+
 	// CreateVerificationWithBodyWithResponse Create a verification session
 	//
 	// Creates a collecting verification from the active published revision of
@@ -35042,6 +37380,30 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with GET /v1/verifications/{verificationID}/decisions (the `ListVerificationDecisions` operationId).
 	ListVerificationDecisionsWithResponse(ctx context.Context, verificationID VerificationID, params *ListVerificationDecisionsParams, reqEditors ...RequestEditorFn) (*ListVerificationDecisionsResponse, error)
 
+	// GetVerificationLifecycleHistoryWithResponse Get authoritative verification lifecycle history
+	//
+	// Requires verification_sessions:read. Returns the authoritative version-one
+	// creation state separately from immutable post-creation transition receipts,
+	// ordered by aggregate version. Actor identifiers, command digests, evidence,
+	// provider payloads, and webhook payloads are never returned.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/verifications/{verificationID}/history (the `GetVerificationLifecycleHistory` operationId).
+	GetVerificationLifecycleHistoryWithResponse(ctx context.Context, verificationID VerificationID, reqEditors ...RequestEditorFn) (*GetVerificationLifecycleHistoryResponse, error)
+
+	// InspectVerificationWithResponse Inspect safe operational metadata for a verification
+	//
+	// Requires verification_sessions:read, evidence:read, and webhooks:read.
+	// Returns bounded evidence, check, attempt, decision-lineage, retention, legal-hold, and webhook
+	// metadata. Evidence bytes, object-store references, encryption material,
+	// provider payloads, and webhook payloads are never returned.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/verifications/{verificationID}/inspection (the `InspectVerification` operationId).
+	InspectVerificationWithResponse(ctx context.Context, verificationID VerificationID, reqEditors ...RequestEditorFn) (*InspectVerificationResponse, error)
+
 	// CreateVerificationReconsiderationWithBodyWithResponse Open an independent correction workflow for a decision
 	//
 	// Reconsideration reuses the existing versioned review-correction lifecycle; it never mutates an immutable decision in place.
@@ -35085,6 +37447,31 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with POST /v1/verifications/{verificationID}/resume (the `ResumeVerification` operationId).
 	ResumeVerificationWithResponse(ctx context.Context, verificationID VerificationID, params *ResumeVerificationParams, body ResumeVerificationJSONRequestBody, reqEditors ...RequestEditorFn) (*ResumeVerificationResponse, error)
+
+	// GetVerificationSignalsWithResponse Get provider-independent verification signals
+	//
+	// Requires verification_sessions:read. Returns bounded immutable observations
+	// using Core's provider-independent signal vocabulary. Provider payloads,
+	// extracted identity values, evidence, and assurance assertions are never returned.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/verifications/{verificationID}/signals (the `GetVerificationSignals` operationId).
+	GetVerificationSignalsWithResponse(ctx context.Context, verificationID VerificationID, reqEditors ...RequestEditorFn) (*GetVerificationSignalsResponse, error)
+
+	// GetVerificationTimelineWithResponse Get the unified verification event timeline
+	//
+	// Requires verification_sessions:read. Returns a bounded chronological projection
+	// of authoritative Core lifecycle, evidence, processing, signal, and decision events
+	// together with explicitly non-authoritative capture-client interactions. Client events
+	// are best effort and ordered by Core receipt time; absence is not proof that an action
+	// did not occur. Raw evidence, subject-entered values, secrets, provider payloads, and
+	// free-form client metadata are never returned.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/verifications/{verificationID}/timeline (the `GetVerificationTimeline` operationId).
+	GetVerificationTimelineWithResponse(ctx context.Context, verificationID VerificationID, reqEditors ...RequestEditorFn) (*GetVerificationTimelineResponse, error)
 
 	// GetWebhookDeliveryWithResponse Get delivery metadata
 	//
@@ -35221,6 +37608,15 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with POST /v1/webhook-endpoints/{endpointID}/subscriptions (the `UpdateWebhookSubscriptions` operationId).
 	UpdateWebhookSubscriptionsWithResponse(ctx context.Context, endpointID string, params *UpdateWebhookSubscriptionsParams, body UpdateWebhookSubscriptionsJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateWebhookSubscriptionsResponse, error)
 
+	// ListWebhookEventTypesWithResponse List supported webhook event types
+	//
+	// Requires webhooks:read. Returns the authoritative closed catalogue of webhook event types supported by this Core deployment, including their envelope schema version and closed data fields.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/webhook-event-types (the `ListWebhookEventTypes` operationId).
+	ListWebhookEventTypesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListWebhookEventTypesResponse, error)
+
 	// ListWebhookEventsWithResponse List catalogue events
 	//
 	// Requires webhooks:read. Ascending insertion-order page of decrypted canonical catalogue envelopes with a tenant-, collection-, filter- and limit-bound cursor. Delivery and attempt inspection remain payload-free.
@@ -35346,6 +37742,129 @@ func (r ExecuteAcceptedCommandResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r ExecuteAcceptedCommandResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ListAccessPermissionsResponse200Headers the declared response headers of an HTTP 200 response for ListAccessPermissions
+type ListAccessPermissionsResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// ListAccessPermissionsResponse401Headers the declared response headers of an HTTP 401 response for ListAccessPermissions
+type ListAccessPermissionsResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// ListAccessPermissionsResponse403Headers the declared response headers of an HTTP 403 response for ListAccessPermissions
+type ListAccessPermissionsResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// ListAccessPermissionsResponse429Headers the declared response headers of an HTTP 429 response for ListAccessPermissions
+type ListAccessPermissionsResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// ListAccessPermissionsResponse500Headers the declared response headers of an HTTP 500 response for ListAccessPermissions
+type ListAccessPermissionsResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// ListAccessPermissionsResponse503Headers the declared response headers of an HTTP 503 response for ListAccessPermissions
+type ListAccessPermissionsResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type ListAccessPermissionsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *PermissionCatalog
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ListAccessPermissionsResponse200Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ListAccessPermissionsResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListAccessPermissionsResponse403Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *ListAccessPermissionsResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListAccessPermissionsResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ListAccessPermissionsResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListAccessPermissionsResponse) GetJSON200() *PermissionCatalog {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListAccessPermissionsResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListAccessPermissionsResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r ListAccessPermissionsResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListAccessPermissionsResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ListAccessPermissionsResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListAccessPermissionsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListAccessPermissionsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListAccessPermissionsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListAccessPermissionsResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -36916,6 +39435,196 @@ func (r GetAssuranceProfileRevisionResponse) ContentType() string {
 	return ""
 }
 
+// ListAuditRecordsResponse401Headers the declared response headers of an HTTP 401 response for ListAuditRecords
+type ListAuditRecordsResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// ListAuditRecordsResponse403Headers the declared response headers of an HTTP 403 response for ListAuditRecords
+type ListAuditRecordsResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// ListAuditRecordsResponse500Headers the declared response headers of an HTTP 500 response for ListAuditRecords
+type ListAuditRecordsResponse500Headers struct {
+	XRequestID RequestID
+}
+
+type ListAuditRecordsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *AuditRecordPage
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ListAuditRecordsResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListAuditRecordsResponse403Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListAuditRecordsResponse500Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListAuditRecordsResponse) GetJSON200() *AuditRecordPage {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListAuditRecordsResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListAuditRecordsResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListAuditRecordsResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r ListAuditRecordsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListAuditRecordsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListAuditRecordsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListAuditRecordsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ListCaptureProfileRegistriesResponse200Headers the declared response headers of an HTTP 200 response for ListCaptureProfileRegistries
+type ListCaptureProfileRegistriesResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// ListCaptureProfileRegistriesResponse401Headers the declared response headers of an HTTP 401 response for ListCaptureProfileRegistries
+type ListCaptureProfileRegistriesResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// ListCaptureProfileRegistriesResponse403Headers the declared response headers of an HTTP 403 response for ListCaptureProfileRegistries
+type ListCaptureProfileRegistriesResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// ListCaptureProfileRegistriesResponse500Headers the declared response headers of an HTTP 500 response for ListCaptureProfileRegistries
+type ListCaptureProfileRegistriesResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// ListCaptureProfileRegistriesResponse503Headers the declared response headers of an HTTP 503 response for ListCaptureProfileRegistries
+type ListCaptureProfileRegistriesResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type ListCaptureProfileRegistriesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *CaptureProfileRegistryList
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ListCaptureProfileRegistriesResponse200Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ListCaptureProfileRegistriesResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListCaptureProfileRegistriesResponse403Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListCaptureProfileRegistriesResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ListCaptureProfileRegistriesResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListCaptureProfileRegistriesResponse) GetJSON200() *CaptureProfileRegistryList {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListCaptureProfileRegistriesResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListCaptureProfileRegistriesResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListCaptureProfileRegistriesResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ListCaptureProfileRegistriesResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListCaptureProfileRegistriesResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListCaptureProfileRegistriesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListCaptureProfileRegistriesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListCaptureProfileRegistriesResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // ListCaptureProfilesResponse200Headers the declared response headers of an HTTP 200 response for ListCaptureProfiles
 type ListCaptureProfilesResponse200Headers struct {
 	XRequestID RequestID
@@ -37767,6 +40476,125 @@ func (r PublishCaptureProfileDraftResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r PublishCaptureProfileDraftResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ListCaptureProfileRevisionsResponse200Headers the declared response headers of an HTTP 200 response for ListCaptureProfileRevisions
+type ListCaptureProfileRevisionsResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// ListCaptureProfileRevisionsResponse400Headers the declared response headers of an HTTP 400 response for ListCaptureProfileRevisions
+type ListCaptureProfileRevisionsResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// ListCaptureProfileRevisionsResponse401Headers the declared response headers of an HTTP 401 response for ListCaptureProfileRevisions
+type ListCaptureProfileRevisionsResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// ListCaptureProfileRevisionsResponse403Headers the declared response headers of an HTTP 403 response for ListCaptureProfileRevisions
+type ListCaptureProfileRevisionsResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// ListCaptureProfileRevisionsResponse404Headers the declared response headers of an HTTP 404 response for ListCaptureProfileRevisions
+type ListCaptureProfileRevisionsResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// ListCaptureProfileRevisionsResponse500Headers the declared response headers of an HTTP 500 response for ListCaptureProfileRevisions
+type ListCaptureProfileRevisionsResponse500Headers struct {
+	XRequestID RequestID
+}
+
+type ListCaptureProfileRevisionsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *CaptureProfileRevisionList
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ListCaptureProfileRevisionsResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ListCaptureProfileRevisionsResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ListCaptureProfileRevisionsResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListCaptureProfileRevisionsResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *ListCaptureProfileRevisionsResponse404Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListCaptureProfileRevisionsResponse500Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListCaptureProfileRevisionsResponse) GetJSON200() *CaptureProfileRevisionList {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ListCaptureProfileRevisionsResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListCaptureProfileRevisionsResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListCaptureProfileRevisionsResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r ListCaptureProfileRevisionsResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListCaptureProfileRevisionsResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r ListCaptureProfileRevisionsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListCaptureProfileRevisionsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListCaptureProfileRevisionsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListCaptureProfileRevisionsResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -38800,6 +41628,127 @@ func (r ResolveCaptureExperienceResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r ResolveCaptureExperienceResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// RecordCaptureJourneyEventResponse202Headers the declared response headers of an HTTP 202 response for RecordCaptureJourneyEvent
+type RecordCaptureJourneyEventResponse202Headers struct {
+	XRequestID RequestID
+}
+
+// RecordCaptureJourneyEventResponse400Headers the declared response headers of an HTTP 400 response for RecordCaptureJourneyEvent
+type RecordCaptureJourneyEventResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// RecordCaptureJourneyEventResponse401Headers the declared response headers of an HTTP 401 response for RecordCaptureJourneyEvent
+type RecordCaptureJourneyEventResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// RecordCaptureJourneyEventResponse409Headers the declared response headers of an HTTP 409 response for RecordCaptureJourneyEvent
+type RecordCaptureJourneyEventResponse409Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+// RecordCaptureJourneyEventResponse500Headers the declared response headers of an HTTP 500 response for RecordCaptureJourneyEvent
+type RecordCaptureJourneyEventResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// RecordCaptureJourneyEventResponse503Headers the declared response headers of an HTTP 503 response for RecordCaptureJourneyEvent
+type RecordCaptureJourneyEventResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type RecordCaptureJourneyEventResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON202 the response for an HTTP 202 `application/json` response
+	JSON202 *CaptureJourneyEventReceipt
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON409 the response for an HTTP 409 `application/problem+json` response
+	ApplicationProblemJSON409 *Conflict
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers202 the parsed response headers for an HTTP 202 response
+	Headers202 *RecordCaptureJourneyEventResponse202Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *RecordCaptureJourneyEventResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *RecordCaptureJourneyEventResponse401Headers
+	// Headers409 the parsed response headers for an HTTP 409 response
+	Headers409 *RecordCaptureJourneyEventResponse409Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *RecordCaptureJourneyEventResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *RecordCaptureJourneyEventResponse503Headers
+}
+
+// GetJSON202 returns the response for an HTTP 202 `application/json` response
+func (r RecordCaptureJourneyEventResponse) GetJSON202() *CaptureJourneyEventReceipt {
+	return r.JSON202
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r RecordCaptureJourneyEventResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r RecordCaptureJourneyEventResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON409 returns the response for an HTTP 409 `application/problem+json` response
+func (r RecordCaptureJourneyEventResponse) GetApplicationProblemJSON409() *Conflict {
+	return r.ApplicationProblemJSON409
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r RecordCaptureJourneyEventResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r RecordCaptureJourneyEventResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r RecordCaptureJourneyEventResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r RecordCaptureJourneyEventResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r RecordCaptureJourneyEventResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r RecordCaptureJourneyEventResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -57682,6 +60631,300 @@ func (r ValidateProviderRegistrationResponse) ContentType() string {
 	return ""
 }
 
+// GetRequestAnalyticsResponse400Headers the declared response headers of an HTTP 400 response for GetRequestAnalytics
+type GetRequestAnalyticsResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// GetRequestAnalyticsResponse401Headers the declared response headers of an HTTP 401 response for GetRequestAnalytics
+type GetRequestAnalyticsResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// GetRequestAnalyticsResponse403Headers the declared response headers of an HTTP 403 response for GetRequestAnalytics
+type GetRequestAnalyticsResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// GetRequestAnalyticsResponse500Headers the declared response headers of an HTTP 500 response for GetRequestAnalytics
+type GetRequestAnalyticsResponse500Headers struct {
+	XRequestID RequestID
+}
+
+type GetRequestAnalyticsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *RequestAnalytics
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *GetRequestAnalyticsResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *GetRequestAnalyticsResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetRequestAnalyticsResponse403Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *GetRequestAnalyticsResponse500Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetRequestAnalyticsResponse) GetJSON200() *RequestAnalytics {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r GetRequestAnalyticsResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetRequestAnalyticsResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetRequestAnalyticsResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r GetRequestAnalyticsResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r GetRequestAnalyticsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetRequestAnalyticsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetRequestAnalyticsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetRequestAnalyticsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ListRequestLogsResponse400Headers the declared response headers of an HTTP 400 response for ListRequestLogs
+type ListRequestLogsResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// ListRequestLogsResponse401Headers the declared response headers of an HTTP 401 response for ListRequestLogs
+type ListRequestLogsResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// ListRequestLogsResponse403Headers the declared response headers of an HTTP 403 response for ListRequestLogs
+type ListRequestLogsResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// ListRequestLogsResponse500Headers the declared response headers of an HTTP 500 response for ListRequestLogs
+type ListRequestLogsResponse500Headers struct {
+	XRequestID RequestID
+}
+
+type ListRequestLogsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *RequestLogPage
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ListRequestLogsResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ListRequestLogsResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListRequestLogsResponse403Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListRequestLogsResponse500Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListRequestLogsResponse) GetJSON200() *RequestLogPage {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ListRequestLogsResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListRequestLogsResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListRequestLogsResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListRequestLogsResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r ListRequestLogsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListRequestLogsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListRequestLogsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListRequestLogsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetRequestLogResponse401Headers the declared response headers of an HTTP 401 response for GetRequestLog
+type GetRequestLogResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// GetRequestLogResponse403Headers the declared response headers of an HTTP 403 response for GetRequestLog
+type GetRequestLogResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// GetRequestLogResponse404Headers the declared response headers of an HTTP 404 response for GetRequestLog
+type GetRequestLogResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// GetRequestLogResponse500Headers the declared response headers of an HTTP 500 response for GetRequestLog
+type GetRequestLogResponse500Headers struct {
+	XRequestID RequestID
+}
+
+type GetRequestLogResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *RequestLog
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *GetRequestLogResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetRequestLogResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetRequestLogResponse404Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *GetRequestLogResponse500Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetRequestLogResponse) GetJSON200() *RequestLog {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetRequestLogResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetRequestLogResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetRequestLogResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r GetRequestLogResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r GetRequestLogResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetRequestLogResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetRequestLogResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetRequestLogResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // GetRetentionResolutionResponse200Headers the declared response headers of an HTTP 200 response for GetRetentionResolution
 type GetRetentionResolutionResponse200Headers struct {
 	XRequestID RequestID
@@ -65444,6 +68687,126 @@ func (r ExportTenantResponse) ContentType() string {
 	return ""
 }
 
+// ListVerificationsResponse200Headers the declared response headers of an HTTP 200 response for ListVerifications
+type ListVerificationsResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// ListVerificationsResponse400Headers the declared response headers of an HTTP 400 response for ListVerifications
+type ListVerificationsResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// ListVerificationsResponse401Headers the declared response headers of an HTTP 401 response for ListVerifications
+type ListVerificationsResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// ListVerificationsResponse403Headers the declared response headers of an HTTP 403 response for ListVerifications
+type ListVerificationsResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// ListVerificationsResponse500Headers the declared response headers of an HTTP 500 response for ListVerifications
+type ListVerificationsResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// ListVerificationsResponse503Headers the declared response headers of an HTTP 503 response for ListVerifications
+type ListVerificationsResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type ListVerificationsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *VerificationSessionList
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ListVerificationsResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *ListVerificationsResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ListVerificationsResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListVerificationsResponse403Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListVerificationsResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ListVerificationsResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListVerificationsResponse) GetJSON200() *VerificationSessionList {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r ListVerificationsResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListVerificationsResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListVerificationsResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListVerificationsResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ListVerificationsResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListVerificationsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListVerificationsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListVerificationsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListVerificationsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // CreateVerificationResponse201Headers the declared response headers of an HTTP 201 response for CreateVerification
 type CreateVerificationResponse201Headers struct {
 	XRequestID RequestID
@@ -67009,6 +70372,246 @@ func (r ListVerificationDecisionsResponse) ContentType() string {
 	return ""
 }
 
+// GetVerificationLifecycleHistoryResponse200Headers the declared response headers of an HTTP 200 response for GetVerificationLifecycleHistory
+type GetVerificationLifecycleHistoryResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// GetVerificationLifecycleHistoryResponse401Headers the declared response headers of an HTTP 401 response for GetVerificationLifecycleHistory
+type GetVerificationLifecycleHistoryResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// GetVerificationLifecycleHistoryResponse403Headers the declared response headers of an HTTP 403 response for GetVerificationLifecycleHistory
+type GetVerificationLifecycleHistoryResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// GetVerificationLifecycleHistoryResponse404Headers the declared response headers of an HTTP 404 response for GetVerificationLifecycleHistory
+type GetVerificationLifecycleHistoryResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// GetVerificationLifecycleHistoryResponse500Headers the declared response headers of an HTTP 500 response for GetVerificationLifecycleHistory
+type GetVerificationLifecycleHistoryResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// GetVerificationLifecycleHistoryResponse503Headers the declared response headers of an HTTP 503 response for GetVerificationLifecycleHistory
+type GetVerificationLifecycleHistoryResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type GetVerificationLifecycleHistoryResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *VerificationLifecycleHistory
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetVerificationLifecycleHistoryResponse200Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *GetVerificationLifecycleHistoryResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetVerificationLifecycleHistoryResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetVerificationLifecycleHistoryResponse404Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *GetVerificationLifecycleHistoryResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *GetVerificationLifecycleHistoryResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetVerificationLifecycleHistoryResponse) GetJSON200() *VerificationLifecycleHistory {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetVerificationLifecycleHistoryResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetVerificationLifecycleHistoryResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetVerificationLifecycleHistoryResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r GetVerificationLifecycleHistoryResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r GetVerificationLifecycleHistoryResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r GetVerificationLifecycleHistoryResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetVerificationLifecycleHistoryResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetVerificationLifecycleHistoryResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetVerificationLifecycleHistoryResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// InspectVerificationResponse200Headers the declared response headers of an HTTP 200 response for InspectVerification
+type InspectVerificationResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// InspectVerificationResponse401Headers the declared response headers of an HTTP 401 response for InspectVerification
+type InspectVerificationResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// InspectVerificationResponse403Headers the declared response headers of an HTTP 403 response for InspectVerification
+type InspectVerificationResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// InspectVerificationResponse404Headers the declared response headers of an HTTP 404 response for InspectVerification
+type InspectVerificationResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// InspectVerificationResponse500Headers the declared response headers of an HTTP 500 response for InspectVerification
+type InspectVerificationResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// InspectVerificationResponse503Headers the declared response headers of an HTTP 503 response for InspectVerification
+type InspectVerificationResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type InspectVerificationResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *VerificationInspection
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *InspectVerificationResponse200Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *InspectVerificationResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *InspectVerificationResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *InspectVerificationResponse404Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *InspectVerificationResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *InspectVerificationResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r InspectVerificationResponse) GetJSON200() *VerificationInspection {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r InspectVerificationResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r InspectVerificationResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r InspectVerificationResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r InspectVerificationResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r InspectVerificationResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r InspectVerificationResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r InspectVerificationResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r InspectVerificationResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r InspectVerificationResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // CreateVerificationReconsiderationResponse400Headers the declared response headers of an HTTP 400 response for CreateVerificationReconsideration
 type CreateVerificationReconsiderationResponse400Headers struct {
 	XRequestID RequestID
@@ -67311,6 +70914,246 @@ func (r ResumeVerificationResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r ResumeVerificationResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetVerificationSignalsResponse200Headers the declared response headers of an HTTP 200 response for GetVerificationSignals
+type GetVerificationSignalsResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// GetVerificationSignalsResponse401Headers the declared response headers of an HTTP 401 response for GetVerificationSignals
+type GetVerificationSignalsResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// GetVerificationSignalsResponse403Headers the declared response headers of an HTTP 403 response for GetVerificationSignals
+type GetVerificationSignalsResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// GetVerificationSignalsResponse404Headers the declared response headers of an HTTP 404 response for GetVerificationSignals
+type GetVerificationSignalsResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// GetVerificationSignalsResponse500Headers the declared response headers of an HTTP 500 response for GetVerificationSignals
+type GetVerificationSignalsResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// GetVerificationSignalsResponse503Headers the declared response headers of an HTTP 503 response for GetVerificationSignals
+type GetVerificationSignalsResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type GetVerificationSignalsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *VerificationSignalPage
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetVerificationSignalsResponse200Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *GetVerificationSignalsResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetVerificationSignalsResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetVerificationSignalsResponse404Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *GetVerificationSignalsResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *GetVerificationSignalsResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetVerificationSignalsResponse) GetJSON200() *VerificationSignalPage {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetVerificationSignalsResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetVerificationSignalsResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetVerificationSignalsResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r GetVerificationSignalsResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r GetVerificationSignalsResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r GetVerificationSignalsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetVerificationSignalsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetVerificationSignalsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetVerificationSignalsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetVerificationTimelineResponse200Headers the declared response headers of an HTTP 200 response for GetVerificationTimeline
+type GetVerificationTimelineResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// GetVerificationTimelineResponse401Headers the declared response headers of an HTTP 401 response for GetVerificationTimeline
+type GetVerificationTimelineResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// GetVerificationTimelineResponse403Headers the declared response headers of an HTTP 403 response for GetVerificationTimeline
+type GetVerificationTimelineResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// GetVerificationTimelineResponse404Headers the declared response headers of an HTTP 404 response for GetVerificationTimeline
+type GetVerificationTimelineResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// GetVerificationTimelineResponse500Headers the declared response headers of an HTTP 500 response for GetVerificationTimeline
+type GetVerificationTimelineResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// GetVerificationTimelineResponse503Headers the declared response headers of an HTTP 503 response for GetVerificationTimeline
+type GetVerificationTimelineResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type GetVerificationTimelineResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *VerificationTimeline
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetVerificationTimelineResponse200Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *GetVerificationTimelineResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetVerificationTimelineResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetVerificationTimelineResponse404Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *GetVerificationTimelineResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *GetVerificationTimelineResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetVerificationTimelineResponse) GetJSON200() *VerificationTimeline {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetVerificationTimelineResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetVerificationTimelineResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetVerificationTimelineResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r GetVerificationTimelineResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r GetVerificationTimelineResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r GetVerificationTimelineResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetVerificationTimelineResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetVerificationTimelineResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetVerificationTimelineResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -68977,6 +72820,129 @@ func (r UpdateWebhookSubscriptionsResponse) ContentType() string {
 	return ""
 }
 
+// ListWebhookEventTypesResponse200Headers the declared response headers of an HTTP 200 response for ListWebhookEventTypes
+type ListWebhookEventTypesResponse200Headers struct {
+	XRequestID RequestID
+}
+
+// ListWebhookEventTypesResponse401Headers the declared response headers of an HTTP 401 response for ListWebhookEventTypes
+type ListWebhookEventTypesResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// ListWebhookEventTypesResponse403Headers the declared response headers of an HTTP 403 response for ListWebhookEventTypes
+type ListWebhookEventTypesResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// ListWebhookEventTypesResponse429Headers the declared response headers of an HTTP 429 response for ListWebhookEventTypes
+type ListWebhookEventTypesResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// ListWebhookEventTypesResponse500Headers the declared response headers of an HTTP 500 response for ListWebhookEventTypes
+type ListWebhookEventTypesResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// ListWebhookEventTypesResponse503Headers the declared response headers of an HTTP 503 response for ListWebhookEventTypes
+type ListWebhookEventTypesResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type ListWebhookEventTypesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *WebhookEventTypeList
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ListWebhookEventTypesResponse200Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *ListWebhookEventTypesResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *ListWebhookEventTypesResponse403Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *ListWebhookEventTypesResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *ListWebhookEventTypesResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *ListWebhookEventTypesResponse503Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListWebhookEventTypesResponse) GetJSON200() *WebhookEventTypeList {
+	return r.JSON200
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListWebhookEventTypesResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r ListWebhookEventTypesResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r ListWebhookEventTypesResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r ListWebhookEventTypesResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r ListWebhookEventTypesResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r ListWebhookEventTypesResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListWebhookEventTypesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListWebhookEventTypesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListWebhookEventTypesResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // ListWebhookEventsResponse200Headers the declared response headers of an HTTP 200 response for ListWebhookEvents
 type ListWebhookEventsResponse200Headers struct {
 	XRequestID RequestID
@@ -69257,6 +73223,23 @@ func (c *ClientWithResponses) ExecuteAcceptedCommandWithResponse(ctx context.Con
 	return ParseExecuteAcceptedCommandResponse(rsp)
 }
 
+// ListAccessPermissionsWithResponse List tenant-assignable permissions
+//
+// Returns the exact permissions understood by this Core revision. The
+// catalog excludes platform-administration and internal permissions and
+// requires `tenant:read`.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/access/permissions (the `ListAccessPermissions` operationId).
+func (c *ClientWithResponses) ListAccessPermissionsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListAccessPermissionsResponse, error) {
+	rsp, err := c.ListAccessPermissions(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListAccessPermissionsResponse(rsp)
+}
+
 // GetReviewAppealWithResponse Get review appeal
 //
 // Read the current tenant-scoped appeal status, deadline, reason and successor reference. Prior transition records remain immutable.
@@ -69467,6 +73450,36 @@ func (c *ClientWithResponses) GetAssuranceProfileRevisionWithResponse(ctx contex
 	return ParseGetAssuranceProfileRevisionResponse(rsp)
 }
 
+// ListAuditRecordsWithResponse List immutable tenant audit records
+//
+// Returns a bounded newest-first page without event payloads, digests, or chain hashes.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/audit-records (the `ListAuditRecords` operationId).
+func (c *ClientWithResponses) ListAuditRecordsWithResponse(ctx context.Context, params *ListAuditRecordsParams, reqEditors ...RequestEditorFn) (*ListAuditRecordsResponse, error) {
+	rsp, err := c.ListAuditRecords(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListAuditRecordsResponse(rsp)
+}
+
+// ListCaptureProfileRegistriesWithResponse List deployed capture-profile registries
+//
+// Returns immutable registry revisions from newest to oldest so profile authors can pin exact compatible vocabulary.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/capture-profile-registries (the `ListCaptureProfileRegistries` operationId).
+func (c *ClientWithResponses) ListCaptureProfileRegistriesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListCaptureProfileRegistriesResponse, error) {
+	rsp, err := c.ListCaptureProfileRegistries(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListCaptureProfileRegistriesResponse(rsp)
+}
+
 // ListCaptureProfilesWithResponse List capture profiles
 //
 // Returns a wrapper object for the known response body format(s).
@@ -69521,6 +73534,8 @@ func (c *ClientWithResponses) GetCaptureProfileWithResponse(ctx context.Context,
 
 // DeactivateCaptureProfileWithResponse Deactivate a capture profile
 //
+// Prevents new sessions from using the profile and withdraws any open draft. A superseding draft may subsequently be created, edited, and published to reactivate the profile without rewriting published revision history.
+//
 // Returns a wrapper object for the known response body format(s).
 //
 // Corresponds with POST /v1/capture-profiles/{profileID}/deactivate (the `DeactivateCaptureProfile` operationId).
@@ -69569,6 +73584,21 @@ func (c *ClientWithResponses) PublishCaptureProfileDraftWithResponse(ctx context
 		return nil, err
 	}
 	return ParsePublishCaptureProfileDraftResponse(rsp)
+}
+
+// ListCaptureProfileRevisionsWithResponse List capture-profile revision history
+//
+// Returns a bounded newest-first page without repeating immutable revision documents.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/capture-profiles/{profileID}/revisions (the `ListCaptureProfileRevisions` operationId).
+func (c *ClientWithResponses) ListCaptureProfileRevisionsWithResponse(ctx context.Context, profileID ProfileID, params *ListCaptureProfileRevisionsParams, reqEditors ...RequestEditorFn) (*ListCaptureProfileRevisionsResponse, error) {
+	rsp, err := c.ListCaptureProfileRevisions(ctx, profileID, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListCaptureProfileRevisionsResponse(rsp)
 }
 
 // GetCaptureProfileRevisionWithResponse Get a capture-profile revision
@@ -69767,6 +73797,46 @@ func (c *ClientWithResponses) ResolveCaptureExperienceWithResponse(ctx context.C
 		return nil, err
 	}
 	return ParseResolveCaptureExperienceResponse(rsp)
+}
+
+// RecordCaptureJourneyEventWithBodyWithResponse Record a privacy-safe capture interaction
+//
+// Records one best-effort client interaction against the verification bound to
+// this capture credential. The schema is deliberately closed: it accepts only
+// bounded workflow vocabulary and cannot carry subject-entered values, raw
+// evidence, secrets, provider payloads, DOM snapshots, or free-form metadata.
+// Reusing an event ID with identical input is idempotent; conflicting reuse is
+// rejected. These events are not authoritative evidence of user behaviour.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/capture/journey-events (the `RecordCaptureJourneyEvent` operationId).
+func (c *ClientWithResponses) RecordCaptureJourneyEventWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RecordCaptureJourneyEventResponse, error) {
+	rsp, err := c.RecordCaptureJourneyEventWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRecordCaptureJourneyEventResponse(rsp)
+}
+
+// RecordCaptureJourneyEventWithResponse Record a privacy-safe capture interaction
+//
+// Records one best-effort client interaction against the verification bound to
+// this capture credential. The schema is deliberately closed: it accepts only
+// bounded workflow vocabulary and cannot carry subject-entered values, raw
+// evidence, secrets, provider payloads, DOM snapshots, or free-form metadata.
+// Reusing an event ID with identical input is idempotent; conflicting reuse is
+// rejected. These events are not authoritative evidence of user behaviour.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /v1/capture/journey-events (the `RecordCaptureJourneyEvent` operationId).
+func (c *ClientWithResponses) RecordCaptureJourneyEventWithResponse(ctx context.Context, body RecordCaptureJourneyEventJSONRequestBody, reqEditors ...RequestEditorFn) (*RecordCaptureJourneyEventResponse, error) {
+	rsp, err := c.RecordCaptureJourneyEvent(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRecordCaptureJourneyEventResponse(rsp)
 }
 
 // BootstrapNativeCaptureWithBodyWithResponse Bind a native application proof key and recover the capture session
@@ -73009,6 +77079,51 @@ func (c *ClientWithResponses) ValidateProviderRegistrationWithResponse(ctx conte
 	return ParseValidateProviderRegistrationResponse(rsp)
 }
 
+// GetRequestAnalyticsWithResponse Get privacy-safe API request analytics
+//
+// Aggregates tenant-scoped route templates, status classes, and server duration. Request bodies, raw paths, query strings, addresses, credentials, evidence, and subject identifiers are excluded.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/request-analytics (the `GetRequestAnalytics` operationId).
+func (c *ClientWithResponses) GetRequestAnalyticsWithResponse(ctx context.Context, params *GetRequestAnalyticsParams, reqEditors ...RequestEditorFn) (*GetRequestAnalyticsResponse, error) {
+	rsp, err := c.GetRequestAnalytics(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetRequestAnalyticsResponse(rsp)
+}
+
+// ListRequestLogsWithResponse List API request logs
+//
+// Returns bounded newest-first operational metadata using route templates, the transport-peer IP address, and bounded redacted query and JSON body parameters. Raw paths, forwarded-address headers, credentials, other headers, evidence bytes, and non-JSON bodies are excluded.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/request-logs (the `ListRequestLogs` operationId).
+func (c *ClientWithResponses) ListRequestLogsWithResponse(ctx context.Context, params *ListRequestLogsParams, reqEditors ...RequestEditorFn) (*ListRequestLogsResponse, error) {
+	rsp, err := c.ListRequestLogs(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListRequestLogsResponse(rsp)
+}
+
+// GetRequestLogWithResponse Get API request log
+//
+// Returns one tenant-scoped request-log record by its public request identifier, including bounded redacted debug parameters.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/request-logs/{requestID} (the `GetRequestLog` operationId).
+func (c *ClientWithResponses) GetRequestLogWithResponse(ctx context.Context, requestID string, reqEditors ...RequestEditorFn) (*GetRequestLogResponse, error) {
+	rsp, err := c.GetRequestLog(ctx, requestID, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetRequestLogResponse(rsp)
+}
+
 // GetRetentionResolutionWithResponse Resolve typed retention for one aggregate
 //
 // Requires deletions:read. Read-only inspection recomputes each retained evidence record with the selected typed retention resolution and returns active holds. It does not extend, shorten, or otherwise invent retention meaning.
@@ -74119,6 +78234,23 @@ func (c *ClientWithResponses) ExportTenantWithResponse(ctx context.Context, para
 	return ParseExportTenantResponse(rsp)
 }
 
+// ListVerificationsWithResponse List verification sessions
+//
+// Returns a bounded newest-first page of tenant-owned verification sessions.
+// The opaque continuation cursor is integrity protected and bound to the
+// authenticated tenant and page size. Requires `verification_sessions:read`.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/verifications (the `ListVerifications` operationId).
+func (c *ClientWithResponses) ListVerificationsWithResponse(ctx context.Context, params *ListVerificationsParams, reqEditors ...RequestEditorFn) (*ListVerificationsResponse, error) {
+	rsp, err := c.ListVerifications(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListVerificationsResponse(rsp)
+}
+
 // CreateVerificationWithBodyWithResponse Create a verification session
 //
 // Creates a collecting verification from the active published revision of
@@ -74335,6 +78467,42 @@ func (c *ClientWithResponses) ListVerificationDecisionsWithResponse(ctx context.
 	return ParseListVerificationDecisionsResponse(rsp)
 }
 
+// GetVerificationLifecycleHistoryWithResponse Get authoritative verification lifecycle history
+//
+// Requires verification_sessions:read. Returns the authoritative version-one
+// creation state separately from immutable post-creation transition receipts,
+// ordered by aggregate version. Actor identifiers, command digests, evidence,
+// provider payloads, and webhook payloads are never returned.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/verifications/{verificationID}/history (the `GetVerificationLifecycleHistory` operationId).
+func (c *ClientWithResponses) GetVerificationLifecycleHistoryWithResponse(ctx context.Context, verificationID VerificationID, reqEditors ...RequestEditorFn) (*GetVerificationLifecycleHistoryResponse, error) {
+	rsp, err := c.GetVerificationLifecycleHistory(ctx, verificationID, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetVerificationLifecycleHistoryResponse(rsp)
+}
+
+// InspectVerificationWithResponse Inspect safe operational metadata for a verification
+//
+// Requires verification_sessions:read, evidence:read, and webhooks:read.
+// Returns bounded evidence, check, attempt, decision-lineage, retention, legal-hold, and webhook
+// metadata. Evidence bytes, object-store references, encryption material,
+// provider payloads, and webhook payloads are never returned.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/verifications/{verificationID}/inspection (the `InspectVerification` operationId).
+func (c *ClientWithResponses) InspectVerificationWithResponse(ctx context.Context, verificationID VerificationID, reqEditors ...RequestEditorFn) (*InspectVerificationResponse, error) {
+	rsp, err := c.InspectVerification(ctx, verificationID, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseInspectVerificationResponse(rsp)
+}
+
 // CreateVerificationReconsiderationWithBodyWithResponse Open an independent correction workflow for a decision
 //
 // Reconsideration reuses the existing versioned review-correction lifecycle; it never mutates an immutable decision in place.
@@ -74401,6 +78569,43 @@ func (c *ClientWithResponses) ResumeVerificationWithResponse(ctx context.Context
 		return nil, err
 	}
 	return ParseResumeVerificationResponse(rsp)
+}
+
+// GetVerificationSignalsWithResponse Get provider-independent verification signals
+//
+// Requires verification_sessions:read. Returns bounded immutable observations
+// using Core's provider-independent signal vocabulary. Provider payloads,
+// extracted identity values, evidence, and assurance assertions are never returned.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/verifications/{verificationID}/signals (the `GetVerificationSignals` operationId).
+func (c *ClientWithResponses) GetVerificationSignalsWithResponse(ctx context.Context, verificationID VerificationID, reqEditors ...RequestEditorFn) (*GetVerificationSignalsResponse, error) {
+	rsp, err := c.GetVerificationSignals(ctx, verificationID, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetVerificationSignalsResponse(rsp)
+}
+
+// GetVerificationTimelineWithResponse Get the unified verification event timeline
+//
+// Requires verification_sessions:read. Returns a bounded chronological projection
+// of authoritative Core lifecycle, evidence, processing, signal, and decision events
+// together with explicitly non-authoritative capture-client interactions. Client events
+// are best effort and ordered by Core receipt time; absence is not proof that an action
+// did not occur. Raw evidence, subject-entered values, secrets, provider payloads, and
+// free-form client metadata are never returned.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/verifications/{verificationID}/timeline (the `GetVerificationTimeline` operationId).
+func (c *ClientWithResponses) GetVerificationTimelineWithResponse(ctx context.Context, verificationID VerificationID, reqEditors ...RequestEditorFn) (*GetVerificationTimelineResponse, error) {
+	rsp, err := c.GetVerificationTimeline(ctx, verificationID, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetVerificationTimelineResponse(rsp)
 }
 
 // GetWebhookDeliveryWithResponse Get delivery metadata
@@ -74628,6 +78833,21 @@ func (c *ClientWithResponses) UpdateWebhookSubscriptionsWithResponse(ctx context
 	return ParseUpdateWebhookSubscriptionsResponse(rsp)
 }
 
+// ListWebhookEventTypesWithResponse List supported webhook event types
+//
+// Requires webhooks:read. Returns the authoritative closed catalogue of webhook event types supported by this Core deployment, including their envelope schema version and closed data fields.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/webhook-event-types (the `ListWebhookEventTypes` operationId).
+func (c *ClientWithResponses) ListWebhookEventTypesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListWebhookEventTypesResponse, error) {
+	rsp, err := c.ListWebhookEventTypes(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListWebhookEventTypesResponse(rsp)
+}
+
 // ListWebhookEventsWithResponse List catalogue events
 //
 // Requires webhooks:read. Ascending insertion-order page of decrypted canonical catalogue envelopes with a tenant-, collection-, filter- and limit-bound cursor. Delivery and attempt inspection remain payload-free.
@@ -74780,6 +79000,165 @@ func ParseExecuteAcceptedCommandResponse(rsp *http.Response) (*ExecuteAcceptedCo
 			headers.XRequestID = value
 		}
 		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseListAccessPermissionsResponse parses an HTTP response from a ListAccessPermissionsWithResponse call
+func ParseListAccessPermissionsResponse(rsp *http.Response) (*ListAccessPermissionsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListAccessPermissionsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest PermissionCatalog
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ListAccessPermissionsResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 401:
+		var headers ListAccessPermissionsResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListAccessPermissionsResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 429:
+		var headers ListAccessPermissionsResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListAccessPermissionsResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ListAccessPermissionsResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
 	}
 
 	return response, nil
@@ -76823,6 +81202,214 @@ func ParseGetAssuranceProfileRevisionResponse(rsp *http.Response) (*GetAssurance
 	return response, nil
 }
 
+// ParseListAuditRecordsResponse parses an HTTP response from a ListAuditRecordsWithResponse call
+func ParseListAuditRecordsResponse(rsp *http.Response) (*ListAuditRecordsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListAuditRecordsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest AuditRecordPage
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 401:
+		var headers ListAuditRecordsResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListAuditRecordsResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListAuditRecordsResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseListCaptureProfileRegistriesResponse parses an HTTP response from a ListCaptureProfileRegistriesWithResponse call
+func ParseListCaptureProfileRegistriesResponse(rsp *http.Response) (*ListCaptureProfileRegistriesResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListCaptureProfileRegistriesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CaptureProfileRegistryList
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ListCaptureProfileRegistriesResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 401:
+		var headers ListCaptureProfileRegistriesResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListCaptureProfileRegistriesResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListCaptureProfileRegistriesResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ListCaptureProfileRegistriesResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
 // ParseListCaptureProfilesResponse parses an HTTP response from a ListCaptureProfilesWithResponse call
 func ParseListCaptureProfilesResponse(rsp *http.Response) (*ListCaptureProfilesResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -77876,6 +82463,137 @@ func ParsePublishCaptureProfileDraftResponse(rsp *http.Response) (*PublishCaptur
 			headers.XRequestID = value
 		}
 		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseListCaptureProfileRevisionsResponse parses an HTTP response from a ListCaptureProfileRevisionsWithResponse call
+func ParseListCaptureProfileRevisionsResponse(rsp *http.Response) (*ListCaptureProfileRevisionsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListCaptureProfileRevisionsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CaptureProfileRevisionList
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ListCaptureProfileRevisionsResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers ListCaptureProfileRevisionsResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ListCaptureProfileRevisionsResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListCaptureProfileRevisionsResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers ListCaptureProfileRevisionsResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListCaptureProfileRevisionsResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
 	}
 
 	return response, nil
@@ -79056,6 +83774,151 @@ func ParseResolveCaptureExperienceResponse(rsp *http.Response) (*ResolveCaptureE
 		response.Headers500 = &headers
 	case rsp.StatusCode == 503:
 		var headers ResolveCaptureExperienceResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseRecordCaptureJourneyEventResponse parses an HTTP response from a RecordCaptureJourneyEventWithResponse call
+func ParseRecordCaptureJourneyEventResponse(rsp *http.Response) (*RecordCaptureJourneyEventResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &RecordCaptureJourneyEventResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 202:
+		var dest CaptureJourneyEventReceipt
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON202 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Conflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 202:
+		var headers RecordCaptureJourneyEventResponse202Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers202 = &headers
+	case rsp.StatusCode == 400:
+		var headers RecordCaptureJourneyEventResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers RecordCaptureJourneyEventResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 409:
+		var headers RecordCaptureJourneyEventResponse409Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers409 = &headers
+	case rsp.StatusCode == 500:
+		var headers RecordCaptureJourneyEventResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers RecordCaptureJourneyEventResponse503Headers
 		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
 			var value int
 			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
@@ -102872,6 +107735,318 @@ func ParseValidateProviderRegistrationResponse(rsp *http.Response) (*ValidatePro
 	return response, nil
 }
 
+// ParseGetRequestAnalyticsResponse parses an HTTP response from a GetRequestAnalyticsWithResponse call
+func ParseGetRequestAnalyticsResponse(rsp *http.Response) (*GetRequestAnalyticsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetRequestAnalyticsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest RequestAnalytics
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 400:
+		var headers GetRequestAnalyticsResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers GetRequestAnalyticsResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetRequestAnalyticsResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 500:
+		var headers GetRequestAnalyticsResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseListRequestLogsResponse parses an HTTP response from a ListRequestLogsWithResponse call
+func ParseListRequestLogsResponse(rsp *http.Response) (*ListRequestLogsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListRequestLogsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest RequestLogPage
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 400:
+		var headers ListRequestLogsResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ListRequestLogsResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListRequestLogsResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListRequestLogsResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetRequestLogResponse parses an HTTP response from a GetRequestLogWithResponse call
+func ParseGetRequestLogResponse(rsp *http.Response) (*GetRequestLogResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetRequestLogResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest RequestLog
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 401:
+		var headers GetRequestLogResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetRequestLogResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetRequestLogResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 500:
+		var headers GetRequestLogResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	}
+
+	return response, nil
+}
+
 // ParseGetRetentionResolutionResponse parses an HTTP response from a GetRetentionResolutionWithResponse call
 func ParseGetRetentionResolutionResponse(rsp *http.Response) (*GetRetentionResolutionResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -113037,6 +118212,144 @@ func ParseExportTenantResponse(rsp *http.Response) (*ExportTenantResponse, error
 	return response, nil
 }
 
+// ParseListVerificationsResponse parses an HTTP response from a ListVerificationsWithResponse call
+func ParseListVerificationsResponse(rsp *http.Response) (*ListVerificationsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListVerificationsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest VerificationSessionList
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ListVerificationsResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers ListVerificationsResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers ListVerificationsResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListVerificationsResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListVerificationsResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ListVerificationsResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
 // ParseCreateVerificationResponse parses an HTTP response from a CreateVerificationWithResponse call
 func ParseCreateVerificationResponse(rsp *http.Response) (*CreateVerificationResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -114977,6 +120290,282 @@ func ParseListVerificationDecisionsResponse(rsp *http.Response) (*ListVerificati
 	return response, nil
 }
 
+// ParseGetVerificationLifecycleHistoryResponse parses an HTTP response from a GetVerificationLifecycleHistoryWithResponse call
+func ParseGetVerificationLifecycleHistoryResponse(rsp *http.Response) (*GetVerificationLifecycleHistoryResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetVerificationLifecycleHistoryResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest VerificationLifecycleHistory
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetVerificationLifecycleHistoryResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 401:
+		var headers GetVerificationLifecycleHistoryResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetVerificationLifecycleHistoryResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetVerificationLifecycleHistoryResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 500:
+		var headers GetVerificationLifecycleHistoryResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers GetVerificationLifecycleHistoryResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseInspectVerificationResponse parses an HTTP response from a InspectVerificationWithResponse call
+func ParseInspectVerificationResponse(rsp *http.Response) (*InspectVerificationResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &InspectVerificationResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest VerificationInspection
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers InspectVerificationResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 401:
+		var headers InspectVerificationResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers InspectVerificationResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers InspectVerificationResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 500:
+		var headers InspectVerificationResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers InspectVerificationResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
 // ParseCreateVerificationReconsiderationResponse parses an HTTP response from a CreateVerificationReconsiderationWithResponse call
 func ParseCreateVerificationReconsiderationResponse(rsp *http.Response) (*CreateVerificationReconsiderationResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -115343,6 +120932,282 @@ func ParseResumeVerificationResponse(rsp *http.Response) (*ResumeVerificationRes
 		response.Headers500 = &headers
 	case rsp.StatusCode == 503:
 		var headers ResumeVerificationResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetVerificationSignalsResponse parses an HTTP response from a GetVerificationSignalsWithResponse call
+func ParseGetVerificationSignalsResponse(rsp *http.Response) (*GetVerificationSignalsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetVerificationSignalsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest VerificationSignalPage
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetVerificationSignalsResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 401:
+		var headers GetVerificationSignalsResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetVerificationSignalsResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetVerificationSignalsResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 500:
+		var headers GetVerificationSignalsResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers GetVerificationSignalsResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetVerificationTimelineResponse parses an HTTP response from a GetVerificationTimelineWithResponse call
+func ParseGetVerificationTimelineResponse(rsp *http.Response) (*GetVerificationTimelineResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetVerificationTimelineResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest VerificationTimeline
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetVerificationTimelineResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 401:
+		var headers GetVerificationTimelineResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetVerificationTimelineResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetVerificationTimelineResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 500:
+		var headers GetVerificationTimelineResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers GetVerificationTimelineResponse503Headers
 		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
 			var value int
 			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
@@ -117513,6 +123378,165 @@ func ParseUpdateWebhookSubscriptionsResponse(rsp *http.Response) (*UpdateWebhook
 		response.Headers500 = &headers
 	case rsp.StatusCode == 503:
 		var headers UpdateWebhookSubscriptionsResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseListWebhookEventTypesResponse parses an HTTP response from a ListWebhookEventTypesWithResponse call
+func ParseListWebhookEventTypesResponse(rsp *http.Response) (*ListWebhookEventTypesResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListWebhookEventTypesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest WebhookEventTypeList
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ListWebhookEventTypesResponse200Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 401:
+		var headers ListWebhookEventTypesResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers ListWebhookEventTypesResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 429:
+		var headers ListWebhookEventTypesResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers ListWebhookEventTypesResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers ListWebhookEventTypesResponse503Headers
 		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
 			var value int
 			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {

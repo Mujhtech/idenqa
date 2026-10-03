@@ -1,6 +1,8 @@
 package verification
 
 import (
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
+
 	"context"
 	"encoding/json"
 	"errors"
@@ -29,7 +31,21 @@ type SessionIDGenerator interface {
 type SessionRepository interface {
 	Create(context.Context, tenant.Scope, SessionCreateMutation) (SessionCreation, error)
 	FindSession(context.Context, tenant.Scope, id.Verification) (Session, error)
+	ListSessions(context.Context, tenant.Scope, *SessionListPosition, int) (SessionPage, error)
 	Resume(context.Context, tenant.Scope, ResumeMutation) (ResumeResult, error)
+}
+
+// SessionListPosition is the exclusive newest-first continuation position.
+type SessionListPosition struct {
+	CreatedAt time.Time `json:"created_at"`
+	ID        string    `json:"id"`
+}
+
+// SessionPage is one bounded verification-session page. The HTTP boundary
+// protects the continuation position before returning it to a caller.
+type SessionPage struct {
+	Sessions []Session
+	Next     *SessionListPosition
 }
 
 // SessionCreateInput contains the tenant-selected profile and optional bounded
@@ -86,6 +102,8 @@ type SessionLifetimes struct {
 
 // SessionService authorises and coordinates verification-session use cases.
 type SessionService struct {
+	tracer observability.Tracer
+
 	repository    SessionRepository
 	identifiers   SessionIDGenerator
 	captureSigner *access.CaptureTokenSigner
@@ -136,7 +154,10 @@ func (service *SessionService) Create(
 	authority access.Context,
 	idempotencyKey string,
 	input SessionCreateInput,
-) (CreatedSession, error) {
+) (spanResult0 CreatedSession, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "verification.SessionService.Create")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := authority.Require(access.PermissionVerificationSessionsCreate); err != nil {
 		return CreatedSession{}, err
 	}
@@ -261,7 +282,10 @@ func (service *SessionService) Find(
 	ctx context.Context,
 	authority access.Context,
 	identifier id.Verification,
-) (Session, error) {
+) (spanResult0 Session, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "verification.SessionService.Find")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := authority.Require(access.PermissionVerificationSessionsRead); err != nil {
 		return Session{}, err
 	}
@@ -269,9 +293,32 @@ func (service *SessionService) Find(
 	return service.repository.FindSession(ctx, authority.TenantScope(), identifier)
 }
 
+// List returns a tenant-scoped bounded page after application authorisation.
+func (service *SessionService) List(
+	ctx context.Context,
+	authority access.Context,
+	after *SessionListPosition,
+	limit int,
+) (spanResult0 SessionPage, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "verification.SessionService.List")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
+	if err := authority.Require(access.PermissionVerificationSessionsRead); err != nil {
+		return SessionPage{}, err
+	}
+	if limit < 1 || limit > 100 || (after != nil && (after.CreatedAt.IsZero() || after.ID == "")) {
+		return SessionPage{}, ErrSessionConflict
+	}
+
+	return service.repository.ListSessions(ctx, authority.TenantScope(), after, limit)
+}
+
 // Resume returns an awaiting-input session to collecting after fresh subject
 // authorisation has been recorded. It never extends the session deadline.
-func (service *SessionService) Resume(ctx context.Context, authority access.Context, identifier id.Verification, expectedVersion int64, idempotencyKey string) (ResumedSession, error) {
+func (service *SessionService) Resume(ctx context.Context, authority access.Context, identifier id.Verification, expectedVersion int64, idempotencyKey string) (spanResult0 ResumedSession, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "verification.SessionService.Resume")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := authority.Require(access.PermissionVerificationSessionsResume); err != nil {
 		return ResumedSession{}, err
 	}
@@ -359,4 +406,19 @@ func validSessionLifetimes(lifetimes SessionLifetimes) bool {
 		lifetimes.CaptureTokenMaximum%time.Second == 0 &&
 		lifetimes.OutcomePostDefault%time.Second == 0 &&
 		lifetimes.OutcomePostMaximum%time.Second == 0
+}
+
+// WithTracer injects operation tracing during composition, before concurrent use.
+func (service *SessionService) WithTracer(tracer observability.Tracer) *SessionService {
+	if service != nil {
+		service.tracer = tracer
+	}
+	return service
+}
+
+func (service *SessionService) operationTracer() observability.Tracer {
+	if service == nil {
+		return nil
+	}
+	return service.tracer
 }

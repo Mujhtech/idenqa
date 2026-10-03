@@ -1,6 +1,8 @@
 package verification
 
 import (
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
+
 	"context"
 	"encoding/json"
 	"errors"
@@ -41,6 +43,8 @@ type DocumentSelectionIdentifiers interface{ NewEvent() (id.Event, error) }
 
 // DocumentSelectionService authorises the command before entering persistence.
 type DocumentSelectionService struct {
+	tracer observability.Tracer
+
 	writer      DocumentSelectionWriter
 	identifiers DocumentSelectionIdentifiers
 	clock       clock.Clock
@@ -56,7 +60,10 @@ func NewDocumentSelectionService(writer DocumentSelectionWriter, identifiers Doc
 }
 
 // Select applies an expected-version command using the authenticated capture principal.
-func (service *DocumentSelectionService) Select(ctx context.Context, capture CaptureContext, key string, input DocumentSelectionInput) (Session, error) {
+func (service *DocumentSelectionService) Select(ctx context.Context, capture CaptureContext, key string, input DocumentSelectionInput) (spanResult0 Session, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "verification.DocumentSelectionService.Select")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	session := capture.Session()
 	now := service.clock.Now().UTC().Truncate(time.Microsecond)
 	if capture.TokenID().IsZero() || capture.TenantScope().ID().IsZero() || session.TenantID() != capture.TenantScope().ID() || !session.AcceptsCaptureAt(now) || input.ExpectedVersion < 1 || !validRequirementKey(input.RequirementKey) || !validRequirementKey(input.DocumentType) {
@@ -77,4 +84,19 @@ func (service *DocumentSelectionService) Select(ctx context.Context, capture Cap
 		return Session{}, err
 	}
 	return service.writer.SelectDocument(ctx, capture.TenantScope(), DocumentSelectionMutation{Input: input, VerificationID: session.ID(), CaptureTokenID: capture.TokenID(), EventID: eventID, Retry: retry})
+}
+
+// WithTracer injects operation tracing during composition, before concurrent use.
+func (service *DocumentSelectionService) WithTracer(tracer observability.Tracer) *DocumentSelectionService {
+	if service != nil {
+		service.tracer = tracer
+	}
+	return service
+}
+
+func (service *DocumentSelectionService) operationTracer() observability.Tracer {
+	if service == nil {
+		return nil
+	}
+	return service.tracer
 }

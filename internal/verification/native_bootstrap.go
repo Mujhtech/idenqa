@@ -1,6 +1,8 @@
 package verification
 
 import (
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
+
 	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
@@ -49,6 +51,8 @@ type NativeAttestationVerifier interface {
 
 // NativeBootstrapService verifies proof-of-possession before durable binding.
 type NativeBootstrapService struct {
+	tracer observability.Tracer
+
 	repository  NativeBindingRepository
 	clock       clock.Clock
 	allowed     map[string]struct{}
@@ -78,7 +82,10 @@ func NewNativeBootstrapService(repository NativeBindingRepository, source clock.
 }
 
 // Bind verifies the single-use request and returns its already authenticated session.
-func (service *NativeBootstrapService) Bind(ctx context.Context, authority CaptureContext, presentedToken string, request NativeBootstrapRequest) (Session, error) {
+func (service *NativeBootstrapService) Bind(ctx context.Context, authority CaptureContext, presentedToken string, request NativeBootstrapRequest) (spanResult0 Session, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "verification.NativeBootstrapService.Bind")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if service == nil || authority.scope.ID().IsZero() || authority.tokenID.IsZero() || presentedToken == "" {
 		return Session{}, ErrSessionNotFound
 	}
@@ -191,4 +198,19 @@ func parseP256PublicKey(encoded []byte) (*ecdsa.PublicKey, error) {
 		return nil, errors.New("verification: invalid native proof key")
 	}
 	return key, nil
+}
+
+// WithTracer injects operation tracing during composition, before concurrent use.
+func (service *NativeBootstrapService) WithTracer(tracer observability.Tracer) *NativeBootstrapService {
+	if service != nil {
+		service.tracer = tracer
+	}
+	return service
+}
+
+func (service *NativeBootstrapService) operationTracer() observability.Tracer {
+	if service == nil {
+		return nil
+	}
+	return service.tracer
 }

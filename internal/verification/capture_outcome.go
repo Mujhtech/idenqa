@@ -1,6 +1,8 @@
 package verification
 
 import (
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
+
 	"context"
 	"errors"
 	"time"
@@ -59,7 +61,10 @@ type CaptureOutcomeRepository interface {
 }
 
 // CaptureOutcomeService correlates an authenticated outcome context with its safe outcome.
-type CaptureOutcomeService struct{ repository CaptureOutcomeRepository }
+type CaptureOutcomeService struct {
+	tracer     observability.Tracer
+	repository CaptureOutcomeRepository
+}
 
 // NewCaptureOutcomeService constructs the read-only subject-outcome application service.
 func NewCaptureOutcomeService(repository CaptureOutcomeRepository) (*CaptureOutcomeService, error) {
@@ -73,7 +78,10 @@ func NewCaptureOutcomeService(repository CaptureOutcomeRepository) (*CaptureOutc
 func (service *CaptureOutcomeService) Find(
 	ctx context.Context,
 	authority OutcomeContext,
-) (CaptureOutcome, error) {
+) (spanResult0 CaptureOutcome, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "verification.CaptureOutcomeService.Find")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	record, err := service.repository.FindCaptureOutcome(
 		ctx,
 		authority.TenantScope(),
@@ -142,4 +150,19 @@ func captureOutcomeState(state SessionState, outcome policy.Outcome) (CaptureOut
 		}
 	}
 	return "", ErrSessionConflict
+}
+
+// WithTracer injects operation tracing during composition, before concurrent use.
+func (service *CaptureOutcomeService) WithTracer(tracer observability.Tracer) *CaptureOutcomeService {
+	if service != nil {
+		service.tracer = tracer
+	}
+	return service
+}
+
+func (service *CaptureOutcomeService) operationTracer() observability.Tracer {
+	if service == nil {
+		return nil
+	}
+	return service.tracer
 }

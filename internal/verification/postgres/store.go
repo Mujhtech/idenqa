@@ -106,6 +106,42 @@ func (store *Store) FindRevision(
 	return found, err
 }
 
+// ListRevisions returns newest-first revisions using an exclusive numeric boundary.
+func (store *Store) ListRevisions(
+	ctx context.Context,
+	scope tenant.Scope,
+	identifier id.Profile,
+	before uint32,
+	limit int,
+) ([]verification.Revision, error) {
+	if scope.ID().IsZero() || identifier.IsZero() || limit < 1 || limit > 101 || before > math.MaxInt32 {
+		return nil, errors.New("verification postgres: invalid revision list request")
+	}
+	var revisions []verification.Revision
+	err := store.read(ctx, scope, func(ctx context.Context, queries *sqlgen.Queries) error {
+		rows, err := queries.ListCaptureProfileRevisions(ctx, sqlgen.ListCaptureProfileRevisionsParams{
+			TenantID:       scope.ID().String(),
+			ProfileID:      identifier.String(),
+			BeforeRevision: int64(before),
+			PageSize:       int32(limit), //nolint:gosec // limit is bounded to 101 above
+		})
+		if err != nil {
+			return fmt.Errorf("list capture profile revisions: %w", err)
+		}
+		revisions = make([]verification.Revision, len(rows))
+		for index, row := range rows {
+			revisions[index], err = restoreRevision(row, store.catalog)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	return revisions, err
+}
+
 // ListProfiles returns limit resources and an unsigned next position.
 func (store *Store) ListProfiles(
 	ctx context.Context,

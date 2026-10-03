@@ -1,6 +1,8 @@
 package verification
 
 import (
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
+
 	"context"
 	"errors"
 	"fmt"
@@ -100,6 +102,8 @@ type ProgressPublisher interface {
 
 // ExecutionService persists one domain transition with optimistic concurrency.
 type ExecutionService struct {
+	tracer observability.Tracer
+
 	repository     CheckRepository
 	identifiers    CheckEventIDGenerator
 	progress       ProgressPublisher
@@ -125,7 +129,10 @@ func (service *ExecutionService) Apply(
 	scope tenant.Scope,
 	checkID id.Check,
 	mutate func(*Check) (string, error),
-) (Check, string, error) {
+) (spanResult0 Check, spanResult1 string, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "verification.ExecutionService.Apply")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	return service.apply(ctx, scope, checkID, nil, mutate)
 }
 
@@ -136,7 +143,10 @@ func (service *ExecutionService) ApplyResult(
 	checkID id.Check,
 	receipt ResultReceipt,
 	mutate func(*Check) (string, error),
-) (Check, string, error) {
+) (spanResult0 Check, spanResult1 string, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "verification.ExecutionService.ApplyResult")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if receipt.Validate() != nil {
 		return Check{}, "", ErrInvalidCheck
 	}
@@ -284,3 +294,18 @@ func cloneCheck(value Check) Check {
 }
 
 var _ CheckRepository = (*MemoryCheckRepository)(nil)
+
+// WithTracer injects operation tracing during composition, before concurrent use.
+func (service *ExecutionService) WithTracer(tracer observability.Tracer) *ExecutionService {
+	if service != nil {
+		service.tracer = tracer
+	}
+	return service
+}
+
+func (service *ExecutionService) operationTracer() observability.Tracer {
+	if service == nil {
+		return nil
+	}
+	return service.tracer
+}

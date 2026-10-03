@@ -27,7 +27,7 @@ const (
 	ProfileStateDraft ProfileState = "draft"
 	// ProfileStateActive has one current published revision and may have a newer draft.
 	ProfileStateActive ProfileState = "active"
-	// ProfileStateDeactivated is an irreversible disabled profile state.
+	// ProfileStateDeactivated prevents new sessions until a replacement draft is published.
 	ProfileStateDeactivated ProfileState = "deactivated"
 )
 
@@ -237,7 +237,7 @@ func (profile CaptureProfile) PublishDraft(
 	published := draft
 	published.state = RevisionStatePublished
 	published.updatedAt = now.UTC()
-	published.publishedAt = timePointer(now.UTC())
+	published.publishedAt = new(now.UTC())
 	var superseded *Revision
 	if previous != nil {
 		if previous.profileID.String() != profile.id.String() || previous.number != *profile.publishedRevision ||
@@ -247,7 +247,7 @@ func (profile CaptureProfile) PublishDraft(
 		value := *previous
 		value.state = RevisionStateSuperseded
 		value.updatedAt = now.UTC()
-		value.endedAt = timePointer(now.UTC())
+		value.endedAt = new(now.UTC())
 		superseded = &value
 	}
 
@@ -257,6 +257,7 @@ func (profile CaptureProfile) PublishDraft(
 	profile.draftRevision = nil
 	profile.publishedRevision = &number
 	profile.updatedAt = now.UTC()
+	profile.deactivatedAt = nil
 
 	return profile, published, superseded, nil
 }
@@ -271,7 +272,8 @@ func (profile CaptureProfile) BeginSupersession(
 	if err := profile.expectMutable(expectedVersion, now); err != nil {
 		return CaptureProfile{}, Revision{}, err
 	}
-	if profile.state != ProfileStateActive || profile.publishedRevision == nil || profile.draftRevision != nil {
+	if (profile.state != ProfileStateActive && profile.state != ProfileStateDeactivated) ||
+		profile.publishedRevision == nil || profile.draftRevision != nil {
 		return CaptureProfile{}, Revision{}, ErrProfileConflict
 	}
 	number := profile.latestRevision + 1
@@ -287,7 +289,8 @@ func (profile CaptureProfile) BeginSupersession(
 	return profile, revision, nil
 }
 
-// Deactivate irreversibly disables the profile while preserving all revisions.
+// Deactivate prevents new sessions while preserving all revisions. A later
+// superseding draft may be edited and published to reactivate the profile.
 func (profile CaptureProfile) Deactivate(
 	expectedVersion int64,
 	draft *Revision,
@@ -309,14 +312,14 @@ func (profile CaptureProfile) Deactivate(
 		value := *draft
 		value.state = RevisionStateWithdrawn
 		value.updatedAt = now.UTC()
-		value.endedAt = timePointer(now.UTC())
+		value.endedAt = new(now.UTC())
 		withdrawn = &value
 	}
 	profile.state = ProfileStateDeactivated
 	profile.version++
 	profile.draftRevision = nil
 	profile.updatedAt = now.UTC()
-	profile.deactivatedAt = timePointer(now.UTC())
+	profile.deactivatedAt = new(now.UTC())
 
 	return profile, withdrawn, nil
 }
@@ -370,7 +373,7 @@ func (profile CaptureProfile) validate() error {
 			return errors.New("verification: stored active capture profile is invalid")
 		}
 	case ProfileStateDeactivated:
-		if profile.publishedRevision == nil || profile.draftRevision != nil || profile.deactivatedAt == nil {
+		if profile.publishedRevision == nil || profile.deactivatedAt == nil {
 			return errors.New("verification: stored deactivated capture profile is invalid")
 		}
 	default:
@@ -410,8 +413,7 @@ func (revision Revision) validate() error {
 }
 
 func (profile CaptureProfile) expectMutable(expectedVersion int64, now time.Time) error {
-	if expectedVersion <= 0 || profile.version != expectedVersion || now.IsZero() || now.Before(profile.updatedAt) ||
-		profile.state == ProfileStateDeactivated {
+	if expectedVersion <= 0 || profile.version != expectedVersion || now.IsZero() || now.Before(profile.updatedAt) {
 		return ErrProfileConflict
 	}
 
@@ -440,8 +442,6 @@ func cloneTime(value *time.Time) *time.Time {
 
 	return &cloned
 }
-
-func timePointer(value time.Time) *time.Time { return &value }
 
 // ID returns the stable capture-profile identifier.
 func (profile CaptureProfile) ID() id.Profile { return profile.id }

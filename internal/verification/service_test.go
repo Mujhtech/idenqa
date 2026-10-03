@@ -96,6 +96,16 @@ func (*profileServiceRepositoryStub) FindRevision(context.Context, tenant.Scope,
 	return Revision{}, ErrProfileNotFound
 }
 
+func (*profileServiceRepositoryStub) ListRevisions(
+	context.Context,
+	tenant.Scope,
+	id.Profile,
+	uint32,
+	int,
+) ([]Revision, error) {
+	return nil, nil
+}
+
 func (*profileServiceRepositoryStub) ListProfiles(context.Context, tenant.Scope, *ListPosition, int) (Page, error) {
 	return Page{}, nil
 }

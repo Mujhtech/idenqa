@@ -1,6 +1,8 @@
 package verification
 
 import (
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
+
 	"context"
 	"encoding/json"
 	"errors"
@@ -90,14 +92,24 @@ type Mutation struct {
 type Repository interface {
 	FindProfile(context.Context, tenant.Scope, id.Profile) (CaptureProfile, error)
 	FindRevision(context.Context, tenant.Scope, id.Profile, uint32) (Revision, error)
+	ListRevisions(context.Context, tenant.Scope, id.Profile, uint32, int) ([]Revision, error)
 	ListProfiles(context.Context, tenant.Scope, *ListPosition, int) (Page, error)
 	Replay(context.Context, tenant.Scope, idempotency.Request) (MutationResult, bool, error)
 	SaveDraft(context.Context, tenant.Scope, id.APIKey, CaptureProfile, Revision, int64) error
 	Apply(context.Context, tenant.Scope, Mutation) (MutationResult, error)
 }
 
+// RevisionPage is a bounded newest-first capture-profile history page.
+type RevisionPage struct {
+	Revisions  []Revision
+	HasMore    bool
+	NextBefore uint32
+}
+
 // Service authorises and coordinates capture-profile lifecycle use cases.
 type Service struct {
+	tracer observability.Tracer
+
 	repository  Repository
 	identifiers ProfileIDGenerator
 	catalog     evidence.Catalog
@@ -136,7 +148,10 @@ func (service *Service) Create(
 	idempotencyKey string,
 	name string,
 	document Profile,
-) (MutationResult, error) {
+) (spanResult0 MutationResult, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "verification.Service.Create")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := authority.Require(access.PermissionCaptureProfilesWrite); err != nil {
 		return MutationResult{}, err
 	}
@@ -200,7 +215,10 @@ func (service *Service) UpdateDraft(
 	expectedVersion int64,
 	name string,
 	document Profile,
-) (MutationResult, error) {
+) (spanResult0 MutationResult, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "verification.Service.UpdateDraft")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := authority.Require(access.PermissionCaptureProfilesWrite); err != nil {
 		return MutationResult{}, err
 	}
@@ -252,7 +270,10 @@ func (service *Service) Publish(
 	identifier id.Profile,
 	expectedVersion int64,
 	idempotencyKey string,
-) (MutationResult, error) {
+) (spanResult0 MutationResult, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "verification.Service.Publish")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	return service.publish(ctx, authority, identifier, expectedVersion, idempotencyKey)
 }
 
@@ -264,7 +285,10 @@ func (service *Service) Supersede(
 	expectedVersion int64,
 	idempotencyKey string,
 	document Profile,
-) (MutationResult, error) {
+) (spanResult0 MutationResult, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "verification.Service.Supersede")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := authority.Require(access.PermissionCaptureProfilesWrite); err != nil {
 		return MutationResult{}, err
 	}
@@ -314,14 +338,18 @@ func (service *Service) Supersede(
 	})
 }
 
-// Deactivate irreversibly disables the resource and withdraws any open draft.
+// Deactivate prevents new sessions and withdraws any open draft. A later
+// superseding draft may be published to reactivate the resource.
 func (service *Service) Deactivate(
 	ctx context.Context,
 	authority access.Context,
 	identifier id.Profile,
 	expectedVersion int64,
 	idempotencyKey string,
-) (MutationResult, error) {
+) (spanResult0 MutationResult, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "verification.Service.Deactivate")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := authority.Require(access.PermissionCaptureProfilesWrite); err != nil {
 		return MutationResult{}, err
 	}
@@ -384,7 +412,10 @@ func (service *Service) Find(
 	ctx context.Context,
 	authority access.Context,
 	identifier id.Profile,
-) (CaptureProfile, error) {
+) (spanResult0 CaptureProfile, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "verification.Service.Find")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := authority.Require(access.PermissionCaptureProfilesRead); err != nil {
 		return CaptureProfile{}, err
 	}
@@ -398,12 +429,53 @@ func (service *Service) FindRevision(
 	authority access.Context,
 	identifier id.Profile,
 	revision uint32,
-) (Revision, error) {
+) (spanResult0 Revision, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "verification.Service.FindRevision")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := authority.Require(access.PermissionCaptureProfilesRead); err != nil {
 		return Revision{}, err
 	}
 
 	return service.repository.FindRevision(ctx, authority.TenantScope(), identifier, revision)
+}
+
+// ListRevisions returns bounded newest-first revision history.
+func (service *Service) ListRevisions(
+	ctx context.Context,
+	authority access.Context,
+	identifier id.Profile,
+	before uint32,
+	limit int,
+) (spanResult0 RevisionPage, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "verification.Service.ListRevisions")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
+	if err := authority.Require(access.PermissionCaptureProfilesRead); err != nil {
+		return RevisionPage{}, err
+	}
+	if identifier.IsZero() || limit < 1 || limit > 100 {
+		return RevisionPage{}, errors.New("verification: invalid capture profile revision list")
+	}
+	if _, err := service.repository.FindProfile(ctx, authority.TenantScope(), identifier); err != nil {
+		return RevisionPage{}, err
+	}
+	revisions, err := service.repository.ListRevisions(
+		ctx, authority.TenantScope(), identifier, before, limit+1,
+	)
+	if err != nil {
+		return RevisionPage{}, fmt.Errorf("list capture profile revisions: %w", err)
+	}
+	hasMore := len(revisions) > limit
+	if hasMore {
+		revisions = revisions[:limit]
+	}
+	var nextBefore uint32
+	if hasMore {
+		nextBefore = revisions[len(revisions)-1].Number()
+	}
+
+	return RevisionPage{Revisions: revisions, HasMore: hasMore, NextBefore: nextBefore}, nil
 }
 
 // List returns a bounded tenant-scoped page.
@@ -412,7 +484,10 @@ func (service *Service) List(
 	authority access.Context,
 	after *ListPosition,
 	limit int,
-) (Page, error) {
+) (spanResult0 Page, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "verification.Service.List")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := authority.Require(access.PermissionCaptureProfilesRead); err != nil {
 		return Page{}, err
 	}
@@ -428,7 +503,10 @@ func (service *Service) ValidateDraft(
 	ctx context.Context,
 	authority access.Context,
 	identifier id.Profile,
-) (string, error) {
+) (spanResult0 string, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "verification.Service.ValidateDraft")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := authority.Require(access.PermissionCaptureProfilesWrite); err != nil {
 		return "", err
 	}
@@ -566,4 +644,19 @@ func mutationResult(profile CaptureProfile, revision Revision) MutationResult {
 		Digest:            revision.Digest(),
 		UpdatedAt:         profile.UpdatedAt(),
 	}
+}
+
+// WithTracer injects operation tracing during composition, before concurrent use.
+func (service *Service) WithTracer(tracer observability.Tracer) *Service {
+	if service != nil {
+		service.tracer = tracer
+	}
+	return service
+}
+
+func (service *Service) operationTracer() observability.Tracer {
+	if service == nil {
+		return nil
+	}
+	return service.tracer
 }
