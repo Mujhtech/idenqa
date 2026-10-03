@@ -150,6 +150,7 @@ func TestRegistryResolve(t *testing.T) {
 			patterns: []string{"*:*", "tenant:read"},
 			want: []access.Permission{
 				access.PermissionAppealsWrite,
+				access.PermissionAuditExport,
 				access.PermissionAuthoritiesRead,
 				access.PermissionAuthoritiesWrite,
 				access.PermissionBreakGlassApprove,

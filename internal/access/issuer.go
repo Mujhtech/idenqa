@@ -167,9 +167,10 @@ func (issuer *Issuer) Issue(ctx context.Context, scope tenant.Scope, input Issue
 
 // RotateInput selects the predecessor, successor expiry, and bounded overlap.
 type RotateInput struct {
-	KeyID   id.APIKey
-	Expiry  ExpiryIntent
-	Overlap time.Duration
+	KeyID    id.APIKey
+	Expiry   ExpiryIntent
+	Overlap  time.Duration
+	Patterns []Pattern
 }
 
 // Rotate atomically creates a same-scope successor and schedules predecessor retirement.
@@ -199,9 +200,14 @@ func (issuer *Issuer) Rotate(ctx context.Context, scope tenant.Scope, input Rota
 	if expiresAt != nil && !expiresAt.After(retirementAt) {
 		return IssuedKey{}, errors.New("successor API key must outlive the rotation overlap")
 	}
-	successor, err := issuer.build(
-		predecessor.TenantID(), predecessor.Label(), predecessor.Grant(), expiresAt, predecessor.ID(), now,
-	)
+	grant := predecessor.Grant()
+	if len(input.Patterns) > 0 {
+		grant, err = issuer.registry.Resolve(input.Patterns...)
+		if err != nil {
+			return IssuedKey{}, fmt.Errorf("resolve rotated API key grant: %w", err)
+		}
+	}
+	successor, err := issuer.build(predecessor.TenantID(), predecessor.Label(), grant, expiresAt, predecessor.ID(), now)
 	if err != nil {
 		return IssuedKey{}, err
 	}

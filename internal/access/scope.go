@@ -66,6 +66,8 @@ const (
 	PermissionTenantRead Permission = "tenant:read"
 	// PermissionTenantExport permits streaming the portable tenant-owned export.
 	PermissionTenantExport Permission = "tenant:export"
+	// PermissionAuditExport permits reading and exporting the tenant's immutable audit chain.
+	PermissionAuditExport Permission = "audit:export"
 	// PermissionCaptureProfilesRead permits reading capture profiles.
 	PermissionCaptureProfilesRead Permission = "capture_profiles:read"
 	// PermissionCaptureProfilesWrite permits changing capture profiles.
@@ -261,6 +263,7 @@ func TenantRegistry() Registry {
 		PermissionReviewsRead,
 		PermissionReviewsWrite,
 		PermissionReviewsAdmin,
+		PermissionAuditExport,
 		PermissionTenantExport,
 		PermissionTenantRead,
 		PermissionVerificationSessionsCreate,
@@ -289,6 +292,12 @@ func TenantRegistry() Registry {
 		PermissionBreakGlassApprove,
 		PermissionBreakGlassUse,
 	}}
+}
+
+// Permissions returns a copy of the exact tenant-assignable permission
+// catalog. Platform-administration and internal permissions are never present.
+func (registry Registry) Permissions() []Permission {
+	return slices.Clone(registry.permissions)
 }
 
 // Resolve expands requested patterns into an immutable exact-permission
