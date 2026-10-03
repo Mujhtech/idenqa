@@ -1,6 +1,8 @@
 package delivery
 
 import (
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
+
 	"context"
 	"crypto/rand"
 	"encoding/json"
@@ -98,6 +100,8 @@ type ManagementIdentifiers interface {
 
 // Management exposes public webhook use cases through existing owned semantics.
 type Management struct {
+	tracer observability.Tracer
+
 	repository  ManagementRepository
 	identifiers ManagementIdentifiers
 	wrapper     platformcrypto.KeyWrapper
@@ -121,7 +125,10 @@ func NewManagement(repository ManagementRepository, identifiers ManagementIdenti
 }
 
 // Execute checks application permission before any state or replay access.
-func (service *Management) Execute(ctx context.Context, actor access.Context, key string, command ManagementCommand) (ManagementResult, []byte, error) {
+func (service *Management) Execute(ctx context.Context, actor access.Context, key string, command ManagementCommand) (spanResult0 ManagementResult, spanResult1 []byte, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "delivery.Management.Execute")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	permission := access.PermissionWebhooksConfigure
 	if command.Operation == "replay" {
 		permission = access.PermissionWebhooksReplay
@@ -263,7 +270,10 @@ func validateManagementCommand(command ManagementCommand) error {
 }
 
 // Endpoints returns one bounded page of metadata.
-func (service *Management) Endpoints(ctx context.Context, actor access.Context, after string, limit int) ([]EndpointView, error) {
+func (service *Management) Endpoints(ctx context.Context, actor access.Context, after string, limit int) (spanResult0 []EndpointView, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "delivery.Management.Endpoints")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := actor.Require(access.PermissionWebhooksRead); err != nil {
 		return nil, err
 	}
@@ -274,7 +284,10 @@ func (service *Management) Endpoints(ctx context.Context, actor access.Context, 
 }
 
 // Endpoint returns one tenant-owned endpoint's safe metadata.
-func (service *Management) Endpoint(ctx context.Context, actor access.Context, identifier id.WebhookEndpoint) (EndpointView, error) {
+func (service *Management) Endpoint(ctx context.Context, actor access.Context, identifier id.WebhookEndpoint) (spanResult0 EndpointView, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "delivery.Management.Endpoint")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := actor.Require(access.PermissionWebhooksRead); err != nil {
 		return EndpointView{}, err
 	}
@@ -282,7 +295,10 @@ func (service *Management) Endpoint(ctx context.Context, actor access.Context, i
 }
 
 // Deliveries returns bounded metadata for one endpoint.
-func (service *Management) Deliveries(ctx context.Context, actor access.Context, endpoint id.WebhookEndpoint, after string, limit int) ([]View, error) {
+func (service *Management) Deliveries(ctx context.Context, actor access.Context, endpoint id.WebhookEndpoint, after string, limit int) (spanResult0 []View, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "delivery.Management.Deliveries")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := actor.Require(access.PermissionWebhooksRead); err != nil {
 		return nil, err
 	}
@@ -293,7 +309,10 @@ func (service *Management) Deliveries(ctx context.Context, actor access.Context,
 }
 
 // Delivery returns one payload-free delivery record.
-func (service *Management) Delivery(ctx context.Context, actor access.Context, identifier id.Delivery) (View, error) {
+func (service *Management) Delivery(ctx context.Context, actor access.Context, identifier id.Delivery) (spanResult0 View, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "delivery.Management.Delivery")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := actor.Require(access.PermissionWebhooksRead); err != nil {
 		return View{}, err
 	}
@@ -301,7 +320,10 @@ func (service *Management) Delivery(ctx context.Context, actor access.Context, i
 }
 
 // Attempts returns the bounded append-only diagnostics for one visible delivery.
-func (service *Management) Attempts(ctx context.Context, actor access.Context, identifier id.Delivery) ([]AttemptView, error) {
+func (service *Management) Attempts(ctx context.Context, actor access.Context, identifier id.Delivery) (spanResult0 []AttemptView, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "delivery.Management.Attempts")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := actor.Require(access.PermissionWebhooksRead); err != nil {
 		return nil, err
 	}
@@ -355,3 +377,18 @@ func (ManagementCommand) String() string { return "[REDACTED]" }
 
 // GoString redacts callback configuration in diagnostic formatting.
 func (ManagementCommand) GoString() string { return "[REDACTED]" }
+
+// WithTracer injects operation tracing during composition, before concurrent use.
+func (service *Management) WithTracer(tracer observability.Tracer) *Management {
+	if service != nil {
+		service.tracer = tracer
+	}
+	return service
+}
+
+func (service *Management) operationTracer() observability.Tracer {
+	if service == nil {
+		return nil
+	}
+	return service.tracer
+}

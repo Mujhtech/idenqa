@@ -1,6 +1,8 @@
 package delivery
 
 import (
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
+
 	"context"
 	"crypto/rand"
 	"errors"
@@ -34,6 +36,8 @@ type IdentifierGenerator interface {
 
 // Manager configures endpoints, rotates secrets, disables endpoints, and creates authorised replay intents.
 type Manager struct {
+	tracer observability.Tracer
+
 	repository  Repository
 	identifiers IdentifierGenerator
 	wrapper     platformcrypto.KeyWrapper
@@ -50,18 +54,27 @@ func NewManager(repository Repository, identifiers IdentifierGenerator, wrapper 
 }
 
 // CreateEndpoint stores a fresh 256-bit secret and the default completion subscription.
-func (manager *Manager) CreateEndpoint(ctx context.Context, scope tenant.Scope, targetURL string) (Endpoint, []byte, error) {
+func (manager *Manager) CreateEndpoint(ctx context.Context, scope tenant.Scope, targetURL string) (spanResult0 Endpoint, spanResult1 []byte, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, manager.operationTracer(), "delivery.Manager.CreateEndpoint")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	return manager.CreateEndpointSubscribedVersioned(ctx, scope, targetURL, DefaultEventTypes, DefaultSchemaVersion)
 }
 
 // CreateEndpointSubscribed stores a fresh secret and an explicit event selection.
-func (manager *Manager) CreateEndpointSubscribed(ctx context.Context, scope tenant.Scope, targetURL string, eventTypes []string) (Endpoint, []byte, error) {
+func (manager *Manager) CreateEndpointSubscribed(ctx context.Context, scope tenant.Scope, targetURL string, eventTypes []string) (spanResult0 Endpoint, spanResult1 []byte, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, manager.operationTracer(), "delivery.Manager.CreateEndpointSubscribed")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	return manager.CreateEndpointSubscribedVersioned(ctx, scope, targetURL, eventTypes, DefaultSchemaVersion)
 }
 
 // CreateEndpointSubscribedVersioned stores a fresh secret and an exact
 // supported event-envelope version pin.
-func (manager *Manager) CreateEndpointSubscribedVersioned(ctx context.Context, scope tenant.Scope, targetURL string, eventTypes []string, schemaVersion string) (Endpoint, []byte, error) {
+func (manager *Manager) CreateEndpointSubscribedVersioned(ctx context.Context, scope tenant.Scope, targetURL string, eventTypes []string, schemaVersion string) (spanResult0 Endpoint, spanResult1 []byte, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, manager.operationTracer(), "delivery.Manager.CreateEndpointSubscribedVersioned")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if len(eventTypes) == 0 {
 		eventTypes = DefaultEventTypes
 	}
@@ -106,7 +119,10 @@ func (manager *Manager) CreateEndpointSubscribedVersioned(ctx context.Context, s
 }
 
 // Rotate creates a new secret and retains the previous version only for overlap.
-func (manager *Manager) Rotate(ctx context.Context, scope tenant.Scope, endpointID id.WebhookEndpoint, overlap time.Duration) (Endpoint, []byte, error) {
+func (manager *Manager) Rotate(ctx context.Context, scope tenant.Scope, endpointID id.WebhookEndpoint, overlap time.Duration) (spanResult0 Endpoint, spanResult1 []byte, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, manager.operationTracer(), "delivery.Manager.Rotate")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if overlap <= 0 || overlap > 24*time.Hour {
 		return Endpoint{}, nil, ErrInvalid
 	}
@@ -133,13 +149,19 @@ func (manager *Manager) Rotate(ctx context.Context, scope tenant.Scope, endpoint
 }
 
 // Subscribe replaces an endpoint's event selection under optimistic concurrency.
-func (manager *Manager) Subscribe(ctx context.Context, scope tenant.Scope, endpointID id.WebhookEndpoint, expectedVersion int64, eventTypes []string) (Endpoint, error) {
+func (manager *Manager) Subscribe(ctx context.Context, scope tenant.Scope, endpointID id.WebhookEndpoint, expectedVersion int64, eventTypes []string) (spanResult0 Endpoint, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, manager.operationTracer(), "delivery.Manager.Subscribe")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	return manager.SubscribeVersioned(ctx, scope, endpointID, expectedVersion, eventTypes, "")
 }
 
 // SubscribeVersioned replaces an endpoint's event selection and, when
 // supplied, its exact supported envelope-version pin.
-func (manager *Manager) SubscribeVersioned(ctx context.Context, scope tenant.Scope, endpointID id.WebhookEndpoint, expectedVersion int64, eventTypes []string, schemaVersion string) (Endpoint, error) {
+func (manager *Manager) SubscribeVersioned(ctx context.Context, scope tenant.Scope, endpointID id.WebhookEndpoint, expectedVersion int64, eventTypes []string, schemaVersion string) (spanResult0 Endpoint, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, manager.operationTracer(), "delivery.Manager.SubscribeVersioned")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	selection, err := webhookv1.ValidateSubscriptions(eventTypes)
 	if err != nil {
 		return Endpoint{}, ErrInvalid
@@ -171,7 +193,10 @@ func (manager *Manager) SubscribeVersioned(ctx context.Context, scope tenant.Sco
 }
 
 // Disable prevents new attempts while retaining immutable history.
-func (manager *Manager) Disable(ctx context.Context, scope tenant.Scope, endpointID id.WebhookEndpoint, reason string) error {
+func (manager *Manager) Disable(ctx context.Context, scope tenant.Scope, endpointID id.WebhookEndpoint, reason string) (spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, manager.operationTracer(), "delivery.Manager.Disable")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	current, err := manager.repository.FindEndpoint(ctx, scope, endpointID)
 	if err != nil {
 		return err
@@ -187,7 +212,10 @@ func (manager *Manager) Disable(ctx context.Context, scope tenant.Scope, endpoin
 }
 
 // CreateDelivery persists one at-least-once event intent.
-func (manager *Manager) CreateDelivery(ctx context.Context, scope tenant.Scope, endpointID id.WebhookEndpoint, eventID id.Event, eventType string, body []byte) (Intent, error) {
+func (manager *Manager) CreateDelivery(ctx context.Context, scope tenant.Scope, endpointID id.WebhookEndpoint, eventID id.Event, eventType string, body []byte) (spanResult0 Intent, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, manager.operationTracer(), "delivery.Manager.CreateDelivery")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	endpoint, err := manager.repository.FindEndpoint(ctx, scope, endpointID)
 	if err != nil {
 		return Intent{}, err
@@ -210,7 +238,10 @@ func (manager *Manager) CreateDelivery(ctx context.Context, scope tenant.Scope, 
 }
 
 // Replay creates a distinct delivery while preserving the signed event identity and exact body.
-func (manager *Manager) Replay(ctx context.Context, scope tenant.Scope, originalID id.Delivery, eventID id.Event) (Intent, error) {
+func (manager *Manager) Replay(ctx context.Context, scope tenant.Scope, originalID id.Delivery, eventID id.Event) (spanResult0 Intent, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, manager.operationTracer(), "delivery.Manager.Replay")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	original, err := manager.repository.FindDelivery(ctx, scope, originalID)
 	if err != nil {
 		return Intent{}, err
@@ -258,4 +289,19 @@ func mustPurpose(value string) kms.Purpose {
 		panic(err)
 	}
 	return purpose
+}
+
+// WithTracer injects operation tracing during composition, before concurrent use.
+func (manager *Manager) WithTracer(tracer observability.Tracer) *Manager {
+	if manager != nil {
+		manager.tracer = tracer
+	}
+	return manager
+}
+
+func (manager *Manager) operationTracer() observability.Tracer {
+	if manager == nil {
+		return nil
+	}
+	return manager.tracer
 }
