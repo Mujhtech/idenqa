@@ -18,6 +18,10 @@ servers:
   - url: /
     description: Current Idenqa deployment
 tags:
+  - name: Access
+    description: The versioned tenant-assignable permission catalog advertised by this Core deployment.
+  - name: Audit
+    description: Reference-only inspection of the tenant's immutable audit chain.
   - name: Assurance
     description: Typed assurance profiles, capability mappings, and immutable session requirements.
   - name: Tenant
@@ -63,6 +67,192 @@ tags:
   - name: Support access
     description: Time-bounded delegated support grants and dual-control emergency break-glass requests with an append-only use ledger.
 paths:
+  /v1/audit-records:
+    get:
+      operationId: listAuditRecords
+      summary: List immutable tenant audit records
+      description: Returns a bounded newest-first page without event payloads, digests, or chain hashes.
+      tags: [Audit]
+      security:
+        - TenantAPIKey: []
+      x-required-scopes: [audit:export]
+      parameters:
+        - name: before
+          in: query
+          description: Exclusive sequence cursor returned by the previous page.
+          schema: { type: string, pattern: '^[1-9][0-9]*$' }
+        - name: limit
+          in: query
+          description: Maximum number of records to return.
+          schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+      responses:
+        "200":
+          description: Reference-only audit metadata was returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditRecordPage"
+              example:
+                data: []
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /v1/request-logs:
+    get:
+      operationId: listRequestLogs
+      summary: List API request logs
+      description: Returns bounded newest-first operational metadata using route templates, the transport-peer IP address, and bounded redacted query and JSON body parameters. Raw paths, forwarded-address headers, credentials, other headers, evidence bytes, and non-JSON bodies are excluded.
+      tags: [Audit]
+      security:
+        - TenantAPIKey: []
+      x-required-scopes: [audit:export]
+      parameters:
+        - name: before
+          in: query
+          description: Opaque exclusive cursor returned by the previous page.
+          schema: { type: string, minLength: 1 }
+        - name: limit
+          in: query
+          description: Maximum number of records to return.
+          schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
+      responses:
+        "200":
+          description: API request metadata was returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestLogPage"
+              example:
+                data: []
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /v1/request-logs/{requestID}:
+    get:
+      operationId: getRequestLog
+      summary: Get API request log
+      description: Returns one tenant-scoped request-log record by its public request identifier, including bounded redacted debug parameters.
+      tags: [Audit]
+      security:
+        - TenantAPIKey: []
+      x-required-scopes: [audit:export]
+      parameters:
+        - name: requestID
+          in: path
+          required: true
+          description: Public request correlation identifier.
+          schema: { type: string, minLength: 1, maxLength: 256 }
+      responses:
+        "200":
+          description: API request metadata was returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestLog"
+              example:
+                request_id: req_01M11HEQG00000000000000000
+                actor_key_id: key_01M11HEQG00000000000000000
+                method: GET
+                route_template: /v1/verifications/{verificationID}
+                client_ip_address: 192.0.2.10
+                query_parameters: {}
+                status_code: 200
+                duration_ms: 12
+                occurred_at: "2026-09-29T06:00:00Z"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /v1/request-analytics:
+    get:
+      operationId: getRequestAnalytics
+      summary: Get privacy-safe API request analytics
+      description: Aggregates tenant-scoped route templates, status classes, and server duration. Request bodies, raw paths, query strings, addresses, credentials, evidence, and subject identifiers are excluded.
+      tags: [Audit]
+      security:
+        - TenantAPIKey: []
+      x-required-scopes: [audit:export]
+      parameters:
+        - name: window
+          in: query
+          required: true
+          description: Bounded trailing UTC window and equally sized preceding comparison window.
+          schema: { type: string, enum: [7d, 30d, 90d] }
+      responses:
+        "200":
+          description: Privacy-safe request analytics were returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RequestAnalytics"
+              example:
+                window: { from: "2026-09-23T06:00:00Z", to: "2026-09-30T06:00:00Z" }
+                requests: 120
+                successes: 117
+                errors: 3
+                p95_latency_ms: 240
+                previous_requests: 110
+                volume: []
+                endpoints: []
+                statuses: []
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /v1/access/permissions:
+    get:
+      operationId: listAccessPermissions
+      summary: List tenant-assignable permissions
+      description: |
+        Returns the exact permissions understood by this Core revision. The
+        catalog excludes platform-administration and internal permissions and
+        requires `tenant:read`.
+      tags: [Access]
+      security:
+        - TenantAPIKey: []
+      x-required-scopes: [tenant:read]
+      responses:
+        "200":
+          description: The tenant-assignable permission catalog was returned.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PermissionCatalog"
+              example:
+                version: idenqa.core/access-permissions/v1
+                data:
+                  - id: verification_sessions:read
+                    resource: verification_sessions
+                    action: read
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
   /v1/tenant:
     get:
       operationId: getCurrentTenant
@@ -159,6 +349,34 @@ paths:
           $ref: "#/components/responses/InsufficientScope"
         "429":
           $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /v1/capture-profile-registries:
+    get:
+      operationId: listCaptureProfileRegistries
+      summary: List deployed capture-profile registries
+      description: Returns immutable registry revisions from newest to oldest so profile authors can pin exact compatible vocabulary.
+      tags: [Capture profiles]
+      security:
+        - TenantAPIKey: []
+      responses:
+        "200":
+          description: The deployed immutable registry catalogue.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CaptureProfileRegistryList"
+              example:
+                data: []
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
         "500":
           $ref: "#/components/responses/InternalError"
         "503":
@@ -432,6 +650,7 @@ paths:
     post:
       operationId: deactivateCaptureProfile
       summary: Deactivate a capture profile
+      description: Prevents new sessions from using the profile and withdraws any open draft. A superseding draft may subsequently be created, edited, and published to reactivate the profile without rewriting published revision history.
       tags: [Capture profiles]
       security:
         - TenantAPIKey: []
@@ -453,6 +672,39 @@ paths:
           $ref: "#/components/responses/PreconditionFailed"
         "428":
           $ref: "#/components/responses/PreconditionRequired"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /v1/capture-profiles/{profileID}/revisions:
+    parameters:
+      - $ref: "#/components/parameters/ProfileID"
+    get:
+      operationId: listCaptureProfileRevisions
+      summary: List capture-profile revision history
+      description: Returns a bounded newest-first page without repeating immutable revision documents.
+      tags: [Capture profiles]
+      security:
+        - TenantAPIKey: []
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: A bounded page of revision metadata.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CaptureProfileRevisionList"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "404":
+          $ref: "#/components/responses/NotFound"
         "500":
           $ref: "#/components/responses/InternalError"
   /v1/capture-profiles/{profileID}/revisions/{revision}:
@@ -487,6 +739,42 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
   /v1/verifications:
+    get:
+      operationId: listVerifications
+      summary: List verification sessions
+      description: |
+        Returns a bounded newest-first page of tenant-owned verification sessions.
+        The opaque continuation cursor is integrity protected and bound to the
+        authenticated tenant and page size. Requires `verification_sessions:read`.
+      tags: [Verifications]
+      security:
+        - TenantAPIKey: []
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: A bounded page of tenant-owned verification sessions.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerificationSessionList"
+              example:
+                data: []
+                page: { has_more: false }
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
     post:
       operationId: createVerification
       summary: Create a verification session
@@ -654,6 +942,170 @@ paths:
           $ref: "#/components/responses/InternalError"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+  /v1/verifications/{verificationID}/inspection:
+    get:
+      operationId: inspectVerification
+      summary: Inspect safe operational metadata for a verification
+      description: |
+        Requires verification_sessions:read, evidence:read, and webhooks:read.
+        Returns bounded evidence, check, attempt, decision-lineage, retention, legal-hold, and webhook
+        metadata. Evidence bytes, object-store references, encryption material,
+        provider payloads, and webhook payloads are never returned.
+      tags: [Verifications]
+      security:
+        - TenantAPIKey: []
+      parameters:
+        - $ref: "#/components/parameters/VerificationID"
+      responses:
+        "200":
+          description: The tenant-safe verification inspection was returned.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerificationInspection"
+              example:
+                evidence: []
+                checks: []
+                attempts: []
+                decisions: []
+                retention: []
+                webhooks: []
+                legal_hold: false
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /v1/verifications/{verificationID}/history:
+    get:
+      operationId: getVerificationLifecycleHistory
+      summary: Get authoritative verification lifecycle history
+      description: |
+        Requires verification_sessions:read. Returns the authoritative version-one
+        creation state separately from immutable post-creation transition receipts,
+        ordered by aggregate version. Actor identifiers, command digests, evidence,
+        provider payloads, and webhook payloads are never returned.
+      tags: [Verifications]
+      security:
+        - TenantAPIKey: []
+      parameters:
+        - $ref: "#/components/parameters/VerificationID"
+      responses:
+        "200":
+          description: The authoritative lifecycle history was returned.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerificationLifecycleHistory"
+              example:
+                origin:
+                  state: collecting
+                  version: 1
+                  occurred_at: "2026-10-02T07:30:00Z"
+                transitions: []
+                truncated: false
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /v1/verifications/{verificationID}/signals:
+    get:
+      operationId: getVerificationSignals
+      summary: Get provider-independent verification signals
+      description: |
+        Requires verification_sessions:read. Returns bounded immutable observations
+        using Core's provider-independent signal vocabulary. Provider payloads,
+        extracted identity values, evidence, and assurance assertions are never returned.
+      tags: [Verifications]
+      security:
+        - TenantAPIKey: []
+      parameters:
+        - $ref: "#/components/parameters/VerificationID"
+      responses:
+        "200":
+          description: The provider-independent verification signals were returned.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerificationSignalPage"
+              example:
+                items: []
+                truncated: false
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /v1/verifications/{verificationID}/timeline:
+    get:
+      operationId: getVerificationTimeline
+      summary: Get the unified verification event timeline
+      description: |
+        Requires verification_sessions:read. Returns a bounded chronological projection
+        of authoritative Core lifecycle, evidence, processing, signal, and decision events
+        together with explicitly non-authoritative capture-client interactions. Client events
+        are best effort and ordered by Core receipt time; absence is not proof that an action
+        did not occur. Raw evidence, subject-entered values, secrets, provider payloads, and
+        free-form client metadata are never returned.
+      tags: [Verifications]
+      security:
+        - TenantAPIKey: []
+      parameters:
+        - $ref: "#/components/parameters/VerificationID"
+      responses:
+        "200":
+          description: The bounded unified event timeline was returned.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerificationTimeline"
+              example:
+                events:
+                  - id: origin:ver_01K3P4NQF00000000000000000
+                    category: lifecycle
+                    source: core
+                    name: verification.created
+                    occurred_at: "2026-10-02T07:30:00Z"
+                    authoritative: true
+                truncated: false
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
   /v1/verifications/{verificationID}/resume:
     post:
       operationId: resumeVerification
@@ -721,6 +1173,57 @@ paths:
           $ref: "#/components/responses/InsufficientScope"
         "404":
           $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+  /v1/capture/journey-events:
+    post:
+      operationId: recordCaptureJourneyEvent
+      summary: Record a privacy-safe capture interaction
+      description: |
+        Records one best-effort client interaction against the verification bound to
+        this capture credential. The schema is deliberately closed: it accepts only
+        bounded workflow vocabulary and cannot carry subject-entered values, raw
+        evidence, secrets, provider payloads, DOM snapshots, or free-form metadata.
+        Reusing an event ID with identical input is idempotent; conflicting reuse is
+        rejected. These events are not authoritative evidence of user behaviour.
+      tags: [Capture]
+      security:
+        - CaptureToken: []
+      requestBody:
+        required: true
+        description: One closed-vocabulary interaction event from the authenticated capture journey.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CaptureJourneyEventCreate"
+            example:
+              event_id: journey_71d7207f-6935-4d75-8f30-5bd35c8ee231
+              event_type: navigation_back
+              screen: preparation
+              action: back
+              sequence: 4
+              client_occurred_at: "2026-10-02T07:31:05Z"
+      responses:
+        "202":
+          description: The immutable interaction was accepted or idempotently replayed.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CaptureJourneyEventReceipt"
+              example:
+                event_id: journey_71d7207f-6935-4d75-8f30-5bd35c8ee231
+                received_at: "2026-10-02T07:31:06Z"
+        "400":
+          $ref: "#/components/responses/InvalidRequest"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
         "409":
           $ref: "#/components/responses/Conflict"
         "500":
@@ -2138,6 +2641,39 @@ paths:
           $ref: "#/components/responses/PreconditionRequired"
         "500":
           $ref: "#/components/responses/InternalError"
+  /v1/webhook-event-types:
+    get:
+      operationId: listWebhookEventTypes
+      summary: List supported webhook event types
+      description:
+        Requires webhooks:read. Returns the authoritative closed catalogue of webhook event types
+        supported by this Core deployment, including their envelope schema version and closed data fields.
+      tags:
+        - Webhooks
+      security:
+        - TenantAPIKey: []
+      responses:
+        "200":
+          description: The supported webhook event type catalogue.
+          headers:
+            X-Request-ID:
+              $ref: "#/components/headers/XRequestID"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookEventTypeList"
+              example:
+                data: []
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "403":
+          $ref: "#/components/responses/InsufficientScope"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
   /v1/webhook-endpoints:
     get:
       operationId: listWebhookEndpoints
@@ -3522,8 +4058,13 @@ paths:
                 region: eu
                 oversight: single
                 state: open
+                required_certificate: document.level2
                 finding_count: 1
+                permitted_findings: []
+                findings: []
                 version: 1
+                created_at: "2026-08-27T12:00:00Z"
+                updated_at: "2026-08-27T12:00:00Z"
         "400":
           $ref: "#/components/responses/InvalidRequest"
         "401":
@@ -3577,8 +4118,13 @@ paths:
                 region: eu
                 oversight: single
                 state: open
+                required_certificate: document.level2
                 finding_count: 1
+                permitted_findings: []
+                findings: []
                 version: 1
+                created_at: "2026-08-27T12:00:00Z"
+                updated_at: "2026-08-27T12:00:00Z"
         "400":
           $ref: "#/components/responses/InvalidRequest"
         "401":
@@ -3643,8 +4189,13 @@ paths:
                 region: eu
                 oversight: single
                 state: open
+                required_certificate: document.level2
                 finding_count: 1
+                permitted_findings: []
+                findings: []
                 version: 1
+                created_at: "2026-08-27T12:00:00Z"
+                updated_at: "2026-08-27T12:00:00Z"
         "400":
           $ref: "#/components/responses/InvalidRequest"
         "401":
@@ -3713,8 +4264,13 @@ paths:
                 region: eu
                 oversight: single
                 state: open
+                required_certificate: document.level2
                 finding_count: 1
+                permitted_findings: []
+                findings: []
                 version: 1
+                created_at: "2026-08-27T12:00:00Z"
+                updated_at: "2026-08-27T12:00:00Z"
         "400":
           $ref: "#/components/responses/InvalidRequest"
         "401":
@@ -10468,6 +11024,197 @@ components:
         type: string
       example: Bearer realm="idenqa"
   schemas:
+    AuditRecord:
+      description: Content-free reference metadata for one immutable tenant audit event.
+      example:
+        sequence: 42
+        event_id: evt_01M11HEQG00000000000000000
+        event_type: verification.created
+        aggregate_id: vrf_01M11HEQG00000000000000000
+        actor_id: key_01M11HEQG00000000000000000
+        occurred_at: "2026-09-29T06:00:00Z"
+      type: object
+      additionalProperties: false
+      required: [sequence, event_id, event_type, aggregate_id, actor_id, occurred_at]
+      properties:
+        sequence: { type: integer, format: int64, minimum: 1, example: 42 }
+        event_id: { type: string, minLength: 1, example: evt_01M11HEQG00000000000000000 }
+        event_type: { type: string, minLength: 1, example: verification.created }
+        aggregate_id: { type: string, minLength: 1, example: vrf_01M11HEQG00000000000000000 }
+        actor_id: { type: string, minLength: 1, example: key_01M11HEQG00000000000000000 }
+        occurred_at: { type: string, format: date-time, example: "2026-09-29T06:00:00Z" }
+    AuditRecordPage:
+      description: A bounded newest-first page of audit-record metadata.
+      example:
+        data: []
+      type: object
+      additionalProperties: false
+      required: [data]
+      properties:
+        data:
+          type: array
+          example: []
+          maxItems: 100
+          items:
+            $ref: "#/components/schemas/AuditRecord"
+        next_before:
+          type: string
+          pattern: '^[1-9][0-9]*$'
+          example: "41"
+    RequestLog:
+      description: Operational metadata and bounded redacted debug parameters for one API request.
+      example:
+        request_id: req_01M11HEQG00000000000000000
+        actor_key_id: key_01M11HEQG00000000000000000
+        method: GET
+        route_template: /v1/verifications/{verificationID}
+        client_ip_address: 192.0.2.10
+        query_parameters: {}
+        status_code: 200
+        duration_ms: 12
+        occurred_at: "2026-09-29T06:00:00Z"
+      type: object
+      additionalProperties: false
+      required: [request_id, actor_key_id, method, route_template, client_ip_address, query_parameters, status_code, duration_ms, occurred_at]
+      properties:
+        request_id: { type: string, minLength: 1, example: req_01M11HEQG00000000000000000 }
+        actor_key_id: { type: string, minLength: 1, example: key_01M11HEQG00000000000000000 }
+        method: { type: string, minLength: 1, example: GET }
+        route_template: { type: string, pattern: '^/v1/', example: '/v1/verifications/{verificationID}' }
+        client_ip_address: { type: string, minLength: 2, maxLength: 45, example: 192.0.2.10 }
+        query_parameters:
+          type: object
+          description: Bounded query parameter values with sensitive fields replaced by `[REDACTED]`.
+          additionalProperties: true
+          example: { limit: "25" }
+        body_parameters:
+          type: object
+          description: Bounded JSON request-body parameters with sensitive fields replaced by `[REDACTED]`; absent for non-JSON, empty, or unread bodies.
+          additionalProperties: true
+          example: { workflow: document_and_selfie, token: "[REDACTED]" }
+        status_code: { type: integer, minimum: 100, maximum: 599, example: 200 }
+        duration_ms: { type: integer, format: int64, minimum: 0, example: 12 }
+        occurred_at: { type: string, format: date-time, example: "2026-09-29T06:00:00Z" }
+        trace_reference: { type: string, example: 4bf92f3577b34da6a3ce929d0e0e4736 }
+    RequestLogPage:
+      description: A bounded newest-first page of content-free API request metadata.
+      example:
+        data: []
+      type: object
+      additionalProperties: false
+      required: [data]
+      properties:
+        data:
+          type: array
+          example: []
+          maxItems: 100
+          items:
+            $ref: "#/components/schemas/RequestLog"
+        next_before: { type: string, minLength: 1, example: req_01M11HEQG00000000000000000 }
+    RequestAnalytics:
+      description: Content-free request metrics for one bounded UTC window and its immediately preceding comparison window.
+      example:
+        window: { from: "2026-09-23T06:00:00Z", to: "2026-09-30T06:00:00Z" }
+        requests: 120
+        successes: 117
+        errors: 3
+        p95_latency_ms: 240
+        previous_requests: 110
+        volume: []
+        endpoints: []
+        statuses: []
+      type: object
+      additionalProperties: false
+      required: [window, requests, successes, errors, p95_latency_ms, previous_requests, volume, endpoints, statuses]
+      properties:
+        window:
+          type: object
+          additionalProperties: false
+          required: [from, to]
+          properties:
+            from: { type: string, format: date-time }
+            to: { type: string, format: date-time }
+        requests: { type: integer, format: int64, minimum: 0 }
+        successes: { type: integer, format: int64, minimum: 0 }
+        errors: { type: integer, format: int64, minimum: 0 }
+        p95_latency_ms: { type: integer, format: int64, minimum: 0 }
+        previous_requests: { type: integer, format: int64, minimum: 0 }
+        volume:
+          type: array
+          maxItems: 90
+          items:
+            type: object
+            additionalProperties: false
+            required: [day, requests, errors]
+            properties:
+              day: { type: string, format: date-time }
+              requests: { type: integer, format: int64, minimum: 0 }
+              errors: { type: integer, format: int64, minimum: 0 }
+        endpoints:
+          type: array
+          maxItems: 20
+          items:
+            type: object
+            additionalProperties: false
+            required: [method, route_template, requests, successes, p95_latency_ms]
+            properties:
+              method: { type: string, minLength: 1 }
+              route_template: { type: string, pattern: '^/v1/' }
+              requests: { type: integer, format: int64, minimum: 0 }
+              successes: { type: integer, format: int64, minimum: 0 }
+              p95_latency_ms: { type: integer, format: int64, minimum: 0 }
+        statuses:
+          type: array
+          maxItems: 5
+          items:
+            type: object
+            additionalProperties: false
+            required: [class, count]
+            properties:
+              class: { type: string, enum: [1xx, 2xx, 3xx, 4xx, 5xx] }
+              count: { type: integer, format: int64, minimum: 0 }
+    PermissionCatalog:
+      description: The exact tenant-assignable permission catalog advertised by this Core revision.
+      type: object
+      additionalProperties: false
+      required: [version, data]
+      example:
+        version: idenqa.core/access-permissions/v1
+        data:
+          - id: verification_sessions:read
+            resource: verification_sessions
+            action: read
+      properties:
+        version:
+          type: string
+          const: idenqa.core/access-permissions/v1
+        data:
+          type: array
+          minItems: 1
+          example:
+            - id: verification_sessions:read
+              resource: verification_sessions
+              action: read
+          items:
+            $ref: "#/components/schemas/PermissionCatalogEntry"
+    PermissionCatalogEntry:
+      description: One exact resource-action permission that may be assigned to a tenant credential.
+      type: object
+      additionalProperties: false
+      required: [id, resource, action]
+      properties:
+        id:
+          type: string
+          pattern: "^[a-z][a-z0-9_]*:[a-z][a-z0-9_]*$"
+          example: verification_sessions:read
+        resource:
+          type: string
+          pattern: "^[a-z][a-z0-9_]*$"
+          example: verification_sessions
+        action:
+          type: string
+          pattern: "^[a-z][a-z0-9_]*$"
+          example: read
     AssuranceDimension:
       type: string
       description: Independent platform assurance dimension; there is no universal ranking.
@@ -11250,8 +11997,13 @@ components:
         - region
         - oversight
         - state
+        - required_certificate
         - finding_count
+        - permitted_findings
+        - findings
         - version
+        - created_at
+        - updated_at
       properties:
         id:
           type: string
@@ -11289,14 +12041,34 @@ components:
           type: string
           minLength: 1
           maxLength: 256
+        required_certificate:
+          type: string
+          minLength: 1
+          maxLength: 256
         finding_count:
           type: integer
           format: int64
           minimum: 0
+        permitted_findings:
+          type: array
+          maxItems: 64
+          items:
+            $ref: "#/components/schemas/ReviewPermittedFinding"
+        findings:
+          type: array
+          maxItems: 64
+          items:
+            $ref: "#/components/schemas/ReviewFinding"
         version:
           type: integer
           format: int64
           minimum: 1
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
       description: Published review Case representation for tenant-scoped manual review operations.
       example:
         id: rev_example
@@ -11304,8 +12076,45 @@ components:
         region: eu
         oversight: single
         state: open
+        required_certificate: document.level2
         finding_count: 1
+        permitted_findings: []
+        findings: []
         version: 1
+        created_at: "2026-08-27T12:00:00Z"
+        updated_at: "2026-08-27T12:00:00Z"
+    ReviewFinding:
+      description: Immutable finding metadata. Evidence content and grant redemption material are excluded.
+      type: object
+      additionalProperties: false
+      required: [id, reviewer_id, resolution, reason_code, evidence_grant_ids, recorded_at]
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 256
+        reviewer_id:
+          type: string
+          minLength: 1
+          maxLength: 256
+        resolution:
+          type: string
+          enum: [satisfy, not_satisfy, request_input]
+        reason_code:
+          type: string
+          minLength: 1
+          maxLength: 128
+        evidence_grant_ids:
+          type: array
+          minItems: 1
+          maxItems: 32
+          items:
+            type: string
+            minLength: 1
+            maxLength: 256
+        recorded_at:
+          type: string
+          format: date-time
     ReviewAppeal:
       type: object
       additionalProperties: false
@@ -11993,12 +12802,11 @@ components:
       properties:
         resolution:
           type: string
-          minLength: 1
-          maxLength: 256
+          enum: [satisfy, not_satisfy, request_input]
         reason_code:
           type: string
           minLength: 1
-          maxLength: 256
+          maxLength: 128
       description: Published review PermittedFinding representation for tenant-scoped manual review operations.
       example:
         resolution: satisfy
@@ -13602,6 +14410,49 @@ components:
         kind: changed
         old: synthetic.first
         new: synthetic.second
+    WebhookEventType:
+      type: object
+      description: One event type from the authoritative closed webhook catalogue.
+      additionalProperties: false
+      required:
+        - type
+        - schema_version
+        - required_data
+        - optional_data
+      properties:
+        type:
+          type: string
+          maxLength: 128
+          description: Exact dotted event type accepted in a webhook subscription.
+          example: verification.completed
+        schema_version:
+          type: string
+          enum: ["1.0"]
+          description: Exact webhook envelope version used for this event type.
+        required_data:
+          type: array
+          description: Closed data fields required in the event envelope.
+          items:
+            type: string
+          example: [verification_id, subject_id, decision_id]
+        optional_data:
+          type: array
+          description: Closed data fields that may be present in the event envelope.
+          items:
+            type: string
+          example: [outcome, decided_at, verification]
+    WebhookEventTypeList:
+      description: The closed webhook event-type catalogue supported by this Core deployment.
+      type: object
+      additionalProperties: false
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          example: []
+          items:
+            $ref: "#/components/schemas/WebhookEventType"
     WebhookEndpoint:
       type: object
       description: Tenant-owned endpoint metadata. Key material is never included.
@@ -15428,6 +16279,368 @@ components:
           format: int64
           minimum: 1
           example: 1
+    CaptureJourneyEventCreate:
+      description: Closed, privacy-safe capture interaction reported by the client.
+      type: object
+      additionalProperties: false
+      required: [event_id, event_type, screen, sequence, client_occurred_at]
+      properties:
+        event_id:
+          type: string
+          pattern: '^journey_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+          example: journey_71d7207f-6935-4d75-8f30-5bd35c8ee231
+        event_type:
+          type: string
+          enum: [screen_viewed, action_selected, navigation_back, capture_started, capture_retried, capture_accepted, capture_retake, recovery_started, processing_started, completion_shown, error_shown]
+          example: navigation_back
+        screen:
+          type: string
+          enum: [intro, country, notice, method, preparation, capture, review, recovery, processing, completion, error]
+          example: preparation
+        action:
+          type: string
+          enum: [continue, back, select_country, accept_notice, refuse_notice, select_document, select_method, start_capture, retake, accept_capture, retry, submit]
+          example: back
+        requirement_key:
+          type: string
+          maxLength: 64
+          pattern: '^[a-z][a-z0-9_]{0,63}$'
+          example: document
+        artefact:
+          type: string
+          maxLength: 128
+          pattern: '^[a-z][a-z0-9._:-]{0,127}$'
+          example: idenqa.artefact.document_front
+        acquisition_method:
+          type: string
+          maxLength: 128
+          pattern: '^[a-z][a-z0-9._:-]{0,127}$'
+          example: idenqa.method.live_camera
+        sequence:
+          type: integer
+          minimum: 1
+          maximum: 10000
+          example: 4
+        client_occurred_at:
+          type: string
+          format: date-time
+          example: "2026-10-02T07:31:05Z"
+    CaptureJourneyEventReceipt:
+      description: Server receipt for one immutable capture interaction.
+      type: object
+      additionalProperties: false
+      required: [event_id, received_at]
+      properties:
+        event_id:
+          type: string
+          pattern: '^journey_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+          example: journey_71d7207f-6935-4d75-8f30-5bd35c8ee231
+        received_at:
+          type: string
+          format: date-time
+          example: "2026-10-02T07:31:06Z"
+    VerificationTimeline:
+      description: Bounded chronological view across Core and capture-client events.
+      type: object
+      additionalProperties: false
+      required: [events, truncated]
+      properties:
+        events:
+          type: array
+          maxItems: 500
+          example: []
+          items:
+            $ref: "#/components/schemas/VerificationTimelineEvent"
+        truncated:
+          description: True when more events exist than this bounded projection contains.
+          type: boolean
+          example: false
+    VerificationTimelineEvent:
+      description: One normalized timeline event. Client-reported interactions are never authoritative.
+      type: object
+      additionalProperties: false
+      required: [id, category, source, name, occurred_at, authoritative]
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 160
+          example: origin:ver_01K3P4NQF00000000000000000
+        category:
+          type: string
+          enum: [lifecycle, interaction, evidence, processing, signal, decision]
+          example: lifecycle
+        source:
+          type: string
+          enum: [core, capture_client]
+          example: core
+        name:
+          type: string
+          minLength: 1
+          maxLength: 160
+          pattern: '^\S+$'
+          example: verification.created
+        status:
+          type: string
+          minLength: 1
+          maxLength: 160
+          pattern: '^\S+$'
+          example: collecting
+        detail:
+          type: string
+          minLength: 1
+          maxLength: 256
+          example: front
+        occurred_at:
+          type: string
+          format: date-time
+          example: "2026-10-02T07:30:00Z"
+        authoritative:
+          type: boolean
+          example: true
+    VerificationInspection:
+      description: Bounded tenant-safe operational metadata for one verification.
+      type: object
+      additionalProperties: false
+      required: [evidence, checks, attempts, decisions, retention, webhooks, legal_hold]
+      properties:
+        evidence:
+          description: Safe evidence metadata, excluding bytes and storage or encryption references.
+          example: []
+          type: array
+          maxItems: 100
+          items:
+            $ref: "#/components/schemas/VerificationInspectionEvidence"
+        checks:
+          example: []
+          type: array
+          maxItems: 100
+          items:
+            $ref: "#/components/schemas/VerificationInspectionCheck"
+        attempts:
+          description: Reference-only execution history without provider payloads or evidence.
+          example: []
+          type: array
+          maxItems: 500
+          items:
+            $ref: "#/components/schemas/VerificationInspectionAttempt"
+        decisions:
+          description: Immutable decision lineage without canonical policy inputs.
+          example: []
+          type: array
+          maxItems: 100
+          items:
+            $ref: "#/components/schemas/VerificationInspectionDecision"
+        retention:
+          example: []
+          type: array
+          maxItems: 32
+          items:
+            $ref: "#/components/schemas/VerificationInspectionRetention"
+        webhooks:
+          example: []
+          type: array
+          maxItems: 100
+          items:
+            $ref: "#/components/schemas/VerificationInspectionWebhook"
+        legal_hold:
+          example: false
+          type: boolean
+    VerificationLifecycleHistory:
+      description: Authoritative creation state and immutable lifecycle transition receipts.
+      type: object
+      additionalProperties: false
+      required: [origin, transitions, truncated]
+      properties:
+        origin:
+          type: object
+          $ref: "#/components/schemas/VerificationLifecycleOrigin"
+          example:
+            state: collecting
+            version: 1
+            occurred_at: "2026-10-02T07:30:00Z"
+        transitions:
+          type: array
+          maxItems: 100
+          example: []
+          items:
+            $ref: "#/components/schemas/VerificationLifecycleTransition"
+        truncated:
+          description: True when more transition receipts exist than this bounded response contains.
+          type: boolean
+          example: false
+    VerificationLifecycleOrigin:
+      description: Authoritative version-one session creation state.
+      type: object
+      additionalProperties: false
+      required: [state, version, occurred_at]
+      properties:
+        state:
+          type: string
+          enum: [collecting]
+        version:
+          type: integer
+          format: int64
+          enum: [1]
+        occurred_at:
+          type: string
+          format: date-time
+    VerificationLifecycleTransition:
+      description: One immutable post-creation state transition in aggregate-version order.
+      type: object
+      additionalProperties: false
+      required: [event_id, from_state, to_state, version, occurred_at]
+      properties:
+        event_id:
+          type: string
+          pattern: '^evt_[0-9A-HJKMNP-TV-Z]{26}$'
+        from_state:
+          type: string
+          enum: [created, collecting, awaiting_input, processing, awaiting_external, manual_review]
+        to_state:
+          type: string
+          enum: [collecting, awaiting_input, processing, awaiting_external, manual_review, completed, cancelled, expired, failed]
+        version:
+          type: integer
+          format: int64
+          minimum: 2
+        decision_id:
+          type: string
+          pattern: '^dec_[0-9A-HJKMNP-TV-Z]{26}$'
+        occurred_at:
+          type: string
+          format: date-time
+    VerificationSignalPage:
+      description: Bounded chronological provider-independent observations.
+      type: object
+      additionalProperties: false
+      required: [items, truncated]
+      properties:
+        items:
+          type: array
+          maxItems: 200
+          example: []
+          items:
+            $ref: "#/components/schemas/VerificationSignal"
+        truncated:
+          description: True when more observations exist than this bounded response contains.
+          type: boolean
+          example: false
+    VerificationSignal:
+      description: An immutable normalised observation, not an identity claim or final decision.
+      type: object
+      additionalProperties: false
+      required: [id, check_id, attempt_id, runner_kind, runner_id, runner_version, contract_major, contract_minor, name, outcome, reason_codes, recorded_at]
+      properties:
+        id: { type: string, pattern: '^obs_[0-9A-HJKMNP-TV-Z]{26}$' }
+        check_id: { type: string, pattern: '^chk_[0-9A-HJKMNP-TV-Z]{26}$' }
+        attempt_id: { type: string, pattern: '^att_[0-9A-HJKMNP-TV-Z]{26}$' }
+        runner_kind: { type: string, enum: [provider, model] }
+        runner_id: { type: string }
+        runner_version: { type: string }
+        contract_major: { type: integer, minimum: 1 }
+        contract_minor: { type: integer, minimum: 0 }
+        name: { type: string }
+        outcome: { type: string, enum: [satisfied, not_satisfied, inconclusive] }
+        reason_codes:
+          type: array
+          maxItems: 16
+          items: { type: string }
+        recorded_at: { type: string, format: date-time }
+    VerificationInspectionEvidence:
+      description: Metadata for one accepted or quarantined evidence artefact.
+      type: object
+      additionalProperties: false
+      required: [id, requirement_key, evidence_type, artefact, acquisition_method, assurances, state, integrity, retention_class, created_at, updated_at]
+      properties:
+        id: { type: string }
+        requirement_key: { type: string }
+        evidence_type: { type: string }
+        artefact: { type: string }
+        acquisition_method: { type: string }
+        assurances:
+          type: array
+          maxItems: 16
+          items: { type: string }
+        state: { type: string, enum: [available, quarantined] }
+        integrity: { type: string, enum: [verified, failed] }
+        retention_class: { type: string }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    VerificationInspectionCheck:
+      description: Current operational state and attempt count for one check.
+      type: object
+      additionalProperties: false
+      required: [id, name, state, attempt_count, created_at, updated_at]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        state: { type: string }
+        outcome: { type: string, enum: [passed, not_passed, inconclusive] }
+        attempt_count: { type: integer, minimum: 0 }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    VerificationInspectionAttempt:
+      description: Reference-only execution state for one semantic check attempt.
+      type: object
+      additionalProperties: false
+      required: [id, check_id, attempt_number, runner_kind, runner_id, runner_version, package_digest, contract_major, contract_minor, request_digest, configuration_digest, state, started_at, deadline]
+      properties:
+        id: { type: string }
+        check_id: { type: string }
+        attempt_number: { type: integer, minimum: 1 }
+        runner_kind: { type: string, enum: [provider, model] }
+        runner_id: { type: string }
+        runner_version: { type: string }
+        package_digest: { type: string, pattern: '^[0-9a-f]{64}$' }
+        contract_major: { type: integer, minimum: 1 }
+        contract_minor: { type: integer, minimum: 0 }
+        request_digest: { type: string, pattern: '^[0-9a-f]{64}$' }
+        configuration_digest: { type: string, pattern: '^[0-9a-f]{64}$' }
+        state: { type: string, enum: [running, completed, failed, timed_out, cancelled] }
+        started_at: { type: string, format: date-time }
+        deadline: { type: string, format: date-time }
+        finished_at: { type: string, format: date-time }
+        failure_class: { type: string }
+        failure_code: { type: string }
+        retry_disposition: { type: string, enum: [never, backoff, reconcile] }
+        retry_after_milliseconds: { type: integer, format: int64, minimum: 0 }
+        result_digest: { type: string, pattern: '^[0-9a-f]{64}$' }
+    VerificationInspectionDecision:
+      description: Immutable terminal decision reference and supersession lineage.
+      type: object
+      additionalProperties: false
+      required: [id, decision_digest, selected, outcome, actor, decided_at]
+      properties:
+        id: { type: string }
+        decision_digest: { type: string, pattern: '^[0-9a-f]{64}$' }
+        selected: { type: string, enum: [complete_verified, complete_not_verified, complete_inconclusive] }
+        outcome: { type: string, enum: [verified, not_verified, inconclusive] }
+        actor: { type: string, enum: [machine, human] }
+        supersedes_id: { type: string }
+        decided_at: { type: string, format: date-time }
+    VerificationInspectionRetention:
+      description: Immutable retention binding applied to the verification aggregate.
+      type: object
+      additionalProperties: false
+      required: [data_class, region, policy_digest, expires_at]
+      properties:
+        data_class: { type: string }
+        region: { type: string }
+        policy_digest: { type: string }
+        expires_at: { type: string, format: date-time }
+    VerificationInspectionWebhook:
+      description: Webhook event and optional delivery reference without payload content.
+      type: object
+      additionalProperties: false
+      required: [event_id, event_type, event_state, created_at]
+      properties:
+        event_id: { type: string }
+        event_type: { type: string }
+        event_state: { type: string, enum: [pending, completed] }
+        delivery_id: { type: string }
+        delivery_state: { type: string, enum: [pending, delivered, exhausted, cancelled] }
+        created_at: { type: string, format: date-time }
     VerificationSession:
       description: Immutable capture requirements and current lifecycle metadata for one verification.
       type: object
@@ -15557,6 +16770,20 @@ components:
             state: claimed
             version: 1
           $ref: "#/components/schemas/VerificationCaseReference"
+    VerificationSessionList:
+      description: A bounded newest-first page of verification sessions.
+      type: object
+      additionalProperties: false
+      required: [data, page]
+      properties:
+        data:
+          example: []
+          type: array
+          maxItems: 100
+          items:
+            $ref: "#/components/schemas/VerificationSession"
+        page:
+          $ref: "#/components/schemas/Page"
     VerificationFailure:
       type: object
       description: |
@@ -16331,6 +17558,68 @@ components:
       description: A complete portable capture-profile document bound to one exact evidence registry revision.
       $ref: ../../../capture-profile/v1/profile.schema.json
       x-go-type: json.RawMessage
+    CaptureProfileRegistryDocument:
+      description: One canonical immutable evidence-registry document.
+      $ref: ../../../capture-profile/v1/registry.schema.json
+      x-go-type: json.RawMessage
+    CaptureProfileRegistryReference:
+      description: Exact immutable evidence-registry pin used by a capture profile.
+      example:
+        schema_version: 1
+        revision: 3
+        digest: sha256:284a4418399974a7d1ce691f96ea534e1cd97ee1a9bc0d09de25d4a3b9d48969
+      type: object
+      additionalProperties: false
+      required: [schema_version, revision, digest]
+      properties:
+        schema_version:
+          type: integer
+          format: uint32
+          minimum: 1
+        revision:
+          type: integer
+          format: uint32
+          minimum: 1
+        digest:
+          type: string
+          pattern: '^sha256:[0-9a-f]{64}$'
+    CaptureProfileRegistry:
+      description: A deployed immutable registry reference and its canonical vocabulary document.
+      example:
+        reference:
+          schema_version: 1
+          revision: 3
+          digest: sha256:284a4418399974a7d1ce691f96ea534e1cd97ee1a9bc0d09de25d4a3b9d48969
+        document:
+          schema_version: 1
+          revision: 3
+          artefacts: []
+          evidence_types: []
+          acquisition_methods: []
+          purposes: []
+          assurances: []
+          constraints: []
+      type: object
+      additionalProperties: false
+      required: [reference, document]
+      properties:
+        reference:
+          $ref: "#/components/schemas/CaptureProfileRegistryReference"
+        document:
+          $ref: "#/components/schemas/CaptureProfileRegistryDocument"
+    CaptureProfileRegistryList:
+      description: Deployed registry revisions ordered from newest to oldest.
+      example:
+        data: []
+      type: object
+      additionalProperties: false
+      required: [data]
+      properties:
+        data:
+          type: array
+          example: []
+          items:
+            $ref: "#/components/schemas/CaptureProfileRegistry"
     CaptureProfileWrite:
       description: A complete mutable capture-profile draft representation.
       type: object
@@ -16500,6 +17789,55 @@ components:
           type: string
           format: date-time
           example: "2026-09-27T12:05:00Z"
+    CaptureProfileRevisionSummary:
+      description: Metadata for one numbered capture-profile revision; retrieve the revision to inspect its document.
+      type: object
+      additionalProperties: false
+      required: [profile_id, revision, state, digest, created_at, updated_at]
+      properties:
+        profile_id:
+          $ref: "#/components/schemas/CaptureProfileID"
+        revision:
+          type: integer
+          minimum: 1
+          example: 2
+        state:
+          type: string
+          enum: [draft, published, superseded, withdrawn]
+          example: superseded
+        digest:
+          type: string
+          pattern: '^sha256:[0-9a-f]{64}$'
+          example: sha256:284a4418399974a7d1ce691f96ea534e1cd97ee1a9bc0d09de25d4a3b9d48969
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-08-27T12:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2026-08-27T12:05:00Z"
+        published_at:
+          type: string
+          format: date-time
+          example: "2026-08-27T12:05:00Z"
+        ended_at:
+          type: string
+          format: date-time
+          example: "2026-09-27T12:05:00Z"
+    CaptureProfileRevisionList:
+      description: A bounded newest-first page of capture-profile revision metadata.
+      type: object
+      additionalProperties: false
+      required: [data, page]
+      properties:
+        data:
+          type: array
+          example: []
+          items:
+            $ref: "#/components/schemas/CaptureProfileRevisionSummary"
+        page:
+          $ref: "#/components/schemas/Page"
     CaptureProfileList:
       description: A bounded descending page of capture-profile resources.
       type: object
@@ -16560,6 +17898,10 @@ components:
         - INSUFFICIENT_SCOPE
         - PROCESSING_AUTHORITY_REQUIRED
         - CAPTURE_ORIGIN_NOT_ALLOWED
+        - REVIEW_SESSION_EXPIRED
+        - REVIEW_SESSION_REPLAYED
+        - REVIEW_CASE_STALE
+        - REVIEW_AUTHORITY_REVOKED
         - NOT_FOUND
         - METHOD_NOT_ALLOWED
         - CONFLICT
