@@ -6,12 +6,11 @@ import (
 
 	libheadgate "github.com/mujhtech/headgate/go"
 	metricnoop "go.opentelemetry.io/otel/metric/noop"
-	tracenoop "go.opentelemetry.io/otel/trace/noop"
 )
 
 func TestTelemetryAcceptsBoundedLifecycleEvents(t *testing.T) {
 	t.Parallel()
-	bridge, err := NewTelemetry(tracenoop.NewTracerProvider(), metricnoop.NewMeterProvider(), "idenqa-test")
+	bridge, err := NewTelemetry(metricnoop.NewMeterProvider(), "idenqa-test")
 	if err != nil {
 		t.Fatal(err)
 	}

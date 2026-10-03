@@ -14,6 +14,7 @@ import (
 	"github.com/Mujhtech/idenqa/internal/platform/task"
 	"github.com/jackc/pgx/v5"
 	libheadgate "github.com/mujhtech/headgate/go"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type carrierPayload struct{ payload json.RawMessage }
@@ -127,16 +128,16 @@ func (adapter *Adapter) NewWorker(
 		return nil, fmt.Errorf("%w: headgate worker", task.ErrInvalid)
 	}
 	headgateRegistry := libheadgate.NewRegistry()
-	if err := registerCarrier[verificationCarrier](headgateRegistry, registry); err != nil {
+	if err := registerCarrier[verificationCarrier](headgateRegistry, registry, adapter.tracer); err != nil {
 		return nil, fmt.Errorf("register verification carrier: %w", err)
 	}
-	if err := registerCarrier[evidenceCarrier](headgateRegistry, registry); err != nil {
+	if err := registerCarrier[evidenceCarrier](headgateRegistry, registry, adapter.tracer); err != nil {
 		return nil, fmt.Errorf("register evidence carrier: %w", err)
 	}
-	if err := registerCarrier[deliveryCarrier](headgateRegistry, registry); err != nil {
+	if err := registerCarrier[deliveryCarrier](headgateRegistry, registry, adapter.tracer); err != nil {
 		return nil, fmt.Errorf("register delivery carrier: %w", err)
 	}
-	if err := registerCarrier[maintenanceCarrier](headgateRegistry, registry); err != nil {
+	if err := registerCarrier[maintenanceCarrier](headgateRegistry, registry, adapter.tracer); err != nil {
 		return nil, fmt.Errorf("register maintenance carrier: %w", err)
 	}
 	queues := make(map[string]libheadgate.QueueConfig, len(configuration.QueueWorkers))
@@ -205,17 +206,17 @@ func (payload evidenceCarrier) encodedPayload() json.RawMessage     { return pay
 func (payload deliveryCarrier) encodedPayload() json.RawMessage     { return payload.payload }
 func (payload maintenanceCarrier) encodedPayload() json.RawMessage  { return payload.payload }
 
-func registerCarrier[T carrier](headgateRegistry *libheadgate.Registry, registry *task.Registry) error {
+func registerCarrier[T carrier](headgateRegistry *libheadgate.Registry, registry *task.Registry, tracer trace.Tracer) error {
 	return libheadgate.RegisterExtracted1[T](
 		headgateRegistry,
 		libheadgate.ExtractMetadata(),
 		func(ctx context.Context, job *libheadgate.Job[T], metadata libheadgate.Metadata) error {
-			return executeJob(ctx, registry, job, metadata)
+			return executeJob(ctx, registry, job, metadata, tracer)
 		},
 	)
 }
 
-func execute(ctx context.Context, registry *task.Registry, claim libheadgate.Claim) error {
+func execute(ctx context.Context, registry *task.Registry, claim libheadgate.Claim, tracers ...trace.Tracer) (spanErr error) {
 	intent, err := intentOf(claim.Envelope)
 	if err != nil {
 		return &libheadgate.UndecodableError{Cause: err}
@@ -227,11 +228,13 @@ func execute(ctx context.Context, registry *task.Registry, claim libheadgate.Cla
 		}
 		return &libheadgate.UndecodableError{Cause: err}
 	}
-	result := handler.Handle(ctx, task.Delivery{
+	ctx, span := startTaskSpan(ctx, intent, claim.Envelope.Attempt+1, tracers...)
+	defer endTaskSpan(span, &spanErr)
+	handled := handler.Handle(ctx, task.Delivery{
 		Intent: intent, Attempt: claim.Envelope.Attempt + 1,
 		CrashAttempt: claim.Envelope.CrashAttempt, Fence: claim.Fence, LeaseUntil: claim.Expires,
 	})
-	return resultError(result)
+	return resultError(handled)
 }
 
 func executeJob[T carrier](
@@ -239,7 +242,8 @@ func executeJob[T carrier](
 	registry *task.Registry,
 	job *libheadgate.Job[T],
 	metadata libheadgate.Metadata,
-) error {
+	tracers ...trace.Tracer,
+) (spanErr error) {
 	intent, err := intentOfJob(job, metadata)
 	if err != nil {
 		return &libheadgate.UndecodableError{Cause: err}
@@ -251,6 +255,8 @@ func executeJob[T carrier](
 		}
 		return &libheadgate.UndecodableError{Cause: err}
 	}
+	ctx, span := startTaskSpan(ctx, intent, job.Attempt+1, tracers...)
+	defer endTaskSpan(span, &spanErr)
 	delivery := task.Delivery{
 		Intent: intent, Attempt: job.Attempt + 1, CrashAttempt: job.CrashAttempt,
 		Fence: job.Fence,
@@ -259,12 +265,12 @@ func executeJob[T carrier](
 	if !ok {
 		return resultError(handler.Handle(ctx, delivery))
 	}
-	work, result := transactional.Prepare(ctx, delivery)
-	if err := result.Validate(); err != nil {
+	work, prepared := transactional.Prepare(ctx, delivery)
+	if err := prepared.Validate(); err != nil {
 		return &libheadgate.UndecodableError{Cause: err}
 	}
-	if result.Outcome != task.OutcomeComplete {
-		return resultError(result)
+	if prepared.Outcome != task.OutcomeComplete {
+		return resultError(prepared)
 	}
 	if work == nil {
 		return &libheadgate.UndecodableError{Cause: task.ErrInvalid}

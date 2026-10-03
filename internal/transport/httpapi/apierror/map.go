@@ -23,6 +23,7 @@ import (
 	"github.com/Mujhtech/idenqa/internal/privacy"
 	"github.com/Mujhtech/idenqa/internal/proposal"
 	"github.com/Mujhtech/idenqa/internal/provider"
+	"github.com/Mujhtech/idenqa/internal/requestlog"
 	"github.com/Mujhtech/idenqa/internal/review"
 	"github.com/Mujhtech/idenqa/internal/support"
 	"github.com/Mujhtech/idenqa/internal/tenant"
@@ -72,6 +73,13 @@ var rules = []rule{
 		code:    CodeNotFound,
 		title:   "Not found",
 		detail:  "The requested resource was not found.",
+	},
+	{
+		targets: []error{requestlog.ErrNotFound},
+		status:  http.StatusNotFound,
+		code:    CodeNotFound,
+		title:   "Not found",
+		detail:  "The API request log was not found.",
 	},
 	{
 		targets: []error{review.ErrConflict},

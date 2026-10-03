@@ -2,10 +2,13 @@
 package logging
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"log/slog"
 	"strings"
+
+	"go.opentelemetry.io/otel/trace"
 )
 
 const redacted = "[REDACTED]"
@@ -38,7 +41,25 @@ func New(writer io.Writer, levelText, format string) (*slog.Logger, error) {
 		return nil, fmt.Errorf("log format %q is not supported", format)
 	}
 
-	return slog.New(handler), nil
+	return slog.New(correlatingHandler{Handler: handler}), nil
+}
+
+type correlatingHandler struct{ slog.Handler }
+
+func (handler correlatingHandler) Handle(ctx context.Context, record slog.Record) error {
+	if span := trace.SpanContextFromContext(ctx); span.IsValid() {
+		record = record.Clone()
+		record.AddAttrs(slog.String("trace_id", span.TraceID().String()), slog.String("span_id", span.SpanID().String()))
+	}
+	return handler.Handler.Handle(ctx, record)
+}
+
+func (handler correlatingHandler) WithAttrs(attributes []slog.Attr) slog.Handler {
+	return correlatingHandler{Handler: handler.Handler.WithAttrs(attributes)}
+}
+
+func (handler correlatingHandler) WithGroup(name string) slog.Handler {
+	return correlatingHandler{Handler: handler.Handler.WithGroup(name)}
 }
 
 func sensitiveKey(key string) bool {

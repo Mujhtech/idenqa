@@ -19,6 +19,9 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	libheadgate "github.com/mujhtech/headgate/go"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func TestPostgresAdapterConformance(t *testing.T) {
@@ -200,7 +203,8 @@ func TestTransactionalHandlerCommitsEffectWithHeadgateCompletion(t *testing.T) {
 }
 
 type transactionalProbe struct {
-	work func(context.Context, task.Delivery, platformpostgres.Transaction) task.Result
+	prepare func(context.Context)
+	work    func(context.Context, task.Delivery, platformpostgres.Transaction) task.Result
 }
 
 func (probe transactionalProbe) Handle(context.Context, task.Delivery) task.Result {
@@ -208,9 +212,12 @@ func (probe transactionalProbe) Handle(context.Context, task.Delivery) task.Resu
 }
 
 func (probe transactionalProbe) Prepare(
-	_ context.Context,
+	ctx context.Context,
 	delivery task.Delivery,
 ) (task.TransactionWork, task.Result) {
+	if probe.prepare != nil {
+		probe.prepare(ctx)
+	}
 	return func(ctx context.Context, transaction platformpostgres.Transaction) task.Result {
 		return probe.work(ctx, delivery, transaction)
 	}, task.Complete()
@@ -474,3 +481,48 @@ func integrationIntent(t *testing.T) task.Intent {
 type integrationClock struct{ now time.Time }
 
 func (clock integrationClock) Now() time.Time { return clock.now }
+
+func TestTransactionalHandlerTraceContinuesThroughCommit(t *testing.T) {
+	url := os.Getenv("DATABASE_TEST_URL")
+	if url == "" {
+		t.Skip("DATABASE_TEST_URL is not configured")
+	}
+	adapter, _ := newIntegrationAdapter(t, url, fmt.Sprintf("headgate_trace_%d", time.Now().UnixNano()))
+	recorder := tracetest.NewSpanRecorder()
+	provider := sdktrace.NewTracerProvider(sdktrace.WithSpanProcessor(recorder))
+	t.Cleanup(func() { _ = provider.Shutdown(context.Background()) })
+	adapter.WithTracerProvider(provider)
+	ctx, parent := provider.Tracer("test").Start(t.Context(), "request")
+	intent := integrationIntent(t)
+	registry := task.NewRegistry()
+	var prepared, committed trace.SpanContext
+	handler := transactionalProbe{prepare: func(ctx context.Context) { prepared = trace.SpanContextFromContext(ctx) }, work: func(ctx context.Context, _ task.Delivery, tx platformpostgres.Transaction) task.Result {
+		committed = trace.SpanContextFromContext(ctx)
+		var one int
+		if err := tx.QueryRow(ctx, "SELECT 1").Scan(&one); err != nil {
+			return task.Retry(task.RetryClassUnavailable, err)
+		}
+		return task.Complete()
+	}}
+	if err := registry.Register(intent.Key(), handler); err != nil {
+		t.Fatal(err)
+	}
+	if err := adapter.Enqueue(ctx, intent); err != nil {
+		t.Fatal(err)
+	}
+	parent.End()
+	worker, err := adapter.NewWorker(registry, DefaultWorkerConfig(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := worker.Drain(t.Context(), 1); err != nil {
+		t.Fatal(err)
+	}
+	if !prepared.IsValid() || !prepared.Equal(committed) || committed.TraceID() != parent.SpanContext().TraceID() {
+		t.Fatal("transactional preparation or commit lost live attempt context")
+	}
+	spans := recorder.Ended()
+	if len(spans) != 3 {
+		t.Fatalf("spans = %d, want request, enqueue, execution", len(spans))
+	}
+}

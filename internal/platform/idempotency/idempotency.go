@@ -190,8 +190,20 @@ func validPrincipal(value string) bool {
 	if _, err := id.ParseAPIKey(value); err == nil {
 		return true
 	}
-	_, err := id.ParseCaptureToken(value)
-	return err == nil
+	if _, err := id.ParseCaptureToken(value); err == nil {
+		return true
+	}
+	if !strings.HasPrefix(value, "usr_") || len(value) < 5 || len(value) > 128 {
+		return false
+	}
+	for _, character := range value[len("usr_"):] {
+		isLetter := character >= 'a' && character <= 'z' || character >= 'A' && character <= 'Z'
+		isDigit := character >= '0' && character <= '9'
+		if !isLetter && !isDigit && character != '_' && character != '-' {
+			return false
+		}
+	}
+	return true
 }
 
 // String deliberately avoids accidentally logging command input identity.

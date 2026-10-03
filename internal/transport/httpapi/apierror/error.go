@@ -26,6 +26,10 @@ const (
 	CodeInsufficientScope           = "INSUFFICIENT_SCOPE"
 	CodeProcessingAuthorityRequired = "PROCESSING_AUTHORITY_REQUIRED"
 	CodeCaptureOriginNotAllowed     = "CAPTURE_ORIGIN_NOT_ALLOWED"
+	CodeReviewSessionExpired        = "REVIEW_SESSION_EXPIRED"
+	CodeReviewSessionReplayed       = "REVIEW_SESSION_REPLAYED"
+	CodeReviewCaseStale             = "REVIEW_CASE_STALE"
+	CodeReviewAuthorityRevoked      = "REVIEW_AUTHORITY_REVOKED"
 )
 
 // Error contains an explicitly safe public representation and an optional

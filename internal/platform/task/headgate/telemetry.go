@@ -2,19 +2,16 @@ package headgate
 
 import (
 	"context"
-	"time"
 
 	libheadgate "github.com/mujhtech/headgate/go"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/metric"
-	"go.opentelemetry.io/otel/trace"
 )
 
 // Telemetry bridges Headgate's exporter-free lifecycle facade into the
-// process-owned OpenTelemetry providers.
+// process-owned OpenTelemetry meter provider. Attempt spans are created live
+// by the worker adapter, rather than reconstructed from completion events.
 type Telemetry struct {
-	tracer    trace.Tracer
 	events    metric.Int64Counter
 	duration  metric.Float64Histogram
 	inflight  metric.Int64Gauge
@@ -29,7 +26,6 @@ const maximumMetricInt64 = uint64(1<<63 - 1)
 // deployment attribute; tenant, task ID, fingerprint, and payload never become
 // metric labels.
 func NewTelemetry(
-	tracerProvider trace.TracerProvider,
 	meterProvider metric.MeterProvider,
 	installationID string,
 ) (*Telemetry, error) {
@@ -55,7 +51,6 @@ func NewTelemetry(
 		return nil, err
 	}
 	return &Telemetry{
-		tracer: tracerProvider.Tracer("github.com/Mujhtech/idenqa/internal/platform/task/headgate"),
 		events: events, duration: duration, inflight: inflight, capacity: capacity,
 		memory: memory, installID: installationID,
 	}, nil
@@ -109,29 +104,6 @@ func (telemetry *Telemetry) OnEvent(event libheadgate.Event) {
 }
 
 func (telemetry *Telemetry) recordAttempt(event libheadgate.Event, attributes []attribute.KeyValue) {
-	ctx := context.Background()
-	if event.Trace.Valid() {
-		traceID, traceErr := trace.TraceIDFromHex(event.Trace.TraceID)
-		spanID, spanErr := trace.SpanIDFromHex(event.Trace.SpanID)
-		if traceErr == nil && spanErr == nil {
-			flags := trace.TraceFlags(0)
-			if event.Trace.Sampled() {
-				flags = trace.FlagsSampled
-			}
-			ctx = trace.ContextWithRemoteSpanContext(ctx, trace.NewSpanContext(trace.SpanContextConfig{
-				TraceID: traceID, SpanID: spanID, TraceFlags: flags, Remote: true,
-			}))
-		}
-	}
-	started := time.UnixMilli(event.StartedAtMs)
-	ctx, span := telemetry.tracer.Start(ctx, "task.attempt",
-		trace.WithTimestamp(started), trace.WithSpanKind(trace.SpanKindConsumer),
-		trace.WithAttributes(attributes...))
-	_ = ctx
-	if event.Outcome != "success" {
-		span.SetStatus(codes.Error, event.Outcome)
-	}
-	span.End(trace.WithTimestamp(started.Add(event.Duration)))
 	telemetry.duration.Record(context.Background(), event.Duration.Seconds(), metric.WithAttributes(attributes...))
 }
 

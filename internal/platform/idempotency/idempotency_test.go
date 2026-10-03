@@ -53,6 +53,37 @@ func TestNewRequestAcceptsCapturePrincipal(t *testing.T) {
 	}
 }
 
+func TestNewRequestAcceptsWorkforcePrincipal(t *testing.T) {
+	t.Parallel()
+
+	tenantID, _ := id.ParseTenant("ten_01K4AR9V8FQ2G7ZXCPNM5T6JWH")
+	principal := testPrincipal("usr_01K4AR9V8FQ2G7ZXCPNM5T6JWH")
+	if _, err := idempotency.NewRequest(tenantID, principal, "reviews.evidence.issue.delegated", "0123456789abcdef", []byte("input"), time.Now(), time.Hour); err != nil {
+		t.Fatalf("NewRequest() error = %v", err)
+	}
+}
+
+func TestNewRequestRejectsMalformedWorkforcePrincipal(t *testing.T) {
+	t.Parallel()
+
+	tenantID, _ := id.ParseTenant("ten_01K4AR9V8FQ2G7ZXCPNM5T6JWH")
+	for _, value := range []string{"usr_", "usr_review.er", "usr_review/other", "usr_review other", "usr_réviewer"} {
+		value := value
+		t.Run(value, func(t *testing.T) {
+			t.Parallel()
+			_, err := idempotency.NewRequest(tenantID, testPrincipal(value), "reviews.evidence.issue.delegated", "0123456789abcdef", []byte("input"), time.Now(), time.Hour)
+			if err == nil {
+				t.Fatal("NewRequest() error = nil")
+			}
+		})
+	}
+}
+
+type testPrincipal string
+
+func (principal testPrincipal) String() string { return string(principal) }
+func (principal testPrincipal) IsZero() bool   { return principal == "" }
+
 func TestNewRequestRejectsInvalidScope(t *testing.T) {
 	t.Parallel()
 

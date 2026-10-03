@@ -16,6 +16,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	libheadgate "github.com/mujhtech/headgate/go"
 	"github.com/mujhtech/headgate/go/driver/headgatepgx"
+	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 )
 
 const (
@@ -130,6 +132,7 @@ func (configuration Config) Validate() error {
 
 // Adapter translates owned Idenqa intents to Headgate envelopes.
 type Adapter struct {
+	tracer         trace.Tracer
 	client         *libheadgate.Client
 	store          libheadgate.Store
 	installationID string
@@ -198,6 +201,7 @@ func New(store libheadgate.Store, configuration Config) (*Adapter, error) {
 	return &Adapter{
 		client: libheadgate.NewClient(store), store: store,
 		installationID: configuration.InstallationID, queues: queues,
+		tracer: noop.NewTracerProvider().Tracer("github.com/Mujhtech/idenqa/internal/platform/task/headgate"),
 	}, nil
 }
 
@@ -224,14 +228,18 @@ func postgresOptions(configuration Config) headgatepgx.Options {
 }
 
 // Enqueue inserts owned intents through Headgate's producer boundary.
-func (adapter *Adapter) Enqueue(ctx context.Context, intents ...task.Intent) error {
+func (adapter *Adapter) Enqueue(ctx context.Context, intents ...task.Intent) (result error) {
 	if adapter == nil || adapter.client == nil {
 		return fmt.Errorf("%w: headgate adapter", task.ErrInvalid)
 	}
+	ctx, sharedParent := enqueueParent(ctx, intents)
+	ctx, span := adapter.tracer.Start(ctx, "task.enqueue", trace.WithSpanKind(trace.SpanKindProducer))
+	defer endTaskSpan(span, &result)
 	envelopes, err := adapter.envelopes(intents)
 	if err != nil {
 		return err
 	}
+	injectTaskContext(ctx, envelopes, sharedParent)
 	if err := adapter.client.Enqueue(ctx, envelopes); err != nil {
 		if errors.Is(err, libheadgate.ErrDuplicate) {
 			return nil
@@ -247,7 +255,7 @@ func (adapter *Adapter) EnqueueTx(
 	ctx context.Context,
 	transaction postgres.Transaction,
 	intents ...task.Intent,
-) error {
+) (result error) {
 	if adapter == nil || adapter.client == nil || transaction == nil {
 		return fmt.Errorf("%w: transactional headgate enqueue", task.ErrInvalid)
 	}
@@ -255,10 +263,14 @@ func (adapter *Adapter) EnqueueTx(
 	if !ok {
 		return fmt.Errorf("%w: transaction is not pgx", task.ErrInvalid)
 	}
+	ctx, sharedParent := enqueueParent(ctx, intents)
+	ctx, span := adapter.tracer.Start(ctx, "task.enqueue", trace.WithSpanKind(trace.SpanKindProducer))
+	defer endTaskSpan(span, &result)
 	envelopes, err := adapter.envelopes(intents)
 	if err != nil {
 		return err
 	}
+	injectTaskContext(ctx, envelopes, sharedParent)
 	if err := adapter.client.EnqueueTx(ctx, headgatepgx.WrapTx(pgxTransaction), envelopes); err != nil {
 		if errors.Is(err, libheadgate.ErrDuplicate) {
 			return nil
@@ -382,3 +394,11 @@ func classify(err error) error {
 }
 
 var _ task.Enqueuer = (*Adapter)(nil)
+
+// WithTracerProvider injects the process-owned provider before concurrent use.
+func (adapter *Adapter) WithTracerProvider(provider trace.TracerProvider) *Adapter {
+	if provider != nil {
+		adapter.tracer = provider.Tracer("github.com/Mujhtech/idenqa/internal/platform/task/headgate")
+	}
+	return adapter
+}

@@ -20,6 +20,7 @@ import (
 	"github.com/Mujhtech/idenqa/internal/privacy"
 	"github.com/Mujhtech/idenqa/internal/proposal"
 	"github.com/Mujhtech/idenqa/internal/provider"
+	"github.com/Mujhtech/idenqa/internal/requestlog"
 	"github.com/Mujhtech/idenqa/internal/support"
 	"github.com/Mujhtech/idenqa/internal/transport/httpapi/apierror"
 	"github.com/Mujhtech/idenqa/internal/verification"
@@ -33,6 +34,10 @@ func TestStableCodesMatchGeneratedContract(t *testing.T) {
 		apierror.CodeUnauthenticated,
 		apierror.CodeInsufficientScope,
 		apierror.CodeProcessingAuthorityRequired,
+		apierror.CodeReviewSessionExpired,
+		apierror.CodeReviewSessionReplayed,
+		apierror.CodeReviewCaseStale,
+		apierror.CodeReviewAuthorityRevoked,
 		apierror.CodeNotFound,
 		apierror.CodeMethodNotAllowed,
 		apierror.CodeConflict,
@@ -180,6 +185,7 @@ func TestMapDomainAdministrationFailures(t *testing.T) {
 		{"provider registration not found", provider.ErrRegistrationNotFound, http.StatusNotFound, apierror.CodeNotFound},
 		{"provider registration conflict", provider.ErrRegistrationConflict, http.StatusConflict, apierror.CodeConflict},
 		{"pack not found", pack.ErrNotFound, http.StatusNotFound, apierror.CodeNotFound},
+		{"request log not found", requestlog.ErrNotFound, http.StatusNotFound, apierror.CodeNotFound},
 		{"pack invalid", pack.ErrInvalid, http.StatusBadRequest, apierror.CodeInvalidRequest},
 		{"pack conflict", pack.ErrConflict, http.StatusBadRequest, apierror.CodeInvalidRequest},
 		{"identity invalid", identity.ErrInvalid, http.StatusBadRequest, apierror.CodeInvalidRequest},
