@@ -1,6 +1,8 @@
 package evidence
 
 import (
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
+
 	"context"
 	"encoding/hex"
 	"errors"
@@ -37,6 +39,8 @@ type OrphanDiscoveryResult struct {
 // OrphanDiscoveryService removes old Idenqa-owned ciphertext versions only
 // after authoritative PostgreSQL state proves that no durable reference protects them.
 type OrphanDiscoveryService struct {
+	tracer observability.Tracer
+
 	inventory     ObjectInventory
 	references    ObjectReferenceChecker
 	clock         clock.Clock
@@ -71,7 +75,10 @@ func (service *OrphanDiscoveryService) DiscoverPage(
 	scope tenant.Scope,
 	cursor string,
 	limit int,
-) (OrphanDiscoveryResult, error) {
+) (spanResult0 OrphanDiscoveryResult, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "evidence.OrphanDiscoveryService.DiscoverPage")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	result := OrphanDiscoveryResult{Next: cursor}
 	if service == nil || ctx == nil || scope.ID().IsZero() ||
 		!objectstore.ValidInventoryCursor(cursor) || limit < 1 ||
@@ -142,3 +149,18 @@ func ownedInventoryObject(scope tenant.Scope, object objectstore.InventoryObject
 }
 
 const versionEntropyBytes = 16
+
+// WithTracer injects operation tracing during composition, before concurrent use.
+func (service *OrphanDiscoveryService) WithTracer(tracer observability.Tracer) *OrphanDiscoveryService {
+	if service != nil {
+		service.tracer = tracer
+	}
+	return service
+}
+
+func (service *OrphanDiscoveryService) operationTracer() observability.Tracer {
+	if service == nil {
+		return nil
+	}
+	return service.tracer
+}

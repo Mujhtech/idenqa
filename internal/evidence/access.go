@@ -1,6 +1,8 @@
 package evidence
 
 import (
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
+
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -141,6 +143,8 @@ type ReadInput struct {
 
 // Reader redeems grants into transactional plaintext receivers.
 type Reader struct {
+	tracer observability.Tracer
+
 	grants         GrantClaimer
 	outcomes       GrantOutcomeRecorder
 	assets         AssetFinder
@@ -182,7 +186,10 @@ func (reader *Reader) Read(
 	scope tenant.Scope,
 	input ReadInput,
 	receiver PlaintextReceiver,
-) error {
+) (spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, reader.operationTracer(), "evidence.Reader.Read")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if ctx == nil || scope.ID().IsZero() || input.GrantID.IsZero() ||
 		input.RedemptionID.IsZero() || receiver == nil {
 		return ErrReadDenied
@@ -337,4 +344,19 @@ func (reader *Reader) recordOutcome(
 	return reader.outcomes.RecordGrantOutcome(
 		outcomeContext, scope, redemption, outcome, reader.clock.Now().UTC(),
 	)
+}
+
+// WithTracer injects operation tracing during composition, before concurrent use.
+func (reader *Reader) WithTracer(tracer observability.Tracer) *Reader {
+	if reader != nil {
+		reader.tracer = tracer
+	}
+	return reader
+}
+
+func (reader *Reader) operationTracer() observability.Tracer {
+	if reader == nil {
+		return nil
+	}
+	return reader.tracer
 }

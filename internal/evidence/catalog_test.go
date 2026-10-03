@@ -1,6 +1,7 @@
 package evidence_test
 
 import (
+	"bytes"
 	"errors"
 	"testing"
 
@@ -25,6 +26,31 @@ func TestCatalogResolvesOnlyExactReference(t *testing.T) {
 	changed.Digest = "sha256:changed"
 	if _, err := catalog.Resolve(changed); !errors.Is(err, evidence.ErrRegistryNotFound) {
 		t.Fatalf("Resolve(changed) error = %v, want ErrRegistryNotFound", err)
+	}
+}
+
+func TestCatalogSnapshotsAreNewestFirstAndDefensive(t *testing.T) {
+	t.Parallel()
+
+	catalog, err := evidence.BuiltInCatalog()
+	if err != nil {
+		t.Fatalf("BuiltInCatalog() error = %v", err)
+	}
+	snapshots, err := catalog.Snapshots()
+	if err != nil {
+		t.Fatalf("Snapshots() error = %v", err)
+	}
+	if len(snapshots) < 2 || snapshots[0].Reference.Revision <= snapshots[1].Reference.Revision {
+		t.Fatalf("snapshot revisions are not newest first: %+v", snapshots)
+	}
+	original := append([]byte(nil), snapshots[0].Document...)
+	snapshots[0].Document[0] = 'x'
+	again, err := catalog.Snapshots()
+	if err != nil {
+		t.Fatalf("Snapshots() second call error = %v", err)
+	}
+	if !bytes.Equal(again[0].Document, original) {
+		t.Fatal("mutating a snapshot changed the catalogue document")
 	}
 }
 

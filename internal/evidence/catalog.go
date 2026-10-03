@@ -3,6 +3,7 @@ package evidence
 import (
 	"errors"
 	"fmt"
+	"slices"
 )
 
 // ErrRegistryNotFound is returned when an exact immutable reference is not deployed.
@@ -11,6 +12,14 @@ var ErrRegistryNotFound = errors.New("evidence: registry not found")
 // Catalog resolves only exact registry schema, revision, and digest references.
 type Catalog struct {
 	registries map[Reference]Registry
+}
+
+// Snapshot is one immutable registry reference and its canonical document.
+// Document bytes are copied when the snapshot is created so callers cannot
+// mutate catalogue state.
+type Snapshot struct {
+	Reference Reference
+	Document  []byte
 }
 
 // NewCatalog validates and snapshots deployed immutable registries.
@@ -42,6 +51,29 @@ func (catalog Catalog) Resolve(reference Reference) (Registry, error) {
 	}
 
 	return registry, nil
+}
+
+// Snapshots returns every deployed registry ordered from newest to oldest.
+func (catalog Catalog) Snapshots() ([]Snapshot, error) {
+	snapshots := make([]Snapshot, 0, len(catalog.registries))
+	for reference, registry := range catalog.registries {
+		document, err := registry.CanonicalJSON()
+		if err != nil {
+			return nil, fmt.Errorf("serialise registry revision %d: %w", reference.Revision, err)
+		}
+		snapshots = append(snapshots, Snapshot{Reference: reference, Document: document})
+	}
+	slices.SortFunc(snapshots, func(left, right Snapshot) int {
+		if left.Reference.Revision > right.Reference.Revision {
+			return -1
+		}
+		if left.Reference.Revision < right.Reference.Revision {
+			return 1
+		}
+		return 0
+	})
+
+	return snapshots, nil
 }
 
 // IsZero reports whether the catalog contains no deployed registry.

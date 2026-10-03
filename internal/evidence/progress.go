@@ -1,6 +1,8 @@
 package evidence
 
 import (
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
+
 	"context"
 	"errors"
 
@@ -46,7 +48,10 @@ type RecoveredUploadAuthorizer interface {
 
 // ProgressReader returns only accepted uploads for an exact authenticated
 // capture principal.
-type ProgressReader struct{ uploads AcceptedUploadLister }
+type ProgressReader struct {
+	tracer  observability.Tracer
+	uploads AcceptedUploadLister
+}
 
 // NewProgressReader constructs the capture progress read boundary.
 func NewProgressReader(uploads AcceptedUploadLister) (*ProgressReader, error) {
@@ -61,7 +66,10 @@ func NewProgressReader(uploads AcceptedUploadLister) (*ProgressReader, error) {
 func (reader *ProgressReader) Find(
 	ctx context.Context,
 	principal UploadPrincipal,
-) (CaptureProgress, error) {
+) (spanResult0 CaptureProgress, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, reader.operationTracer(), "evidence.ProgressReader.Find")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if reader == nil || principal.Scope.ID().IsZero() || principal.CaptureTokenID.IsZero() ||
 		principal.VerificationID.IsZero() {
 		return CaptureProgress{}, ErrUploadNotFound
@@ -118,4 +126,19 @@ func (reader *ProgressReader) Find(
 	}
 
 	return CaptureProgress{VerificationID: principal.VerificationID, Completions: completions}, nil
+}
+
+// WithTracer injects operation tracing during composition, before concurrent use.
+func (reader *ProgressReader) WithTracer(tracer observability.Tracer) *ProgressReader {
+	if reader != nil {
+		reader.tracer = tracer
+	}
+	return reader
+}
+
+func (reader *ProgressReader) operationTracer() observability.Tracer {
+	if reader == nil {
+		return nil
+	}
+	return reader.tracer
 }

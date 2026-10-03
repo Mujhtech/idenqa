@@ -1,6 +1,8 @@
 package evidence
 
 import (
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
+
 	"context"
 	"errors"
 	"fmt"
@@ -13,6 +15,8 @@ import (
 // ReconciliationService recovers one exact staged object from authoritative
 // PostgreSQL state. It never guesses an acceptance outcome from object presence.
 type ReconciliationService struct {
+	tracer observability.Tracer
+
 	queue         ObjectReconciliationQueue
 	uploads       UploadFinder
 	assets        AssetFinder
@@ -55,7 +59,10 @@ func NewReconciliationService(
 func (service *ReconciliationService) ReconcileNext(
 	ctx context.Context,
 	scope tenant.Scope,
-) (ReconciliationState, error) {
+) (spanResult0 ReconciliationState, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "evidence.ReconciliationService.ReconcileNext")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if service == nil || ctx == nil || scope.ID().IsZero() {
 		return "", errors.New("evidence: reconciliation request is invalid")
 	}
@@ -131,4 +138,19 @@ func (service *ReconciliationService) retry(
 	}
 
 	return cause
+}
+
+// WithTracer injects operation tracing during composition, before concurrent use.
+func (service *ReconciliationService) WithTracer(tracer observability.Tracer) *ReconciliationService {
+	if service != nil {
+		service.tracer = tracer
+	}
+	return service
+}
+
+func (service *ReconciliationService) operationTracer() observability.Tracer {
+	if service == nil {
+		return nil
+	}
+	return service.tracer
 }
