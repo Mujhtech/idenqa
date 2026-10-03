@@ -1,6 +1,8 @@
 package fraud
 
 import (
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
+
 	"context"
 	"encoding/json"
 	"time"
@@ -38,6 +40,8 @@ type Repository interface {
 
 // Service authorizes all tenant operations at the application boundary.
 type Service struct {
+	tracer observability.Tracer
+
 	repository Repository
 	now        func() time.Time
 }
@@ -47,11 +51,14 @@ func NewService(r Repository, now func() time.Time) (*Service, error) {
 	if r == nil || now == nil {
 		return nil, ErrInvalid
 	}
-	return &Service{r, now}, nil
+	return &Service{repository: r, now: now}, nil
 }
 
 // Execute validates and fingerprints a tenant command.
-func (s *Service) Execute(ctx context.Context, auth access.Context, key string, c Command) (Result, error) {
+func (s *Service) Execute(ctx context.Context, auth access.Context, key string, c Command) (spanResult0 Result, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, s.operationTracer(), "fraud.Service.Execute")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	permission := access.PermissionFraudWrite
 	if c.Operation == "configure" {
 		permission = access.PermissionFraudConfigure
@@ -94,9 +101,27 @@ func (s *Service) Execute(ctx context.Context, auth access.Context, key string, 
 }
 
 // Read authorizes access to safe fraud metadata.
-func (s *Service) Read(ctx context.Context, auth access.Context, kind, reference string) (Result, error) {
+func (s *Service) Read(ctx context.Context, auth access.Context, kind, reference string) (spanResult0 Result, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, s.operationTracer(), "fraud.Service.Read")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if e := auth.Require(access.PermissionFraudRead); e != nil {
 		return Result{}, e
 	}
 	return s.repository.Read(ctx, auth.TenantScope(), kind, reference)
+}
+
+// WithTracer injects operation tracing during composition, before concurrent use.
+func (s *Service) WithTracer(tracer observability.Tracer) *Service {
+	if s != nil {
+		s.tracer = tracer
+	}
+	return s
+}
+
+func (s *Service) operationTracer() observability.Tracer {
+	if s == nil {
+		return nil
+	}
+	return s.tracer
 }
