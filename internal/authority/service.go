@@ -1,6 +1,8 @@
 package authority
 
 import (
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
+
 	"context"
 	"encoding/json"
 	"errors"
@@ -158,6 +160,8 @@ type RestrictionGate interface {
 
 // Service coordinates authority use cases without transport or storage types.
 type Service struct {
+	tracer observability.Tracer
+
 	notices      NoticeRepository
 	authorities  ProcessingRepository
 	responses    ResponseRepository
@@ -182,7 +186,10 @@ func (service *Service) AuthorizeEvidence(
 	ctx context.Context,
 	scope tenant.Scope,
 	request evidence.ReadAuthorization,
-) (evidence.AuthorizationDecision, error) {
+) (spanResult0 evidence.AuthorizationDecision, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "authority.Service.AuthorizeEvidence")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if ctx == nil || scope.ID().IsZero() || request.TenantID != scope.ID() ||
 		request.SubjectID.IsZero() || request.VerificationID.IsZero() || request.EvidenceID.IsZero() {
 		return evidence.AuthorizationDecision{}, ErrProcessingNotPermitted
@@ -264,7 +271,10 @@ func (service *Service) CreateNotice(
 	accessContext access.Context,
 	idempotencyKey string,
 	input NoticeInput,
-) (Notice, error) {
+) (spanResult0 Notice, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "authority.Service.CreateNotice")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := accessContext.Require(access.PermissionNoticesWrite); err != nil {
 		return Notice{}, err
 	}
@@ -302,7 +312,10 @@ func (service *Service) FindNotice(
 	ctx context.Context,
 	accessContext access.Context,
 	identifier id.Notice,
-) (Notice, error) {
+) (spanResult0 Notice, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "authority.Service.FindNotice")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := accessContext.Require(access.PermissionNoticesRead); err != nil {
 		return Notice{}, err
 	}
@@ -315,7 +328,10 @@ func (service *Service) Declare(
 	accessContext access.Context,
 	idempotencyKey string,
 	input DeclarationInput,
-) (Authority, error) {
+) (spanResult0 Authority, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "authority.Service.Declare")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := accessContext.Require(access.PermissionAuthoritiesWrite); err != nil {
 		return Authority{}, err
 	}
@@ -380,7 +396,10 @@ func (service *Service) FindByVerification(
 	ctx context.Context,
 	accessContext access.Context,
 	verificationID id.Verification,
-) (Authority, error) {
+) (spanResult0 Authority, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "authority.Service.FindByVerification")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := accessContext.Require(access.PermissionAuthoritiesRead); err != nil {
 		return Authority{}, err
 	}
@@ -397,7 +416,10 @@ func (service *Service) Transition(
 	idempotencyKey string,
 	expectedVersion int64,
 	state State,
-) (Authority, error) {
+) (spanResult0 Authority, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "authority.Service.Transition")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := accessContext.Require(access.PermissionAuthoritiesWrite); err != nil {
 		return Authority{}, err
 	}
@@ -460,7 +482,10 @@ func (service *Service) Transition(
 func (service *Service) CaptureSnapshot(
 	ctx context.Context,
 	captureContext verification.CaptureContext,
-) (Snapshot, error) {
+) (spanResult0 Snapshot, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "authority.Service.CaptureSnapshot")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	snapshot, err := service.responses.CaptureSnapshot(ctx, captureContext.TenantScope(), captureContext.Session().ID())
 	if err != nil {
 		return Snapshot{}, err
@@ -477,7 +502,10 @@ func (service *Service) Respond(
 	captureContext verification.CaptureContext,
 	idempotencyKey string,
 	input ResponseInput,
-) (Response, error) {
+) (spanResult0 Response, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "authority.Service.Respond")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	snapshot, err := service.CaptureSnapshot(ctx, captureContext)
 	if err != nil {
 		return Response{}, err
@@ -522,7 +550,10 @@ func (service *Service) Respond(
 }
 
 // FindConsent returns one immutable consent receipt to an authorised tenant caller.
-func (service *Service) FindConsent(ctx context.Context, auth access.Context, identifier id.Acknowledgement) (Response, error) {
+func (service *Service) FindConsent(ctx context.Context, auth access.Context, identifier id.Acknowledgement) (spanResult0 Response, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "authority.Service.FindConsent")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := auth.Require(access.PermissionConsentsRead); err != nil {
 		return Response{}, err
 	}
@@ -538,7 +569,10 @@ func (service *Service) FindConsent(ctx context.Context, auth access.Context, id
 }
 
 // RevokeConsent appends a refusal receipt; the original consent remains immutable.
-func (service *Service) RevokeConsent(ctx context.Context, auth access.Context, identifier id.Acknowledgement, key, reason string) (Response, error) {
+func (service *Service) RevokeConsent(ctx context.Context, auth access.Context, identifier id.Acknowledgement, key, reason string) (spanResult0 Response, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "authority.Service.RevokeConsent")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := auth.Require(access.PermissionConsentsWrite); err != nil {
 		return Response{}, err
 	}
@@ -601,4 +635,19 @@ func requirementScope(profile verification.Profile) ([]string, []string) {
 	slices.Sort(purposes)
 	slices.Sort(evidenceTypes)
 	return slices.Compact(purposes), slices.Compact(evidenceTypes)
+}
+
+// WithTracer injects operation tracing during composition, before concurrent use.
+func (service *Service) WithTracer(tracer observability.Tracer) *Service {
+	if service != nil {
+		service.tracer = tracer
+	}
+	return service
+}
+
+func (service *Service) operationTracer() observability.Tracer {
+	if service == nil {
+		return nil
+	}
+	return service.tracer
 }

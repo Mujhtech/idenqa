@@ -1,6 +1,8 @@
 package authority
 
 import (
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
+
 	"context"
 	"errors"
 	"fmt"
@@ -58,6 +60,8 @@ type UploadAcceptanceIDGenerator interface {
 // UploadAcceptanceService joins authenticated preflight, bounded streaming
 // protection, live authority evaluation, atomic persistence, and compensation.
 type UploadAcceptanceService struct {
+	tracer observability.Tracer
+
 	authorities UploadAuthorityFinder
 	preflight   UploadAcceptancePreflighter
 	stager      UploadEvidenceStager
@@ -99,7 +103,10 @@ func (service *UploadAcceptanceService) Accept(
 	uploadID id.Upload,
 	metadata evidence.UploadMetadata,
 	body io.Reader,
-) (evidence.Upload, error) {
+) (spanResult0 evidence.Upload, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "authority.UploadAcceptanceService.Accept")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if service == nil {
 		return evidence.Upload{}, errors.New("authority: upload acceptance service is not initialised")
 	}
@@ -318,4 +325,19 @@ func uploadRejectionReason(err error) string {
 		return uploadAuthorityRejection
 	}
 	return ""
+}
+
+// WithTracer injects operation tracing during composition, before concurrent use.
+func (service *UploadAcceptanceService) WithTracer(tracer observability.Tracer) *UploadAcceptanceService {
+	if service != nil {
+		service.tracer = tracer
+	}
+	return service
+}
+
+func (service *UploadAcceptanceService) operationTracer() observability.Tracer {
+	if service == nil {
+		return nil
+	}
+	return service.tracer
 }

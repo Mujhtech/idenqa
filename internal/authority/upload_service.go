@@ -1,6 +1,8 @@
 package authority
 
 import (
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
+
 	"context"
 	"encoding/json"
 	"errors"
@@ -48,6 +50,8 @@ type UploadRequest struct {
 // UploadService resolves a capture request against immutable requirements,
 // deployment limits, and current processing authority before persistence.
 type UploadService struct {
+	tracer observability.Tracer
+
 	authorities UploadAuthorityFinder
 	uploads     UploadCreator
 	identifiers UploadIDGenerator
@@ -86,7 +90,10 @@ func (service *UploadService) Issue(
 	captureContext verification.CaptureContext,
 	idempotencyKey string,
 	input UploadRequest,
-) (evidence.Upload, error) {
+) (spanResult0 evidence.Upload, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "authority.UploadService.Issue")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if service == nil {
 		return evidence.Upload{}, errors.New("authority: upload service is not initialised")
 	}
@@ -276,4 +283,19 @@ func uploadAssurances(
 	}
 
 	return nil, ErrProcessingNotPermitted
+}
+
+// WithTracer injects operation tracing during composition, before concurrent use.
+func (service *UploadService) WithTracer(tracer observability.Tracer) *UploadService {
+	if service != nil {
+		service.tracer = tracer
+	}
+	return service
+}
+
+func (service *UploadService) operationTracer() observability.Tracer {
+	if service == nil {
+		return nil
+	}
+	return service.tracer
 }
