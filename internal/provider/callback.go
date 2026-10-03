@@ -1,6 +1,8 @@
 package provider
 
 import (
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
+
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -83,6 +85,8 @@ type CallbackOutcome struct {
 // this service owns only reference resolution, receipt deduplication, and the
 // bounded wake-up.
 type CallbackService struct {
+	tracer observability.Tracer
+
 	resolver CallbackResolver
 	verifier providerv1.CallbackVerifier
 	receipts CallbackReceiptStore
@@ -106,7 +110,10 @@ func NewCallbackService(
 
 // Handle authenticates one bounded callback and records its normalized
 // progress. Raw callback material is never persisted or returned.
-func (service *CallbackService) Handle(ctx context.Context, token string, envelope providerv1.CallbackEnvelope) (CallbackOutcome, error) {
+func (service *CallbackService) Handle(ctx context.Context, token string, envelope providerv1.CallbackEnvelope) (spanResult0 CallbackOutcome, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "provider.CallbackService.Handle")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if service == nil || envelope.Validate() != nil {
 		return CallbackOutcome{}, ErrCallbackInvalid
 	}
@@ -207,4 +214,19 @@ func CallbackProgressDigest(progress providerv1.Progress) (string, error) {
 	}
 	sum := sha256.Sum256(encoded)
 	return hex.EncodeToString(sum[:]), nil
+}
+
+// WithTracer injects operation tracing during composition, before concurrent use.
+func (service *CallbackService) WithTracer(tracer observability.Tracer) *CallbackService {
+	if service != nil {
+		service.tracer = tracer
+	}
+	return service
+}
+
+func (service *CallbackService) operationTracer() observability.Tracer {
+	if service == nil {
+		return nil
+	}
+	return service.tracer
 }

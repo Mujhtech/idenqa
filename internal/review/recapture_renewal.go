@@ -1,6 +1,8 @@
 package review
 
 import (
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
+
 	"context"
 	"encoding/json"
 	"slices"
@@ -13,7 +15,10 @@ import (
 )
 
 // Renew replaces an expired credential while preserving explicitly linked accepted progress.
-func (service *RecaptureService) Renew(ctx context.Context, auth access.Context, caseID id.ReviewCase, version int64, expected id.CaptureToken, key string) (verification.CreatedSession, error) {
+func (service *RecaptureService) Renew(ctx context.Context, auth access.Context, caseID id.ReviewCase, version int64, expected id.CaptureToken, key string) (spanResult0 verification.CreatedSession, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.tracer, "review.RecaptureService.Renew")
+	defer func() { completeSpan(spanErr) }()
+
 	if err := auth.Require(access.PermissionReviewsWrite); err != nil {
 		return verification.CreatedSession{}, err
 	}

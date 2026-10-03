@@ -15,8 +15,11 @@ import (
 
 	pg "github.com/Mujhtech/idenqa/internal/platform/postgres"
 	"github.com/Mujhtech/idenqa/internal/review"
+	"github.com/Mujhtech/idenqa/internal/reviewbrowser"
+	"github.com/Mujhtech/idenqa/internal/reviewdelegation"
 	"github.com/Mujhtech/idenqa/internal/tenant"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 // Authority resolves durable assignments on every operation. A revoked row never falls back to a file.
@@ -35,6 +38,12 @@ func NewAuthority(pool transactionRunner, fallback review.Authority) (*Authority
 
 // ResolveReviewer resolves current tenant, region and credential authority.
 func (a *Authority) ResolveReviewer(ctx context.Context, scope tenant.Scope, actor review.Actor, region string, at time.Time) (review.Principal, error) {
+	if session, ok := reviewbrowser.SessionFromContext(ctx); ok {
+		return a.resolveBrowser(ctx, nil, scope, actor, region, at, session)
+	}
+	if claims, ok := reviewdelegation.ClaimsFromContext(ctx); ok {
+		return a.resolveDelegated(ctx, nil, scope, actor, region, at, claims, false)
+	}
 	var p review.Principal
 	err := a.pool.WithinTransaction(ctx, pg.TransactionOptions{}, func(ctx context.Context, tx pg.Transaction) error {
 		var err error
@@ -44,10 +53,33 @@ func (a *Authority) ResolveReviewer(ctx context.Context, scope tenant.Scope, act
 	return p, err
 }
 
+func (a *Authority) resolveBrowser(ctx context.Context, tx pg.Transaction, scope tenant.Scope, actor review.Actor, region string, at time.Time, session reviewbrowser.Session) (review.Principal, error) {
+	if session.Scope.ID() != scope.ID() || session.Actor.ID != actor.ID || session.Region != region ||
+		session.ExpiresAt.Before(at) || session.ExpiresAt.Equal(at) {
+		return review.Principal{}, review.ErrForbidden
+	}
+	if tx == nil {
+		return a.resolveDelegatedRead(ctx, scope, actor, region, at)
+	}
+	rows, err := tx.Query(ctx, `SELECT assignment FROM idenqa.review_operator_assignments
+		WHERE tenant_id=$1 AND revoked=false AND assignment->>'operator_id'=$2 ORDER BY api_key_id LIMIT 2`, scope.ID().String(), actor.ID)
+	if err != nil {
+		return review.Principal{}, err
+	}
+	defer rows.Close()
+	return a.principalFromDelegatedRows(ctx, rows, scope, region, at)
+}
+
 // ResolveWithin locks current authority until the consequential transaction commits.
 func (a *Authority) ResolveWithin(ctx context.Context, tx pg.Transaction, scope tenant.Scope, actor review.Actor, region string, at time.Time) (review.Principal, error) {
 	if err := setScope(ctx, tx, scope); err != nil {
 		return review.Principal{}, err
+	}
+	if session, ok := reviewbrowser.SessionFromContext(ctx); ok {
+		return a.resolveBrowser(ctx, tx, scope, actor, region, at, session)
+	}
+	if claims, ok := reviewdelegation.ClaimsFromContext(ctx); ok {
+		return a.resolveDelegated(ctx, tx, scope, actor, region, at, claims, true)
 	}
 	var encoded []byte
 	var revoked bool
@@ -80,6 +112,128 @@ func (a *Authority) ResolveWithin(ctx context.Context, tx pg.Transaction, scope 
 		registry = registry.WithCertificationVerifier(verifier)
 	}
 	return registry.ResolveReviewer(ctx, scope, actor, region, at)
+}
+
+func (a *Authority) resolveDelegated(ctx context.Context, tx pg.Transaction, scope tenant.Scope, actor review.Actor, region string, at time.Time, claims reviewdelegation.Claims, consume bool) (review.Principal, error) {
+	if claims.Scope.TenantID != scope.ID().String() || claims.ActorID != actor.ID || claims.Scope.Region != region {
+		return review.Principal{}, review.ErrForbidden
+	}
+	if consume {
+		if tx == nil {
+			return review.Principal{}, review.ErrForbidden
+		}
+		_, err := tx.Exec(ctx, `INSERT INTO idenqa.review_command_receipts
+			(tenant_id,command_id,actor_id,target_kind,target_id,operation,expected_version,request_digest,consumed_at)
+			VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`, scope.ID().String(), claims.CommandID, claims.ActorID,
+			claims.TargetKind, claims.TargetID, claims.Operation, claims.ExpectedVersion, claims.RequestDigest, at)
+		if err != nil {
+			var postgresError *pgconn.PgError
+			if errors.As(err, &postgresError) && postgresError.Code == "23505" {
+				return review.Principal{}, review.ErrForbidden
+			}
+			return review.Principal{}, err
+		}
+	}
+
+	query := `SELECT assignment FROM idenqa.review_operator_assignments
+		WHERE tenant_id=$1 AND revoked=false AND assignment->>'operator_id'=$2 ORDER BY api_key_id LIMIT 2`
+	var rows pgx.Rows
+	var err error
+	if tx != nil {
+		rows, err = tx.Query(ctx, query, scope.ID().String(), actor.ID)
+	} else {
+		return a.resolveDelegatedRead(ctx, scope, actor, region, at)
+	}
+	if err != nil {
+		return review.Principal{}, err
+	}
+	defer rows.Close()
+	return a.principalFromDelegatedRows(ctx, rows, scope, region, at)
+}
+
+func (a *Authority) resolveDelegatedRead(ctx context.Context, scope tenant.Scope, actor review.Actor, region string, at time.Time) (review.Principal, error) {
+	var principal review.Principal
+	err := a.pool.WithinTransaction(ctx, pg.TransactionOptions{ReadOnly: true}, func(ctx context.Context, tx pg.Transaction) error {
+		if err := setScope(ctx, tx, scope); err != nil {
+			return err
+		}
+		rows, err := tx.Query(ctx, `SELECT assignment FROM idenqa.review_operator_assignments
+			WHERE tenant_id=$1 AND revoked=false AND assignment->>'operator_id'=$2 ORDER BY api_key_id LIMIT 2`, scope.ID().String(), actor.ID)
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+		principal, err = a.principalFromDelegatedRows(ctx, rows, scope, region, at)
+		return err
+	})
+	return principal, err
+}
+
+// ObserveReviewCommand returns the authoritative case state only when the
+// exact delegated command has already been consumed in Core's state-changing
+// transaction. It is the ambiguity-resolution path used before agent retries.
+func (s *Store) ObserveReviewCommand(ctx context.Context, scope tenant.Scope, claims reviewdelegation.Claims) (review.Case, error) {
+	identifier, err := id.ParseReviewCase(claims.TargetID)
+	if err != nil {
+		return review.Case{}, reviewdelegation.ErrNotFound
+	}
+	var result review.Case
+	err = s.pool.WithinTransaction(ctx, pg.TransactionOptions{ReadOnly: true}, func(ctx context.Context, tx pg.Transaction) error {
+		if err := setScope(ctx, tx, scope); err != nil {
+			return err
+		}
+		var actorID, targetKind, targetID, operation, requestDigest string
+		var expectedVersion int64
+		err := tx.QueryRow(ctx, `SELECT actor_id,target_kind,target_id,operation,expected_version,request_digest
+			FROM idenqa.review_command_receipts WHERE tenant_id=$1 AND command_id=$2`,
+			scope.ID().String(), claims.CommandID).Scan(&actorID, &targetKind, &targetID, &operation, &expectedVersion, &requestDigest)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return reviewdelegation.ErrNotFound
+		}
+		if err != nil {
+			return err
+		}
+		if actorID != claims.ActorID || targetKind != claims.TargetKind || targetID != claims.TargetID ||
+			operation != claims.Operation || expectedVersion != claims.ExpectedVersion || requestDigest != claims.RequestDigest {
+			return review.ErrForbidden
+		}
+		result, err = s.findCaseWithin(ctx, scope, tx, identifier)
+		return err
+	})
+	return result, err
+}
+
+func (a *Authority) principalFromDelegatedRows(ctx context.Context, rows pgx.Rows, scope tenant.Scope, region string, at time.Time) (review.Principal, error) {
+	var assignments []review.Assignment
+	for rows.Next() {
+		var encoded []byte
+		if err := rows.Scan(&encoded); err != nil {
+			return review.Principal{}, err
+		}
+		var assignment review.Assignment
+		if json.Unmarshal(encoded, &assignment) != nil {
+			return review.Principal{}, review.ErrForbidden
+		}
+		assignments = append(assignments, assignment)
+	}
+	if err := rows.Err(); err != nil {
+		return review.Principal{}, err
+	}
+	if len(assignments) != 1 {
+		return review.Principal{}, review.ErrForbidden
+	}
+	registry, err := review.NewRegistry(assignments)
+	if err != nil {
+		return review.Principal{}, review.ErrForbidden
+	}
+	if source, ok := a.fallback.(review.CertificationVerifierSource); ok {
+		verifier, err := source.CertificationVerifier()
+		if err != nil {
+			return review.Principal{}, review.ErrForbidden
+		}
+		registry = registry.WithCertificationVerifier(verifier)
+	}
+	return registry.ResolveReviewer(ctx, scope, review.Actor{ID: assignments[0].APIKeyID}, region, at)
 }
 func resolveWithin(ctx context.Context, tx pg.Transaction, authority review.Authority, scope tenant.Scope, actor review.Actor, region string, at time.Time) (review.Principal, error) {
 	if authority == nil {
@@ -115,6 +269,28 @@ func (s *Store) checkAuthority(ctx context.Context, tx pg.Transaction, scope ten
 		return err
 	}
 	if !slices.Contains(principal.Permissions, permission) || !slices.Contains(principal.Certifications, value.RequiredCertificate) {
+		return review.ErrForbidden
+	}
+	return nil
+}
+
+func checkDelegationBinding(ctx context.Context, scope tenant.Scope, actor review.Actor, value review.Case, permission review.Permission, expectedVersion int64) error {
+	claims, ok := reviewdelegation.ClaimsFromContext(ctx)
+	if !ok {
+		return nil
+	}
+	wantedPermission, wantedOperation := "", ""
+	switch permission {
+	case review.PermissionClaim:
+		wantedPermission, wantedOperation = "review:claim", "claim"
+	case review.PermissionFind:
+		wantedPermission, wantedOperation = "review:find", "submit_finding"
+	default:
+		return review.ErrForbidden
+	}
+	if claims.Scope.TenantID != scope.ID().String() || claims.ActorID != actor.ID || claims.TargetKind != "review_case" ||
+		claims.TargetID != value.ID.String() || claims.ExpectedVersion != expectedVersion || claims.Permission != wantedPermission ||
+		claims.Operation != wantedOperation || claims.Scope.Region != value.Region {
 		return review.ErrForbidden
 	}
 	return nil

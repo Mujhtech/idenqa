@@ -18,6 +18,7 @@ type Repository interface {
 // AdminRepository is the privileged port consumed only by administrative workflows.
 type AdminRepository interface {
 	Create(context.Context, AdminAction, Tenant) error
+	Provision(context.Context, AdminAction, ProvisionCommand, Tenant) (Tenant, bool, error)
 	Inspect(context.Context, AdminAction, id.Tenant) (Tenant, error)
 	Disable(context.Context, AdminAction, id.Tenant, int64, time.Time) (Tenant, error)
 }
@@ -58,6 +59,32 @@ func (admin *Admin) Create(ctx context.Context, action AdminAction) (Tenant, err
 	}
 
 	return created, nil
+}
+
+// Provision creates a tenant exactly once for an immutable managed-deployment
+// command. A replay returns the original tenant without creating another.
+func (admin *Admin) Provision(ctx context.Context, action AdminAction, command ProvisionCommand) (Tenant, bool, error) {
+	if err := action.Validate(); err != nil {
+		return Tenant{}, false, err
+	}
+	if err := command.Validate(); err != nil {
+		return Tenant{}, false, err
+	}
+	identifier, err := admin.ids.NewTenant()
+	if err != nil {
+		return Tenant{}, false, fmt.Errorf("generate provisioned tenant id: %w", err)
+	}
+	now := admin.clock.Now().UTC()
+	action.occurredAt = now
+	candidate, err := Restore(identifier, StateActive, 1, now, now, nil)
+	if err != nil {
+		return Tenant{}, false, err
+	}
+	provisioned, created, err := admin.repository.Provision(ctx, action, command, candidate)
+	if err != nil {
+		return Tenant{}, false, fmt.Errorf("provision tenant: %w", err)
+	}
+	return provisioned, created, nil
 }
 
 // Inspect retrieves a tenant through an audited administrative bypass.

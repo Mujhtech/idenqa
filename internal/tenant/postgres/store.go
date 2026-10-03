@@ -3,6 +3,7 @@ package postgres
 
 import (
 	"context"
+	"crypto/subtle"
 	"errors"
 	"fmt"
 	"time"
@@ -14,6 +15,59 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
+
+// Provision atomically claims an immutable command and creates its tenant. A
+// replay returns the original tenant; conflicting reuse fails closed.
+func (store *Store) Provision(ctx context.Context, action tenant.AdminAction, command tenant.ProvisionCommand, candidate tenant.Tenant) (tenant.Tenant, bool, error) {
+	var provisioned tenant.Tenant
+	created := false
+	err := store.pool.WithinTransaction(ctx, platformpostgres.TransactionOptions{}, func(ctx context.Context, tx platformpostgres.Transaction) error {
+		queries := sqlgen.New(tx)
+		var allowed bool
+		if err := tx.QueryRow(ctx, `SELECT rolsuper OR rolbypassrls FROM pg_catalog.pg_roles WHERE rolname=current_user`).Scan(&allowed); err != nil {
+			return fmt.Errorf("check tenant admin privilege: %w", err)
+		}
+		if !allowed {
+			return errAdminPrivilege
+		}
+		if _, err := tx.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtextextended($1,0))`, command.ID); err != nil {
+			return fmt.Errorf("lock tenant provision command: %w", err)
+		}
+		var digest []byte
+		var tenantID string
+		err := tx.QueryRow(ctx, `SELECT request_digest,tenant_id FROM idenqa.tenant_provision_commands WHERE command_id=$1`, command.ID).Scan(&digest, &tenantID)
+		if err == nil {
+			if len(digest) != len(command.RequestDigest) || subtle.ConstantTimeCompare(digest, command.RequestDigest[:]) != 1 {
+				return tenant.ErrProvisionConflict
+			}
+			row, err := queries.FindTenant(ctx, tenantID)
+			if err != nil {
+				return fmt.Errorf("find provisioned tenant: %w", err)
+			}
+			provisioned, err = restore(row)
+			return err
+		}
+		if !errors.Is(err, pgx.ErrNoRows) {
+			return fmt.Errorf("find tenant provision command: %w", err)
+		}
+		if err := queries.CreateTenant(ctx, sqlgen.CreateTenantParams{
+			ID: candidate.ID().String(), State: string(candidate.State()), Version: candidate.Version(),
+			CreatedAt: timestamp(candidate.CreatedAt()), UpdatedAt: timestamp(candidate.UpdatedAt()),
+		}); err != nil {
+			return fmt.Errorf("insert provisioned tenant: %w", err)
+		}
+		if err := insertAudit(ctx, queries, action, candidate.ID(), "provision"); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(ctx, `INSERT INTO idenqa.tenant_provision_commands(command_id,request_digest,tenant_id,created_at) VALUES($1,$2,$3,$4)`, command.ID, command.RequestDigest[:], candidate.ID().String(), candidate.CreatedAt()); err != nil {
+			return fmt.Errorf("insert tenant provision command: %w", err)
+		}
+		provisioned = candidate
+		created = true
+		return nil
+	})
+	return provisioned, created, err
+}
 
 var errAdminPrivilege = errors.New("tenant postgres: administrative database role is required")
 

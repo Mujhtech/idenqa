@@ -1,6 +1,8 @@
 package review
 
 import (
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
+
 	"context"
 	"encoding/json"
 	"slices"
@@ -30,7 +32,10 @@ type recaptureReevaluator interface {
 }
 
 // Reevaluate explicitly requests evaluation of the acknowledged child outcome.
-func (service *RecaptureService) Reevaluate(ctx context.Context, auth access.Context, caseID id.ReviewCase, version int64, decisionID id.Decision, key string) (RecaptureReevaluation, error) {
+func (service *RecaptureService) Reevaluate(ctx context.Context, auth access.Context, caseID id.ReviewCase, version int64, decisionID id.Decision, key string) (spanResult0 RecaptureReevaluation, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.tracer, "review.RecaptureService.Reevaluate")
+	defer func() { completeSpan(spanErr) }()
+
 	var empty RecaptureReevaluation
 	if err := auth.Require(access.PermissionReviewsWrite); err != nil {
 		return empty, err

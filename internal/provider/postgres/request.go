@@ -3,11 +3,15 @@ package postgres
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 
 	providerv1 "github.com/Mujhtech/idenqa/contracts/provider/v1"
+	usagev1 "github.com/Mujhtech/idenqa/contracts/usage/v1"
 	authoritypostgres "github.com/Mujhtech/idenqa/internal/authority/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
 	"github.com/Mujhtech/idenqa/internal/platform/observability"
@@ -118,11 +122,24 @@ func (store *RequestStore) Claim(ctx context.Context, request providerv1.Request
 		if _, err := sqlgen.New(tx).SetTenantScope(ctx, scope.ID().String()); err != nil {
 			return err
 		}
-		tag, err := tx.Exec(ctx, `INSERT INTO idenqa.provider_dispatches(tenant_id,attempt_id,request_digest,claimed_at) SELECT tenant_id,attempt_id,request_digest,$4 FROM idenqa.provider_requests WHERE tenant_id=$1 AND attempt_id=$2 AND request_digest=$3 ON CONFLICT DO NOTHING`, request.TenantID, request.AttemptID, digest, store.source.Now().UTC().Truncate(time.Microsecond))
+		claimedAt := store.source.Now().UTC().Truncate(time.Microsecond)
+		tag, err := tx.Exec(ctx, `INSERT INTO idenqa.provider_dispatches(tenant_id,attempt_id,request_digest,claimed_at) SELECT tenant_id,attempt_id,request_digest,$4 FROM idenqa.provider_requests WHERE tenant_id=$1 AND attempt_id=$2 AND request_digest=$3 ON CONFLICT DO NOTHING`, request.TenantID, request.AttemptID, digest, claimedAt)
 		if err != nil {
 			return err
 		}
 		claimed = tag.RowsAffected() == 1
+		if claimed {
+			at := claimedAt
+			identity := sha256.Sum256([]byte("provider-dispatch\x00" + request.TenantID + "\x00" + request.AttemptID))
+			receipt := usagev1.Receipt{Schema: usagev1.Schema, ID: hex.EncodeToString(identity[:]), CoreTenantID: request.TenantID, Event: "provider_dispatch", ProviderID: request.ProviderID, AdapterID: request.Adapter.AdapterID, AdapterVersion: request.Adapter.AdapterVersion, PackageDigest: request.Adapter.PackageDigest, Check: request.Check, OccurredAt: at, Quantity: 1}
+			encoded, err := json.Marshal(receipt)
+			if err != nil {
+				return err
+			}
+			if _, err := tx.Exec(ctx, `INSERT INTO idenqa.usage_receipts(tenant_id,id,receipt,created_at) VALUES($1,$2,$3,$4)`, request.TenantID, receipt.ID, encoded, at); err != nil {
+				return fmt.Errorf("append provider usage intent: %w", err)
+			}
+		}
 		var stored string
 		var body []byte
 		if err := tx.QueryRow(ctx, `SELECT request_digest,result_body FROM idenqa.provider_dispatches WHERE tenant_id=$1 AND attempt_id=$2`, request.TenantID, request.AttemptID).Scan(&stored, &body); err != nil {

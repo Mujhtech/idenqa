@@ -1,6 +1,8 @@
 package review
 
 import (
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
+
 	"context"
 	"encoding/json"
 	"slices"
@@ -42,7 +44,10 @@ type recaptureAcknowledger interface {
 }
 
 // Acknowledge marks a completed child outcome as seen without changing parent meaning.
-func (service *RecaptureService) Acknowledge(ctx context.Context, auth access.Context, caseID id.ReviewCase, version int64, decisionID id.Decision, key string) (RecaptureAcknowledgement, error) {
+func (service *RecaptureService) Acknowledge(ctx context.Context, auth access.Context, caseID id.ReviewCase, version int64, decisionID id.Decision, key string) (spanResult0 RecaptureAcknowledgement, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.tracer, "review.RecaptureService.Acknowledge")
+	defer func() { completeSpan(spanErr) }()
+
 	var empty RecaptureAcknowledgement
 	if err := auth.Require(access.PermissionReviewsWrite); err != nil {
 		return empty, err

@@ -1,8 +1,11 @@
 package review
 
 import (
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
+
 	"context"
 	"fmt"
+	"io"
 	"slices"
 	"time"
 
@@ -70,6 +73,8 @@ type EvidenceRepository interface {
 
 // EvidenceService requires application permissions as well as current repository-backed reviewer authority.
 type EvidenceService struct {
+	tracer observability.Tracer
+
 	repository EvidenceRepository
 	now        func() time.Time
 }
@@ -79,11 +84,14 @@ func NewEvidenceService(repository EvidenceRepository, now func() time.Time) (*E
 	if repository == nil || now == nil {
 		return nil, ErrInvalid
 	}
-	return &EvidenceService{repository, now}, nil
+	return &EvidenceService{repository: repository, now: now}, nil
 }
 
 // Issue creates a short-lived case-bound display grant.
-func (s *EvidenceService) Issue(ctx context.Context, auth access.Context, caseID id.ReviewCase, version int64, evidenceID id.Evidence, key string) (EvidenceAccess, error) {
+func (s *EvidenceService) Issue(ctx context.Context, auth access.Context, caseID id.ReviewCase, version int64, evidenceID id.Evidence, key string) (spanResult0 EvidenceAccess, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, s.operationTracer(), "review.EvidenceService.Issue")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := auth.Require(access.PermissionReviewsWrite); err != nil {
 		return EvidenceAccess{}, err
 	}
@@ -97,11 +105,78 @@ func (s *EvidenceService) Issue(ctx context.Context, auth access.Context, caseID
 	}
 	return s.repository.IssueEvidence(ctx, auth.TenantScope(), EvidenceRequest{caseID, version, evidenceID, Actor{auth.Principal().KeyID().String()}, retry})
 }
-func (s *EvidenceService) Read(ctx context.Context, auth access.Context, grantID id.Grant, receiver evidence.PlaintextReceiver) error {
+
+// IssueDelegated creates a display grant for an independently authenticated
+// workforce reviewer. The repository remains responsible for current
+// assignment, certification, case-version, and evidence-policy checks.
+func (s *EvidenceService) IssueDelegated(ctx context.Context, scope tenant.Scope, actor Actor, caseID id.ReviewCase, version int64, evidenceID id.Evidence, key string) (spanResult0 EvidenceAccess, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, s.operationTracer(), "review.EvidenceService.IssueDelegated")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
+	if scope.ID().IsZero() || actor.ID == "" || caseID.IsZero() || version < 1 || evidenceID.IsZero() {
+		return EvidenceAccess{}, ErrInvalid
+	}
+	retry, err := delegatedEvidenceRetry(scope, actor, caseID, version, evidenceID, key, s.now())
+	if err != nil {
+		return EvidenceAccess{}, err
+	}
+	return s.repository.IssueEvidence(ctx, scope, EvidenceRequest{caseID, version, evidenceID, actor, retry})
+}
+
+func delegatedEvidenceRetry(scope tenant.Scope, actor Actor, caseID id.ReviewCase, version int64, evidenceID id.Evidence, key string, now time.Time) (idempotency.Request, error) {
+	encoded := []byte(caseID.String() + "/" + evidenceID.String() + "/" + fmt.Sprint(version))
+	return idempotency.NewRequest(scope.ID(), workforcePrincipal(actor.ID), "reviews.evidence.issue.delegated", key, encoded, now.UTC().Truncate(time.Microsecond), 24*time.Hour)
+}
+
+type workforcePrincipal string
+
+func (principal workforcePrincipal) String() string { return string(principal) }
+func (principal workforcePrincipal) IsZero() bool   { return principal == "" }
+func (s *EvidenceService) Read(ctx context.Context, auth access.Context, grantID id.Grant, receiver evidence.PlaintextReceiver) (spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, s.operationTracer(), "review.EvidenceService.Read")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := auth.Require(access.PermissionReviewsWrite); err != nil {
 		return err
 	}
 	return s.repository.ReadEvidence(ctx, auth.TenantScope(), Actor{auth.Principal().KeyID().String()}, grantID, receiver)
+}
+
+// ReadDelegated releases one controlled display to an independently
+// authenticated workforce reviewer.
+func (s *EvidenceService) ReadDelegated(ctx context.Context, scope tenant.Scope, actor Actor, caseID id.ReviewCase, version int64, grantID id.Grant, receiver evidence.PlaintextReceiver) (spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, s.operationTracer(), "review.EvidenceService.ReadDelegated")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
+	if scope.ID().IsZero() || actor.ID == "" || caseID.IsZero() || version < 1 || grantID.IsZero() || receiver == nil {
+		return ErrInvalid
+	}
+	return s.repository.ReadEvidence(ctx, scope, actor, grantID, &caseBoundReceiver{caseID: caseID, version: version, next: receiver})
+}
+
+type caseBoundReceiver struct {
+	caseID  id.ReviewCase
+	version int64
+	next    evidence.PlaintextReceiver
+	allowed bool
+}
+
+func (receiver *caseBoundReceiver) Configure(value EvidenceAccess) {
+	receiver.allowed = value.CaseID == receiver.caseID && value.CaseVersion == receiver.version
+	if receiver.allowed {
+		if configurable, ok := receiver.next.(interface{ Configure(EvidenceAccess) }); ok {
+			configurable.Configure(value)
+		}
+	}
+}
+
+func (receiver *caseBoundReceiver) Binding() evidence.ReceiverBinding { return receiver.next.Binding() }
+
+func (receiver *caseBoundReceiver) Receive(ctx context.Context, redemption id.Redemption, mediaType string, produce func(io.Writer) error, afterCommit func() error) error {
+	if !receiver.allowed {
+		return ErrForbidden
+	}
+	return receiver.next.Receive(ctx, redemption, mediaType, produce, afterCommit)
 }
 
 // CanReadEvidence applies the same assignment and independence rules as finding submission.
@@ -140,7 +215,10 @@ type EvidenceMetadata struct {
 }
 
 // List returns only display-eligible artefact metadata.
-func (s *EvidenceService) List(ctx context.Context, auth access.Context, caseID id.ReviewCase, version int64) ([]EvidenceMetadata, error) {
+func (s *EvidenceService) List(ctx context.Context, auth access.Context, caseID id.ReviewCase, version int64) (spanResult0 []EvidenceMetadata, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, s.operationTracer(), "review.EvidenceService.List")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := auth.Require(access.PermissionReviewsWrite); err != nil {
 		return nil, err
 	}
@@ -151,4 +229,34 @@ func (s *EvidenceService) List(ctx context.Context, auth access.Context, caseID 
 		return nil, ErrInvalid
 	}
 	return repository.ListEvidence(ctx, auth.TenantScope(), Actor{auth.Principal().KeyID().String()}, caseID, version)
+}
+
+// ListDelegated returns display-eligible metadata after repository-backed
+// reviewer reauthorisation.
+func (s *EvidenceService) ListDelegated(ctx context.Context, scope tenant.Scope, actor Actor, caseID id.ReviewCase, version int64) (spanResult0 []EvidenceMetadata, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, s.operationTracer(), "review.EvidenceService.ListDelegated")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
+	repository, ok := s.repository.(interface {
+		ListEvidence(context.Context, tenant.Scope, Actor, id.ReviewCase, int64) ([]EvidenceMetadata, error)
+	})
+	if !ok || scope.ID().IsZero() || actor.ID == "" || caseID.IsZero() || version < 1 {
+		return nil, ErrInvalid
+	}
+	return repository.ListEvidence(ctx, scope, actor, caseID, version)
+}
+
+// WithTracer injects operation tracing during composition, before concurrent use.
+func (s *EvidenceService) WithTracer(tracer observability.Tracer) *EvidenceService {
+	if s != nil {
+		s.tracer = tracer
+	}
+	return s
+}
+
+func (s *EvidenceService) operationTracer() observability.Tracer {
+	if s == nil {
+		return nil
+	}
+	return s.tracer
 }

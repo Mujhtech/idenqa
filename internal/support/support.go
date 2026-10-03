@@ -5,6 +5,8 @@
 package support
 
 import (
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
+
 	"context"
 	"encoding/json"
 	"errors"
@@ -183,6 +185,8 @@ type Repository interface {
 // Service authorizes and validates support operations at the application
 // boundary.
 type Service struct {
+	tracer observability.Tracer
+
 	repository Repository
 	registry   access.Registry
 	now        func() time.Time
@@ -218,7 +222,10 @@ func grantable(registry access.Registry, patterns []access.Pattern) bool {
 }
 
 // Execute authorizes and fingerprints one support command.
-func (service *Service) Execute(ctx context.Context, auth access.Context, key string, command Command) (Result, error) {
+func (service *Service) Execute(ctx context.Context, auth access.Context, key string, command Command) (spanResult0 Result, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "support.Service.Execute")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if ctx == nil || auth.TenantScope().ID().IsZero() {
 		return Result{}, ErrInvalid
 	}
@@ -241,7 +248,10 @@ func (service *Service) Execute(ctx context.Context, auth access.Context, key st
 // ExecuteDirect validates and fingerprints one support command for an
 // already-authenticated operator actor. The operator CLI uses it directly;
 // HTTP callers use Execute so the permission is always checked.
-func (service *Service) ExecuteDirect(ctx context.Context, scope tenant.Scope, actor id.APIKey, key string, command Command) (Result, error) {
+func (service *Service) ExecuteDirect(ctx context.Context, scope tenant.Scope, actor id.APIKey, key string, command Command) (spanResult0 Result, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "support.Service.ExecuteDirect")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if ctx == nil || scope.ID().IsZero() || actor.IsZero() {
 		return Result{}, ErrInvalid
 	}
@@ -263,7 +273,10 @@ func (service *Service) ExecuteDirect(ctx context.Context, scope tenant.Scope, a
 }
 
 // Read authorizes safe support reads.
-func (service *Service) Read(ctx context.Context, auth access.Context, kind, reference string) (Result, error) {
+func (service *Service) Read(ctx context.Context, auth access.Context, kind, reference string) (spanResult0 Result, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "support.Service.Read")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := auth.Require(access.PermissionSupportAccessRead); err != nil {
 		return Result{}, err
 	}
@@ -274,7 +287,10 @@ func (service *Service) Read(ctx context.Context, auth access.Context, kind, ref
 // AuthorizeSupport reports whether an active delegated grant covers permission
 // for grantee at the current instant. It is the enforcement seam for a future
 // support-credential authentication path.
-func (service *Service) AuthorizeSupport(ctx context.Context, scope tenant.Scope, grantee string, permission access.Permission) (Grant, error) {
+func (service *Service) AuthorizeSupport(ctx context.Context, scope tenant.Scope, grantee string, permission access.Permission) (spanResult0 Grant, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "support.Service.AuthorizeSupport")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	result, err := service.repository.Read(ctx, scope, "grant_grantee", grantee)
 	if err != nil {
 		return Grant{}, err
@@ -288,7 +304,10 @@ func (service *Service) AuthorizeSupport(ctx context.Context, scope tenant.Scope
 
 // AuthorizeEmergency reports whether an approved break-glass window covers
 // permission at the current instant.
-func (service *Service) AuthorizeEmergency(ctx context.Context, scope tenant.Scope, identifier string, permission access.Permission) (Emergency, error) {
+func (service *Service) AuthorizeEmergency(ctx context.Context, scope tenant.Scope, identifier string, permission access.Permission) (spanResult0 Emergency, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "support.Service.AuthorizeEmergency")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	result, err := service.repository.Read(ctx, scope, "emergency", identifier)
 	if err != nil {
 		return Emergency{}, err
@@ -408,4 +427,19 @@ func validIdentifier(value string) bool {
 	}
 
 	return true
+}
+
+// WithTracer injects operation tracing during composition, before concurrent use.
+func (service *Service) WithTracer(tracer observability.Tracer) *Service {
+	if service != nil {
+		service.tracer = tracer
+	}
+	return service
+}
+
+func (service *Service) operationTracer() observability.Tracer {
+	if service == nil {
+		return nil
+	}
+	return service.tracer
 }

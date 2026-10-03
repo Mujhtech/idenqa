@@ -16,6 +16,9 @@ var (
 	ErrNotFound = errors.New("tenant: not found")
 	// ErrConflict means the expected lifecycle version no longer matches.
 	ErrConflict = errors.New("tenant: lifecycle conflict")
+	// ErrProvisionConflict means a provisioning command identifier was reused
+	// with different immutable meaning.
+	ErrProvisionConflict = errors.New("tenant: provisioning command conflict")
 )
 
 // State is a tenant lifecycle state.
@@ -111,6 +114,22 @@ type AdminAction struct {
 	Actor      string
 	Reason     string
 	occurredAt time.Time
+}
+
+// ProvisionCommand identifies one retry-safe managed-tenant creation request.
+type ProvisionCommand struct {
+	ID            string
+	RequestDigest [32]byte
+}
+
+func (command ProvisionCommand) Validate() error {
+	if err := validateAuditText("provision command", command.ID, 200); err != nil || len(command.ID) < 16 {
+		return errors.New("tenant provision command is invalid")
+	}
+	if command.RequestDigest == ([32]byte{}) {
+		return errors.New("tenant provision command digest is required")
+	}
+	return nil
 }
 
 // OccurredAt returns the authoritative operation time assigned by Admin.

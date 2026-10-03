@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"time"
 
@@ -271,25 +272,28 @@ func (store *Store) SaveCase(ctx context.Context, scope tenant.Scope, actor revi
 		return review.ErrInvalid
 	}
 	return store.mutate(ctx, scope, actor, value.ID.String(), "review.case."+string(value.State), value.UpdatedAt, value.Version, func(ctx context.Context, tx platformpostgres.Transaction) error {
-		if !value.ChallengedDecision.IsZero() {
-			principal, err := resolveWithin(ctx, tx, store.authority, scope, actor, value.Region, store.clock.Now().UTC())
-			if store.authority != nil {
-				if err != nil {
-					return err
-				}
-				if err := independentOfDecision(ctx, tx, scope, value.ChallengedDecision, principal.ID); err != nil {
-					return err
-				}
-			}
-		}
 		permission := review.PermissionClaim
 		if finding != nil {
 			permission = review.PermissionFind
 		} else if !value.SupersedesDecision.IsZero() {
 			permission = review.PermissionResolve
 		}
-		if err := store.checkAuthority(ctx, tx, scope, actor, value, permission); err != nil {
+		if err := checkDelegationBinding(ctx, scope, actor, value, permission, expectedVersion); err != nil {
 			return err
+		}
+		if store.authority != nil {
+			principal, err := resolveWithin(ctx, tx, store.authority, scope, actor, value.Region, store.clock.Now().UTC())
+			if err != nil {
+				return err
+			}
+			if !slices.Contains(principal.Permissions, permission) || !slices.Contains(principal.Certifications, value.RequiredCertificate) {
+				return review.ErrForbidden
+			}
+			if !value.ChallengedDecision.IsZero() {
+				if err := independentOfDecision(ctx, tx, scope, value.ChallengedDecision, principal.ID); err != nil {
+					return err
+				}
+			}
 		}
 		if !value.SupersedesDecision.IsZero() {
 			if err := validateSuccessor(ctx, tx, scope, value.VerificationID, value.ChallengedDecision, value.SupersedesDecision); err != nil {

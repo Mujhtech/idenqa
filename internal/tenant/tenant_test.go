@@ -19,6 +19,11 @@ type adminRepository struct {
 	action  tenant.AdminAction
 }
 
+func (repository *adminRepository) Provision(_ context.Context, action tenant.AdminAction, _ tenant.ProvisionCommand, value tenant.Tenant) (tenant.Tenant, bool, error) {
+	repository.action, repository.created = action, value
+	return value, true, nil
+}
+
 func (repository *adminRepository) Create(_ context.Context, action tenant.AdminAction, value tenant.Tenant) error {
 	repository.action, repository.created = action, value
 
@@ -64,6 +69,24 @@ func TestAdminLifecycle(t *testing.T) {
 	}
 	if disabled.State() != tenant.StateDisabled || disabled.Version() != 2 || disabled.DisabledAt() == nil {
 		t.Fatalf("disabled tenant = %+v", disabled)
+	}
+}
+
+func TestAdminProvisionBuildsAuditedCandidate(t *testing.T) {
+	now := time.Date(2026, time.October, 1, 7, 0, 0, 0, time.UTC)
+	generator, err := id.NewGenerator(fixedClock{now: now}, bytes.NewReader(bytes.Repeat([]byte{7}, 32)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	repository := &adminRepository{}
+	admin, err := tenant.NewAdmin(repository, generator, fixedClock{now: now})
+	if err != nil {
+		t.Fatal(err)
+	}
+	digest := [32]byte{1}
+	created, fresh, err := admin.Provision(t.Context(), tenant.AdminAction{Actor: "idenqa-cloud", Reason: "managed shared onboarding"}, tenant.ProvisionCommand{ID: "onboarding-command-0001", RequestDigest: digest})
+	if err != nil || !fresh || created.ID().IsZero() || repository.action.OccurredAt() != now {
+		t.Fatalf("Provision() = %#v, %t, %v", created, fresh, err)
 	}
 }
 

@@ -1,6 +1,8 @@
 package provider
 
 import (
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
+
 	"context"
 	"encoding/json"
 	"regexp"
@@ -38,6 +40,8 @@ type HealthView interface {
 // idempotent replay. Manifests are the configured deployment adapter
 // advertisements; a registration may only target one of them.
 type RegistrationManagement struct {
+	tracer observability.Tracer
+
 	repository RegistrationRepository
 	ids        registrationIDs
 	now        func() time.Time
@@ -68,7 +72,10 @@ func NewRegistrationManagement(repository RegistrationRepository, ids registrati
 
 // Execute commits one version-checked registration command. Create is
 // idempotent; mutations require the exact expected version.
-func (service *RegistrationManagement) Execute(ctx context.Context, actor access.Context, key string, command RegistrationCommand) (RegistrationReceipt, error) {
+func (service *RegistrationManagement) Execute(ctx context.Context, actor access.Context, key string, command RegistrationCommand) (spanResult0 RegistrationReceipt, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "provider.RegistrationManagement.Execute")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := actor.Require(access.PermissionProvidersWrite); err != nil {
 		return RegistrationReceipt{}, err
 	}
@@ -122,7 +129,10 @@ func (service *RegistrationManagement) WithHealth(health HealthView) *Registrati
 }
 
 // Get reads one authorized tenant registration.
-func (service *RegistrationManagement) Get(ctx context.Context, actor access.Context, registrationID string) (Registration, error) {
+func (service *RegistrationManagement) Get(ctx context.Context, actor access.Context, registrationID string) (spanResult0 Registration, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "provider.RegistrationManagement.Get")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := actor.Require(access.PermissionProvidersRead); err != nil {
 		return Registration{}, err
 	}
@@ -130,7 +140,10 @@ func (service *RegistrationManagement) Get(ctx context.Context, actor access.Con
 }
 
 // List reads one bounded newest-first page for an authorized tenant.
-func (service *RegistrationManagement) List(ctx context.Context, actor access.Context, after *RegistrationPosition, limit int) (RegistrationPage, error) {
+func (service *RegistrationManagement) List(ctx context.Context, actor access.Context, after *RegistrationPosition, limit int) (spanResult0 RegistrationPage, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "provider.RegistrationManagement.List")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := actor.Require(access.PermissionProvidersRead); err != nil {
 		return RegistrationPage{}, err
 	}
@@ -142,7 +155,10 @@ func (service *RegistrationManagement) List(ctx context.Context, actor access.Co
 
 // Validate checks one closed write document against the configured deployment
 // manifest without persistence.
-func (service *RegistrationManagement) Validate(ctx context.Context, actor access.Context, write RegistrationWrite) (RegistrationValidationReport, error) {
+func (service *RegistrationManagement) Validate(ctx context.Context, actor access.Context, write RegistrationWrite) (spanResult0 RegistrationValidationReport, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "provider.RegistrationManagement.Validate")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := actor.Require(access.PermissionProvidersWrite); err != nil {
 		return RegistrationValidationReport{}, err
 	}
@@ -159,7 +175,10 @@ func (service *RegistrationManagement) Validate(ctx context.Context, actor acces
 // Health reads a bounded snapshot of the tenant's own dispatch records for one
 // registration plus the cached derived readiness snapshot. It never performs an
 // external probe beyond the existing bounded runner health surface.
-func (service *RegistrationManagement) Health(ctx context.Context, actor access.Context, registrationID string) (RegistrationHealth, error) {
+func (service *RegistrationManagement) Health(ctx context.Context, actor access.Context, registrationID string) (spanResult0 RegistrationHealth, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "provider.RegistrationManagement.Health")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := actor.Require(access.PermissionProvidersRead); err != nil {
 		return RegistrationHealth{}, err
 	}
@@ -189,7 +208,10 @@ func (service *RegistrationManagement) Health(ctx context.Context, actor access.
 // SimulateFailure returns the pure owned operational classification preview for
 // one bounded provider failure class and code. Nothing is dispatched or
 // persisted and no identity outcome is ever produced.
-func (service *RegistrationManagement) SimulateFailure(ctx context.Context, actor access.Context, registrationID string, class providerv1.FailureClass, code string) (FailureSimulation, error) {
+func (service *RegistrationManagement) SimulateFailure(ctx context.Context, actor access.Context, registrationID string, class providerv1.FailureClass, code string) (spanResult0 FailureSimulation, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "provider.RegistrationManagement.SimulateFailure")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := actor.Require(access.PermissionProvidersRead); err != nil {
 		return FailureSimulation{}, err
 	}
@@ -248,4 +270,19 @@ func (service *RegistrationManagement) validateCommand(command RegistrationComma
 	default:
 		return ErrRegistrationInvalid
 	}
+}
+
+// WithTracer injects operation tracing during composition, before concurrent use.
+func (service *RegistrationManagement) WithTracer(tracer observability.Tracer) *RegistrationManagement {
+	if service != nil {
+		service.tracer = tracer
+	}
+	return service
+}
+
+func (service *RegistrationManagement) operationTracer() observability.Tracer {
+	if service == nil {
+		return nil
+	}
+	return service.tracer
 }

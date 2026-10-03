@@ -360,6 +360,8 @@ type HealthSnapshotStore interface {
 // health. It never performs an invented probe: the optional checker is the
 // existing provider runner health surface.
 type HealthService struct {
+	tracer observability.Tracer
+
 	reader   HealthEvidenceReader
 	store    HealthSnapshotStore
 	breakers *BreakerRegistry
@@ -415,7 +417,10 @@ func (service *HealthService) WithPersistence(persist bool) *HealthService {
 
 // RegistrationHealth derives the bounded snapshot for one persisted tenant
 // registration. It never broadens to another region.
-func (service *HealthService) RegistrationHealth(ctx context.Context, scope tenant.Scope, registration Registration) (HealthSnapshot, error) {
+func (service *HealthService) RegistrationHealth(ctx context.Context, scope tenant.Scope, registration Registration) (spanResult0 HealthSnapshot, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "provider.HealthService.RegistrationHealth")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if registration.AdapterID == "" || registration.Configuration.ProviderID == "" {
 		return HealthSnapshot{}, ErrHealthInvalid
 	}
@@ -425,7 +430,10 @@ func (service *HealthService) RegistrationHealth(ctx context.Context, scope tena
 // Health returns the cached or freshly derived bounded snapshot for one key.
 // Persisted continuity is used when the owned evidence window is empty, and it
 // seeds the local breaker so an open state survives a process restart.
-func (service *HealthService) Health(ctx context.Context, scope tenant.Scope, key HealthKey) (HealthSnapshot, error) {
+func (service *HealthService) Health(ctx context.Context, scope tenant.Scope, key HealthKey) (spanResult0 HealthSnapshot, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "provider.HealthService.Health")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if service == nil || scope.ID().IsZero() || !key.Valid() || key.TenantID != scope.ID().String() {
 		return HealthSnapshot{}, ErrHealthInvalid
 	}
@@ -485,7 +493,10 @@ func (service *HealthService) Health(ctx context.Context, scope tenant.Scope, ke
 // ObserveBreaker persists one bounded transition and announces it exactly once
 // per state change. A persistence failure is reported to the caller while the
 // local breaker keeps its already-applied state.
-func (service *HealthService) ObserveBreaker(ctx context.Context, key BreakerKey, transition BreakerTransition) error {
+func (service *HealthService) ObserveBreaker(ctx context.Context, key BreakerKey, transition BreakerTransition) (spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "provider.HealthService.ObserveBreaker")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if service == nil || !transition.Changed {
 		return nil
 	}
@@ -569,4 +580,19 @@ func runnerHealthState(state providerv1.HealthState) HealthState {
 	default:
 		return HealthUnknown
 	}
+}
+
+// WithTracer injects operation tracing during composition, before concurrent use.
+func (service *HealthService) WithTracer(tracer observability.Tracer) *HealthService {
+	if service != nil {
+		service.tracer = tracer
+	}
+	return service
+}
+
+func (service *HealthService) operationTracer() observability.Tracer {
+	if service == nil {
+		return nil
+	}
+	return service.tracer
 }

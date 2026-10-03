@@ -1,6 +1,8 @@
 package review
 
 import (
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
+
 	"context"
 	"time"
 
@@ -30,7 +32,10 @@ type recaptureStatusReader interface {
 }
 
 // List returns reference-only child status; it never discloses bearer credentials.
-func (service *RecaptureService) List(ctx context.Context, auth access.Context, caseID id.ReviewCase) ([]RecaptureStatus, error) {
+func (service *RecaptureService) List(ctx context.Context, auth access.Context, caseID id.ReviewCase) (spanResult0 []RecaptureStatus, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.tracer, "review.RecaptureService.List")
+	defer func() { completeSpan(spanErr) }()
+
 	if err := auth.Require(access.PermissionReviewsRead); err != nil {
 		return nil, err
 	}

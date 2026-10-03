@@ -24,6 +24,8 @@ type AsyncRepository interface {
 
 // AsyncExecutor keeps pending progress outside terminal verification results.
 type AsyncExecutor struct {
+	tracer observability.Tracer
+
 	repository AsyncRepository
 	remote     providerv1.Advancer
 	now        func() time.Time
@@ -35,7 +37,7 @@ func NewAsyncExecutor(repository AsyncRepository, remote providerv1.Advancer, no
 	if repository == nil || remote == nil || now == nil {
 		return nil, ErrRequestUnavailable
 	}
-	return &AsyncExecutor{repository, remote, now, nil}, nil
+	return &AsyncExecutor{repository: repository, remote: remote, now: now, metrics: nil}, nil
 }
 
 // WithMetrics attaches the bounded provider dispatch metric receiver.
@@ -47,7 +49,10 @@ func (executor *AsyncExecutor) WithMetrics(metrics Metrics) *AsyncExecutor {
 }
 
 // Execute submits at most once, then uses status-only recovery on every continuation.
-func (executor *AsyncExecutor) Execute(ctx context.Context, request providerv1.Request) (providerv1.Result, error) {
+func (executor *AsyncExecutor) Execute(ctx context.Context, request providerv1.Request) (spanResult0 providerv1.Result, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, executor.operationTracer(), "provider.AsyncExecutor.Execute")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if request.Validate() != nil || !executor.now().Before(request.Deadline) {
 		return providerv1.Result{}, ErrRequestUnavailable
 	}
@@ -100,4 +105,19 @@ func (executor *AsyncExecutor) observe(request providerv1.Request, outcome obser
 		Outcome:      outcome,
 		FailureClass: class,
 	})
+}
+
+// WithTracer injects operation tracing during composition, before concurrent use.
+func (executor *AsyncExecutor) WithTracer(tracer observability.Tracer) *AsyncExecutor {
+	if executor != nil {
+		executor.tracer = tracer
+	}
+	return executor
+}
+
+func (executor *AsyncExecutor) operationTracer() observability.Tracer {
+	if executor == nil {
+		return nil
+	}
+	return executor.tracer
 }

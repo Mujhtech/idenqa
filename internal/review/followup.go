@@ -1,6 +1,8 @@
 package review
 
 import (
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
+
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -41,6 +43,8 @@ type FollowupRepository interface {
 
 // FollowupService authorizes policy-controlled follow-up commands.
 type FollowupService struct {
+	tracer observability.Tracer
+
 	repository FollowupRepository
 	now        func() time.Time
 }
@@ -50,11 +54,14 @@ func NewFollowupService(repository FollowupRepository, now func() time.Time) (*F
 	if repository == nil || now == nil {
 		return nil, ErrInvalid
 	}
-	return &FollowupService{repository, now}, nil
+	return &FollowupService{repository: repository, now: now}, nil
 }
 
 // Execute authorizes and dispatches one idempotent follow-up.
-func (s *FollowupService) Execute(ctx context.Context, auth access.Context, caseID id.ReviewCase, version int64, resolution Resolution, reason, key string, correction bool) (FollowupResult, error) {
+func (s *FollowupService) Execute(ctx context.Context, auth access.Context, caseID id.ReviewCase, version int64, resolution Resolution, reason, key string, correction bool) (spanResult0 FollowupResult, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, s.operationTracer(), "review.FollowupService.Execute")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := auth.Require(access.PermissionReviewsWrite); err != nil {
 		return FollowupResult{}, err
 	}
@@ -121,7 +128,10 @@ func FindingState(resolution Resolution) policy.RequirementState {
 }
 
 // Intake opens a correction against an eligible immutable decision.
-func (s *FollowupService) Intake(ctx context.Context, auth access.Context, decisionID id.Decision, key string) (FollowupResult, error) {
+func (s *FollowupService) Intake(ctx context.Context, auth access.Context, decisionID id.Decision, key string) (spanResult0 FollowupResult, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, s.operationTracer(), "review.FollowupService.Intake")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := auth.Require(access.PermissionAppealsWrite); err != nil {
 		return FollowupResult{}, err
 	}
@@ -142,7 +152,10 @@ func (s *FollowupService) Intake(ctx context.Context, auth access.Context, decis
 }
 
 // Reconsider opens the existing independent correction workflow for one exact verification decision.
-func (s *FollowupService) Reconsider(ctx context.Context, auth access.Context, verificationID id.Verification, decisionID id.Decision, key string) (FollowupResult, error) {
+func (s *FollowupService) Reconsider(ctx context.Context, auth access.Context, verificationID id.Verification, decisionID id.Decision, key string) (spanResult0 FollowupResult, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, s.operationTracer(), "review.FollowupService.Reconsider")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := auth.Require(access.PermissionAppealsWrite); err != nil {
 		return FollowupResult{}, err
 	}
@@ -167,4 +180,19 @@ func (s *FollowupService) Reconsider(ctx context.Context, auth access.Context, v
 		return FollowupResult{}, ErrForbidden
 	}
 	return repository.OpenReconsideration(ctx, auth.TenantScope(), verificationID, decisionID, Actor{auth.Principal().KeyID().String()}, retry)
+}
+
+// WithTracer injects operation tracing during composition, before concurrent use.
+func (s *FollowupService) WithTracer(tracer observability.Tracer) *FollowupService {
+	if s != nil {
+		s.tracer = tracer
+	}
+	return s
+}
+
+func (s *FollowupService) operationTracer() observability.Tracer {
+	if s == nil {
+		return nil
+	}
+	return s.tracer
 }

@@ -1,6 +1,8 @@
 package review
 
 import (
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
+
 	"context"
 	"encoding/json"
 	"fmt"
@@ -39,6 +41,8 @@ type AdministrationRepository interface {
 
 // Management authorizes tenant review administration.
 type Management struct {
+	tracer observability.Tracer
+
 	repository AdministrationRepository
 	now        func() time.Time
 }
@@ -48,7 +52,7 @@ func NewManagement(repository AdministrationRepository, now func() time.Time) (*
 	if repository == nil || now == nil {
 		return nil, ErrInvalid
 	}
-	return &Management{repository, now}, nil
+	return &Management{repository: repository, now: now}, nil
 }
 
 // OperatorConfiguration is an explicit tenant attestation, not proof from an external issuer.
@@ -58,7 +62,10 @@ type OperatorConfiguration struct {
 }
 
 // PutOperator versions a tenant-attested operator assignment.
-func (m *Management) PutOperator(ctx context.Context, auth access.Context, keyID id.APIKey, input OperatorConfiguration, version int64, key string) (AdministrationRecord, error) {
+func (m *Management) PutOperator(ctx context.Context, auth access.Context, keyID id.APIKey, input OperatorConfiguration, version int64, key string) (spanResult0 AdministrationRecord, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, m.operationTracer(), "review.Management.PutOperator")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := auth.Require(access.PermissionReviewsAdmin); err != nil {
 		return AdministrationRecord{}, err
 	}
@@ -72,7 +79,10 @@ func (m *Management) PutOperator(ctx context.Context, auth access.Context, keyID
 }
 
 // PutPolicy versions settings for an exact policy revision.
-func (m *Management) PutPolicy(ctx context.Context, auth access.Context, input PolicySettings, version int64, key string) (AdministrationRecord, error) {
+func (m *Management) PutPolicy(ctx context.Context, auth access.Context, input PolicySettings, version int64, key string) (spanResult0 AdministrationRecord, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, m.operationTracer(), "review.Management.PutPolicy")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := auth.Require(access.PermissionReviewsAdmin); err != nil {
 		return AdministrationRecord{}, err
 	}
@@ -108,7 +118,10 @@ func (m *Management) change(ctx context.Context, auth access.Context, kind, refe
 	}
 	return m.repository.Administer(ctx, auth.TenantScope(), Administration{kind, reference, version, body, Actor{auth.Principal().KeyID().String()}, now, retry})
 }
-func (m *Management) Read(ctx context.Context, auth access.Context, kind, reference string) (AdministrationRecord, error) {
+func (m *Management) Read(ctx context.Context, auth access.Context, kind, reference string) (spanResult0 AdministrationRecord, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, m.operationTracer(), "review.Management.Read")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := auth.Require(access.PermissionReviewsAdmin); err != nil {
 		return AdministrationRecord{}, err
 	}
@@ -140,7 +153,10 @@ func (q QueueConfiguration) Validate() error {
 }
 
 // PutQueue updates queue metadata without altering case findings.
-func (m *Management) PutQueue(ctx context.Context, auth access.Context, caseID id.ReviewCase, input QueueConfiguration, version int64, key string) (AdministrationRecord, error) {
+func (m *Management) PutQueue(ctx context.Context, auth access.Context, caseID id.ReviewCase, input QueueConfiguration, version int64, key string) (spanResult0 AdministrationRecord, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, m.operationTracer(), "review.Management.PutQueue")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := auth.Require(access.PermissionReviewsAdmin); err != nil {
 		return AdministrationRecord{}, err
 	}
@@ -151,7 +167,10 @@ func (m *Management) PutQueue(ctx context.Context, auth access.Context, caseID i
 }
 
 // BindCase pins explicit display and operational settings to an existing case.
-func (m *Management) BindCase(ctx context.Context, auth access.Context, caseID id.ReviewCase, input PolicySettings, key string) (AdministrationRecord, error) {
+func (m *Management) BindCase(ctx context.Context, auth access.Context, caseID id.ReviewCase, input PolicySettings, key string) (spanResult0 AdministrationRecord, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, m.operationTracer(), "review.Management.BindCase")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := auth.Require(access.PermissionReviewsAdmin); err != nil {
 		return AdministrationRecord{}, err
 	}
@@ -159,4 +178,19 @@ func (m *Management) BindCase(ctx context.Context, auth access.Context, caseID i
 		return AdministrationRecord{}, ErrInvalid
 	}
 	return m.change(ctx, auth, "case-settings", caseID.String(), input, 0, key)
+}
+
+// WithTracer injects operation tracing during composition, before concurrent use.
+func (m *Management) WithTracer(tracer observability.Tracer) *Management {
+	if m != nil {
+		m.tracer = tracer
+	}
+	return m
+}
+
+func (m *Management) operationTracer() observability.Tracer {
+	if m == nil {
+		return nil
+	}
+	return m.tracer
 }

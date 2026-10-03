@@ -1,6 +1,8 @@
 package review
 
 import (
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
+
 	"context"
 	"encoding/json"
 	"slices"
@@ -29,6 +31,8 @@ type RecaptureRepository interface {
 
 // RecaptureService requires current operator authority even for credential replay.
 type RecaptureService struct {
+	tracer observability.Tracer
+
 	repository                RecaptureRepository
 	authority                 Authority
 	ids                       verification.SessionIDGenerator
@@ -52,7 +56,10 @@ func NewRecaptureService(repository RecaptureRepository, authority Authority, id
 }
 
 // Create requires a policy-approved request_input evaluation of an accepted case.
-func (service *RecaptureService) Create(ctx context.Context, auth access.Context, caseID id.ReviewCase, version int64, key string) (verification.CreatedSession, error) {
+func (service *RecaptureService) Create(ctx context.Context, auth access.Context, caseID id.ReviewCase, version int64, key string) (spanResult0 verification.CreatedSession, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "review.RecaptureService.Create")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := auth.Require(access.PermissionReviewsWrite); err != nil {
 		return verification.CreatedSession{}, err
 	}
@@ -131,4 +138,19 @@ func (service *RecaptureService) Create(ctx context.Context, auth access.Context
 		CaptureToken: presented, OutcomeCredential: result.OutcomeCredential,
 		OutcomeToken: outcomePresented,
 	}, nil
+}
+
+// WithTracer injects operation tracing during composition, before concurrent use.
+func (service *RecaptureService) WithTracer(tracer observability.Tracer) *RecaptureService {
+	if service != nil {
+		service.tracer = tracer
+	}
+	return service
+}
+
+func (service *RecaptureService) operationTracer() observability.Tracer {
+	if service == nil {
+		return nil
+	}
+	return service.tracer
 }

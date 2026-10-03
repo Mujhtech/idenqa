@@ -38,6 +38,8 @@ type IdentifierGenerator interface {
 
 // Service authorises and coordinates review aggregates independently of HTTP.
 type Service struct {
+	tracer observability.Tracer
+
 	repository  Repository
 	identifiers IdentifierGenerator
 	now         func() time.Time
@@ -83,7 +85,10 @@ func (service *Service) reviewer(ctx context.Context, scope tenant.Scope, actor 
 }
 
 // OpenCase creates one review case linked to an immutable decision.
-func (service *Service) OpenCase(ctx context.Context, scope tenant.Scope, actor Actor, verification id.Verification, challenged id.Decision, region, certificate string, oversight Oversight) (Case, error) {
+func (service *Service) OpenCase(ctx context.Context, scope tenant.Scope, actor Actor, verification id.Verification, challenged id.Decision, region, certificate string, oversight Oversight) (spanResult0 Case, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "review.Service.OpenCase")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if actor.ID == "" {
 		return Case{}, ErrForbidden
 	}
@@ -102,7 +107,10 @@ func (service *Service) OpenCase(ctx context.Context, scope tenant.Scope, actor 
 }
 
 // FindCase returns only non-evidence case metadata.
-func (service *Service) FindCase(ctx context.Context, scope tenant.Scope, actor Actor, identifier id.ReviewCase) (Case, error) {
+func (service *Service) FindCase(ctx context.Context, scope tenant.Scope, actor Actor, identifier id.ReviewCase) (spanResult0 Case, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "review.Service.FindCase")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if actor.ID == "" || identifier.IsZero() {
 		return Case{}, ErrForbidden
 	}
@@ -111,7 +119,10 @@ func (service *Service) FindCase(ctx context.Context, scope tenant.Scope, actor 
 
 // FindCaseForVerification returns the current non-evidence case metadata for a
 // verification without exposing findings or evidence.
-func (service *Service) FindCaseForVerification(ctx context.Context, scope tenant.Scope, actor Actor, verification id.Verification) (Case, error) {
+func (service *Service) FindCaseForVerification(ctx context.Context, scope tenant.Scope, actor Actor, verification id.Verification) (spanResult0 Case, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "review.Service.FindCaseForVerification")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if actor.ID == "" || verification.IsZero() {
 		return Case{}, ErrForbidden
 	}
@@ -126,7 +137,10 @@ func (service *Service) FindCaseForVerification(ctx context.Context, scope tenan
 }
 
 // Claim applies certification and optimistic assignment rules.
-func (service *Service) Claim(ctx context.Context, scope tenant.Scope, actor Actor, identifier id.ReviewCase, expectedVersion int64) (Case, error) {
+func (service *Service) Claim(ctx context.Context, scope tenant.Scope, actor Actor, identifier id.ReviewCase, expectedVersion int64) (spanResult0 Case, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "review.Service.Claim")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	value, err := service.repository.FindCase(ctx, scope, identifier)
 	if err != nil {
 		return Case{}, err
@@ -147,7 +161,10 @@ func (service *Service) Claim(ctx context.Context, scope tenant.Scope, actor Act
 
 // SubmitFinding resolves grant metadata inside the tenant boundary before the
 // aggregate sees it; evidence content never enters this service.
-func (service *Service) SubmitFinding(ctx context.Context, scope tenant.Scope, actor Actor, caseID id.ReviewCase, resolution Resolution, reasonCode string, grantIDs []id.Grant, expectedVersion int64) (Case, error) {
+func (service *Service) SubmitFinding(ctx context.Context, scope tenant.Scope, actor Actor, caseID id.ReviewCase, resolution Resolution, reasonCode string, grantIDs []id.Grant, expectedVersion int64) (spanResult0 Case, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "review.Service.SubmitFinding")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	value, err := service.repository.FindCase(ctx, scope, caseID)
 	if err != nil {
 		return Case{}, err
@@ -200,7 +217,10 @@ func (service *Service) observeResolution(previous, resolved Case, resolution Re
 }
 
 // Correct records immutable decision supersession lineage.
-func (service *Service) Correct(ctx context.Context, scope tenant.Scope, actor Actor, caseID id.ReviewCase, superseding id.Decision, expectedVersion int64) (Case, error) {
+func (service *Service) Correct(ctx context.Context, scope tenant.Scope, actor Actor, caseID id.ReviewCase, superseding id.Decision, expectedVersion int64) (spanResult0 Case, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "review.Service.Correct")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	value, err := service.repository.FindCase(ctx, scope, caseID)
 	if err != nil {
 		return Case{}, err
@@ -220,7 +240,10 @@ func (service *Service) Correct(ctx context.Context, scope tenant.Scope, actor A
 }
 
 // RequestAppeal creates an independent-review workflow from a resolved case.
-func (service *Service) RequestAppeal(ctx context.Context, scope tenant.Scope, actor Actor, caseID id.ReviewCase, deadline time.Time) (Appeal, error) {
+func (service *Service) RequestAppeal(ctx context.Context, scope tenant.Scope, actor Actor, caseID id.ReviewCase, deadline time.Time) (spanResult0 Appeal, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "review.Service.RequestAppeal")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	return service.requestAppeal(ctx, scope, actor, caseID, deadline, nil)
 }
 func (service *Service) requestAppeal(ctx context.Context, scope tenant.Scope, actor Actor, caseID id.ReviewCase, deadline time.Time, retry *idempotency.Request) (Appeal, error) {
@@ -260,7 +283,10 @@ func (service *Service) requestAppeal(ctx context.Context, scope tenant.Scope, a
 }
 
 // AssignAppeal assigns an independent reviewer optimistically.
-func (service *Service) AssignAppeal(ctx context.Context, scope tenant.Scope, actor Actor, identifier id.Appeal, expectedVersion int64) (Appeal, error) {
+func (service *Service) AssignAppeal(ctx context.Context, scope tenant.Scope, actor Actor, identifier id.Appeal, expectedVersion int64) (spanResult0 Appeal, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "review.Service.AssignAppeal")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	appeal, err := service.repository.FindAppeal(ctx, scope, identifier)
 	if err != nil {
 		return Appeal{}, err
@@ -285,7 +311,10 @@ func (service *Service) AssignAppeal(ctx context.Context, scope tenant.Scope, ac
 }
 
 // ResolveAppeal records a bounded independent outcome and optional successor.
-func (service *Service) ResolveAppeal(ctx context.Context, scope tenant.Scope, actor Actor, identifier id.Appeal, outcome AppealOutcome, reason string, superseding id.Decision, expectedVersion int64) (Appeal, error) {
+func (service *Service) ResolveAppeal(ctx context.Context, scope tenant.Scope, actor Actor, identifier id.Appeal, outcome AppealOutcome, reason string, superseding id.Decision, expectedVersion int64) (spanResult0 Appeal, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "review.Service.ResolveAppeal")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	appeal, err := service.repository.FindAppeal(ctx, scope, identifier)
 	if err != nil {
 		return Appeal{}, err
@@ -315,7 +344,10 @@ func IsExpectedFailure(err error) bool {
 }
 
 // WithdrawAppeal permits the authenticated requester to cancel an open appeal.
-func (service *Service) WithdrawAppeal(ctx context.Context, auth access.Context, identifier id.Appeal, version int64) (Appeal, error) {
+func (service *Service) WithdrawAppeal(ctx context.Context, auth access.Context, identifier id.Appeal, version int64) (spanResult0 Appeal, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "review.Service.WithdrawAppeal")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := auth.Require(access.PermissionAppealsWrite); err != nil {
 		return Appeal{}, err
 	}
@@ -329,7 +361,10 @@ func (service *Service) WithdrawAppeal(ctx context.Context, auth access.Context,
 }
 
 // ReadAppeal returns a tenant-scoped appeal representation.
-func (service *Service) ReadAppeal(ctx context.Context, auth access.Context, identifier id.Appeal) (Appeal, error) {
+func (service *Service) ReadAppeal(ctx context.Context, auth access.Context, identifier id.Appeal) (spanResult0 Appeal, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "review.Service.ReadAppeal")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := auth.Require(access.PermissionReviewsRead); err != nil {
 		return Appeal{}, err
 	}
@@ -337,7 +372,10 @@ func (service *Service) ReadAppeal(ctx context.Context, auth access.Context, ide
 }
 
 // RequestAppealWithKey authorizes idempotent appeal intake.
-func (service *Service) RequestAppealWithKey(ctx context.Context, auth access.Context, caseID id.ReviewCase, deadline time.Time, key string) (Appeal, error) {
+func (service *Service) RequestAppealWithKey(ctx context.Context, auth access.Context, caseID id.ReviewCase, deadline time.Time, key string) (spanResult0 Appeal, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "review.Service.RequestAppealWithKey")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := auth.Require(access.PermissionAppealsWrite); err != nil {
 		return Appeal{}, err
 	}
@@ -346,4 +384,19 @@ func (service *Service) RequestAppealWithKey(ctx context.Context, auth access.Co
 		return Appeal{}, err
 	}
 	return service.requestAppeal(ctx, auth.TenantScope(), Actor{auth.Principal().KeyID().String()}, caseID, deadline, &retry)
+}
+
+// WithTracer injects operation tracing during composition, before concurrent use.
+func (service *Service) WithTracer(tracer observability.Tracer) *Service {
+	if service != nil {
+		service.tracer = tracer
+	}
+	return service
+}
+
+func (service *Service) operationTracer() observability.Tracer {
+	if service == nil {
+		return nil
+	}
+	return service.tracer
 }
