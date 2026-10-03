@@ -138,6 +138,9 @@ import type {
   CaptureProgress,
   CaptureOutcome,
   CaptureConnection,
+  CaptureJourneyEventCreate,
+  CaptureJourneyEventReceipt,
+  VerificationTimeline,
   EvidenceUpload,
   EvidenceUploadCreate,
   EvidenceUploadID,
@@ -371,6 +374,38 @@ export class CaptureClient {
   constructor(options: CaptureClientOptions) {
     this.#token = requiredToken(options.captureToken, "captureToken");
     this.#transport = new JSONTransport(options);
+  }
+
+  /** Records best-effort interaction telemetry; this is not authoritative evidence. */
+  async recordJourneyEvent(
+    input: CaptureJourneyEventCreate,
+    options: RequestOptions = {},
+  ): Promise<SDKResponse<CaptureJourneyEventReceipt>> {
+    const response = await this.#transport.request<
+      components["schemas"]["CaptureJourneyEventReceipt"]
+    >({
+      method: "POST",
+      path: "v1/capture/journey-events",
+      bearerToken: this.#token,
+      body: {
+        event_id: input.eventId,
+        event_type: input.eventType,
+        screen: input.screen,
+        ...(input.action === undefined ? {} : { action: input.action }),
+        ...(input.requirementKey === undefined ? {} : { requirement_key: input.requirementKey }),
+        ...(input.artefact === undefined ? {} : { artefact: input.artefact }),
+        ...(input.acquisitionMethod === undefined
+          ? {}
+          : { acquisition_method: input.acquisitionMethod }),
+        sequence: positiveInteger(input.sequence, "sequence"),
+        client_occurred_at: input.clientOccurredAt,
+      },
+      ...signal(options),
+    });
+    return mapResponse(response, (value) => ({
+      eventId: value.event_id,
+      receivedAt: value.received_at,
+    }));
   }
 
   /** Cancels this token's verification. Reuse the key and expected version on retry. */
@@ -1002,6 +1037,31 @@ export class VerificationsClient {
       ...signal(options),
     });
     return mapResponse(response, verificationSession);
+  }
+
+  async timeline(
+    verificationId: VerificationID,
+    options: RequestOptions = {},
+  ): Promise<SDKResponse<VerificationTimeline>> {
+    const response = await this.#transport.request<components["schemas"]["VerificationTimeline"]>({
+      method: "GET",
+      path: `v1/verifications/${pathSegment(verificationId, "verificationId")}/timeline`,
+      bearerToken: this.#token,
+      ...signal(options),
+    });
+    return mapResponse(response, (value) => ({
+      events: value.events.map((event) => ({
+        id: event.id,
+        category: event.category,
+        source: event.source,
+        name: event.name,
+        ...(event.status === undefined ? {} : { status: event.status }),
+        ...(event.detail === undefined ? {} : { detail: event.detail }),
+        occurredAt: event.occurred_at,
+        authoritative: event.authoritative,
+      })),
+      truncated: value.truncated,
+    }));
   }
 }
 

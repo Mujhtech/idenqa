@@ -177,6 +177,79 @@ export interface CaptureConnection {
   readonly expiresAt: string;
 }
 
+export type CaptureJourneyEventType =
+  | "screen_viewed"
+  | "action_selected"
+  | "navigation_back"
+  | "capture_started"
+  | "capture_retried"
+  | "capture_accepted"
+  | "capture_retake"
+  | "recovery_started"
+  | "processing_started"
+  | "completion_shown"
+  | "error_shown";
+export type CaptureJourneyScreen =
+  | "intro"
+  | "country"
+  | "notice"
+  | "method"
+  | "preparation"
+  | "capture"
+  | "review"
+  | "recovery"
+  | "processing"
+  | "completion"
+  | "error";
+export type CaptureJourneyAction =
+  | "continue"
+  | "back"
+  | "select_country"
+  | "accept_notice"
+  | "refuse_notice"
+  | "select_document"
+  | "select_method"
+  | "start_capture"
+  | "retake"
+  | "accept_capture"
+  | "retry"
+  | "submit";
+
+/** Closed privacy-safe interaction input; arbitrary metadata is intentionally unsupported. */
+export interface CaptureJourneyEventCreate {
+  readonly eventId: string;
+  readonly eventType: CaptureJourneyEventType;
+  readonly screen: CaptureJourneyScreen;
+  readonly action?: CaptureJourneyAction;
+  readonly requirementKey?: string;
+  readonly artefact?: string;
+  readonly acquisitionMethod?: string;
+  readonly sequence: number;
+  readonly clientOccurredAt: string;
+}
+
+export interface CaptureJourneyEventReceipt {
+  readonly eventId: string;
+  readonly receivedAt: string;
+}
+
+export interface VerificationTimelineEvent {
+  readonly id: string;
+  readonly category:
+    "lifecycle" | "interaction" | "evidence" | "processing" | "signal" | "decision";
+  readonly source: "core" | "capture_client";
+  readonly name: string;
+  readonly status?: string;
+  readonly detail?: string;
+  readonly occurredAt: string;
+  readonly authoritative: boolean;
+}
+
+export interface VerificationTimeline {
+  readonly events: readonly VerificationTimelineEvent[];
+  readonly truncated: boolean;
+}
+
 export type CaptureProfileState = "draft" | "active" | "deactivated";
 export type CaptureProfileRevisionState = "draft" | "published" | "superseded" | "withdrawn";
 /** Workflow state; the identity outcome is available through the decision resource. */

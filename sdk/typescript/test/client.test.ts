@@ -34,6 +34,74 @@ const document: CaptureProfileDocument = {
 };
 
 describe("IdenqaClient", () => {
+  it("records a closed journey event and reads the unified timeline", async () => {
+    const requests: Request[] = [];
+    const fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const request = new Request(input, init);
+      requests.push(request);
+      if (request.url.endsWith("/v1/capture/journey-events")) {
+        return jsonResponse(
+          {
+            event_id: "journey_71d7207f-6935-4d75-8f30-5bd35c8ee231",
+            received_at: "2026-10-02T07:31:06Z",
+          },
+          202,
+          { "X-Request-ID": "req_journey" },
+        );
+      }
+      return jsonResponse(
+        {
+          events: [
+            {
+              id: "origin:ver_01M11HEQG00000000000000000",
+              category: "lifecycle",
+              source: "core",
+              name: "verification.created",
+              occurred_at: "2026-10-02T07:30:00Z",
+              authoritative: true,
+            },
+          ],
+          truncated: false,
+        },
+        200,
+        { "X-Request-ID": "req_timeline" },
+      );
+    });
+    const capture = new CaptureClient({
+      baseUrl: "https://core.example.test",
+      captureToken: "capture-token",
+      fetch,
+    });
+    const client = new IdenqaClient({
+      baseUrl: "https://core.example.test",
+      apiKey: "tenant-token",
+      fetch,
+    });
+    const receipt = await capture.recordJourneyEvent({
+      eventId: "journey_71d7207f-6935-4d75-8f30-5bd35c8ee231",
+      eventType: "navigation_back",
+      screen: "preparation",
+      action: "back",
+      sequence: 4,
+      clientOccurredAt: "2026-10-02T07:31:05Z",
+    });
+    const timeline = await client.verifications.timeline("ver_01M11HEQG00000000000000000");
+
+    expect(receipt.data.receivedAt).toBe("2026-10-02T07:31:06Z");
+    expect(await requests[0]!.json()).toEqual({
+      event_id: "journey_71d7207f-6935-4d75-8f30-5bd35c8ee231",
+      event_type: "navigation_back",
+      screen: "preparation",
+      action: "back",
+      sequence: 4,
+      client_occurred_at: "2026-10-02T07:31:05Z",
+    });
+    expect(timeline.data.events[0]).toMatchObject({
+      name: "verification.created",
+      authoritative: true,
+    });
+  });
+
   it("persists a capture document choice with expected version and a stable idempotency key", async () => {
     const capture = new CaptureClient({
       baseUrl: "https://core.example.test/",

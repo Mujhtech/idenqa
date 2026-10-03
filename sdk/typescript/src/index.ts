@@ -63,6 +63,11 @@ export type {
   CaptureConstraintValue,
   CaptureCompletion,
   CaptureConnection,
+  CaptureJourneyAction,
+  CaptureJourneyEventCreate,
+  CaptureJourneyEventReceipt,
+  CaptureJourneyEventType,
+  CaptureJourneyScreen,
   CaptureFallback,
   CaptureFallbackReason,
   CaptureProfile,
@@ -139,6 +144,8 @@ export type {
   VerificationSession,
   VerificationCancellation,
   VerificationResumed,
+  VerificationTimeline,
+  VerificationTimelineEvent,
   VerificationState,
 } from "./types.js";
 

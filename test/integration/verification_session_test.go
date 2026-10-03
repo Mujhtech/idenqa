@@ -321,6 +321,40 @@ func TestVerificationSessionAtomicSnapshotReplayAndIsolation(t *testing.T) {
 	if err != nil || captureContext.Session().ID().String() != created.Session.ID().String() {
 		t.Fatalf("Authenticate(capture) session = %s, error = %v", captureContext.Session().ID(), err)
 	}
+	timelineNow := mutation.CreatedAt.Add(3 * time.Minute)
+	timelineService, err := verification.NewTimelineService(sessionStore, func() time.Time { return timelineNow })
+	if err != nil {
+		t.Fatalf("new timeline service: %v", err)
+	}
+	journeyInput := verification.JourneyEventInput{
+		EventID: "journey_71d7207f-6935-4d75-8f30-5bd35c8ee231", EventType: "navigation_back",
+		Screen: "preparation", Action: "back", RequirementKey: "document",
+		Artefact: "idenqa.artefact.document_front", AcquisitionMethod: string(evidence.MethodLiveCamera),
+		Sequence: 1, ClientOccurredAt: timelineNow.Add(-time.Second),
+	}
+	recorded, err := timelineService.Record(ctx, captureContext, journeyInput)
+	if err != nil {
+		t.Fatalf("Record(journey event) error = %v", err)
+	}
+	if replayed, replayErr := timelineService.Record(ctx, captureContext, journeyInput); replayErr != nil || replayed.Digest != recorded.Digest {
+		t.Fatalf("Record(journey replay) = %#v, %v", replayed, replayErr)
+	}
+	conflictingJourney := journeyInput
+	conflictingJourney.EventID = "journey_4db19387-76a8-49c1-b61f-e4a3029dccdc"
+	if _, err := timelineService.Record(ctx, captureContext, conflictingJourney); !errors.Is(err, verification.ErrSessionConflict) {
+		t.Fatalf("Record(sequence conflict) error = %v, want ErrSessionConflict", err)
+	}
+	timeline, err := sessionStore.FindTimeline(ctx, firstScope, created.Session.ID())
+	if err != nil {
+		t.Fatalf("FindTimeline() error = %v", err)
+	}
+	if len(timeline.Events) != 2 || timeline.Events[0].Name != "verification.created" || !timeline.Events[0].Authoritative ||
+		timeline.Events[1].Name != "navigation_back" || timeline.Events[1].Authoritative {
+		t.Fatalf("timeline = %#v", timeline)
+	}
+	if _, err := sessionStore.FindTimeline(ctx, secondScope, created.Session.ID()); !errors.Is(err, verification.ErrSessionNotFound) {
+		t.Fatalf("cross-tenant FindTimeline() error = %v, want ErrSessionNotFound", err)
+	}
 	ticketStore, err := realtimepostgres.New(runtimePool)
 	if err != nil {
 		t.Fatalf("new realtime ticket store: %v", err)
@@ -938,6 +972,23 @@ func TestVerificationSessionAtomicSnapshotReplayAndIsolation(t *testing.T) {
 	current, err := sessionStore.FindSession(ctx, firstScope, created.Session.ID())
 	if err != nil || current.State() != verification.SessionStateProcessing || current.Version() != 2 {
 		t.Fatalf("current session must still expose its transition: %+v, %v", current, err)
+	}
+	history, err := sessionStore.FindHistory(ctx, firstScope, created.Session.ID())
+	if err != nil {
+		t.Fatalf("FindHistory() error = %v", err)
+	}
+	if history.Origin.State != verification.SessionStateCollecting || history.Origin.Version != 1 ||
+		!history.Origin.OccurredAt.Equal(mutation.CreatedAt) || history.Truncated || len(history.Transitions) != 1 {
+		t.Fatalf("lifecycle history = %+v", history)
+	}
+	transition := history.Transitions[0]
+	if transition.EventID != transitionID || transition.From != verification.SessionStateCollecting ||
+		transition.To != verification.SessionStateProcessing || transition.Version != 2 ||
+		!transition.OccurredAt.Equal(transitionAt) {
+		t.Fatalf("lifecycle transition = %+v", transition)
+	}
+	if _, err := sessionStore.FindHistory(ctx, secondScope, created.Session.ID()); !errors.Is(err, verification.ErrSessionNotFound) {
+		t.Fatalf("cross-tenant FindHistory() error = %v, want ErrSessionNotFound", err)
 	}
 }
 

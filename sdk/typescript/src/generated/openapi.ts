@@ -4,6 +4,108 @@
  */
 
 export interface paths {
+    readonly "/v1/audit-records": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * List immutable tenant audit records
+         * @description Returns a bounded newest-first page without event payloads, digests, or chain hashes.
+         */
+        readonly get: operations["listAuditRecords"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/request-logs": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * List API request logs
+         * @description Returns bounded newest-first operational metadata using route templates, the transport-peer IP address, and bounded redacted query and JSON body parameters. Raw paths, forwarded-address headers, credentials, other headers, evidence bytes, and non-JSON bodies are excluded.
+         */
+        readonly get: operations["listRequestLogs"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/request-logs/{requestID}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Get API request log
+         * @description Returns one tenant-scoped request-log record by its public request identifier, including bounded redacted debug parameters.
+         */
+        readonly get: operations["getRequestLog"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/request-analytics": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Get privacy-safe API request analytics
+         * @description Aggregates tenant-scoped route templates, status classes, and server duration. Request bodies, raw paths, query strings, addresses, credentials, evidence, and subject identifiers are excluded.
+         */
+        readonly get: operations["getRequestAnalytics"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/access/permissions": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * List tenant-assignable permissions
+         * @description Returns the exact permissions understood by this Core revision. The
+         *     catalog excludes platform-administration and internal permissions and
+         *     requires `tenant:read`.
+         */
+        readonly get: operations["listAccessPermissions"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
     readonly "/v1/tenant": {
         readonly parameters: {
             readonly query?: never;
@@ -41,6 +143,26 @@ export interface paths {
          *     provider payloads are never included.
          */
         readonly get: operations["exportTenant"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/capture-profile-registries": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * List deployed capture-profile registries
+         * @description Returns immutable registry revisions from newest to oldest so profile authors can pin exact compatible vocabulary.
+         */
+        readonly get: operations["listCaptureProfileRegistries"];
         readonly put?: never;
         readonly post?: never;
         readonly delete?: never;
@@ -179,8 +301,34 @@ export interface paths {
         };
         readonly get?: never;
         readonly put?: never;
-        /** Deactivate a capture profile */
+        /**
+         * Deactivate a capture profile
+         * @description Prevents new sessions from using the profile and withdraws any open draft. A superseding draft may subsequently be created, edited, and published to reactivate the profile without rewriting published revision history.
+         */
         readonly post: operations["deactivateCaptureProfile"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/capture-profiles/{profileID}/revisions": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Stable capture-profile identifier. */
+                readonly profileID: components["parameters"]["ProfileID"];
+            };
+            readonly cookie?: never;
+        };
+        /**
+         * List capture-profile revision history
+         * @description Returns a bounded newest-first page without repeating immutable revision documents.
+         */
+        readonly get: operations["listCaptureProfileRevisions"];
+        readonly put?: never;
+        readonly post?: never;
         readonly delete?: never;
         readonly options?: never;
         readonly head?: never;
@@ -216,7 +364,13 @@ export interface paths {
             readonly path?: never;
             readonly cookie?: never;
         };
-        readonly get?: never;
+        /**
+         * List verification sessions
+         * @description Returns a bounded newest-first page of tenant-owned verification sessions.
+         *     The opaque continuation cursor is integrity protected and bound to the
+         *     authenticated tenant and page size. Requires `verification_sessions:read`.
+         */
+        readonly get: operations["listVerifications"];
         readonly put?: never;
         /**
          * Create a verification session
@@ -277,6 +431,99 @@ export interface paths {
         readonly patch?: never;
         readonly trace?: never;
     };
+    readonly "/v1/verifications/{verificationID}/inspection": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Inspect safe operational metadata for a verification
+         * @description Requires verification_sessions:read, evidence:read, and webhooks:read.
+         *     Returns bounded evidence, check, attempt, decision-lineage, retention, legal-hold, and webhook
+         *     metadata. Evidence bytes, object-store references, encryption material,
+         *     provider payloads, and webhook payloads are never returned.
+         */
+        readonly get: operations["inspectVerification"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/verifications/{verificationID}/history": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Get authoritative verification lifecycle history
+         * @description Requires verification_sessions:read. Returns the authoritative version-one
+         *     creation state separately from immutable post-creation transition receipts,
+         *     ordered by aggregate version. Actor identifiers, command digests, evidence,
+         *     provider payloads, and webhook payloads are never returned.
+         */
+        readonly get: operations["getVerificationLifecycleHistory"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/verifications/{verificationID}/signals": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Get provider-independent verification signals
+         * @description Requires verification_sessions:read. Returns bounded immutable observations
+         *     using Core's provider-independent signal vocabulary. Provider payloads,
+         *     extracted identity values, evidence, and assurance assertions are never returned.
+         */
+        readonly get: operations["getVerificationSignals"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/verifications/{verificationID}/timeline": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Get the unified verification event timeline
+         * @description Requires verification_sessions:read. Returns a bounded chronological projection
+         *     of authoritative Core lifecycle, evidence, processing, signal, and decision events
+         *     together with explicitly non-authoritative capture-client interactions. Client events
+         *     are best effort and ordered by Core receipt time; absence is not proof that an action
+         *     did not occur. Raw evidence, subject-entered values, secrets, provider payloads, and
+         *     free-form client metadata are never returned.
+         */
+        readonly get: operations["getVerificationTimeline"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
     readonly "/v1/verifications/{verificationID}/resume": {
         readonly parameters: {
             readonly query?: never;
@@ -295,6 +542,31 @@ export interface paths {
          *     never returns capture bearer material again.
          */
         readonly post: operations["resumeVerification"];
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/capture/journey-events": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly get?: never;
+        readonly put?: never;
+        /**
+         * Record a privacy-safe capture interaction
+         * @description Records one best-effort client interaction against the verification bound to
+         *     this capture credential. The schema is deliberately closed: it accepts only
+         *     bounded workflow vocabulary and cannot carry subject-entered values, raw
+         *     evidence, secrets, provider payloads, DOM snapshots, or free-form metadata.
+         *     Reusing an event ID with identical input is idempotent; conflicting reuse is
+         *     rejected. These events are not authoritative evidence of user behaviour.
+         */
+        readonly post: operations["recordCaptureJourneyEvent"];
         readonly delete?: never;
         readonly options?: never;
         readonly head?: never;
@@ -941,6 +1213,26 @@ export interface paths {
          *     consuming or storing the repeated body.
          */
         readonly put: operations["uploadEvidence"];
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/webhook-event-types": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * List supported webhook event types
+         * @description Requires webhooks:read. Returns the authoritative closed catalogue of webhook event types supported by this Core deployment, including their envelope schema version and closed data fields.
+         */
+        readonly get: operations["listWebhookEventTypes"];
+        readonly put?: never;
         readonly post?: never;
         readonly delete?: never;
         readonly options?: never;
@@ -4444,6 +4736,215 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /**
+         * @description Content-free reference metadata for one immutable tenant audit event.
+         * @example {
+         *       "sequence": 42,
+         *       "event_id": "evt_01M11HEQG00000000000000000",
+         *       "event_type": "verification.created",
+         *       "aggregate_id": "vrf_01M11HEQG00000000000000000",
+         *       "actor_id": "key_01M11HEQG00000000000000000",
+         *       "occurred_at": "2026-09-29T06:00:00Z"
+         *     }
+         */
+        readonly AuditRecord: {
+            /**
+             * Format: int64
+             * @example 42
+             */
+            readonly sequence: number;
+            /** @example evt_01M11HEQG00000000000000000 */
+            readonly event_id: string;
+            /** @example verification.created */
+            readonly event_type: string;
+            /** @example vrf_01M11HEQG00000000000000000 */
+            readonly aggregate_id: string;
+            /** @example key_01M11HEQG00000000000000000 */
+            readonly actor_id: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-29T06:00:00Z
+             */
+            readonly occurred_at: string;
+        };
+        /**
+         * @description A bounded newest-first page of audit-record metadata.
+         * @example {
+         *       "data": []
+         *     }
+         */
+        readonly AuditRecordPage: {
+            /** @example [] */
+            readonly data: readonly components["schemas"]["AuditRecord"][];
+            /** @example 41 */
+            readonly next_before?: string;
+        };
+        /**
+         * @description Operational metadata and bounded redacted debug parameters for one API request.
+         * @example {
+         *       "request_id": "req_01M11HEQG00000000000000000",
+         *       "actor_key_id": "key_01M11HEQG00000000000000000",
+         *       "method": "GET",
+         *       "route_template": "/v1/verifications/{verificationID}",
+         *       "client_ip_address": "192.0.2.10",
+         *       "query_parameters": {},
+         *       "status_code": 200,
+         *       "duration_ms": 12,
+         *       "occurred_at": "2026-09-29T06:00:00Z"
+         *     }
+         */
+        readonly RequestLog: {
+            /** @example req_01M11HEQG00000000000000000 */
+            readonly request_id: string;
+            /** @example key_01M11HEQG00000000000000000 */
+            readonly actor_key_id: string;
+            /** @example GET */
+            readonly method: string;
+            /** @example /v1/verifications/{verificationID} */
+            readonly route_template: string;
+            /** @example 192.0.2.10 */
+            readonly client_ip_address: string;
+            /**
+             * @description Bounded query parameter values with sensitive fields replaced by `[REDACTED]`.
+             * @example {
+             *       "limit": "25"
+             *     }
+             */
+            readonly query_parameters: {
+                readonly [key: string]: unknown;
+            };
+            /**
+             * @description Bounded JSON request-body parameters with sensitive fields replaced by `[REDACTED]`; absent for non-JSON, empty, or unread bodies.
+             * @example {
+             *       "workflow": "document_and_selfie",
+             *       "token": "[REDACTED]"
+             *     }
+             */
+            readonly body_parameters?: {
+                readonly [key: string]: unknown;
+            };
+            /** @example 200 */
+            readonly status_code: number;
+            /**
+             * Format: int64
+             * @example 12
+             */
+            readonly duration_ms: number;
+            /**
+             * Format: date-time
+             * @example 2026-09-29T06:00:00Z
+             */
+            readonly occurred_at: string;
+            /** @example 4bf92f3577b34da6a3ce929d0e0e4736 */
+            readonly trace_reference?: string;
+        };
+        /**
+         * @description A bounded newest-first page of content-free API request metadata.
+         * @example {
+         *       "data": []
+         *     }
+         */
+        readonly RequestLogPage: {
+            /** @example [] */
+            readonly data: readonly components["schemas"]["RequestLog"][];
+            /** @example req_01M11HEQG00000000000000000 */
+            readonly next_before?: string;
+        };
+        /**
+         * @description Content-free request metrics for one bounded UTC window and its immediately preceding comparison window.
+         * @example {
+         *       "window": {
+         *         "from": "2026-09-23T06:00:00Z",
+         *         "to": "2026-09-30T06:00:00Z"
+         *       },
+         *       "requests": 120,
+         *       "successes": 117,
+         *       "errors": 3,
+         *       "p95_latency_ms": 240,
+         *       "previous_requests": 110,
+         *       "volume": [],
+         *       "endpoints": [],
+         *       "statuses": []
+         *     }
+         */
+        readonly RequestAnalytics: {
+            readonly window: {
+                /** Format: date-time */
+                readonly from: string;
+                /** Format: date-time */
+                readonly to: string;
+            };
+            /** Format: int64 */
+            readonly requests: number;
+            /** Format: int64 */
+            readonly successes: number;
+            /** Format: int64 */
+            readonly errors: number;
+            /** Format: int64 */
+            readonly p95_latency_ms: number;
+            /** Format: int64 */
+            readonly previous_requests: number;
+            readonly volume: readonly {
+                /** Format: date-time */
+                readonly day: string;
+                /** Format: int64 */
+                readonly requests: number;
+                /** Format: int64 */
+                readonly errors: number;
+            }[];
+            readonly endpoints: readonly {
+                readonly method: string;
+                readonly route_template: string;
+                /** Format: int64 */
+                readonly requests: number;
+                /** Format: int64 */
+                readonly successes: number;
+                /** Format: int64 */
+                readonly p95_latency_ms: number;
+            }[];
+            readonly statuses: readonly {
+                /** @enum {string} */
+                readonly class: "1xx" | "2xx" | "3xx" | "4xx" | "5xx";
+                /** Format: int64 */
+                readonly count: number;
+            }[];
+        };
+        /**
+         * @description The exact tenant-assignable permission catalog advertised by this Core revision.
+         * @example {
+         *       "version": "idenqa.core/access-permissions/v1",
+         *       "data": [
+         *         {
+         *           "id": "verification_sessions:read",
+         *           "resource": "verification_sessions",
+         *           "action": "read"
+         *         }
+         *       ]
+         *     }
+         */
+        readonly PermissionCatalog: {
+            /** @constant */
+            readonly version: "idenqa.core/access-permissions/v1";
+            /**
+             * @example [
+             *       {
+             *         "id": "verification_sessions:read",
+             *         "resource": "verification_sessions",
+             *         "action": "read"
+             *       }
+             *     ]
+             */
+            readonly data: readonly components["schemas"]["PermissionCatalogEntry"][];
+        };
+        /** @description One exact resource-action permission that may be assigned to a tenant credential. */
+        readonly PermissionCatalogEntry: {
+            /** @example verification_sessions:read */
+            readonly id: string;
+            /** @example verification_sessions */
+            readonly resource: string;
+            /** @example read */
+            readonly action: string;
+        };
+        /**
          * @description Independent platform assurance dimension; there is no universal ranking.
          * @example liveness
          * @enum {string}
@@ -4895,8 +5396,13 @@ export interface components {
          *       "region": "eu",
          *       "oversight": "single",
          *       "state": "open",
+         *       "required_certificate": "document.level2",
          *       "finding_count": 1,
-         *       "version": 1
+         *       "permitted_findings": [],
+         *       "findings": [],
+         *       "version": 1,
+         *       "created_at": "2026-08-27T12:00:00Z",
+         *       "updated_at": "2026-08-27T12:00:00Z"
          *     }
          */
         readonly ReviewCase: {
@@ -4909,10 +5415,28 @@ export interface components {
             readonly oversight: string;
             readonly state: string;
             readonly assigned_reviewer?: string;
+            readonly required_certificate: string;
             /** Format: int64 */
             readonly finding_count: number;
+            readonly permitted_findings: readonly components["schemas"]["ReviewPermittedFinding"][];
+            readonly findings: readonly components["schemas"]["ReviewFinding"][];
             /** Format: int64 */
             readonly version: number;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        /** @description Immutable finding metadata. Evidence content and grant redemption material are excluded. */
+        readonly ReviewFinding: {
+            readonly id: string;
+            readonly reviewer_id: string;
+            /** @enum {string} */
+            readonly resolution: "satisfy" | "not_satisfy" | "request_input";
+            readonly reason_code: string;
+            readonly evidence_grant_ids: readonly string[];
+            /** Format: date-time */
+            readonly recorded_at: string;
         };
         /**
          * @description Published review Appeal representation for tenant-scoped manual review operations.
@@ -5297,7 +5821,8 @@ export interface components {
          *     }
          */
         readonly ReviewPermittedFinding: {
-            readonly resolution: string;
+            /** @enum {string} */
+            readonly resolution: "satisfy" | "not_satisfy" | "request_input";
             readonly reason_code: string;
         };
         /**
@@ -6526,6 +7051,42 @@ export interface components {
             /** @description Canonical JSON fragment added or replacing; absent for removals. */
             readonly new?: Record<string, never> | readonly unknown[] | string | number | boolean | null;
         };
+        /** @description One event type from the authoritative closed webhook catalogue. */
+        readonly WebhookEventType: {
+            /**
+             * @description Exact dotted event type accepted in a webhook subscription.
+             * @example verification.completed
+             */
+            readonly type: string;
+            /**
+             * @description Exact webhook envelope version used for this event type.
+             * @enum {string}
+             */
+            readonly schema_version: "1.0";
+            /**
+             * @description Closed data fields required in the event envelope.
+             * @example [
+             *       "verification_id",
+             *       "subject_id",
+             *       "decision_id"
+             *     ]
+             */
+            readonly required_data: readonly string[];
+            /**
+             * @description Closed data fields that may be present in the event envelope.
+             * @example [
+             *       "outcome",
+             *       "decided_at",
+             *       "verification"
+             *     ]
+             */
+            readonly optional_data: readonly string[];
+        };
+        /** @description The closed webhook event-type catalogue supported by this Core deployment. */
+        readonly WebhookEventTypeList: {
+            /** @example [] */
+            readonly data: readonly components["schemas"]["WebhookEventType"][];
+        };
         /**
          * @description Tenant-owned endpoint metadata. Key material is never included.
          * @example {
@@ -7524,6 +8085,279 @@ export interface components {
              */
             readonly expected_version: number;
         };
+        /** @description Closed, privacy-safe capture interaction reported by the client. */
+        readonly CaptureJourneyEventCreate: {
+            /** @example journey_71d7207f-6935-4d75-8f30-5bd35c8ee231 */
+            readonly event_id: string;
+            /**
+             * @example navigation_back
+             * @enum {string}
+             */
+            readonly event_type: "screen_viewed" | "action_selected" | "navigation_back" | "capture_started" | "capture_retried" | "capture_accepted" | "capture_retake" | "recovery_started" | "processing_started" | "completion_shown" | "error_shown";
+            /**
+             * @example preparation
+             * @enum {string}
+             */
+            readonly screen: "intro" | "country" | "notice" | "method" | "preparation" | "capture" | "review" | "recovery" | "processing" | "completion" | "error";
+            /**
+             * @example back
+             * @enum {string}
+             */
+            readonly action?: "continue" | "back" | "select_country" | "accept_notice" | "refuse_notice" | "select_document" | "select_method" | "start_capture" | "retake" | "accept_capture" | "retry" | "submit";
+            /** @example document */
+            readonly requirement_key?: string;
+            /** @example idenqa.artefact.document_front */
+            readonly artefact?: string;
+            /** @example idenqa.method.live_camera */
+            readonly acquisition_method?: string;
+            /** @example 4 */
+            readonly sequence: number;
+            /**
+             * Format: date-time
+             * @example 2026-10-02T07:31:05Z
+             */
+            readonly client_occurred_at: string;
+        };
+        /** @description Server receipt for one immutable capture interaction. */
+        readonly CaptureJourneyEventReceipt: {
+            /** @example journey_71d7207f-6935-4d75-8f30-5bd35c8ee231 */
+            readonly event_id: string;
+            /**
+             * Format: date-time
+             * @example 2026-10-02T07:31:06Z
+             */
+            readonly received_at: string;
+        };
+        /** @description Bounded chronological view across Core and capture-client events. */
+        readonly VerificationTimeline: {
+            /** @example [] */
+            readonly events: readonly components["schemas"]["VerificationTimelineEvent"][];
+            /**
+             * @description True when more events exist than this bounded projection contains.
+             * @example false
+             */
+            readonly truncated: boolean;
+        };
+        /** @description One normalized timeline event. Client-reported interactions are never authoritative. */
+        readonly VerificationTimelineEvent: {
+            /** @example origin:ver_01K3P4NQF00000000000000000 */
+            readonly id: string;
+            /**
+             * @example lifecycle
+             * @enum {string}
+             */
+            readonly category: "lifecycle" | "interaction" | "evidence" | "processing" | "signal" | "decision";
+            /**
+             * @example core
+             * @enum {string}
+             */
+            readonly source: "core" | "capture_client";
+            /** @example verification.created */
+            readonly name: string;
+            /** @example collecting */
+            readonly status?: string;
+            /** @example front */
+            readonly detail?: string;
+            /**
+             * Format: date-time
+             * @example 2026-10-02T07:30:00Z
+             */
+            readonly occurred_at: string;
+            /** @example true */
+            readonly authoritative: boolean;
+        };
+        /** @description Bounded tenant-safe operational metadata for one verification. */
+        readonly VerificationInspection: {
+            /**
+             * @description Safe evidence metadata, excluding bytes and storage or encryption references.
+             * @example []
+             */
+            readonly evidence: readonly components["schemas"]["VerificationInspectionEvidence"][];
+            /** @example [] */
+            readonly checks: readonly components["schemas"]["VerificationInspectionCheck"][];
+            /**
+             * @description Reference-only execution history without provider payloads or evidence.
+             * @example []
+             */
+            readonly attempts: readonly components["schemas"]["VerificationInspectionAttempt"][];
+            /**
+             * @description Immutable decision lineage without canonical policy inputs.
+             * @example []
+             */
+            readonly decisions: readonly components["schemas"]["VerificationInspectionDecision"][];
+            /** @example [] */
+            readonly retention: readonly components["schemas"]["VerificationInspectionRetention"][];
+            /** @example [] */
+            readonly webhooks: readonly components["schemas"]["VerificationInspectionWebhook"][];
+            /** @example false */
+            readonly legal_hold: boolean;
+        };
+        /** @description Authoritative creation state and immutable lifecycle transition receipts. */
+        readonly VerificationLifecycleHistory: {
+            /**
+             * @example {
+             *       "state": "collecting",
+             *       "version": 1,
+             *       "occurred_at": "2026-10-02T07:30:00Z"
+             *     }
+             */
+            readonly origin: components["schemas"]["VerificationLifecycleOrigin"];
+            /** @example [] */
+            readonly transitions: readonly components["schemas"]["VerificationLifecycleTransition"][];
+            /**
+             * @description True when more transition receipts exist than this bounded response contains.
+             * @example false
+             */
+            readonly truncated: boolean;
+        };
+        /** @description Authoritative version-one session creation state. */
+        readonly VerificationLifecycleOrigin: {
+            /** @enum {string} */
+            readonly state: "collecting";
+            /**
+             * Format: int64
+             * @enum {integer}
+             */
+            readonly version: 1;
+            /** Format: date-time */
+            readonly occurred_at: string;
+        };
+        /** @description One immutable post-creation state transition in aggregate-version order. */
+        readonly VerificationLifecycleTransition: {
+            readonly event_id: string;
+            /** @enum {string} */
+            readonly from_state: "created" | "collecting" | "awaiting_input" | "processing" | "awaiting_external" | "manual_review";
+            /** @enum {string} */
+            readonly to_state: "collecting" | "awaiting_input" | "processing" | "awaiting_external" | "manual_review" | "completed" | "cancelled" | "expired" | "failed";
+            /** Format: int64 */
+            readonly version: number;
+            readonly decision_id?: string;
+            /** Format: date-time */
+            readonly occurred_at: string;
+        };
+        /** @description Bounded chronological provider-independent observations. */
+        readonly VerificationSignalPage: {
+            /** @example [] */
+            readonly items: readonly components["schemas"]["VerificationSignal"][];
+            /**
+             * @description True when more observations exist than this bounded response contains.
+             * @example false
+             */
+            readonly truncated: boolean;
+        };
+        /** @description An immutable normalised observation, not an identity claim or final decision. */
+        readonly VerificationSignal: {
+            readonly id: string;
+            readonly check_id: string;
+            readonly attempt_id: string;
+            /** @enum {string} */
+            readonly runner_kind: "provider" | "model";
+            readonly runner_id: string;
+            readonly runner_version: string;
+            readonly contract_major: number;
+            readonly contract_minor: number;
+            readonly name: string;
+            /** @enum {string} */
+            readonly outcome: "satisfied" | "not_satisfied" | "inconclusive";
+            readonly reason_codes: readonly string[];
+            /** Format: date-time */
+            readonly recorded_at: string;
+        };
+        /** @description Metadata for one accepted or quarantined evidence artefact. */
+        readonly VerificationInspectionEvidence: {
+            readonly id: string;
+            readonly requirement_key: string;
+            readonly evidence_type: string;
+            readonly artefact: string;
+            readonly acquisition_method: string;
+            readonly assurances: readonly string[];
+            /** @enum {string} */
+            readonly state: "available" | "quarantined";
+            /** @enum {string} */
+            readonly integrity: "verified" | "failed";
+            readonly retention_class: string;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        /** @description Current operational state and attempt count for one check. */
+        readonly VerificationInspectionCheck: {
+            readonly id: string;
+            readonly name: string;
+            readonly state: string;
+            /** @enum {string} */
+            readonly outcome?: "passed" | "not_passed" | "inconclusive";
+            readonly attempt_count: number;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        /** @description Reference-only execution state for one semantic check attempt. */
+        readonly VerificationInspectionAttempt: {
+            readonly id: string;
+            readonly check_id: string;
+            readonly attempt_number: number;
+            /** @enum {string} */
+            readonly runner_kind: "provider" | "model";
+            readonly runner_id: string;
+            readonly runner_version: string;
+            readonly package_digest: string;
+            readonly contract_major: number;
+            readonly contract_minor: number;
+            readonly request_digest: string;
+            readonly configuration_digest: string;
+            /** @enum {string} */
+            readonly state: "running" | "completed" | "failed" | "timed_out" | "cancelled";
+            /** Format: date-time */
+            readonly started_at: string;
+            /** Format: date-time */
+            readonly deadline: string;
+            /** Format: date-time */
+            readonly finished_at?: string;
+            readonly failure_class?: string;
+            readonly failure_code?: string;
+            /** @enum {string} */
+            readonly retry_disposition?: "never" | "backoff" | "reconcile";
+            /** Format: int64 */
+            readonly retry_after_milliseconds?: number;
+            readonly result_digest?: string;
+        };
+        /** @description Immutable terminal decision reference and supersession lineage. */
+        readonly VerificationInspectionDecision: {
+            readonly id: string;
+            readonly decision_digest: string;
+            /** @enum {string} */
+            readonly selected: "complete_verified" | "complete_not_verified" | "complete_inconclusive";
+            /** @enum {string} */
+            readonly outcome: "verified" | "not_verified" | "inconclusive";
+            /** @enum {string} */
+            readonly actor: "machine" | "human";
+            readonly supersedes_id?: string;
+            /** Format: date-time */
+            readonly decided_at: string;
+        };
+        /** @description Immutable retention binding applied to the verification aggregate. */
+        readonly VerificationInspectionRetention: {
+            readonly data_class: string;
+            readonly region: string;
+            readonly policy_digest: string;
+            /** Format: date-time */
+            readonly expires_at: string;
+        };
+        /** @description Webhook event and optional delivery reference without payload content. */
+        readonly VerificationInspectionWebhook: {
+            readonly event_id: string;
+            readonly event_type: string;
+            /** @enum {string} */
+            readonly event_state: "pending" | "completed";
+            readonly delivery_id?: string;
+            /** @enum {string} */
+            readonly delivery_state?: "pending" | "delivered" | "exhausted" | "cancelled";
+            /** Format: date-time */
+            readonly created_at: string;
+        };
         /** @description Immutable capture requirements and current lifecycle metadata for one verification. */
         readonly VerificationSession: {
             readonly id: components["schemas"]["VerificationSessionID"];
@@ -7624,6 +8458,12 @@ export interface components {
              *     }
              */
             readonly current_case?: components["schemas"]["VerificationCaseReference"];
+        };
+        /** @description A bounded newest-first page of verification sessions. */
+        readonly VerificationSessionList: {
+            /** @example [] */
+            readonly data: readonly components["schemas"]["VerificationSession"][];
+            readonly page: components["schemas"]["Page"];
         };
         /**
          * @description Bounded operational failure classification for a verification workflow
@@ -8154,6 +8994,57 @@ export interface components {
         };
         /** @description A complete portable capture-profile document bound to one exact evidence registry revision. */
         readonly CaptureProfileDocument: components["schemas"]["profile.schema"];
+        /** @description One canonical immutable evidence-registry document. */
+        readonly CaptureProfileRegistryDocument: components["schemas"]["registry.schema"];
+        /**
+         * @description Exact immutable evidence-registry pin used by a capture profile.
+         * @example {
+         *       "schema_version": 1,
+         *       "revision": 3,
+         *       "digest": "sha256:284a4418399974a7d1ce691f96ea534e1cd97ee1a9bc0d09de25d4a3b9d48969"
+         *     }
+         */
+        readonly CaptureProfileRegistryReference: {
+            /** Format: uint32 */
+            readonly schema_version: number;
+            /** Format: uint32 */
+            readonly revision: number;
+            readonly digest: string;
+        };
+        /**
+         * @description A deployed immutable registry reference and its canonical vocabulary document.
+         * @example {
+         *       "reference": {
+         *         "schema_version": 1,
+         *         "revision": 3,
+         *         "digest": "sha256:284a4418399974a7d1ce691f96ea534e1cd97ee1a9bc0d09de25d4a3b9d48969"
+         *       },
+         *       "document": {
+         *         "schema_version": 1,
+         *         "revision": 3,
+         *         "artefacts": [],
+         *         "evidence_types": [],
+         *         "acquisition_methods": [],
+         *         "purposes": [],
+         *         "assurances": [],
+         *         "constraints": []
+         *       }
+         *     }
+         */
+        readonly CaptureProfileRegistry: {
+            readonly reference: components["schemas"]["CaptureProfileRegistryReference"];
+            readonly document: components["schemas"]["registry.schema"];
+        };
+        /**
+         * @description Deployed registry revisions ordered from newest to oldest.
+         * @example {
+         *       "data": []
+         *     }
+         */
+        readonly CaptureProfileRegistryList: {
+            /** @example [] */
+            readonly data: readonly components["schemas"]["CaptureProfileRegistry"][];
+        };
         /** @description A complete mutable capture-profile draft representation. */
         readonly CaptureProfileWrite: {
             /** @example Standard identity */
@@ -8265,6 +9156,45 @@ export interface components {
              * @example 2026-09-27T12:05:00Z
              */
             readonly ended_at?: string;
+        };
+        /** @description Metadata for one numbered capture-profile revision; retrieve the revision to inspect its document. */
+        readonly CaptureProfileRevisionSummary: {
+            readonly profile_id: components["schemas"]["CaptureProfileID"];
+            /** @example 2 */
+            readonly revision: number;
+            /**
+             * @example superseded
+             * @enum {string}
+             */
+            readonly state: "draft" | "published" | "superseded" | "withdrawn";
+            /** @example sha256:284a4418399974a7d1ce691f96ea534e1cd97ee1a9bc0d09de25d4a3b9d48969 */
+            readonly digest: string;
+            /**
+             * Format: date-time
+             * @example 2026-08-27T12:00:00Z
+             */
+            readonly created_at: string;
+            /**
+             * Format: date-time
+             * @example 2026-08-27T12:05:00Z
+             */
+            readonly updated_at: string;
+            /**
+             * Format: date-time
+             * @example 2026-08-27T12:05:00Z
+             */
+            readonly published_at?: string;
+            /**
+             * Format: date-time
+             * @example 2026-09-27T12:05:00Z
+             */
+            readonly ended_at?: string;
+        };
+        /** @description A bounded newest-first page of capture-profile revision metadata. */
+        readonly CaptureProfileRevisionList: {
+            /** @example [] */
+            readonly data: readonly components["schemas"]["CaptureProfileRevisionSummary"][];
+            readonly page: components["schemas"]["Page"];
         };
         /** @description A bounded descending page of capture-profile resources. */
         readonly CaptureProfileList: {
@@ -11805,6 +12735,57 @@ export interface components {
             /** @example sub_01M11HEQG00000000000000000 */
             readonly target: string;
         };
+        readonly evidence_name: string;
+        readonly artefact_name: string;
+        readonly purpose_name: string;
+        readonly assurance_name: string;
+        readonly artefact_name_set: readonly components["schemas"]["artefact_name"][];
+        readonly nonempty_artefact_name_set: readonly components["schemas"]["artefact_name"][];
+        readonly method_name: string;
+        readonly assurance_name_set: readonly components["schemas"]["assurance_name"][];
+        readonly purpose_name_set: readonly components["schemas"]["purpose_name"][];
+        readonly constraint_name: string;
+        readonly evidence_name_set: readonly components["schemas"]["evidence_name"][];
+        /** Idenqa evidence registry v1 */
+        readonly "registry.schema": {
+            /** @constant */
+            readonly schema_version: 1;
+            readonly revision: number;
+            readonly artefacts: components["schemas"]["artefact_name_set"];
+            readonly evidence_types: readonly {
+                readonly name: components["schemas"]["evidence_name"];
+                readonly artefacts: components["schemas"]["nonempty_artefact_name_set"];
+            }[];
+            readonly acquisition_methods: readonly {
+                readonly name: components["schemas"]["method_name"];
+                readonly supports: readonly {
+                    readonly evidence_type: components["schemas"]["evidence_name"];
+                    readonly artefacts: components["schemas"]["nonempty_artefact_name_set"];
+                    readonly assurances: components["schemas"]["assurance_name_set"];
+                }[];
+            }[];
+            readonly purposes: components["schemas"]["purpose_name_set"];
+            readonly assurances: components["schemas"]["assurance_name_set"];
+            readonly constraints: readonly {
+                readonly name: components["schemas"]["constraint_name"];
+                /** @enum {unknown} */
+                readonly value_kind: "string" | "integer" | "boolean" | "string_list";
+                readonly applies_to: components["schemas"]["evidence_name_set"];
+            }[];
+            $defs: {
+                readonly evidence_name: string;
+                readonly artefact_name: string;
+                readonly method_name: string;
+                readonly purpose_name: string;
+                readonly assurance_name: string;
+                readonly constraint_name: string;
+                readonly evidence_name_set: readonly components["schemas"]["evidence_name"][];
+                readonly artefact_name_set: readonly components["schemas"]["artefact_name"][];
+                readonly nonempty_artefact_name_set: readonly components["schemas"]["artefact_name"][];
+                readonly purpose_name_set: readonly components["schemas"]["purpose_name"][];
+                readonly assurance_name_set: readonly components["schemas"]["assurance_name"][];
+            };
+        };
         readonly evidence: string;
         readonly artefact: string;
         readonly method: string;
@@ -12295,6 +13276,194 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    readonly listAuditRecords: {
+        readonly parameters: {
+            readonly query?: {
+                /** @description Exclusive sequence cursor returned by the previous page. */
+                readonly before?: string;
+                /** @description Maximum number of records to return. */
+                readonly limit?: number;
+            };
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description Reference-only audit metadata was returned. */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "data": []
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["AuditRecordPage"];
+                };
+            };
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 500: components["responses"]["InternalError"];
+        };
+    };
+    readonly listRequestLogs: {
+        readonly parameters: {
+            readonly query?: {
+                /** @description Opaque exclusive cursor returned by the previous page. */
+                readonly before?: string;
+                /** @description Maximum number of records to return. */
+                readonly limit?: number;
+            };
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description API request metadata was returned. */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "data": []
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["RequestLogPage"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 500: components["responses"]["InternalError"];
+        };
+    };
+    readonly getRequestLog: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Public request correlation identifier. */
+                readonly requestID: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description API request metadata was returned. */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "request_id": "req_01M11HEQG00000000000000000",
+                     *       "actor_key_id": "key_01M11HEQG00000000000000000",
+                     *       "method": "GET",
+                     *       "route_template": "/v1/verifications/{verificationID}",
+                     *       "client_ip_address": "192.0.2.10",
+                     *       "query_parameters": {},
+                     *       "status_code": 200,
+                     *       "duration_ms": 12,
+                     *       "occurred_at": "2026-09-29T06:00:00Z"
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["RequestLog"];
+                };
+            };
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 500: components["responses"]["InternalError"];
+        };
+    };
+    readonly getRequestAnalytics: {
+        readonly parameters: {
+            readonly query: {
+                /** @description Bounded trailing UTC window and equally sized preceding comparison window. */
+                readonly window: "7d" | "30d" | "90d";
+            };
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description Privacy-safe request analytics were returned. */
+            readonly 200: {
+                headers: {
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "window": {
+                     *         "from": "2026-09-23T06:00:00Z",
+                     *         "to": "2026-09-30T06:00:00Z"
+                     *       },
+                     *       "requests": 120,
+                     *       "successes": 117,
+                     *       "errors": 3,
+                     *       "p95_latency_ms": 240,
+                     *       "previous_requests": 110,
+                     *       "volume": [],
+                     *       "endpoints": [],
+                     *       "statuses": []
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["RequestAnalytics"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 500: components["responses"]["InternalError"];
+        };
+    };
+    readonly listAccessPermissions: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The tenant-assignable permission catalog was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "version": "idenqa.core/access-permissions/v1",
+                     *       "data": [
+                     *         {
+                     *           "id": "verification_sessions:read",
+                     *           "resource": "verification_sessions",
+                     *           "action": "read"
+                     *         }
+                     *       ]
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["PermissionCatalog"];
+                };
+            };
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     readonly getCurrentTenant: {
         readonly parameters: {
             readonly query?: never;
@@ -12358,6 +13527,36 @@ export interface operations {
             readonly 401: components["responses"]["Unauthenticated"];
             readonly 403: components["responses"]["InsufficientScope"];
             readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly listCaptureProfileRegistries: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The deployed immutable registry catalogue. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "data": []
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["CaptureProfileRegistryList"];
+                };
+            };
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
             readonly 500: components["responses"]["InternalError"];
             readonly 503: components["responses"]["ServiceUnavailable"];
         };
@@ -12634,6 +13833,40 @@ export interface operations {
             readonly 500: components["responses"]["InternalError"];
         };
     };
+    readonly listCaptureProfileRevisions: {
+        readonly parameters: {
+            readonly query?: {
+                /** @description Opaque continuation cursor returned by the preceding page. */
+                readonly cursor?: components["parameters"]["Cursor"];
+                /** @description Maximum collection items to return. The default is 25. */
+                readonly limit?: components["parameters"]["Limit"];
+            };
+            readonly header?: never;
+            readonly path: {
+                /** @description Stable capture-profile identifier. */
+                readonly profileID: components["parameters"]["ProfileID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description A bounded page of revision metadata. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "application/json": components["schemas"]["CaptureProfileRevisionList"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 500: components["responses"]["InternalError"];
+        };
+    };
     readonly getCaptureProfileRevision: {
         readonly parameters: {
             readonly query?: never;
@@ -12662,6 +13895,45 @@ export interface operations {
             readonly 403: components["responses"]["InsufficientScope"];
             readonly 404: components["responses"]["NotFound"];
             readonly 500: components["responses"]["InternalError"];
+        };
+    };
+    readonly listVerifications: {
+        readonly parameters: {
+            readonly query?: {
+                /** @description Opaque continuation cursor returned by the preceding page. */
+                readonly cursor?: components["parameters"]["Cursor"];
+                /** @description Maximum collection items to return. The default is 25. */
+                readonly limit?: components["parameters"]["Limit"];
+            };
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description A bounded page of tenant-owned verification sessions. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "data": [],
+                     *       "page": {
+                     *         "has_more": false
+                     *       }
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["VerificationSessionList"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
         };
     };
     readonly createVerification: {
@@ -12841,6 +14113,165 @@ export interface operations {
             readonly 503: components["responses"]["ServiceUnavailable"];
         };
     };
+    readonly inspectVerification: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Stable verification-session identifier. */
+                readonly verificationID: components["parameters"]["VerificationID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The tenant-safe verification inspection was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "evidence": [],
+                     *       "checks": [],
+                     *       "attempts": [],
+                     *       "decisions": [],
+                     *       "retention": [],
+                     *       "webhooks": [],
+                     *       "legal_hold": false
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["VerificationInspection"];
+                };
+            };
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly getVerificationLifecycleHistory: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Stable verification-session identifier. */
+                readonly verificationID: components["parameters"]["VerificationID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The authoritative lifecycle history was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "origin": {
+                     *         "state": "collecting",
+                     *         "version": 1,
+                     *         "occurred_at": "2026-10-02T07:30:00Z"
+                     *       },
+                     *       "transitions": [],
+                     *       "truncated": false
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["VerificationLifecycleHistory"];
+                };
+            };
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly getVerificationSignals: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Stable verification-session identifier. */
+                readonly verificationID: components["parameters"]["VerificationID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The provider-independent verification signals were returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "items": [],
+                     *       "truncated": false
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["VerificationSignalPage"];
+                };
+            };
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly getVerificationTimeline: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Stable verification-session identifier. */
+                readonly verificationID: components["parameters"]["VerificationID"];
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The bounded unified event timeline was returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "events": [
+                     *         {
+                     *           "id": "origin:ver_01K3P4NQF00000000000000000",
+                     *           "category": "lifecycle",
+                     *           "source": "core",
+                     *           "name": "verification.created",
+                     *           "occurred_at": "2026-10-02T07:30:00Z",
+                     *           "authoritative": true
+                     *         }
+                     *       ],
+                     *       "truncated": false
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["VerificationTimeline"];
+                };
+            };
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     readonly resumeVerification: {
         readonly parameters: {
             readonly query?: never;
@@ -12916,6 +14347,53 @@ export interface operations {
             readonly 401: components["responses"]["Unauthenticated"];
             readonly 403: components["responses"]["InsufficientScope"];
             readonly 404: components["responses"]["NotFound"];
+            readonly 409: components["responses"]["Conflict"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly recordCaptureJourneyEvent: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /** @description One closed-vocabulary interaction event from the authenticated capture journey. */
+        readonly requestBody: {
+            readonly content: {
+                /**
+                 * @example {
+                 *       "event_id": "journey_71d7207f-6935-4d75-8f30-5bd35c8ee231",
+                 *       "event_type": "navigation_back",
+                 *       "screen": "preparation",
+                 *       "action": "back",
+                 *       "sequence": 4,
+                 *       "client_occurred_at": "2026-10-02T07:31:05Z"
+                 *     }
+                 */
+                readonly "application/json": components["schemas"]["CaptureJourneyEventCreate"];
+            };
+        };
+        readonly responses: {
+            /** @description The immutable interaction was accepted or idempotently replayed. */
+            readonly 202: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "event_id": "journey_71d7207f-6935-4d75-8f30-5bd35c8ee231",
+                     *       "received_at": "2026-10-02T07:31:06Z"
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["CaptureJourneyEventReceipt"];
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
             readonly 409: components["responses"]["Conflict"];
             readonly 500: components["responses"]["InternalError"];
             readonly 503: components["responses"]["ServiceUnavailable"];
@@ -14461,6 +15939,37 @@ export interface operations {
             readonly 500: components["responses"]["InternalError"];
         };
     };
+    readonly listWebhookEventTypes: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The supported webhook event type catalogue. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "data": []
+                     *     }
+                     */
+                    readonly "application/json": components["schemas"]["WebhookEventTypeList"];
+                };
+            };
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     readonly listWebhookEndpoints: {
         readonly parameters: {
             readonly query?: {
@@ -15565,8 +17074,13 @@ export interface operations {
                      *       "region": "eu",
                      *       "oversight": "single",
                      *       "state": "open",
+                     *       "required_certificate": "document.level2",
                      *       "finding_count": 1,
-                     *       "version": 1
+                     *       "permitted_findings": [],
+                     *       "findings": [],
+                     *       "version": 1,
+                     *       "created_at": "2026-08-27T12:00:00Z",
+                     *       "updated_at": "2026-08-27T12:00:00Z"
                      *     }
                      */
                     readonly "application/json": components["schemas"]["ReviewCase"];
@@ -15621,8 +17135,13 @@ export interface operations {
                      *       "region": "eu",
                      *       "oversight": "single",
                      *       "state": "open",
+                     *       "required_certificate": "document.level2",
                      *       "finding_count": 1,
-                     *       "version": 1
+                     *       "permitted_findings": [],
+                     *       "findings": [],
+                     *       "version": 1,
+                     *       "created_at": "2026-08-27T12:00:00Z",
+                     *       "updated_at": "2026-08-27T12:00:00Z"
                      *     }
                      */
                     readonly "application/json": components["schemas"]["ReviewCase"];
@@ -15682,8 +17201,13 @@ export interface operations {
                      *       "region": "eu",
                      *       "oversight": "single",
                      *       "state": "open",
+                     *       "required_certificate": "document.level2",
                      *       "finding_count": 1,
-                     *       "version": 1
+                     *       "permitted_findings": [],
+                     *       "findings": [],
+                     *       "version": 1,
+                     *       "created_at": "2026-08-27T12:00:00Z",
+                     *       "updated_at": "2026-08-27T12:00:00Z"
                      *     }
                      */
                     readonly "application/json": components["schemas"]["ReviewCase"];
@@ -15739,8 +17263,13 @@ export interface operations {
                      *       "region": "eu",
                      *       "oversight": "single",
                      *       "state": "open",
+                     *       "required_certificate": "document.level2",
                      *       "finding_count": 1,
-                     *       "version": 1
+                     *       "permitted_findings": [],
+                     *       "findings": [],
+                     *       "version": 1,
+                     *       "created_at": "2026-08-27T12:00:00Z",
+                     *       "updated_at": "2026-08-27T12:00:00Z"
                      *     }
                      */
                     readonly "application/json": components["schemas"]["ReviewCase"];

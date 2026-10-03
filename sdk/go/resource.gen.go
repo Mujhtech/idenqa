@@ -771,6 +771,10 @@ const (
 	REQUESTCANCELLED            ProblemCode = "REQUEST_CANCELLED"
 	REQUESTTIMEOUT              ProblemCode = "REQUEST_TIMEOUT"
 	REQUESTTOOLARGE             ProblemCode = "REQUEST_TOO_LARGE"
+	REVIEWAUTHORITYREVOKED      ProblemCode = "REVIEW_AUTHORITY_REVOKED"
+	REVIEWCASESTALE             ProblemCode = "REVIEW_CASE_STALE"
+	REVIEWSESSIONEXPIRED        ProblemCode = "REVIEW_SESSION_EXPIRED"
+	REVIEWSESSIONREPLAYED       ProblemCode = "REVIEW_SESSION_REPLAYED"
 	SERVICEUNAVAILABLE          ProblemCode = "SERVICE_UNAVAILABLE"
 	UNAUTHENTICATED             ProblemCode = "UNAUTHENTICATED"
 )
@@ -807,6 +811,14 @@ func (e ProblemCode) Valid() bool {
 	case REQUESTTIMEOUT:
 		return true
 	case REQUESTTOOLARGE:
+		return true
+	case REVIEWAUTHORITYREVOKED:
+		return true
+	case REVIEWCASESTALE:
+		return true
+	case REVIEWSESSIONEXPIRED:
+		return true
+	case REVIEWSESSIONREPLAYED:
 		return true
 	case SERVICEUNAVAILABLE:
 		return true

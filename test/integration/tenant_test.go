@@ -4,6 +4,7 @@ package integration_test
 
 import (
 	"context"
+	"crypto/sha256"
 	"errors"
 	"testing"
 	"time"
@@ -148,5 +149,65 @@ func TestTenantIsolationAndAdministrativeBypass(t *testing.T) {
 	}
 	if auditCount != 4 {
 		t.Fatalf("admin audit count = %d, want 4", auditCount)
+	}
+}
+
+func TestManagedTenantProvisionRecordsAuditAndReplays(t *testing.T) {
+	database := createIsolatedDatabase(t)
+	ctx := t.Context()
+	migrator, err := idenqapostgres.OpenMigrator(ctx, migrationConfig(database.url))
+	if err != nil {
+		t.Fatalf("OpenMigrator() error = %v", err)
+	}
+	if _, err := migrator.Up(ctx); err != nil {
+		t.Fatalf("Up() error = %v", err)
+	}
+	if err := migrator.Close(); err != nil {
+		t.Fatalf("close migrator: %v", err)
+	}
+
+	adminPool, err := idenqapostgres.Open(ctx, poolConfig(database.url))
+	if err != nil {
+		t.Fatalf("open admin pool: %v", err)
+	}
+	defer adminPool.Close()
+	adminStore, err := tenantpostgres.New(adminPool)
+	if err != nil {
+		t.Fatalf("new admin store: %v", err)
+	}
+	generator, err := id.NewSystemGenerator()
+	if err != nil {
+		t.Fatalf("new id generator: %v", err)
+	}
+	admin, err := tenant.NewAdmin(adminStore, generator, clock.System{})
+	if err != nil {
+		t.Fatalf("new tenant admin: %v", err)
+	}
+	command := tenant.ProvisionCommand{
+		ID:            "synthetic-tenant:dep_integration_01",
+		RequestDigest: sha256.Sum256([]byte("synthetic deployment integration fixture")),
+	}
+	action := tenant.AdminAction{Actor: "idenqa-cloud", Reason: "managed deployment synthetic readiness"}
+	provisioned, created, err := admin.Provision(ctx, action, command)
+	if err != nil {
+		t.Fatalf("provision managed tenant: %v", err)
+	}
+	if !created {
+		t.Fatal("first managed tenant provision was not created")
+	}
+	replayed, created, err := admin.Provision(ctx, action, command)
+	if err != nil {
+		t.Fatalf("replay managed tenant provision: %v", err)
+	}
+	if created || replayed.ID() != provisioned.ID() {
+		t.Fatalf("provision replay = %s, created %t; want %s, false", replayed.ID(), created, provisioned.ID())
+	}
+
+	var auditCount int
+	if err := adminPool.Native().QueryRow(ctx, "SELECT count(*) FROM idenqa.tenant_admin_audit WHERE action='provision'").Scan(&auditCount); err != nil {
+		t.Fatalf("count provision audit: %v", err)
+	}
+	if auditCount != 1 {
+		t.Fatalf("provision audit count = %d, want 1", auditCount)
 	}
 }
