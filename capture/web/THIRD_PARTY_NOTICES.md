@@ -1,4 +1,12 @@
-# Liveness tracking assets
+# Third-party notices
+
+## Inter
+
+Capture Web self-hosts the Inter variable font from Fontsource 5.3.0.
+Inter is copyright The Inter Project Authors and licensed under the SIL Open
+Font License 1.1. Source: https://github.com/rsms/inter
+
+## MediaPipe
 
 The bundled pose worker uses Google's MediaPipe Tasks Vision 1.0.1,
 copyright Google LLC, licensed under Apache License 2.0.

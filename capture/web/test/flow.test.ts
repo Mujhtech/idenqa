@@ -19,6 +19,7 @@ import {
   CAPTURE_EXPERIENCE_VERSION,
   CaptureFlowController,
   CaptureFlowError,
+  createCaptureFlowController,
   type CaptureFlowClient,
   type CaptureFlowSnapshot,
 } from "../src/index.js";
@@ -31,6 +32,62 @@ const capabilities = {
 };
 
 describe("CaptureFlowController", () => {
+  it("records privacy-safe journey events with monotonic per-flow sequence numbers", async () => {
+    const recordJourneyEvent = vi
+      .fn<NonNullable<CaptureFlowClient["recordJourneyEvent"]>>()
+      .mockImplementation(async (input) =>
+        response({ eventId: input.eventId, receivedAt: "2026-10-02T12:00:00Z" }),
+      );
+    const controller = new CaptureFlowController({ ...client(), recordJourneyEvent }, capabilities);
+
+    await controller.recordJourneyEvent({
+      eventType: "screen_viewed",
+      screen: "intro",
+    });
+    await controller.recordJourneyEvent({
+      eventType: "navigation_back",
+      screen: "preparation",
+      action: "back",
+      requirementKey: "document",
+    });
+
+    expect(recordJourneyEvent).toHaveBeenCalledTimes(2);
+    expect(recordJourneyEvent.mock.calls.map(([event]) => event.sequence)).toEqual([1, 2]);
+    expect(recordJourneyEvent.mock.calls[1]?.[0]).toMatchObject({
+      eventType: "navigation_back",
+      screen: "preparation",
+      action: "back",
+      requirementKey: "document",
+    });
+    expect(recordJourneyEvent.mock.calls[0]?.[0].eventId).toMatch(/^journey_[0-9a-f-]{36}$/);
+  });
+
+  it("wires journey events through the public SDK-backed controller factory", async () => {
+    const fetcher = vi.fn<typeof fetch>(async (input, init) => {
+      expect(String(input)).toBe("https://core.example.test/v1/capture/journey-events");
+      const body = JSON.parse(String(init?.body)) as { sequence: number; event_type: string };
+      expect(body).toMatchObject({ sequence: 1, event_type: "screen_viewed" });
+      return new Response(
+        JSON.stringify({
+          event_id: "journey_71d7207f-6935-4d75-8f30-5bd35c8ee231",
+          received_at: "2026-10-02T12:00:00Z",
+        }),
+        { status: 202, headers: { "Content-Type": "application/json", "X-Request-ID": "req_1" } },
+      );
+    });
+    const controller = createCaptureFlowController({
+      baseUrl: "https://core.example.test",
+      captureToken: "capture-token",
+      outcomeToken: "outcome-token",
+      capabilities,
+      fetch: fetcher,
+    });
+
+    await controller.recordJourneyEvent({ eventType: "screen_viewed", screen: "intro" });
+
+    expect(fetcher).toHaveBeenCalledOnce();
+  });
+
   it("retries a lost document-selection response with the same key and recovers the Core branch", async () => {
     const base = session.requirements.requirements[0]!;
     let current: VerificationSession = {

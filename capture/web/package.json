@@ -38,7 +38,7 @@
     "build": "tsdown",
     "prebuild": "pnpm run build:sdk",
     "assets:prepare": "node scripts/prepare-liveness.mjs",
-    "demo:hosted": "vite ./demo --config ./vite.config.mjs --host 127.0.0.1 --port 4173 --strictPort --open /hosted.html",
+    "demo:hosted": "vite ./demo --config ./vite.config.mjs --host 127.0.0.1 --port 4173 --strictPort --open '/hosted.html#controller=Idenqa+local+demo+tenant&recipient=Idenqa+local+demo+tenant'",
     "package:check": "publint && attw --pack .",
     "pretest": "pnpm run build:sdk",
     "pretest:unit": "pnpm run build:sdk",
@@ -50,6 +50,7 @@
     "typecheck": "tsc --project tsconfig.json"
   },
   "dependencies": {
+    "@fontsource-variable/inter": "5.3.0",
     "@idenqa/sdk": "workspace:*",
     "@mediapipe/tasks-vision": "1.0.1",
     "lit": "3.3.3"

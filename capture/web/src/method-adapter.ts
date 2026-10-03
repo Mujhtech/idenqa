@@ -1,5 +1,5 @@
 import type { CaptureLivenessPrompt } from "./acquisition.js";
-import type { CapturePoseFeedback } from "./pose.js";
+import type { CapturePoseFeedback, CapturePoseProgress } from "./pose.js";
 import type { CaptureRuntimeFallbackReason } from "./planner.js";
 
 export interface CaptureMethodAdapterContext {
@@ -36,6 +36,7 @@ export interface CaptureMethodAdapterProgress {
   readonly prompt?: CaptureLivenessPrompt;
   readonly poseProgress?: number;
   readonly poseFeedback?: CapturePoseFeedback;
+  readonly poseStage?: CapturePoseProgress["stage"];
 }
 
 export interface CaptureMethodAdapterControls {
@@ -227,6 +228,13 @@ export function normalizeCaptureMethodProgress(
     (progress.phase !== "challenge" || !feedback.has(progress.poseFeedback))
   )
     throw invalid("Pose feedback is invalid.");
+  if (
+    progress.poseStage !== undefined &&
+    (progress.phase !== "challenge" ||
+      !["centering", "centered", "pose"].includes(progress.poseStage))
+  ) {
+    throw invalid("Pose stage is invalid.");
+  }
   return {
     phase: progress.phase,
     ...(progress.current === undefined ? {} : { current: progress.current }),
@@ -234,6 +242,7 @@ export function normalizeCaptureMethodProgress(
     ...(progress.prompt === undefined ? {} : { prompt: progress.prompt }),
     ...(progress.poseProgress === undefined ? {} : { poseProgress: progress.poseProgress }),
     ...(progress.poseFeedback === undefined ? {} : { poseFeedback: progress.poseFeedback }),
+    ...(progress.poseStage === undefined ? {} : { poseStage: progress.poseStage }),
   };
 }
 

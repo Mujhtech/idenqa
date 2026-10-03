@@ -132,6 +132,9 @@ export type {
 } from "./active-liveness.js";
 export type {
   CaptureCompleteDetail,
+  CaptureCountryJourneyOptions,
+  CaptureCountryJourneyNotice,
+  CaptureCountryOption,
   CaptureElementStartOptions,
   CaptureEvidenceAcceptedDetail,
   CaptureFlowErrorDetail,

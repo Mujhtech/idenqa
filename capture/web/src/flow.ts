@@ -8,6 +8,11 @@ import {
   type CaptureCompletion,
   type CaptureProgress,
   type CaptureObservation,
+  type CaptureJourneyAction,
+  type CaptureJourneyEventCreate,
+  type CaptureJourneyEventReceipt,
+  type CaptureJourneyEventType,
+  type CaptureJourneyScreen,
   type CaptureOutcome,
   type CaptureOutcomeState,
   type CaptureRealtimeEvent,
@@ -64,6 +69,10 @@ export interface CaptureOutcomeFlowSnapshot {
 export type CaptureFlowSnapshot = CaptureActiveFlowSnapshot | CaptureOutcomeFlowSnapshot;
 
 export interface CaptureFlowClient {
+  recordJourneyEvent?(
+    input: CaptureJourneyEventCreate,
+    options?: { readonly signal?: AbortSignal },
+  ): Promise<SDKResponse<CaptureJourneyEventReceipt>>;
   selectDocument?(
     input: {
       readonly requirementKey: string;
@@ -145,6 +154,7 @@ export class CaptureFlowController {
   #snapshot: CaptureFlowSnapshot | undefined;
   #observation: CaptureObservation | undefined;
   #progressETag: string | undefined;
+  #journeySequence = 0;
 
   constructor(
     client: CaptureFlowClient,
@@ -163,6 +173,25 @@ export class CaptureFlowController {
 
   get snapshot(): CaptureFlowSnapshot | undefined {
     return this.#snapshot;
+  }
+
+  /** Best-effort, privacy-safe interaction reporting. Callers must not block UX on failure. */
+  async recordJourneyEvent(input: {
+    readonly eventType: CaptureJourneyEventType;
+    readonly screen: CaptureJourneyScreen;
+    readonly action?: CaptureJourneyAction;
+    readonly requirementKey?: string;
+    readonly artefact?: string;
+    readonly acquisitionMethod?: string;
+  }): Promise<void> {
+    if (this.#client.recordJourneyEvent === undefined) return;
+    this.#journeySequence += 1;
+    await this.#client.recordJourneyEvent({
+      eventId: `journey_${globalThis.crypto.randomUUID()}`,
+      sequence: this.#journeySequence,
+      clientOccurredAt: new Date().toISOString(),
+      ...input,
+    });
   }
 
   async load(signal?: AbortSignal): Promise<CaptureFlowSnapshot> {
@@ -641,6 +670,8 @@ export function createCaptureFlowController(
   const capture = new CaptureClient(options);
   const outcome = new OutcomeClient(options);
   const client: CaptureFlowClient = {
+    recordJourneyEvent: (input, requestOptions) =>
+      capture.recordJourneyEvent(input, requestOptions),
     observe: (session, observeOptions) => capture.observe(session, observeOptions),
     getSession: (requestOptions) => capture.getSession(requestOptions),
     getAuthority: (requestOptions) => capture.getAuthority(requestOptions),

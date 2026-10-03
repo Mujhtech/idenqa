@@ -81,6 +81,23 @@ describe("capture method adapters", () => {
       expect.objectContaining({ code: "CAPTURE_METHOD_ADAPTER_INVALID" }),
     );
   });
+
+  it("preserves closed pose stages and rejects stages outside a challenge", () => {
+    for (const poseStage of ["centering", "centered", "pose"] as const) {
+      expect(
+        normalizeCaptureMethodProgress({
+          phase: "challenge",
+          current: 1,
+          total: 3,
+          prompt: "neutral",
+          poseStage,
+        }),
+      ).toMatchObject({ poseStage });
+    }
+    expect(() =>
+      normalizeCaptureMethodProgress({ phase: "ready", poseStage: "centered" }),
+    ).toThrow();
+  });
 });
 
 function extensionAdapter(overrides: Partial<CaptureMethodAdapter> = {}): CaptureMethodAdapter {

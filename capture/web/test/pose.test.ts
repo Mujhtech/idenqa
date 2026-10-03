@@ -21,6 +21,29 @@ function calibrate(target: CapturePoseGate) {
 }
 
 describe("measured pose gate", () => {
+  it("confirms centering only after a measured neutral hold, then exposes the pose stage", () => {
+    const target = gate("turn_left");
+    expect(target.update(neutral, 0).stage).toBe("centering");
+    for (let t = 100; t < 500; t += 100) {
+      expect(target.update(neutral, t).stage).toBe("centering");
+    }
+    expect(target.update(neutral, 500)).toMatchObject({ stage: "centered", complete: false });
+    expect(target.update(neutral, 600)).toMatchObject({ stage: "pose", complete: false });
+    expect(target.update({ ...neutral, faceCount: 0 }, 700).stage).toBe("centering");
+    expect(target.update(neutral, 800).stage).toBe("centering");
+  });
+
+  it("never shows centering confirmation for an off-center or multiple face sample", () => {
+    const target = gate("neutral");
+    for (let t = 0; t <= 2000; t += 100) {
+      expect(target.update({ ...neutral, centerX: 0.9 }, t)).toMatchObject({
+        stage: "centering",
+        complete: false,
+      });
+    }
+    expect(target.update({ ...neutral, faceCount: 2 }, 2100).stage).toBe("centering");
+  });
+
   it.each(["turn_left", "turn_right", "look_up", "look_down"] as const)(
     "does not advance %s while stationary or moving the wrong way",
     (prompt) => {

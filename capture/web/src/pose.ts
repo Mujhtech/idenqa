@@ -43,6 +43,8 @@ export interface CapturePoseProgress {
   readonly fraction: number;
   readonly feedback: CapturePoseFeedback;
   readonly complete: boolean;
+  /** Presentation only; centering confirmation does not establish liveness. */
+  readonly stage: "centering" | "centered" | "pose";
 }
 
 /** One challenge's contiguous, measured hold. Every challenge starts from a
@@ -72,7 +74,12 @@ export class CapturePoseGate {
   update(pose: CaptureFacePose, at: number, quality = true): CapturePoseProgress {
     const reject = (feedback: CapturePoseFeedback): CapturePoseProgress => {
       this.reset();
-      return { fraction: 0, feedback, complete: false };
+      return {
+        fraction: 0,
+        feedback,
+        complete: false,
+        stage: this.#baseline === undefined || feedback !== "follow_prompt" ? "centering" : "pose",
+      };
     };
     if (!Number.isFinite(at) || at <= this.#last) return reject("find_face");
     if (at - this.#last > 500) this.reset();
@@ -123,12 +130,22 @@ export class CapturePoseGate {
         return reject("face_forward");
       const held = this.#hold(at, this.#policy.hold_duration_ms);
       if (this.#prompt === "neutral")
-        return { fraction: held, feedback: "hold_still", complete: held === 1 };
+        return {
+          fraction: held,
+          feedback: "hold_still",
+          complete: held === 1,
+          stage: held === 1 ? "centered" : "centering",
+        };
       if (held === 1) {
         this.#baseline = pose;
         this.reset();
       }
-      return { fraction: 0, feedback: "face_forward", complete: false };
+      return {
+        fraction: 0,
+        feedback: "face_forward",
+        complete: false,
+        stage: held === 1 ? "centered" : "centering",
+      };
     }
     const yaw = pose.yaw - this.#baseline.yaw;
     const pitch = pose.pitch - this.#baseline.pitch;
@@ -139,12 +156,22 @@ export class CapturePoseGate {
         this.#blinkClosed ||= this.#blinkSamples >= 2;
         this.#since = undefined;
         this.#samples = 0;
-        return { fraction: this.#blinkClosed ? 0.6 : 0.3, feedback: "open_eyes", complete: false };
+        return {
+          fraction: this.#blinkClosed ? 0.6 : 0.3,
+          feedback: "open_eyes",
+          complete: false,
+          stage: "pose",
+        };
       }
       if (!this.#blinkClosed || pose.leftEyeClosed > 0.35 || pose.rightEyeClosed > 0.35)
         return reject("follow_prompt");
       const held = this.#hold(at, this.#policy.hold_duration_ms);
-      return { fraction: 0.6 + 0.4 * held, feedback: "hold_still", complete: held === 1 };
+      return {
+        fraction: 0.6 + 0.4 * held,
+        feedback: "hold_still",
+        complete: held === 1,
+        stage: "pose",
+      };
     }
     const angle =
       this.#prompt === "turn_right"
@@ -166,10 +193,16 @@ export class CapturePoseGate {
           angle > target + tolerance ? 0 : Math.max(0, Math.min(0.7, (angle / target) * 0.7)),
         feedback: "follow_prompt",
         complete: false,
+        stage: "pose",
       };
     }
     const held = this.#hold(at, this.#policy.hold_duration_ms);
-    return { fraction: 0.7 + 0.3 * held, feedback: "hold_still", complete: held === 1 };
+    return {
+      fraction: 0.7 + 0.3 * held,
+      feedback: "hold_still",
+      complete: held === 1,
+      stage: "pose",
+    };
   }
 
   #hold(at: number, duration: number): number {

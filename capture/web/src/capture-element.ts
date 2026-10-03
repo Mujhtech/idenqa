@@ -1,11 +1,16 @@
 import { LitElement, css, html, svg, nothing, type PropertyValues } from "lit";
 
 import type {
+  CaptureJourneyAction,
+  CaptureJourneyEventType,
+  CaptureJourneyScreen,
   CaptureRealtimeEvent,
   ExperienceResolution,
   SubjectResponseAction,
 } from "@idenqa/sdk";
 import type { EvidenceUpload } from "@idenqa/sdk";
+
+import { installCaptureFont } from "./font.js";
 
 import {
   createCaptureFlowController,
@@ -128,6 +133,44 @@ export interface CaptureElementStartOptions extends CaptureFlowStartOptions {
   readonly documentCapture?: CaptureDocumentCaptureOptions;
 }
 
+export interface CaptureCountryOption {
+  /** ISO 3166-1 alpha-2 code. The host must provide only policy-approved countries. */
+  readonly code: string;
+  /** Subject-facing country name in the host's selected locale. */
+  readonly label: string;
+}
+
+export interface CaptureCountryJourneyNotice {
+  readonly locale: string;
+  readonly controller: string;
+  readonly recipient: string;
+  readonly copy: {
+    readonly title: string;
+    readonly summary: string;
+    readonly purpose: string;
+    readonly consequences: string;
+  };
+  readonly consentRequired: boolean;
+}
+
+export interface CaptureCountryJourneyOptions {
+  readonly countries: readonly CaptureCountryOption[];
+  /** The exact notice the country-bound session must return. */
+  readonly notice: CaptureCountryJourneyNotice;
+  /** Optional host-known count for the pre-session introduction. */
+  readonly captureItemCount?: number;
+  /**
+   * Resolves the selected country into a newly-created, immutable capture
+   * session. Tenant credentials remain at the host/server boundary.
+   */
+  readonly resolve: (
+    country: CaptureCountryOption,
+    signal: AbortSignal,
+  ) => Promise<CaptureElementStartOptions>;
+  /** Optional package-copy translations shown before the session exists. */
+  readonly messageCatalogue?: CaptureMessageCatalogue;
+}
+
 export interface CaptureCompleteDetail extends CaptureProgressDetail {
   readonly captureComplete: true;
 }
@@ -182,6 +225,7 @@ interface StepAdapterState {
 }
 
 type ComponentFlowState = "idle" | "loading" | "ready" | "responding" | "error" | "cancelled";
+type CountryJourneyPhase = "intro" | "notice" | "country";
 type JourneyPhase =
   "intro" | "notice" | "recovery" | "capture" | "confirmation" | "processing" | "complete";
 type StepStage = "method" | "preparation" | "capture";
@@ -193,16 +237,17 @@ export class IdenqaCaptureElement extends LitElement {
 
   static override styles = css`
     :host {
-      --idq-capture-accent: #0b6b57;
-      --idq-capture-accent-strong: #075345;
+      --idq-capture-accent: #2e6b4a;
+      --idq-capture-accent-strong: #1f4e37;
       --idq-capture-accent-foreground: #ffffff;
-      --idq-capture-background: #ffffff;
-      --idq-capture-border: #d6dedb;
-      --idq-capture-card-radius: 0.75rem;
-      --idq-capture-control-radius: 0.625rem;
+      --idq-capture-background: #f6f4ee;
+      --idq-capture-border: #e4e0d5;
+      --idq-capture-card-radius: 0.875rem;
+      --idq-capture-control-radius: 999px;
       --idq-capture-error: #b42318;
       --idq-capture-face-guide: rgb(255 255 255 / 78%);
       --idq-capture-face-guide-muted: rgb(255 255 255 / 42%);
+      --idq-capture-face-guide-ready: #79e8b1;
       --idq-capture-font-family:
         Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       --idq-capture-focus-offset: 0.1875rem;
@@ -217,20 +262,21 @@ export class IdenqaCaptureElement extends LitElement {
       --idq-capture-motion-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
       --idq-capture-motion-fast: 160ms;
       --idq-capture-motion-press: 140ms;
-      --idq-capture-muted: #52605c;
+      --idq-capture-muted: #5b6a61;
       --idq-capture-overlay-background: rgb(10 18 16 / 82%);
       --idq-capture-overlay-border: rgb(255 255 255 / 18%);
       --idq-capture-overlay-foreground: #ffffff;
-      --idq-capture-panel-radius: 1rem;
+      --idq-capture-panel-radius: 0.875rem;
+      --idq-capture-shell-max-height: min(52.75rem, calc(100dvh - 3rem));
       --idq-capture-shell-max-width: 42rem;
-      --idq-capture-shell-min-height: min(42rem, calc(100dvh - 2rem));
-      --idq-capture-shell-padding: 1.25rem;
-      --idq-capture-shell-radius: 1.5rem;
-      --idq-capture-shell-shadow: 0 1.25rem 4rem rgb(20 32 29 / 10%);
-      --idq-capture-surface: #f3f7f5;
-      --idq-capture-surface-strong: #e4f2ed;
+      --idq-capture-shell-min-height: min(52.75rem, calc(100dvh - 3rem));
+      --idq-capture-shell-padding: 1.5rem;
+      --idq-capture-shell-radius: 0;
+      --idq-capture-shell-shadow: none;
+      --idq-capture-surface: #ffffff;
+      --idq-capture-surface-strong: #e7f0e8;
       --idq-capture-tap-highlight: rgb(23 92 211 / 18%);
-      --idq-capture-text: #14201d;
+      --idq-capture-text: #16211b;
       color-scheme: light dark;
       color: var(--idq-capture-text);
       display: block;
@@ -248,13 +294,34 @@ export class IdenqaCaptureElement extends LitElement {
       border-radius: var(--idq-capture-shell-radius);
       box-shadow: var(--idq-capture-shell-shadow);
       margin-inline: auto;
+      /*max-height: var(--idq-capture-shell-max-height);*/
       max-width: var(--idq-capture-shell-max-width);
       min-height: var(--idq-capture-shell-min-height);
+      overflow-x: hidden;
+      overflow-y: auto;
       overflow-wrap: anywhere;
+      overscroll-behavior: contain;
       padding: max(var(--idq-capture-shell-padding), env(safe-area-inset-top))
         max(var(--idq-capture-shell-padding), env(safe-area-inset-right))
         max(var(--idq-capture-shell-padding), env(safe-area-inset-bottom))
         max(var(--idq-capture-shell-padding), env(safe-area-inset-left));
+    }
+
+    @media (min-width: 769px) and (min-height: 568px) {
+      .shell {
+        min-height: 600px;
+        max-height: 100%;
+        max-width: 400px;
+      }
+    }
+
+    .visually-hidden {
+      block-size: 1px;
+      clip-path: inset(50%);
+      inline-size: 1px;
+      overflow: hidden;
+      position: absolute;
+      white-space: nowrap;
     }
 
     .eyebrow {
@@ -269,28 +336,28 @@ export class IdenqaCaptureElement extends LitElement {
     h2,
     h3,
     h4,
-    p {
+    p,
+    dl {
       margin-block-start: 0;
+      margin-block-end: 0;
     }
 
     h2 {
-      font-size: clamp(1.75rem, 6vw, 2.5rem);
-      letter-spacing: -0.025em;
-      line-height: 1.12;
-      margin-block-end: 0.75rem;
+      font-size: 1.75rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.06;
       text-wrap: balance;
     }
 
     h3 {
       font-size: 1.125rem;
       line-height: 1.35;
-      margin-block-end: 0.25rem;
       text-wrap: balance;
     }
 
     h4 {
       font-size: 1rem;
-      margin-block-end: 0.75rem;
       text-wrap: balance;
     }
 
@@ -307,13 +374,18 @@ export class IdenqaCaptureElement extends LitElement {
       border-radius: var(--idq-capture-card-radius);
       margin-block-start: 1.5rem;
       padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
     }
 
     .notice h4 {
-      margin-block: 1rem 0.25rem;
+      font-size: 0.875rem;
+      /*margin-block: 1rem 0.25rem;*/
     }
 
     .notice-copy {
+      font-size: 0.875rem;
       white-space: pre-wrap;
     }
 
@@ -322,7 +394,6 @@ export class IdenqaCaptureElement extends LitElement {
       font-size: 0.875rem;
       gap: 0.75rem;
       grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
-      margin-block: 1.25rem 0;
     }
 
     .notice-meta div {
@@ -346,7 +417,7 @@ export class IdenqaCaptureElement extends LitElement {
 
     .notice-guidance {
       border-inline-start: 0.25rem solid var(--idq-capture-accent);
-      margin-block: 1.25rem 0;
+      font-size: 0.875rem;
       padding-inline-start: 0.75rem;
     }
 
@@ -545,7 +616,7 @@ export class IdenqaCaptureElement extends LitElement {
 
     .adapter-preview-frame {
       background: var(--idq-capture-media-background);
-      border-radius: var(--idq-capture-panel-radius);
+      /*border-radius: var(--idq-capture-panel-radius);*/
       overflow: hidden;
       position: relative;
     }
@@ -563,24 +634,37 @@ export class IdenqaCaptureElement extends LitElement {
     }
 
     .liveness-face-guide {
-      inset: 4% 12%;
-      width: 76%;
-      height: 92%;
+      inset: 6%;
+      width: 88%;
+      height: 88%;
       pointer-events: none;
       position: absolute;
     }
-    .liveness-face-guide line {
-      stroke: #ffffff;
-      stroke-width: 0.7;
+
+    .liveness-guide-arc {
+      fill: none;
+      stroke: var(--idq-capture-face-guide);
+      stroke-width: 1.1;
       stroke-linecap: round;
-      opacity: 0.3;
+      transition: stroke var(--idq-capture-motion-fast) ease;
     }
-    .liveness-face-guide line[data-active="true"] {
-      opacity: 1;
+
+    .liveness-face-guide[data-stage="centered"] .liveness-guide-arc {
+      stroke: var(--idq-capture-face-guide-ready);
+    }
+
+    .liveness-face-guide[data-stage="pose"] .liveness-guide-arc {
+      stroke: var(--idq-capture-face-guide-muted);
+    }
+
+    .liveness-face-guide line {
+      stroke: var(--idq-capture-face-guide);
+      stroke-width: 0.55;
+      stroke-linecap: round;
+      transition: stroke var(--idq-capture-motion-fast) ease;
     }
     .liveness-face-guide line[data-filled="true"] {
-      stroke: #79e8b1;
-      opacity: 1;
+      stroke: var(--idq-capture-face-guide-ready);
     }
     .liveness-pose-meter {
       width: 100%;
@@ -590,23 +674,23 @@ export class IdenqaCaptureElement extends LitElement {
     .liveness-overlay-prompt {
       background: var(--idq-capture-overlay-background);
       border: 1px solid var(--idq-capture-overlay-border);
-      border-radius: 999px;
+      border-radius: var(--idq-capture-control-radius);
       color: var(--idq-capture-overlay-foreground);
-      font-size: clamp(0.875rem, 3vw, 1rem);
-      font-weight: 750;
-      inset-block-start: 1rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      inset-block-start: 50%;
       inset-inline: 50% auto;
       max-width: calc(100% - 2rem);
+      width: max-content;
       padding: 0.625rem 1rem;
       pointer-events: none;
       position: absolute;
       text-align: center;
-      transform: translateX(-50%);
-      white-space: nowrap;
+      transform: translate(-50%, -50%);
     }
 
     [dir="rtl"] .liveness-overlay-prompt {
-      transform: translateX(50%);
+      transform: translate(50%, -50%);
     }
 
     .liveness-auto-capture,
@@ -631,12 +715,16 @@ export class IdenqaCaptureElement extends LitElement {
     }
 
     .adapter-progress {
-      background: var(--idq-capture-surface);
+      /*background: var(--idq-capture-surface);
       border: 1px solid var(--idq-capture-border);
       border-radius: var(--idq-capture-card-radius);
-      display: grid;
+      padding: 1rem;*/
+      margin-right: var(--idq-capture-shell-padding);
+      margin-left: var(--idq-capture-shell-padding);
+      display: flex;
+      flex-direction: column;
       gap: 0.625rem;
-      padding: 1rem;
+      align-items: center;
     }
 
     .adapter-progress p {
@@ -661,7 +749,7 @@ export class IdenqaCaptureElement extends LitElement {
       font: inherit;
       font-weight: 650;
       justify-content: center;
-      min-height: 3rem;
+      min-height: 3.25rem;
       padding: 0.75rem 1rem;
       touch-action: manipulation;
       transition:
@@ -699,43 +787,18 @@ export class IdenqaCaptureElement extends LitElement {
       min-height: 1.3125rem;
     }
 
-    .product-header {
-      align-items: center;
-      display: flex;
-      gap: 0.625rem;
-      margin-block-end: clamp(2rem, 7vw, 3.5rem);
-    }
-
-    .mark {
-      align-items: center;
-      background: var(--idq-capture-accent);
-      border-radius: 0.65rem;
-      color: var(--idq-capture-accent-foreground);
-      display: inline-flex;
-      font-size: 0.875rem;
-      font-weight: 800;
-      block-size: 2rem;
-      inline-size: 2rem;
-      justify-content: center;
-    }
-
-    .product-name {
-      font-size: 0.9375rem;
-      font-weight: 750;
-      letter-spacing: -0.01em;
-      margin: 0;
-    }
-
     .screen {
-      display: grid;
-      gap: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
       margin-inline: auto;
-      max-width: 34rem;
+      /*max-width: 34rem;
+      min-height: calc(var(--idq-capture-shell-min-height) - 2 * var(--idq-capture-shell-padding));*/
     }
 
     .screen-copy {
       color: var(--idq-capture-muted);
-      font-size: 1rem;
+      font-size: 0.875rem;
       margin-block-end: 0;
       max-width: 34rem;
     }
@@ -747,28 +810,28 @@ export class IdenqaCaptureElement extends LitElement {
       border-radius: 50%;
       color: var(--idq-capture-accent-strong);
       display: inline-flex;
-      font-size: 1.5rem;
+      font-size: 1rem;
       font-weight: 800;
-      block-size: 4rem;
-      inline-size: 4rem;
+      block-size: 4.125rem;
+      inline-size: 4.125rem;
       justify-content: center;
     }
 
     .liveness-illustration {
       align-items: center;
       align-self: center;
-      background:
-        radial-gradient(circle at 50% 42%, var(--idq-capture-background) 0 28%, transparent 29%),
-        linear-gradient(145deg, var(--idq-capture-surface-strong), var(--idq-capture-surface));
+      background: var(--idq-capture-surface-strong);
       border: 1px solid var(--idq-capture-border);
       border-radius: 50%;
       color: var(--idq-capture-liveness-color);
       display: flex;
-      height: var(--idq-capture-liveness-size);
       justify-content: center;
       justify-self: center;
       overflow: hidden;
-      width: var(--idq-capture-liveness-size);
+      /*width: var(--idq-capture-liveness-size);*/
+      /*height: var(--idq-capture-liveness-size);*/
+      width: 100px;
+      height: 100px;
     }
 
     .liveness-illustration svg {
@@ -836,14 +899,14 @@ export class IdenqaCaptureElement extends LitElement {
     }
 
     .state-icon {
-      block-size: 3.25rem;
-      inline-size: 3.25rem;
+      block-size: 2.375rem;
+      inline-size: 2.375rem;
     }
 
     .benefits,
     .tips {
       display: grid;
-      gap: 0.875rem;
+      gap: 0;
       list-style: none;
       margin: 0;
       padding: 0;
@@ -853,24 +916,47 @@ export class IdenqaCaptureElement extends LitElement {
     .tips li {
       align-items: flex-start;
       display: grid;
-      gap: 0.75rem;
-      grid-template-columns: 1.5rem 1fr;
+      gap: 0.6875rem;
+      font-size: 0.875rem;
+      grid-template-columns: 0.75rem 1fr;
+    }
+
+    .benefits {
+      background: var(--idq-capture-surface);
+      border: 1px solid var(--idq-capture-border);
+      border-radius: 1rem;
+      padding: 0.25rem 1rem;
+    }
+
+    .benefits li {
+      border-block-end: 1px solid var(--idq-capture-border);
+      padding-block: 0.75rem;
+    }
+
+    .benefits li:last-child {
+      border-block-end: 0;
     }
 
     .benefits li::before,
     .tips li::before {
       align-items: center;
-      background: var(--idq-capture-surface-strong);
-      border-radius: 50%;
+      background: transparent;
       color: var(--idq-capture-accent-strong);
       content: "✓";
       display: inline-flex;
       font-size: 0.75rem;
       font-weight: 900;
-      block-size: 1.5rem;
-      inline-size: 1.5rem;
+      block-size: 1.25rem;
+      inline-size: 0.75rem;
       justify-content: center;
       margin-block-start: 0.1rem;
+    }
+
+    .tips li::before {
+      background: var(--idq-capture-surface-strong);
+      border-radius: 50%;
+      block-size: 1.5rem;
+      inline-size: 1.5rem;
     }
 
     .primary {
@@ -893,11 +979,15 @@ export class IdenqaCaptureElement extends LitElement {
     .journey-actions {
       display: grid;
       gap: 0.75rem;
-      margin-block-start: 0.5rem;
+      margin-block-start: auto;
     }
 
     .journey-actions.split {
       grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    }
+
+    .journey-actions.notice-actions {
+      grid-template-columns: 1fr;
     }
 
     .journey-progress {
@@ -905,7 +995,7 @@ export class IdenqaCaptureElement extends LitElement {
       display: grid;
       gap: 0.75rem;
       grid-template-columns: 1fr auto;
-      margin-block-end: 1.75rem;
+      margin-block-end: 2rem;
     }
 
     .journey-progress p {
@@ -922,7 +1012,7 @@ export class IdenqaCaptureElement extends LitElement {
 
     .method-list {
       display: grid;
-      gap: 0.75rem;
+      gap: 0.625rem;
     }
 
     .method-card {
@@ -931,19 +1021,22 @@ export class IdenqaCaptureElement extends LitElement {
       gap: 0.75rem;
       grid-template-columns: auto 1fr auto;
       justify-content: initial;
-      min-height: 4.5rem;
+      border-radius: 1rem;
+      min-height: 4.75rem;
       padding: 1rem;
       text-align: start;
+      font-size: 1rem;
+      background: var(--idq-capture-surface);
     }
 
     .method-card .method-icon {
       align-items: center;
       background: var(--idq-capture-surface-strong);
-      border-radius: 0.65rem;
+      border-radius: 100%;
       color: var(--idq-capture-accent-strong);
       display: inline-flex;
-      block-size: 2.5rem;
-      inline-size: 2.5rem;
+      block-size: 2.75rem;
+      inline-size: 2.75rem;
       justify-content: center;
     }
 
@@ -962,13 +1055,137 @@ export class IdenqaCaptureElement extends LitElement {
       font-size: 1.25rem;
     }
 
-    .capture-panel {
+    .country-picker {
+      align-items: center;
+      display: grid;
+      position: relative;
+    }
+
+    .country-search-icon {
+      color: var(--idq-capture-muted);
+      display: inline-flex;
+      inset-inline-start: 1rem;
+      pointer-events: none;
+      position: absolute;
+      z-index: 1;
+    }
+
+    .country-picker input {
+      appearance: none;
       background: var(--idq-capture-surface);
       border: 1px solid var(--idq-capture-border);
-      border-radius: var(--idq-capture-panel-radius);
+      border-radius: 999px;
+      color: var(--idq-capture-text);
+      font: inherit;
+      inline-size: 100%;
+      min-height: 3.5rem;
+      padding: 0.75rem 1rem 0.75rem 3rem;
+    }
+
+    .country-picker input:focus-visible {
+      outline: var(--idq-capture-focus-width) solid var(--idq-capture-accent);
+      outline-offset: var(--idq-capture-focus-offset);
+    }
+
+    .country-list {
+      display: none;
+      gap: 0.625rem;
+      max-height: 19rem;
+      overflow-y: auto;
+      padding: 0.125rem;
+    }
+
+    .country-picker:focus-within + .country-list,
+    .country-list:focus-within,
+    .country-list-open {
+      display: grid;
+    }
+
+    .country-option {
+      background: var(--idq-capture-surface);
+      border-radius: 1rem;
+      display: grid;
+      gap: 0.75rem;
+      grid-template-columns: 1fr auto auto;
+      justify-content: initial;
+      text-align: start;
+    }
+
+    .country-option:hover {
+      border-color: var(--idq-capture-accent);
+    }
+
+    .country-code,
+    .country-option .chevron {
+      color: var(--idq-capture-muted);
+      font-size: 0.8125rem;
+    }
+
+    .country-option .chevron {
+      font-size: 1.15rem;
+    }
+
+    .empty-state {
+      color: var(--idq-capture-muted);
+      margin: 0;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .secured-by {
+      align-items: center;
+      align-self: end;
+      color: var(--idq-capture-text);
+      display: flex;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      gap: 0.5rem;
+      justify-content: flex-end;
+      margin: 0;
+    }
+
+    .mini-mark {
+      align-items: center;
+      background: var(--idq-capture-accent);
+      border-radius: 0.625rem;
+      color: var(--idq-capture-accent-foreground);
+      display: inline-flex;
+      font-size: 1.125rem;
+      font-weight: 800;
+      block-size: 2rem;
+      inline-size: 2rem;
+      justify-content: center;
+    }
+
+    .preflight-intro {
+      gap: 2rem;
+      padding-block-start: 2.0625rem;
+    }
+
+    .preflight-intro > div:first-of-type {
+      display: grid;
+      gap: 0.625rem;
+    }
+
+    .preflight-intro .eyebrow,
+    .preflight-intro h2,
+    .preflight-intro .screen-copy {
+      margin-block-end: 0;
+    }
+
+    .country-screen > div:nth-of-type(2) {
+      padding-block-start: 1rem;
+    }
+
+    .capture-panel {
+      /*background: var(--idq-capture-surface);
+      border: 1px solid var(--idq-capture-border);
+      border-radius: var(--idq-capture-panel-radius);*/
       display: grid;
       gap: 1rem;
-      padding: 1rem;
+      margin-left: calc(-1 * var(--idq-capture-shell-padding));
+      margin-right: calc(-1 * var(--idq-capture-shell-padding));
+      /*padding: 1rem;*/
     }
 
     .capture-panel .file-label,
@@ -1006,11 +1223,12 @@ export class IdenqaCaptureElement extends LitElement {
 
     .confirmation-card p {
       margin: 0;
+      font-size: 0.8125rem;
     }
 
     .confirmation-card strong {
       display: block;
-      margin-block-end: 0.125rem;
+      font-size: 0.875rem;
     }
 
     .privacy-note {
@@ -1181,7 +1399,9 @@ export class IdenqaCaptureElement extends LitElement {
     }
 
     @media (prefers-reduced-motion: reduce) {
-      button {
+      button,
+      .liveness-guide-arc,
+      .liveness-face-guide line {
         transition-duration: 0ms;
       }
 
@@ -1208,7 +1428,13 @@ export class IdenqaCaptureElement extends LitElement {
         border-inline: 0;
         border-radius: 0;
         box-shadow: none;
+        max-height: none;
         min-height: 100dvh;
+        overflow-y: visible;
+      }
+
+      .screen {
+        min-height: calc(100dvh - 2 * var(--idq-capture-shell-padding));
       }
 
       .journey-actions.split {
@@ -1230,12 +1456,12 @@ export class IdenqaCaptureElement extends LitElement {
     .shell.document-camera-shell {
       background: #080808;
       color: #fff;
+      border: none;
       --idq-capture-text: #fff;
       --idq-capture-muted: #c9c9c9;
       --idq-capture-media-background: #080808;
     }
 
-    .document-camera-shell .product-header,
     .document-camera-shell .journey-progress {
       position: absolute;
       inline-size: 1px;
@@ -1277,8 +1503,8 @@ export class IdenqaCaptureElement extends LitElement {
       background: #262626;
       color: #fff;
       border-radius: 0.5rem;
-      padding: 0.875rem 1rem;
-      font-size: 1.0625rem;
+      padding: 0.875rem;
+      font-size: 0.725rem;
       font-weight: 500;
       line-height: 1.6;
       text-align: center;
@@ -1339,7 +1565,7 @@ export class IdenqaCaptureElement extends LitElement {
     .document-auto-copy {
       color: #c9c9c9;
       text-align: center;
-      font-size: 0.875rem;
+      font-size: 0.725rem;
       margin: 0;
     }
 
@@ -1355,10 +1581,11 @@ export class IdenqaCaptureElement extends LitElement {
       min-block-size: 2.75rem;
       box-sizing: border-box;
       list-style-position: inside;
+      font-size: 0.725rem;
     }
     .document-help p {
       color: #c9c9c9;
-      font-size: 0.9375rem;
+      font-size: 0.75rem;
       line-height: 1.6;
     }
     .document-help summary:focus-visible {
@@ -1412,9 +1639,9 @@ export class IdenqaCaptureElement extends LitElement {
       justify-content: center;
     }
     .shutter-icon {
-      inline-size: 1.5rem;
-      block-size: 1.5rem;
-      border: 2px solid #fff;
+      inline-size: 1rem;
+      block-size: 1rem;
+      border: 1px solid #fff;
       border-radius: 50%;
       box-shadow: inset 0 0 0 3px #080808;
       background: #fff;
@@ -1464,6 +1691,12 @@ export class IdenqaCaptureElement extends LitElement {
   #flowSnapshot: CaptureFlowSnapshot | undefined;
   #flowState: ComponentFlowState = "idle";
   #flowAbortController: AbortController | undefined;
+  #countryJourney: CaptureCountryJourneyOptions | undefined;
+  #countryJourneyPhase: CountryJourneyPhase = "intro";
+  #countryQuery = "";
+  #countrySelecting: string | undefined;
+  #countrySelectionError = false;
+  #countryAbortController: AbortController | undefined;
   #responseError = false;
   #captureCompleteDispatched = false;
   #outcomePolling = false;
@@ -1472,11 +1705,39 @@ export class IdenqaCaptureElement extends LitElement {
   #journeyPhase: JourneyPhase = "intro";
   #stepStage: StepStage = "method";
   #activeStepIndex = 0;
+  #lastJourneyScreen: CaptureJourneyScreen | undefined;
   readonly #documentStates = new Map<string, StepDocumentState>();
   readonly #documentObservations = new Map<string, StepDocumentObservation>();
   readonly #capturingSteps = new Set<string>();
   #documentCapture: NormalizedCaptureDocumentCaptureOptions =
     normalizeCaptureDocumentCaptureOptions();
+
+  /**
+   * Presents privacy and country selection before a verification session
+   * exists. Selecting a country delegates session creation to the host,
+   * verifies the returned notice, records the accepted response, and then
+   * continues with the ordinary immutable capture flow.
+   */
+  startCountryJourney(options: CaptureCountryJourneyOptions): void {
+    const countries = normalizeCountryOptions(options.countries);
+    if (
+      options.captureItemCount !== undefined &&
+      (!Number.isInteger(options.captureItemCount) ||
+        options.captureItemCount < 1 ||
+        options.captureItemCount > 99)
+    ) {
+      throw new TypeError("Capture item count must be an integer between 1 and 99.");
+    }
+    this.cancel();
+    this.#countryJourney = { ...options, countries };
+    this.#countryJourneyPhase = "intro";
+    this.#countryQuery = "";
+    this.#countrySelecting = undefined;
+    this.#countrySelectionError = false;
+    this.#localizer = createCaptureLocalizer(browserLocale(), options.messageCatalogue);
+    this.#flowState = "idle";
+    this.requestUpdate();
+  }
 
   async start(options: CaptureElementStartOptions): Promise<CaptureFlowSnapshot> {
     const {
@@ -1506,6 +1767,9 @@ export class IdenqaCaptureElement extends LitElement {
     this.#clearCameraStates();
     this.#clearAdapterStates();
     this.#flowAbortController?.abort();
+    this.#countryAbortController?.abort();
+    this.#countryAbortController = undefined;
+    this.#countryJourney = undefined;
     const abortController = new AbortController();
     this.#flowAbortController = abortController;
     this.#flowController = createCaptureFlowController(flowOptions);
@@ -1515,6 +1779,7 @@ export class IdenqaCaptureElement extends LitElement {
     this.#journeyPhase = "intro";
     this.#stepStage = "method";
     this.#activeStepIndex = 0;
+    this.#lastJourneyScreen = undefined;
     this.#responseError = false;
     this.#clearUploadStates();
     this.#cameraStates.clear();
@@ -1590,6 +1855,9 @@ export class IdenqaCaptureElement extends LitElement {
   }
 
   cancel(): void {
+    this.#countryAbortController?.abort();
+    this.#countryAbortController = undefined;
+    this.#countryJourney = undefined;
     this.#dropFlowController();
     this.#flowSnapshot = undefined;
     this.#flowState = "cancelled";
@@ -1620,33 +1888,288 @@ export class IdenqaCaptureElement extends LitElement {
     }
   }
 
+  protected override updated(changedProperties: PropertyValues<this>): void {
+    super.updated(changedProperties);
+    const screen = this.#currentJourneyScreen();
+    if (screen === undefined || screen === this.#lastJourneyScreen) return;
+    this.#lastJourneyScreen = screen;
+    this.#recordJourney("screen_viewed", screen);
+    const stateEvent: Partial<Record<CaptureJourneyScreen, CaptureJourneyEventType>> = {
+      recovery: "recovery_started",
+      processing: "processing_started",
+      completion: "completion_shown",
+      error: "error_shown",
+    };
+    const eventType = stateEvent[screen];
+    if (eventType !== undefined) this.#recordJourney(eventType, screen);
+  }
+
   protected override render() {
     return html`
       <section
-        class=${this.#isDocumentCameraScreen() ? "shell document-camera-shell" : "shell"}
+        class=${this.#isDocumentCameraScreen() || this.#isLiveCameraScreen() ? "shell document-camera-shell" : "shell"}
         aria-labelledby="capture-title"
         lang=${this.#localizer.locale}
         dir=${this.#localizer.direction}
       >
-        <header class="product-header">
-          <span class="mark" aria-hidden="true">I</span>
-          <h2 class="product-name" id="capture-title">${this.#text("identityVerification")}</h2>
-        </header>
+        <h1 class="visually-hidden" id="capture-title">${this.#text("identityVerification")}</h1>
         ${
-          this.#flowState === "loading"
-            ? this.#renderLoading()
-            : this.#flowState === "error"
-              ? this.#renderError()
-              : this.#flowState === "cancelled"
-                ? this.#renderCancelled()
-                : this.#flowSnapshot !== undefined
-                  ? this.#renderFlow(this.#flowSnapshot)
-                  : this.plan === undefined
-                    ? this.#renderLoading(false)
-                    : this.#renderPlan(this.plan)
+          this.#countryJourney !== undefined
+            ? this.#renderCountryJourney()
+            : this.#flowState === "loading"
+              ? this.#renderLoading()
+              : this.#flowState === "error"
+                ? this.#renderError()
+                : this.#flowState === "cancelled"
+                  ? this.#renderCancelled()
+                  : this.#flowSnapshot !== undefined
+                    ? this.#renderFlow(this.#flowSnapshot)
+                    : this.plan === undefined
+                      ? this.#renderLoading(false)
+                      : this.#renderPlan(this.plan)
         }
       </section>
     `;
+  }
+
+  #renderCountryJourney() {
+    const journey = this.#countryJourney;
+    if (journey === undefined) return nothing;
+    if (this.#countryJourneyPhase === "intro") {
+      return html`
+        <div class="screen preflight-intro">
+          <span class="hero-icon" aria-hidden="true">${this.#shieldIcon()}</span>
+          <div>
+            <p class="eyebrow">${this.#text("secureCapture")}</p>
+            <h2>${this.#text("introTitle")}</h2>
+            <p class="screen-copy">${this.#text("introBody")}</p>
+          </div>
+          <ul class="benefits">
+            <li>
+              ${
+                journey.captureItemCount === undefined
+                  ? this.#text("countryMatchedDocuments")
+                  : this.#text("introStepCount", {
+                      count: formatNumber(journey.captureItemCount, this.#localizer.locale),
+                    })
+              }
+            </li>
+            <li>${this.#text("introPrivate")}</li>
+            <li>${this.#text("introDevice")}</li>
+          </ul>
+          <div class="journey-actions">
+            <button
+              class="primary"
+              type="button"
+              @click=${() => {
+                this.#countryJourneyPhase = "notice";
+                this.requestUpdate();
+              }}
+            >
+              ${this.#text("getStarted")}
+            </button>
+          </div>
+          ${this.#renderSecuredBy()}
+        </div>
+      `;
+    }
+
+    if (this.#countryJourneyPhase === "notice") return this.#renderCountryJourneyNotice(journey);
+
+    const query = this.#countryQuery.trim().toLocaleLowerCase(this.#localizer.locale);
+    const countries = journey.countries.filter(
+      (country) =>
+        query.length === 0 ||
+        country.label.toLocaleLowerCase(this.#localizer.locale).includes(query) ||
+        country.code.toLocaleLowerCase(this.#localizer.locale).includes(query),
+    );
+    return html`
+      <div class="screen country-screen">
+        ${
+          journey.captureItemCount === undefined
+            ? nothing
+            : html`
+                <div class="journey-progress">
+                  <p>
+                    ${this.#text("stepOf", {
+                      current: formatNumber(1, this.#localizer.locale),
+                      total: formatNumber(journey.captureItemCount, this.#localizer.locale),
+                    })}
+                  </p>
+                  <p>
+                    ${this.#text("progressPercent", { percent: formatNumber(0, this.#localizer.locale) })}
+                  </p>
+                  <progress
+                    aria-label=${this.#text("progressLabel")}
+                    value="0"
+                    max="100"
+                  ></progress>
+                </div>
+              `
+        }
+        <div>
+          <h2>${this.#text("chooseCountryTitle")}</h2>
+          <p class="screen-copy">${this.#text("chooseCountryBody")}</p>
+        </div>
+        <div class="country-picker">
+          <label class="visually-hidden" for="country-search">${this.#text("searchCountry")}</label>
+          <span class="country-search-icon" aria-hidden="true">${this.#searchIcon()}</span>
+          <input
+            id="country-search"
+            type="search"
+            autocomplete="country-name"
+            placeholder=${this.#text("searchCountry")}
+            .value=${this.#countryQuery}
+            ?disabled=${this.#countrySelecting !== undefined}
+            @input=${(event: InputEvent) => {
+              this.#countryQuery = (event.currentTarget as HTMLInputElement).value;
+              this.#countrySelectionError = false;
+              this.requestUpdate();
+            }}
+          />
+        </div>
+        <div
+          class=${query.length === 0 ? "country-list" : "country-list country-list-open"}
+          role="list"
+          aria-live="polite"
+        >
+          ${countries.map(
+            (country) => html`
+              <button
+                class="country-option"
+                type="button"
+                ?disabled=${this.#countrySelecting !== undefined}
+                @click=${() => void this.#selectCountry(country)}
+              >
+                <span>${country.label}</span>
+                <span class="country-code">${country.code}</span>
+                <span class="chevron" aria-hidden="true">›</span>
+              </button>
+            `,
+          )}
+          ${
+            countries.length === 0
+              ? html`<p class="empty-state">${this.#text("countryNoResults")}</p>`
+              : nothing
+          }
+        </div>
+        ${
+          this.#countrySelecting === undefined
+            ? nothing
+            : html`<p class="status" role="status">${this.#text("preparingCountry")}</p>`
+        }
+        ${
+          this.#countrySelectionError
+            ? html`<p class="error" role="alert">${this.#text("countrySelectionFailed")}</p>`
+            : nothing
+        }
+        <div class="journey-actions">
+          <button
+            class="quiet"
+            type="button"
+            ?disabled=${this.#countrySelecting !== undefined}
+            @click=${() => {
+              this.#countryJourneyPhase = "notice";
+              this.#countryQuery = "";
+              this.#countrySelectionError = false;
+              this.requestUpdate();
+            }}
+          >
+            ${this.#text("back")}
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  #renderCountryJourneyNotice(journey: CaptureCountryJourneyOptions) {
+    const { notice } = journey;
+    return html`
+      <div class="screen notice-screen">
+        <div>
+          <p class="eyebrow">${this.#text("noticeStep")}</p>
+          <h2>${this.#text("noticeTitle")}</h2>
+          <p class="screen-copy">${this.#text("noticeBody")}</p>
+        </div>
+        <article class="notice" aria-labelledby="idq-notice-title" lang=${notice.locale}>
+          <div>
+            <h4 id="idq-notice-title">${notice.copy.title}</h4>
+            <p class="notice-copy">${notice.copy.summary}</p>
+          </div>
+          <div>
+            <h4>${this.#text("whyInformationNeeded")}</h4>
+            <p class="notice-copy">${notice.copy.purpose}</p>
+          </div>
+          <div>
+            <h4>${this.#text("ifYouRefuse")}</h4>
+            <p class="notice-copy">${notice.copy.consequences}</p>
+          </div>
+          <dl class="notice-meta">
+            <div>
+              <dt>${this.#text("controller")}</dt>
+              <dd>${notice.controller}</dd>
+            </div>
+            <div>
+              <dt>${this.#text("recipient")}</dt>
+              <dd>${notice.recipient}</dd>
+            </div>
+          </dl>
+          <p class="notice-guidance">
+            ${notice.consentRequired ? this.#text("reviewConsent") : this.#text("reviewAcknowledgement")}
+          </p>
+        </article>
+        <div
+          class="journey-actions notice-actions"
+          role="group"
+          aria-label=${this.#text("noticeActionsLabel")}
+        >
+          <button
+            class="primary"
+            type="button"
+            @click=${() => {
+              this.#countryJourneyPhase = "country";
+              this.requestUpdate();
+            }}
+          >
+            ${notice.consentRequired ? this.#text("agreeAndContinue") : this.#text("acknowledgeAndContinue")}
+          </button>
+          <button class="quiet" type="button" @click=${() => this.cancel()}>
+            ${this.#text("cancel")}
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  async #selectCountry(country: CaptureCountryOption): Promise<void> {
+    const journey = this.#countryJourney;
+    if (journey === undefined || this.#countrySelecting !== undefined) return;
+    const controller = new AbortController();
+    this.#countryAbortController?.abort();
+    this.#countryAbortController = controller;
+    this.#countrySelecting = country.code;
+    this.#countrySelectionError = false;
+    this.requestUpdate();
+    try {
+      const options = await journey.resolve(country, controller.signal);
+      if (controller.signal.aborted || this.#countryAbortController !== controller) return;
+      const snapshot = await this.start(options);
+      if (
+        !isActiveCaptureFlowSnapshot(snapshot) ||
+        snapshot.status !== "notice_required" ||
+        !countryJourneyNoticeMatches(journey.notice, snapshot)
+      ) {
+        throw new Error("The country-bound session did not return the accepted notice.");
+      }
+      await this.#respond(journey.notice.consentRequired ? "consent" : "acknowledge");
+    } catch (error) {
+      if (controller.signal.aborted) return;
+      this.#countryAbortController = undefined;
+      this.#countrySelecting = undefined;
+      this.#countrySelectionError = true;
+      this.requestUpdate();
+      void error;
+    }
   }
 
   #renderFlow(flow: CaptureFlowSnapshot) {
@@ -1706,7 +2229,7 @@ export class IdenqaCaptureElement extends LitElement {
   }
 
   #renderIntroduction(flow: CaptureActiveFlowSnapshot) {
-    const totalSteps = planSteps(flow.plan).length;
+    const totalSteps = flow.plan.requirements.length;
     return html`
       <div class="screen">
         <span class="hero-icon" aria-hidden="true">✓</span>
@@ -1726,10 +2249,8 @@ export class IdenqaCaptureElement extends LitElement {
           <button class="primary" type="button" @click=${() => this.#beginJourney(flow)}>
             ${this.#text("getStarted")}
           </button>
-          <button class="quiet" type="button" @click=${() => this.cancel()}>
-            ${this.#text("cancel")}
-          </button>
         </div>
+        ${this.#renderSecuredBy()}
       </div>
     `;
   }
@@ -1744,7 +2265,7 @@ export class IdenqaCaptureElement extends LitElement {
           <p class="screen-copy">${this.#text("noticeBody")}</p>
         </div>
         <article class="notice" aria-labelledby="idq-notice-title" lang=${notice.locale}>
-          <h3 id="idq-notice-title">${notice.copy.title}</h3>
+          <h4 id="idq-notice-title">${notice.copy.title}</h4>
           <p class="notice-copy">${notice.copy.summary}</p>
           <h4>${this.#text("whyInformationNeeded")}</h4>
           <p class="notice-copy">${notice.copy.purpose}</p>
@@ -1762,7 +2283,13 @@ export class IdenqaCaptureElement extends LitElement {
           </dl>
           ${
             flow.status === "notice_required"
-              ? this.#renderNoticeActions(authority.consentRequired)
+              ? html`<p class="notice-guidance">
+                  ${
+                    authority.consentRequired
+                      ? this.#text("reviewConsent")
+                      : this.#text("reviewAcknowledgement")
+                  }
+                </p>`
               : html`<p class="notice-guidance" role="status">
                   ${
                     latestResponse?.action === "consent"
@@ -1772,9 +2299,21 @@ export class IdenqaCaptureElement extends LitElement {
                 </p>`
           }
         </article>
-        <button class="quiet" type="button" @click=${() => this.cancel()}>
-          ${this.#text("cancel")}
-        </button>
+        ${
+          flow.status === "notice_required"
+            ? this.#renderNoticeActions(authority.consentRequired)
+            : this.#journeyPhase === "notice" && flow.status === "capture_ready"
+              ? html`<div class="journey-actions">
+                  <button
+                    class="primary"
+                    type="button"
+                    @click=${() => this.#resumeJourney(flow.plan)}
+                  >
+                    ${this.#text("continue")}
+                  </button>
+                </div>`
+              : nothing
+        }
       </div>
     `;
   }
@@ -1783,10 +2322,11 @@ export class IdenqaCaptureElement extends LitElement {
     const busy = this.#flowState === "responding";
     const acceptedAction: SubjectResponseAction = consentRequired ? "consent" : "acknowledge";
     return html`
-      <p class="notice-guidance">
-        ${consentRequired ? this.#text("reviewConsent") : this.#text("reviewAcknowledgement")}
-      </p>
-      <div class="notice-actions" role="group" aria-label=${this.#text("noticeActionsLabel")}>
+      <div
+        class="journey-actions notice-actions"
+        role="group"
+        aria-label=${this.#text("noticeActionsLabel")}
+      >
         <button
           class="primary"
           type="button"
@@ -1801,8 +2341,13 @@ export class IdenqaCaptureElement extends LitElement {
                 : this.#text("acknowledgeAndContinue")
           }
         </button>
-        <button type="button" ?disabled=${busy} @click=${() => void this.#respond("refuse")}>
-          ${this.#text("refuse")}
+        <button
+          class="quiet"
+          type="button"
+          ?disabled=${busy}
+          @click=${() => void this.#respond("refuse")}
+        >
+          ${this.#text("cancel")}
         </button>
       </div>
       ${
@@ -1817,26 +2362,30 @@ export class IdenqaCaptureElement extends LitElement {
     const steps = planSteps(plan);
     const step = steps[this.#activeStepIndex];
     if (step === undefined) return this.#renderProcessing();
-    const completedSteps = steps.filter((candidate) =>
-      this.#completedSteps.has(stepKey(candidate)),
+    const activeRequirementIndex = plan.requirements.findIndex(
+      (requirement) => requirement.key === step.requirementKey,
+    );
+    const completedRequirements = plan.requirements.filter((requirement) =>
+      requirement.steps.every((candidate) => this.#completedSteps.has(stepKey(candidate))),
     ).length;
+    const totalRequirements = plan.requirements.length;
     const item = friendlyArtefact(step.artefact, this.#localizer);
     return html`
       <div class="screen">
         <div class="journey-progress">
           <p>
             ${this.#text("stepOf", {
-              current: formatNumber(this.#activeStepIndex + 1, locale),
-              total: formatNumber(steps.length, locale),
+              current: formatNumber(activeRequirementIndex + 1, locale),
+              total: formatNumber(totalRequirements, locale),
             })}
           </p>
           <p>
-            ${this.#text("progressPercent", { percent: formatNumber(Math.round((completedSteps / steps.length) * 100), locale) })}
+            ${this.#text("progressPercent", { percent: formatNumber(Math.round((completedRequirements / totalRequirements) * 100), locale) })}
           </p>
           <progress
             aria-label=${this.#text("progressLabel")}
-            value=${completedSteps}
-            max=${steps.length}
+            value=${completedRequirements}
+            max=${totalRequirements}
           ></progress>
         </div>
         ${
@@ -1877,6 +2426,27 @@ export class IdenqaCaptureElement extends LitElement {
       step !== undefined &&
       isDocumentArtefact(step.artefact) &&
       (this.#selectedMethods.get(stepKey(step)) ?? step.methodOptions[0]) === LIVE_CAMERA_METHOD
+    );
+  }
+
+  #isLiveCameraScreen(): boolean {
+    const flow = this.#flowSnapshot;
+    if (
+      flow === undefined ||
+      !isActiveCaptureFlowSnapshot(flow) ||
+      flow.status !== "capture_ready" ||
+      this.#journeyPhase !== "capture" ||
+      this.#stepStage !== "capture"
+    )
+      return false;
+    const step = planSteps(flow.plan)[this.#activeStepIndex];
+    if (step === undefined) return false;
+    const method = this.#selectedMethods.get(stepKey(step)) ?? step.methodOptions[0];
+    return (
+      method === LIVE_CAMERA_METHOD &&
+      step.evidenceType === "idenqa.evidence.selfie_image" &&
+      step.artefact === "idenqa.artefact.selfie_image" &&
+      this.#adapterFor(step, method)?.presentation === "active_liveness"
     );
   }
 
@@ -1977,9 +2547,50 @@ export class IdenqaCaptureElement extends LitElement {
     }
   }
 
+  #shieldIcon() {
+    return html`<svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.8"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M12 3 20 6v5c0 5.2-3.4 8.6-8 10-4.6-1.4-8-4.8-8-10V6l8-3Z" />
+      <path d="m8.7 12 2.1 2.1 4.7-4.8" />
+    </svg>`;
+  }
+
+  #searchIcon() {
+    return html`<svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.8"
+      stroke-linecap="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-4-4" />
+    </svg>`;
+  }
+
+  #renderSecuredBy() {
+    return html`<p class="secured-by">
+      <span>${this.#text("securedBy")}</span><span class="mini-mark" aria-hidden="true">I</span>
+    </p>`;
+  }
+
   #documentIcon() {
     return html`<svg
-      width="40"
+      width="28"
       height="28"
       viewBox="0 0 40 28"
       fill="none"
@@ -2069,14 +2680,14 @@ export class IdenqaCaptureElement extends LitElement {
       </div>
       ${
         copy?.tips === undefined
-          ? html`<ul class="tips">
+          ? html`<ul class="benefits">
               <li>${this.#text("tipLighting")}</li>
               <li>${this.#text("tipReadable")}</li>
               <li>${this.#text("tipPrivacy")}</li>
             </ul>`
           : copy.tips.length === 0
             ? nothing
-            : html`<ul class="tips">
+            : html`<ul class="benefits">
                 ${copy.tips.map((tip) => html`<li>${tip}</li>`)}
               </ul>`
       }
@@ -2092,25 +2703,13 @@ export class IdenqaCaptureElement extends LitElement {
           ${copy?.action ?? this.#text("continue")}
         </button>
         <button type="button" @click=${() => this.#backFromPreparation(step)}>
-          ${step.methodOptions.length > 1 ? this.#text("chooseAnotherMethod") : this.#text("back")}
+          ${
+            this.#canChangeDocument(step) || step.methodOptions.length === 1
+              ? this.#text("back")
+              : this.#text("chooseAnotherMethod")
+          }
         </button>
-        ${
-          this.#canChangeDocument(step)
-            ? html`<button
-                type="button"
-                @click=${() => {
-                  this.#choosingDocument = step.requirementKey;
-                  this.requestUpdate();
-                }}
-              >
-                ${this.#text("changeDocument")}
-              </button>`
-            : nothing
-        }
       </div>
-      <button class="quiet" type="button" @click=${() => this.cancel()}>
-        ${this.#text("cancel")}
-      </button>
     `;
   }
 
@@ -2176,12 +2775,27 @@ export class IdenqaCaptureElement extends LitElement {
       `;
     }
     return html`
-      <div>
-        <p class="eyebrow">${this.#text("capture")}</p>
-        <h2>${this.#text("captureTitle", { item })}</h2>
+      <div class="document-navigation">
+        <button
+          type="button"
+          ?disabled=${busy}
+          @click=${() => this.#backToPreparation(step)}
+        >
+          ${this.#text("back")}
+        </button>
+        <button class="quiet" type="button" ?disabled=${busy} @click=${() => this.cancel()}>
+          ${this.#text("cancel")}
+        </button>
+      </div>
+
+      <div class="document-camera">
+          <h2 class="document-instruction">
+              ${copy?.instruction ?? captureInstruction(method, this.#localizer)}
+          </h2>
+        <!--<h2>${this.#text("captureTitle", { item })}</h2>
         <p class="screen-copy">
           ${copy?.instruction ?? captureInstruction(method, this.#localizer)}
-        </p>
+        </p>-->
       </div>
       <div class="capture-panel">
         ${
@@ -2204,14 +2818,6 @@ export class IdenqaCaptureElement extends LitElement {
                     ${methodAction(method, this.#localizer)}
                   </button>`
         }
-      </div>
-      <div class="journey-actions">
-        <button type="button" ?disabled=${busy} @click=${() => this.#backToPreparation(step)}>
-          ${this.#text("back")}
-        </button>
-        <button class="quiet" type="button" ?disabled=${busy} @click=${() => this.cancel()}>
-          ${this.#text("cancel")}
-        </button>
       </div>
     `;
   }
@@ -2255,33 +2861,34 @@ export class IdenqaCaptureElement extends LitElement {
         ? this.#text("requiredItem")
         : friendlyArtefact(step.artefact, this.#localizer);
     const isLast = steps.every((candidate) => this.#completedSteps.has(stepKey(candidate)));
-    const completedSteps = steps.filter((candidate) =>
-      this.#completedSteps.has(stepKey(candidate)),
-    ).length;
+    const progress = captureProgress(plan, this.#completedSteps);
+    const activeRequirementIndex = plan.requirements.findIndex(
+      (requirement) => requirement.key === step?.requirementKey,
+    );
     return html`
       <div class="screen" aria-live="polite">
         <div class="journey-progress">
           <p>
             ${this.#text("stepOf", {
               current: formatNumber(
-                Math.min(this.#activeStepIndex + 1, steps.length),
+                Math.min(activeRequirementIndex + 1, progress.totalSteps),
                 this.#localizer.locale,
               ),
-              total: formatNumber(steps.length, this.#localizer.locale),
+              total: formatNumber(progress.totalSteps, this.#localizer.locale),
             })}
           </p>
           <p>
             ${this.#text("progressPercent", {
               percent: formatNumber(
-                Math.round((completedSteps / steps.length) * 100),
+                Math.round((progress.completedSteps / progress.totalSteps) * 100),
                 this.#localizer.locale,
               ),
             })}
           </p>
           <progress
             aria-label=${this.#text("progressLabel")}
-            value=${completedSteps}
-            max=${steps.length}
+            value=${progress.completedSteps}
+            max=${progress.totalSteps}
           ></progress>
         </div>
         <span class="hero-icon" aria-hidden="true">✓</span>
@@ -2441,6 +3048,7 @@ export class IdenqaCaptureElement extends LitElement {
   }
 
   #beginJourney(flow: CaptureActiveFlowSnapshot): void {
+    this.#recordJourney("action_selected", "intro", "continue");
     if (flow.status === "notice_required") {
       this.#journeyPhase = "notice";
     } else if (flow.status === "capture_ready") {
@@ -2453,7 +3061,7 @@ export class IdenqaCaptureElement extends LitElement {
 
   #resumeJourney(plan: CapturePlan, showRecovery = false): void {
     const progress = captureProgress(plan, this.#completedSteps);
-    if (showRecovery && progress.completedSteps > 0) {
+    if (showRecovery && this.#completedSteps.size > 0) {
       this.#journeyPhase = "recovery";
       this.requestUpdate();
       return;
@@ -2482,7 +3090,17 @@ export class IdenqaCaptureElement extends LitElement {
     const step = steps[this.#activeStepIndex]!;
     const key = stepKey(step);
     this.#selectedMethods.set(key, step.methodOptions[0]!);
-    this.#stepStage = "preparation";
+    this.#stepStage =
+      isDocumentArtefact(step.artefact) &&
+      (this.#documentChoices[step.requirementKey]?.options.length ?? 0) > 1 &&
+      step.methodOptions.length > 1 &&
+      !steps.some(
+        (candidate) =>
+          candidate.requirementKey === step.requirementKey &&
+          this.#completedSteps.has(stepKey(candidate)),
+      )
+        ? "method"
+        : "preparation";
     this.#journeyPhase = "capture";
     const options = this.#documentChoices[step.requirementKey]?.options;
     if (options?.length === 1 && !this.#selectedDocuments.has(step.requirementKey)) {
@@ -2493,6 +3111,7 @@ export class IdenqaCaptureElement extends LitElement {
 
   #chooseGuidedMethod(step: CapturePlanStep, method: string): void {
     this.#selectMethod(step, method);
+    this.#recordStepJourney("action_selected", "method", step, "select_method", method);
     this.#stepStage = "preparation";
     this.requestUpdate();
   }
@@ -2513,16 +3132,24 @@ export class IdenqaCaptureElement extends LitElement {
   }
 
   #backFromPreparation(step: CapturePlanStep): void {
-    if (step.methodOptions.length > 1) {
+    this.#recordStepJourney("navigation_back", "preparation", step, "back");
+    if (this.#canChangeDocument(step)) {
+      this.#choosingDocument = step.requirementKey;
+      this.#documentSelectionError = false;
+    } else if (step.methodOptions.length > 1) {
       this.#selectedMethods.delete(stepKey(step));
       this.#stepStage = "method";
     } else {
-      this.#journeyPhase = "intro";
+      this.#journeyPhase = "notice";
     }
     this.requestUpdate();
   }
 
   #showCaptureTask(): void {
+    const step = this.#activeJourneyStep();
+    if (step !== undefined) {
+      this.#recordStepJourney("capture_started", "preparation", step, "start_capture");
+    }
     this.#stepStage = "capture";
     this.requestUpdate();
   }
@@ -2539,6 +3166,7 @@ export class IdenqaCaptureElement extends LitElement {
   }
 
   #backToPreparation(step: CapturePlanStep): void {
+    this.#recordStepJourney("navigation_back", "capture", step, "back");
     const key = stepKey(step);
     this.#clearUploadState(key);
     this.#clearCameraState(key);
@@ -3132,6 +3760,7 @@ export class IdenqaCaptureElement extends LitElement {
 
   #renderPoseRing(progress: CaptureMethodAdapterProgress | undefined) {
     const prompt = progress?.prompt;
+    const stage = poseGuideStage(progress);
     const center =
       prompt === "turn_right"
         ? 0
@@ -3140,24 +3769,35 @@ export class IdenqaCaptureElement extends LitElement {
           : prompt === "look_up"
             ? -Math.PI / 2
             : Math.PI / 2;
-    const all = prompt === "neutral" || prompt === "blink";
-    const ticks = Array.from({ length: 64 }, (_, index) => {
-      const angle = (index / 64) * Math.PI * 2 - Math.PI;
-      const distance = Math.atan2(Math.sin(angle - center), Math.cos(angle - center));
-      return {
-        angle,
-        active: all || Math.abs(distance) <= Math.PI / 3,
-        order: all ? index / 64 : (distance + Math.PI / 3) / ((Math.PI * 2) / 3),
-      };
-    });
-    return html`<svg class="liveness-face-guide" viewBox="0 0 100 100" aria-hidden="true">
-      ${ticks.map(
-        ({ angle, active, order }) => svg`<line
-        x1=${50 + Math.cos(angle) * 39} y1=${50 + Math.sin(angle) * 43}
-        x2=${50 + Math.cos(angle) * 43} y2=${50 + Math.sin(angle) * 47}
-        data-active=${String(active)} data-filled=${String(active && (progress?.poseProgress ?? 0) > order)} />`,
-      )}
-    </svg>`;
+    const arcHalfAngle = Math.PI / 6;
+    return html`
+      <svg
+        class="liveness-face-guide"
+        viewBox="0 0 100 100"
+        preserveAspectRatio="xMidYMid meet"
+        data-stage=${stage}
+        aria-hidden="true"
+        focusable="false"
+      >
+        ${[0, Math.PI / 2, Math.PI, -Math.PI / 2].map((arcCenter) => {
+          const active = stage === "pose" && (prompt === "blink" || arcCenter === center);
+          if (active) {
+            return Array.from({ length: 29 }, (_, index) => {
+              const angle = arcCenter - arcHalfAngle + (index / 28) * 2 * arcHalfAngle;
+              const filled = Math.abs(index - 14) / 14 < (progress?.poseProgress ?? 0);
+              return svg`<line
+                x1=${50 + Math.cos(angle) * 40} y1=${50 + Math.sin(angle) * 40}
+                x2=${50 + Math.cos(angle) * 46} y2=${50 + Math.sin(angle) * 46}
+                data-filled=${String(filled)} />`;
+            });
+          }
+          const start = arcCenter - arcHalfAngle;
+          const end = arcCenter + arcHalfAngle;
+          return svg`<path class="liveness-guide-arc"
+            d=${`M ${50 + Math.cos(start) * 43} ${50 + Math.sin(start) * 43} A 43 43 0 0 1 ${50 + Math.cos(end) * 43} ${50 + Math.sin(end) * 43}`} />`;
+        })}
+      </svg>
+    `;
   }
 
   #renderMethodAdapter(
@@ -3175,10 +3815,15 @@ export class IdenqaCaptureElement extends LitElement {
         ? livenessPrompt(state.progress.prompt, this.#localizer)
         : undefined;
     const feedback = state?.progress?.poseFeedback;
+    const guideStage = poseGuideStage(state?.progress);
     const guidance =
-      feedback === undefined || feedback === "follow_prompt"
-        ? prompt
-        : this.#text(poseFeedbackKey(feedback));
+      guideStage === "centered"
+        ? this.#text("poseCentered")
+        : feedback !== undefined && feedback !== "follow_prompt"
+          ? this.#text(poseFeedbackKey(feedback))
+          : guideStage === "centering"
+            ? this.#text("poseCenterFace")
+            : prompt;
     return html`
       <div
         class="adapter-option"
@@ -3222,7 +3867,7 @@ export class IdenqaCaptureElement extends LitElement {
                   ${
                     state.progress?.phase === "challenge" && prompt !== undefined
                       ? html`
-                          <p class="eyebrow">
+                          <p class="" style="font-size:0.75rem">
                             ${this.#text("challengeProgress", {
                               current: formatNumber(
                                 state.progress.current!,
@@ -3231,7 +3876,7 @@ export class IdenqaCaptureElement extends LitElement {
                               total: formatNumber(state.progress.total!, this.#localizer.locale),
                             })}
                           </p>
-                          <p class="adapter-prompt">${guidance}</p>
+                          <!--<p class="adapter-prompt">${guidance}</p>-->
                           <progress
                             aria-label=${this.#text("livenessProgressLabel")}
                             aria-live="off"
@@ -3259,16 +3904,17 @@ export class IdenqaCaptureElement extends LitElement {
                         </p>`
                       : nothing
                   }
-                  <p>${adapterProgressMessage(state.progress, copy.label, this.#localizer)}</p>
+                  <p style="font-size:0.75rem">${adapterProgressMessage(state.progress, copy.label, this.#localizer)}</p>
                 </div>
-                <button type="button" @click=${() => this.#cancelMethodAdapter(step)}>
+                <!--<button type="button" @click=${() => this.#cancelMethodAdapter(step)}>
                   ${this.#text("cancelMethod", { method: copy.label })}
-                </button>
+                </button>-->
               `
             : html`
                 <button
                   class="primary"
                   type="button"
+                  style="margin-left: var(--idq-capture-shell-padding); margin-right: var(--idq-capture-shell-padding);"
                   @click=${() => void this.#runMethodAdapter(step, adapter, previewId)}
                 >
                   ${copy.action}
@@ -3277,7 +3923,7 @@ export class IdenqaCaptureElement extends LitElement {
         }
         ${
           state?.status === "error"
-            ? html`<p class="error" role="alert">${state.message}</p>`
+            ? html`<p class="error" style="margin-left: var(--idq-capture-shell-padding); margin-right: var(--idq-capture-shell-padding); font-size:0.75rem" role="alert">${state.message}</p>`
             : nothing
         }
       </div>
@@ -3317,6 +3963,20 @@ export class IdenqaCaptureElement extends LitElement {
         };
         const adapter = findCaptureMethodAdapter(this.#methodAdapters, context);
         if (adapter !== undefined) captureMethodAdapterCopy(adapter, this.#localizer.locale);
+        if (
+          method === LIVE_CAMERA_METHOD &&
+          step.evidenceType === "idenqa.evidence.selfie_image" &&
+          step.artefact === "idenqa.artefact.selfie_image"
+        ) {
+          const selfieAdapter = requireCaptureMethodAdapter(this.#methodAdapters, context);
+          if (selfieAdapter.presentation !== "active_liveness") {
+            throw new CaptureMethodAdapterError(
+              "CAPTURE_METHOD_ADAPTER_INVALID",
+              "Live selfie capture requires the guided active-liveness presentation.",
+            );
+          }
+          continue;
+        }
         if (
           method !== FILE_UPLOAD_METHOD &&
           method !== LIVE_CAMERA_METHOD &&
@@ -3419,6 +4079,25 @@ export class IdenqaCaptureElement extends LitElement {
         "failed",
         unconfirmed ? "adapter_completion_unconfirmed" : "adapter_failed",
       );
+      if (!unconfirmed) {
+        try {
+          this.#flowSnapshot = flowController.captureFailed(step);
+          this.#adapterStates.delete(key);
+          this.#selectedMethods.delete(key);
+          if (this.#journeyPhase === "capture") {
+            const fallbackStep = planSteps(this.#flowSnapshot.plan)[this.#activeStepIndex];
+            if (fallbackStep !== undefined && fallbackStep.methodOptions.length === 1) {
+              this.#selectedMethods.set(stepKey(fallbackStep), fallbackStep.methodOptions[0]!);
+              this.#stepStage = "preparation";
+            } else {
+              this.#stepStage = "method";
+            }
+          }
+          return;
+        } catch {
+          // No usable capture_failed fallback exists; keep the adapter retry local.
+        }
+      }
       this.#dispatchFlowError();
     } finally {
       parentSignal.removeEventListener("abort", parentAborted);
@@ -3715,6 +4394,7 @@ export class IdenqaCaptureElement extends LitElement {
   }
 
   async #retakePhoto(step: CapturePlanStep, idSuffix: string): Promise<void> {
+    this.#recordStepJourney("capture_retake", "review", step, "retake", LIVE_CAMERA_METHOD);
     this.#clearCameraState(stepKey(step));
     await this.#startCamera(step, idSuffix);
   }
@@ -3904,6 +4584,13 @@ export class IdenqaCaptureElement extends LitElement {
       uploadId: upload.id,
       evidenceId: upload.evidenceId,
     });
+    this.#recordStepJourney(
+      "capture_accepted",
+      "review",
+      step,
+      "accept_capture",
+      acquisitionMethod,
+    );
     const detail: CaptureEvidenceAcceptedDetail = {
       uploadId: upload.id,
       evidenceId: upload.evidenceId,
@@ -4019,6 +4706,11 @@ export class IdenqaCaptureElement extends LitElement {
     const signal = this.#flowAbortController?.signal;
     if (controller === undefined || this.#flowState === "responding") return;
     this.#flowState = "responding";
+    this.#recordJourney(
+      "action_selected",
+      "notice",
+      action === "refuse" ? "refuse_notice" : "accept_notice",
+    );
     this.#responseError = false;
     this.requestUpdate();
     try {
@@ -4057,6 +4749,7 @@ export class IdenqaCaptureElement extends LitElement {
   }
 
   #dispatchFlowError(): void {
+    this.#recordJourney("error_shown", "error");
     const detail: CaptureFlowErrorDetail = { code: "CAPTURE_FLOW_REQUEST_FAILED" };
     this.dispatchEvent(
       new CustomEvent<CaptureFlowErrorDetail>("idenqa-flow-error", {
@@ -4132,6 +4825,61 @@ export class IdenqaCaptureElement extends LitElement {
   #text(key: CaptureMessageKey, values?: CaptureMessageValues): string {
     return this.#localizer.text(key, values);
   }
+
+  #currentJourneyScreen(): CaptureJourneyScreen | undefined {
+    if (this.#flowController === undefined && this.#flowSnapshot === undefined) return undefined;
+    if (this.#flowState === "error") return "error";
+    const flow = this.#flowSnapshot;
+    if (flow !== undefined && !isActiveCaptureFlowSnapshot(flow)) {
+      if (flow.status === "processing" || flow.status === "action_required") return "processing";
+      if (flow.status === "failed") return "error";
+      return "completion";
+    }
+    if (this.#journeyPhase === "confirmation") return "review";
+    if (this.#journeyPhase === "complete") return "completion";
+    if (this.#journeyPhase !== "capture") return this.#journeyPhase;
+    return this.#stepStage;
+  }
+
+  #activeJourneyStep(): CapturePlanStep | undefined {
+    const flow = this.#flowSnapshot;
+    if (flow === undefined || !isActiveCaptureFlowSnapshot(flow)) return undefined;
+    return planSteps(flow.plan)[this.#activeStepIndex];
+  }
+
+  #recordStepJourney(
+    eventType: CaptureJourneyEventType,
+    screen: CaptureJourneyScreen,
+    step: CapturePlanStep,
+    action?: CaptureJourneyAction,
+    acquisitionMethod?: string,
+  ): void {
+    this.#recordJourney(eventType, screen, action, {
+      requirementKey: step.requirementKey,
+      artefact: step.artefact,
+      ...(acquisitionMethod === undefined ? {} : { acquisitionMethod }),
+    });
+  }
+
+  #recordJourney(
+    eventType: CaptureJourneyEventType,
+    screen: CaptureJourneyScreen,
+    action?: CaptureJourneyAction,
+    context: {
+      readonly requirementKey?: string;
+      readonly artefact?: string;
+      readonly acquisitionMethod?: string;
+    } = {},
+  ): void {
+    void this.#flowController
+      ?.recordJourneyEvent({
+        eventType,
+        screen,
+        ...(action === undefined ? {} : { action }),
+        ...context,
+      })
+      .catch(() => undefined);
+  }
 }
 
 export function defineIdenqaCapture(
@@ -4140,6 +4888,7 @@ export function defineIdenqaCapture(
   if (typeof customElements === "undefined") {
     throw new Error("Custom elements are not available in this environment.");
   }
+  installCaptureFont();
   const existing = customElements.get(tagName);
   if (existing === undefined) {
     customElements.define(tagName, IdenqaCaptureElement);
@@ -4217,10 +4966,11 @@ function captureProgress(
   plan: CapturePlan,
   completedSteps: ReadonlyMap<string, StepCompletion>,
 ): Pick<CaptureProgressDetail, "completedSteps" | "totalSteps"> {
-  const steps = plan.requirements.flatMap((requirement) => requirement.steps);
   return {
-    completedSteps: steps.filter((step) => completedSteps.has(stepKey(step))).length,
-    totalSteps: steps.length,
+    completedSteps: plan.requirements.filter((requirement) =>
+      requirement.steps.every((step) => completedSteps.has(stepKey(step))),
+    ).length,
+    totalSteps: plan.requirements.length,
   };
 }
 
@@ -4290,6 +5040,23 @@ function poseFeedbackKey(
     quality: "poseQuality",
   } as const;
   return keys[feedback];
+}
+
+function poseGuideStage(progress: CaptureMethodAdapterProgress | undefined) {
+  if (progress?.poseStage !== undefined) return progress.poseStage;
+  // Older host adapters can still render guidance without inventing measured
+  // confirmation. Only an explicit centered stage makes the arcs green.
+  if (
+    progress?.prompt === undefined ||
+    progress.prompt === "neutral" ||
+    (progress.poseFeedback !== undefined &&
+      progress.poseFeedback !== "follow_prompt" &&
+      progress.poseFeedback !== "hold_still" &&
+      progress.poseFeedback !== "open_eyes")
+  ) {
+    return "centering";
+  }
+  return "pose";
 }
 
 function livenessPrompt(
@@ -4377,6 +5144,42 @@ function labelForIdentifier(identifier: string): string {
     .filter((word) => word.length > 0)
     .map((word) => word[0]?.toUpperCase() + word.slice(1))
     .join(" ");
+}
+
+function normalizeCountryOptions(
+  countries: readonly CaptureCountryOption[],
+): readonly CaptureCountryOption[] {
+  if (countries.length === 0 || countries.length > 249) {
+    throw new TypeError("Country selection requires between 1 and 249 approved countries.");
+  }
+  const seen = new Set<string>();
+  return countries.map((country) => {
+    const code = country.code.trim().toUpperCase();
+    const label = country.label.trim();
+    if (!/^[A-Z]{2}$/.test(code) || label.length === 0 || label.length > 100) {
+      throw new TypeError("Country options require an ISO alpha-2 code and a display label.");
+    }
+    if (seen.has(code)) throw new TypeError(`Country option ${code} is duplicated.`);
+    seen.add(code);
+    return { code, label };
+  });
+}
+
+function countryJourneyNoticeMatches(
+  expected: CaptureCountryJourneyNotice,
+  snapshot: CaptureActiveFlowSnapshot,
+): boolean {
+  const { notice, authority } = snapshot.authoritySnapshot;
+  return (
+    authority.consentRequired === expected.consentRequired &&
+    notice.locale === expected.locale &&
+    notice.controller === expected.controller &&
+    notice.recipient === expected.recipient &&
+    notice.copy.title === expected.copy.title &&
+    notice.copy.summary === expected.copy.summary &&
+    notice.copy.purpose === expected.copy.purpose &&
+    notice.copy.consequences === expected.copy.consequences
+  );
 }
 
 function browserLocale(): string {

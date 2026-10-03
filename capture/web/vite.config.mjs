@@ -42,30 +42,60 @@ const demoOutcomes = new Set([
   "failed",
 ]);
 
-const documentProfile = {
-  ...demoProfile,
-  requirements: [
+const documentOptionsByCountry = {
+  NG: [
     {
-      ...demoProfile.requirements[0],
-      key: "identity_document",
-      evidence_type: "idenqa.evidence.document_image",
-      artefacts: ["idenqa.artefact.document_front", "idenqa.artefact.document_back"],
-      document_options: [
-        {
-          id: "driver_license",
-          label: "driver license",
-          artefacts: ["idenqa.artefact.document_front", "idenqa.artefact.document_back"],
-        },
-        {
-          id: "national_id",
-          label: "national identity card",
-          artefacts: ["idenqa.artefact.document_front", "idenqa.artefact.document_back"],
-        },
-        { id: "passport", label: "passport", artefacts: ["idenqa.artefact.document_front"] },
-      ],
+      id: "nin",
+      label: "National Identity Number (NIN)",
+      artefacts: ["idenqa.artefact.document_front"],
     },
+    {
+      id: "driver_license",
+      label: "Driver’s licence",
+      artefacts: ["idenqa.artefact.document_front", "idenqa.artefact.document_back"],
+    },
+    { id: "passport", label: "Passport", artefacts: ["idenqa.artefact.document_front"] },
+  ],
+  GH: [
+    {
+      id: "ghana_card",
+      label: "Ghana Card",
+      artefacts: ["idenqa.artefact.document_front", "idenqa.artefact.document_back"],
+    },
+    {
+      id: "driver_license",
+      label: "Driver’s licence",
+      artefacts: ["idenqa.artefact.document_front", "idenqa.artefact.document_back"],
+    },
+    { id: "passport", label: "Passport", artefacts: ["idenqa.artefact.document_front"] },
+  ],
+  GB: [
+    {
+      id: "driver_license",
+      label: "Driving licence",
+      artefacts: ["idenqa.artefact.document_front", "idenqa.artefact.document_back"],
+    },
+    { id: "passport", label: "Passport", artefacts: ["idenqa.artefact.document_front"] },
   ],
 };
+
+function documentProfile(country) {
+  const options = documentOptionsByCountry[country];
+  if (options === undefined) throw new Error("unsupported document country");
+  return {
+    ...demoProfile,
+    requirements: [
+      {
+        ...demoProfile.requirements[0],
+        key: "identity_document",
+        evidence_type: "idenqa.evidence.document_image",
+        artefacts: ["idenqa.artefact.document_front", "idenqa.artefact.document_back"],
+        document_options: options,
+      },
+      demoProfile.requirements[0],
+    ],
+  };
+}
 
 const demoPolicyResults = {
   verified: { state: "satisfied", directive: "complete_verified" },
@@ -132,11 +162,12 @@ export default defineConfig(({ mode }) => {
               return;
             }
             try {
-              const outcome = requestedDemoOutcome(request.url);
-              const documentJourney =
-                new URL(request.url ?? "", "http://capture-web.invalid").searchParams.get(
-                  "journey",
-                ) === "document";
+              const launch = await readDemoLaunch(request);
+              const outcome = requestedDemoOutcome(launch.outcome);
+              const documentJourney = launch.journey === "document";
+              const profileId = requestedCaptureProfile(launch.profile);
+              const country = requestedDocumentCountry(launch.country);
+              const noticeIdentity = requestedNoticeIdentity(launch.controller, launch.recipient);
               let policyIdPromise = policyIdPromises.get(outcome);
               policyIdPromise ??= provisionDemoPolicy({ apiKey, coreUrl, outcome }).catch(
                 (error) => {
@@ -153,6 +184,9 @@ export default defineConfig(({ mode }) => {
                 policyId,
                 region,
                 documentJourney,
+                country,
+                profileId,
+                noticeIdentity,
               });
               response.statusCode = 201;
               response.end(JSON.stringify(journey));
@@ -192,60 +226,56 @@ async function provisionDemoPolicy({ apiKey, coreUrl, outcome }) {
   return policy.data.policy.id;
 }
 
-async function provisionJourney({ apiKey, coreUrl, outcome, policyId, region, documentJourney }) {
+async function provisionJourney({
+  apiKey,
+  coreUrl,
+  outcome,
+  policyId,
+  region,
+  documentJourney,
+  country,
+  profileId,
+  noticeIdentity,
+}) {
   const tenant = new IdenqaClient({ baseUrl: coreUrl, apiKey });
-  const createdProfile = await runStage("create profile", () =>
-    tenant.captureProfiles.create(
-      {
-        name: "Capture Web hosted demo",
-        document: documentJourney ? documentProfile : demoProfile,
-      },
-      { idempotencyKey: createIdempotencyKey("demo_profile") },
-    ),
-  );
-  const publishedProfile = await runStage("publish profile", () =>
-    tenant.captureProfiles.publish(createdProfile.data.profileId, {
-      etag: required(createdProfile.etag, "profile ETag"),
-      idempotencyKey: createIdempotencyKey("demo_publish"),
-    }),
-  );
-  if (publishedProfile.data.state !== "active") throw new Error("profile was not activated");
+  const captureProfileId =
+    profileId === undefined
+      ? await provisionDemoProfile({ tenant, documentJourney, country })
+      : await provisionCountryBoundProfile({ tenant, profileId, country });
 
   // Core's current authority services compare at whole-second precision. Keep
   // this synthetic fixture on that boundary so an immediate subject response
   // cannot fall fractionally before the declaration's valid-from instant.
   const now = new Date(Math.floor(Date.now() / 1_000) * 1_000);
-  const notice = await runStage("create notice", () =>
-    tenant.notices.create(
-      {
-        key: `tenant.notice.capture_demo.${Date.now()}`,
-        locale: "en",
-        controller: "Idenqa local demo tenant",
-        recipient: "Idenqa local demo tenant",
-        copy: {
-          title: "Identity Verification Notice",
-          summary: documentJourney
-            ? "We need synthetic front and back document images to demonstrate the capture journey."
-            : "We need a synthetic selfie image to demonstrate the capture journey.",
-          purpose:
-            "The synthetic image is used only for this local identity-capture demonstration.",
-          consequences: "You may refuse. Capture will stop and no evidence will be collected.",
-        },
-        effectiveAt: now.toISOString(),
-      },
-      { idempotencyKey: createIdempotencyKey("demo_notice") },
-    ),
-  );
   const verification = await runStage("create verification", () =>
     tenant.verifications.create(
       {
-        captureProfileId: createdProfile.data.profileId,
+        captureProfileId,
         policyId,
         verificationTtlSeconds: outcome === "expired" ? 5 : 1800,
         captureTokenTtlSeconds: outcome === "expired" ? 5 : 1800,
         outcomeTokenPostExpiryTtlSeconds: outcome === "expired" ? 300 : 86400,
       },
       { idempotencyKey: createIdempotencyKey("demo_verification") },
+    ),
+  );
+  const noticeCopy = demoNoticeCopy();
+  const notice = await runStage("create notice", () =>
+    tenant.notices.create(
+      {
+        key: `tenant.notice.capture_demo.${Date.now()}`,
+        locale: "en",
+        controller: noticeIdentity.controller,
+        recipient: noticeIdentity.recipient,
+        copy: {
+          title: "Identity Verification Notice",
+          summary: noticeCopy.summary,
+          purpose: noticeCopy.purpose,
+          consequences: "You may refuse. Capture will stop and no evidence will be collected.",
+        },
+        effectiveAt: now.toISOString(),
+      },
+      { idempotencyKey: createIdempotencyKey("demo_notice") },
     ),
   );
   await runStage("declare authority", () =>
@@ -255,11 +285,14 @@ async function provisionJourney({ apiKey, coreUrl, outcome, policyId, region, do
         noticeId: notice.data.id,
         category: "tenant.authority.customer_declared",
         purpose: "idenqa.purpose.identity_verification",
-        jurisdiction: "tenant.jurisdiction.local_demo",
+        jurisdiction:
+          country === undefined
+            ? "tenant.jurisdiction.local_demo"
+            : `tenant.jurisdiction.country.${country.toLowerCase()}`,
         policyPack: "tenant.policy.local_demo_v1",
         consentRequired: true,
         recipientReference: "tenant.recipient.local_demo",
-        recipientDisplayName: "Idenqa local demo tenant",
+        recipientDisplayName: noticeIdentity.recipient,
         regions: [region],
         retentionReference: "tenant.retention.local_demo",
         validFrom: notice.data.effectiveAt,
@@ -297,7 +330,140 @@ async function provisionJourney({ apiKey, coreUrl, outcome, policyId, region, do
     sessionVersion: verification.data.session.version,
     region,
     outcome,
+    ...selfieRequirementBinding(verification.data.session.requirements.requirements),
     ...(experience === undefined ? {} : { experience }),
+  };
+}
+
+function selfieRequirementBinding(requirements) {
+  const matches = requirements.filter(
+    (requirement) =>
+      requirement.evidence_type === "idenqa.evidence.selfie_image" &&
+      requirement.artefacts.includes("idenqa.artefact.selfie_image"),
+  );
+  if (matches.length > 1) throw new Error("capture profile has ambiguous selfie requirements");
+  return matches.length === 0 ? {} : { selfieRequirementKey: matches[0].key };
+}
+
+async function provisionDemoProfile({ tenant, documentJourney, country }) {
+  const createdProfile = await runStage("create profile", () =>
+    tenant.captureProfiles.create(
+      {
+        name: "Capture Web hosted demo",
+        document: documentJourney ? documentProfile(country) : demoProfile,
+      },
+      { idempotencyKey: createIdempotencyKey("demo_profile") },
+    ),
+  );
+  const publishedProfile = await runStage("publish profile", () =>
+    tenant.captureProfiles.publish(createdProfile.data.profileId, {
+      etag: required(createdProfile.etag, "profile ETag"),
+      idempotencyKey: createIdempotencyKey("demo_publish"),
+    }),
+  );
+  if (publishedProfile.data.state !== "active") throw new Error("profile was not activated");
+  return createdProfile.data.profileId;
+}
+
+async function provisionCountryBoundProfile({ tenant, profileId, country }) {
+  const profile = await runStage("get profile", () => tenant.captureProfiles.get(profileId));
+  if (profile.data.publishedRevision === undefined) {
+    throw new Error("capture profile has no published revision");
+  }
+  const revision = await runStage("get profile revision", () =>
+    tenant.captureProfiles.getRevision(profileId, profile.data.publishedRevision),
+  );
+  const countryOptions = documentOptionsByCountry[country];
+  if (countryOptions === undefined) throw new Error("unsupported document country");
+  let hasDocumentRequirement = false;
+  const requirements = revision.data.document.requirements.map((requirement) => {
+    if (requirement.evidence_type !== "idenqa.evidence.document_image") return requirement;
+    hasDocumentRequirement = true;
+    const permitted =
+      requirement.document_options === undefined
+        ? countryOptions
+        : countryOptions.filter((option) =>
+            requirement.document_options.some((candidate) => candidate.id === option.id),
+          );
+    if (permitted.length === 0) {
+      throw new Error("capture profile permits no documents for the selected country");
+    }
+    return {
+      ...requirement,
+      artefacts: [...new Set(permitted.flatMap((option) => option.artefacts))],
+      document_options: permitted,
+    };
+  });
+  if (!hasDocumentRequirement) return profileId;
+  const createdProfile = await runStage("create country profile", () =>
+    tenant.captureProfiles.create(
+      {
+        name: `${profile.data.name} (${country} demo)`,
+        document: { ...revision.data.document, requirements },
+      },
+      { idempotencyKey: createIdempotencyKey("demo_country_profile") },
+    ),
+  );
+  const publishedProfile = await runStage("publish country profile", () =>
+    tenant.captureProfiles.publish(createdProfile.data.profileId, {
+      etag: required(createdProfile.etag, "profile ETag"),
+      idempotencyKey: createIdempotencyKey("demo_country_profile_publish"),
+    }),
+  );
+  if (publishedProfile.data.state !== "active") throw new Error("profile was not activated");
+  return createdProfile.data.profileId;
+}
+
+function requestedCaptureProfile(value) {
+  if (value === undefined) return undefined;
+  if (!/^prf_[0-9A-HJKMNP-TV-Z]{26}$/.test(value)) {
+    throw new Error("capture profile identifier is invalid");
+  }
+  return value;
+}
+
+function requestedDocumentCountry(value) {
+  if (typeof value !== "string") throw new Error("document country is required");
+  const country = value.trim().toUpperCase();
+  if (documentOptionsByCountry[country] === undefined) {
+    throw new Error("document country is unsupported");
+  }
+  return country;
+}
+
+async function readDemoLaunch(request) {
+  if (!String(request.headers["content-type"] ?? "").startsWith("application/json")) {
+    throw new Error("capture launch must be JSON");
+  }
+  const chunks = [];
+  let size = 0;
+  for await (const chunk of request) {
+    size += chunk.length;
+    if (size > 8_192) throw new Error("capture launch is too large");
+    chunks.push(chunk);
+  }
+  const value = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+  if (value === null || Array.isArray(value) || typeof value !== "object") {
+    throw new Error("capture launch is invalid");
+  }
+  return value;
+}
+
+function requestedNoticeIdentity(controller, recipient) {
+  if (!validDisplayIdentity(controller) || !validDisplayIdentity(recipient)) {
+    throw new Error("tenant notice identity is required");
+  }
+  return { controller: controller.trim(), recipient: recipient.trim() };
+}
+
+function validDisplayIdentity(value) {
+  return typeof value === "string" && value.trim().length >= 2 && value.trim().length <= 200;
+}
+
+function demoNoticeCopy() {
+  return {
+    summary: "We need identity evidence to demonstrate this capture journey.",
+    purpose: "This evidence is used only for this local identity-capture demonstration.",
   };
 }
 
@@ -335,9 +501,9 @@ function demoPolicy(outcome) {
   };
 }
 
-function requestedDemoOutcome(requestURL) {
-  const value = new URL(requestURL ?? "", "http://capture-web.invalid").searchParams.get("outcome");
+function requestedDemoOutcome(value) {
   const outcome = value ?? "verified";
+  if (typeof outcome !== "string") throw new Error("unsupported demo outcome");
   if (!demoOutcomes.has(outcome)) throw new Error("unsupported demo outcome");
   return outcome;
 }

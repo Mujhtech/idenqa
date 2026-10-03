@@ -4,8 +4,12 @@
 
 Active liveness now gates each challenge on local face measurements rather than
 a delay. A stable neutral face precedes each movement; the requested pose must
-reach its target and hold before its frame is accepted. The segmented ring shows
-measured movement/hold progress. Missing/multiple faces, poor framing, wrong
+reach its target and hold before its frame is accepted. Four circular arcs guide
+centering and turn green after a measured neutral hold. A 1.2-second confirmation
+pause precedes the next prompt and remains cancellable. During a movement's
+initial centering, the pause shortens to leave time within its challenge deadline.
+Directional ticks then show measured movement/hold progress.
+Missing/multiple faces, poor framing, wrong
 movement, stale frames and failed configured quality checks pause/reset progress.
 Timeout permits another attempt; cancellation releases camera and worker.
 
@@ -127,6 +131,57 @@ expandable help, and a separate review state. The subject confirms **Use Photo**
 or chooses **Retake Photo** before an upload begins. Automatic detection and the
 manual shutter share the same review flow.
 
+### Privacy-first, country-bound session bootstrap
+
+When country determines the applicable profile, document catalogue, required
+sides, or jurisdiction-specific notice, collect it before creating the immutable
+verification session. `startCountryJourney` renders the package-owned
+introduction and privacy notice before the searchable country screen, then
+delegates the selected ISO 3166-1 alpha-2 country to a trusted host callback:
+
+```ts
+capture.startCountryJourney({
+  captureItemCount: 2,
+  notice: {
+    locale: "en",
+    controller: "Example Tenant",
+    recipient: "Example Tenant",
+    consentRequired: true,
+    copy: {
+      title: "Identity Verification Notice",
+      summary: "We need identity evidence to verify your identity.",
+      purpose: "Your evidence is used only for identity verification.",
+      consequences: "You may refuse and collection will not continue.",
+    },
+  },
+  countries: [
+    { code: "NG", label: "Nigeria" },
+    { code: "GH", label: "Ghana" },
+  ],
+  resolve: async (country, signal) => {
+    const response = await fetch("/identity/capture-bootstrap", {
+      method: "POST",
+      signal,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ country: country.code }),
+    });
+    if (!response.ok) throw new Error("Capture bootstrap failed");
+    return response.json(); // CaptureElementStartOptions
+  },
+});
+```
+
+The host supplies only tenant-policy-approved countries and keeps tenant
+credentials on its server. Its callback resolves the country pack and applicable
+policy/profile, creates the session with the exact notice shown before country
+selection, and returns the same programmatic start options accepted by `start`.
+Capture Web verifies that the session notice exactly matches the accepted copy,
+records the response, and continues directly from country selection to document
+selection. Capture Web never treats the local country list as policy authority,
+never puts bearer credentials in markup, and cannot change the selected country
+after session creation. A host that already knows the country or has an existing
+session continues to call `start` directly.
+
 Document choices come from the tenant's published capture profile, pinned into
 the session. Add `document_options` to a document-image requirement when creating
 the profile through the tenant API:
@@ -171,11 +226,22 @@ exists for the requirement, including failed or abandoned uploads. Profiles
 without `document_options` retain their original fixed-artefact behaviour and
 generic identity-document instructions.
 
-The live-Core hosted and embedded fixtures expose this journey at
-`/hosted.html?journey=document` and `/embedded.html?journey=document`. The server
-creates the profile with driver license, national identity card, and passport
-branches before session creation. Core canonicalises the artefact set;
+The live-Core hosted and embedded fixtures expose this journey through a launch
+fragment such as
+`/hosted.html#journey=document&controller=Example+Tenant&recipient=Example+Tenant`.
+The hosted and embedded fixture first asks for the issuing country, then the
+same-origin server creates a country-specific profile with only the permitted
+document branches before session creation. Core canonicalises the artefact set;
 Capture Web presents the front before the back without changing either binding.
+
+To test an already-published profile from the same self-hosted Core tenant, use
+the Console-generated launch URL. It places the profile, outcome, and the
+owning tenant's controller and recipient display identity in a URL fragment.
+The fragment is forwarded only to the
+same-origin demo bootstrap; the server creates the real verification session and
+returns its display-once credentials directly to the page. Bearer credentials
+are never placed in the URL. This is a local integration fixture, not a tenant
+production bootstrap endpoint.
 
 The real-Core browser suite recreates the component after the front is accepted,
 recovers the document selection and accepted progress from Core, captures the
@@ -224,7 +290,7 @@ idenqa-capture {
   --idq-capture-accent: #5b35d5;
   --idq-capture-accent-strong: #4324ad;
   --idq-capture-accent-foreground: #ffffff;
-  --idq-capture-font-family: "Inter", sans-serif;
+  --idq-capture-font-family: Inter, sans-serif;
   --idq-capture-shell-radius: 1rem;
   --idq-capture-control-radius: 0.75rem;
   --idq-capture-liveness-color: #5b35d5;
@@ -233,45 +299,47 @@ idenqa-capture {
 
 The supported appearance variables are:
 
-| Variable                                    | Safe default               | Controls                                     |
-| ------------------------------------------- | -------------------------- | -------------------------------------------- |
-| `--idq-capture-accent`                      | `#0b6b57`                  | Primary actions, progress, and focus colour  |
-| `--idq-capture-accent-strong`               | `#075345`                  | Hover and emphasized accent colour           |
-| `--idq-capture-accent-foreground`           | `#ffffff`                  | Content placed on the accent colour          |
-| `--idq-capture-background`                  | `#ffffff`                  | Main background and neutral controls         |
-| `--idq-capture-surface`                     | `#f3f7f5`                  | Cards and capture panels                     |
-| `--idq-capture-surface-strong`              | `#e4f2ed`                  | Icons, tips, and stronger secondary surfaces |
-| `--idq-capture-text`                        | `#14201d`                  | Primary text                                 |
-| `--idq-capture-muted`                       | `#52605c`                  | Secondary text                               |
-| `--idq-capture-border`                      | `#d6dedb`                  | Borders and dividers                         |
-| `--idq-capture-error`                       | `#b42318`                  | Error text                                   |
-| `--idq-capture-font-family`                 | System sans-serif stack    | Package-owned interface typography           |
-| `--idq-capture-shell-max-width`             | `42rem`                    | Maximum component width                      |
-| `--idq-capture-shell-min-height`            | Responsive `42rem` minimum | Minimum journey height                       |
-| `--idq-capture-shell-padding`               | `1.25rem`                  | Safe-area-aware shell padding                |
-| `--idq-capture-shell-radius`                | `1.5rem`                   | Outer shell corners                          |
-| `--idq-capture-shell-shadow`                | Soft neutral shadow        | Outer shell elevation                        |
-| `--idq-capture-panel-radius`                | `1rem`                     | Large panels and media frames                |
-| `--idq-capture-card-radius`                 | `0.75rem`                  | Cards and previews                           |
-| `--idq-capture-control-radius`              | `0.625rem`                 | Buttons and file controls                    |
-| `--idq-capture-focus-width`                 | `0.1875rem`                | Keyboard focus-ring width                    |
-| `--idq-capture-focus-offset`                | `0.1875rem`                | Keyboard focus-ring offset                   |
-| `--idq-capture-media-background`            | `#0c111d`                  | Camera and image-preview background          |
-| `--idq-capture-overlay-background`          | Translucent near-black     | Camera prompt background                     |
-| `--idq-capture-overlay-border`              | Translucent white          | Camera prompt border                         |
-| `--idq-capture-overlay-foreground`          | `#ffffff`                  | Camera prompt text                           |
-| `--idq-capture-face-guide`                  | Translucent white          | Primary live face guide                      |
-| `--idq-capture-face-guide-muted`            | Translucent white          | Secondary live face guide                    |
-| `--idq-capture-liveness-color`              | Strong accent              | Preparation illustration colour              |
-| `--idq-capture-liveness-size`               | Responsive `9rem`–`12rem`  | Preparation illustration size                |
-| `--idq-capture-liveness-duration`           | `9.6s`                     | Explanatory movement-loop duration           |
-| `--idq-capture-liveness-cue-opacity`        | `0.14`                     | Resting directional-cue opacity              |
-| `--idq-capture-liveness-cue-active-opacity` | `0.9`                      | Active directional-cue opacity               |
-| `--idq-capture-motion-fast`                 | `160ms`                    | Colour feedback duration                     |
-| `--idq-capture-motion-press`                | `140ms`                    | Press feedback duration                      |
-| `--idq-capture-motion-ease-out`             | Strong ease-out curve      | Press feedback easing                        |
-| `--idq-capture-motion-ease-in-out`          | Strong ease-in-out curve   | Explanatory movement easing                  |
-| `--idq-capture-tap-highlight`               | Translucent blue           | Touch tap highlight                          |
+| Variable                                    | Safe default                              | Controls                                     |
+| ------------------------------------------- | ----------------------------------------- | -------------------------------------------- |
+| `--idq-capture-accent`                      | `#2e6b4a`                                 | Primary actions, progress, and focus colour  |
+| `--idq-capture-accent-strong`               | `#1f4e37`                                 | Hover and emphasized accent colour           |
+| `--idq-capture-accent-foreground`           | `#ffffff`                                 | Content placed on the accent colour          |
+| `--idq-capture-background`                  | `#f6f4ee`                                 | Main background and neutral controls         |
+| `--idq-capture-surface`                     | `#ffffff`                                 | Cards and capture panels                     |
+| `--idq-capture-surface-strong`              | `#e7f0e8`                                 | Icons, tips, and stronger secondary surfaces |
+| `--idq-capture-text`                        | `#16211b`                                 | Primary text                                 |
+| `--idq-capture-muted`                       | `#5b6a61`                                 | Secondary text                               |
+| `--idq-capture-border`                      | `#e4e0d5`                                 | Borders and dividers                         |
+| `--idq-capture-error`                       | `#b42318`                                 | Error text                                   |
+| `--idq-capture-font-family`                 | Self-hosted Inter, then system sans-serif | Package-owned interface typography           |
+| `--idq-capture-shell-max-width`             | `42rem`                                   | Maximum desktop component width              |
+| `--idq-capture-shell-min-height`            | Responsive `52.75rem`                     | Minimum desktop journey height               |
+| `--idq-capture-shell-max-height`            | Responsive `52.75rem`                     | Maximum desktop journey height before scroll |
+| `--idq-capture-shell-padding`               | `1.5rem`                                  | Safe-area-aware shell padding                |
+| `--idq-capture-shell-radius`                | `0`                                       | Outer shell corners                          |
+| `--idq-capture-shell-shadow`                | None                                      | Outer shell elevation                        |
+| `--idq-capture-panel-radius`                | `0.875rem`                                | Large panels and media frames                |
+| `--idq-capture-card-radius`                 | `0.875rem`                                | Cards and previews                           |
+| `--idq-capture-control-radius`              | `999px`                                   | Pill buttons and file controls               |
+| `--idq-capture-focus-width`                 | `0.1875rem`                               | Keyboard focus-ring width                    |
+| `--idq-capture-focus-offset`                | `0.1875rem`                               | Keyboard focus-ring offset                   |
+| `--idq-capture-media-background`            | `#0c111d`                                 | Camera and image-preview background          |
+| `--idq-capture-overlay-background`          | Translucent near-black                    | Camera prompt background                     |
+| `--idq-capture-overlay-border`              | Translucent white                         | Camera prompt border                         |
+| `--idq-capture-overlay-foreground`          | `#ffffff`                                 | Camera prompt text                           |
+| `--idq-capture-face-guide`                  | Translucent white                         | Primary live face guide                      |
+| `--idq-capture-face-guide-muted`            | Translucent white                         | Secondary live face guide                    |
+| `--idq-capture-face-guide-ready`            | `#79e8b1`                                 | Measured centering and pose progress         |
+| `--idq-capture-liveness-color`              | Strong accent                             | Preparation illustration colour              |
+| `--idq-capture-liveness-size`               | Responsive `9rem`–`12rem`                 | Preparation illustration size                |
+| `--idq-capture-liveness-duration`           | `9.6s`                                    | Explanatory movement-loop duration           |
+| `--idq-capture-liveness-cue-opacity`        | `0.14`                                    | Resting directional-cue opacity              |
+| `--idq-capture-liveness-cue-active-opacity` | `0.9`                                     | Active directional-cue opacity               |
+| `--idq-capture-motion-fast`                 | `160ms`                                   | Colour feedback duration                     |
+| `--idq-capture-motion-press`                | `140ms`                                   | Press feedback duration                      |
+| `--idq-capture-motion-ease-out`             | Strong ease-out curve                     | Press feedback easing                        |
+| `--idq-capture-motion-ease-in-out`          | Strong ease-in-out curve                  | Explanatory movement easing                  |
+| `--idq-capture-tap-highlight`               | Translucent blue                          | Touch tap highlight                          |
 
 System dark mode supplies accessible dark defaults for the semantic colour
 variables, while host declarations still take precedence. Forced-colour and
@@ -335,11 +403,11 @@ quality checks do not establish active-liveness assurance. A compatible
 provider or model must evaluate the temporal evidence and return an
 authoritative normalised result.
 
-The self-hosted hosted demo exposes this path at
-`/hosted.html?method=active-liveness`. It executes three camera prompts and uploads
-every frame with ordered challenge/time metadata and a content-digest chain
-through the Core evidence boundary. It completes only after authoritative Core
-progress reports the exact step. That synthetic path proves orchestration,
+The self-hosted hosted demo uses this path by default for every selfie requirement,
+including document-plus-selfie profiles. It executes three camera prompts and
+uploads every frame with ordered challenge/time metadata and a content-digest
+chain through the Core evidence boundary. It completes only after authoritative
+Core progress reports the exact step. That synthetic path proves orchestration,
 cleanup, sequence upload, and receipt; it is not evidence of production liveness
 or PAD performance.
 
@@ -451,10 +519,10 @@ API key remains inside the Vite development server. The browser receives both
 credentials only in a same-origin, no-store bootstrap response; neither is
 placed in a URL, HTML, storage, event, or log.
 
-Provide a local tenant API key with `policies:write`, `capture_profiles:write`,
-`notices:write`, `verification_sessions:create`, and `authorities:write`. The demo
-region must exactly match Core's `IDENQA_REGION` and must also be a canonical
-processing-authority code, such as `tenant-local`.
+Provide a local tenant API key with `policies:write`, `policies:activate`,
+`capture_profiles:write`, `notices:write`, `verification_sessions:create`, and
+`authorities:write`. The demo region must exactly match Core's `IDENQA_REGION`
+and must also be a canonical processing-authority code, such as `tenant-local`.
 
 ```sh
 IDENQA_DEMO_CORE_URL=http://127.0.0.1:8080 \
@@ -463,10 +531,17 @@ IDENQA_DEMO_REGION=tenant-local \
 pnpm --dir capture/web demo:hosted
 ```
 
-Open `/hosted.html` for the standalone product surface or `/embedded.html` for
-the same component inside a tenant-owned page. Use synthetic JPEG or PNG evidence
-only. The local conformance harness may add `?outcome=not_verified`,
-`inconclusive`, `action_required`, `cancelled`, `failed`, or `expired`; each option provisions
+The command opens a synthetic local launch whose notice identifies `Idenqa
+local demo tenant` as both controller and recipient. To exercise different
+notice copy manually, replace the `controller` and `recipient` values in the
+URL fragment; both are required.
+
+Open the Console-generated test URL for the standalone product surface. Manual
+fixture launches must supply non-empty `controller` and `recipient` values in
+the URL fragment and may use `/embedded.html` for the same component inside a
+tenant-owned page. Use synthetic JPEG or PNG evidence only. The local conformance
+harness may set `outcome=not_verified`, `inconclusive`, `action_required`,
+`cancelled`, `failed`, or `expired` in that fragment; each option provisions
 or invokes the corresponding real Core transition and never instructs the
 component to manufacture an outcome. This harness is local demonstration infrastructure, not a production
 tenant backend; production integrations must authenticate their own subject and

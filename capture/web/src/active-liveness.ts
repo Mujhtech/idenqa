@@ -10,7 +10,7 @@ import {
 import { captureCameraFrame, startCamera, stopCamera, type CameraFrame } from "./camera.js";
 import type { CaptureMethodAdapter, CaptureMethodAdapterCopyResolver } from "./method-adapter.js";
 import type { CaptureRuntimeFallbackReason } from "./planner.js";
-import { CapturePoseGate } from "./pose.js";
+import { CAPTURE_POSE_DEFAULTS, CapturePoseGate } from "./pose.js";
 import { createBrowserPoseTracker, type CapturePoseTracker } from "./pose-tracker.js";
 
 export interface CaptureActiveLivenessQuality {
@@ -189,6 +189,7 @@ export function createActiveLivenessMethodAdapter(
         const frames: CaptureActiveLivenessFrame[] = [];
         for (const [index, challenge] of requirement.challenges.entries()) {
           const frame = await withinChallengeDeadline(challenge, context.signal, async (signal) => {
+            const startedAt = performance.now();
             controls.update({
               phase: "challenge",
               current: index + 1,
@@ -231,6 +232,7 @@ export function createActiveLivenessMethodAdapter(
                 prompt: challenge.prompt,
                 poseProgress: progress.fraction,
                 poseFeedback: progress.feedback,
+                poseStage: progress.stage,
               });
               if (progress.complete)
                 return {
@@ -240,10 +242,24 @@ export function createActiveLivenessMethodAdapter(
                   body: captured.body,
                   quality,
                 } satisfies CaptureActiveLivenessFrame;
+              if (progress.stage === "centered") {
+                // Reserve time for movement and its measured hold when the
+                // server supplies a short deadline. No pause completes a pose.
+                const remaining = challenge.maximum_duration_ms - (performance.now() - startedAt);
+                const hold =
+                  challenge.pose?.hold_duration_ms ?? CAPTURE_POSE_DEFAULTS.hold_duration_ms;
+                await abortableDelay(
+                  Math.min(1200, Math.max(0, remaining - hold * 2 - 500)),
+                  signal,
+                );
+              }
               await abortableDelay(80, signal);
             }
           });
           frames.push(frame);
+          // A completed neutral frame has already met its deadline. Keep its
+          // green confirmation visible before issuing the next camera prompt.
+          if (frame.prompt === "neutral") await abortableDelay(1200, context.signal);
         }
         controls.update({ phase: "submitting" });
         await options.submit(

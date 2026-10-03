@@ -1,29 +1,42 @@
 import { expect, test, type Page } from "@playwright/test";
-import type { CaptureElementStartOptions, IdenqaCaptureElement } from "../../src/index.js";
 
 const liveDemo = process.env.IDENQA_CAPTURE_LIVE_DEMO_URL === undefined ? test.skip : test;
 
+function demoURL(path: string, launch: Record<string, string> = {}): string {
+  return `${path}#${new URLSearchParams({
+    controller: "Idenqa browser conformance tenant",
+    recipient: "Idenqa browser conformance tenant",
+    ...launch,
+  })}`;
+}
+
 test.describe.configure({ mode: "serial" });
 
-for (const [surface, documentType, label] of [
-  ["hosted", "driver_license", "driver license"],
-  ["embedded", "national_id", "national identity card"],
-  ["hosted", "passport", "passport"],
+for (const [surface, country, documentType, label] of [
+  ["hosted", "Nigeria", "driver_license", "Driver’s licence"],
+  ["embedded", "Ghana", "ghana_card", "Ghana Card"],
+  ["hosted", "United Kingdom", "passport", "Passport"],
 ] as const) {
   liveDemo(
     `completes ${surface} ${documentType} selection, retake and required sides against Core`,
     async ({ page }, testInfo) => {
       testInfo.setTimeout(90_000);
       await page.setViewportSize({ width: 390, height: 844 });
+      await installMeasuredPoseWorker(page);
       const bootstrapResponse = page.waitForResponse(
         (response) =>
           response.url().includes("/__idenqa_demo/bootstrap") && response.status() === 201,
       );
-      await page.goto(`/${surface}.html?journey=document`);
-      const bootstrap = await (await bootstrapResponse).json();
+      await page.goto(demoURL(`/${surface}.html`, { journey: "document" }));
+      if (surface === "hosted" && country === "Nigeria") await page.reload();
       await page.getByRole("button", { name: "Get Started" }).click();
       await page.getByRole("button", { name: "Agree & Continue" }).click();
+      await page.getByPlaceholder("Search your country").fill(country);
+      await page.getByRole("button", { name: new RegExp(`^${country}`) }).click();
+      expect(page.url()).toContain("#controller=Idenqa+browser+conformance+tenant");
+      await bootstrapResponse;
       await page.getByRole("button", { name: label, exact: true }).click();
+      await page.getByRole("button", { name: "Use Camera" }).click();
       await page.getByRole("button", { name: "Continue to Capture" }).click();
       await expect(
         page.getByRole("heading", { name: `Take a clear photo of the front of your ${label}.` }),
@@ -47,48 +60,33 @@ for (const [surface, documentType, label] of [
       await page.getByRole("button", { name: "Capture Photo", exact: true }).click();
       await page.getByRole("button", { name: "Use Photo" }).click();
       if (documentType === "passport") {
-        await expect(page.getByRole("heading", { name: "Identity Verified" })).toBeVisible({
-          timeout: 30_000,
-        });
+        await expect(
+          page.getByRole("heading", { name: "Front of Your Identity Document Added" }),
+        ).toBeVisible();
         await expect(page.getByText("Back of ID", { exact: true })).toHaveCount(0);
-        return;
-      }
-      await expect(
-        page.getByRole("heading", { name: "Front of Your Identity Document Added" }),
-      ).toBeVisible();
+      } else {
+        await expect(
+          page.getByRole("heading", { name: "Front of Your Identity Document Added" }),
+        ).toBeVisible();
 
-      // Recreate the component from host-held credentials alone. Selection and progress
-      // comes from Core, not the old component's in-memory completion map.
-      await page.locator("idenqa-capture").evaluate(
-        async (element, input) => {
-          const replacement = document.createElement("idenqa-capture") as IdenqaCaptureElement;
-          element.replaceWith(replacement);
-          await replacement.start({
-            baseUrl: new URL(input.bootstrap.baseUrl, location.href),
-            captureToken: input.bootstrap.captureToken,
-            outcomeToken: input.bootstrap.outcomeToken,
-            expectedVerificationId: input.bootstrap.verificationId,
-            region: input.bootstrap.region,
-            capabilities: {
-              supportedMethods: ["idenqa.method.live_camera"],
-              availableMethods: ["idenqa.method.live_camera"],
-            },
-            documentCapture: { autoCapture: false },
-          } satisfies CaptureElementStartOptions);
-        },
-        { bootstrap, documentType },
-      );
-      await page.getByRole("button", { name: "Get Started" }).click();
-      await expect(page.getByRole("heading", { name: "Welcome Back" })).toBeVisible();
-      await page.getByRole("button", { name: "Resume Capture" }).click();
-      await expect(page.getByRole("button", { name: "Change document" })).toHaveCount(0);
+        await page.getByRole("button", { name: "Continue to Next Step" }).click();
+        await expect(page.getByRole("button", { name: "Change document" })).toHaveCount(0);
+        await page.getByRole("button", { name: "Continue to Capture" }).click();
+        await expect(
+          page.getByRole("heading", { name: `Take a clear photo of the back of your ${label}.` }),
+        ).toBeVisible();
+        await page.getByRole("button", { name: "Start Camera" }).click();
+        await page.getByRole("button", { name: "Capture Photo", exact: true }).click();
+        await page.getByRole("button", { name: "Use Photo" }).click();
+      }
+
+      await page.getByRole("button", { name: "Continue to Next Step" }).click();
+      await expect(page.getByRole("heading", { name: "Get Your Selfie Ready" })).toBeVisible();
       await page.getByRole("button", { name: "Continue to Capture" }).click();
+      await expect(page.locator("idenqa-capture").locator(".adapter-prompt")).toBeVisible();
       await expect(
-        page.getByRole("heading", { name: `Take a clear photo of the back of your ${label}.` }),
+        page.getByRole("progressbar", { name: "Liveness challenge progress" }),
       ).toBeVisible();
-      await page.getByRole("button", { name: "Start Camera" }).click();
-      await page.getByRole("button", { name: "Capture Photo", exact: true }).click();
-      await page.getByRole("button", { name: "Use Photo" }).click();
       await expect(page.getByRole("heading", { name: "Identity Verified" })).toBeVisible({
         timeout: 30_000,
       });
@@ -101,12 +99,12 @@ for (const surface of ["hosted", "embedded"] as const) {
   liveDemo(
     `completes the ${surface} journey against a running self-hosted Core`,
     async ({ page }) => {
-      await page.goto(`/${surface}.html`);
+      await page.goto(demoURL(`/${surface}.html`));
 
       await expect(page.getByRole("heading", { name: "Let’s Verify Your Identity" })).toBeVisible();
       await page.getByRole("button", { name: "Get Started" }).click();
-      await expect(page.getByRole("heading", { name: "Review Before You Continue" })).toBeVisible();
       await page.getByRole("button", { name: "Agree & Continue" }).click();
+      await selectCountry(page);
       await page.getByRole("button", { name: "Use Another Method" }).click();
       await page.getByRole("button", { name: "Upload File" }).click();
       await page.getByRole("button", { name: "Continue to Capture" }).click();
@@ -129,15 +127,16 @@ liveDemo("does not submit liveness when the real tracker sees no face", async ({
     if (request.method() === "POST" && request.url().includes("/evidence-uploads"))
       uploads.push(request.url());
   });
-  await page.goto("/hosted.html?method=active-liveness");
+  await page.goto(demoURL("/hosted.html", { method: "active-liveness" }));
   await page.getByRole("button", { name: "Get Started" }).click();
   await page.getByRole("button", { name: "Agree & Continue" }).click();
-  await page.getByRole("button", { name: "Start Liveness Check" }).click();
+  await selectCountry(page);
+  await page.getByRole("button", { name: "Continue to Capture" }).click();
   await expect(page.locator("idenqa-capture").locator(".adapter-prompt")).toHaveText(
     "Bring Your Face Into View",
     { timeout: 15000 },
   );
-  await expect(page.getByRole("button", { name: "Start Liveness Check" })).toBeVisible({
+  await expect(page.getByRole("button", { name: "Continue to Capture" })).toBeVisible({
     timeout: 20000,
   });
   expect(uploads).toEqual([]);
@@ -148,24 +147,15 @@ liveDemo(
   "runs synthetic measured liveness through authoritative Core progress",
   async ({ page }) => {
     // This tests temporal submission and Core progress, not landmark accuracy.
-    await page.route("**/idenqa-liveness/pose-worker.js", (route) =>
-      route.fulfill({
-        contentType: "text/javascript",
-        body: `let sample = 0; self.onmessage = ({data}) => {
-      if (data.type === "init") { self.postMessage({ready:true}); return; }
-      data.bitmap.close(); const index = sample++;
-      self.postMessage({pose:{faceCount:1,yaw:index>=14&&index<21?-20:index>=28?20:0,
-        pitch:0,roll:0,centerX:0.5,centerY:0.5,width:0.4,height:0.6,leftEyeClosed:0,rightEyeClosed:0}});
-    };`,
-      }),
-    );
-    await page.goto("/hosted.html?method=active-liveness");
+    await installMeasuredPoseWorker(page);
+    await page.goto(demoURL("/hosted.html", { method: "active-liveness" }));
 
     await expect(page.getByRole("heading", { name: "Let’s Verify Your Identity" })).toBeVisible();
     await page.getByRole("button", { name: "Get Started" }).click();
     await page.getByRole("button", { name: "Agree & Continue" }).click();
-    await expect(page.getByRole("heading", { name: "Let’s Make Sure You’re You" })).toBeVisible();
-    await page.getByRole("button", { name: "Start Liveness Check" }).click();
+    await selectCountry(page);
+    await expect(page.getByRole("heading", { name: "Get Your Selfie Ready" })).toBeVisible();
+    await page.getByRole("button", { name: "Continue to Capture" }).click();
 
     await expect(page.getByRole("heading", { name: "Identity Verified" })).toBeVisible({
       timeout: 30_000,
@@ -227,7 +217,10 @@ liveDemo(
 );
 
 liveDemo("renders a subject-cancelled Core session", async ({ page }) => {
-  await page.goto("/hosted.html?outcome=cancelled");
+  await page.goto(demoURL("/hosted.html", { outcome: "cancelled" }));
+  await page.getByRole("button", { name: "Get Started" }).click();
+  await page.getByRole("button", { name: "Agree & Continue" }).click();
+  await selectCountry(page);
 
   await expect(page.getByRole("heading", { name: "Capture Cancelled" })).toBeVisible({
     timeout: 15_000,
@@ -241,7 +234,10 @@ liveDemo(
   "renders an expired Core session with the read-only outcome credential",
   async ({ page }, testInfo) => {
     testInfo.setTimeout(150_000);
-    await page.goto("/hosted.html?outcome=expired");
+    await page.goto(demoURL("/hosted.html", { outcome: "expired" }));
+    await page.getByRole("button", { name: "Get Started" }).click();
+    await page.getByRole("button", { name: "Agree & Continue" }).click();
+    await selectCountry(page);
 
     await expect(page.getByRole("heading", { name: "This Verification Has Expired" })).toBeVisible({
       timeout: 130_000,
@@ -275,7 +271,7 @@ for (const outcome of [
   },
 ] as const) {
   liveDemo(`renders the Core-authored ${outcome.state} outcome`, async ({ page }) => {
-    await page.goto(`/hosted.html?outcome=${outcome.state}`);
+    await page.goto(demoURL("/hosted.html", { outcome: outcome.state }));
     await completeFileCapture(page);
 
     await expect(page.getByRole("heading", { name: outcome.title })).toBeVisible({
@@ -290,6 +286,7 @@ async function completeFileCapture(page: Page) {
   await expect(page.getByRole("heading", { name: "Let’s Verify Your Identity" })).toBeVisible();
   await page.getByRole("button", { name: "Get Started" }).click();
   await page.getByRole("button", { name: "Agree & Continue" }).click();
+  await selectCountry(page);
   await page.getByRole("button", { name: "Use Another Method" }).click();
   await page.getByRole("button", { name: "Upload File" }).click();
   await page.getByRole("button", { name: "Continue to Capture" }).click();
@@ -299,6 +296,25 @@ async function completeFileCapture(page: Page) {
     buffer: Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
   });
   await page.getByRole("button", { name: "Use This File" }).click();
+}
+
+async function selectCountry(page: Page, country = "Nigeria") {
+  await page.getByPlaceholder("Search your country").fill(country);
+  await page.getByRole("button", { name: new RegExp(`^${country}`) }).click();
+}
+
+async function installMeasuredPoseWorker(page: Page) {
+  await page.route("**/idenqa-liveness/pose-worker.js", (route) =>
+    route.fulfill({
+      contentType: "text/javascript",
+      body: `let sample = 0; self.onmessage = ({data}) => {
+    if (data.type === "init") { self.postMessage({ready:true}); return; }
+    data.bitmap.close(); const index = sample++;
+    self.postMessage({pose:{faceCount:1,yaw:index>=14&&index<21?-20:index>=28?20:0,
+      pitch:0,roll:0,centerX:0.5,centerY:0.5,width:0.4,height:0.6,leftEyeClosed:0,rightEyeClosed:0}});
+  };`,
+    }),
+  );
 }
 
 async function completeReviewSubjectCapture(page: Page, terminalHeading: string) {

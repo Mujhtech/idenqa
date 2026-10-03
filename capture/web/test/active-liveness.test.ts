@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   CaptureActiveLivenessError,
@@ -35,6 +35,8 @@ function createActiveLivenessMethodAdapter(options: Parameters<typeof createAdap
     }),
   });
 }
+
+afterEach(() => vi.useRealTimers());
 
 describe("active liveness adapter", () => {
   it.each(["stationary", "wrong_direction", "tracking_lost", "poor_quality"])(
@@ -117,6 +119,7 @@ describe("active liveness adapter", () => {
   });
 
   it("captures ordered challenged frames and submits without asserting assurance", async () => {
+    vi.useFakeTimers();
     const close = vi.fn();
     const capture = vi.fn().mockResolvedValue({
       body: new Blob([new Uint8Array([0xff, 0xd8, 0xff])], { type: "image/jpeg" }),
@@ -146,10 +149,12 @@ describe("active liveness adapter", () => {
     const updates: unknown[] = [];
     const previews: Array<MediaStream | undefined> = [];
 
-    await adapter.acquire(
+    const acquisition = adapter.acquire(
       { ...context(), fallbackCondition: "capture_failed" },
       controls(updates, previews),
     );
+    await vi.runAllTimersAsync();
+    await acquisition;
 
     expect(capture).toHaveBeenCalledTimes(30);
     expect(updates).toEqual(
@@ -158,6 +163,10 @@ describe("active liveness adapter", () => {
         { phase: "challenge", current: 2, total: 3, prompt: "turn_left" },
         { phase: "challenge", current: 3, total: 3, prompt: "turn_right" },
         { phase: "submitting" },
+        expect.objectContaining({ prompt: "neutral", poseStage: "centered", poseProgress: 1 }),
+        expect.objectContaining({ prompt: "turn_left", poseStage: "centering" }),
+        expect.objectContaining({ prompt: "turn_left", poseStage: "centered" }),
+        expect.objectContaining({ prompt: "turn_left", poseStage: "pose" }),
       ]),
     );
     expect(previews).toEqual([stream, undefined]);
@@ -348,6 +357,7 @@ describe("active liveness adapter", () => {
   });
 
   it("cleans up when submission fails", async () => {
+    vi.useFakeTimers();
     const close = vi.fn();
     const stream = { getTracks: () => [] } as unknown as MediaStream;
     const frame = {
@@ -379,7 +389,11 @@ describe("active liveness adapter", () => {
     });
     const previews: Array<MediaStream | undefined> = [];
 
-    await expect(adapter.acquire(context(), controls([], previews))).rejects.toBe(failure);
+    const rejection = expect(adapter.acquire(context(), controls([], previews))).rejects.toBe(
+      failure,
+    );
+    await vi.runAllTimersAsync();
+    await rejection;
     expect(close).toHaveBeenCalledOnce();
     expect(previews).toEqual([stream, undefined]);
   });
@@ -396,6 +410,66 @@ describe("active liveness adapter", () => {
       }),
     ).toThrowError(expect.objectContaining({ code: "CAPTURE_ACTIVE_LIVENESS_INVALID" }));
   });
+
+  it.each([false, true])(
+    "keeps green confirmation cancellable with a short neutral deadline: %s",
+    async (cancel) => {
+      vi.useFakeTimers();
+      const input = plan();
+      input.requirements[0]!.challenges = [
+        { id: "neutral", prompt: "neutral", maximum_duration_ms: 1000 },
+      ];
+      const controller = new AbortController();
+      const close = vi.fn();
+      const submit = vi.fn();
+      let centeredAt = 0;
+      const reason = new DOMException("Subject cancelled.", "AbortError");
+      const adapter = createActiveLivenessMethodAdapter({
+        plan: input,
+        requirementKey: "selfie",
+        cameraSessionFactory: async () => ({
+          stream: { getTracks: () => [] } as unknown as MediaStream,
+          close,
+          capture: async () => ({
+            body: new Blob(["frame"], { type: "image/jpeg" }),
+            width: 720,
+            height: 720,
+          }),
+        }),
+        assess: async (frame) => ({
+          width: 720,
+          height: 720,
+          byteCount: frame.body.size,
+          brightness: 0.5,
+          contrast: 0.5,
+          sharpness: 0.5,
+          glare: 0,
+          faceCount: 1,
+        }),
+        submit,
+      });
+      const pending = adapter.acquire(
+        { ...context(), signal: controller.signal },
+        {
+          setPreview: async () => {},
+          update: (progress) => {
+            if (progress.poseStage === "centered") {
+              centeredAt = Date.now();
+              if (cancel) setTimeout(() => controller.abort(reason), 100);
+            }
+          },
+        },
+      );
+      const assertion = cancel
+        ? expect(pending).rejects.toBe(reason)
+        : expect(pending).resolves.toBeUndefined();
+      await vi.runAllTimersAsync();
+      await assertion;
+      expect(close).toHaveBeenCalledOnce();
+      expect(submit).toHaveBeenCalledTimes(cancel ? 0 : 1);
+      if (!cancel) expect(Date.now() - centeredAt).toBeGreaterThanOrEqual(1200);
+    },
+  );
 });
 
 function context(): CaptureMethodAdapterContext {

@@ -28,6 +28,14 @@ describe("createCaptureLocalizer", () => {
     ).toBe("1.000 von 2.000 Schritten abgeschlossen.");
   });
 
+  it("labels the expanded artefact count as capture steps", () => {
+    const localizer = createCaptureLocalizer("en");
+
+    expect(localizer.text("introStepCount", { count: localizer.formatNumber(3) })).toBe(
+      "Items to capture: 3",
+    );
+  });
+
   it("derives right-to-left presentation from the locale", () => {
     expect(createCaptureLocalizer("ar").direction).toBe("rtl");
   });

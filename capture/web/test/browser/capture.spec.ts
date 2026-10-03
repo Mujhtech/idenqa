@@ -1,16 +1,20 @@
 import { expect, test } from "@playwright/test";
 import { auditCaptureThemeContrast, captureContrastRatio } from "../../src/theme-contrast.js";
 
-import type { CaptureDocumentCaptureOptions, IdenqaCaptureElement } from "../../src/index.js";
+import type {
+  CaptureDocumentCaptureOptions,
+  CaptureMethodAdapterProgress,
+  IdenqaCaptureElement,
+} from "../../src/index.js";
 
 test("renders the plain-HTML capture plan with semantic, keyboard-operable choices", async ({
   page,
 }) => {
   await page.goto("/");
 
-  await expect(
-    page.getByRole("heading", { level: 2, name: "Identity Verification" }),
-  ).toBeVisible();
+  await expect(page.locator("idenqa-capture section.shell")).toHaveAccessibleName(
+    "Identity Verification",
+  );
   await expect(page.getByRole("heading", { level: 3, name: "Selfie Image" })).toBeVisible();
   await expect(page.getByRole("heading", { level: 4, name: "Document Front" })).toBeVisible();
   await expect(page.getByRole("heading", { level: 4, name: "Document Back" })).toBeVisible();
@@ -35,6 +39,114 @@ test("keeps the component within a narrow mobile viewport", async ({ page }) => 
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
   expect(overflow).toBeLessThanOrEqual(0);
   await expect(page.getByRole("button", { name: "Upload File" }).first()).toBeVisible();
+});
+
+test("bounds the capture surface on desktop and keeps overflow reachable", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await mockCaptureFlow(page, { consentRequired: true });
+  await page.goto("/");
+  await loadCaptureFlow(page, "synthetic-bounded-desktop-token");
+  await page.getByRole("button", { name: "Get Started" }).click();
+
+  const shell = page.locator("idenqa-capture").locator("section.shell");
+  const bounds = await shell.boundingBox();
+  expect(bounds?.width).toBeLessThanOrEqual(672);
+  expect(bounds?.height).toBeLessThanOrEqual(844);
+  await expect(shell).toHaveCSS("overflow-y", "auto");
+
+  const refuse = page.getByRole("button", { name: "Cancel", exact: true });
+  await refuse.scrollIntoViewIfNeeded();
+  await expect(refuse).toBeVisible();
+});
+
+test("selects country before session creation and shows only its pinned documents", async ({
+  page,
+}) => {
+  const selectedCountries: string[] = [];
+  await page.route("**/__country_selection", async (route) => {
+    selectedCountries.push(String(route.request().postDataJSON().country));
+    await route.fulfill({ status: 204, body: "" });
+  });
+  await mockCaptureFlow(page, {
+    consentRequired: true,
+    primaryMethods: ["idenqa.method.live_camera"],
+    requirement: {
+      key: "identity_document",
+      evidenceType: "idenqa.evidence.document_image",
+      artefacts: ["idenqa.artefact.document_front", "idenqa.artefact.document_back"],
+      documentOptions: [
+        {
+          id: "ghana_card",
+          label: "Ghana Card",
+          artefacts: ["idenqa.artefact.document_front", "idenqa.artefact.document_back"],
+        },
+        {
+          id: "passport",
+          label: "Passport",
+          artefacts: ["idenqa.artefact.document_front"],
+        },
+      ],
+    },
+  });
+  await page.goto("/");
+  await page.locator("idenqa-capture").evaluate((element, notice) => {
+    (element as IdenqaCaptureElement).startCountryJourney({
+      captureItemCount: 2,
+      notice,
+      countries: [
+        { code: "NG", label: "Nigeria" },
+        { code: "GH", label: "Ghana" },
+      ],
+      resolve: async (country) => {
+        await fetch("/__country_selection", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ country: country.code }),
+        });
+        return {
+          baseUrl: new URL("/core/", location.href),
+          captureToken: "synthetic-country-token",
+          outcomeToken: "synthetic-country-outcome-token",
+          capabilities: {
+            supportedMethods: ["idenqa.method.live_camera"],
+            availableMethods: ["idenqa.method.live_camera"],
+          },
+        };
+      },
+    });
+  }, countryJourneyNotice());
+
+  await page.getByRole("button", { name: "Get Started" }).click();
+  await expect(page.getByRole("heading", { name: "Review Before You Continue" })).toBeVisible();
+  await page.getByRole("button", { name: "Agree & Continue" }).click();
+  await expect(page.getByRole("heading", { name: "Which country are you from?" })).toBeVisible();
+  await page.getByRole("button", { name: "Back", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Review Before You Continue" })).toBeVisible();
+  await page.getByRole("button", { name: "Agree & Continue" }).click();
+  await page.getByPlaceholder("Search your country").fill("ghan");
+  await expect(page.getByRole("button", { name: /Nigeria/ })).toHaveCount(0);
+  await page.getByRole("button", { name: /Ghana/ }).click();
+
+  expect(selectedCountries).toEqual(["GH"]);
+  await expect(page.getByRole("button", { name: /Ghana Card/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /National Identity Number/ })).toHaveCount(0);
+});
+
+test("returns from single-method preparation to the accepted privacy step", async ({ page }) => {
+  await mockCaptureFlow(page, {
+    consentRequired: true,
+    primaryMethods: ["idenqa.method.file_upload"],
+  });
+  await page.goto("/");
+  await loadCaptureFlow(page, "synthetic-back-history");
+  await page.getByRole("button", { name: "Get Started" }).click();
+  await page.getByRole("button", { name: "Agree & Continue" }).click();
+  await expect(page.getByRole("heading", { name: "Get Your Selfie Ready" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Back", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Review Before You Continue" })).toBeVisible();
+  await page.getByRole("button", { name: "Continue to Capture" }).click();
+  await expect(page.getByRole("heading", { name: "Get Your Selfie Ready" })).toBeVisible();
 });
 
 test("presents one keyboard-operable primary task at a time", async ({ page }) => {
@@ -75,7 +187,7 @@ test("applies public styling variables across the component boundary", async ({ 
   const primary = page.getByRole("button", { name: "Get Started" });
   await expect(shell).toHaveCSS("background-color", "rgb(254, 252, 232)");
   await expect(shell).toHaveCSS("border-radius", "8px");
-  await expect(shell).toHaveCSS("max-width", "768px");
+  await expect(shell).toHaveCSS("max-width", "400px");
   await expect(shell).toHaveCSS("box-shadow", "none");
   await expect(primary).toHaveCSS("background-color", "rgb(124, 58, 237)");
   await expect(primary).toHaveCSS("color", "rgb(255, 247, 237)");
@@ -134,7 +246,7 @@ test("applies portable themes beneath host overrides and clears previous experie
     const { applyCaptureExperienceTheme } = await import(moduleURL);
     applyCaptureExperienceTheme(element, undefined);
   }, moduleURL);
-  await expect(page.locator("idenqa-capture .shell")).toHaveCSS("color", "rgb(20, 32, 29)");
+  await expect(page.locator("idenqa-capture .shell")).toHaveCSS("color", "rgb(22, 33, 27)");
   await expect(page.locator("idenqa-capture .shell")).toHaveCSS(
     "background-color",
     "rgb(254, 252, 232)",
@@ -188,9 +300,35 @@ test("matches the safe-default responsive visual captures", async ({ page }) => 
   const methods = ["idenqa.method.live_camera", "idenqa.method.file_upload"];
   await mockCaptureFlow(page, { consentRequired: true, primaryMethods: methods });
   await page.goto("/");
-  await loadCaptureFlow(page, "synthetic-visual-token", methods);
+  await page.locator("idenqa-capture").evaluate((element, notice) => {
+    (element as IdenqaCaptureElement).startCountryJourney({
+      captureItemCount: 2,
+      notice,
+      countries: [
+        { code: "NG", label: "Nigeria" },
+        { code: "GH", label: "Ghana" },
+        { code: "GB", label: "United Kingdom" },
+      ],
+      resolve: () => new Promise(() => undefined),
+    });
+  }, countryJourneyNotice());
+  await page.getByRole("button", { name: "Get Started" }).click();
+  await page.getByRole("button", { name: "Agree & Continue" }).click();
 
   const shell = page.locator("idenqa-capture").locator("section.shell");
+  await expect(shell).toHaveScreenshot("guided-country-mobile-light.png", {
+    animations: "disabled",
+    maxDiffPixels: 20,
+  });
+
+  await loadCaptureFlowWithSyntheticAdapter(
+    page,
+    "synthetic-visual-token",
+    "idenqa.method.live_camera",
+    "liveness",
+    methods,
+  );
+
   await expect(shell).toHaveScreenshot("guided-intro-mobile-light.png", {
     animations: "disabled",
     maxDiffPixels: 20,
@@ -207,7 +345,7 @@ test("matches the safe-default responsive visual captures", async ({ page }) => 
   await page.emulateMedia({ colorScheme: "light", reducedMotion: "reduce" });
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.getByRole("button", { name: "Agree & Continue" }).click();
-  await expect(page.getByRole("heading", { name: "Get Your Selfie Ready" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Let’s Make Sure You’re You" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Use Another Method" })).toBeVisible();
   await expect(shell).toHaveScreenshot("guided-method-desktop-light.png", {
     animations: "disabled",
@@ -267,7 +405,7 @@ test("records refusal without exposing capture methods", async ({ page }) => {
 
   await startCaptureFlow(page, captureToken);
   await expect(page.getByRole("button", { name: "Acknowledge & Continue" })).toBeVisible();
-  await page.getByRole("button", { name: "Refuse" }).click();
+  await page.getByRole("button", { name: "Cancel", exact: true }).click();
 
   await expect(
     page.getByText("You chose not to continue. No evidence will be collected in this experience."),
@@ -330,10 +468,14 @@ test("locks an any_of step after one method succeeds and reports capture complet
     primaryMethods: ["idenqa.method.file_upload", "idenqa.method.live_camera"],
   });
   await page.goto("/");
-  await startCaptureFlow(page, "synthetic-choice-token", [
-    "idenqa.method.file_upload",
+  await loadCaptureFlowWithSyntheticAdapter(
+    page,
+    "synthetic-choice-token",
     "idenqa.method.live_camera",
-  ]);
+    "liveness",
+    ["idenqa.method.file_upload", "idenqa.method.live_camera"],
+  );
+  await page.getByRole("button", { name: "Get Started" }).click();
   await page.getByRole("button", { name: "Acknowledge & Continue" }).click();
   await page.locator("idenqa-capture").evaluate((element) => {
     const state = globalThis as typeof globalThis & { captureCompleteDetail?: unknown };
@@ -389,7 +531,9 @@ test("recovers accepted progress after a fresh page load without uploading again
   expect(requests.uploadBodies).toHaveLength(1);
 });
 
-test("tracks document front and back independently before capture completion", async ({ page }) => {
+test("tracks document sides independently while grouping subject progress by item", async ({
+  page,
+}) => {
   const requests = await mockCaptureFlow(page, {
     consentRequired: false,
     requirement: {
@@ -404,14 +548,14 @@ test("tracks document front and back independently before capture completion", a
   await page.getByRole("button", { name: "Continue to Capture" }).click();
 
   const progress = page.getByRole("progressbar", { name: "Evidence capture progress" });
-  await expect(progress).toHaveJSProperty("max", 2);
+  await expect(progress).toHaveJSProperty("max", 1);
   await expect(progress).toHaveJSProperty("value", 0);
   const inputs = page.getByLabel("Choose File");
   await expect(inputs).toHaveCount(1);
 
   await inputs.setInputFiles(pngFile("front.png"));
   await page.getByRole("button", { name: "Use This File" }).click();
-  await expect(progress).toHaveJSProperty("value", 1);
+  await expect(progress).toHaveJSProperty("value", 0);
   await expect(
     page.getByText("Required evidence capture is complete. Verification may continue."),
   ).toHaveCount(0);
@@ -426,45 +570,11 @@ test("tracks document front and back independently before capture completion", a
   ]);
 });
 
-test("captures, reviews, and uploads a live-camera photo", async ({ page }) => {
-  const requests = await mockCaptureFlow(page, {
-    consentRequired: false,
-    primaryMethods: ["idenqa.method.live_camera"],
-  });
-  await page.goto("/");
-  await startCaptureFlow(page, "synthetic-camera-token", [
-    "idenqa.method.live_camera",
-    "idenqa.method.file_upload",
-  ]);
-  await page.getByRole("button", { name: "Acknowledge & Continue" }).click();
-  await page.getByRole("button", { name: "Continue to Capture" }).click();
-
-  await page.getByRole("button", { name: "Start Camera" }).click();
-  await expect(page.getByLabel("Live camera preview for Your Selfie")).toBeVisible();
-  await expect(page.getByRole("status").filter({ hasText: "Camera ready." })).toBeVisible();
-  await page.getByRole("button", { name: "Capture Photo" }).click();
-  await expect(page.getByAltText("Captured Preview of Your Selfie")).toBeVisible();
-  await page.getByRole("button", { name: "Use Photo" }).click();
-
-  await expect(page.getByRole("heading", { name: "Verifying Your Identity" })).toBeVisible();
-  expect(requests.uploadIntents[0]).toMatchObject({
-    acquisition_method: "idenqa.method.live_camera",
-    requirement_key: "selfie",
-    artefact: "idenqa.artefact.selfie_image",
-  });
-  expect(requests.uploadBodies[0]).not.toBe("");
-});
-
-test("uses capture_failed fallback only after a real camera failure", async ({ page }) => {
-  await page.addInitScript(() => {
-    Object.defineProperty(navigator.mediaDevices, "getUserMedia", {
-      configurable: true,
-      value: () => Promise.reject(new DOMException("synthetic denial", "NotAllowedError")),
-    });
-  });
+test("uses capture_failed fallback only after an active-liveness failure", async ({ page }) => {
+  const method = "idenqa.method.live_camera";
   await mockCaptureFlow(page, {
     consentRequired: false,
-    primaryMethods: ["idenqa.method.live_camera"],
+    primaryMethods: [method],
     fallbacks: [
       {
         on: ["capture_failed"],
@@ -473,45 +583,19 @@ test("uses capture_failed fallback only after a real camera failure", async ({ p
     ],
   });
   await page.goto("/");
-  await startCaptureFlow(page, "synthetic-fallback-token", [
-    "idenqa.method.live_camera",
+  await loadCaptureFlowWithSyntheticAdapter(page, "synthetic-fallback-token", method, "failure", [
+    method,
     "idenqa.method.file_upload",
   ]);
+  await page.getByRole("button", { name: "Get Started" }).click();
   await page.getByRole("button", { name: "Acknowledge & Continue" }).click();
-  await page.getByRole("button", { name: "Continue to Capture" }).click();
-  await page.getByRole("button", { name: "Start Camera" }).click();
+  await page.getByRole("button", { name: "Start Liveness Check" }).click();
+  await advanceSyntheticAdapter(page);
 
   await expect(
     page.getByText("The camera attempt failed. This policy-approved alternative is available."),
   ).toBeVisible();
   await expect(page.getByRole("heading", { name: "Get Your Selfie Ready" })).toBeVisible();
-});
-
-test("camera cancellation stops the preview without activating fallback", async ({ page }) => {
-  await mockCaptureFlow(page, {
-    consentRequired: false,
-    primaryMethods: ["idenqa.method.live_camera"],
-    fallbacks: [
-      {
-        on: ["capture_failed"],
-        acquisition: { strategy: "any_of", methods: ["idenqa.method.file_upload"] },
-      },
-    ],
-  });
-  await page.goto("/");
-  await startCaptureFlow(page, "synthetic-cancel-token", [
-    "idenqa.method.live_camera",
-    "idenqa.method.file_upload",
-  ]);
-  await page.getByRole("button", { name: "Acknowledge & Continue" }).click();
-  await page.getByRole("button", { name: "Continue to Capture" }).click();
-  await page.getByRole("button", { name: "Start Camera" }).click();
-  await expect(page.getByLabel("Live camera preview for Your Selfie")).toBeVisible();
-  await page.getByRole("button", { name: "Cancel Camera" }).click();
-
-  await expect(page.getByRole("button", { name: "Start Camera" })).toBeVisible();
-  await expect(page.getByText(/camera attempt failed/i)).toHaveCount(0);
-  await expect(page.getByLabel("Choose File")).toHaveCount(0);
 });
 
 test("records a sole pinned document option before showing preparation", async ({ page }) => {
@@ -620,13 +704,13 @@ test("document selection drives front/back capture and survives review and retak
   await page.getByRole("button", { name: "Acknowledge & Continue" }).click();
   await expect(page.getByRole("heading", { name: "Which document will you use?" })).toBeVisible();
   await page.getByRole("button", { name: "driver license" }).click();
-  await page.getByRole("button", { name: "Change document" }).click();
+  await page.getByRole("button", { name: "Use Camera" }).click();
+  await expect(page.getByRole("button", { name: "Change document" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Cancel", exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: "Back", exact: true }).click();
-  await page.getByRole("button", { name: "Change document" }).click();
+  await expect(page.getByRole("heading", { name: "Which document will you use?" })).toBeVisible();
   await page.getByRole("button", { name: "national identity card" }).click();
-  await page.getByRole("button", { name: "Use Another Method" }).click();
-  await page.getByRole("button", { name: "Upload File" }).click();
-  await page.getByRole("button", { name: "Use Another Method" }).click();
+  await expect(page.getByRole("heading", { name: /How Would You Like to Add/ })).toBeVisible();
   await page.getByRole("button", { name: "Use Camera" }).click();
   await page.getByRole("button", { name: "Continue to Capture" }).click();
   await expect(
@@ -986,7 +1070,7 @@ test("runs ordered active-liveness prompts and completes only after Core confirm
   await page.getByRole("button", { name: "Start Liveness Check" }).click();
 
   const progress = page.getByRole("progressbar", { name: "Liveness challenge progress" });
-  await expect(page.getByText("Look Straight at the Camera")).toBeVisible();
+  await expect(page.getByText("Center Your Face in the Circle")).toBeVisible();
   await expect(progress).toHaveJSProperty("value", 0);
   await advanceSyntheticAdapter(page);
   await expect(page.getByText("Slowly Turn Your Head Left")).toBeVisible();
@@ -1006,6 +1090,137 @@ test("runs ordered active-liveness prompts and completes only after Core confirm
       acquisitionMethod: method,
     }),
   ]);
+});
+
+test("shows circular centering confirmation before directional pose ticks", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const method = "idenqa.method.live_camera";
+  await mockCaptureFlow(page, { consentRequired: false, primaryMethods: [method] });
+  await page.goto("/");
+  await loadCaptureFlowWithSyntheticAdapter(
+    page,
+    "synthetic-guide-token",
+    method,
+    "liveness",
+    [method],
+    true,
+  );
+  await page.getByRole("button", { name: "Get Started" }).click();
+  await page.getByRole("button", { name: "Acknowledge & Continue" }).click();
+  await page.getByRole("button", { name: "Start Liveness Check" }).click();
+  const frame = page.locator("idenqa-capture .adapter-preview-frame");
+  const guide = frame.locator(".liveness-face-guide");
+  await expect(guide).toHaveAttribute("data-stage", "centering");
+  await expect(guide.locator("path")).toHaveCount(4);
+  await expect(guide.locator("line")).toHaveCount(0);
+  await expect(frame.getByText("Center Your Face in the Circle")).toBeVisible();
+  await frame.screenshot({ path: "/tmp/idenqa-liveness-centering.png" });
+
+  const update = async (progress: CaptureMethodAdapterProgress) => {
+    await page.evaluate((value) => {
+      const state = globalThis as typeof globalThis & {
+        setCaptureGuideProgress?: (progress: CaptureMethodAdapterProgress) => void;
+      };
+      state.setCaptureGuideProgress?.(value);
+    }, progress);
+  };
+  await update({
+    phase: "challenge",
+    current: 1,
+    total: 3,
+    prompt: "neutral",
+    poseStage: "centered",
+    poseProgress: 1,
+    poseFeedback: "hold_still",
+  });
+  await expect(guide).toHaveAttribute("data-stage", "centered");
+  await expect(guide.locator("path").first()).toHaveCSS("stroke", "rgb(121, 232, 177)");
+  await expect(frame.getByText("Face Centered — Hold Still")).toBeVisible();
+  await frame.screenshot({ path: "/tmp/idenqa-liveness-centered.png" });
+
+  for (const prompt of ["turn_left", "turn_right", "look_up", "look_down", "blink"] as const) {
+    await update({
+      phase: "challenge",
+      current: 2,
+      total: 3,
+      prompt,
+      poseStage: "pose",
+      poseProgress: 0.3,
+      poseFeedback: "follow_prompt",
+    });
+    await expect(guide).toHaveAttribute("data-stage", "pose");
+    await expect(guide.locator("line")).toHaveCount(prompt === "blink" ? 116 : 29);
+    if (prompt !== "blink") {
+      await expect(guide.locator("path").first()).toHaveCSS("stroke", "rgba(255, 255, 255, 0.42)");
+    }
+    expect(await guide.locator('line[data-filled="true"]').count()).toBeGreaterThan(0);
+    if (prompt === "turn_left") {
+      const tick = guide.locator("line").first();
+      expect(Number(await tick.getAttribute("x1"))).toBeLessThan(50);
+      await frame.screenshot({ path: "/tmp/idenqa-liveness-pose.png" });
+    }
+  }
+  await update({
+    phase: "challenge",
+    current: 2,
+    total: 3,
+    prompt: "turn_left",
+    poseStage: "centering",
+    poseProgress: 0,
+    poseFeedback: "find_face",
+  });
+  await expect(guide.locator("line")).toHaveCount(0);
+  await expect(frame.getByText("Bring Your Face Into View")).toBeVisible();
+  await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
+  await page.setViewportSize({ width: 320, height: 720 });
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth - innerWidth),
+  ).toBeLessThanOrEqual(0);
+  await expect(guide.locator("path").first()).toHaveCSS("transition-duration", "0s");
+  await page.getByRole("button", { name: "Cancel Liveness Check" }).click();
+  await expect(frame).toHaveCount(0);
+});
+
+test("never falls back to the generic camera UI for a live selfie", async ({ page }) => {
+  const method = "idenqa.method.live_camera";
+  await mockCaptureFlow(page, {
+    consentRequired: false,
+    primaryMethods: [method],
+  });
+  await page.goto("/");
+
+  const failure = await page.locator("idenqa-capture").evaluate(
+    async (element, input) => {
+      try {
+        await (element as IdenqaCaptureElement).start({
+          baseUrl: new URL("/core/", location.href),
+          captureToken: input.token,
+          outcomeToken: `${input.token}-outcome`,
+          capabilities: {
+            supportedMethods: [input.method],
+            availableMethods: [input.method],
+          },
+        });
+        return undefined;
+      } catch (error) {
+        return {
+          code:
+            error instanceof Error && "code" in error && typeof error.code === "string"
+              ? error.code
+              : undefined,
+          message: error instanceof Error ? error.message : String(error),
+        };
+      }
+    },
+    { token: "missing-liveness-adapter-token", method },
+  );
+
+  expect(failure).toEqual({
+    code: "CAPTURE_METHOD_ADAPTER_MISSING",
+    message: "No acquisition adapter is registered for idenqa.method.live_camera.",
+  });
+  await expect(page.getByRole("heading", { name: "Add Your Selfie" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Start Camera" })).toHaveCount(0);
 });
 
 test("cancels an active-liveness adapter without completing or activating fallback", async ({
@@ -1032,12 +1247,12 @@ test("cancels an active-liveness adapter without completing or activating fallba
   await page.getByRole("button", { name: "Get Started" }).click();
   await page.getByRole("button", { name: "Acknowledge & Continue" }).click();
   await page.getByRole("button", { name: "Start Liveness Check" }).click();
-  await expect(page.getByText("Look Straight at the Camera")).toBeVisible();
+  await expect(page.getByText("Center Your Face in the Circle")).toBeVisible();
 
   await page.getByRole("button", { name: "Cancel Liveness Check" }).click();
 
   await expect(page.getByRole("button", { name: "Start Liveness Check" })).toBeVisible();
-  await expect(page.getByText("Look Straight at the Camera")).toHaveCount(0);
+  await expect(page.getByText("Center Your Face in the Circle")).toHaveCount(0);
   await expect(page.getByText(/attempt failed/i)).toHaveCount(0);
   await expect(page.getByLabel("Choose File")).toHaveCount(0);
   expect(requests.adapterCompletions).toHaveLength(0);
@@ -1133,9 +1348,7 @@ test("runs in a React host with locale fallback and composed completion events",
   await expect(shell).toHaveAttribute("lang", "fr-CA");
   await expect(shell).toHaveAttribute("dir", "ltr");
   await expect(page.getByText("Capture sécurisée canadienne", { exact: true })).toBeVisible();
-  await expect(
-    page.getByRole("heading", { level: 2, name: "Identity Verification" }),
-  ).toBeVisible();
+  await expect(shell).toHaveAccessibleName("Identity Verification");
   await page.getByRole("button", { name: "Get Started" }).click();
   await page.getByRole("button", { name: "Reconnaître et continuer" }).click();
   await page.getByRole("button", { name: "Continue to Capture" }).click();
@@ -1206,12 +1419,15 @@ async function loadCaptureFlowWithSyntheticAdapter(
   page: Parameters<typeof mockCaptureFlow>[0],
   captureToken: string,
   method: string,
-  variant: "liveness" | "extension" | "retry",
+  variant: "liveness" | "failure" | "extension" | "retry",
+  supportedMethods: readonly string[] = [method],
+  guide = false,
 ) {
   await page.locator("idenqa-capture").evaluate(
     (element, input) => {
       const testState = globalThis as typeof globalThis & {
         advanceCaptureAdapter?: () => void;
+        setCaptureGuideProgress?: (progress: CaptureMethodAdapterProgress) => void;
       };
       const waitForAdvance = (signal: AbortSignal) =>
         new Promise<void>((resolve, reject) => {
@@ -1231,15 +1447,17 @@ async function loadCaptureFlowWithSyntheticAdapter(
         captureToken: input.token,
         outcomeToken: `${input.token}-outcome`,
         capabilities: {
-          supportedMethods: [input.method],
-          availableMethods: [input.method],
+          supportedMethods: [...input.supportedMethods],
+          availableMethods: [...input.supportedMethods],
         },
         methodAdapters: [
           {
             method: input.method,
-            ...(input.variant === "liveness" ? { presentation: "active_liveness" as const } : {}),
+            ...(input.variant === "liveness" || input.variant === "failure"
+              ? { presentation: "active_liveness" as const }
+              : {}),
             copy:
-              input.variant === "liveness"
+              input.variant === "liveness" || input.variant === "failure"
                 ? {
                     label: "Liveness Check",
                     action: "Start Liveness Check",
@@ -1262,7 +1480,26 @@ async function loadCaptureFlowWithSyntheticAdapter(
                   },
             async acquire(context, controls) {
               attempts += 1;
+              if (input.variant === "failure") {
+                controls.update({ phase: "challenge", current: 1, total: 3, prompt: "neutral" });
+                await waitForAdvance(context.signal);
+                throw new Error("Synthetic active-liveness failure.");
+              }
               if (input.variant === "liveness") {
+                if (input.guide) {
+                  // Explicit synthetic camera surface for guide rendering only.
+                  const canvas = document.createElement("canvas");
+                  canvas.width = 640;
+                  canvas.height = 480;
+                  const ctx = canvas.getContext("2d")!;
+                  const gradient = ctx.createLinearGradient(0, 0, 640, 480);
+                  gradient.addColorStop(0, "#6b777e");
+                  gradient.addColorStop(1, "#333c46");
+                  ctx.fillStyle = gradient;
+                  ctx.fillRect(0, 0, 640, 480);
+                  await controls.setPreview(canvas.captureStream(1));
+                  testState.setCaptureGuideProgress = (progress) => controls.update(progress);
+                }
                 for (const [index, prompt] of ["neutral", "turn_left", "turn_right"].entries()) {
                   controls.update({
                     phase: "challenge",
@@ -1296,7 +1533,7 @@ async function loadCaptureFlowWithSyntheticAdapter(
         ],
       });
     },
-    { token: captureToken, method, variant },
+    { token: captureToken, method, variant, supportedMethods, guide },
   );
 }
 
@@ -1634,6 +1871,21 @@ function authorityResponse(options: {
       digest: "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
     },
   };
+}
+
+function countryJourneyNotice() {
+  return {
+    locale: "en",
+    controller: "Example Controller",
+    recipient: "Example Recipient",
+    consentRequired: true,
+    copy: {
+      title: "Identity Verification Notice",
+      summary: "We need to verify your identity.",
+      purpose: "Your evidence is used only for identity verification.",
+      consequences: "You may refuse and collection will not continue.",
+    },
+  } as const;
 }
 
 function subjectResponse(action: "acknowledge" | "consent" | "refuse", locale = "en") {
