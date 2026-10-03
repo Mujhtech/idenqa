@@ -30,6 +30,46 @@ func New(pool transactionRunner) (*Store, error) {
 	return &Store{pool: pool}, nil
 }
 
+// List returns a bounded newest-first tenant page. before is exclusive and
+// zero begins at the current chain head.
+func (store *Store) List(ctx context.Context, scope tenant.Scope, before uint64, limit int) ([]audit.Record, error) {
+	if scope.ID().IsZero() || limit < 1 || limit > 100 || before > math.MaxInt64 {
+		return nil, audit.ErrInvalid
+	}
+	records := make([]audit.Record, 0, limit)
+	err := store.pool.WithinTransaction(ctx, platformpostgres.TransactionOptions{ReadOnly: true}, func(ctx context.Context, tx platformpostgres.Transaction) error {
+		if err := setScope(ctx, tx, scope); err != nil {
+			return err
+		}
+		boundary := int64(before) //nolint:gosec // before is rejected above MaxInt64.
+		rows, err := tx.Query(ctx, `SELECT sequence,event_id,event_type,aggregate_id,actor_id,occurred_at,event_digest,previous_hash,hash
+			FROM idenqa.audit_records WHERE tenant_id=$1 AND ($2=0 OR sequence<$2)
+			ORDER BY sequence DESC LIMIT $3`, scope.ID().String(), boundary, limit)
+		if err != nil {
+			return fmt.Errorf("query audit records: %w", err)
+		}
+		defer rows.Close()
+		for rows.Next() {
+			var sequence int64
+			var record audit.Record
+			if err := rows.Scan(&sequence, &record.EventID, &record.EventType, &record.AggregateID, &record.ActorID, &record.OccurredAt, &record.EventDigest, &record.PreviousHash, &record.Hash); err != nil {
+				return fmt.Errorf("scan audit record: %w", err)
+			}
+			if sequence <= 0 {
+				return audit.ErrInvalid
+			}
+			record.Sequence = uint64(sequence)
+			record.OccurredAt = record.OccurredAt.UTC()
+			records = append(records, record)
+		}
+		if err := rows.Err(); err != nil {
+			return fmt.Errorf("iterate audit records: %w", err)
+		}
+		return nil
+	})
+	return records, err
+}
+
 // Event is the reference-only consequential meaning committed to the chain.
 type Event struct {
 	EventID, EventType, AggregateID, ActorID, EventDigest string
