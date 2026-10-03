@@ -48,6 +48,21 @@ SELECT *
 FROM idenqa.verification_sessions
 WHERE tenant_id = $1 AND id = $2;
 
+-- name: ListVerificationSessions :many
+SELECT *
+FROM idenqa.verification_sessions
+WHERE tenant_id = sqlc.arg(tenant_id)
+  AND (
+    NOT sqlc.arg(has_after)::boolean
+    OR created_at < sqlc.arg(after_created_at)::timestamptz
+    OR (
+      created_at = sqlc.arg(after_created_at)::timestamptz
+      AND id < sqlc.arg(after_id)::text
+    )
+  )
+ORDER BY created_at DESC, id DESC
+LIMIT sqlc.arg(page_size);
+
 -- name: FindCaptureOutcome :one
 SELECT
     sessions.id AS verification_id,

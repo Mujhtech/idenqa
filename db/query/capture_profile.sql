@@ -25,6 +25,15 @@ SELECT *
 FROM idenqa.capture_profile_revisions
 WHERE tenant_id = $1 AND profile_id = $2 AND revision = $3;
 
+-- name: ListCaptureProfileRevisions :many
+SELECT *
+FROM idenqa.capture_profile_revisions
+WHERE tenant_id = sqlc.arg(tenant_id)
+  AND profile_id = sqlc.arg(profile_id)
+  AND (sqlc.arg(before_revision)::bigint = 0 OR revision < sqlc.arg(before_revision))
+ORDER BY revision DESC
+LIMIT sqlc.arg(page_size);
+
 -- name: ListCaptureProfilesFirst :many
 SELECT *
 FROM idenqa.capture_profiles
