@@ -3,7 +3,9 @@ import { CaptureClient, createIdempotencyKey, type ExperienceResolution } from "
 import {
   createActiveLivenessMethodAdapter,
   defineIdenqaCapture,
+  type CaptureElementStartOptions,
   type CaptureActiveLivenessSubmission,
+  type CaptureCountryOption,
   type IdenqaCaptureElement,
 } from "../src/index.js";
 
@@ -14,6 +16,7 @@ interface HostedBootstrap {
   readonly outcomeToken: string;
   readonly sessionVersion: number;
   readonly region: string;
+  readonly selfieRequirementKey?: string;
   readonly experience?: ExperienceResolution;
   readonly outcome:
     | "verified"
@@ -37,16 +40,82 @@ void startHostedJourney(capture).catch(() => {
 });
 
 async function startHostedJourney(element: IdenqaCaptureElement): Promise<void> {
+  const launch = new URLSearchParams(location.hash.slice(1));
+  const requestedOutcome = launch.get("outcome");
+  const requestedProfile = launch.get("profile");
+  const controller = launch.get("controller");
+  const recipient = launch.get("recipient");
+  const documentJourney = launch.get("journey") === "document";
+  const activeLiveness = true;
+  element.startCountryJourney({
+    countries: documentCountries(),
+    captureItemCount: 2,
+    notice: demoPrivacyNotice(controller, recipient),
+    resolve: (country, signal) => {
+      return prepareHostedJourney(
+        {
+          requestedOutcome,
+          requestedProfile,
+          controller,
+          recipient,
+          documentJourney,
+          country: country.code,
+          activeLiveness,
+        },
+        signal,
+      );
+    },
+  });
+}
+
+function demoPrivacyNotice(controller: string | null, recipient: string | null) {
+  if (controller === null || controller.trim().length < 2) {
+    throw new Error("The controller display identity is required.");
+  }
+  if (recipient === null || recipient.trim().length < 2) {
+    throw new Error("The recipient display identity is required.");
+  }
+  return {
+    locale: "en",
+    controller: controller.trim(),
+    recipient: recipient.trim(),
+    consentRequired: true,
+    copy: {
+      title: "Identity Verification Notice",
+      summary: "We need identity evidence to demonstrate this capture journey.",
+      purpose: "This evidence is used only for this local identity-capture demonstration.",
+      consequences: "You may refuse. Capture will stop and no evidence will be collected.",
+    },
+  } as const;
+}
+
+async function prepareHostedJourney(
+  launch: {
+    readonly requestedOutcome: string | null;
+    readonly requestedProfile: string | null;
+    readonly controller: string | null;
+    readonly recipient: string | null;
+    readonly documentJourney: boolean;
+    readonly country?: string;
+    readonly activeLiveness: boolean;
+  },
+  signal?: AbortSignal,
+): Promise<CaptureElementStartOptions> {
   const bootstrapURL = new URL("/__idenqa_demo/bootstrap", location.href);
-  const requestedOutcome = new URLSearchParams(location.search).get("outcome");
-  if (requestedOutcome !== null) bootstrapURL.searchParams.set("outcome", requestedOutcome);
-  const documentJourney = new URLSearchParams(location.search).get("journey") === "document";
-  if (documentJourney) bootstrapURL.searchParams.set("journey", "document");
   const response = await fetch(bootstrapURL, {
     method: "POST",
     cache: "no-store",
     credentials: "same-origin",
-    headers: { Accept: "application/json" },
+    ...(signal === undefined ? {} : { signal }),
+    headers: { Accept: "application/json", "Content-Type": "application/json" },
+    body: JSON.stringify({
+      ...(launch.requestedOutcome === null ? {} : { outcome: launch.requestedOutcome }),
+      ...(launch.requestedProfile === null ? {} : { profile: launch.requestedProfile }),
+      ...(launch.controller === null ? {} : { controller: launch.controller }),
+      ...(launch.recipient === null ? {} : { recipient: launch.recipient }),
+      ...(launch.documentJourney ? { journey: "document" } : {}),
+      ...(launch.country === undefined ? {} : { country: launch.country }),
+    }),
   });
   if (!response.ok) throw new Error("The self-hosted Capture Web demo could not be prepared.");
   const bootstrap = (await response.json()) as HostedBootstrap;
@@ -57,9 +126,7 @@ async function startHostedJourney(element: IdenqaCaptureElement): Promise<void> 
       { idempotencyKey: createIdempotencyKey("demo_cancel") },
     );
   }
-  const activeLiveness =
-    !documentJourney && new URLSearchParams(location.search).get("method") === "active-liveness";
-  await element.start({
+  return {
     baseUrl,
     captureToken: bootstrap.captureToken,
     outcomeToken: bootstrap.outcomeToken,
@@ -67,18 +134,40 @@ async function startHostedJourney(element: IdenqaCaptureElement): Promise<void> 
     capabilities: browserCapabilities(),
     region: bootstrap.region,
     ...(bootstrap.experience === undefined ? {} : { experience: bootstrap.experience }),
-    ...(activeLiveness
+    ...(launch.activeLiveness && bootstrap.selfieRequirementKey !== undefined
       ? {
           methodAdapters: [
             createActiveLivenessMethodAdapter({
               plan: demoActiveLivenessPlan(bootstrap.verificationId),
-              requirementKey: "selfie",
+              requirementKey: bootstrap.selfieRequirementKey,
+              copy: {
+                label: "Liveness Check",
+                action: "Continue to Capture",
+                description: "Follow a short series of camera prompts",
+                title: "Get Your Selfie Ready",
+                preparation: "Before opening the camera, take a moment to set up a clear shot.",
+                instruction:
+                  "Keep your face in view while the camera captures each requested movement.",
+                tips: [
+                  "Use bright, even lighting and avoid glare.",
+                  "Keep your full face visible inside the guide.",
+                  "Follow each prompt and hold still while it captures automatically.",
+                ],
+              },
               submit: coreDemoSubmitter(baseUrl, bootstrap),
             }),
           ],
         }
       : {}),
-  });
+  };
+}
+
+function documentCountries(): readonly CaptureCountryOption[] {
+  return [
+    { code: "NG", label: "Nigeria" },
+    { code: "GH", label: "Ghana" },
+    { code: "GB", label: "United Kingdom" },
+  ];
 }
 
 function demoActiveLivenessPlan(verificationId: string) {

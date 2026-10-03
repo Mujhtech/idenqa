@@ -1,3 +1,7 @@
+import { installCaptureFont } from "../src/font.js";
+
+installCaptureFont();
+
 interface BootstrapResponse {
   readonly journeyId: string;
   readonly originalSubjectUrl: string;
