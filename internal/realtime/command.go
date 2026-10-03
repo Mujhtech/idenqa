@@ -1,6 +1,8 @@
 package realtime
 
 import (
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
+
 	"context"
 	"crypto/sha256"
 	"encoding/json"
@@ -131,6 +133,8 @@ type CaptureStepCommandRepository interface {
 
 // CommandService applies the supported client command catalogue.
 type CommandService struct {
+	tracer observability.Tracer
+
 	repository CaptureStepCommandRepository
 	clock      clock.Clock
 }
@@ -149,7 +153,10 @@ func (service *CommandService) HandleClientCommand(
 	ctx context.Context,
 	ticket Ticket,
 	message Message,
-) (CommandAcknowledgement, error) {
+) (spanResult0 CommandAcknowledgement, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "realtime.CommandService.HandleClientCommand")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if service == nil || service.repository == nil || service.clock == nil {
 		return CommandAcknowledgement{}, errors.New("realtime: command service is not initialised")
 	}
@@ -176,4 +183,19 @@ func (service *CommandService) HandleClientCommand(
 
 func rejectedCommand(code string) CommandAcknowledgement {
 	return CommandAcknowledgement{Disposition: CommandDispositionRejected, Code: code}
+}
+
+// WithTracer injects operation tracing during composition, before concurrent use.
+func (service *CommandService) WithTracer(tracer observability.Tracer) *CommandService {
+	if service != nil {
+		service.tracer = tracer
+	}
+	return service
+}
+
+func (service *CommandService) operationTracer() observability.Tracer {
+	if service == nil {
+		return nil
+	}
+	return service.tracer
 }

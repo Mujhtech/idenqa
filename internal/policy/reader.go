@@ -1,6 +1,8 @@
 package policy
 
 import (
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
+
 	"context"
 	"errors"
 	"fmt"
@@ -10,7 +12,10 @@ import (
 )
 
 // Reader authorises tenant decision inspection and portable export separately.
-type Reader struct{ repository Repository }
+type Reader struct {
+	tracer     observability.Tracer
+	repository Repository
+}
 
 // NewReader constructs the tenant decision-read application service.
 func NewReader(repository Repository) (*Reader, error) {
@@ -26,7 +31,10 @@ func (reader *Reader) Find(
 	ctx context.Context,
 	authority access.Context,
 	decisionID id.Decision,
-) (ReproductionReport, error) {
+) (spanResult0 ReproductionReport, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, reader.operationTracer(), "policy.Reader.Find")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := reader.ready(); err != nil {
 		return ReproductionReport{}, err
 	}
@@ -50,7 +58,10 @@ func (reader *Reader) FindLatest(
 	ctx context.Context,
 	authority access.Context,
 	verificationID id.Verification,
-) (ReproductionReport, error) {
+) (spanResult0 ReproductionReport, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, reader.operationTracer(), "policy.Reader.FindLatest")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := reader.ready(); err != nil {
 		return ReproductionReport{}, err
 	}
@@ -76,7 +87,10 @@ func (reader *Reader) List(
 	verificationID id.Verification,
 	before id.Decision,
 	limit int,
-) ([]ReproductionReport, error) {
+) (spanResult0 []ReproductionReport, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, reader.operationTracer(), "policy.Reader.List")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := reader.ready(); err != nil {
 		return nil, err
 	}
@@ -110,7 +124,10 @@ func (reader *Reader) Export(
 	ctx context.Context,
 	authority access.Context,
 	decisionID id.Decision,
-) (DecisionBundle, ReproductionReport, error) {
+) (spanResult0 DecisionBundle, spanResult1 ReproductionReport, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, reader.operationTracer(), "policy.Reader.Export")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := reader.ready(); err != nil {
 		return DecisionBundle{}, ReproductionReport{}, err
 	}
@@ -147,4 +164,19 @@ func reproduceReport(decision Decision) (ReproductionReport, error) {
 	}
 
 	return report, nil
+}
+
+// WithTracer injects operation tracing during composition, before concurrent use.
+func (reader *Reader) WithTracer(tracer observability.Tracer) *Reader {
+	if reader != nil {
+		reader.tracer = tracer
+	}
+	return reader
+}
+
+func (reader *Reader) operationTracer() observability.Tracer {
+	if reader == nil {
+		return nil
+	}
+	return reader.tracer
 }

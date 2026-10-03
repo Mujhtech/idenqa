@@ -112,6 +112,8 @@ type Tombstone struct {
 
 // Service owns authorised observable deletion execution.
 type Service struct {
+	tracer observability.Tracer
+
 	repository  Repository
 	eraser      TargetEraser
 	identifiers IdentifierGenerator
@@ -136,13 +138,19 @@ func (service *Service) WithMetrics(metrics Metrics) *Service {
 }
 
 // RequestDeletion creates one exact, region-pinned workflow.
-func (service *Service) RequestDeletion(ctx context.Context, scope tenant.Scope, actor Actor, aggregateID, region string, targets []Target, backupExpiresAt time.Time) (Deletion, error) {
+func (service *Service) RequestDeletion(ctx context.Context, scope tenant.Scope, actor Actor, aggregateID, region string, targets []Target, backupExpiresAt time.Time) (spanResult0 Deletion, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "privacy.Service.RequestDeletion")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	return service.requestDeletionAt(ctx, scope, actor, aggregateID, region, targets, service.now().UTC(), backupExpiresAt)
 }
 
 // RequestEvidenceDeletion plans exact raw and derived targets and applies the
 // selected 35-day backup boundary; callers cannot inject object references.
-func (service *Service) RequestEvidenceDeletion(ctx context.Context, scope tenant.Scope, actor Actor, aggregateID, region string) (Deletion, error) {
+func (service *Service) RequestEvidenceDeletion(ctx context.Context, scope tenant.Scope, actor Actor, aggregateID, region string) (spanResult0 Deletion, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "privacy.Service.RequestEvidenceDeletion")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	planner, ok := service.repository.(EvidenceTargetPlanner)
 	if !ok {
 		return Deletion{}, ErrInvalid
@@ -175,6 +183,9 @@ func (service *Service) requestDeletionAt(ctx context.Context, scope tenant.Scop
 
 // Run advances one workflow until a failure, legal hold, backup boundary, or completion.
 func (service *Service) Run(ctx context.Context, scope tenant.Scope, actor Actor, identifier id.Deletion) (result Deletion, err error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "privacy.Service.Run")
+	defer observability.EndSpan(completeSpan, &err)
+
 	if !actor.permits(PermissionRunDeletion) {
 		return Deletion{}, ErrConflict
 	}
@@ -286,7 +297,10 @@ func (service *Service) observeDeletion(from DeletionState, next Deletion) {
 // RunDue advances a bounded batch of expired or retryable workflows. Each
 // workflow remains independently transactional so one failure cannot hide the
 // remaining identifiers from a later scheduler pass.
-func (service *Service) RunDue(ctx context.Context, scope tenant.Scope, actor Actor, limit int) ([]Deletion, error) {
+func (service *Service) RunDue(ctx context.Context, scope tenant.Scope, actor Actor, limit int) (spanResult0 []Deletion, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "privacy.Service.RunDue")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if !actor.permits(PermissionRunDeletion) || limit < 1 || limit > 1000 {
 		return nil, ErrConflict
 	}
@@ -335,7 +349,10 @@ func (service *Service) observeBacklog(results []Deletion) {
 }
 
 // FindDeletion loads one tenant-scoped deletion workflow.
-func (service *Service) FindDeletion(ctx context.Context, scope tenant.Scope, actor Actor, identifier id.Deletion) (Deletion, error) {
+func (service *Service) FindDeletion(ctx context.Context, scope tenant.Scope, actor Actor, identifier id.Deletion) (spanResult0 Deletion, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "privacy.Service.FindDeletion")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if !actor.permits(PermissionReadDeletion) || identifier.IsZero() {
 		return Deletion{}, ErrConflict
 	}
@@ -343,7 +360,10 @@ func (service *Service) FindDeletion(ctx context.Context, scope tenant.Scope, ac
 }
 
 // DeletionStatus projects one deletion with exact target states and active holds.
-func (service *Service) DeletionStatus(ctx context.Context, scope tenant.Scope, actor Actor, identifier id.Deletion) (DeletionStatus, error) {
+func (service *Service) DeletionStatus(ctx context.Context, scope tenant.Scope, actor Actor, identifier id.Deletion) (spanResult0 DeletionStatus, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "privacy.Service.DeletionStatus")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if !actor.permits(PermissionReadDeletion) || identifier.IsZero() {
 		return DeletionStatus{}, ErrConflict
 	}
@@ -360,7 +380,10 @@ func (service *Service) DeletionStatus(ctx context.Context, scope tenant.Scope, 
 
 // ListDeletions returns one bounded ascending page, optionally filtered by
 // exact aggregate. A non-empty position is the previous page's last identifier.
-func (service *Service) ListDeletions(ctx context.Context, scope tenant.Scope, actor Actor, aggregateID, position string, limit int) (DeletionPage, error) {
+func (service *Service) ListDeletions(ctx context.Context, scope tenant.Scope, actor Actor, aggregateID, position string, limit int) (spanResult0 DeletionPage, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "privacy.Service.ListDeletions")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if !actor.permits(PermissionReadDeletion) || limit < 1 || limit > 100 ||
 		(aggregateID != "" && !token(aggregateID, 200)) || (position != "" && !token(position, 64)) {
 		return DeletionPage{}, ErrConflict
@@ -386,7 +409,10 @@ func (service *Service) ListDeletions(ctx context.Context, scope tenant.Scope, a
 // ResolveRetention recomputes typed retention meaning read-only for each
 // retained evidence object of one aggregate and includes active holds. It
 // never trusts denormalised deadlines over privacy.Resolve.
-func (service *Service) ResolveRetention(ctx context.Context, scope tenant.Scope, actor Actor, aggregateID string) (RetentionResolution, error) {
+func (service *Service) ResolveRetention(ctx context.Context, scope tenant.Scope, actor Actor, aggregateID string) (spanResult0 RetentionResolution, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "privacy.Service.ResolveRetention")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if !actor.permits(PermissionReadDeletion) || !token(aggregateID, 200) {
 		return RetentionResolution{}, ErrConflict
 	}
@@ -416,7 +442,10 @@ func (service *Service) ResolveRetention(ctx context.Context, scope tenant.Scope
 }
 
 // CreateHold creates an auditable hold without granting evidence access.
-func (service *Service) CreateHold(ctx context.Context, scope tenant.Scope, actor Actor, aggregateID, authority, reason string, startsAt, reviewAt time.Time) (Hold, error) {
+func (service *Service) CreateHold(ctx context.Context, scope tenant.Scope, actor Actor, aggregateID, authority, reason string, startsAt, reviewAt time.Time) (spanResult0 Hold, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "privacy.Service.CreateHold")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	identifiers, ok := service.identifiers.(HoldIdentifierGenerator)
 	if !actor.permits(PermissionManageHold) || !ok {
 		return Hold{}, ErrConflict
@@ -440,7 +469,10 @@ func (service *Service) CreateHold(ctx context.Context, scope tenant.Scope, acto
 }
 
 // ReleaseHold ends one exact hold; it does not delete or reveal held data.
-func (service *Service) ReleaseHold(ctx context.Context, scope tenant.Scope, actor Actor, identifier id.LegalHold) (Hold, error) {
+func (service *Service) ReleaseHold(ctx context.Context, scope tenant.Scope, actor Actor, identifier id.LegalHold) (spanResult0 Hold, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "privacy.Service.ReleaseHold")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if !actor.permits(PermissionManageHold) || identifier.IsZero() {
 		return Hold{}, ErrConflict
 	}
@@ -454,7 +486,10 @@ func (service *Service) ReleaseHold(ctx context.Context, scope tenant.Scope, act
 // ReplayTombstones reapplies every exact deletion target after a restore. The
 // eraser must be idempotent; evidence access remains disabled until this pass
 // succeeds and its audit event commits.
-func (service *Service) ReplayTombstones(ctx context.Context, scope tenant.Scope, actor Actor, limit int) (int, error) {
+func (service *Service) ReplayTombstones(ctx context.Context, scope tenant.Scope, actor Actor, limit int) (spanResult0 int, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "privacy.Service.ReplayTombstones")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if !actor.permits(PermissionRunDeletion) || limit < 1 || limit > 1000 {
 		return 0, ErrConflict
 	}
@@ -496,4 +531,19 @@ func classifyFailure(err error) string {
 		return "cancelled"
 	}
 	return "target_unavailable"
+}
+
+// WithTracer injects operation tracing during composition, before concurrent use.
+func (service *Service) WithTracer(tracer observability.Tracer) *Service {
+	if service != nil {
+		service.tracer = tracer
+	}
+	return service
+}
+
+func (service *Service) operationTracer() observability.Tracer {
+	if service == nil {
+		return nil
+	}
+	return service.tracer
 }

@@ -5,6 +5,8 @@
 package keycustody
 
 import (
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
+
 	"context"
 	"crypto/hmac"
 	"crypto/rand"
@@ -137,6 +139,8 @@ type References interface {
 // Service authorizes and validates lifecycle operations at the application
 // boundary.
 type Service struct {
+	tracer observability.Tracer
+
 	repository Repository
 	identifier *id.Generator
 	now        func() time.Time
@@ -153,7 +157,10 @@ func NewService(repository Repository, identifier *id.Generator, now func() time
 }
 
 // Execute authorizes and fingerprints one lifecycle command.
-func (service *Service) Execute(ctx context.Context, auth access.Context, key string, command Command) (Result, error) {
+func (service *Service) Execute(ctx context.Context, auth access.Context, key string, command Command) (spanResult0 Result, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "keycustody.Service.Execute")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if ctx == nil || auth.TenantScope().ID().IsZero() {
 		return Result{}, ErrInvalid
 	}
@@ -167,7 +174,10 @@ func (service *Service) Execute(ctx context.Context, auth access.Context, key st
 // ExecuteDirect validates and fingerprints one lifecycle command for an
 // already-authenticated operator actor. The operator CLI uses it directly;
 // HTTP callers use Execute so the permission is always checked.
-func (service *Service) ExecuteDirect(ctx context.Context, scope tenant.Scope, actor id.APIKey, key string, command Command) (Result, error) {
+func (service *Service) ExecuteDirect(ctx context.Context, scope tenant.Scope, actor id.APIKey, key string, command Command) (spanResult0 Result, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "keycustody.Service.ExecuteDirect")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if ctx == nil || scope.ID().IsZero() || actor.IsZero() {
 		return Result{}, ErrInvalid
 	}
@@ -195,7 +205,10 @@ func (service *Service) ExecuteDirect(ctx context.Context, scope tenant.Scope, a
 }
 
 // Read authorizes a safe domain read.
-func (service *Service) Read(ctx context.Context, auth access.Context, domain string) (Result, error) {
+func (service *Service) Read(ctx context.Context, auth access.Context, domain string) (spanResult0 Result, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "keycustody.Service.Read")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := auth.Require(access.PermissionKMSRead); err != nil {
 		return Result{}, err
 	}
@@ -275,4 +288,19 @@ func EqualToken(first, second string) bool {
 	}
 
 	return subtle.ConstantTimeCompare([]byte(first), []byte(second)) == 1
+}
+
+// WithTracer injects operation tracing during composition, before concurrent use.
+func (service *Service) WithTracer(tracer observability.Tracer) *Service {
+	if service != nil {
+		service.tracer = tracer
+	}
+	return service
+}
+
+func (service *Service) operationTracer() observability.Tracer {
+	if service == nil {
+		return nil
+	}
+	return service.tracer
 }

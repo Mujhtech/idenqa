@@ -1,6 +1,8 @@
 package policy
 
 import (
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
+
 	"context"
 	"encoding/json"
 	"errors"
@@ -122,6 +124,8 @@ type ManagementIDs interface {
 
 // Management enforces public catalog authority above every persistence adapter.
 type Management struct {
+	tracer observability.Tracer
+
 	repository ManagementRepository
 	compiler   RevisionCompiler
 	ids        ManagementIDs
@@ -134,13 +138,16 @@ func NewManagement(repository ManagementRepository, compiler RevisionCompiler, i
 	if repository == nil || compiler == nil || ids == nil || now == nil || retention <= 0 {
 		return nil, ErrInvalid
 	}
-	return &Management{repository, compiler, ids, now, retention}, nil
+	return &Management{repository: repository, compiler: compiler, ids: ids, now: now, retention: retention}, nil
 }
 
 var managementReason = regexp.MustCompile(`^[a-z][a-z0-9._:-]{0,63}$`)
 
 // Execute authorises and atomically applies an immutable public command.
-func (service *Management) Execute(ctx context.Context, actor access.Context, key string, command Command) (ManagementResult, error) {
+func (service *Management) Execute(ctx context.Context, actor access.Context, key string, command Command) (spanResult0 ManagementResult, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "policy.Management.Execute")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	permission := access.PermissionPoliciesWrite
 	if command.Operation == "activate" || command.Operation == "rollback" {
 		permission = access.PermissionPoliciesActivate
@@ -291,7 +298,10 @@ func invalidCompilation(ctx context.Context, err error) error {
 }
 
 // Validate compiles supplied meaning without registration, activation or audit mutation.
-func (service *Management) Validate(ctx context.Context, actor access.Context, definition Definition) (Validation, error) {
+func (service *Management) Validate(ctx context.Context, actor access.Context, definition Definition) (spanResult0 Validation, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "policy.Management.Validate")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := actor.Require(access.PermissionPoliciesWrite); err != nil {
 		return Validation{}, err
 	}
@@ -308,7 +318,10 @@ func (service *Management) Validate(ctx context.Context, actor access.Context, d
 }
 
 // Get retrieves source-free metadata for one visible policy.
-func (service *Management) Get(ctx context.Context, actor access.Context, identifier id.Policy) (Summary, error) {
+func (service *Management) Get(ctx context.Context, actor access.Context, identifier id.Policy) (spanResult0 Summary, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "policy.Management.Get")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := actor.Require(access.PermissionPoliciesRead); err != nil {
 		return Summary{}, err
 	}
@@ -316,7 +329,10 @@ func (service *Management) Get(ctx context.Context, actor access.Context, identi
 }
 
 // List returns a bounded descending identifier page.
-func (service *Management) List(ctx context.Context, actor access.Context, before string, limit int) ([]Summary, error) {
+func (service *Management) List(ctx context.Context, actor access.Context, before string, limit int) (spanResult0 []Summary, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "policy.Management.List")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := actor.Require(access.PermissionPoliciesRead); err != nil {
 		return nil, err
 	}
@@ -327,7 +343,10 @@ func (service *Management) List(ctx context.Context, actor access.Context, befor
 }
 
 // GetRevision explicitly retrieves authorised policy source and immutable identity.
-func (service *Management) GetRevision(ctx context.Context, actor access.Context, identifier id.Policy, number uint32) (RevisionDocument, error) {
+func (service *Management) GetRevision(ctx context.Context, actor access.Context, identifier id.Policy, number uint32) (spanResult0 RevisionDocument, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "policy.Management.GetRevision")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := actor.Require(access.PermissionPoliciesRead); err != nil {
 		return RevisionDocument{}, err
 	}
@@ -339,7 +358,10 @@ func (service *Management) GetRevision(ctx context.Context, actor access.Context
 }
 
 // Diff compares two visible stored revisions as bounded canonical structure.
-func (service *Management) Diff(ctx context.Context, actor access.Context, identifier id.Policy, from, to uint32) (RevisionDiff, error) {
+func (service *Management) Diff(ctx context.Context, actor access.Context, identifier id.Policy, from, to uint32) (spanResult0 RevisionDiff, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "policy.Management.Diff")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if err := actor.Require(access.PermissionPoliciesRead); err != nil {
 		return RevisionDiff{}, err
 	}
@@ -358,7 +380,10 @@ func (service *Management) Diff(ctx context.Context, actor access.Context, ident
 }
 
 // Revisions returns validated source-free revision history.
-func (service *Management) Revisions(ctx context.Context, actor access.Context, identifier id.Policy, before uint32, limit int) ([]RevisionInfo, bool, uint32, error) {
+func (service *Management) Revisions(ctx context.Context, actor access.Context, identifier id.Policy, before uint32, limit int) (spanResult0 []RevisionInfo, spanResult1 bool, spanResult2 uint32, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "policy.Management.Revisions")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if _, err := service.Get(ctx, actor, identifier); err != nil {
 		return nil, false, 0, err
 	}
@@ -378,7 +403,10 @@ func (service *Management) Revisions(ctx context.Context, actor access.Context, 
 }
 
 // Activations returns immutable active-pointer switches, newest first.
-func (service *Management) Activations(ctx context.Context, actor access.Context, identifier id.Policy, before int64, limit int) ([]ActivationInfo, bool, int64, error) {
+func (service *Management) Activations(ctx context.Context, actor access.Context, identifier id.Policy, before int64, limit int) (spanResult0 []ActivationInfo, spanResult1 bool, spanResult2 int64, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "policy.Management.Activations")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if _, err := service.Get(ctx, actor, identifier); err != nil {
 		return nil, false, 0, err
 	}
@@ -401,4 +429,19 @@ func revisionInfo(revision Revision) RevisionInfo {
 }
 func metadataInfo(reference Reference, evaluator EvaluatorReference, at time.Time) RevisionInfo {
 	return RevisionInfo{reference.ID.String(), reference.Revision, reference.SchemaMajor, reference.SchemaMinor, reference.Digest, evaluator.Major, evaluator.Minor, evaluator.Digest, at}
+}
+
+// WithTracer injects operation tracing during composition, before concurrent use.
+func (service *Management) WithTracer(tracer observability.Tracer) *Management {
+	if service != nil {
+		service.tracer = tracer
+	}
+	return service
+}
+
+func (service *Management) operationTracer() observability.Tracer {
+	if service == nil {
+		return nil
+	}
+	return service.tracer
 }

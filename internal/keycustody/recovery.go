@@ -1,6 +1,8 @@
 package keycustody
 
 import (
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
+
 	"context"
 	"errors"
 	"time"
@@ -110,6 +112,8 @@ type EpochAuthorizer interface {
 
 // RecoveryService enforces the dual-control ceremony state machine.
 type RecoveryService struct {
+	tracer observability.Tracer
+
 	repository  RecoveryRepository
 	rewrapper   TenantClassRewrapper
 	epochs      EpochAuthorizer
@@ -134,7 +138,10 @@ func NewRecoveryService(
 }
 
 // Execute applies one ceremony transition for the authenticated operator.
-func (service *RecoveryService) Execute(ctx context.Context, auth access.Context, command RecoveryCommand) (RecoveryResult, error) {
+func (service *RecoveryService) Execute(ctx context.Context, auth access.Context, command RecoveryCommand) (spanResult0 RecoveryResult, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "keycustody.RecoveryService.Execute")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if ctx == nil || auth.TenantScope().ID().IsZero() {
 		return RecoveryResult{}, ErrInvalid
 	}
@@ -147,7 +154,10 @@ func (service *RecoveryService) Execute(ctx context.Context, auth access.Context
 
 // ExecuteDirect applies one ceremony transition for an already-authenticated
 // operator actor. The operator CLI uses it directly.
-func (service *RecoveryService) ExecuteDirect(ctx context.Context, actor id.APIKey, command RecoveryCommand) (RecoveryResult, error) {
+func (service *RecoveryService) ExecuteDirect(ctx context.Context, actor id.APIKey, command RecoveryCommand) (spanResult0 RecoveryResult, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "keycustody.RecoveryService.ExecuteDirect")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if service == nil || ctx == nil || actor.IsZero() || validateReason(command.Reason) != nil {
 		return RecoveryResult{}, ErrInvalid
 	}
@@ -167,7 +177,10 @@ func (service *RecoveryService) ExecuteDirect(ctx context.Context, actor id.APIK
 }
 
 // Read returns one ceremony by identifier.
-func (service *RecoveryService) Read(ctx context.Context, auth access.Context, identifier string) (RecoveryResult, error) {
+func (service *RecoveryService) Read(ctx context.Context, auth access.Context, identifier string) (spanResult0 RecoveryResult, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "keycustody.RecoveryService.Read")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if service == nil || ctx == nil || identifier == "" {
 		return RecoveryResult{}, ErrInvalid
 	}
@@ -180,7 +193,10 @@ func (service *RecoveryService) Read(ctx context.Context, auth access.Context, i
 
 // ReadDirect returns one ceremony to an already-authenticated operator CLI
 // actor. HTTP callers use Read so the permission is always checked.
-func (service *RecoveryService) ReadDirect(ctx context.Context, identifier string) (RecoveryResult, error) {
+func (service *RecoveryService) ReadDirect(ctx context.Context, identifier string) (spanResult0 RecoveryResult, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "keycustody.RecoveryService.ReadDirect")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if service == nil || ctx == nil || identifier == "" {
 		return RecoveryResult{}, ErrInvalid
 	}
@@ -364,4 +380,19 @@ func validRecoveryClass(value string) bool {
 	}
 
 	return value[0] >= 'a' && value[0] <= 'z'
+}
+
+// WithTracer injects operation tracing during composition, before concurrent use.
+func (service *RecoveryService) WithTracer(tracer observability.Tracer) *RecoveryService {
+	if service != nil {
+		service.tracer = tracer
+	}
+	return service
+}
+
+func (service *RecoveryService) operationTracer() observability.Tracer {
+	if service == nil {
+		return nil
+	}
+	return service.tracer
 }

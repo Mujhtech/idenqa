@@ -7,6 +7,8 @@
 package keyrewrap
 
 import (
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
+
 	"context"
 	"crypto/sha256"
 	"crypto/subtle"
@@ -252,6 +254,8 @@ type Repository interface {
 
 // Service orchestrates bounded sweeps over composed class adapters.
 type Service struct {
+	tracer observability.Tracer
+
 	repository Repository
 	tenants    TenantSource
 	adapters   map[Class]Adapter
@@ -329,7 +333,10 @@ func EpochFromRecord(record kms.WrappedKeyRecord) (Epoch, error) {
 }
 
 // Statuses returns every durable class sweep state in fixed class order.
-func (service *Service) Statuses(ctx context.Context) ([]State, error) {
+func (service *Service) Statuses(ctx context.Context) (spanResult0 []State, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "keyrewrap.Service.Statuses")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if service == nil || ctx == nil {
 		return nil, ErrInvalid
 	}
@@ -340,7 +347,10 @@ func (service *Service) Statuses(ctx context.Context) ([]State, error) {
 // SweepClass processes at most one bounded batch for one class. ErrConflict
 // signals that another worker advanced the durable state first; callers retry
 // on the next tick.
-func (service *Service) SweepClass(ctx context.Context, class Class, batchSize int) (Result, error) {
+func (service *Service) SweepClass(ctx context.Context, class Class, batchSize int) (spanResult0 Result, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "keyrewrap.Service.SweepClass")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if service == nil || ctx == nil || batchSize < MinimumBatch || batchSize > MaximumBatch {
 		return Result{}, ErrInvalid
 	}
@@ -398,7 +408,10 @@ func (service *Service) SweepClass(ctx context.Context, class Class, batchSize i
 
 // SweepAll processes one bounded batch per class in fixed class order. A class
 // failure is reported but does not stop the remaining classes.
-func (service *Service) SweepAll(ctx context.Context, batchSize int) ([]Result, error) {
+func (service *Service) SweepAll(ctx context.Context, batchSize int) (spanResult0 []Result, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "keyrewrap.Service.SweepAll")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if service == nil || ctx == nil || batchSize < MinimumBatch || batchSize > MaximumBatch {
 		return nil, ErrInvalid
 	}
@@ -576,7 +589,10 @@ func SameIdentity(first, second kms.WrappedKeyRecord) bool {
 
 // RewrapTenantClass rewraps up to limit stale objects of one class for one
 // tenant. It is the bounded executor consumed by a recovery ceremony.
-func (service *Service) RewrapTenantClass(ctx context.Context, class string, tenantID id.Tenant, limit int) (int, error) {
+func (service *Service) RewrapTenantClass(ctx context.Context, class string, tenantID id.Tenant, limit int) (spanResult0 int, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "keyrewrap.Service.RewrapTenantClass")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if service == nil || ctx == nil || tenantID.IsZero() || limit < 1 || limit > 100000 {
 		return 0, ErrInvalid
 	}
@@ -620,7 +636,10 @@ func (service *Service) RewrapTenantClass(ctx context.Context, class string, ten
 
 // AuthorizeEpoch verifies the requested wrapping identity against the active
 // provider material and begins a new sweep generation for the class.
-func (service *Service) AuthorizeEpoch(ctx context.Context, class, provider, reference, version, algorithm string) (int64, error) {
+func (service *Service) AuthorizeEpoch(ctx context.Context, class, provider, reference, version, algorithm string) (spanResult0 int64, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "keyrewrap.Service.AuthorizeEpoch")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if service == nil || ctx == nil {
 		return 0, ErrInvalid
 	}
@@ -646,4 +665,19 @@ func (service *Service) AuthorizeEpoch(ctx context.Context, class, provider, ref
 	}
 
 	return state.Generation, nil
+}
+
+// WithTracer injects operation tracing during composition, before concurrent use.
+func (service *Service) WithTracer(tracer observability.Tracer) *Service {
+	if service != nil {
+		service.tracer = tracer
+	}
+	return service
+}
+
+func (service *Service) operationTracer() observability.Tracer {
+	if service == nil {
+		return nil
+	}
+	return service.tracer
 }

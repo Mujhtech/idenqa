@@ -1,6 +1,8 @@
 package policy
 
 import (
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
+
 	"context"
 	"time"
 
@@ -56,6 +58,8 @@ type AssuranceRepository interface {
 
 // AssuranceManagement enforces policy permissions in the application boundary.
 type AssuranceManagement struct {
+	tracer observability.Tracer
+
 	repository AssuranceRepository
 	now        func() time.Time
 }
@@ -65,9 +69,12 @@ func NewAssuranceManagement(r AssuranceRepository, now func() time.Time) (*Assur
 	if r == nil || now == nil {
 		return nil, ErrInvalid
 	}
-	return &AssuranceManagement{r, now}, nil
+	return &AssuranceManagement{repository: r, now: now}, nil
 }
-func (s *AssuranceManagement) Write(ctx context.Context, a access.Context, key string, c AssuranceCommand) (AssuranceResource, error) {
+func (s *AssuranceManagement) Write(ctx context.Context, a access.Context, key string, c AssuranceCommand) (spanResult0 AssuranceResource, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, s.operationTracer(), "policy.AssuranceManagement.Write")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	permission := access.PermissionPoliciesWrite
 	if c.Operation == "assign" {
 		permission = access.PermissionPoliciesActivate
@@ -103,7 +110,10 @@ func (s *AssuranceManagement) Write(ctx context.Context, a access.Context, key s
 	c.At = s.now().UTC().Truncate(time.Microsecond)
 	return s.repository.WriteAssurance(ctx, a.TenantScope(), c)
 }
-func (s *AssuranceManagement) Read(ctx context.Context, a access.Context, q AssuranceQuery) (AssuranceResource, error) {
+func (s *AssuranceManagement) Read(ctx context.Context, a access.Context, q AssuranceQuery) (spanResult0 AssuranceResource, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, s.operationTracer(), "policy.AssuranceManagement.Read")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if e := a.Require(access.PermissionPoliciesRead); e != nil {
 		return AssuranceResource{}, e
 	}
@@ -139,7 +149,10 @@ func (s *AssuranceManagement) Read(ctx context.Context, a access.Context, q Assu
 }
 
 // Validate checks a profile without publishing or selecting it.
-func (s *AssuranceManagement) Validate(ctx context.Context, a access.Context, p AssuranceProfile) (AssuranceResource, error) {
+func (s *AssuranceManagement) Validate(ctx context.Context, a access.Context, p AssuranceProfile) (spanResult0 AssuranceResource, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, s.operationTracer(), "policy.AssuranceManagement.Validate")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if e := a.Require(access.PermissionPoliciesWrite); e != nil {
 		return AssuranceResource{}, e
 	}
@@ -154,7 +167,10 @@ func (s *AssuranceManagement) Validate(ctx context.Context, a access.Context, p 
 }
 
 // Capabilities exposes platform semantics and owned core derivation identifiers.
-func (s *AssuranceManagement) Capabilities(ctx context.Context, a access.Context) ([]AssuranceCapability, error) {
+func (s *AssuranceManagement) Capabilities(ctx context.Context, a access.Context) (spanResult0 []AssuranceCapability, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, s.operationTracer(), "policy.AssuranceManagement.Capabilities")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if e := a.Require(access.PermissionPoliciesRead); e != nil {
 		return nil, e
 	}
@@ -162,4 +178,19 @@ func (s *AssuranceManagement) Capabilities(ctx context.Context, a access.Context
 		return nil, e
 	}
 	return AssuranceCapabilities(), nil
+}
+
+// WithTracer injects operation tracing during composition, before concurrent use.
+func (s *AssuranceManagement) WithTracer(tracer observability.Tracer) *AssuranceManagement {
+	if s != nil {
+		s.tracer = tracer
+	}
+	return s
+}
+
+func (s *AssuranceManagement) operationTracer() observability.Tracer {
+	if s == nil {
+		return nil
+	}
+	return s.tracer
 }

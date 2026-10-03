@@ -1,6 +1,8 @@
 package keycustody
 
 import (
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
+
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -152,6 +154,8 @@ type DestructionRepository interface {
 // DestructionService verifies reference freedom before any provider-side
 // destruction is scheduled.
 type DestructionService struct {
+	tracer observability.Tracer
+
 	scanner     ReferenceScanner
 	repository  DestructionRepository
 	scheduler   DestructionScheduler
@@ -178,7 +182,10 @@ func NewDestructionService(
 // Verify scans every reference class and records an immutable receipt. It
 // fails closed with ErrDestructionBlocked while any reference remains; the
 // blocked receipt is still recorded so the refusal is auditable.
-func (service *DestructionService) Verify(ctx context.Context, actor id.APIKey, target DestructionTarget, reason string) (VerificationReceipt, error) {
+func (service *DestructionService) Verify(ctx context.Context, actor id.APIKey, target DestructionTarget, reason string) (spanResult0 VerificationReceipt, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "keycustody.DestructionService.Verify")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if ctx == nil || actor.IsZero() || !target.Valid() {
 		return VerificationReceipt{}, ErrInvalid
 	}
@@ -229,7 +236,10 @@ func (service *DestructionService) Verify(ctx context.Context, actor id.APIKey, 
 // Authorize checks a receipt from the Authorized method. It returns the
 // receipt and ErrDestructionUnverified when the receipt is blocked, unknown,
 // or stale.
-func (service *DestructionService) Authorize(ctx context.Context, receiptID string) (VerificationReceipt, error) {
+func (service *DestructionService) Authorize(ctx context.Context, receiptID string) (spanResult0 VerificationReceipt, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "keycustody.DestructionService.Authorize")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if service == nil || ctx == nil || receiptID == "" {
 		return VerificationReceipt{}, ErrInvalid
 	}
@@ -247,7 +257,10 @@ func (service *DestructionService) Authorize(ctx context.Context, receiptID stri
 // ReceiptDirect returns one recorded receipt, including blocked refusals, to
 // an already-authenticated operator. HTTP reads use it so a refusal can always
 // be inspected.
-func (service *DestructionService) ReceiptDirect(ctx context.Context, identifier string) (VerificationReceipt, error) {
+func (service *DestructionService) ReceiptDirect(ctx context.Context, identifier string) (spanResult0 VerificationReceipt, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "keycustody.DestructionService.ReceiptDirect")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if service == nil || ctx == nil || identifier == "" {
 		return VerificationReceipt{}, ErrInvalid
 	}
@@ -258,7 +271,10 @@ func (service *DestructionService) ReceiptDirect(ctx context.Context, identifier
 // Schedule records, and when a provider scheduler is configured also
 // schedules, destruction for one exact verified receipt. recordOnly forces
 // the recorded mode even when a scheduler exists.
-func (service *DestructionService) Schedule(ctx context.Context, actor id.APIKey, receiptID string, pendingWindow time.Duration, recordOnly bool, reason string) (DestructionSchedule, error) {
+func (service *DestructionService) Schedule(ctx context.Context, actor id.APIKey, receiptID string, pendingWindow time.Duration, recordOnly bool, reason string) (spanResult0 DestructionSchedule, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "keycustody.DestructionService.Schedule")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if ctx == nil || actor.IsZero() {
 		return DestructionSchedule{}, ErrInvalid
 	}
@@ -298,7 +314,10 @@ func (service *DestructionService) Schedule(ctx context.Context, actor id.APIKey
 }
 
 // ExecuteAuthorized enforces kms:write before running one destruction action.
-func (service *DestructionService) ExecuteAuthorized(ctx context.Context, auth access.Context, command string, target DestructionTarget, receiptID string, pendingWindow time.Duration, recordOnly bool, reason string) (any, error) {
+func (service *DestructionService) ExecuteAuthorized(ctx context.Context, auth access.Context, command string, target DestructionTarget, receiptID string, pendingWindow time.Duration, recordOnly bool, reason string) (spanResult0 any, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "keycustody.DestructionService.ExecuteAuthorized")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if auth.TenantScope().ID().IsZero() {
 		return nil, ErrInvalid
 	}
@@ -347,4 +366,19 @@ func validateReason(reason string) error {
 	}
 
 	return nil
+}
+
+// WithTracer injects operation tracing during composition, before concurrent use.
+func (service *DestructionService) WithTracer(tracer observability.Tracer) *DestructionService {
+	if service != nil {
+		service.tracer = tracer
+	}
+	return service
+}
+
+func (service *DestructionService) operationTracer() observability.Tracer {
+	if service == nil {
+		return nil
+	}
+	return service.tracer
 }

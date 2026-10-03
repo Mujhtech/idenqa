@@ -1,6 +1,8 @@
 package realtime
 
 import (
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
+
 	"context"
 	"errors"
 	"fmt"
@@ -53,6 +55,8 @@ type Redemption struct {
 
 // Service issues and redeems single-use connection tickets.
 type Service struct {
+	tracer observability.Tracer
+
 	repository  TicketRepository
 	identifiers TicketIDGenerator
 	generator   *TicketGenerator
@@ -76,7 +80,10 @@ func NewService(
 }
 
 // Issue creates one display-once ticket within the authenticated session lifetime.
-func (service *Service) Issue(ctx context.Context, input IssueInput) (IssuedTicket, error) {
+func (service *Service) Issue(ctx context.Context, input IssueInput) (spanResult0 IssuedTicket, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "realtime.Service.Issue")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if service == nil || input.Scope.ID().IsZero() || input.VerificationID.IsZero() ||
 		input.CaptureTokenID.IsZero() || input.Binding.IsZero() || !validRegion(input.Region) {
 		return IssuedTicket{}, ErrTicketUnavailable
@@ -121,7 +128,10 @@ func (service *Service) Redeem(
 	binding ClientBinding,
 	region string,
 	protocol string,
-) (Ticket, error) {
+) (spanResult0 Ticket, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "realtime.Service.Redeem")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if service == nil || binding.IsZero() || !validRegion(region) || protocol != SubprotocolV1 {
 		return Ticket{}, ErrInvalidTicket
 	}
@@ -150,4 +160,19 @@ func (service *Service) Redeem(
 	}
 
 	return record, nil
+}
+
+// WithTracer injects operation tracing during composition, before concurrent use.
+func (service *Service) WithTracer(tracer observability.Tracer) *Service {
+	if service != nil {
+		service.tracer = tracer
+	}
+	return service
+}
+
+func (service *Service) operationTracer() observability.Tracer {
+	if service == nil {
+		return nil
+	}
+	return service.tracer
 }

@@ -1,6 +1,8 @@
 package identity
 
 import (
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
+
 	"context"
 	"time"
 
@@ -73,6 +75,8 @@ type Repository interface {
 
 // Service requires exact application permissions, including on direct calls.
 type Service struct {
+	tracer observability.Tracer
+
 	repository Repository
 	now        func() time.Time
 	region     string
@@ -83,11 +87,14 @@ func NewService(r Repository, now func() time.Time, region string) (*Service, er
 	if r == nil || now == nil || !validRegion(region) {
 		return nil, ErrInvalid
 	}
-	return &Service{r, now, region}, nil
+	return &Service{repository: r, now: now, region: region}, nil
 }
 
 // Execute checks command meaning and preserves opaque tenant scope from authentication.
-func (s *Service) Execute(ctx context.Context, auth access.Context, key string, c Command) (Result, error) {
+func (s *Service) Execute(ctx context.Context, auth access.Context, key string, c Command) (spanResult0 Result, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, s.operationTracer(), "identity.Service.Execute")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	permission := access.PermissionSubjectsWrite
 	switch c.Operation {
 	case "create", "update", "link", "rebuild":
@@ -151,7 +158,10 @@ func (s *Service) Execute(ctx context.Context, auth access.Context, key string, 
 }
 
 // Read applies tenant read/reveal permissions independently of transport middleware.
-func (s *Service) Read(ctx context.Context, auth access.Context, q Query) (Result, error) {
+func (s *Service) Read(ctx context.Context, auth access.Context, q Query) (spanResult0 Result, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, s.operationTracer(), "identity.Service.Read")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	permission := access.PermissionIdentityRead
 	switch q.Kind {
 	case "subject", "subjects", "verifications", "external_lookup":
@@ -214,4 +224,19 @@ func (s *Service) Read(ctx context.Context, auth access.Context, q Query) (Resul
 	q.Region = s.region
 	q.Actor = auth.Principal().KeyID()
 	return s.repository.Read(ctx, auth.TenantScope(), q)
+}
+
+// WithTracer injects operation tracing during composition, before concurrent use.
+func (s *Service) WithTracer(tracer observability.Tracer) *Service {
+	if s != nil {
+		s.tracer = tracer
+	}
+	return s
+}
+
+func (s *Service) operationTracer() observability.Tracer {
+	if s == nil {
+		return nil
+	}
+	return s.tracer
 }

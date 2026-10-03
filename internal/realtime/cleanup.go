@@ -1,6 +1,8 @@
 package realtime
 
 import (
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
+
 	"context"
 	"errors"
 	"fmt"
@@ -20,6 +22,8 @@ type TicketCleanupRepository interface {
 // CleanupService exposes bounded ticket cleanup for the owned task boundary.
 // Scheduling remains outside this package and may be supplied by Headgate.
 type CleanupService struct {
+	tracer observability.Tracer
+
 	repository TicketCleanupRepository
 	clock      clock.Clock
 }
@@ -38,7 +42,10 @@ func (service *CleanupService) CleanupExpired(
 	ctx context.Context,
 	scope tenant.Scope,
 	batchSize int32,
-) (int, error) {
+) (spanResult0 int, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "realtime.CleanupService.CleanupExpired")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if service == nil || service.repository == nil || service.clock == nil || scope.ID().IsZero() ||
 		batchSize < 1 || batchSize > maximumTicketCleanupBatch {
 		return 0, errors.New("realtime: cleanup scope and batch size are invalid")
@@ -54,4 +61,19 @@ func (service *CleanupService) CleanupExpired(
 	}
 
 	return deleted, nil
+}
+
+// WithTracer injects operation tracing during composition, before concurrent use.
+func (service *CleanupService) WithTracer(tracer observability.Tracer) *CleanupService {
+	if service != nil {
+		service.tracer = tracer
+	}
+	return service
+}
+
+func (service *CleanupService) operationTracer() observability.Tracer {
+	if service == nil {
+		return nil
+	}
+	return service.tracer
 }

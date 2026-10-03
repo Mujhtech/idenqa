@@ -151,6 +151,8 @@ type SubjectAuthority struct {
 
 // RequestService owns the data-subject privacy-request workflow.
 type RequestService struct {
+	tracer observability.Tracer
+
 	requests     RequestRepository
 	restrictions RestrictionRepository
 	disclosures  DisclosureRepository
@@ -182,7 +184,10 @@ func (service *RequestService) WithMetrics(metrics RequestMetrics) *RequestServi
 }
 
 // Create creates one tenant-channel request. The tenant is the controller.
-func (service *RequestService) Create(ctx context.Context, scope tenant.Scope, actor Actor, input CreateRequestInput) (Request, error) {
+func (service *RequestService) Create(ctx context.Context, scope tenant.Scope, actor Actor, input CreateRequestInput) (spanResult0 Request, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "privacy.RequestService.Create")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if !actor.permits(PermissionWritePrivacyRequests) {
 		return Request{}, ErrConflict
 	}
@@ -191,7 +196,10 @@ func (service *RequestService) Create(ctx context.Context, scope tenant.Scope, a
 
 // CreateSubject creates one subject-channel request from a closed outcome
 // credential. The tenant remains the controller and decides the outcome.
-func (service *RequestService) CreateSubject(ctx context.Context, authority SubjectAuthority, input CreateRequestInput) (SubjectRequest, error) {
+func (service *RequestService) CreateSubject(ctx context.Context, authority SubjectAuthority, input CreateRequestInput) (spanResult0 SubjectRequest, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "privacy.RequestService.CreateSubject")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if authority.Scope.ID().IsZero() || authority.VerificationID.IsZero() {
 		return SubjectRequest{}, ErrConflict
 	}
@@ -250,7 +258,10 @@ func (service *RequestService) expiry(requested *time.Time) (time.Time, error) {
 }
 
 // BeginReview records the requested -> in_review transition.
-func (service *RequestService) BeginReview(ctx context.Context, scope tenant.Scope, actor Actor, identifier id.PrivacyRequest) (Request, error) {
+func (service *RequestService) BeginReview(ctx context.Context, scope tenant.Scope, actor Actor, identifier id.PrivacyRequest) (spanResult0 Request, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "privacy.RequestService.BeginReview")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if !actor.permits(PermissionWritePrivacyRequests) || identifier.IsZero() {
 		return Request{}, ErrConflict
 	}
@@ -274,7 +285,10 @@ func (service *RequestService) BeginReview(ctx context.Context, scope tenant.Sco
 
 // Decide records one approve, partially-approve, or deny outcome. Replay of
 // the same decision is idempotent regardless of the expected version.
-func (service *RequestService) Decide(ctx context.Context, scope tenant.Scope, actor Actor, identifier id.PrivacyRequest, outcome DecisionOutcome, reason ReasonCode, expectedVersion int64) (Request, error) {
+func (service *RequestService) Decide(ctx context.Context, scope tenant.Scope, actor Actor, identifier id.PrivacyRequest, outcome DecisionOutcome, reason ReasonCode, expectedVersion int64) (spanResult0 Request, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "privacy.RequestService.Decide")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if !actor.permits(PermissionApprovePrivacyRequests) || identifier.IsZero() || !outcome.Valid() || expectedVersion < 1 {
 		return Request{}, ErrConflict
 	}
@@ -327,7 +341,10 @@ func (service *RequestService) Decide(ctx context.Context, scope tenant.Scope, a
 }
 
 // Withdraw ends an undecided request at tenant request.
-func (service *RequestService) Withdraw(ctx context.Context, scope tenant.Scope, actor Actor, identifier id.PrivacyRequest, expectedVersion int64) (Request, error) {
+func (service *RequestService) Withdraw(ctx context.Context, scope tenant.Scope, actor Actor, identifier id.PrivacyRequest, expectedVersion int64) (spanResult0 Request, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "privacy.RequestService.Withdraw")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if !actor.permits(PermissionWritePrivacyRequests) || identifier.IsZero() || expectedVersion < 1 {
 		return Request{}, ErrConflict
 	}
@@ -356,7 +373,10 @@ func (service *RequestService) Withdraw(ctx context.Context, scope tenant.Scope,
 
 // Execute runs the approved effect through the existing owning mechanism.
 // Completed requests are returned unchanged, so replay adds nothing.
-func (service *RequestService) Execute(ctx context.Context, scope tenant.Scope, actor Actor, identifier id.PrivacyRequest, expectedVersion int64) (Request, error) {
+func (service *RequestService) Execute(ctx context.Context, scope tenant.Scope, actor Actor, identifier id.PrivacyRequest, expectedVersion int64) (spanResult0 Request, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "privacy.RequestService.Execute")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if !actor.permits(PermissionApprovePrivacyRequests) || identifier.IsZero() || expectedVersion < 1 {
 		return Request{}, ErrConflict
 	}
@@ -456,7 +476,10 @@ func (service *RequestService) executeEffect(ctx context.Context, scope tenant.S
 }
 
 // ExpireDue expires a bounded batch of undecided requests at their boundary.
-func (service *RequestService) ExpireDue(ctx context.Context, scope tenant.Scope, actor Actor, limit int) ([]Request, error) {
+func (service *RequestService) ExpireDue(ctx context.Context, scope tenant.Scope, actor Actor, limit int) (spanResult0 []Request, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "privacy.RequestService.ExpireDue")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if !actor.permits(PermissionWritePrivacyRequests) || limit < 1 || limit > 1000 {
 		return nil, ErrConflict
 	}
@@ -486,7 +509,10 @@ func (service *RequestService) ExpireDue(ctx context.Context, scope tenant.Scope
 }
 
 // Find returns one tenant-scoped request.
-func (service *RequestService) Find(ctx context.Context, scope tenant.Scope, actor Actor, identifier id.PrivacyRequest) (Request, error) {
+func (service *RequestService) Find(ctx context.Context, scope tenant.Scope, actor Actor, identifier id.PrivacyRequest) (spanResult0 Request, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "privacy.RequestService.Find")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if !actor.permits(PermissionReadPrivacyRequests) || identifier.IsZero() {
 		return Request{}, ErrConflict
 	}
@@ -494,7 +520,10 @@ func (service *RequestService) Find(ctx context.Context, scope tenant.Scope, act
 }
 
 // List returns one bounded tenant-scoped page.
-func (service *RequestService) List(ctx context.Context, scope tenant.Scope, actor Actor, filter RequestFilter, position string, limit int) (RequestPage, error) {
+func (service *RequestService) List(ctx context.Context, scope tenant.Scope, actor Actor, filter RequestFilter, position string, limit int) (spanResult0 RequestPage, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "privacy.RequestService.List")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if !actor.permits(PermissionReadPrivacyRequests) || limit < 1 || limit > 100 ||
 		(filter.SubjectID != "" && !token(filter.SubjectID, 200)) || (position != "" && !token(position, 64)) {
 		return RequestPage{}, ErrConflict
@@ -522,7 +551,10 @@ func (service *RequestService) List(ctx context.Context, scope tenant.Scope, act
 
 // SubjectList returns the closed subject-safe projection of requests created
 // through one outcome credential's verification.
-func (service *RequestService) SubjectList(ctx context.Context, authority SubjectAuthority, position string, limit int) (SubjectRequestPage, error) {
+func (service *RequestService) SubjectList(ctx context.Context, authority SubjectAuthority, position string, limit int) (spanResult0 SubjectRequestPage, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "privacy.RequestService.SubjectList")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if authority.Scope.ID().IsZero() || authority.VerificationID.IsZero() || limit < 1 || limit > 100 ||
 		(position != "" && !token(position, 64)) {
 		return SubjectRequestPage{}, ErrConflict
@@ -547,7 +579,10 @@ func (service *RequestService) SubjectList(ctx context.Context, authority Subjec
 }
 
 // Restrictions lists bounded restrictions, optionally for one exact subject.
-func (service *RequestService) Restrictions(ctx context.Context, scope tenant.Scope, actor Actor, subjectID, position string, limit int) ([]Restriction, error) {
+func (service *RequestService) Restrictions(ctx context.Context, scope tenant.Scope, actor Actor, subjectID, position string, limit int) (spanResult0 []Restriction, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "privacy.RequestService.Restrictions")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if !actor.permits(PermissionReadPrivacyRequests) || limit < 1 || limit > 100 ||
 		(subjectID != "" && !token(subjectID, 200)) || (position != "" && !token(position, 64)) {
 		return nil, ErrConflict
@@ -556,7 +591,10 @@ func (service *RequestService) Restrictions(ctx context.Context, scope tenant.Sc
 }
 
 // LiftRestriction ends an active restriction and audits the reason.
-func (service *RequestService) LiftRestriction(ctx context.Context, scope tenant.Scope, actor Actor, identifier id.PrivacyRestriction, reason RestrictionReason, expectedVersion int64) (Restriction, error) {
+func (service *RequestService) LiftRestriction(ctx context.Context, scope tenant.Scope, actor Actor, identifier id.PrivacyRestriction, reason RestrictionReason, expectedVersion int64) (spanResult0 Restriction, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "privacy.RequestService.LiftRestriction")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if !actor.permits(PermissionApprovePrivacyRequests) || identifier.IsZero() || expectedVersion < 1 {
 		return Restriction{}, ErrConflict
 	}
@@ -586,7 +624,10 @@ func (service *RequestService) LiftRestriction(ctx context.Context, scope tenant
 }
 
 // Blocked reports whether a subject-scoped restriction blocks new processing.
-func (service *RequestService) Blocked(ctx context.Context, scope tenant.Scope, subjectID string) (bool, error) {
+func (service *RequestService) Blocked(ctx context.Context, scope tenant.Scope, subjectID string) (spanResult0 bool, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "privacy.RequestService.Blocked")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if scope.ID().IsZero() || !token(subjectID, 200) {
 		return false, ErrInvalid
 	}
@@ -603,7 +644,10 @@ func (service *RequestService) Blocked(ctx context.Context, scope tenant.Scope, 
 }
 
 // CreateDisclosure records one immutable disclosure.
-func (service *RequestService) CreateDisclosure(ctx context.Context, scope tenant.Scope, actor Actor, requestID id.PrivacyRequest, recipient, purpose string, class DisclosureClass, legalBasis, region, reference string) (Disclosure, error) {
+func (service *RequestService) CreateDisclosure(ctx context.Context, scope tenant.Scope, actor Actor, requestID id.PrivacyRequest, recipient, purpose string, class DisclosureClass, legalBasis, region, reference string) (spanResult0 Disclosure, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "privacy.RequestService.CreateDisclosure")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if !actor.permits(PermissionWritePrivacyRequests) || requestID.IsZero() {
 		return Disclosure{}, ErrConflict
 	}
@@ -622,7 +666,10 @@ func (service *RequestService) CreateDisclosure(ctx context.Context, scope tenan
 }
 
 // ListDisclosures returns a bounded page for one request or the whole tenant.
-func (service *RequestService) ListDisclosures(ctx context.Context, scope tenant.Scope, actor Actor, requestID id.PrivacyRequest, position string, limit int) ([]Disclosure, error) {
+func (service *RequestService) ListDisclosures(ctx context.Context, scope tenant.Scope, actor Actor, requestID id.PrivacyRequest, position string, limit int) (spanResult0 []Disclosure, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "privacy.RequestService.ListDisclosures")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if !actor.permits(PermissionReadPrivacyRequests) || limit < 1 || limit > 100 || (position != "" && !token(position, 64)) {
 		return nil, ErrConflict
 	}
@@ -631,7 +678,10 @@ func (service *RequestService) ListDisclosures(ctx context.Context, scope tenant
 
 // PutProcessor creates or updates one versioned processor-inventory entry.
 // Version zero creates; a positive version updates with expected-version.
-func (service *RequestService) PutProcessor(ctx context.Context, scope tenant.Scope, actor Actor, identifier id.Processor, expectedVersion int64, name string, role ProcessorRole, purpose string, dataClasses []DataClass, regions []string, transferMechanism string) (Processor, error) {
+func (service *RequestService) PutProcessor(ctx context.Context, scope tenant.Scope, actor Actor, identifier id.Processor, expectedVersion int64, name string, role ProcessorRole, purpose string, dataClasses []DataClass, regions []string, transferMechanism string) (spanResult0 Processor, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "privacy.RequestService.PutProcessor")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if !actor.permits(PermissionWritePrivacyRequests) || expectedVersion < 0 {
 		return Processor{}, ErrConflict
 	}
@@ -671,7 +721,10 @@ func (service *RequestService) PutProcessor(ctx context.Context, scope tenant.Sc
 }
 
 // ListProcessors returns a bounded inventory page.
-func (service *RequestService) ListProcessors(ctx context.Context, scope tenant.Scope, actor Actor, position string, limit int) ([]Processor, error) {
+func (service *RequestService) ListProcessors(ctx context.Context, scope tenant.Scope, actor Actor, position string, limit int) (spanResult0 []Processor, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "privacy.RequestService.ListProcessors")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if !actor.permits(PermissionReadPrivacyRequests) || limit < 1 || limit > 100 || (position != "" && !token(position, 64)) {
 		return nil, ErrConflict
 	}
@@ -679,7 +732,10 @@ func (service *RequestService) ListProcessors(ctx context.Context, scope tenant.
 }
 
 // FindProcessor returns one inventory entry.
-func (service *RequestService) FindProcessor(ctx context.Context, scope tenant.Scope, actor Actor, identifier id.Processor) (Processor, error) {
+func (service *RequestService) FindProcessor(ctx context.Context, scope tenant.Scope, actor Actor, identifier id.Processor) (spanResult0 Processor, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "privacy.RequestService.FindProcessor")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if !actor.permits(PermissionReadPrivacyRequests) || identifier.IsZero() {
 		return Processor{}, ErrConflict
 	}
@@ -714,4 +770,19 @@ func classifyRequestFailure(err error) string {
 		return "effect_unavailable"
 	}
 	return "effect_failed"
+}
+
+// WithTracer injects operation tracing during composition, before concurrent use.
+func (service *RequestService) WithTracer(tracer observability.Tracer) *RequestService {
+	if service != nil {
+		service.tracer = tracer
+	}
+	return service
+}
+
+func (service *RequestService) operationTracer() observability.Tracer {
+	if service == nil {
+		return nil
+	}
+	return service.tracer
 }

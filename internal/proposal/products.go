@@ -1,6 +1,8 @@
 package proposal
 
 import (
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
+
 	"context"
 	"strings"
 	"time"
@@ -24,7 +26,10 @@ type PolicyDraftRequest struct {
 // GeneratePolicyDraft creates a model-driven proposal for a natural-language
 // policy draft. The draft remains inactive until simulation/adversarial gates
 // pass; the proposal requires human approval.
-func (service *Service) GeneratePolicyDraft(ctx context.Context, scope tenant.Scope, request PolicyDraftRequest) (Proposal, error) {
+func (service *Service) GeneratePolicyDraft(ctx context.Context, scope tenant.Scope, request PolicyDraftRequest) (spanResult0 Proposal, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.tracer, "proposal.Service.GeneratePolicyDraft")
+	defer func() { completeSpan(spanErr) }()
+
 	if request.Prompt == "" || request.PolicyID.IsZero() {
 		return Proposal{}, ErrInvalid
 	}
@@ -47,7 +52,10 @@ func (service *Service) GeneratePolicyDraft(ctx context.Context, scope tenant.Sc
 }
 
 // GeneratePolicyDiff creates a model-driven proposal for a human-readable policy diff.
-func (service *Service) GeneratePolicyDiff(ctx context.Context, scope tenant.Scope, policyID id.Policy, actorID string) (Proposal, error) {
+func (service *Service) GeneratePolicyDiff(ctx context.Context, scope tenant.Scope, policyID id.Policy, actorID string) (spanResult0 Proposal, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.tracer, "proposal.Service.GeneratePolicyDiff")
+	defer func() { completeSpan(spanErr) }()
+
 	if policyID.IsZero() {
 		return Proposal{}, ErrInvalid
 	}
@@ -65,7 +73,10 @@ func (service *Service) GeneratePolicyDiff(ctx context.Context, scope tenant.Sco
 }
 
 // GenerateAdversarialScenarios creates a model-driven proposal for adversarial policy scenarios.
-func (service *Service) GenerateAdversarialScenarios(ctx context.Context, scope tenant.Scope, policyID id.Policy, actorID string) (Proposal, error) {
+func (service *Service) GenerateAdversarialScenarios(ctx context.Context, scope tenant.Scope, policyID id.Policy, actorID string) (spanResult0 Proposal, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.tracer, "proposal.Service.GenerateAdversarialScenarios")
+	defer func() { completeSpan(spanErr) }()
+
 	if policyID.IsZero() {
 		return Proposal{}, ErrInvalid
 	}
@@ -83,7 +94,10 @@ func (service *Service) GenerateAdversarialScenarios(ctx context.Context, scope 
 }
 
 // ProposeAccessibility creates a model-driven accessibility/exception-path proposal.
-func (service *Service) ProposeAccessibility(ctx context.Context, scope tenant.Scope, verificationID id.Verification, actorID string) (Proposal, error) {
+func (service *Service) ProposeAccessibility(ctx context.Context, scope tenant.Scope, verificationID id.Verification, actorID string) (spanResult0 Proposal, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.tracer, "proposal.Service.ProposeAccessibility")
+	defer func() { completeSpan(spanErr) }()
+
 	if verificationID.IsZero() {
 		return Proposal{}, ErrInvalid
 	}
@@ -101,7 +115,10 @@ func (service *Service) ProposeAccessibility(ctx context.Context, scope tenant.S
 }
 
 // ProposeExceptionPath creates a model-driven exception-path proposal.
-func (service *Service) ProposeExceptionPath(ctx context.Context, scope tenant.Scope, verificationID id.Verification, actorID string) (Proposal, error) {
+func (service *Service) ProposeExceptionPath(ctx context.Context, scope tenant.Scope, verificationID id.Verification, actorID string) (spanResult0 Proposal, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.tracer, "proposal.Service.ProposeExceptionPath")
+	defer func() { completeSpan(spanErr) }()
+
 	if verificationID.IsZero() {
 		return Proposal{}, ErrInvalid
 	}
@@ -119,7 +136,10 @@ func (service *Service) ProposeExceptionPath(ctx context.Context, scope tenant.S
 }
 
 // ProposeDocumentLayout creates a model-driven unfamiliar document layout proposal.
-func (service *Service) ProposeDocumentLayout(ctx context.Context, scope tenant.Scope, verificationID id.Verification, actorID string) (Proposal, error) {
+func (service *Service) ProposeDocumentLayout(ctx context.Context, scope tenant.Scope, verificationID id.Verification, actorID string) (spanResult0 Proposal, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.tracer, "proposal.Service.ProposeDocumentLayout")
+	defer func() { completeSpan(spanErr) }()
+
 	if verificationID.IsZero() {
 		return Proposal{}, ErrInvalid
 	}

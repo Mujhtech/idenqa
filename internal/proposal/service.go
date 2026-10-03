@@ -1,6 +1,8 @@
 package proposal
 
 import (
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
+
 	"context"
 	"encoding/json"
 	"errors"
@@ -54,6 +56,8 @@ type AuditRecorder interface {
 // Service owns proposal lifecycle, guardrail orchestration, mode configuration,
 // prompt/model registries, and deterministic accepted-command execution.
 type Service struct {
+	tracer observability.Tracer
+
 	ids       *id.Generator
 	clock     clock.Clock
 	proposals Repository
@@ -113,7 +117,10 @@ func NewService(config ServiceConfig) (*Service, error) {
 }
 
 // GetGenerationUsageReport returns bounded tenant operational accounting.
-func (service *Service) GetGenerationUsageReport(ctx context.Context, scope tenant.Scope, from, to time.Time) (GenerationUsageReport, error) {
+func (service *Service) GetGenerationUsageReport(ctx context.Context, scope tenant.Scope, from, to time.Time) (spanResult0 GenerationUsageReport, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "proposal.Service.GetGenerationUsageReport")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if service.usage == nil || scope.ID().IsZero() {
 		return GenerationUsageReport{}, ErrNotFound
 	}
@@ -121,13 +128,19 @@ func (service *Service) GetGenerationUsageReport(ctx context.Context, scope tena
 }
 
 // GetProposal retrieves a proposal with tenant scope.
-func (service *Service) GetProposal(ctx context.Context, scope tenant.Scope, proposalID id.Proposal) (Proposal, error) {
+func (service *Service) GetProposal(ctx context.Context, scope tenant.Scope, proposalID id.Proposal) (spanResult0 Proposal, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "proposal.Service.GetProposal")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	return service.proposals.Get(ctx, scope, proposalID)
 }
 
 // CreateProposal validates the request, checks mode, runs initial guardrails (without human approval),
 // and persists a pending proposal. Raw evidence bytes are never accepted — only references.
-func (service *Service) CreateProposal(ctx context.Context, scope tenant.Scope, request proposalv1.ProposalRequest, actorID string) (Proposal, error) {
+func (service *Service) CreateProposal(ctx context.Context, scope tenant.Scope, request proposalv1.ProposalRequest, actorID string) (spanResult0 Proposal, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "proposal.Service.CreateProposal")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if scope.ID().IsZero() || actorID == "" {
 		return Proposal{}, ErrInvalid
 	}
@@ -183,7 +196,10 @@ func (service *Service) CreateProposal(ctx context.Context, scope tenant.Scope, 
 // Propose invokes the configured ProposalModel to produce a bounded proposal,
 // then runs the same deterministic guardrails and persistence as CreateProposal.
 // It returns ErrNotFound when no proposal model is configured.
-func (service *Service) Propose(ctx context.Context, scope tenant.Scope, request proposalv1.ProposalRequest, actorID string) (Proposal, error) {
+func (service *Service) Propose(ctx context.Context, scope tenant.Scope, request proposalv1.ProposalRequest, actorID string) (spanResult0 Proposal, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "proposal.Service.Propose")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if scope.ID().IsZero() || actorID == "" {
 		return Proposal{}, ErrInvalid
 	}
@@ -391,7 +407,10 @@ func proposalFromAgent(agent proposalv1.AgentProposal, actorID string) (Proposal
 }
 
 // ApproveProposal runs full guardrails with human approval flag, creates an AcceptedCommand per action, and transitions to approved.
-func (service *Service) ApproveProposal(ctx context.Context, scope tenant.Scope, proposalID id.Proposal, expectedVersion int64, actorID string, humanApproved bool) (Proposal, []AcceptedCommandRecord, error) {
+func (service *Service) ApproveProposal(ctx context.Context, scope tenant.Scope, proposalID id.Proposal, expectedVersion int64, actorID string, humanApproved bool) (spanResult0 Proposal, spanResult1 []AcceptedCommandRecord, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "proposal.Service.ApproveProposal")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if scope.ID().IsZero() || proposalID.IsZero() || actorID == "" {
 		return Proposal{}, nil, ErrInvalid
 	}
@@ -475,7 +494,10 @@ func (service *Service) ApproveProposal(ctx context.Context, scope tenant.Scope,
 }
 
 // ExecuteCommand replays the stored AcceptedCommand deterministically without re-querying the model.
-func (service *Service) ExecuteCommand(ctx context.Context, scope tenant.Scope, commandID id.AcceptedCommand, executor proposalv1.CommandExecutor) error {
+func (service *Service) ExecuteCommand(ctx context.Context, scope tenant.Scope, commandID id.AcceptedCommand, executor proposalv1.CommandExecutor) (spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "proposal.Service.ExecuteCommand")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if scope.ID().IsZero() || commandID.IsZero() {
 		return ErrInvalid
 	}
@@ -517,22 +539,34 @@ func (service *Service) ExecuteCommand(ctx context.Context, scope tenant.Scope, 
 }
 
 // RejectProposal transitions a pending proposal to rejected.
-func (service *Service) RejectProposal(ctx context.Context, scope tenant.Scope, proposalID id.Proposal, expectedVersion int64, actorID string, reason string) (Proposal, error) {
+func (service *Service) RejectProposal(ctx context.Context, scope tenant.Scope, proposalID id.Proposal, expectedVersion int64, actorID string, reason string) (spanResult0 Proposal, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "proposal.Service.RejectProposal")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	return service.transition(ctx, scope, proposalID, expectedVersion, proposalv1.ProposalStatusRejected, actorID, reason)
 }
 
 // CancelProposal transitions a pending proposal to cancelled.
-func (service *Service) CancelProposal(ctx context.Context, scope tenant.Scope, proposalID id.Proposal, expectedVersion int64, actorID string) (Proposal, error) {
+func (service *Service) CancelProposal(ctx context.Context, scope tenant.Scope, proposalID id.Proposal, expectedVersion int64, actorID string) (spanResult0 Proposal, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "proposal.Service.CancelProposal")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	return service.transition(ctx, scope, proposalID, expectedVersion, proposalv1.ProposalStatusCancelled, actorID, "")
 }
 
 // ExpireProposal transitions a pending proposal to expired.
-func (service *Service) ExpireProposal(ctx context.Context, scope tenant.Scope, proposalID id.Proposal, expectedVersion int64, actorID string) (Proposal, error) {
+func (service *Service) ExpireProposal(ctx context.Context, scope tenant.Scope, proposalID id.Proposal, expectedVersion int64, actorID string) (spanResult0 Proposal, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "proposal.Service.ExpireProposal")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	return service.transition(ctx, scope, proposalID, expectedVersion, proposalv1.ProposalStatusExpired, actorID, "expired")
 }
 
 // SupersedeProposal transitions a pending proposal to superseded.
-func (service *Service) SupersedeProposal(ctx context.Context, scope tenant.Scope, proposalID id.Proposal, expectedVersion int64, actorID string) (Proposal, error) {
+func (service *Service) SupersedeProposal(ctx context.Context, scope tenant.Scope, proposalID id.Proposal, expectedVersion int64, actorID string) (spanResult0 Proposal, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "proposal.Service.SupersedeProposal")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	return service.transition(ctx, scope, proposalID, expectedVersion, proposalv1.ProposalStatusSuperseded, actorID, "superseded")
 }
 func (service *Service) transition(ctx context.Context, scope tenant.Scope, proposalID id.Proposal, expectedVersion int64, target proposalv1.ProposalStatus, actorID string, reason string) (Proposal, error) {
@@ -565,7 +599,10 @@ func (service *Service) transition(ctx context.Context, scope tenant.Scope, prop
 }
 
 // PutModeConfig stores a versioned automation-mode configuration with expectedVersion CAS.
-func (service *Service) PutModeConfig(ctx context.Context, scope tenant.Scope, workflow string, mode proposalv1.AutomationMode, allowedKinds []proposalv1.ActionKind, pins ModePins, version int64, actorID string) (ModeConfig, error) {
+func (service *Service) PutModeConfig(ctx context.Context, scope tenant.Scope, workflow string, mode proposalv1.AutomationMode, allowedKinds []proposalv1.ActionKind, pins ModePins, version int64, actorID string) (spanResult0 ModeConfig, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "proposal.Service.PutModeConfig")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if scope.ID().IsZero() || workflow == "" || actorID == "" {
 		return ModeConfig{}, ErrInvalid
 	}
@@ -630,7 +667,10 @@ func (service *Service) PutModeConfig(ctx context.Context, scope tenant.Scope, w
 }
 
 // GetModeConfig retrieves the mode configuration for a workflow.
-func (service *Service) GetModeConfig(ctx context.Context, scope tenant.Scope, workflow string) (ModeConfig, error) {
+func (service *Service) GetModeConfig(ctx context.Context, scope tenant.Scope, workflow string) (spanResult0 ModeConfig, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "proposal.Service.GetModeConfig")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if scope.ID().IsZero() || workflow == "" {
 		return ModeConfig{}, ErrInvalid
 	}
@@ -638,7 +678,10 @@ func (service *Service) GetModeConfig(ctx context.Context, scope tenant.Scope, w
 }
 
 // CreatePromptRecord creates an immutable prompt version.
-func (service *Service) CreatePromptRecord(ctx context.Context, scope tenant.Scope, content, modelID, actorID string) (PromptRecord, error) {
+func (service *Service) CreatePromptRecord(ctx context.Context, scope tenant.Scope, content, modelID, actorID string) (spanResult0 PromptRecord, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "proposal.Service.CreatePromptRecord")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if scope.ID().IsZero() || content == "" || !validGenerationToken(modelID) || actorID == "" {
 		return PromptRecord{}, ErrInvalid
 	}
@@ -671,7 +714,10 @@ func (service *Service) CreatePromptRecord(ctx context.Context, scope tenant.Sco
 }
 
 // GetPromptRecord retrieves a prompt version.
-func (service *Service) GetPromptRecord(ctx context.Context, scope tenant.Scope, promptID id.Prompt, version int64) (PromptRecord, error) {
+func (service *Service) GetPromptRecord(ctx context.Context, scope tenant.Scope, promptID id.Prompt, version int64) (spanResult0 PromptRecord, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "proposal.Service.GetPromptRecord")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if service.registry == nil {
 		return PromptRecord{}, ErrNotFound
 	}
@@ -679,7 +725,10 @@ func (service *Service) GetPromptRecord(ctx context.Context, scope tenant.Scope,
 }
 
 // CreateModelRecord creates an immutable tenant-owned generative-model revision.
-func (service *Service) CreateModelRecord(ctx context.Context, scope tenant.Scope, logicalModelID, digest, actorID string) (GenerativeModelRecord, error) {
+func (service *Service) CreateModelRecord(ctx context.Context, scope tenant.Scope, logicalModelID, digest, actorID string) (spanResult0 GenerativeModelRecord, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "proposal.Service.CreateModelRecord")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if scope.ID().IsZero() || !validGenerationToken(logicalModelID) || !isSHA256(digest) || actorID == "" {
 		return GenerativeModelRecord{}, ErrInvalid
 	}
@@ -698,7 +747,10 @@ func (service *Service) CreateModelRecord(ctx context.Context, scope tenant.Scop
 }
 
 // GetModelRecord retrieves an immutable tenant-owned model revision.
-func (service *Service) GetModelRecord(ctx context.Context, scope tenant.Scope, modelID id.Model, version int64) (GenerativeModelRecord, error) {
+func (service *Service) GetModelRecord(ctx context.Context, scope tenant.Scope, modelID id.Model, version int64) (spanResult0 GenerativeModelRecord, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "proposal.Service.GetModelRecord")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if service.registry == nil || scope.ID().IsZero() {
 		return GenerativeModelRecord{}, ErrNotFound
 	}
@@ -706,7 +758,10 @@ func (service *Service) GetModelRecord(ctx context.Context, scope tenant.Scope, 
 }
 
 // ActivateGenerationRoute publishes one exact registry/runtime route revision.
-func (service *Service) ActivateGenerationRoute(ctx context.Context, scope tenant.Scope, activation GenerationActivation, expectedRevision int64, actorID string) (GenerationActivation, error) {
+func (service *Service) ActivateGenerationRoute(ctx context.Context, scope tenant.Scope, activation GenerationActivation, expectedRevision int64, actorID string) (spanResult0 GenerationActivation, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "proposal.Service.ActivateGenerationRoute")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if service.registry == nil || scope.ID().IsZero() || actorID == "" || expectedRevision < 0 {
 		return GenerationActivation{}, ErrInvalid
 	}
@@ -735,7 +790,10 @@ func (service *Service) ActivateGenerationRoute(ctx context.Context, scope tenan
 }
 
 // RetireGenerationRoute disables the current workflow route without deleting history.
-func (service *Service) RetireGenerationRoute(ctx context.Context, scope tenant.Scope, workflow string, expectedRevision int64, reason, actorID string) (GenerationActivation, error) {
+func (service *Service) RetireGenerationRoute(ctx context.Context, scope tenant.Scope, workflow string, expectedRevision int64, reason, actorID string) (spanResult0 GenerationActivation, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "proposal.Service.RetireGenerationRoute")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if service.registry == nil || scope.ID().IsZero() || workflow == "" || expectedRevision < 1 || actorID == "" {
 		return GenerationActivation{}, ErrInvalid
 	}
@@ -758,7 +816,10 @@ func (service *Service) RetireGenerationRoute(ctx context.Context, scope tenant.
 }
 
 // RollbackGenerationRoute republishes a prior active route as a new revision.
-func (service *Service) RollbackGenerationRoute(ctx context.Context, scope tenant.Scope, workflow string, expectedRevision, targetRevision int64, reason, actorID string) (GenerationActivation, error) {
+func (service *Service) RollbackGenerationRoute(ctx context.Context, scope tenant.Scope, workflow string, expectedRevision, targetRevision int64, reason, actorID string) (spanResult0 GenerationActivation, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "proposal.Service.RollbackGenerationRoute")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if service.registry == nil || scope.ID().IsZero() || workflow == "" || expectedRevision < 1 || targetRevision < 1 || actorID == "" {
 		return GenerationActivation{}, ErrInvalid
 	}
@@ -788,7 +849,10 @@ func (service *Service) RollbackGenerationRoute(ctx context.Context, scope tenan
 }
 
 // GetGenerationActivation returns the current workflow activation.
-func (service *Service) GetGenerationActivation(ctx context.Context, scope tenant.Scope, workflow string) (GenerationActivation, error) {
+func (service *Service) GetGenerationActivation(ctx context.Context, scope tenant.Scope, workflow string) (spanResult0 GenerationActivation, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "proposal.Service.GetGenerationActivation")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if service.registry == nil || scope.ID().IsZero() || workflow == "" {
 		return GenerationActivation{}, ErrInvalid
 	}
@@ -796,7 +860,10 @@ func (service *Service) GetGenerationActivation(ctx context.Context, scope tenan
 }
 
 // ListGenerationActivationHistory returns newest lifecycle revisions first.
-func (service *Service) ListGenerationActivationHistory(ctx context.Context, scope tenant.Scope, workflow string, limit int) ([]GenerationActivation, error) {
+func (service *Service) ListGenerationActivationHistory(ctx context.Context, scope tenant.Scope, workflow string, limit int) (spanResult0 []GenerationActivation, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "proposal.Service.ListGenerationActivationHistory")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if service.registry == nil || scope.ID().IsZero() || workflow == "" {
 		return nil, ErrInvalid
 	}
@@ -804,7 +871,10 @@ func (service *Service) ListGenerationActivationHistory(ctx context.Context, sco
 }
 
 // CreateImpactRecord stores an AI impact assessment.
-func (service *Service) CreateImpactRecord(ctx context.Context, scope tenant.Scope, kind proposalv1.ActionKind, assessment, riskLevel, actorID string) (ImpactAssessment, error) {
+func (service *Service) CreateImpactRecord(ctx context.Context, scope tenant.Scope, kind proposalv1.ActionKind, assessment, riskLevel, actorID string) (spanResult0 ImpactAssessment, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "proposal.Service.CreateImpactRecord")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if scope.ID().IsZero() || !proposalv1.IsAllowedKind(kind) || assessment == "" || len(assessment) > 8192 ||
 		(riskLevel != "low" && riskLevel != "medium" && riskLevel != "high" && riskLevel != "critical") || actorID == "" {
 		return ImpactAssessment{}, ErrInvalid
@@ -832,7 +902,10 @@ func (service *Service) CreateImpactRecord(ctx context.Context, scope tenant.Sco
 }
 
 // GetImpactRecord returns one immutable AI impact assessment.
-func (service *Service) GetImpactRecord(ctx context.Context, scope tenant.Scope, assessmentID string) (ImpactAssessment, error) {
+func (service *Service) GetImpactRecord(ctx context.Context, scope tenant.Scope, assessmentID string) (spanResult0 ImpactAssessment, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "proposal.Service.GetImpactRecord")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if service.registry == nil || scope.ID().IsZero() || assessmentID == "" {
 		return ImpactAssessment{}, ErrInvalid
 	}
@@ -840,7 +913,10 @@ func (service *Service) GetImpactRecord(ctx context.Context, scope tenant.Scope,
 }
 
 // ListImpactRecords returns a bounded newest-first page of assessments.
-func (service *Service) ListImpactRecords(ctx context.Context, scope tenant.Scope, before time.Time, limit int) ([]ImpactAssessment, error) {
+func (service *Service) ListImpactRecords(ctx context.Context, scope tenant.Scope, before time.Time, limit int) (spanResult0 []ImpactAssessment, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "proposal.Service.ListImpactRecords")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if service.registry == nil || scope.ID().IsZero() || limit < 1 || limit > 100 {
 		return nil, ErrInvalid
 	}
@@ -848,7 +924,10 @@ func (service *Service) ListImpactRecords(ctx context.Context, scope tenant.Scop
 }
 
 // ProposeReviewCopilot creates a model-driven review-copilot summary proposal.
-func (service *Service) ProposeReviewCopilot(ctx context.Context, scope tenant.Scope, verificationID id.Verification, evidenceRefs []string, actorID string) (Proposal, error) {
+func (service *Service) ProposeReviewCopilot(ctx context.Context, scope tenant.Scope, verificationID id.Verification, evidenceRefs []string, actorID string) (spanResult0 Proposal, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "proposal.Service.ProposeReviewCopilot")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if verificationID.IsZero() {
 		return Proposal{}, ErrInvalid
 	}
@@ -867,7 +946,10 @@ func (service *Service) ProposeReviewCopilot(ctx context.Context, scope tenant.S
 }
 
 // ProposeAdaptiveRoute creates a model-driven adaptive-routing proposal.
-func (service *Service) ProposeAdaptiveRoute(ctx context.Context, scope tenant.Scope, verificationID id.Verification, actorID string) (Proposal, error) {
+func (service *Service) ProposeAdaptiveRoute(ctx context.Context, scope tenant.Scope, verificationID id.Verification, actorID string) (spanResult0 Proposal, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "proposal.Service.ProposeAdaptiveRoute")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
 	if verificationID.IsZero() {
 		return Proposal{}, ErrInvalid
 	}
@@ -882,4 +964,19 @@ func (service *Service) ProposeAdaptiveRoute(ctx context.Context, scope tenant.S
 		ContextDigest:  "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
 		ExpiresAt:      service.clock.Now().Add(15 * time.Minute),
 	}, actorID)
+}
+
+// WithTracer injects operation tracing during composition, before concurrent use.
+func (service *Service) WithTracer(tracer observability.Tracer) *Service {
+	if service != nil {
+		service.tracer = tracer
+	}
+	return service
+}
+
+func (service *Service) operationTracer() observability.Tracer {
+	if service == nil {
+		return nil
+	}
+	return service.tracer
 }
