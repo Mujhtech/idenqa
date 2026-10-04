@@ -21,8 +21,8 @@ updates:
     schedule:
       interval: weekly
     ignore:
-      # AGP's built-in Kotlin compiler is 2.2.0 and reads metadata up to 2.3.0.
-      # Keep the test stack on 2.3.x until the Android toolchain supports 2.4.
+      # Keep Kotlin test libraries at their separately selected 2.3.x version.
+      # Stdlib upgrades are managed independently of the test stack.
       - dependency-name: "org.jetbrains.kotlin:kotlin-test-junit"
         versions: [">= 2.4.0"]
   - package-ecosystem: github-actions
