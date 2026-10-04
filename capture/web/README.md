@@ -139,9 +139,12 @@ manual shutter share the same review flow.
 
 ### Privacy-first, country-bound session bootstrap
 
-When country determines the applicable profile, document catalogue, required
-sides, or jurisdiction-specific notice, collect it before creating the immutable
-verification session. `startCountryJourney` renders the package-owned
+Country selection belongs to document capture: it determines which documents
+are relevant to the subject's country. Flows without document requirements,
+including selfie/liveness-only flows, use `start` directly and omit country
+selection. For a document flow, collect country before creating the immutable
+verification session when it determines the applicable document profile,
+catalogue, required sides, or notice. `startCountryJourney` renders the package-owned
 introduction and privacy notice before the searchable country screen, then
 delegates the selected ISO 3166-1 alpha-2 country to a trusted host callback:
 
@@ -235,10 +238,14 @@ generic identity-document instructions.
 The live-Core hosted and embedded fixtures expose this journey through a launch
 fragment such as
 `/hosted.html#journey=document&controller=Example+Tenant&recipient=Example+Tenant`.
-The hosted and embedded fixture first asks for the issuing country, then the
+For document flows, the hosted and embedded fixture asks for country, then the
 same-origin server creates a country-specific profile with only the permitted
 document branches before session creation. Core canonicalises the artefact set;
 Capture Web presents the front before the back without changing either binding.
+When a `profile` launch fragment is supplied, the server inspects that profile's
+published requirements to decide whether country selection is needed. A
+selfie/liveness-only profile skips country selection, including when a
+`journey=document` hint is also present.
 
 To test an already-published profile from the same self-hosted Core tenant, use
 the Console-generated launch URL. It places the profile, outcome, and the
@@ -248,6 +255,15 @@ same-origin demo bootstrap; the server creates the real verification session and
 returns its display-once credentials directly to the page. Bearer credentials
 are never placed in the URL. This is a local integration fixture, not a tenant
 production bootstrap endpoint.
+
+The bootstrap declares the profile's explicit processing purpose when all
+requirements use one distinct purpose. For profiles with several purposes,
+configure `IDENQA_DEMO_PROCESSING_PURPOSE` on the server with the intended purpose
+from that profile. An absent, empty or incompatible selection fails before
+session creation; bootstrap never substitutes a demo purpose or rewrites the
+profile. It rechecks the purpose against the newly pinned session requirements
+before creating a notice or declaring authority. Bootstrap failures show an
+error and remove the capture loader.
 
 The real-Core browser suite recreates the component after the front is accepted,
 recovers the document selection and accepted progress from Core, captures the

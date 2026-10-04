@@ -132,6 +132,130 @@ test("selects country before session creation and shows only its pinned document
   await expect(page.getByRole("button", { name: /National Identity Number/ })).toHaveCount(0);
 });
 
+for (const surface of ["hosted", "embedded"] as const) {
+  test(`replaces the ${surface} loader with an error when bootstrap fails`, async ({ page }) => {
+    await page.route("**/__idenqa_demo/bootstrap", (route) =>
+      route.fulfill({
+        status: 502,
+        json: { error: "core_bootstrap_failed" },
+      }),
+    );
+    await page.goto(
+      `/${surface}.html#profile=prf_01M3VTQXVWEAX20X1ZQNG6N6EC&controller=Example+Controller&recipient=Example+Recipient`,
+    );
+
+    await expect(page.locator("#hosted-error")).toBeVisible();
+    await expect(page.locator("#hosted-error")).toContainText(
+      "We couldn’t prepare this verification.",
+    );
+    await expect(page.locator("idenqa-capture")).toBeHidden();
+    await expect(page.getByRole("heading", { name: "Preparing capture…" })).toHaveCount(0);
+  });
+
+  test(`skips country selection for a selfie/liveness-only ${surface} flow`, async ({ page }) => {
+    const observed = await mockCaptureFlow(page, {
+      consentRequired: true,
+      primaryMethods: ["idenqa.method.live_camera"],
+    });
+    const launches: Record<string, unknown>[] = [];
+    await page.route("**/__idenqa_demo/bootstrap", async (route) => {
+      launches.push(route.request().postDataJSON());
+      await route.fulfill({
+        status: 201,
+        json: { ...hostedBootstrapResponse(), selfieRequirementKey: "selfie" },
+      });
+    });
+    await page.goto(
+      `/${surface}.html#profile=prf_01M3VTQXVWEAX20X1ZQNG6N6EC&controller=Example+Controller&recipient=Example+Recipient`,
+    );
+    await page.getByRole("button", { name: "Get Started" }).click();
+    await expect(page.getByRole("heading", { name: "Review Before You Continue" })).toBeVisible();
+    await page.getByRole("button", { name: "Agree & Continue" }).click();
+
+    await expect(page.getByRole("heading", { name: "Get Your Selfie Ready" })).toBeVisible();
+    await expect(page.getByPlaceholder("Search your country")).toHaveCount(0);
+    await expect(page.getByText("Step 1 of 1", { exact: true })).toBeVisible();
+    expect(launches).toHaveLength(1);
+    expect(launches[0]).not.toHaveProperty("country");
+    expect(observed.responses).toHaveLength(1);
+    expect(observed.responses[0]?.action).toBe("consent");
+  });
+}
+
+test("keeps country selection inside a hosted document flow before its document choice", async ({
+  page,
+}) => {
+  const options = {
+    consentRequired: true,
+    primaryMethods: ["idenqa.method.live_camera"],
+    requirement: {
+      key: "identity_document",
+      evidenceType: "idenqa.evidence.document_image",
+      artefacts: ["idenqa.artefact.document_front", "idenqa.artefact.document_back"],
+      documentOptions: [
+        {
+          id: "ghana_card",
+          label: "Ghana Card",
+          artefacts: ["idenqa.artefact.document_front", "idenqa.artefact.document_back"],
+        },
+        {
+          id: "passport",
+          label: "Passport",
+          artefacts: ["idenqa.artefact.document_front"],
+        },
+      ],
+    },
+  };
+  const observed = await mockCaptureFlow(page, options);
+  await page.route("**/core/v1/capture/authority", async (route) => {
+    const authority = authorityResponse(options);
+    await route.fulfill({
+      json: {
+        ...authority,
+        notice: {
+          ...authority.notice,
+          copy: {
+            title: "Identity Verification Notice",
+            summary: "We need identity evidence to demonstrate this capture journey.",
+            purpose: "This evidence is used only for this local identity-capture demonstration.",
+            consequences: "You may refuse. Capture will stop and no evidence will be collected.",
+          },
+        },
+        ...(observed.responses.length === 0
+          ? {}
+          : { latest_response: subjectResponse(observed.responses.at(-1)!.action) }),
+      },
+      headers: { "X-Request-ID": "req_document_authority" },
+    });
+  });
+  const launches: Record<string, unknown>[] = [];
+  await page.route("**/__idenqa_demo/bootstrap", async (route) => {
+    const launch = route.request().postDataJSON();
+    launches.push(launch);
+    await route.fulfill(
+      launch.country === undefined
+        ? { status: 200, json: { countrySelectionRequired: true, captureItemCount: 1 } }
+        : { status: 201, json: hostedBootstrapResponse() },
+    );
+  });
+  await page.goto(
+    "/hosted.html#profile=prf_01M3VTQXVWEAX20X1ZQNG6N6EC&controller=Example+Controller&recipient=Example+Recipient",
+  );
+  await page.getByRole("button", { name: "Get Started" }).click();
+  await page.getByRole("button", { name: "Agree & Continue" }).click();
+  await expect(page.getByRole("heading", { name: "Which country are you from?" })).toBeVisible();
+  await expect(page.getByText("Step 1 of 1", { exact: true })).toBeVisible();
+  expect(observed.authorization).toEqual([]);
+  await page.getByPlaceholder("Search your country").fill("Ghana");
+  await page.getByRole("button", { name: /^Ghana/ }).click();
+
+  await expect(page.getByRole("button", { name: "Ghana Card", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: /National Identity Number/ })).toHaveCount(0);
+  expect(launches).toHaveLength(2);
+  expect(launches[1]?.country).toBe("GH");
+  expect(observed.responses).toHaveLength(1);
+});
+
 test("returns from single-method preparation to the accepted privacy step", async ({ page }) => {
   await mockCaptureFlow(page, {
     consentRequired: true,
@@ -369,7 +493,7 @@ test("shows the exact notice and records explicit consent before revealing captu
   ]);
 
   await expect(
-    page.getByRole("heading", { level: 3, name: "Identity Verification Notice" }),
+    page.getByRole("heading", { level: 4, name: "Identity Verification Notice" }),
   ).toBeVisible();
   await expect(page.getByText("We need to verify your identity.", { exact: true })).toBeVisible();
   await expect(
@@ -1180,8 +1304,16 @@ test("shows circular centering confirmation before directional pose ticks", asyn
     await page.evaluate(() => document.documentElement.scrollWidth - innerWidth),
   ).toBeLessThanOrEqual(0);
   await expect(guide.locator("path").first()).toHaveCSS("transition-duration", "0s");
-  await page.getByRole("button", { name: "Cancel Liveness Check" }).click();
+  const previewStream = await frame
+    .locator("video")
+    .evaluateHandle((video) => (video as HTMLVideoElement).srcObject as MediaStream);
+  await page.getByRole("button", { name: "Back", exact: true }).click();
   await expect(frame).toHaveCount(0);
+  expect(
+    await previewStream.evaluate((stream) => stream.getTracks().map((track) => track.readyState)),
+  ).toEqual(["ended"]);
+  await previewStream.dispose();
+  await expect(page.getByRole("button", { name: "Start Liveness Check" })).toBeVisible();
 });
 
 test("never falls back to the generic camera UI for a live selfie", async ({ page }) => {
@@ -1226,7 +1358,7 @@ test("never falls back to the generic camera UI for a live selfie", async ({ pag
   await expect(page.getByRole("button", { name: "Start Camera" })).toHaveCount(0);
 });
 
-test("cancels an active-liveness adapter without completing or activating fallback", async ({
+test("uses Back to cancel an active-liveness adapter without completing or activating fallback", async ({
   page,
 }) => {
   const method = "idenqa.method.live_camera";
@@ -1252,10 +1384,11 @@ test("cancels an active-liveness adapter without completing or activating fallba
   await page.getByRole("button", { name: "Start Liveness Check" }).click();
   await expect(page.getByText("Center Your Face in the Circle")).toBeVisible();
 
-  await page.getByRole("button", { name: "Cancel Liveness Check" }).click();
+  await page.getByRole("button", { name: "Back", exact: true }).click();
 
   await expect(page.getByRole("button", { name: "Start Liveness Check" })).toBeVisible();
   await expect(page.getByText("Center Your Face in the Circle")).toHaveCount(0);
+  expect(await page.evaluate(() => Object.hasOwn(globalThis, "advanceCaptureAdapter"))).toBe(false);
   await expect(page.getByText(/attempt failed/i)).toHaveCount(0);
   await expect(page.getByLabel("Choose File")).toHaveCount(0);
   expect(requests.adapterCompletions).toHaveLength(0);
@@ -1755,6 +1888,19 @@ async function mockCaptureFlow(
     });
   });
   return observed;
+}
+
+function hostedBootstrapResponse() {
+  return {
+    countrySelectionRequired: false,
+    baseUrl: "/core/",
+    verificationId: sessionResponse.id,
+    captureToken: "synthetic-hosted-token",
+    outcomeToken: "synthetic-hosted-outcome-token",
+    sessionVersion: 1,
+    region: "idenqa.region.synthetic",
+    outcome: "verified",
+  };
 }
 
 const sessionResponse = {

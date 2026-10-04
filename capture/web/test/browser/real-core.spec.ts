@@ -104,7 +104,7 @@ for (const surface of ["hosted", "embedded"] as const) {
       await expect(page.getByRole("heading", { name: "Let’s Verify Your Identity" })).toBeVisible();
       await page.getByRole("button", { name: "Get Started" }).click();
       await page.getByRole("button", { name: "Agree & Continue" }).click();
-      await selectCountry(page);
+      await expect(page.getByPlaceholder("Search your country")).toHaveCount(0);
       await page.getByRole("button", { name: "Use Another Method" }).click();
       await page.getByRole("button", { name: "Upload File" }).click();
       await page.getByRole("button", { name: "Continue to Capture" }).click();
@@ -133,7 +133,7 @@ liveDemo(
     await page.goto(demoURL("/hosted.html", { method: "active-liveness" }));
     await page.getByRole("button", { name: "Get Started" }).click();
     await page.getByRole("button", { name: "Agree & Continue" }).click();
-    await selectCountry(page);
+    await expect(page.getByPlaceholder("Search your country")).toHaveCount(0);
     await page.getByRole("button", { name: "Continue to Capture" }).click();
     await expect(page.locator("idenqa-capture").locator(".liveness-overlay-prompt")).toHaveText(
       "Bring Your Face Into View",
@@ -162,7 +162,7 @@ liveDemo(
     await expect(page.getByRole("heading", { name: "Let’s Verify Your Identity" })).toBeVisible();
     await page.getByRole("button", { name: "Get Started" }).click();
     await page.getByRole("button", { name: "Agree & Continue" }).click();
-    await selectCountry(page);
+    await expect(page.getByPlaceholder("Search your country")).toHaveCount(0);
     await expect(page.getByRole("heading", { name: "Get Your Selfie Ready" })).toBeVisible();
     await page.getByRole("button", { name: "Continue to Capture" }).click();
 
@@ -227,9 +227,7 @@ liveDemo(
 
 liveDemo("renders a subject-cancelled Core session", async ({ page }) => {
   await page.goto(demoURL("/hosted.html", { outcome: "cancelled" }));
-  await page.getByRole("button", { name: "Get Started" }).click();
-  await page.getByRole("button", { name: "Agree & Continue" }).click();
-  await selectCountry(page);
+  await expect(page.getByPlaceholder("Search your country")).toHaveCount(0);
 
   await expect(page.getByRole("heading", { name: "Capture Cancelled" })).toBeVisible({
     timeout: 15_000,
@@ -244,9 +242,7 @@ liveDemo(
   async ({ page }, testInfo) => {
     testInfo.setTimeout(150_000);
     await page.goto(demoURL("/hosted.html", { outcome: "expired" }));
-    await page.getByRole("button", { name: "Get Started" }).click();
-    await page.getByRole("button", { name: "Agree & Continue" }).click();
-    await selectCountry(page);
+    await expect(page.getByPlaceholder("Search your country")).toHaveCount(0);
 
     await expect(page.getByRole("heading", { name: "This Verification Has Expired" })).toBeVisible({
       timeout: 130_000,
@@ -295,7 +291,7 @@ async function completeFileCapture(page: Page) {
   await expect(page.getByRole("heading", { name: "Let’s Verify Your Identity" })).toBeVisible();
   await page.getByRole("button", { name: "Get Started" }).click();
   await page.getByRole("button", { name: "Agree & Continue" }).click();
-  await selectCountry(page);
+  await expect(page.getByPlaceholder("Search your country")).toHaveCount(0);
   await page.getByRole("button", { name: "Use Another Method" }).click();
   await page.getByRole("button", { name: "Upload File" }).click();
   await page.getByRole("button", { name: "Continue to Capture" }).click();
@@ -305,11 +301,6 @@ async function completeFileCapture(page: Page) {
     buffer: Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
   });
   await page.getByRole("button", { name: "Use This File" }).click();
-}
-
-async function selectCountry(page: Page, country = "Nigeria") {
-  await page.getByPlaceholder("Search your country").fill(country);
-  await page.getByRole("button", { name: new RegExp(`^${country}`) }).click();
 }
 
 async function installMeasuredPoseWorker(page: Page) {

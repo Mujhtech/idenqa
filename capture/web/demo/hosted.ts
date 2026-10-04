@@ -10,6 +10,7 @@ import {
 } from "../src/index.js";
 
 interface HostedBootstrap {
+  readonly countrySelectionRequired: false;
   readonly baseUrl: string;
   readonly verificationId: string;
   readonly captureToken: string;
@@ -28,12 +29,18 @@ interface HostedBootstrap {
     | "failed";
 }
 
+interface HostedCountrySelection {
+  readonly countrySelectionRequired: true;
+  readonly captureItemCount: number;
+}
+
 defineIdenqaCapture();
 
 const capture = document.querySelector<IdenqaCaptureElement>("idenqa-capture");
 if (capture === null) throw new Error("The hosted Capture Web element is missing.");
 
 void startHostedJourney(capture).catch(() => {
+  capture.cancel();
   capture.hidden = true;
   const error = document.querySelector<HTMLElement>("#hosted-error");
   if (error !== null) error.hidden = false;
@@ -47,20 +54,28 @@ async function startHostedJourney(element: IdenqaCaptureElement): Promise<void> 
   const recipient = launch.get("recipient");
   const documentJourney = launch.get("journey") === "document";
   const activeLiveness = true;
+  const options = {
+    requestedOutcome,
+    requestedProfile,
+    controller,
+    recipient,
+    documentJourney,
+    activeLiveness,
+  };
+  const bootstrap = await requestHostedBootstrap(options);
+  if (!bootstrap.countrySelectionRequired) {
+    await element.start(await hostedStartOptions(bootstrap, activeLiveness));
+    return;
+  }
   element.startCountryJourney({
     countries: documentCountries(),
-    captureItemCount: 2,
+    captureItemCount: bootstrap.captureItemCount,
     notice: demoPrivacyNotice(controller, recipient),
     resolve: (country, signal) => {
       return prepareHostedJourney(
         {
-          requestedOutcome,
-          requestedProfile,
-          controller,
-          recipient,
-          documentJourney,
+          ...options,
           country: country.code,
-          activeLiveness,
         },
         signal,
       );
@@ -89,18 +104,31 @@ function demoPrivacyNotice(controller: string | null, recipient: string | null) 
   } as const;
 }
 
+interface HostedLaunch {
+  readonly requestedOutcome: string | null;
+  readonly requestedProfile: string | null;
+  readonly controller: string | null;
+  readonly recipient: string | null;
+  readonly documentJourney: boolean;
+  readonly country?: string;
+  readonly activeLiveness: boolean;
+}
+
 async function prepareHostedJourney(
-  launch: {
-    readonly requestedOutcome: string | null;
-    readonly requestedProfile: string | null;
-    readonly controller: string | null;
-    readonly recipient: string | null;
-    readonly documentJourney: boolean;
-    readonly country?: string;
-    readonly activeLiveness: boolean;
-  },
+  launch: HostedLaunch,
   signal?: AbortSignal,
 ): Promise<CaptureElementStartOptions> {
+  const bootstrap = await requestHostedBootstrap(launch, signal);
+  if (bootstrap.countrySelectionRequired) {
+    throw new Error("The document capture journey requires country selection.");
+  }
+  return hostedStartOptions(bootstrap, launch.activeLiveness);
+}
+
+async function requestHostedBootstrap(
+  launch: HostedLaunch,
+  signal?: AbortSignal,
+): Promise<HostedBootstrap | HostedCountrySelection> {
   const bootstrapURL = new URL("/__idenqa_demo/bootstrap", location.href);
   const response = await fetch(bootstrapURL, {
     method: "POST",
@@ -118,7 +146,13 @@ async function prepareHostedJourney(
     }),
   });
   if (!response.ok) throw new Error("The self-hosted Capture Web demo could not be prepared.");
-  const bootstrap = (await response.json()) as HostedBootstrap;
+  return response.json();
+}
+
+async function hostedStartOptions(
+  bootstrap: HostedBootstrap,
+  activeLiveness: boolean,
+): Promise<CaptureElementStartOptions> {
   const baseUrl = new URL(bootstrap.baseUrl, location.href);
   if (bootstrap.outcome === "cancelled") {
     await new CaptureClient({ baseUrl, captureToken: bootstrap.captureToken }).cancel(
@@ -134,7 +168,7 @@ async function prepareHostedJourney(
     capabilities: browserCapabilities(),
     region: bootstrap.region,
     ...(bootstrap.experience === undefined ? {} : { experience: bootstrap.experience }),
-    ...(launch.activeLiveness && bootstrap.selfieRequirementKey !== undefined
+    ...(activeLiveness && bootstrap.selfieRequirementKey !== undefined
       ? {
           methodAdapters: [
             createActiveLivenessMethodAdapter({

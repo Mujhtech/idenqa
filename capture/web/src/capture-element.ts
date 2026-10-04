@@ -155,7 +155,7 @@ export interface CaptureCountryJourneyNotice {
 
 export interface CaptureCountryJourneyOptions {
   readonly countries: readonly CaptureCountryOption[];
-  /** The exact notice the country-bound session must return. */
+  /** The exact notice the country-bound document session must return. */
   readonly notice: CaptureCountryJourneyNotice;
   /** Optional host-known count for the pre-session introduction. */
   readonly captureItemCount?: number;
@@ -282,6 +282,10 @@ export class IdenqaCaptureElement extends LitElement {
       display: block;
       font-family: var(--idq-capture-font-family);
       line-height: 1.5;
+    }
+
+    :host([hidden]) {
+      display: none;
     }
 
     * {
@@ -424,6 +428,7 @@ export class IdenqaCaptureElement extends LitElement {
     .error {
       color: var(--idq-capture-error);
       font-weight: 650;
+      font-size: 0.75rem;
     }
 
     .requirements {
@@ -1824,8 +1829,9 @@ export class IdenqaCaptureElement extends LitElement {
     normalizeCaptureDocumentCaptureOptions();
 
   /**
-   * Presents privacy and country selection before a verification session
-   * exists. Selecting a country delegates session creation to the host,
+   * Presents privacy and country selection for a document flow before a
+   * verification session exists. Flows without documents use start directly.
+   * Selecting a country delegates session creation to the host,
    * verifies the returned notice, records the accepted response, and then
    * continues with the ordinary immutable capture flow.
    */
@@ -2887,7 +2893,11 @@ export class IdenqaCaptureElement extends LitElement {
     }
     return html`
       <div class="document-navigation">
-        <button type="button" ?disabled=${busy} @click=${() => this.#backToPreparation(step)}>
+        <button
+          type="button"
+          ?disabled=${uploadState?.status === "uploading" || isCameraBusy(cameraState)}
+          @click=${() => this.#backToPreparation(step)}
+        >
           ${this.#text("back")}
         </button>
         <button class="quiet" type="button" ?disabled=${busy} @click=${() => this.cancel()}>

@@ -114,6 +114,7 @@ export default defineConfig(({ mode }) => {
   const apiKeyID = environment.IDENQA_DEMO_TENANT_API_KEY_ID;
   const region = environment.IDENQA_DEMO_REGION;
   const tenantID = environment.IDENQA_DEMO_TENANT_ID;
+  const configuredPurpose = environment.IDENQA_DEMO_PROCESSING_PURPOSE;
 
   return {
     server: {
@@ -166,8 +167,32 @@ export default defineConfig(({ mode }) => {
               const outcome = requestedDemoOutcome(launch.outcome);
               const documentJourney = launch.journey === "document";
               const profileId = requestedCaptureProfile(launch.profile);
-              const country = requestedDocumentCountry(launch.country);
               const noticeIdentity = requestedNoticeIdentity(launch.controller, launch.recipient);
+              const tenant = new IdenqaClient({ baseUrl: coreUrl, apiKey });
+              const profile =
+                profileId === undefined
+                  ? undefined
+                  : await publishedCaptureProfile({ tenant, profileId });
+              const requirements = profile?.document.requirements ?? demoProfile.requirements;
+              const purpose = processingPurpose(requirements, configuredPurpose);
+              const hasDocuments =
+                profile === undefined
+                  ? documentJourney
+                  : requirements.some(
+                      (requirement) =>
+                        requirement.evidence_type === "idenqa.evidence.document_image",
+                    );
+              if (hasDocuments && launch.country === undefined) {
+                response.statusCode = 200;
+                response.end(
+                  JSON.stringify({
+                    countrySelectionRequired: true,
+                    captureItemCount: profile === undefined ? 2 : requirements.length,
+                  }),
+                );
+                return;
+              }
+              const country = hasDocuments ? requestedDocumentCountry(launch.country) : undefined;
               let policyIdPromise = policyIdPromises.get(outcome);
               policyIdPromise ??= provisionDemoPolicy({ apiKey, coreUrl, outcome }).catch(
                 (error) => {
@@ -186,16 +211,25 @@ export default defineConfig(({ mode }) => {
                 documentJourney,
                 country,
                 profileId,
+                profile,
+                purpose,
                 noticeIdentity,
               });
               response.statusCode = 201;
-              response.end(JSON.stringify(journey));
+              response.end(JSON.stringify({ countrySelectionRequired: false, ...journey }));
             } catch (error) {
               server.config.logger.error(
                 `[capture-web-demo] bootstrap failed: ${safeErrorMessage(error)}`,
               );
-              response.statusCode = 502;
-              response.end(JSON.stringify({ error: "core_bootstrap_failed" }));
+              response.statusCode = error instanceof BootstrapConfigurationError ? 400 : 502;
+              response.end(
+                JSON.stringify({
+                  error:
+                    error instanceof BootstrapConfigurationError
+                      ? error.code
+                      : "core_bootstrap_failed",
+                }),
+              );
             }
           });
         },
@@ -235,13 +269,15 @@ async function provisionJourney({
   documentJourney,
   country,
   profileId,
+  profile,
+  purpose,
   noticeIdentity,
 }) {
   const tenant = new IdenqaClient({ baseUrl: coreUrl, apiKey });
   const captureProfileId =
     profileId === undefined
       ? await provisionDemoProfile({ tenant, documentJourney, country })
-      : await provisionCountryBoundProfile({ tenant, profileId, country });
+      : await provisionCountryBoundProfile({ tenant, profileId, profile, country });
 
   // Core's current authority services compare at whole-second precision. Keep
   // this synthetic fixture on that boundary so an immediate subject response
@@ -259,6 +295,9 @@ async function provisionJourney({
       { idempotencyKey: createIdempotencyKey("demo_verification") },
     ),
   );
+  // Confirm the newly pinned snapshot still permits the configured purpose.
+  // Publication may have changed after the initial profile read.
+  processingPurpose(verification.data.session.requirements.requirements, purpose);
   const noticeCopy = demoNoticeCopy();
   const notice = await runStage("create notice", () =>
     tenant.notices.create(
@@ -284,7 +323,7 @@ async function provisionJourney({
       {
         noticeId: notice.data.id,
         category: "tenant.authority.customer_declared",
-        purpose: "idenqa.purpose.identity_verification",
+        purpose,
         jurisdiction:
           country === undefined
             ? "tenant.jurisdiction.local_demo"
@@ -345,6 +384,43 @@ function selfieRequirementBinding(requirements) {
   return matches.length === 0 ? {} : { selfieRequirementKey: matches[0].key };
 }
 
+class BootstrapConfigurationError extends Error {
+  constructor(code, message) {
+    super(message);
+    this.name = "BootstrapConfigurationError";
+    this.code = code;
+  }
+}
+
+function processingPurpose(requirements, configuredPurpose) {
+  const purposes = new Set(requirements.map((requirement) => requirement.purpose));
+  if (
+    purposes.size === 0 ||
+    [...purposes].some((purpose) => typeof purpose !== "string" || purpose.trim().length === 0)
+  ) {
+    throw new BootstrapConfigurationError(
+      "profile_purpose_invalid",
+      "The published capture profile must explicitly declare its requirement purposes.",
+    );
+  }
+  if (configuredPurpose !== undefined) {
+    if (!purposes.has(configuredPurpose)) {
+      throw new BootstrapConfigurationError(
+        "processing_purpose_mismatch",
+        "The configured processing purpose is absent from the published profile requirements.",
+      );
+    }
+    return configuredPurpose;
+  }
+  if (purposes.size !== 1) {
+    throw new BootstrapConfigurationError(
+      "processing_purpose_required",
+      "A profile with several purposes requires IDENQA_DEMO_PROCESSING_PURPOSE to be configured explicitly.",
+    );
+  }
+  return purposes.values().next().value;
+}
+
 async function provisionDemoProfile({ tenant, documentJourney, country }) {
   const createdProfile = await runStage("create profile", () =>
     tenant.captureProfiles.create(
@@ -365,7 +441,7 @@ async function provisionDemoProfile({ tenant, documentJourney, country }) {
   return createdProfile.data.profileId;
 }
 
-async function provisionCountryBoundProfile({ tenant, profileId, country }) {
+async function publishedCaptureProfile({ tenant, profileId }) {
   const profile = await runStage("get profile", () => tenant.captureProfiles.get(profileId));
   if (profile.data.publishedRevision === undefined) {
     throw new Error("capture profile has no published revision");
@@ -373,12 +449,21 @@ async function provisionCountryBoundProfile({ tenant, profileId, country }) {
   const revision = await runStage("get profile revision", () =>
     tenant.captureProfiles.getRevision(profileId, profile.data.publishedRevision),
   );
+  return { name: profile.data.name, document: revision.data.document };
+}
+
+async function provisionCountryBoundProfile({ tenant, profileId, profile, country }) {
+  if (
+    !profile.document.requirements.some(
+      (requirement) => requirement.evidence_type === "idenqa.evidence.document_image",
+    )
+  ) {
+    return profileId;
+  }
   const countryOptions = documentOptionsByCountry[country];
   if (countryOptions === undefined) throw new Error("unsupported document country");
-  let hasDocumentRequirement = false;
-  const requirements = revision.data.document.requirements.map((requirement) => {
+  const requirements = profile.document.requirements.map((requirement) => {
     if (requirement.evidence_type !== "idenqa.evidence.document_image") return requirement;
-    hasDocumentRequirement = true;
     const permitted =
       requirement.document_options === undefined
         ? countryOptions
@@ -394,12 +479,11 @@ async function provisionCountryBoundProfile({ tenant, profileId, country }) {
       document_options: permitted,
     };
   });
-  if (!hasDocumentRequirement) return profileId;
   const createdProfile = await runStage("create country profile", () =>
     tenant.captureProfiles.create(
       {
-        name: `${profile.data.name} (${country} demo)`,
-        document: { ...revision.data.document, requirements },
+        name: `${profile.name} (${country} demo)`,
+        document: { ...profile.document, requirements },
       },
       { idempotencyKey: createIdempotencyKey("demo_country_profile") },
     ),
