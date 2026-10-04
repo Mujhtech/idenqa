@@ -29,12 +29,12 @@ dependencies {
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
 }
 
-// Keep Kotlin test APIs at the separately selected version. Declare the SDK's
-// stdlib above so it does not override lint or compiler tool dependencies.
+// Pin Kotlin test artifacts independently from the SDK's stdlib. Declare stdlib
+// above so it does not override lint or compiler tool dependencies.
 configurations.configureEach {
     resolutionStrategy {
         force(
-            "org.jetbrains.kotlin:kotlin-test:2.3.21",
+            "org.jetbrains.kotlin:kotlin-test:2.4.20",
             "org.jetbrains.kotlin:kotlin-test-junit:2.3.21",
         )
     }

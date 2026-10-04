@@ -21,8 +21,8 @@ updates:
     schedule:
       interval: weekly
     ignore:
-      # Keep Kotlin test libraries at their separately selected 2.3.x version.
-      # Stdlib upgrades are managed independently of the test stack.
+      # Keep the JUnit adapter at its separately selected 2.3.x version.
+      # Stdlib and kotlin-test upgrades are managed independently.
       - dependency-name: "org.jetbrains.kotlin:kotlin-test-junit"
         versions: [">= 2.4.0"]
   - package-ecosystem: github-actions
