@@ -6,6 +6,7 @@ import {
   type CaptureActiveLivenessCameraSession,
   type CaptureMethodAdapterControls,
   type CaptureMethodAdapterContext,
+  type CaptureMethodAdapterProgress,
 } from "../src/index.js";
 
 // Explicit synthetic measurements for orchestration tests; production uses the
@@ -40,9 +41,9 @@ afterEach(() => vi.useRealTimers());
 
 describe("active liveness adapter", () => {
   it.each(["stationary", "wrong_direction", "tracking_lost", "poor_quality"])(
-    "never submits on %s and closes resources at the deadline",
+    "keeps guiding %s across attempt deadlines without submitting",
     async (mode) => {
-      vi.useFakeTimers();
+      vi.useFakeTimers({ toFake: ["Date", "performance", "setTimeout", "clearTimeout"] });
       try {
         const input = plan();
         input.requirements[0]!.challenges = [
@@ -51,6 +52,9 @@ describe("active liveness adapter", () => {
         const submit = vi.fn();
         const close = vi.fn();
         const trackerClose = vi.fn();
+        const controller = new AbortController();
+        const updates: CaptureMethodAdapterProgress[] = [];
+        const previews: Array<MediaStream | undefined> = [];
         let count = 0;
         const adapter = createAdapter({
           plan: input,
@@ -91,14 +95,26 @@ describe("active liveness adapter", () => {
             faceCount: 1,
           }),
         });
-        const pending = expect(adapter.acquire(context(), controls([], []))).rejects.toMatchObject({
-          code: "CAPTURE_ACTIVE_LIVENESS_TIMEOUT",
-        });
-        await vi.advanceTimersByTimeAsync(5000);
-        await pending;
+        const pending = adapter.acquire(
+          { ...context(), signal: controller.signal },
+          controls(updates, previews),
+        );
+        const reason = new DOMException("Subject cancelled.", "AbortError");
+        const rejection = expect(pending).rejects.toBe(reason);
+        await vi.advanceTimersByTimeAsync(15_000);
         expect(submit).not.toHaveBeenCalled();
+        expect(close).not.toHaveBeenCalled();
+        expect(trackerClose).not.toHaveBeenCalled();
+        expect(previews).toHaveLength(1);
+        expect(
+          updates.filter((update) => update.phase === "challenge" && update.poseStage === undefined)
+            .length,
+        ).toBeGreaterThanOrEqual(3);
+        controller.abort(reason);
+        await rejection;
         expect(close).toHaveBeenCalledOnce();
         expect(trackerClose).toHaveBeenCalledOnce();
+        expect(previews.at(-1)).toBeUndefined();
       } finally {
         vi.useRealTimers();
       }
@@ -116,6 +132,90 @@ describe("active liveness adapter", () => {
       action: "Start Liveness Check",
       preparation: "Center your face in the camera, then follow 3 quick prompts.",
     });
+  });
+
+  it("allows a subject to find the camera after multiple deadlines and then complete", async () => {
+    vi.useFakeTimers({ toFake: ["Date", "performance", "setTimeout", "clearTimeout"] });
+    const input = plan();
+    input.requirements[0]!.challenges = [
+      { id: "neutral", prompt: "neutral", maximum_duration_ms: 5000 },
+    ];
+    const readyAt = Date.now() + 20_000;
+    const submit = vi.fn();
+    const close = vi.fn();
+    const trackerClose = vi.fn();
+    const cameraSessionFactory = vi.fn(async () => syntheticCamera(close));
+    const poseTrackerFactory = vi.fn(async () => ({
+      close: trackerClose,
+      measure: async () => ({ ...neutralPose(), faceCount: Date.now() < readyAt ? 0 : 1 }),
+    }));
+    const adapter = createAdapter({
+      plan: input,
+      requirementKey: "selfie",
+      cameraSessionFactory,
+      poseTrackerFactory,
+      monotonicClock: () => performance.now(),
+      assess: syntheticAssessment,
+      submit,
+    });
+    const previews: Array<MediaStream | undefined> = [];
+    const pending = adapter.acquire(context(), controls([], previews));
+    const assertion = expect(pending).resolves.toBeUndefined();
+    await vi.advanceTimersByTimeAsync(20_000);
+    expect(submit).not.toHaveBeenCalled();
+    expect(close).not.toHaveBeenCalled();
+    expect(trackerClose).not.toHaveBeenCalled();
+    expect(previews).toHaveLength(1);
+    await vi.advanceTimersByTimeAsync(2500);
+    await assertion;
+    expect(cameraSessionFactory).toHaveBeenCalledOnce();
+    expect(poseTrackerFactory).toHaveBeenCalledOnce();
+    expect(submit).toHaveBeenCalledOnce();
+    expect(submit.mock.calls[0]![0].frames).toHaveLength(1);
+    expect(close).toHaveBeenCalledOnce();
+    expect(trackerClose).toHaveBeenCalledOnce();
+    expect(previews.at(-1)).toBeUndefined();
+  });
+
+  it("requires a new neutral baseline and full target hold after an attempt expires", async () => {
+    vi.useFakeTimers({ toFake: ["Date", "performance", "setTimeout", "clearTimeout"] });
+    const input = plan();
+    input.requirements[0]!.challenges = [
+      { id: "turn", prompt: "turn_right", maximum_duration_ms: 3000 },
+    ];
+    let yaw = 0;
+    const submit = vi.fn();
+    const updates: CaptureMethodAdapterProgress[] = [];
+    const adapter = createAdapter({
+      plan: input,
+      requirementKey: "selfie",
+      cameraSessionFactory: async () => syntheticCamera(vi.fn()),
+      poseTrackerFactory: async () => ({
+        close() {},
+        measure: async () => ({ ...neutralPose(), yaw }),
+      }),
+      monotonicClock: () => performance.now(),
+      assess: syntheticAssessment,
+      submit,
+    });
+    const pending = adapter.acquire(context(), controls(updates, []));
+    const assertion = expect(pending).resolves.toBeUndefined();
+    await vi.advanceTimersByTimeAsync(2800);
+    yaw = 20;
+    await vi.advanceTimersByTimeAsync(200);
+    expect(
+      updates.some((update) => update.poseStage === "pose" && (update.poseProgress ?? 0) > 0),
+    ).toBe(true);
+    await vi.advanceTimersByTimeAsync(500);
+    expect(submit).not.toHaveBeenCalled();
+    expect(updates.at(-1)).toMatchObject({ poseStage: "centering", poseFeedback: "face_forward" });
+    yaw = 0;
+    await vi.advanceTimersByTimeAsync(600);
+    yaw = 20;
+    await vi.advanceTimersByTimeAsync(2000);
+    await assertion;
+    expect(submit).toHaveBeenCalledOnce();
+    expect(submit.mock.calls[0]![0].frames).toHaveLength(1);
   });
 
   it("captures ordered challenged frames and submits without asserting assurance", async () => {
@@ -231,38 +331,42 @@ describe("active liveness adapter", () => {
     ).rejects.toMatchObject({ code: "CAPTURE_ACTIVE_LIVENESS_INVALID" });
   });
 
-  it("enforces each server-authored challenge deadline and releases the camera", async () => {
-    vi.useFakeTimers();
-    try {
-      const close = vi.fn();
-      const camera: CaptureActiveLivenessCameraSession = {
-        stream: { getTracks: () => [] } as unknown as MediaStream,
-        capture: (_mediaType, signal) =>
-          new Promise((_, reject) => {
-            signal.addEventListener("abort", () => reject(signal.reason), { once: true });
-          }),
-        close,
-      };
-      const adapter = createActiveLivenessMethodAdapter({
-        plan: plan(),
-        requirementKey: "selfie",
-        settleDurationMs: 0,
-        cameraSessionFactory: vi.fn().mockResolvedValue(camera),
-        submit: vi.fn(),
-      });
+  it.each([true, false])(
+    "bounds stalled capture work and releases the camera (cooperative abort: %s)",
+    async (cooperative) => {
+      vi.useFakeTimers();
+      try {
+        const close = vi.fn();
+        const camera: CaptureActiveLivenessCameraSession = {
+          stream: { getTracks: () => [] } as unknown as MediaStream,
+          capture: (_mediaType, signal) =>
+            new Promise((_, reject) => {
+              if (cooperative)
+                signal.addEventListener("abort", () => reject(signal.reason), { once: true });
+            }),
+          close,
+        };
+        const adapter = createActiveLivenessMethodAdapter({
+          plan: plan(),
+          requirementKey: "selfie",
+          settleDurationMs: 0,
+          cameraSessionFactory: vi.fn().mockResolvedValue(camera),
+          submit: vi.fn(),
+        });
 
-      const pending = adapter.acquire(context(), controls([], []));
-      const rejection = expect(pending).rejects.toMatchObject({
-        code: "CAPTURE_ACTIVE_LIVENESS_TIMEOUT",
-      });
-      await vi.advanceTimersByTimeAsync(5_000);
+        const pending = adapter.acquire(context(), controls([], []));
+        const rejection = expect(pending).rejects.toMatchObject({
+          code: "CAPTURE_ACTIVE_LIVENESS_TIMEOUT",
+        });
+        await vi.advanceTimersByTimeAsync(5_000);
 
-      await rejection;
-      expect(close).toHaveBeenCalledOnce();
-    } finally {
-      vi.useRealTimers();
-    }
-  });
+        await rejection;
+        expect(close).toHaveBeenCalledOnce();
+      } finally {
+        vi.useRealTimers();
+      }
+    },
+  );
 
   it("propagates subject cancellation and clears the preview", async () => {
     const close = vi.fn();
@@ -481,6 +585,48 @@ function context(): CaptureMethodAdapterContext {
     acquisitionMethod: "idenqa.method.live_camera",
     locale: "en",
     signal: new AbortController().signal,
+  };
+}
+
+function neutralPose() {
+  return {
+    faceCount: 1,
+    yaw: 0,
+    pitch: 0,
+    roll: 0,
+    centerX: 0.5,
+    centerY: 0.5,
+    width: 0.4,
+    height: 0.6,
+    leftEyeClosed: 0,
+    rightEyeClosed: 0,
+  };
+}
+
+function syntheticCamera(close: () => void): CaptureActiveLivenessCameraSession {
+  return {
+    stream: { getTracks: () => [] } as unknown as MediaStream,
+    close,
+    capture: async () => ({
+      body: new Blob(["frame"], { type: "image/jpeg" }),
+      width: 720,
+      height: 720,
+    }),
+  };
+}
+
+async function syntheticAssessment(
+  frame: Awaited<ReturnType<CaptureActiveLivenessCameraSession["capture"]>>,
+) {
+  return {
+    width: frame.width,
+    height: frame.height,
+    byteCount: frame.body.size,
+    brightness: 0.5,
+    contrast: 0.5,
+    sharpness: 0.5,
+    glare: 0,
+    faceCount: 1,
   };
 }
 

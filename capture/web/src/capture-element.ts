@@ -731,6 +731,73 @@ export class IdenqaCaptureElement extends LitElement {
       margin: 0;
     }
 
+    .adapter-challenge-label {
+      font-size: 0.75rem;
+    }
+
+    .liveness-progress-panel {
+      --idq-liveness-background: #0b1710;
+      --idq-liveness-muted: #b3b8b0;
+      --idq-liveness-segment: #374139;
+      --idq-liveness-segment-active: #2d6d4e;
+      --idq-liveness-badge-background: #182e20;
+      --idq-liveness-badge-foreground: #f5f4ee;
+      --idq-liveness-badge-dot: #8bcea5;
+      /*background: var(--idq-liveness-background);*/
+      gap: 1rem;
+      margin-inline: 0;
+      padding: 2.25rem 1.5rem 1.75rem;
+      text-align: center;
+    }
+
+    .liveness-progress-label {
+      color: var(--idq-liveness-muted);
+      font-size: 0.9375rem;
+      font-weight: 500;
+      text-wrap: balance;
+    }
+
+    .liveness-segments {
+      display: grid;
+      gap: 0.4375rem;
+      grid-auto-columns: minmax(0, 1fr);
+      grid-auto-flow: column;
+      inline-size: 10rem;
+      max-inline-size: 100%;
+    }
+
+    .liveness-segment {
+      background: var(--idq-liveness-segment);
+      block-size: 0.3125rem;
+      border-radius: 999px;
+    }
+
+    .liveness-segment[data-state="active"],
+    .liveness-segment[data-state="complete"] {
+      background: var(--idq-liveness-segment-active);
+    }
+
+    .liveness-progress-panel .liveness-auto-capture {
+      /*background: var(--idq-liveness-badge-background);
+      color: var(--idq-liveness-badge-foreground);*/
+      background: #262626;
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 500;
+      gap: 0.5rem;
+      max-inline-size: 100%;
+      padding: 0.5rem 1.25rem;
+    }
+
+    .liveness-progress-panel .liveness-auto-capture::before {
+      background: var(--idq-liveness-badge-dot);
+      block-size: 0.5rem;
+      border-radius: 50%;
+      content: "";
+      flex: 0 0 0.5rem;
+      inline-size: 0.5rem;
+    }
+
     .adapter-prompt {
       font-size: clamp(1.125rem, 4vw, 1.4rem);
       font-weight: 750;
@@ -1006,8 +1073,30 @@ export class IdenqaCaptureElement extends LitElement {
     }
 
     .journey-progress progress {
+      appearance: none;
+      -webkit-appearance: none;
+      background: var(--idq-capture-border);
+      border: 0;
+      border-radius: 999px;
+      color: var(--idq-capture-accent);
       grid-column: 1 / -1;
-      block-size: 0.4rem;
+      block-size: 0.4375rem;
+      overflow: hidden;
+    }
+
+    .journey-progress progress::-webkit-progress-bar {
+      background: var(--idq-capture-border);
+      border-radius: 999px;
+    }
+
+    .journey-progress progress::-webkit-progress-value {
+      background: var(--idq-capture-accent);
+      border-radius: 999px;
+    }
+
+    .journey-progress progress::-moz-progress-bar {
+      background: var(--idq-capture-accent);
+      border-radius: 999px;
     }
 
     .method-list {
@@ -1648,6 +1737,28 @@ export class IdenqaCaptureElement extends LitElement {
     }
 
     @media (forced-colors: active) {
+      .journey-progress progress {
+        --idq-capture-accent: Highlight;
+        --idq-capture-border: Canvas;
+        border: 1px solid CanvasText;
+        forced-color-adjust: none;
+      }
+      .liveness-progress-panel {
+        --idq-liveness-background: Canvas;
+        --idq-liveness-muted: CanvasText;
+        --idq-liveness-segment: Canvas;
+        --idq-liveness-segment-active: Highlight;
+        --idq-liveness-badge-background: Canvas;
+        --idq-liveness-badge-foreground: CanvasText;
+        --idq-liveness-badge-dot: CanvasText;
+      }
+      .liveness-segment {
+        border: 1px solid CanvasText;
+        forced-color-adjust: none;
+      }
+      .liveness-progress-panel .liveness-auto-capture {
+        border: 1px solid CanvasText;
+      }
       .document-camera,
       .shell.document-camera-shell,
       .document-camera .document-instruction,
@@ -2776,11 +2887,7 @@ export class IdenqaCaptureElement extends LitElement {
     }
     return html`
       <div class="document-navigation">
-        <button
-          type="button"
-          ?disabled=${busy}
-          @click=${() => this.#backToPreparation(step)}
-        >
+        <button type="button" ?disabled=${busy} @click=${() => this.#backToPreparation(step)}>
           ${this.#text("back")}
         </button>
         <button class="quiet" type="button" ?disabled=${busy} @click=${() => this.cancel()}>
@@ -2789,9 +2896,9 @@ export class IdenqaCaptureElement extends LitElement {
       </div>
 
       <div class="document-camera">
-          <h2 class="document-instruction">
-              ${copy?.instruction ?? captureInstruction(method, this.#localizer)}
-          </h2>
+        <h2 class="document-instruction">
+          ${copy?.instruction ?? captureInstruction(method, this.#localizer)}
+        </h2>
         <!--<h2>${this.#text("captureTitle", { item })}</h2>
         <p class="screen-copy">
           ${copy?.instruction ?? captureInstruction(method, this.#localizer)}
@@ -3814,6 +3921,13 @@ export class IdenqaCaptureElement extends LitElement {
       state?.progress?.phase === "challenge" && state.progress.prompt !== undefined
         ? livenessPrompt(state.progress.prompt, this.#localizer)
         : undefined;
+    const challengeProgress =
+      state?.progress?.phase === "challenge"
+        ? this.#text("challengeProgress", {
+            current: formatNumber(state.progress.current!, this.#localizer.locale),
+            total: formatNumber(state.progress.total!, this.#localizer.locale),
+          })
+        : undefined;
     const feedback = state?.progress?.poseFeedback;
     const guideStage = poseGuideStage(state?.progress);
     const guidance =
@@ -3863,36 +3977,64 @@ export class IdenqaCaptureElement extends LitElement {
         ${
           running
             ? html`
-                <div class="adapter-progress" role="status" aria-live="polite">
+                <div
+                  class=${activeLiveness ? "adapter-progress liveness-progress-panel" : "adapter-progress"}
+                  role="status"
+                  aria-live="polite"
+                >
                   ${
                     state.progress?.phase === "challenge" && prompt !== undefined
                       ? html`
-                          <p class="" style="font-size:0.75rem">
-                            ${this.#text("challengeProgress", {
-                              current: formatNumber(
-                                state.progress.current!,
-                                this.#localizer.locale,
-                              ),
-                              total: formatNumber(state.progress.total!, this.#localizer.locale),
-                            })}
+                          <p
+                            class=${activeLiveness ? "liveness-progress-label" : "adapter-challenge-label"}
+                          >
+                            ${challengeProgress}
                           </p>
-                          <!--<p class="adapter-prompt">${guidance}</p>-->
-                          <progress
-                            aria-label=${this.#text("livenessProgressLabel")}
-                            aria-live="off"
-                            value=${state.progress.current! - 1 + (state.progress.poseProgress ?? 0)}
-                            max=${state.progress.total!}
-                          ></progress>
                           ${
-                            state.progress.poseProgress === undefined
-                              ? nothing
-                              : html` <progress
-                                  class="liveness-pose-meter"
-                                  aria-live="off"
-                                  aria-label=${this.#text("poseProgressLabel")}
-                                  value=${state.progress.poseProgress}
-                                  max="1"
-                                ></progress>`
+                            activeLiveness
+                              ? html`
+                                  <div
+                                    class="liveness-segments"
+                                    role="progressbar"
+                                    aria-label=${this.#text("livenessProgressLabel")}
+                                    aria-live="off"
+                                    aria-valuemin="1"
+                                    aria-valuemax=${state.progress.total!}
+                                    aria-valuenow=${state.progress.current!}
+                                    aria-valuetext=${challengeProgress!}
+                                  >
+                                    ${Array.from(
+                                      { length: state.progress.total! },
+                                      (_, index) => html`
+                                        <span
+                                          class="liveness-segment"
+                                          aria-hidden="true"
+                                          data-state=${index + 1 < state.progress!.current! ? "complete" : index + 1 === state.progress!.current! ? "active" : "upcoming"}
+                                        ></span>
+                                      `,
+                                    )}
+                                  </div>
+                                  <p class="visually-hidden">${guidance}</p>
+                                `
+                              : html`
+                                  <progress
+                                    aria-label=${this.#text("livenessProgressLabel")}
+                                    aria-live="off"
+                                    value=${state.progress.current! - 1 + (state.progress.poseProgress ?? 0)}
+                                    max=${state.progress.total!}
+                                  ></progress>
+                                  ${
+                                    state.progress.poseProgress === undefined
+                                      ? nothing
+                                      : html`<progress
+                                          class="liveness-pose-meter"
+                                          aria-live="off"
+                                          aria-label=${this.#text("poseProgressLabel")}
+                                          value=${state.progress.poseProgress}
+                                          max="1"
+                                        ></progress>`
+                                  }
+                                `
                           }
                         `
                       : nothing
@@ -3904,7 +4046,13 @@ export class IdenqaCaptureElement extends LitElement {
                         </p>`
                       : nothing
                   }
-                  <p style="font-size:0.75rem">${adapterProgressMessage(state.progress, copy.label, this.#localizer)}</p>
+                  ${
+                    activeLiveness && state.progress?.phase === "challenge"
+                      ? nothing
+                      : html`<p style="font-size:0.75rem">
+                          ${adapterProgressMessage(state.progress, copy.label, this.#localizer)}
+                        </p>`
+                  }
                 </div>
                 <!--<button type="button" @click=${() => this.#cancelMethodAdapter(step)}>
                   ${this.#text("cancelMethod", { method: copy.label })}
@@ -3923,7 +4071,13 @@ export class IdenqaCaptureElement extends LitElement {
         }
         ${
           state?.status === "error"
-            ? html`<p class="error" style="margin-left: var(--idq-capture-shell-padding); margin-right: var(--idq-capture-shell-padding); font-size:0.75rem" role="alert">${state.message}</p>`
+            ? html`<p
+                class="error"
+                style="margin-left: var(--idq-capture-shell-padding); margin-right: var(--idq-capture-shell-padding); font-size:0.75rem"
+                role="alert"
+              >
+                ${state.message}
+              </p>`
             : nothing
         }
       </div>

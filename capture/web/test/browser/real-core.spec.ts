@@ -121,27 +121,36 @@ for (const surface of ["hosted", "embedded"] as const) {
   );
 }
 
-liveDemo("does not submit liveness when the real tracker sees no face", async ({ page }) => {
-  const uploads: string[] = [];
-  page.on("request", (request) => {
-    if (request.method() === "POST" && request.url().includes("/evidence-uploads"))
-      uploads.push(request.url());
-  });
-  await page.goto(demoURL("/hosted.html", { method: "active-liveness" }));
-  await page.getByRole("button", { name: "Get Started" }).click();
-  await page.getByRole("button", { name: "Agree & Continue" }).click();
-  await selectCountry(page);
-  await page.getByRole("button", { name: "Continue to Capture" }).click();
-  await expect(page.locator("idenqa-capture").locator(".adapter-prompt")).toHaveText(
-    "Bring Your Face Into View",
-    { timeout: 15000 },
-  );
-  await expect(page.getByRole("button", { name: "Continue to Capture" })).toBeVisible({
-    timeout: 20000,
-  });
-  expect(uploads).toEqual([]);
-  await expect(page.getByRole("heading", { name: "Identity Verified" })).toHaveCount(0);
-});
+liveDemo(
+  "keeps guiding without submitting when the real tracker sees no face",
+  async ({ page }, testInfo) => {
+    testInfo.setTimeout(45_000);
+    const uploads: string[] = [];
+    page.on("request", (request) => {
+      if (request.method() === "POST" && request.url().includes("/evidence-uploads"))
+        uploads.push(request.url());
+    });
+    await page.goto(demoURL("/hosted.html", { method: "active-liveness" }));
+    await page.getByRole("button", { name: "Get Started" }).click();
+    await page.getByRole("button", { name: "Agree & Continue" }).click();
+    await selectCountry(page);
+    await page.getByRole("button", { name: "Continue to Capture" }).click();
+    await expect(page.locator("idenqa-capture").locator(".liveness-overlay-prompt")).toHaveText(
+      "Bring Your Face Into View",
+      { timeout: 15000 },
+    );
+    // Deliberately cross the hosted plan's 15-second attempt limit.
+    await page.waitForTimeout(16_000);
+    await expect(page.locator(".liveness-progress-panel")).toBeVisible();
+    await expect(page.locator(".adapter-option [role=alert]")).toHaveCount(0);
+    expect(uploads).toEqual([]);
+    await expect(page.getByRole("heading", { name: "Identity Verified" })).toHaveCount(0);
+    await page.locator("idenqa-capture").evaluate((element) => {
+      (element as HTMLElement & { cancel(): void }).cancel();
+    });
+    await expect(page.locator(".adapter-preview-frame")).toHaveCount(0);
+  },
+);
 
 liveDemo(
   "runs synthetic measured liveness through authoritative Core progress",

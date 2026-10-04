@@ -188,27 +188,47 @@ export function createActiveLivenessMethodAdapter(
         controls.update({ phase: "ready" });
         const frames: CaptureActiveLivenessFrame[] = [];
         for (const [index, challenge] of requirement.challenges.entries()) {
-          const frame = await withinChallengeDeadline(challenge, context.signal, async (signal) => {
-            const startedAt = performance.now();
+          let startedAt = performance.now();
+          let gate = new CapturePoseGate(challenge);
+          const restart = () => {
+            startedAt = performance.now();
+            gate = new CapturePoseGate(challenge);
             controls.update({
               phase: "challenge",
               current: index + 1,
               total: requirement.challenges.length,
               prompt: challenge.prompt,
             });
-            const gate = new CapturePoseGate(challenge);
+          };
+          restart();
+          const frame = await (async () => {
             for (;;) {
-              if (signal.aborted) throw abortReason(signal);
-              const captured = await session!.capture(mediaType, signal);
-              const capturedAt = clock().toISOString();
-              const measuredAt = (options.monotonicClock ?? (() => performance.now()))();
-              const pose = await tracker!.measure(captured, signal);
-              const assessed = await assess(captured, requirement, challenge, signal);
-              const quality =
-                options.assess === undefined
-                  ? { ...assessed, faceCount: pose.faceCount }
-                  : assessed;
-              const failures = qualityFailures(captured, quality, requirement.quality, mediaType);
+              if (context.signal.aborted) throw abortReason(context.signal);
+              if (performance.now() - startedAt >= challenge.maximum_duration_ms) restart();
+              // Bound camera/tracker work independently of the subject's pose
+              // attempt, so ordinary centering does not abort the live worker.
+              const { captured, capturedAt, measuredAt, pose, quality, failures, fresh } =
+                await withinCaptureDeadline(challenge, context.signal, async (signal) => {
+                  const captured = await session!.capture(mediaType, signal);
+                  const capturedAt = clock().toISOString();
+                  const measuredAt = (options.monotonicClock ?? (() => performance.now()))();
+                  const pose = await tracker!.measure(captured, signal);
+                  const assessed = await assess(captured, requirement, challenge, signal);
+                  const quality =
+                    options.assess === undefined
+                      ? { ...assessed, faceCount: pose.faceCount }
+                      : assessed;
+                  const failures = qualityFailures(
+                    captured,
+                    quality,
+                    requirement.quality,
+                    mediaType,
+                  );
+                  if (signal.aborted) throw abortReason(signal);
+                  const fresh =
+                    (options.monotonicClock ?? (() => performance.now()))() - measuredAt <= 500;
+                  return { captured, capturedAt, measuredAt, pose, quality, failures, fresh };
+                });
               // A missing assessor for a required metric cannot recover by waiting.
               if (
                 failures.some(
@@ -221,9 +241,14 @@ export function createActiveLivenessMethodAdapter(
                   failures,
                 );
               }
-              if (signal.aborted) throw abortReason(signal);
-              const fresh =
-                (options.monotonicClock ?? (() => performance.now()))() - measuredAt <= 500;
+              if (context.signal.aborted) throw abortReason(context.signal);
+              if (performance.now() - startedAt >= challenge.maximum_duration_ms) {
+                // Discard the expired attempt's frame and partial hold. Only
+                // fresh observations can establish the next neutral baseline.
+                restart();
+                await abortableDelay(80, context.signal);
+                continue;
+              }
               const progress = gate.update(pose, measuredAt, failures.length === 0 && fresh);
               controls.update({
                 phase: "challenge",
@@ -250,12 +275,12 @@ export function createActiveLivenessMethodAdapter(
                   challenge.pose?.hold_duration_ms ?? CAPTURE_POSE_DEFAULTS.hold_duration_ms;
                 await abortableDelay(
                   Math.min(1200, Math.max(0, remaining - hold * 2 - 500)),
-                  signal,
+                  context.signal,
                 );
               }
-              await abortableDelay(80, signal);
+              await abortableDelay(80, context.signal);
             }
-          });
+          })();
           frames.push(frame);
           // A completed neutral frame has already met its deadline. Keep its
           // green confirmation visible before issuing the next camera prompt.
@@ -489,7 +514,7 @@ function validFaceCount(value: number): boolean {
   return Number.isSafeInteger(value) && value >= 0 && value <= 4;
 }
 
-async function withinChallengeDeadline<T>(
+async function withinCaptureDeadline<T>(
   challenge: CaptureLivenessChallenge,
   parent: AbortSignal,
   operation: (signal: AbortSignal) => Promise<T>,
@@ -503,13 +528,19 @@ async function withinChallengeDeadline<T>(
       controller.abort(
         new CaptureActiveLivenessError(
           "CAPTURE_ACTIVE_LIVENESS_TIMEOUT",
-          "The liveness prompt timed out. Keep your face in view and retry.",
+          "The liveness capture stopped responding. Restart the capture.",
         ),
       ),
     challenge.maximum_duration_ms,
   );
+  let aborted: () => void;
+  const interruption = new Promise<never>((_, reject) => {
+    aborted = () => reject(abortReason(controller.signal));
+    controller.signal.addEventListener("abort", aborted, { once: true });
+    if (controller.signal.aborted) aborted();
+  });
   try {
-    return await operation(controller.signal);
+    return await Promise.race([operation(controller.signal), interruption]);
   } catch (error) {
     if (parent.aborted) throw abortReason(parent);
     if (controller.signal.aborted) {
@@ -519,6 +550,7 @@ async function withinChallengeDeadline<T>(
     throw error;
   } finally {
     clearTimeout(timeout);
+    controller.signal.removeEventListener("abort", aborted!);
     parent.removeEventListener("abort", parentAborted);
   }
 }

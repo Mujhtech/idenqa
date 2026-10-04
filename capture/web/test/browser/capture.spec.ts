@@ -1070,14 +1070,17 @@ test("runs ordered active-liveness prompts and completes only after Core confirm
   await page.getByRole("button", { name: "Start Liveness Check" }).click();
 
   const progress = page.getByRole("progressbar", { name: "Liveness challenge progress" });
-  await expect(page.getByText("Center Your Face in the Circle")).toBeVisible();
-  await expect(progress).toHaveJSProperty("value", 0);
+  const guidance = page.locator(".adapter-progress .visually-hidden");
+  await expect(guidance).toHaveText("Center Your Face in the Circle");
+  await expect(progress).toHaveAttribute("aria-valuenow", "1");
+  await expect(progress).toHaveAttribute("aria-valuemax", "3");
+  await expect(progress).toHaveAttribute("aria-valuetext", "Liveness Prompt 1 of 3");
   await advanceSyntheticAdapter(page);
-  await expect(page.getByText("Slowly Turn Your Head Left")).toBeVisible();
-  await expect(progress).toHaveJSProperty("value", 1);
+  await expect(guidance).toHaveText("Slowly Turn Your Head Left");
+  await expect(progress).toHaveAttribute("aria-valuenow", "2");
   await advanceSyntheticAdapter(page);
-  await expect(page.getByText("Slowly Turn Your Head Right")).toBeVisible();
-  await expect(progress).toHaveJSProperty("value", 2);
+  await expect(guidance).toHaveText("Slowly Turn Your Head Right");
+  await expect(progress).toHaveAttribute("aria-valuenow", "3");
 
   expect(requests.adapterCompletions).toHaveLength(0);
   await advanceSyntheticAdapter(page);

@@ -11,7 +11,13 @@ initial centering, the pause shortens to leave time within its challenge deadlin
 Directional ticks then show measured movement/hold progress.
 Missing/multiple faces, poor framing, wrong
 movement, stale frames and failed configured quality checks pause/reset progress.
-Timeout permits another attempt; cancellation releases camera and worker.
+The mandatory `maximum_duration_ms` bounds each pose attempt. If the subject
+needs longer, the attempt quietly restarts with a fresh neutral baseline and no
+carried-over hold or frame; the camera and worker stay open. Camera, tracker and
+assessment work retain a mandatory watchdog using the same duration. Stalled
+work and unavailable/invalid required measurements still stop capture;
+cancellation releases camera and worker. Session and capture-authority expiry
+remain authoritative and are not extended by local retries.
 
 The default tracker runs MediaPipe Tasks Vision 1.0.1 in a dedicated classic
 worker. Runtime model/WASM assets must be hosted on the page origin:
