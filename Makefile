@@ -1,5 +1,8 @@
 GO ?= go
 PNPM ?= corepack pnpm
+# Buf must use its own dependency graph instead of Core's Protovalidate/CEL versions.
+BUF_VERSION := v1.72.0
+BUF := $(GO) run github.com/bufbuild/buf/cmd/buf@$(BUF_VERSION)
 BIN_DIR ?= bin
 VERSION ?= dev
 COMMIT ?= unknown
@@ -52,7 +55,7 @@ fmt-check:
 	$(PNPM) format:check
 
 generate:
-	$(GO) tool buf generate
+	$(BUF) generate
 	$(GO) tool sqlc generate
 	$(GO) tool oapi-codegen -config $(OPENAPI_CONFIG) $(OPENAPI_SPEC)
 	$(GO) tool oapi-codegen -config sdk/go/oapi-codegen.yaml $(OPENAPI_SPEC)
@@ -63,7 +66,7 @@ generate-check: generate
 	$(PNPM) generate:check
 
 contract-lint:
-	$(GO) tool buf lint
+	$(BUF) lint
 	$(GO) tool vacuum lint --no-update-check --no-banner --no-style --silent --min-score 100 --fail-severity warn --ruleset $(OPENAPI_RULESET) $(OPENAPI_SPEC)
 
 contract-breaking:
@@ -72,7 +75,7 @@ contract-breaking:
 
 proto-breaking:
 	@test -n "$(PROTO_BASE)" || (echo "PROTO_BASE must name a Buf input containing the base contract" >&2; exit 2)
-	$(GO) tool buf breaking --against "$(PROTO_BASE)"
+	$(BUF) breaking --against "$(PROTO_BASE)"
 
 lint:
 	$(GO) tool golangci-lint run

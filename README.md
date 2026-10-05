@@ -108,6 +108,8 @@ make proto-breaking PROTO_BASE='.git#branch=main'
 
 Vacuum and Buf linting plus reproducible OpenAPI and Protobuf generation run as part of `make verify`. Pull requests compare the proposed OpenAPI and runner Protobuf documents to the base revision with oasdiff and Buf. Shared synthetic payloads live under `contracts/api/openapi/v1/fixtures` for handler and SDK conformance tests. Behaviour that OpenAPI cannot fully express is documented in [`contracts/api/openapi/v1/conventions.md`](contracts/api/openapi/v1/conventions.md).
 
+Buf CLI v1.72.0 is pinned in the Makefile and runs with a version-suffixed `go run` command, keeping its Protovalidate and CEL dependencies separate from Core's runtime dependencies. Other Go tools remain pinned with `tool` directives in `go.mod`.
+
 ### Public SDKs and Capture Web
 
 The [TypeScript SDK](sdk/typescript/README.md) and dependency-free [Go SDK](sdk/go/README.md) expose 30 typed administration operations for decisions, evidence/grants, consent, impact assessments and privacy. The [SDK resource guide](docs/public-sdk-resources-v0.1.md) lists exact methods, retry contracts, passing verification evidence and remaining work. This increment does not imply all-endpoint Go parity or production acceptance.

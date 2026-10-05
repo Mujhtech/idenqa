@@ -81,7 +81,7 @@ go 1.27.1
 
 The exact patch version is also pinned in CI, development containers, and release images. The `go` directive establishes the minimum module language/toolchain requirement; reproducible build environments enforce the exact patch version.
 
-Go tools are pinned with Go 1.24+ `tool` directives. The repository does not use the legacy blank-import `tools.go` pattern.
+Go tools are pinned with Go 1.24+ `tool` directives, except for the Buf CLI. The selected Buf v1.72.0 is pinned in the Makefile and invoked with a version-suffixed `go run` command so its upstream Protovalidate/CEL dependency graph remains separate from Core's runtime graph, following [Buf's installation guidance](https://buf.build/docs/cli/installation/). Protobuf linting, generation, and breaking-change checks must all use that isolated command. The repository does not use the legacy blank-import `tools.go` pattern.
 
 ### 2.5 Open-source licence
 
