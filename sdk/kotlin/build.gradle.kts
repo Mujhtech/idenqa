@@ -1,7 +1,7 @@
 buildscript {
     dependencies {
         // Use the repository-selected compiler with AGP's built-in Kotlin support.
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.3.21")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:2.4.20")
     }
 }
 
