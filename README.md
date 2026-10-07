@@ -1,230 +1,178 @@
-# Idenqa (eye-DEN-kah)
+# Idenqa
 
-Idenqa is an open-source identity-verification core. The repository is currently being built in small, reviewable bricks from the accepted architecture documents in [`docs`](docs/).
+**Identity infrastructure you control.**
 
-## Development commands
+Idenqa (pronounced _eye-DEN-kah_) is an Apache-2.0 open-source identity-verification core. It collects identity evidence, runs provider and private-model checks, evaluates deterministic policy, routes exceptions for review, and produces explainable, reproducible decisions through stable APIs.
 
-Go 1.27.1 is the selected Go toolchain. TypeScript work uses Node.js 22.18+ and the repository-pinned pnpm release through Corepack. From the repository root:
+The core is designed to be self-hosted and provider-neutral. A tenant can keep control of its evidence, encryption keys, policies, provider relationships, models, retention rules, and audit history. The open-source SDKs and Capture Web package work without Idenqa Cloud or Console.
+
+> [!IMPORTANT]
+> Idenqa is pre-release. The repository contains substantial working slices and a complete synthetic self-hosted journey, but its architecture and contracts are still drafts and several production-acceptance gates remain open. Use synthetic data only unless you are deliberately working through the [external-beta checklist](docs/releases/external-beta-checklist.md). The included model fixtures do not establish biometric accuracy, and the Capture Web demo remains development infrastructure until its outstanding device and interaction acceptance is complete.
+
+## What Idenqa provides
+
+- Tenant-scoped subjects, capture profiles, verification sessions, evidence metadata, checks, decisions, review cases, and privacy workflows.
+- Versioned capture requirements with `any_of` choices, `all_of` requirements, policy-approved fallbacks, and immutable per-session snapshots.
+- Encrypted evidence storage behind local or S3-compatible object-store boundaries. Raw evidence bytes stay out of WebSocket messages, task payloads, ordinary logs, traces, and domain objects.
+- Provider and model runner contracts that keep vendor SDKs and inference runtimes outside the domain core.
+- Deterministic policy evaluation, immutable decision snapshots, offline decision reproduction, audit-chain verification, signed webhooks, and durable at-least-once work with idempotent effects.
+- Open TypeScript, Go, Swift, and Kotlin SDKs plus a framework-neutral Web capture package.
+- Self-hosted deployment examples, operational CLI tooling, conformance suites, and portable public contracts.
+
+Idenqa deliberately keeps **what was collected**, **how it was collected**, and **what assurance that method can establish** separate. For example, uploading a selfie may provide a selfie image, but it cannot by itself prove freshness, live capture, or liveness.
+
+Commercial Idenqa Cloud and Console products are separate consumers of the same public contracts. They are not required to compile, run, upgrade, recover, or export data from Core.
+
+## How the core fits together
+
+```mermaid
+flowchart LR
+    Tenant["Tenant backend"] --> API["Core API"]
+    Subject["Subject"] --> Capture["Capture Web or SDK"]
+    Capture --> API
+    API --> State["PostgreSQL<br/>state and orchestration"]
+    API --> Vault["Encrypted evidence vault"]
+    State --> Worker["Worker"]
+    Worker --> Runners["Provider and model runners"]
+    Worker --> Policy["Deterministic policy"]
+    Policy --> Outcome["Decision or manual review"]
+    Outcome --> Webhook["Signed webhook"]
+```
+
+PostgreSQL is authoritative for durable state, idempotency, the inbox/outbox, replay, and coordination. [Headgate](https://github.com/mujhtech/headgate) runs background work through its PostgreSQL backend. Evidence lives in an encrypted local or S3-compatible object store; Redis is not a baseline dependency.
+
+Capture completion and verification completion are different events. Capture Web gathers the authorised evidence and reports capture progress; only Core's authoritative workflow—using checks, policy, and any required review—authors a verification outcome.
+
+## Try the self-hosted stack
+
+The cleanest local path needs only Docker with Compose. From the repository root:
+
+```sh
+deploy/self-hosted/smoke.sh
+```
+
+The smoke gate builds and starts Core without Cloud or Console, then proves 13 operational steps: migrations, tenant and API-key creation, policy activation, SDK/CLI access, a synthetic capture journey, worker execution, reproducible policy decisions, a verified signed webhook, audit verification, interruption recovery, retention and deletion, and a digest-verified tenant export.
+
+After it passes, the stack remains available for inspection:
+
+- API readiness: <http://127.0.0.1:8080/readyz>
+- Hosted Capture Web fixture: <http://127.0.0.1:4173/hosted.html>
+- OpenAPI 3.1 contract: [`contracts/api/openapi/v1/openapi.yaml`](contracts/api/openapi/v1/openapi.yaml)
+
+Stop the stack without deleting its volumes:
+
+```sh
+docker compose \
+  --project-directory deploy/self-hosted \
+  -f deploy/self-hosted/compose.yaml down
+```
+
+The Compose defaults and generated credentials are for local development only. Copy [`deploy/self-hosted/.env.example`](deploy/self-hosted/.env.example) beside the Compose file when you need to override ports, image tags, or development settings. See the [backup and recovery runbook](docs/runbooks/backup-restore-and-recovery.md) before treating any deployment as durable.
+
+## Develop from source
+
+Required for the main Go and TypeScript workspace:
+
+- Go 1.27.1
+- Node.js 22.18 or newer
+- Corepack with the repository-pinned pnpm release
+- Docker with Compose for PostgreSQL integration tests
+
+Install the TypeScript workspace and run the complete static, contract, generation, test, vulnerability, build, and package checks:
 
 ```sh
 corepack pnpm install --frozen-lockfile
-make db-up
-make migrate
 make verify
-make build
-./bin/idenqa version
-./bin/api
 ```
 
-With the API running, its health endpoints are available locally:
-
-```sh
-curl --fail --show-error http://127.0.0.1:8080/livez
-curl --fail --show-error http://127.0.0.1:8080/startupz
-curl --fail --show-error http://127.0.0.1:8080/readyz
-```
-
-Each returns `ok` while its condition is healthy. During graceful drain, readiness changes to HTTP 503 before the server shuts down.
-
-### API configuration
-
-The API accepts typed `IDENQA_*` process variables:
-
-| Variable                                     | Default                | Purpose                                                                                                                              |
-| -------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `IDENQA_ENVIRONMENT`                         | `production`           | Runtime safety mode: `production`, `development`, or `test`                                                                          |
-| `IDENQA_DATABASE_URL`                        | Required               | PostgreSQL URL; treated as secret configuration and never logged                                                                     |
-| `IDENQA_DATABASE_ROLE`                       | Empty                  | Optional validated runtime role entered by each pooled connection; it must not own tenant tables or bypass RLS                       |
-| `IDENQA_DATABASE_ADMIN_URL`                  | Empty                  | Separate privileged URL for migrations and audited CLI administration; do not provide it to API or worker deployments                |
-| `IDENQA_DATABASE_MAX_CONNECTIONS`            | `20`                   | Maximum API PostgreSQL pool size                                                                                                     |
-| `IDENQA_DATABASE_MIN_CONNECTIONS`            | `2`                    | Minimum API PostgreSQL pool size                                                                                                     |
-| `IDENQA_DATABASE_MAX_LIFETIME`               | `1h`                   | Maximum lifetime of a pooled connection                                                                                              |
-| `IDENQA_DATABASE_MAX_IDLE_TIME`              | `15m`                  | Maximum idle duration of a pooled connection                                                                                         |
-| `IDENQA_DATABASE_CONNECT_TIMEOUT`            | `5s`                   | Startup and migration connection deadline                                                                                            |
-| `IDENQA_DATABASE_MIGRATION_TIMEOUT`          | `5m`                   | Per-statement migration timeout                                                                                                      |
-| `IDENQA_DATABASE_HEALTH_INTERVAL`            | `10s`                  | Runtime database readiness-check interval                                                                                            |
-| `IDENQA_DATABASE_HEALTH_TIMEOUT`             | `2s`                   | Runtime database readiness-check deadline                                                                                            |
-| `IDENQA_API_KEY_ACTIVE_PEPPER_VERSION`       | Empty                  | Version used to authenticate newly issued API keys; configure together with the pepper set                                           |
-| `IDENQA_API_KEY_PEPPERS`                     | Empty                  | Comma-separated `version=unpadded-base64url` 32-byte HMAC peppers; values are redacted and retained while matching keys remain valid |
-| `IDENQA_API_KEY_ALLOW_NO_EXPIRY`             | `false`                | Whether an explicit no-expiry issuance choice is permitted                                                                           |
-| `IDENQA_API_KEY_MAXIMUM_LIFETIME`            | Empty                  | Optional maximum fixed API-key lifetime; empty leaves fixed expiries unbounded but still explicit                                    |
-| `IDENQA_API_KEY_MAXIMUM_ROTATION_OVERLAP`    | Empty                  | Maximum predecessor/successor overlap; required when API-key issuance is composed                                                    |
-| `IDENQA_HTTP_HOST`                           | `127.0.0.1`            | HTTP bind host or interface                                                                                                          |
-| `IDENQA_HTTP_PORT`                           | `8080`                 | HTTP listen port                                                                                                                     |
-| `IDENQA_HTTP_TLS_MODE`                       | `disabled`             | `disabled` for plain HTTP or `file` for direct TLS                                                                                   |
-| `IDENQA_HTTP_TLS_CERT_FILE`                  | Empty                  | PEM certificate chain used when TLS mode is `file`                                                                                   |
-| `IDENQA_HTTP_TLS_KEY_FILE`                   | Empty                  | PEM private key used when TLS mode is `file`                                                                                         |
-| `IDENQA_HTTP_MAX_BODY_BYTES`                 | `1048576`              | Maximum request-body size before route-specific limits                                                                               |
-| `IDENQA_HTTP_REQUEST_TIMEOUT`                | `10s`                  | Default HTTP request deadline                                                                                                        |
-| `IDENQA_HTTP_CORS_ALLOWED_ORIGINS`           | Empty                  | Comma-separated exact browser origins; empty denies cross-origin requests                                                            |
-| `IDENQA_EVIDENCE_UPLOAD_MAXIMUM_BYTES`       | `16777216`             | Deployment evidence-upload ceiling; validated from 1 MiB through 64 MiB and tenant profiles may only narrow it                       |
-| `IDENQA_EVIDENCE_UPLOAD_INTENT_LIFETIME`     | `15m`                  | Upload-intent lifetime; validated from 5 through 60 minutes                                                                          |
-| `IDENQA_EVIDENCE_UPLOAD_ATTEMPT_TIMEOUT`     | `10m`                  | Whole-body attempt deadline; validated from 1 through 15 minutes                                                                     |
-| `IDENQA_EVIDENCE_UPLOAD_ALLOWED_MEDIA_TYPES` | `image/jpeg,image/png` | Deployment media allow-list; v1 permits canonical JPEG and PNG values and tenant profiles may only narrow it                         |
-| `IDENQA_EVIDENCE_LOCAL_DIRECTORY`            | Empty                  | Existing root directory for the root API's local immutable ciphertext store; configure together with the local keyring file          |
-| `IDENQA_EVIDENCE_LOCAL_KEYRING_FILE`         | Empty                  | Existing mounted local KEK keyring; configure together with the local evidence directory                                             |
-| `IDENQA_EVIDENCE_PROTECTION_CLEANUP_TIMEOUT` | `5s`                   | Bounded cancellation-independent deadline for exact staged-ciphertext compensation                                                   |
-| `IDENQA_SHUTDOWN_TIMEOUT`                    | `10s`                  | Graceful-shutdown deadline                                                                                                           |
-| `IDENQA_LOG_LEVEL`                           | `info`                 | `debug`, `info`, `warn`, or `error` logging threshold                                                                                |
-| `IDENQA_LOG_FORMAT`                          | `json`                 | Structured `json` or `text` output                                                                                                   |
-
-Production startup reads only the process environment. For explicit local or test loading, copy [`.env.example`](.env.example), edit it, and run:
-
-```sh
-./bin/api --env-file .env
-```
-
-Existing process variables take precedence over values in that file. Unknown `IDENQA_*` variables are rejected to catch configuration mistakes, and secret-like structured log attributes are redacted.
-
-The `worker` additionally accepts validated reconciliation controls. Defaults
-are `IDENQA_WORKER_RECONCILIATION_SWEEP_INTERVAL=1m`,
-`IDENQA_WORKER_RECONCILIATION_BATCH_SIZE=100`,
-`IDENQA_WORKER_RECONCILIATION_ITEM_LEASE=2m`, and
-`IDENQA_WORKER_PROGRESS_POLL_INTERVAL=1s`. Its PostgreSQL pool must provide at
-least two connections because one connection is dedicated to the optional
-notification hint while durable queries remain the correctness path.
-
-The core `api` enables evidence-upload routes only when both local evidence paths are configured. It then owns the filesystem ciphertext store and mounted keyring lifecycle. The root `worker` uses the same local object namespace for worker-owned exact deletion. Production S3 deployments use the independently versioned `github.com/Mujhtech/idenqa/distributions/s3` composition module, whose `api` and `worker` binaries inject the same owned object, key, deletion, and lifecycle ports without adding cloud SDKs to the root module. Run those two binaries with the same S3 bucket, prefix, region, and endpoint; do not mix the S3 pair with the local pair for one database.
-
-Create the local keyring once before starting an evidence-enabled API:
-
-```sh
-idenqa evidence-key init --keyring-file /run/secrets/idenqa/evidence-keyring.json
-```
-
-The parent directory must already exist and be writable by the setup operator. Initialization creates an owner-only file atomically and refuses to replace any existing target. The command prints only the active key version; it never prints key material, the keyring identifier, or the configured path. Store or mount the resulting file as a secret, configure the same path through `IDENQA_EVIDENCE_LOCAL_KEYRING_FILE`, and back it up according to the deployment recovery policy. Losing every retained KEK version makes its evidence permanently unreadable. CLI rotation is intentionally not included yet because rotation cadence, fleet rewrap completion, recovery validation, and retirement approval remain unresolved operational policy.
-
-### Public HTTP contract
-
-The OpenAPI 3.1 source for v1 is [`contracts/api/openapi/v1/openapi.yaml`](contracts/api/openapi/v1/openapi.yaml). It describes the published tenant, verification, capture, decision, evidence, consent, review, policy, webhook, identity, fraud, assurance, proposal, provider/model-administration and privacy resources, plus shared problem, pagination, idempotency, conditional-mutation, request-correlation, rate-limit and deprecation conventions. Generated Go code under `internal/gen/openapi/v1` is a transport contract, not a domain model or a public SDK implementation. Public SDK coverage is tracked separately in the [resource guide](docs/public-sdk-resources-v0.1.md).
-
-```sh
-make contract-lint
-make generate
-make generate-check
-make contract-breaking OPENAPI_BASE=/path/to/base-openapi.yaml
-make proto-breaking PROTO_BASE='.git#branch=main'
-```
-
-Vacuum and Buf linting plus reproducible OpenAPI and Protobuf generation run as part of `make verify`. Pull requests compare the proposed OpenAPI and runner Protobuf documents to the base revision with oasdiff and Buf. Shared synthetic payloads live under `contracts/api/openapi/v1/fixtures` for handler and SDK conformance tests. Behaviour that OpenAPI cannot fully express is documented in [`contracts/api/openapi/v1/conventions.md`](contracts/api/openapi/v1/conventions.md).
-
-Buf CLI v1.72.0 is pinned in the Makefile and runs with a version-suffixed `go run` command, keeping its Protovalidate and CEL dependencies separate from Core's runtime dependencies. Other Go tools remain pinned with `tool` directives in `go.mod`.
-
-### Public SDKs and Capture Web
-
-The [TypeScript SDK](sdk/typescript/README.md) and dependency-free [Go SDK](sdk/go/README.md) expose 30 typed administration operations for decisions, evidence/grants, consent, impact assessments and privacy. The [SDK resource guide](docs/public-sdk-resources-v0.1.md) lists exact methods, retry contracts, passing verification evidence and remaining work. This increment does not imply all-endpoint Go parity or production acceptance.
-
-The open-source TypeScript SDK lives in [`sdk/typescript`](sdk/typescript/) and is published as `@idenqa/sdk`. It provides a zero-runtime-dependency tenant client for capture-profile, verification, notice, and processing-authority operations; a capture-token client for retrieving immutable session requirements, displaying the exact authority notice, recording acknowledgement, consent, or refusal, issuing requirement-bound upload intents, and sending raw JPEG/PNG `Blob` evidence directly to ingress; and a separate outcome-token client restricted to the subject-safe outcome projection. Its public API uses `Promise`, `AbortSignal`, Fetch, stable errors, request IDs, and explicit idempotency keys; it does not require Effect.
-
-The open-source Web capture package lives under [`capture/web`](capture/web/) and is published as `@idenqa/capture`. Its renderer-independent planner applies immutable session requirements to explicit host capabilities while preserving tenant `any_of`, `all_of`, artefact, and reason-specific fallback policy. The explicitly registered Lit Web Component renders that plan with semantic, keyboard-operable controls; its programmatic capture flow retrieves and correlates the immutable session and exact notice, records acknowledgement, consent, or refusal through the public SDK, and withholds capture methods until the response permits collection. Capture and outcome tokens enter only through the programmatic trusted-bootstrap boundary and never enter attributes, rendered state, events, URLs, storage, or logs; the outcome token is used only for the read-only subject projection. Vite and Playwright are development-only fixture and browser-test tools, tsdown remains the library builder, and Effect is not a dependency.
-
-```sh
-corepack pnpm generate:check
-corepack pnpm typecheck
-corepack pnpm test
-corepack pnpm build
-corepack pnpm package:check
-```
-
-The canonical OpenAPI document generates private committed types under `sdk/typescript/src/generated`. Those generated symbols are deliberately absent from the published API. See the [SDK README](sdk/typescript/README.md) for the walking-slice example. With an isolated PostgreSQL database available, `make sdk-conformance DATABASE_TEST_URL='postgres://...'` proves profile publication, idempotent verification creation, tenant retrieval, and capture bootstrap against the running core.
-
-### Capture-profile contract
-
-The portable v1 profile and evidence-registry schemas live under [`contracts/capture-profile/v1`](contracts/capture-profile/v1/). Profiles keep evidence types separate from acquisition methods, support `any_of` choices and `all_of` requirements, pin an immutable registry revision and digest, and validate namespaced extensions fail closed. The companion contract document defines canonical serialization, assurance-preserving fallbacks, and why SDK capability advertisements guide selection without proving assurance.
-
-The initial registry supports document-front, document-back, and selfie images through file upload or live camera. Uploads cannot establish freshness, live-capture, passive-liveness, or active-liveness assurance. The acquisition-plan schema and synthetic launch fixture live under [`contracts/capture/acquisition/v1`](contracts/capture/acquisition/v1/). Web active-liveness uploads may persist a complete ordered, digest-chained frame sequence for a temporal-capable model, but local quality measurements and challenge transcripts remain capture metadata rather than biometric assurance.
-
-The first-party predictive path is the primary biometric engineering direction; external provider adapters remain optional. The ONNX runner currently supports evaluation-only PAD, document/selfie face matching, and explicit selfie analysis. Selfie analysis consumes a still image or complete temporal sequence and returns separate inconclusive face-count, framing, head-pose, image-quality and temporal-integrity signals. These repository mechanics do not constitute accepted liveness or fraud detection; see [`docs/onnx-runtime-v0.1.md`](docs/onnx-runtime-v0.1.md).
-
-### Native SDKs and provider adapters
-
-The open-source [Swift SDK](sdk/swift/) and [Kotlin SDK](sdk/kotlin/) provide native session, transport, secure bootstrap, camera, and bounded acquisition foundations. Run `swift test` in `sdk/swift` and `./gradlew :idenqa:test` in `sdk/kotlin`; CI runs both on their supported host platforms.
-
-The public provider contract and conformance harness are under [`contracts/provider/v1`](contracts/provider/v1/) and [`conformance/provider`](conformance/provider/). Go integrations use its `AdapterDojah` and `AdapterSmileID` constants for the built-in adapter identifiers; the identifier field remains open to conforming third-party adapters. The reviewed pre-release Dojah and Smile ID implementations live under [`adapters/providers`](adapters/providers/) and require tenant-owned credentials, purpose-bound input/evidence resolvers, and isolated runner composition. Their manifests are catalogue records, not production entitlement or certification. See the [provider runbook](docs/runbooks/provider-operations.md) and [external-beta checklist](docs/releases/external-beta-checklist.md) before enabling real processing.
-
-### PostgreSQL and migrations
-
-The local PostgreSQL 18.4 harness uses the official pinned container image:
+Run the PostgreSQL integration suite with the development database:
 
 ```sh
 make db-up
-make migrate
-make integration
-make integration-s3
+
+IDENQA_DATABASE_URL='postgres://idenqa:idenqa_dev@127.0.0.1:5432/idenqa?sslmode=disable' \
+  make migrate
+
+DATABASE_TEST_URL='postgres://idenqa:idenqa_dev@127.0.0.1:5432/idenqa?sslmode=disable' \
+  make integration
+
 make db-down
 ```
 
-`make integration-s3` builds and starts the independently versioned S3 API
-binary, then proves the complete public evidence-upload flow against
-PostgreSQL and an owned loopback, filesystem-backed S3 protocol fixture. The
-production process still exercises the real AWS SDK adapter, SigV4 request
-signing, immutable conditional writes, and encrypted object persistence; the
-fixture keeps a third-party S3 emulator out of the repository and the AWS SDK
-dependency graph out of the root module. The same distribution also publishes
-the S3-backed `worker` binary for privacy deletion and other worker-owned exact
-object deletion. Its composition and packaging are implemented; live S3 worker
-deletion remains production acceptance evidence rather than missing repository
-wiring.
+`make build` produces the public `api`, `worker`, `idenqa`, `adapter-runner`, and `model-runner` binaries under `bin/`, plus the independently composed S3 API distribution. Explore operational commands with `./bin/idenqa --help`.
 
-If port 5432 is already occupied, select another local port consistently:
+Useful focused commands:
 
 ```sh
-IDENQA_POSTGRES_PORT=55433 make db-up
-IDENQA_DATABASE_URL='postgres://idenqa:idenqa_dev@127.0.0.1:55433/idenqa?sslmode=disable' make migrate
-DATABASE_TEST_URL='postgres://idenqa:idenqa_dev@127.0.0.1:55433/idenqa?sslmode=disable' make integration
-DATABASE_TEST_URL='postgres://idenqa:idenqa_dev@127.0.0.1:55433/idenqa?sslmode=disable' make integration-s3
+make contract-lint       # lint OpenAPI and Protobuf contracts
+make generate-check      # prove committed generated code is reproducible
+make test                # Go race tests and TypeScript tests
+DATABASE_TEST_URL='postgres://idenqa:idenqa_dev@127.0.0.1:5432/idenqa?sslmode=disable' \
+  make integration-s3    # exercise public evidence upload through the S3 distribution
+DATABASE_TEST_URL='postgres://idenqa:idenqa_dev@127.0.0.1:5432/idenqa?sslmode=disable' \
+  make sdk-conformance   # run an SDK journey against a real local Core
 ```
 
-Migrations are reviewed SQL files embedded in `idenqa`. The API never changes the schema during startup. Operators apply and inspect migrations explicitly:
+Swift and Kotlin have their own package-level instructions in [`sdk/swift`](sdk/swift/README.md) and [`sdk/kotlin`](sdk/kotlin/README.md).
 
-```sh
-idenqa migrate preflight
-idenqa migrate up
-idenqa migrate version
-```
+## Repository map
 
-Migration metadata is fixed at `public.schema_migrations`, independent of the connection role's PostgreSQL search path. `idenqa migrate down --confirm` rolls back exactly one version and is rejected unless `IDENQA_ENVIRONMENT` is explicitly `development` or `test`. The API verifies that the database is at the exact schema version required by its binary before becoming ready, so its restricted runtime database role requires `SELECT` on `public.schema_migrations` in addition to its narrow application schema and table grants. Runtime database failures make readiness fail without changing liveness; readiness recovers after PostgreSQL does.
+| Path                                    | Purpose                                                                                    |
+| --------------------------------------- | ------------------------------------------------------------------------------------------ |
+| [`cmd`](cmd/)                           | Thin process entry points for the API, worker, CLI, and isolated runners                   |
+| [`internal`](internal/)                 | Bounded Go domain, application, transport, and platform packages                           |
+| [`contracts`](contracts/)               | Public OpenAPI, Protobuf, capture, provider, model, policy, webhook, and related contracts |
+| [`sdk`](sdk/)                           | Public TypeScript, Go, Swift, and Kotlin SDKs                                              |
+| [`capture/web`](capture/web/)           | Open-source subject-facing Web capture package and development fixtures                    |
+| [`adapters`](adapters/)                 | Provider, model, object-store, KMS, experience, and proposal adapters                      |
+| [`distributions/s3`](distributions/s3/) | S3-composed API and worker distribution kept outside the root Go module                    |
+| [`db`](db/)                             | Reviewed migrations and sqlc queries                                                       |
+| [`deploy`](deploy/)                     | Development, observability, and self-hosted deployment assets                              |
+| [`conformance`](conformance/)           | Provider, model, and policy conformance material                                           |
+| [`test`](test/)                         | Cross-package integration and public-contract conformance suites                           |
+| [`examples`](examples/)                 | Synthetic journey, runner, webhook, and audit examples                                     |
+| [`docs`](docs/)                         | Architecture, build status, acceptance criteria, security material, and runbooks           |
 
-### Tenant administration and isolation
+The Go code uses modular hexagonal architecture with explicit constructor injection. Domain and application packages do not depend on HTTP routers, SQL drivers, task systems, telemetry SDKs, object-store SDKs, KMS SDKs, or cloud-provider SDKs.
 
-Tenant-owned access is fail-closed and protected twice: repository operations require an explicit tenant scope, and `idenqa.tenants` uses forced PostgreSQL row-level security. The runtime database principal must have the required schema/table grants while neither owning tenant tables nor holding `BYPASSRLS`. Role creation and credential distribution remain deployment responsibilities; migrations deliberately do not create login roles or passwords.
+## Public integration surfaces
 
-Administrative operations require a separate `IDENQA_DATABASE_ADMIN_URL` whose principal is a superuser or explicitly provisioned `BYPASSRLS` role. Do not make this variable available to API or worker processes. Every successful operation requires an actor assertion and reason and writes an audit row atomically:
+- **HTTP API:** the canonical OpenAPI source is [`contracts/api/openapi/v1/openapi.yaml`](contracts/api/openapi/v1/openapi.yaml); behaviour that OpenAPI cannot fully express is in its [conventions](contracts/api/openapi/v1/conventions.md).
+- **Capture profiles:** the portable schema and assurance-preserving rules are under [`contracts/capture-profile/v1`](contracts/capture-profile/v1/README.md).
+- **Realtime capture:** a versioned WebSocket channel carries control and progress events; REST provides bootstrap, recovery, snapshots, and fallback; HTTP carries evidence bytes.
+- **Provider and model runners:** versioned contracts and conformance material live under [`contracts/provider/v1`](contracts/provider/v1/README.md), [`contracts/model/v1`](contracts/model/v1/README.md), and [`contracts/runner`](contracts/runner/).
+- **SDKs:** start with the [TypeScript SDK](sdk/typescript/README.md), [Go SDK](sdk/go/README.md), [Swift SDK](sdk/swift/README.md), or [Kotlin SDK](sdk/kotlin/README.md). Exact administration coverage is tracked in the [public SDK resource guide](docs/public-sdk-resources-v0.1.md).
+- **Capture Web:** integration, theming, token-handling, liveness, document capture, and fixture guidance live in the [Capture Web README](capture/web/README.md).
 
-```sh
-idenqa tenant create --actor local-operator --reason 'bootstrap local integration'
-idenqa tenant inspect --id ten_01M... --actor local-operator --reason 'inspect local tenant'
-idenqa tenant disable --id ten_01M... --version 1 --actor local-operator --reason 'disable local tenant'
-```
+## Configuration and deployment
 
-The actor string is an operator assertion backed by possession of the administrative database credential. Tenant API-key authentication protects the public API, while authenticated human administration remains a later boundary.
+Configuration is typed, fail-closed, and scoped to each process. Production processes read the environment; explicit local/test runs may opt into `--env-file`. Unknown `IDENQA_*` names are rejected, secret-like log attributes are redacted, and privileged migration or administration credentials must not be supplied to API or worker deployments.
 
-### API-key administration
+Use these sources instead of copying a stale variable table from this README:
 
-API-key CLI operations use the same separate administrative database URL and require an actor and reason. Creation and rotation require configured peppers and rotation policy. A fixed `--expires-at` value or explicit `--no-expiry` choice is mandatory:
+| Need                                             | Source                                                                                         |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| Direct API, worker, and CLI configuration        | [`.env.example`](.env.example)                                                                 |
+| Packaged self-hosted stack and Compose overrides | [`deploy/self-hosted/.env.example`](deploy/self-hosted/.env.example)                           |
+| Real provider-runner setup                       | [`docs/provider-runtime-v0.1.md`](docs/provider-runtime-v0.1.md)                               |
+| Model-runner and evaluation setup                | [`docs/onnx-runtime-v0.1.md`](docs/onnx-runtime-v0.1.md)                                       |
+| Backup, restore, and recovery                    | [`docs/runbooks/backup-restore-and-recovery.md`](docs/runbooks/backup-restore-and-recovery.md) |
+| Provider operations                              | [`docs/runbooks/provider-operations.md`](docs/runbooks/provider-operations.md)                 |
 
-```sh
-idenqa api-key create --tenant ten_01M... --label backend \
-  --scope tenant:read --scope 'verification_sessions:*' --expires-at 2027-08-27T00:00:00Z \
-  --actor local-operator --reason 'create backend credential'
+## Project documents
 
-idenqa api-key list --tenant ten_01M... \
-  --actor local-operator --reason 'inspect tenant credentials'
+The current sources of truth are:
 
-idenqa api-key rotate --tenant ten_01M... --id key_01M... --overlap 10m \
-  --expires-at 2027-08-27T00:00:00Z --confirm \
-  --actor local-operator --reason 'rotate backend credential'
+1. [Repository structure and package decisions](docs/global-identity-core-repository-structure-and-packages-v0.1-draft.md) for layout, boundaries, dependencies, and unresolved implementation decisions.
+2. [Technical architecture v0.6](docs/global-identity-core-technical-architecture-v0.6-draft.md) for the integrated product and system architecture.
+3. [Build plan](docs/global-identity-core-build-plan-v0.1.md) for milestone status, decision gates, and completion evidence.
+4. [Implementation gap audit](docs/global-identity-core-implementation-gap-audit-v0.1-draft.md) for the consolidated distinction between implemented work, missing acceptance evidence, and later scope.
+5. [External-beta checklist](docs/releases/external-beta-checklist.md) and [threat model](docs/security/external-beta-threat-model.md) for release readiness.
 
-idenqa api-key revoke --tenant ten_01M... --id key_01M... --version 1 --confirm \
-  --actor local-operator --reason 'revoke compromised credential'
-```
+These documents are drafts, and their **Selected**, **Proposed**, **Conditional**, and **TBD** labels are meaningful. The unversioned [`global-identity-core-technical-architecture.md`](docs/global-identity-core-technical-architecture.md) is the preserved historical v0.5 baseline, not the current architecture.
 
-Create and rotate print the new `credential=` value exactly once after the database transaction commits. Store it immediately in an appropriate secret manager. List and revoke output is secret-free. Rotation and revocation are irreversible, require `--confirm`, and every successful create, list, rotate, or revoke appends an atomic audit record.
+## Security and licence
 
-CORS is deny-by-default. Each permitted capture-page or SDK browser origin must be listed exactly, including its scheme and port when non-default. Wildcards, paths, credentials, query strings, and fragments are rejected.
+Report vulnerabilities through the private process in [`SECURITY.md`](SECURITY.md). Do not open a public issue containing exploit details, secrets, personal data, identity evidence, or provider credentials.
 
-For direct TLS, set `IDENQA_HTTP_TLS_MODE=file` and provide both certificate and key files. The pair is loaded before the API becomes started or ready, TLS versions below 1.2 are rejected, and certificate paths are not logged. File-based certificates are loaded at startup; the initial implementation requires a graceful restart to rotate them. When a trusted reverse proxy terminates TLS, leave the mode disabled and configure transport-header trust separately when that support is introduced.
-
-## Licence
-
-Idenqa is licensed under the [Apache License 2.0](LICENSE). New dependencies are governed by the [dependency licence policy](docs/dependency-licence-policy.md). Report vulnerabilities through the private process in [SECURITY.md](SECURITY.md).
+Idenqa is licensed under the [Apache License 2.0](LICENSE). New dependencies are governed by the [dependency licence policy](docs/dependency-licence-policy.md).
