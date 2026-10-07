@@ -13,6 +13,7 @@ interface HostedBootstrap {
   readonly countrySelectionRequired: false;
   readonly baseUrl: string;
   readonly verificationId: string;
+  readonly subjectId: string;
   readonly captureToken: string;
   readonly outcomeToken: string;
   readonly sessionVersion: number;
@@ -53,8 +54,11 @@ async function startHostedJourney(element: IdenqaCaptureElement): Promise<void> 
   const controller = launch.get("controller");
   const recipient = launch.get("recipient");
   const documentJourney = launch.get("journey") === "document";
+  const subjectId = launch.get("subject");
   const activeLiveness = true;
   const options = {
+    launchId: crypto.randomUUID(),
+    subjectId,
     requestedOutcome,
     requestedProfile,
     controller,
@@ -105,6 +109,8 @@ function demoPrivacyNotice(controller: string | null, recipient: string | null) 
 }
 
 interface HostedLaunch {
+  readonly launchId: string;
+  readonly subjectId: string | null;
   readonly requestedOutcome: string | null;
   readonly requestedProfile: string | null;
   readonly controller: string | null;
@@ -137,6 +143,8 @@ async function requestHostedBootstrap(
     ...(signal === undefined ? {} : { signal }),
     headers: { Accept: "application/json", "Content-Type": "application/json" },
     body: JSON.stringify({
+      launchId: launch.launchId,
+      ...(launch.subjectId === null ? {} : { subjectId: launch.subjectId }),
       ...(launch.requestedOutcome === null ? {} : { outcome: launch.requestedOutcome }),
       ...(launch.requestedProfile === null ? {} : { profile: launch.requestedProfile }),
       ...(launch.controller === null ? {} : { controller: launch.controller }),

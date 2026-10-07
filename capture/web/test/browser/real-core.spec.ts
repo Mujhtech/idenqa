@@ -1,6 +1,12 @@
 import { expect, test, type Page } from "@playwright/test";
+import { IdenqaClient } from "@idenqa/sdk";
 
 const liveDemo = process.env.IDENQA_CAPTURE_LIVE_DEMO_URL === undefined ? test.skip : test;
+const subjectIntegration =
+  process.env.IDENQA_CAPTURE_TEST_CORE_URL === undefined ||
+  process.env.IDENQA_CAPTURE_TEST_TENANT_API_KEY === undefined
+    ? test.skip
+    : liveDemo;
 
 function demoURL(path: string, launch: Record<string, string> = {}): string {
   return `${path}#${new URLSearchParams({
@@ -11,6 +17,64 @@ function demoURL(path: string, launch: Record<string, string> = {}): string {
 }
 
 test.describe.configure({ mode: "serial" });
+
+subjectIntegration(
+  "creates a persistent customer, recovers bootstrap retries and reuses the customer against Core",
+  async ({ page }, testInfo) => {
+    testInfo.setTimeout(60_000);
+    const tenant = new IdenqaClient({
+      baseUrl: process.env.IDENQA_CAPTURE_TEST_CORE_URL!,
+      apiKey: process.env.IDENQA_CAPTURE_TEST_TENANT_API_KEY!,
+    });
+    const firstResponse = page.waitForResponse(
+      (response) =>
+        response.url().includes("/__idenqa_demo/bootstrap") && response.status() === 201,
+    );
+    await page.goto(demoURL("/hosted.html"));
+    const response = await firstResponse;
+    const first = (await response.json()) as { subjectId: string; verificationId: string };
+    const launch = response.request().postDataJSON() as Record<string, string>;
+    expect(first.subjectId).toMatch(/^sub_[0-9A-HJKMNP-TV-Z]{26}$/);
+    const subject = await tenant.identity.getSubject(first.subjectId);
+    expect(subject.data.subject?.state).toBe("active");
+    expect(
+      (await tenant.identity.listVerifications(first.subjectId)).data.verification_ids,
+    ).toContain(first.verificationId);
+
+    const replay = await page.request.post("/__idenqa_demo/bootstrap", {
+      headers: { "Sec-Fetch-Site": "same-origin" },
+      data: launch,
+    });
+    expect(replay.status()).toBe(201);
+    const replayed = (await replay.json()) as { subjectId: string; verificationId: string };
+    expect(replayed.subjectId).toBe(first.subjectId);
+    expect(replayed.verificationId).toBe(first.verificationId);
+    expect(
+      (await tenant.identity.listVerifications(first.subjectId)).data.verification_ids,
+    ).toEqual([first.verificationId]);
+
+    await completeFileCapture(page);
+    await expect(page.getByRole("heading", { name: "Identity Verified" })).toBeVisible({
+      timeout: 30_000,
+    });
+
+    await page.goto("about:blank");
+    const nextResponse = page.waitForResponse(
+      (next) => next.url().includes("/__idenqa_demo/bootstrap") && next.status() === 201,
+    );
+    await page.goto(demoURL("/hosted.html", { subject: first.subjectId }));
+    const next = (await (await nextResponse).json()) as {
+      subjectId: string;
+      verificationId: string;
+    };
+    expect(next.subjectId).toBe(first.subjectId);
+    expect(next.verificationId).not.toBe(first.verificationId);
+    expect(
+      (await tenant.identity.listVerifications(first.subjectId)).data.verification_ids,
+    ).toEqual(expect.arrayContaining([first.verificationId, next.verificationId]));
+    expect((await tenant.identity.getSubject(first.subjectId)).data.subject?.version).toBe(3);
+  },
+);
 
 for (const [surface, country, documentType, label] of [
   ["hosted", "Nigeria", "driver_license", "Driver’s licence"],

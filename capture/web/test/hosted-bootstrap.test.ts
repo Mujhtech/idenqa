@@ -14,6 +14,12 @@ const core = vi.hoisted(() => ({
   verifications: { create: vi.fn() },
   notices: { create: vi.fn() },
   authorities: { declare: vi.fn() },
+  identity: {
+    createSubject: vi.fn(),
+    getSubject: vi.fn(),
+    listVerifications: vi.fn(),
+    linkVerification: vi.fn(),
+  },
 }));
 
 vi.mock("@idenqa/sdk", () => ({
@@ -23,6 +29,7 @@ vi.mock("@idenqa/sdk", () => ({
     verifications = core.verifications;
     notices = core.notices;
     authorities = core.authorities;
+    identity = core.identity;
   },
   CaptureClient: class {
     async getExperience() {
@@ -33,6 +40,13 @@ vi.mock("@idenqa/sdk", () => ({
 }));
 
 const profileId = "prf_01M3VTQXVWEAX20X1ZQNG6N6EC";
+const subject = {
+  id: "sub_01M3VTQXVWEAX20X1ZQNG6N6EC",
+  region: "tenant-local",
+  state: "active",
+  version: 1,
+};
+const launchId = "c59b03fc-b0f0-4e76-8f3f-71756e58e4bc";
 const selfie = {
   key: "selfie",
   purpose: "idenqa.purpose.identity_verification",
@@ -74,11 +88,18 @@ beforeEach(() => {
   core.policies.create.mockResolvedValue({
     data: { policy: { id: "policy", latestRevision: 1, activationVersion: 1 } },
   });
+  core.identity.createSubject.mockResolvedValue({ data: { subject } });
+  core.identity.getSubject.mockResolvedValue({ data: { subject } });
+  core.identity.listVerifications.mockResolvedValue({ data: { verification_ids: [] } });
+  core.identity.linkVerification.mockResolvedValue({
+    data: { subject: { ...subject, version: 2 } },
+  });
   core.verifications.create.mockResolvedValue({
     data: {
       session: {
         id: "verification",
         version: 1,
+        createdAt: "2026-10-04T11:00:00.789Z",
         expiresAt: "2026-10-04T12:00:00Z",
         requirements: { requirements: [selfie] },
       },
@@ -102,6 +123,7 @@ describe("hosted flow bootstrap", () => {
         session: {
           id: "verification",
           version: 1,
+          createdAt: "2026-10-04T11:00:00.789Z",
           expiresAt: "2026-10-04T12:00:00Z",
           requirements: { requirements },
         },
@@ -145,6 +167,7 @@ describe("hosted flow bootstrap", () => {
         session: {
           id: "verification",
           version: 1,
+          createdAt: "2026-10-04T11:00:00.789Z",
           expiresAt: "2026-10-04T12:00:00Z",
           requirements: { requirements },
         },
@@ -245,6 +268,7 @@ describe("hosted flow bootstrap", () => {
       expect(core.policies.create).not.toHaveBeenCalled();
       expect(core.verifications.create).not.toHaveBeenCalled();
       expect(core.captureProfiles.create).not.toHaveBeenCalled();
+      expect(core.identity.createSubject).not.toHaveBeenCalled();
     },
   );
 
@@ -289,6 +313,152 @@ describe("hosted flow bootstrap", () => {
       expect(core.verifications.create).toHaveBeenCalledTimes(hasDocuments ? 0 : 1);
     },
   );
+
+  it("creates a persistent subject and links the verification before declaring authority", async () => {
+    const result = await bootstrap({ profile: profileId });
+
+    expect(result.status).toBe(201);
+    expect(result.body.subjectId).toBe(subject.id);
+    expect(core.identity.createSubject).toHaveBeenCalledWith(undefined, {
+      idempotencyKey: `capture_demo_${launchId}_subject`,
+    });
+    expect(core.identity.linkVerification).toHaveBeenCalledWith(subject.id, "verification", 1, {
+      idempotencyKey: `capture_demo_${launchId}_subject_link_v1`,
+    });
+    expect(core.identity.createSubject.mock.invocationCallOrder[0]).toBeLessThan(
+      core.verifications.create.mock.invocationCallOrder[0]!,
+    );
+    expect(core.verifications.create.mock.invocationCallOrder[0]).toBeLessThan(
+      core.identity.linkVerification.mock.invocationCallOrder[0]!,
+    );
+    expect(core.identity.linkVerification.mock.invocationCallOrder[0]).toBeLessThan(
+      core.authorities.declare.mock.invocationCallOrder[0]!,
+    );
+  });
+
+  it("reuses only an explicitly selected existing subject", async () => {
+    const result = await bootstrap({ profile: profileId, subjectId: subject.id });
+
+    expect(result.status).toBe(201);
+    expect(result.body.subjectId).toBe(subject.id);
+    expect(core.identity.createSubject).not.toHaveBeenCalled();
+    expect(core.identity.getSubject).toHaveBeenCalledWith(subject.id);
+    expect(core.identity.linkVerification).toHaveBeenCalledWith(
+      subject.id,
+      "verification",
+      1,
+      expect.any(Object),
+    );
+  });
+
+  it.each([
+    { state: "suspended" },
+    { state: "deleting" },
+    { state: "deleted" },
+    { region: "other-region" },
+  ])(
+    "rejects an unavailable existing subject %j before creating a verification",
+    async (change) => {
+      core.identity.getSubject.mockResolvedValue({ data: { subject: { ...subject, ...change } } });
+
+      const result = await bootstrap({ profile: profileId, subjectId: subject.id });
+
+      expect(result).toEqual({ status: 400, body: { error: "subject_unavailable" } });
+      expect(core.identity.createSubject).not.toHaveBeenCalled();
+      expect(core.verifications.create).not.toHaveBeenCalled();
+    },
+  );
+
+  it("does not replace an inaccessible subject with a new customer", async () => {
+    core.identity.getSubject.mockRejectedValue(
+      Object.assign(new Error("Not found"), { code: "NOT_FOUND" }),
+    );
+
+    const result = await bootstrap({ profile: profileId, subjectId: subject.id });
+
+    expect(result.status).toBe(502);
+    expect(core.identity.createSubject).not.toHaveBeenCalled();
+    expect(core.verifications.create).not.toHaveBeenCalled();
+  });
+
+  it("withholds capture credentials when the subject association fails", async () => {
+    core.identity.linkVerification.mockRejectedValue(new Error("Subject write is unavailable"));
+
+    const result = await bootstrap({ profile: profileId });
+
+    expect(result).toEqual({ status: 502, body: { error: "core_bootstrap_failed" } });
+    expect(core.notices.create).not.toHaveBeenCalled();
+    expect(core.authorities.declare).not.toHaveBeenCalled();
+  });
+
+  it("uses Core's committed association and stable mutation keys when a bootstrap is retried", async () => {
+    const first = await bootstrap({ profile: profileId });
+    core.identity.getSubject.mockResolvedValue({ data: { subject: { ...subject, version: 2 } } });
+    core.identity.listVerifications.mockResolvedValue({
+      data: { verification_ids: ["verification"] },
+    });
+
+    // A new middleware instance also models a development-server restart.
+    const retried = await bootstrap({ profile: profileId });
+
+    expect(retried).toEqual(first);
+    expect(core.identity.linkVerification).toHaveBeenCalledTimes(1);
+    for (const mutation of [
+      core.identity.createSubject,
+      core.policies.create,
+      core.policies.activate,
+      core.verifications.create,
+      core.notices.create,
+      core.authorities.declare,
+    ]) {
+      expect(mutation.mock.calls[1]).toEqual(mutation.mock.calls[0]);
+    }
+    expect(core.notices.create.mock.calls[0]?.[0].effectiveAt).toBe("2026-10-04T11:00:00.000Z");
+  });
+
+  it("finds a committed verification link beyond the first page", async () => {
+    core.identity.listVerifications
+      .mockResolvedValueOnce({ data: { verification_ids: ["older"], next_cursor: "next-page" } })
+      .mockResolvedValueOnce({ data: { verification_ids: ["verification"] } });
+
+    const result = await bootstrap({ profile: profileId, subjectId: subject.id });
+
+    expect(result.status).toBe(201);
+    expect(core.identity.listVerifications).toHaveBeenLastCalledWith(subject.id, {
+      limit: 100,
+      after: "next-page",
+    });
+    expect(core.identity.linkVerification).not.toHaveBeenCalled();
+  });
+
+  it("rereads the subject version when another journey links concurrently", async () => {
+    core.identity.getSubject
+      .mockResolvedValueOnce({ data: { subject } })
+      .mockResolvedValueOnce({ data: { subject } })
+      .mockResolvedValueOnce({ data: { subject: { ...subject, version: 2 } } });
+    core.identity.linkVerification.mockRejectedValueOnce(
+      Object.assign(new Error("Version conflict"), { code: "CONFLICT" }),
+    );
+
+    const result = await bootstrap({ profile: profileId, subjectId: subject.id });
+
+    expect(result.status).toBe(201);
+    expect(core.identity.linkVerification).toHaveBeenLastCalledWith(subject.id, "verification", 2, {
+      idempotencyKey: `capture_demo_${launchId}_subject_link_v2`,
+    });
+  });
+
+  it.each([{ launchId: "invalid" }, { subjectId: "invalid" }])(
+    "rejects malformed launch identifiers %j before creating resources",
+    async (change) => {
+      const result = await bootstrap({ profile: profileId, ...change });
+
+      expect(result.status).toBe(400);
+      expect(core.policies.create).not.toHaveBeenCalled();
+      expect(core.identity.createSubject).not.toHaveBeenCalled();
+      expect(core.verifications.create).not.toHaveBeenCalled();
+    },
+  );
 });
 
 async function bootstrap(launch: Record<string, string>) {
@@ -324,7 +494,12 @@ async function bootstrap(launch: Record<string, string>) {
   const response = { statusCode: 0, setHeader: vi.fn(), end: vi.fn() };
   const handled = handler(request, response as unknown as ServerResponse);
   (request as unknown as PassThrough).end(
-    JSON.stringify({ controller: "Synthetic tenant", recipient: "Synthetic tenant", ...launch }),
+    JSON.stringify({
+      launchId,
+      controller: "Synthetic tenant",
+      recipient: "Synthetic tenant",
+      ...launch,
+    }),
   );
   await handled;
   return {

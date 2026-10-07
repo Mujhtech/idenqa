@@ -535,7 +535,7 @@ copy and are never read from or replaced by the interface catalogue.
 ## Real self-hosted demonstration
 
 The hosted and embedded demonstrations create a fresh synthetic policy, capture
-profile, notice, verification session, processing authority, and display-once
+profile, persistent subject, notice, verification session, processing authority, and display-once
 capture and outcome credentials against a running self-hosted Core. The tenant
 API key remains inside the Vite development server. The browser receives both
 credentials only in a same-origin, no-store bootstrap response; neither is
@@ -543,7 +543,7 @@ placed in a URL, HTML, storage, event, or log.
 
 Provide a local tenant API key with `policies:write`, `policies:activate`,
 `capture_profiles:write`, `notices:write`, `verification_sessions:create`, and
-`authorities:write`. The demo region must exactly match Core's `IDENQA_REGION`
+`authorities:write`, plus `subjects:read` and `subjects:write`. The demo region must exactly match Core's `IDENQA_REGION`
 and must also be a canonical processing-authority code, such as `tenant-local`.
 
 ```sh
@@ -557,6 +557,25 @@ The command opens a synthetic local launch whose notice identifies `Idenqa
 local demo tenant` as both controller and recipient. To exercise different
 notice copy manually, replace the `controller` and `recipient` values in the
 URL fragment; both are required.
+
+The trusted development server creates a persistent Core subject for each new
+launch and explicitly links its verification before returning capture credentials.
+Cloud's Customers page reads those subjects and their linked verifications from
+Core. An existing tenant subject may be selected explicitly with `subject=sub_…`
+in a local fixture launch fragment. It must be active in the configured region;
+an unknown, inaccessible, suspended, or deleted subject fails the launch. The
+bootstrap never matches or merges customers using names, documents, or external
+references. Persistent subject identity remains separate from the
+verification-local processing-authority subject used for consent.
+
+The browser generates one launch ID and reuses it through country selection.
+Bootstrap mutations use stable, stage-specific Core idempotency keys for that
+launch, including after a development-server restart. Link retries read committed
+associations and respect the current subject version. Reloading the fixture starts
+a new launch; explicitly select the same subject to attach a further verification
+to an existing customer. Production backends must obtain that subject selection
+from their authenticated tenant/customer context, rather than trust a browser
+fragment as authorization.
 
 Open the Console-generated test URL for the standalone product surface. Manual
 fixture launches must supply non-empty `controller` and `recipient` values in

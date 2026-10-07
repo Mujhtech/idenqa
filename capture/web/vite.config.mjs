@@ -1,4 +1,4 @@
-import { CaptureClient, IdenqaClient, createIdempotencyKey } from "@idenqa/sdk";
+import { CaptureClient, IdenqaClient } from "@idenqa/sdk";
 import { defineConfig, loadEnv } from "vite";
 
 import { createReviewDemoPlugin } from "./demo/review-server.mjs";
@@ -142,7 +142,6 @@ export default defineConfig(({ mode }) => {
       {
         name: "idenqa-real-core-demo-bootstrap",
         configureServer(server) {
-          const policyIdPromises = new Map();
           server.middlewares.use("/__idenqa_demo/bootstrap", async (request, response) => {
             response.setHeader("Cache-Control", "no-store");
             response.setHeader("Content-Type", "application/json; charset=utf-8");
@@ -164,6 +163,8 @@ export default defineConfig(({ mode }) => {
             }
             try {
               const launch = await readDemoLaunch(request);
+              const key = launchKeys(launch.launchId);
+              const subjectId = requestedSubject(launch.subjectId);
               const outcome = requestedDemoOutcome(launch.outcome);
               const documentJourney = launch.journey === "document";
               const profileId = requestedCaptureProfile(launch.profile);
@@ -193,15 +194,7 @@ export default defineConfig(({ mode }) => {
                 return;
               }
               const country = hasDocuments ? requestedDocumentCountry(launch.country) : undefined;
-              let policyIdPromise = policyIdPromises.get(outcome);
-              policyIdPromise ??= provisionDemoPolicy({ apiKey, coreUrl, outcome }).catch(
-                (error) => {
-                  policyIdPromises.delete(outcome);
-                  throw error;
-                },
-              );
-              policyIdPromises.set(outcome, policyIdPromise);
-              const policyId = await policyIdPromise;
+              const policyId = await provisionDemoPolicy({ apiKey, coreUrl, outcome, key });
               const journey = await provisionJourney({
                 apiKey,
                 coreUrl,
@@ -214,6 +207,8 @@ export default defineConfig(({ mode }) => {
                 profile,
                 purpose,
                 noticeIdentity,
+                subjectId,
+                key,
               });
               response.statusCode = 201;
               response.end(JSON.stringify({ countrySelectionRequired: false, ...journey }));
@@ -239,11 +234,11 @@ export default defineConfig(({ mode }) => {
   };
 });
 
-async function provisionDemoPolicy({ apiKey, coreUrl, outcome }) {
+async function provisionDemoPolicy({ apiKey, coreUrl, outcome, key }) {
   const tenant = new IdenqaClient({ baseUrl: coreUrl, apiKey });
   const policy = await runStage("create policy", () =>
     tenant.policies.create(demoPolicy(outcome), {
-      idempotencyKey: createIdempotencyKey("demo_policy"),
+      idempotencyKey: key("policy"),
     }),
   );
   await runStage("activate policy", () =>
@@ -254,7 +249,7 @@ async function provisionDemoPolicy({ apiKey, coreUrl, outcome }) {
         expectedVersion: policy.data.policy.activationVersion,
         reason: "capture_web_conformance",
       },
-      { idempotencyKey: createIdempotencyKey("demo_policy_activation") },
+      { idempotencyKey: key("policy_activation") },
     ),
   );
   return policy.data.policy.id;
@@ -272,17 +267,16 @@ async function provisionJourney({
   profile,
   purpose,
   noticeIdentity,
+  subjectId,
+  key,
 }) {
   const tenant = new IdenqaClient({ baseUrl: coreUrl, apiKey });
   const captureProfileId =
     profileId === undefined
-      ? await provisionDemoProfile({ tenant, documentJourney, country })
-      : await provisionCountryBoundProfile({ tenant, profileId, profile, country });
+      ? await provisionDemoProfile({ tenant, documentJourney, country, key })
+      : await provisionCountryBoundProfile({ tenant, profileId, profile, country, key });
 
-  // Core's current authority services compare at whole-second precision. Keep
-  // this synthetic fixture on that boundary so an immediate subject response
-  // cannot fall fractionally before the declaration's valid-from instant.
-  const now = new Date(Math.floor(Date.now() / 1_000) * 1_000);
+  const subject = await resolveSubject({ tenant, subjectId, region, key });
   const verification = await runStage("create verification", () =>
     tenant.verifications.create(
       {
@@ -292,17 +286,29 @@ async function provisionJourney({
         captureTokenTtlSeconds: outcome === "expired" ? 5 : 1800,
         outcomeTokenPostExpiryTtlSeconds: outcome === "expired" ? 300 : 86400,
       },
-      { idempotencyKey: createIdempotencyKey("demo_verification") },
+      { idempotencyKey: key("verification") },
     ),
   );
   // Confirm the newly pinned snapshot still permits the configured purpose.
   // Publication may have changed after the initial profile read.
   processingPurpose(verification.data.session.requirements.requirements, purpose);
+  await runStage("link subject verification", () =>
+    linkSubjectVerification({
+      tenant,
+      subjectId: subject.id,
+      verificationId: verification.data.session.id,
+      region,
+      key,
+    }),
+  );
+  // Anchor the notice to the Core-created session so retries send exactly the
+  // same declaration. Authority comparisons currently use whole seconds.
+  const now = new Date(Math.floor(Date.parse(verification.data.session.createdAt) / 1_000) * 1_000);
   const noticeCopy = demoNoticeCopy();
   const notice = await runStage("create notice", () =>
     tenant.notices.create(
       {
-        key: `tenant.notice.capture_demo.${Date.now()}`,
+        key: `tenant.notice.capture_demo.${key("notice")}`,
         locale: "en",
         controller: noticeIdentity.controller,
         recipient: noticeIdentity.recipient,
@@ -314,7 +320,7 @@ async function provisionJourney({
         },
         effectiveAt: now.toISOString(),
       },
-      { idempotencyKey: createIdempotencyKey("demo_notice") },
+      { idempotencyKey: key("notice") },
     ),
   );
   await runStage("declare authority", () =>
@@ -337,7 +343,7 @@ async function provisionJourney({
         validFrom: notice.data.effectiveAt,
         expiresAt: verification.data.session.expiresAt,
       },
-      { idempotencyKey: createIdempotencyKey("demo_authority") },
+      { idempotencyKey: key("authority") },
     ),
   );
   if (outcome === "expired") {
@@ -364,6 +370,7 @@ async function provisionJourney({
   return {
     baseUrl: "/core/",
     verificationId: verification.data.session.id,
+    subjectId: subject.id,
     captureToken: verification.data.captureToken,
     outcomeToken: verification.data.outcomeToken,
     sessionVersion: verification.data.session.version,
@@ -372,6 +379,71 @@ async function provisionJourney({
     ...selfieRequirementBinding(verification.data.session.requirements.requirements),
     ...(experience === undefined ? {} : { experience }),
   };
+}
+
+async function resolveSubject({ tenant, subjectId, region, key }) {
+  const result =
+    subjectId === undefined
+      ? await runStage("create subject", () =>
+          tenant.identity.createSubject(undefined, { idempotencyKey: key("subject") }),
+        )
+      : await runStage("get subject", () => tenant.identity.getSubject(subjectId));
+  return activeSubject(result, region);
+}
+
+function activeSubject(result, region) {
+  const subject = required(result.data.subject, "persistent subject");
+  if (subject.state !== "active" || subject.region !== region) {
+    throw new BootstrapConfigurationError(
+      "subject_unavailable",
+      "The selected subject must be active in the capture region.",
+    );
+  }
+  return subject;
+}
+
+async function linkSubjectVerification({ tenant, subjectId, verificationId, region, key }) {
+  // Core owns the immutable association and its optimistic version check. Read
+  // the committed links on replay; never infer identity from captured evidence.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const subject = activeSubject(await tenant.identity.getSubject(subjectId), region);
+    let after;
+    do {
+      const links = await tenant.identity.listVerifications(subjectId, {
+        limit: 100,
+        ...(after === undefined ? {} : { after }),
+      });
+      if (links.data.verification_ids?.includes(verificationId)) return;
+      after = links.data.next_cursor;
+    } while (after !== undefined && after !== "");
+    try {
+      await tenant.identity.linkVerification(subjectId, verificationId, subject.version, {
+        idempotencyKey: key(`subject_link_v${subject.version}`),
+      });
+      return;
+    } catch (error) {
+      if (error.code !== "CONFLICT" || attempt === 2) throw error;
+    }
+  }
+}
+
+function launchKeys(launchId) {
+  if (
+    typeof launchId !== "string" ||
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(launchId)
+  ) {
+    throw new BootstrapConfigurationError("launch_id_invalid", "A capture launch ID is required.");
+  }
+  // These keys are persisted by Core, not by an in-memory bootstrap cache.
+  return (stage) => `capture_demo_${launchId}_${stage}`;
+}
+
+function requestedSubject(value) {
+  if (value === undefined) return undefined;
+  if (typeof value !== "string" || !/^sub_[0-9A-HJKMNP-TV-Z]{26}$/.test(value)) {
+    throw new BootstrapConfigurationError("subject_id_invalid", "The subject ID is invalid.");
+  }
+  return value;
 }
 
 function selfieRequirementBinding(requirements) {
@@ -421,20 +493,20 @@ function processingPurpose(requirements, configuredPurpose) {
   return purposes.values().next().value;
 }
 
-async function provisionDemoProfile({ tenant, documentJourney, country }) {
+async function provisionDemoProfile({ tenant, documentJourney, country, key }) {
   const createdProfile = await runStage("create profile", () =>
     tenant.captureProfiles.create(
       {
         name: "Capture Web hosted demo",
         document: documentJourney ? documentProfile(country) : demoProfile,
       },
-      { idempotencyKey: createIdempotencyKey("demo_profile") },
+      { idempotencyKey: key("profile") },
     ),
   );
   const publishedProfile = await runStage("publish profile", () =>
     tenant.captureProfiles.publish(createdProfile.data.profileId, {
       etag: required(createdProfile.etag, "profile ETag"),
-      idempotencyKey: createIdempotencyKey("demo_publish"),
+      idempotencyKey: key("profile_publish"),
     }),
   );
   if (publishedProfile.data.state !== "active") throw new Error("profile was not activated");
@@ -452,7 +524,7 @@ async function publishedCaptureProfile({ tenant, profileId }) {
   return { name: profile.data.name, document: revision.data.document };
 }
 
-async function provisionCountryBoundProfile({ tenant, profileId, profile, country }) {
+async function provisionCountryBoundProfile({ tenant, profileId, profile, country, key }) {
   if (
     !profile.document.requirements.some(
       (requirement) => requirement.evidence_type === "idenqa.evidence.document_image",
@@ -485,13 +557,13 @@ async function provisionCountryBoundProfile({ tenant, profileId, profile, countr
         name: `${profile.name} (${country} demo)`,
         document: { ...profile.document, requirements },
       },
-      { idempotencyKey: createIdempotencyKey("demo_country_profile") },
+      { idempotencyKey: key("country_profile") },
     ),
   );
   const publishedProfile = await runStage("publish country profile", () =>
     tenant.captureProfiles.publish(createdProfile.data.profileId, {
       etag: required(createdProfile.etag, "profile ETag"),
-      idempotencyKey: createIdempotencyKey("demo_country_profile_publish"),
+      idempotencyKey: key("country_profile_publish"),
     }),
   );
   if (publishedProfile.data.state !== "active") throw new Error("profile was not activated");
