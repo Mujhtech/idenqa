@@ -45,7 +45,8 @@ const (
 	maximumHeaderCount        = 32
 )
 
-var httpSpanAttributeAllowList = []attribute.Key{
+var spanAttributeAllowList = []attribute.Key{
+	"task.name", "task.queue", "task.version", "task.attempt",
 	"http.method",
 	"http.scheme",
 	"http.route",
@@ -89,7 +90,7 @@ func NewProviders(serviceName, serviceVersion string) *Providers {
 		serviceVersion,
 		nil,
 		nil,
-		sdktrace.AlwaysSample(),
+		sdktrace.ParentBased(sdktrace.AlwaysSample()),
 		time.Minute,
 		defaultTraceExportTimeout,
 	)
@@ -175,7 +176,7 @@ func newProviders(
 	return &Providers{
 		tracer: tracer,
 		meter:  meter,
-		safe:   NewAttributeFilteringTracerProvider(tracer, httpSpanAttributeAllowList...),
+		safe:   NewAttributeFilteringTracerProvider(tracer, spanAttributeAllowList...),
 	}
 }
 
