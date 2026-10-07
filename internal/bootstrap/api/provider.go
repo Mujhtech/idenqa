@@ -24,6 +24,7 @@ import (
 	tinkcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto/tink"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/platform/kms"
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
 	pg "github.com/Mujhtech/idenqa/internal/platform/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/postgres/sqlgen"
 	"github.com/Mujhtech/idenqa/internal/provider"
@@ -56,6 +57,7 @@ func configuredProviderManifests(configuration config.API) map[string]providerv1
 }
 
 type providerEvidenceRoutes struct {
+	tracer     observability.Tracer
 	pool       database
 	plan       *provider.Plan
 	credential [32]byte
@@ -207,6 +209,8 @@ func (routes *providerEvidenceRoutes) read(w http.ResponseWriter, r *http.Reques
 		if err != nil {
 			return err
 		}
+		authorizer.WithTracer(routes.tracer)
+		reader.WithTracer(routes.tracer)
 		grantID, err := id.ParseGrant(input.GrantID)
 		if err != nil {
 			return evidence.ErrReadDenied

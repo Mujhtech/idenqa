@@ -12,11 +12,14 @@ import (
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	taskheadgate "github.com/Mujhtech/idenqa/internal/platform/task/headgate"
+	"github.com/Mujhtech/idenqa/internal/platform/telemetry"
 	"github.com/Mujhtech/idenqa/internal/provider"
 	providerpostgres "github.com/Mujhtech/idenqa/internal/provider/postgres"
 	"github.com/Mujhtech/idenqa/internal/transport/httpapi"
 	"github.com/Mujhtech/idenqa/internal/transport/runner"
 	verificationtask "github.com/Mujhtech/idenqa/internal/verification/task"
+	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 )
 
@@ -28,6 +31,7 @@ func newProviderCallbackRoutes(
 	pool database,
 	identifiers *id.Generator,
 	logger *slog.Logger,
+	providers *telemetry.Providers,
 ) (*httpapi.ProviderCallbackRoutes, closer, error) {
 	settings, err := config.LoadProviderRuntime(configuration.ProviderRuntimeFile)
 	if err != nil {
@@ -45,7 +49,7 @@ func newProviderCallbackRoutes(
 	if err != nil {
 		return nil, nil, err
 	}
-	options, err := runner.DialOptions(runner.ClientConfig{Credential: bearer, TLS: tlsCredentials})
+	options, err := runner.DialOptions(runner.ClientConfig{Credential: bearer, TLS: tlsCredentials, TracerProvider: providers.TracerProvider(), Propagator: propagation.TraceContext{}})
 	if err != nil {
 		return nil, nil, err
 	}
@@ -69,12 +73,13 @@ func newProviderCallbackRoutes(
 		requests,
 		client,
 		requests,
-		providerCallbackWakeup{database: pool, configuration: configuration, identifiers: identifiers},
+		providerCallbackWakeup{database: pool, configuration: configuration, identifiers: identifiers, tracerProvider: providers.TracerProvider()},
 		time.Now,
 	)
 	if err != nil {
 		return fail(err)
 	}
+	service.WithTracer(telemetry.NewOperationTracer(providers.TracerProvider()))
 	routes, err := httpapi.NewProviderCallbackRoutes(service, logger)
 	if err != nil {
 		return fail(err)
@@ -92,9 +97,10 @@ func (connection providerRunnerConnection) Close() { _ = connection.connection.C
 // idempotently. The deterministic intent key means an already-scheduled
 // continuation is never duplicated; Headgate remains the selected queue.
 type providerCallbackWakeup struct {
-	database      database
-	configuration config.API
-	identifiers   *id.Generator
+	tracerProvider trace.TracerProvider
+	database       database
+	configuration  config.API
+	identifiers    *id.Generator
 }
 
 func (wakeup providerCallbackWakeup) Wake(ctx context.Context, target provider.CallbackTarget) error {
@@ -121,6 +127,7 @@ func (wakeup providerCallbackWakeup) Wake(ctx context.Context, target provider.C
 	if err != nil {
 		return err
 	}
+	adapter.WithTracerProvider(wakeup.tracerProvider)
 	// A duplicate intent key reports success: the existing continuation will
 	// observe the durable receipt on its next bounded poll.
 	return adapter.Enqueue(ctx, intent)

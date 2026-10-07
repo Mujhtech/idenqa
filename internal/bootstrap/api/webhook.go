@@ -8,12 +8,14 @@ import (
 	pg "github.com/Mujhtech/idenqa/internal/platform/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/task"
 	taskheadgate "github.com/Mujhtech/idenqa/internal/platform/task/headgate"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // webhookEnqueuer adapts public replay to the same installation's owned queue.
 type webhookEnqueuer struct {
-	database      database
-	configuration config.API
+	tracerProvider trace.TracerProvider
+	database       database
+	configuration  config.API
 }
 
 func (queue webhookEnqueuer) EnqueueTx(ctx context.Context, tx pg.Transaction, intents ...task.Intent) error {
@@ -27,5 +29,6 @@ func (queue webhookEnqueuer) EnqueueTx(ctx context.Context, tx pg.Transaction, i
 	if err != nil {
 		return delivery.ErrQueueUnavailable
 	}
+	adapter.WithTracerProvider(queue.tracerProvider)
 	return adapter.EnqueueTx(ctx, tx, intents...)
 }

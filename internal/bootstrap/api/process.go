@@ -8,6 +8,8 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/Mujhtech/idenqa/internal/fraud"
@@ -22,6 +24,8 @@ import (
 	"github.com/Mujhtech/idenqa/db/migrations"
 	"github.com/Mujhtech/idenqa/internal/access"
 	accesspostgres "github.com/Mujhtech/idenqa/internal/access/postgres"
+	"github.com/Mujhtech/idenqa/internal/audit"
+	auditpostgres "github.com/Mujhtech/idenqa/internal/audit/postgres"
 	"github.com/Mujhtech/idenqa/internal/authority"
 	authoritypostgres "github.com/Mujhtech/idenqa/internal/authority/postgres"
 	"github.com/Mujhtech/idenqa/internal/buildinfo"
@@ -56,8 +60,13 @@ import (
 	providerpostgres "github.com/Mujhtech/idenqa/internal/provider/postgres"
 	"github.com/Mujhtech/idenqa/internal/realtime"
 	realtimepostgres "github.com/Mujhtech/idenqa/internal/realtime/postgres"
+	"github.com/Mujhtech/idenqa/internal/requestlog"
+	requestlogpostgres "github.com/Mujhtech/idenqa/internal/requestlog/postgres"
 	"github.com/Mujhtech/idenqa/internal/review"
 	reviewpostgres "github.com/Mujhtech/idenqa/internal/review/postgres"
+	"github.com/Mujhtech/idenqa/internal/reviewbrowser"
+	reviewbrowserpostgres "github.com/Mujhtech/idenqa/internal/reviewbrowser/postgres"
+	"github.com/Mujhtech/idenqa/internal/reviewdelegation"
 	"github.com/Mujhtech/idenqa/internal/support"
 	supportpostgres "github.com/Mujhtech/idenqa/internal/support/postgres"
 	tenantpostgres "github.com/Mujhtech/idenqa/internal/tenant/postgres"
@@ -65,6 +74,7 @@ import (
 	tenantexportpostgres "github.com/Mujhtech/idenqa/internal/tenantexport/postgres"
 	"github.com/Mujhtech/idenqa/internal/transport/httpapi"
 	transportrealtime "github.com/Mujhtech/idenqa/internal/transport/realtime"
+	"github.com/Mujhtech/idenqa/internal/transport/reviewbridge"
 	"github.com/Mujhtech/idenqa/internal/verification"
 	verificationpostgres "github.com/Mujhtech/idenqa/internal/verification/postgres"
 )
@@ -115,24 +125,26 @@ func (database *processDatabase) CheckHeadgate(ctx context.Context, schema strin
 
 // Process owns the API process lifecycle and the resources it constructs.
 type Process struct {
-	address          string
-	shutdownTimeout  time.Duration
-	server           server
-	tlsEnabled       bool
-	listen           listenFunc
-	health           *health.State
-	logger           *slog.Logger
-	build            buildinfo.Info
-	telemetry        shutdowner
-	realtime         connectionDrainer
-	wakeups          closer
-	webhookWakeups   closer
-	providerRunner   closer
-	evidence         EvidenceLifecycle
-	database         database
-	databaseInterval time.Duration
-	databaseTimeout  time.Duration
-	headgateSchema   string
+	address            string
+	shutdownTimeout    time.Duration
+	server             server
+	tlsEnabled         bool
+	listen             listenFunc
+	health             *health.State
+	logger             *slog.Logger
+	build              buildinfo.Info
+	telemetry          shutdowner
+	realtime           connectionDrainer
+	wakeups            closer
+	webhookWakeups     closer
+	providerRunner     closer
+	evidence           EvidenceLifecycle
+	database           database
+	databaseInterval   time.Duration
+	databaseTimeout    time.Duration
+	headgateSchema     string
+	reviewBridgeSocket string
+	reviewBridgeServer *http.Server
 }
 
 // NewProcess composes an API process from validated configuration.
@@ -238,7 +250,7 @@ func newProcess(
 		return nil, err
 	}
 	connectionPool, err := openDatabase(ctx, postgres.Config{
-		URL:                 configuration.DatabaseURL,
+		URL:                 configuration.DatabaseConnectionString(),
 		Role:                configuration.DatabaseRole,
 		MaxConnections:      configuration.DatabaseMaxConnections,
 		MinConnections:      configuration.DatabaseMinConnections,
@@ -284,6 +296,11 @@ func newProcess(
 
 		return nil, fmt.Errorf("construct API telemetry: %w", err)
 	}
+	operationTracer := telemetry.NewOperationTracer(providers.TracerProvider())
+	if pool, ok := connectionPool.(*processDatabase); ok {
+		pool.WithTracer(operationTracer)
+	}
+
 	metrics, err := telemetry.NewDomainMetrics(providers.MeterProvider())
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
@@ -332,6 +349,52 @@ func newProcess(
 
 		return nil, fmt.Errorf("construct API access middleware: %w", err)
 	}
+	accessCatalogRoutes, err := httpapi.NewAccessCatalogRoutes(accessMiddleware, access.TenantRegistry(), logger)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, fmt.Errorf("construct access catalog routes: %w", err)
+	}
+	auditStore, err := auditpostgres.New(connectionPool)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, fmt.Errorf("construct audit persistence: %w", err)
+	}
+	auditReader, err := audit.NewReader(auditStore)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, fmt.Errorf("construct audit reader: %w", err)
+	}
+	auditReader.WithTracer(operationTracer)
+
+	auditRoutes, err := httpapi.NewAuditRoutes(accessMiddleware, auditReader, logger)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, fmt.Errorf("construct audit routes: %w", err)
+	}
+	requestLogStore, err := requestlogpostgres.New(connectionPool)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, fmt.Errorf("construct request-log persistence: %w", err)
+	}
+	requestLogService, err := requestlog.NewService(requestLogStore)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, fmt.Errorf("construct request-log service: %w", err)
+	}
+	requestLogService.WithTracer(operationTracer)
+
+	requestLogRoutes, err := httpapi.NewRequestLogRoutes(accessMiddleware, requestLogService, logger)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, fmt.Errorf("construct request-log routes: %w", err)
+	}
 	tenantReader, err := access.NewTenantReader(tenantStore)
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
@@ -339,6 +402,8 @@ func newProcess(
 
 		return nil, fmt.Errorf("construct tenant reader: %w", err)
 	}
+	tenantReader.WithTracer(operationTracer)
+
 	policyStore, err := policypostgres.New(connectionPool, infrastructure.keys)
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
@@ -402,6 +467,8 @@ func newProcess(
 
 		return nil, fmt.Errorf("construct policy decision reader: %w", err)
 	}
+	decisionReader.WithTracer(operationTracer)
+
 	decisionRoutes, err := httpapi.NewDecisionRoutes(accessMiddleware, decisionReader, logger)
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
@@ -435,7 +502,34 @@ func newProcess(
 		connectionPool.Close()
 		return nil, fmt.Errorf("construct review service: %w", err)
 	}
+	reviewService.WithTracer(operationTracer)
+
 	reviewService.WithMetrics(metrics)
+	var reviewBridgeServer *http.Server
+	if configuration.ReviewBridgeSocket != "" {
+		authorityTTL := configuration.ReviewBridgeAuthorityTTL
+		if authorityTTL == 0 {
+			authorityTTL = time.Minute
+		}
+		verifier, err := reviewdelegation.NewVerifier(configuration.ReviewBridgePublicKeys.Values(), reviewdelegation.Binding{
+			OrganisationID: configuration.ReviewBridgeOrganisationID,
+			EnvironmentID:  configuration.ReviewBridgeEnvironmentID,
+			DeploymentID:   configuration.ReviewBridgeDeploymentID,
+			Region:         configuration.Region,
+		}, authorityTTL, time.Now)
+		if err != nil {
+			_ = providers.Shutdown(context.Background())
+			connectionPool.Close()
+			return nil, fmt.Errorf("configure review command verifier: %w", err)
+		}
+		bridge, err := reviewbridge.NewHandler(reviewService, reviewStore, verifier)
+		if err != nil {
+			_ = providers.Shutdown(context.Background())
+			connectionPool.Close()
+			return nil, fmt.Errorf("construct review command bridge: %w", err)
+		}
+		reviewBridgeServer = &http.Server{Handler: bridge, ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 10 * time.Second, IdleTimeout: 30 * time.Second}
+	}
 	reviewRoutes, err := httpapi.NewReviewRoutes(accessMiddleware, reviewService, logger)
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
@@ -459,6 +553,8 @@ func newProcess(
 		connectionPool.Close()
 		return nil, err
 	}
+	recaptureService.WithTracer(operationTracer)
+
 	reviewRoutes = reviewRoutes.WithRecapture(recaptureService).WithQueue(reviewStore, cursorCodec)
 	profileStore, err := verificationpostgres.New(connectionPool, catalog)
 	if err != nil {
@@ -480,6 +576,8 @@ func newProcess(
 
 		return nil, fmt.Errorf("construct capture profile service: %w", err)
 	}
+	profileService.WithTracer(operationTracer)
+
 	profileRoutes, err := httpapi.NewProfileRoutes(
 		accessMiddleware,
 		profileService,
@@ -524,6 +622,8 @@ func newProcess(
 
 		return nil, fmt.Errorf("construct verification session service: %w", err)
 	}
+	sessionService.WithTracer(operationTracer)
+
 	var experienceStore *experiencepostgres.Store
 	var experienceRoutes RouteRegistrar
 	var experienceService *experience.Service
@@ -570,6 +670,8 @@ func newProcess(
 
 			return nil, fmt.Errorf("construct experience service: %w", err)
 		}
+		experienceService.WithTracer(operationTracer)
+
 		sessionService.WithExperience(experienceService)
 	}
 	captureAuthenticator, err := verification.NewCaptureAuthenticator(
@@ -607,6 +709,8 @@ func newProcess(
 
 		return nil, fmt.Errorf("construct capture outcome service: %w", err)
 	}
+	captureOutcomeService.WithTracer(operationTracer)
+
 	outcomeAuthenticator, err := verification.NewOutcomeAuthenticator(sessionStore, outcomeSigner, clock.System{})
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
@@ -642,6 +746,8 @@ func newProcess(
 		connectionPool.Close()
 		return nil, err
 	}
+	cancellationService.WithTracer(operationTracer)
+
 	cancellationMiddleware, err := httpapi.NewCaptureAccessMiddleware(verification.CancellationAuthenticator{Authenticator: captureAuthenticator}, logger)
 	if err != nil {
 		connectionPool.Close()
@@ -667,6 +773,43 @@ func newProcess(
 
 		return nil, fmt.Errorf("construct verification routes: %w", err)
 	}
+	verificationRoutes.WithList(sessionService, cursorCodec)
+	inspectionService, err := verification.NewInspectionService(sessionStore)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, fmt.Errorf("construct verification inspection service: %w", err)
+	}
+	inspectionService.WithTracer(operationTracer)
+
+	verificationRoutes.WithInspection(inspectionService)
+	historyService, err := verification.NewHistoryService(sessionStore)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, fmt.Errorf("construct verification history service: %w", err)
+	}
+	historyService.WithTracer(operationTracer)
+
+	verificationRoutes.WithHistory(historyService)
+	signalService, err := verification.NewSignalService(sessionStore)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, fmt.Errorf("construct verification signal service: %w", err)
+	}
+	signalService.WithTracer(operationTracer)
+
+	verificationRoutes.WithSignals(signalService)
+	timelineService, err := verification.NewTimelineService(sessionStore, time.Now)
+	if err != nil {
+		_ = providers.Shutdown(context.Background())
+		connectionPool.Close()
+		return nil, fmt.Errorf("construct verification timeline service: %w", err)
+	}
+	timelineService.WithTracer(operationTracer)
+
+	verificationRoutes.WithTimeline(timelineService)
 	documentSelectionStore, err := verificationpostgres.NewDocumentSelectionStore(sessionStore, clock.System{})
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
@@ -679,6 +822,8 @@ func newProcess(
 		connectionPool.Close()
 		return nil, fmt.Errorf("construct document selection service: %w", err)
 	}
+	documentSelectionService.WithTracer(operationTracer)
+
 	verificationRoutes.WithDocumentSelection(documentSelectionService)
 	var nativeBootstrapRoutes RouteRegistrar
 	if len(configuration.NativeApplicationIDs) > 0 {
@@ -688,6 +833,8 @@ func newProcess(
 			connectionPool.Close()
 			return nil, fmt.Errorf("construct native bootstrap service: %w", err)
 		}
+		nativeBootstrapService.WithTracer(operationTracer)
+
 		nativeBootstrapRoutes, err = httpapi.NewNativeBootstrapRoutes(captureMiddleware, nativeBootstrapService, catalog, logger)
 		if err != nil {
 			_ = providers.Shutdown(context.Background())
@@ -717,6 +864,8 @@ func newProcess(
 
 		return nil, fmt.Errorf("construct processing authority service: %w", err)
 	}
+	authorityService.WithTracer(operationTracer)
+
 	authorityRoutes, err := httpapi.NewAuthorityRoutes(
 		accessMiddleware,
 		captureMiddleware,
@@ -750,6 +899,8 @@ func newProcess(
 
 		return nil, fmt.Errorf("construct realtime command service: %w", err)
 	}
+	realtimeCommandService.WithTracer(operationTracer)
+
 	ticketGenerator, err := realtime.NewSystemTicketGenerator()
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
@@ -779,6 +930,8 @@ func newProcess(
 
 		return nil, fmt.Errorf("construct realtime ticket service: %w", err)
 	}
+	ticketService.WithTracer(operationTracer)
+
 	connectionRoutes, err := httpapi.NewCaptureConnectionRoutes(
 		captureMiddleware,
 		ticketService,
@@ -879,6 +1032,8 @@ func newProcess(
 		connectionPool.Close()
 		return nil, err
 	}
+	identityService.WithTracer(operationTracer)
+
 	identityRoutes, err := httpapi.NewIdentityRoutes(accessMiddleware, identityService, logger)
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
@@ -897,6 +1052,8 @@ func newProcess(
 		connectionPool.Close()
 		return nil, err
 	}
+	keyCustodyService.WithTracer(operationTracer)
+
 	kmsRoutes, err := httpapi.NewKMSRoutes(accessMiddleware, keyCustodyService, logger)
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
@@ -915,6 +1072,8 @@ func newProcess(
 		connectionPool.Close()
 		return nil, err
 	}
+	supportService.WithTracer(operationTracer)
+
 	supportRoutes, err := httpapi.NewSupportRoutes(accessMiddleware, supportService, logger)
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
@@ -930,6 +1089,9 @@ func newProcess(
 
 		return nil, err
 	}
+	keyRewrapService.WithTracer(operationTracer)
+	keyDestructionService.WithTracer(operationTracer)
+	keyRecoveryService.WithTracer(operationTracer)
 	keyOperationRoutes, err := keyOperationRoutesOrNil(
 		accessMiddleware, keyRewrapService, keyDestructionService, keyRecoveryService, logger,
 	)
@@ -951,6 +1113,8 @@ func newProcess(
 		connectionPool.Close()
 		return nil, err
 	}
+	fraudService.WithTracer(operationTracer)
+
 	fraudRoutes, err := httpapi.NewFraudRoutes(accessMiddleware, fraudService, logger)
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
@@ -969,6 +1133,8 @@ func newProcess(
 		connectionPool.Close()
 		return nil, err
 	}
+	modelService.WithTracer(operationTracer)
+
 	modelRoutes, err := httpapi.NewModelRoutes(accessMiddleware, modelService, logger)
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
@@ -999,6 +1165,8 @@ func newProcess(
 		connectionPool.Close()
 		return nil, fmt.Errorf("construct provider health service: %w", err)
 	}
+	providerHealth.WithTracer(operationTracer)
+
 	providerHealth.WithMetrics(metrics)
 	registrationService, err := provider.NewRegistrationManagement(registrationStore, identifiers, time.Now, configuration.VerificationIdempotencyTTL, configuredProviderManifests(configuration))
 	if err != nil {
@@ -1006,6 +1174,8 @@ func newProcess(
 		connectionPool.Close()
 		return nil, fmt.Errorf("construct provider registration service: %w", err)
 	}
+	registrationService.WithTracer(operationTracer)
+
 	registrationService.WithHealth(providerHealth)
 	providerRegistrationRoutes, err := httpapi.NewProviderRoutes(accessMiddleware, registrationService, cursorCodec, logger)
 	if err != nil {
@@ -1025,6 +1195,8 @@ func newProcess(
 		connectionPool.Close()
 		return nil, err
 	}
+	policyManagement.WithTracer(operationTracer)
+
 	policyRoutes, err := httpapi.NewPolicyRoutes(accessMiddleware, policyManagement, cursorCodec, logger)
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
@@ -1061,13 +1233,15 @@ func newProcess(
 		connectionPool.Close()
 		return nil, err
 	}
+	assuranceService.WithTracer(operationTracer)
+
 	assuranceRoutes, err := httpapi.NewAssuranceRoutes(accessMiddleware, assuranceService, logger)
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
 		connectionPool.Close()
 		return nil, err
 	}
-	webhookStore, err := deliverypostgres.NewManagementStore(connectionPool, webhookEnqueuer{connectionPool, configuration}, identifiers, time.Now)
+	webhookStore, err := deliverypostgres.NewManagementStore(connectionPool, webhookEnqueuer{database: connectionPool, configuration: configuration, tracerProvider: providers.TracerProvider()}, identifiers, time.Now)
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
 		connectionPool.Close()
@@ -1079,6 +1253,8 @@ func newProcess(
 		connectionPool.Close()
 		return nil, err
 	}
+	webhookService.WithTracer(operationTracer)
+
 	webhookStream, err := delivery.NewStream(webhookStore, infrastructure.keys)
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
@@ -1115,6 +1291,8 @@ func newProcess(
 		connectionPool.Close()
 		return nil, err
 	}
+	reviewManagement.WithTracer(operationTracer)
+
 	reviewManagementRoutes, err := httpapi.NewReviewManagementRoutes(accessMiddleware, reviewManagement, logger)
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
@@ -1154,6 +1332,8 @@ func newProcess(
 		connectionPool.Close()
 		return nil, fmt.Errorf("construct proposal service: %w", err)
 	}
+	proposalService.WithTracer(operationTracer)
+
 	proposalRoutes, err := httpapi.NewProposalRoutes(accessMiddleware, proposalService, logger)
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
@@ -1185,6 +1365,8 @@ func newProcess(
 		connectionPool.Close()
 		return nil, err
 	}
+	followupService.WithTracer(operationTracer)
+
 	followupRoutes, err := httpapi.NewReviewFollowupRoutes(accessMiddleware, followupService, logger)
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
@@ -1229,7 +1411,7 @@ func newProcess(
 	}
 
 	routes := []RouteRegistrar{
-		assuranceRoutes, identityRoutes, fraudRoutes, followupRoutes, reviewManagementRoutes, proposalRoutes, tenantRoutes, modelRoutes, policyRoutes, policySimulationRoutes, webhookRoutes, decisionRoutes, reviewRoutes, profileRoutes, verificationRoutes, captureOutcomeRoutes, cancellationRoutes, authorityRoutes, connectionRoutes, realtimeRoutes, providerRegistrationRoutes, packRoutes, kmsRoutes, supportRoutes,
+		accessCatalogRoutes, auditRoutes, requestLogRoutes, assuranceRoutes, identityRoutes, fraudRoutes, followupRoutes, reviewManagementRoutes, proposalRoutes, tenantRoutes, modelRoutes, policyRoutes, policySimulationRoutes, webhookRoutes, decisionRoutes, reviewRoutes, profileRoutes, verificationRoutes, captureOutcomeRoutes, cancellationRoutes, authorityRoutes, connectionRoutes, realtimeRoutes, providerRegistrationRoutes, packRoutes, kmsRoutes, supportRoutes,
 	}
 	internalRoutes := []InternalRouteRegistrar{}
 	if keyOperationRoutes != nil {
@@ -1282,6 +1464,8 @@ func newProcess(
 			connectionPool.Close()
 			return nil, err
 		}
+		reviewEvidenceService.WithTracer(operationTracer)
+
 		reviewEvidenceRoutes, err := httpapi.NewReviewEvidenceRoutes(accessMiddleware, reviewEvidenceService, logger)
 		if err != nil {
 			_ = providers.Shutdown(context.Background())
@@ -1289,6 +1473,48 @@ func newProcess(
 			return nil, err
 		}
 		routes = append(routes, reviewEvidenceRoutes)
+		if len(configuration.ReviewBridgePublicKeys) > 0 {
+			authorityTTL := configuration.ReviewBridgeAuthorityTTL
+			if authorityTTL == 0 {
+				authorityTTL = time.Minute
+			}
+			verifier, err := reviewbrowser.NewVerifier(configuration.ReviewBridgePublicKeys.Values(), reviewbrowser.Binding{
+				OrganisationID: configuration.ReviewBridgeOrganisationID,
+				EnvironmentID:  configuration.ReviewBridgeEnvironmentID,
+				DeploymentID:   configuration.ReviewBridgeDeploymentID,
+				Region:         configuration.Region,
+			}, authorityTTL, time.Now)
+			if err != nil {
+				_ = providers.Shutdown(context.Background())
+				connectionPool.Close()
+				return nil, fmt.Errorf("configure review browser verifier: %w", err)
+			}
+			sessionStore, err := reviewbrowserpostgres.New(connectionPool)
+			if err != nil {
+				_ = providers.Shutdown(context.Background())
+				connectionPool.Close()
+				return nil, err
+			}
+			sessionTTL := configuration.ReviewBrowserSessionTTL
+			if sessionTTL == 0 {
+				sessionTTL = 5 * time.Minute
+			}
+			sessionService, err := reviewbrowser.NewSystem(verifier, sessionStore, reviewEvidenceService, sessionTTL)
+			if err != nil {
+				_ = providers.Shutdown(context.Background())
+				connectionPool.Close()
+				return nil, fmt.Errorf("construct review browser sessions: %w", err)
+			}
+			sessionService.WithTracer(operationTracer)
+
+			browserRoutes, err := httpapi.NewReviewBrowserRoutes(sessionService, reviewEvidenceService, reviewService, logger)
+			if err != nil {
+				_ = providers.Shutdown(context.Background())
+				connectionPool.Close()
+				return nil, err
+			}
+			routes = append(routes, browserRoutes)
+		}
 
 		evidenceStore, err := evidencepostgres.New(connectionPool, infrastructure.keys, catalog)
 		if err != nil {
@@ -1347,6 +1573,8 @@ func newProcess(
 			connectionPool.Close()
 			return nil, fmt.Errorf("construct privacy service: %w", err)
 		}
+		privacyService.WithTracer(operationTracer)
+
 		privacyService.WithMetrics(metrics)
 		privacyDispatcher, err := privacy.NewDispatcher(
 			privacySubjectBundle{exporter: tenantSubjectExporter},
@@ -1364,6 +1592,8 @@ func newProcess(
 			connectionPool.Close()
 			return nil, fmt.Errorf("construct privacy request service: %w", err)
 		}
+		privacyRequestService.WithTracer(operationTracer)
+
 		privacyRequestService.WithMetrics(metrics)
 		authorityService.WithRestrictionGate(privacyRequestService)
 		privacyRoutes, err := httpapi.NewPrivacyRoutes(accessMiddleware, privacyService, privacyRequestService, captureOutcomeMiddleware, cursorCodec, logger)
@@ -1401,6 +1631,8 @@ func newProcess(
 
 			return nil, fmt.Errorf("construct evidence upload issuance: %w", err)
 		}
+		issuer.WithTracer(operationTracer)
+
 		preflight, err := evidence.NewUploadPreflight(evidenceStore, clock.System{})
 		if err != nil {
 			_ = providers.Shutdown(context.Background())
@@ -1415,6 +1647,8 @@ func newProcess(
 
 			return nil, fmt.Errorf("construct capture progress reader: %w", err)
 		}
+		progressReader.WithTracer(operationTracer)
+
 		acceptance, err := authority.NewUploadAcceptanceService(
 			authorityStore,
 			preflight,
@@ -1431,6 +1665,8 @@ func newProcess(
 
 			return nil, fmt.Errorf("construct evidence upload acceptance: %w", err)
 		}
+		acceptance.WithTracer(operationTracer)
+
 		uploadRoutes, err := httpapi.NewEvidenceUploadRoutes(
 			captureMiddleware,
 			issuer,
@@ -1465,7 +1701,7 @@ func newProcess(
 			connectionPool.Close()
 			return nil, err
 		}
-		callbackRoutes, callbackRunner, err := newProviderCallbackRoutes(configuration, connectionPool, identifiers, logger)
+		callbackRoutes, callbackRunner, err := newProviderCallbackRoutes(configuration, connectionPool, identifiers, logger, providers)
 		if err != nil {
 			_ = providers.Shutdown(context.Background())
 			connectionPool.Close()
@@ -1473,6 +1709,7 @@ func newProcess(
 		}
 		routes = append(routes, callbackRoutes)
 		providerRunner = callbackRunner
+		providerRoutes.tracer = operationTracer
 		internalRoutes = append(internalRoutes, providerRoutes)
 	}
 	if configuration.ModelRuntimeFile != "" {
@@ -1481,6 +1718,9 @@ func newProcess(
 			_ = providers.Shutdown(context.Background())
 			connectionPool.Close()
 			return nil, err
+		}
+		for _, route := range modelRoutes.routes {
+			route.tracer = operationTracer
 		}
 		internalRoutes = append(internalRoutes, modelRoutes)
 	}
@@ -1493,6 +1733,7 @@ func newProcess(
 		MaxBodyBytes:         configuration.HTTPMaxBodyBytes,
 		AllowedOrigins:       configuration.HTTPCORSAllowedOrigins,
 		EvidenceUploadPolicy: uploadPolicy,
+		RequestLogRecorder:   requestLogService,
 	}, routes, internalRoutes)
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
@@ -1517,19 +1758,21 @@ func newProcess(
 
 			return listenConfig.Listen(ctx, network, address)
 		},
-		health:           state,
-		logger:           logger,
-		build:            build,
-		telemetry:        providers,
-		realtime:         connectionLifecycle,
-		wakeups:          wakeupHub,
-		webhookWakeups:   webhookWakeupHub,
-		providerRunner:   providerRunner,
-		evidence:         infrastructure.lifecycle,
-		database:         connectionPool,
-		databaseInterval: configuration.DatabaseHealthInterval,
-		databaseTimeout:  configuration.DatabaseHealthTimeout,
-		headgateSchema:   configuration.HeadgateSchema,
+		health:             state,
+		logger:             logger,
+		build:              build,
+		telemetry:          providers,
+		realtime:           connectionLifecycle,
+		wakeups:            wakeupHub,
+		webhookWakeups:     webhookWakeupHub,
+		providerRunner:     providerRunner,
+		evidence:           infrastructure.lifecycle,
+		database:           connectionPool,
+		databaseInterval:   configuration.DatabaseHealthInterval,
+		databaseTimeout:    configuration.DatabaseHealthTimeout,
+		headgateSchema:     configuration.HeadgateSchema,
+		reviewBridgeSocket: configuration.ReviewBridgeSocket,
+		reviewBridgeServer: reviewBridgeServer,
 	}
 	constructed = true
 
@@ -1671,6 +1914,24 @@ func (process *Process) Run(ctx context.Context) (runErr error) {
 	if err != nil {
 		return fmt.Errorf("listen for API traffic: %w", err)
 	}
+	var reviewListener net.Listener
+	if process.reviewBridgeServer != nil {
+		if !filepath.IsAbs(process.reviewBridgeSocket) || filepath.Clean(process.reviewBridgeSocket) != process.reviewBridgeSocket {
+			_ = listener.Close()
+			return errors.New("review bridge socket must be a clean absolute path")
+		}
+		reviewListener, err = process.listen(ctx, "unix", process.reviewBridgeSocket)
+		if err != nil {
+			_ = listener.Close()
+			return fmt.Errorf("listen for review bridge traffic: %w", err)
+		}
+		if err := os.Chmod(process.reviewBridgeSocket, 0o600); err != nil {
+			_ = reviewListener.Close()
+			_ = listener.Close()
+			return fmt.Errorf("protect review bridge socket: %w", err)
+		}
+		defer os.Remove(process.reviewBridgeSocket)
+	}
 
 	process.health.MarkStarted()
 	process.health.MarkReady()
@@ -1685,7 +1946,7 @@ func (process *Process) Run(ctx context.Context) (runErr error) {
 		<-monitorDone
 	}
 
-	serveErrors := make(chan error, 1)
+	serveErrors := make(chan error, 2)
 	go func() {
 		if process.tlsEnabled {
 			serveErrors <- process.server.ServeTLS(listener, "", "")
@@ -1694,6 +1955,9 @@ func (process *Process) Run(ctx context.Context) (runErr error) {
 		}
 		serveErrors <- process.server.Serve(listener)
 	}()
+	if reviewListener != nil {
+		go func() { serveErrors <- process.reviewBridgeServer.Serve(reviewListener) }()
+	}
 
 	process.logger.InfoContext(
 		ctx,
@@ -1711,9 +1975,16 @@ func (process *Process) Run(ctx context.Context) (runErr error) {
 		process.health.BeginDrain()
 		drainContext, cancel := context.WithTimeout(context.WithoutCancel(ctx), process.shutdownTimeout)
 		defer cancel()
+		apiShutdownErr := process.server.Shutdown(drainContext)
+		bridgeErr := error(nil)
+		if process.reviewBridgeServer != nil {
+			bridgeErr = process.reviewBridgeServer.Shutdown(drainContext)
+		}
 
 		return errors.Join(
 			normalizeServeError(serveErr),
+			wrapError("shut down API", apiShutdownErr),
+			wrapError("shut down review bridge", bridgeErr),
 			wrapError("drain realtime connections", process.drainRealtime(drainContext)),
 		)
 	case <-ctx.Done():
@@ -1770,15 +2041,25 @@ func (process *Process) shutdown(parent context.Context, serveErrors <-chan erro
 		realtimeErrors <- process.drainRealtime(shutdownContext)
 	}()
 	shutdownErr := process.server.Shutdown(shutdownContext)
+	bridgeShutdownErr := error(nil)
+	if process.reviewBridgeServer != nil {
+		bridgeShutdownErr = process.reviewBridgeServer.Shutdown(shutdownContext)
+	}
 	realtimeErr := <-realtimeErrors
 	serveErr := <-serveErrors
 	serveErr = normalizeServeError(serveErr)
+	bridgeServeErr := error(nil)
+	if process.reviewBridgeServer != nil {
+		bridgeServeErr = normalizeServeError(<-serveErrors)
+	}
 
-	if shutdownErr != nil || realtimeErr != nil || serveErr != nil {
+	if shutdownErr != nil || bridgeShutdownErr != nil || realtimeErr != nil || serveErr != nil || bridgeServeErr != nil {
 		return errors.Join(
 			wrapError("shut down API", shutdownErr),
+			wrapError("shut down review bridge", bridgeShutdownErr),
 			wrapError("drain realtime connections", realtimeErr),
 			serveErr,
+			bridgeServeErr,
 		)
 	}
 

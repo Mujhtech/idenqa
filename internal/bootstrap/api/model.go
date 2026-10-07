@@ -23,6 +23,7 @@ import (
 	tinkcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto/tink"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/platform/kms"
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
 	pg "github.com/Mujhtech/idenqa/internal/platform/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/postgres/sqlgen"
 	"github.com/Mujhtech/idenqa/internal/tenant"
@@ -35,6 +36,7 @@ import (
 const modelEvidenceLimit = 10 << 20
 
 type modelEvidenceRoutes struct {
+	tracer     observability.Tracer
 	pool       database
 	plan       *model.Plan
 	credential [32]byte
@@ -178,6 +180,8 @@ func (routes *modelEvidenceRoutes) read(w http.ResponseWriter, r *http.Request) 
 		if err != nil {
 			return err
 		}
+		authorizer.WithTracer(routes.tracer)
+		reader.WithTracer(routes.tracer)
 		grantID, err := id.ParseGrant(input.GrantID)
 		if err != nil {
 			return evidence.ErrReadDenied
