@@ -86,6 +86,12 @@ func TestRun(t *testing.T) {
 			wantStderr: "requires --confirm",
 		},
 		{
+			name:       "runtime permissions require an explicit role",
+			args:       []string{"migrate", "permissions"},
+			wantCode:   2,
+			wantStderr: "requires --runtime-role",
+		},
+		{
 			name:       "tenant operation required",
 			args:       []string{"tenant"},
 			wantCode:   2,

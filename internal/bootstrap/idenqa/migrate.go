@@ -38,6 +38,7 @@ func newMigrationCommand() *cobra.Command {
 		newMigrationOperationCommand("version", options),
 		newMigrationDownCommand(options),
 		newHeadgateMigrationCommand(options),
+		newRuntimePermissionsCommand(options),
 	)
 
 	return command
