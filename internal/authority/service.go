@@ -343,6 +343,10 @@ func (service *Service) Declare(
 	if !session.AcceptsCaptureAt(now) || input.ExpiresAt.After(session.ExpiresAt()) {
 		return Authority{}, ErrConflict
 	}
+	purposes, evidenceTypes := requirementScope(session.Requirements())
+	if !slices.Contains(purposes, input.Purpose) {
+		return Authority{}, fmt.Errorf("declare authority: purpose is absent from session requirement purposes: %w", ErrConflict)
+	}
 	notice, err := service.notices.FindNotice(ctx, accessContext.TenantScope(), input.NoticeID)
 	if err != nil {
 		return Authority{}, err
@@ -363,7 +367,6 @@ func (service *Service) Declare(
 	if err != nil {
 		return Authority{}, fmt.Errorf("generate authority event id: %w", err)
 	}
-	purposes, evidenceTypes := requirementScope(session.Requirements())
 	declaration, err := New(Record{
 		ID: authorityID, TenantID: accessContext.TenantScope().ID(),
 		SubjectID: subjectID, VerificationID: session.ID(), NoticeID: notice.ID(),

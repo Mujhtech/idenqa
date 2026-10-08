@@ -1,11 +1,13 @@
 package authority_test
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"testing"
 	"time"
 
+	"github.com/Mujhtech/idenqa/internal/access"
 	"github.com/Mujhtech/idenqa/internal/authority"
 	"github.com/Mujhtech/idenqa/internal/evidence"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
@@ -13,6 +15,59 @@ import (
 	"github.com/Mujhtech/idenqa/internal/tenant"
 	"github.com/Mujhtech/idenqa/internal/verification"
 )
+
+func TestServiceDeclareValidatesPurposeAgainstPinnedRequirements(t *testing.T) {
+	t.Parallel()
+	for _, test := range []struct {
+		name           string
+		profilePurpose string
+		purpose        string
+		wantConflict   bool
+	}{
+		{name: "matching identity purpose", profilePurpose: "idenqa.purpose.identity_verification", purpose: "idenqa.purpose.identity_verification"},
+		{name: "matching fraud purpose", profilePurpose: "idenqa.purpose.fraud_prevention", purpose: "idenqa.purpose.fraud_prevention"},
+		{name: "absent purpose", profilePurpose: "idenqa.purpose.identity_verification", purpose: "idenqa.purpose.fraud_prevention", wantConflict: true},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			fixture := newFixture(t, true)
+			fixture.request.Purpose = test.profilePurpose
+			repository := &authorityServiceStub{snapshot: authority.Snapshot{Notice: fixture.notice}, session: authoritySession(t, fixture)}
+			identifiers, err := id.NewGenerator(authorityClock{now: fixture.now}, bytes.NewReader(bytes.Repeat([]byte{1}, 512)))
+			if err != nil {
+				t.Fatalf("NewGenerator() error = %v", err)
+			}
+			service, err := authority.NewService(repository, repository, repository, repository, identifiers, authorityClock{now: fixture.now}, time.Hour)
+			if err != nil {
+				t.Fatalf("NewService() error = %v", err)
+			}
+			record := fixture.authority.Record()
+			declaration, err := service.Declare(t.Context(), authorityAccess(t, fixture), "declare-purpose-test", authority.DeclarationInput{
+				VerificationID: record.VerificationID, NoticeID: record.NoticeID,
+				Category: record.Category, Purpose: test.purpose, Jurisdiction: record.Jurisdiction,
+				PolicyPack: record.PolicyPack, IsConsentRequired: record.IsConsentRequired,
+				RecipientReference: record.RecipientReference, RecipientDisplayName: record.RecipientDisplayName,
+				Regions: record.Regions, RetentionReference: record.RetentionReference,
+				ValidFrom: record.ValidFrom, ExpiresAt: record.ExpiresAt,
+			})
+			if test.wantConflict {
+				if !errors.Is(err, authority.ErrConflict) {
+					t.Fatalf("Declare() error = %v, want ErrConflict", err)
+				}
+				if repository.declared != nil {
+					t.Fatal("an incompatible purpose was persisted")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("Declare() error = %v", err)
+			}
+			if declaration.Record().Purpose != test.purpose || repository.declared == nil {
+				t.Fatal("matching authority was not persisted with its declared purpose")
+			}
+		})
+	}
+}
 
 func TestServiceAuthorizeEvidenceReturnsPinnedLiveDecision(t *testing.T) {
 	t.Parallel()
@@ -76,6 +131,7 @@ func (source authorityClock) Now() time.Time { return source.now }
 type authorityServiceStub struct {
 	snapshot authority.Snapshot
 	session  verification.Session
+	declared *authority.Authority
 }
 
 func (stub *authorityServiceStub) CreateNotice(
@@ -91,15 +147,16 @@ func (stub *authorityServiceStub) FindNotice(
 	tenant.Scope,
 	id.Notice,
 ) (authority.Notice, error) {
-	return authority.Notice{}, nil
+	return stub.snapshot.Notice, nil
 }
 
 func (stub *authorityServiceStub) Declare(
-	context.Context,
-	tenant.Scope,
-	authority.DeclarationMutation,
+	_ context.Context,
+	_ tenant.Scope,
+	mutation authority.DeclarationMutation,
 ) (authority.Authority, error) {
-	return authority.Authority{}, nil
+	stub.declared = &mutation.Authority
+	return mutation.Authority, nil
 }
 
 func (stub *authorityServiceStub) FindByVerification(
@@ -165,6 +222,9 @@ func (stub *authorityServiceStub) NewEvent() (id.Event, error) { return id.Event
 func authoritySession(t *testing.T, fixture fixture) verification.Session {
 	t.Helper()
 	registry, err := evidence.BuiltInRegistry()
+	if fixture.request.Purpose == string(evidence.PurposeFraudPrevention) {
+		registry, err = evidence.FraudRegistry()
+	}
 	if err != nil {
 		t.Fatalf("BuiltInRegistry() error = %v", err)
 	}
@@ -200,4 +260,55 @@ func authoritySession(t *testing.T, fixture fixture) verification.Session {
 		t.Fatalf("RestoreSession() error = %v", err)
 	}
 	return session
+}
+
+type authorityAccessRepository struct{ record access.VerificationRecord }
+
+func (repository authorityAccessRepository) FindForVerification(context.Context, id.Tenant, id.APIKey) (access.VerificationRecord, error) {
+	return repository.record, nil
+}
+
+func authorityAccess(t *testing.T, fixture fixture) access.Context {
+	t.Helper()
+	generator, err := access.NewKeyGenerator(bytes.NewReader(bytes.Repeat([]byte{1}, 32)))
+	if err != nil {
+		t.Fatalf("NewKeyGenerator() error = %v", err)
+	}
+	presented, err := generator.Generate(fixture.request.TenantID, fixture.authority.Record().CreatedBy)
+	if err != nil {
+		t.Fatalf("Generate() error = %v", err)
+	}
+	peppers, err := access.NewPepperSet(1, map[access.PepperVersion][]byte{1: bytes.Repeat([]byte{2}, 32)})
+	if err != nil {
+		t.Fatalf("NewPepperSet() error = %v", err)
+	}
+	digest, version, err := peppers.Digest(presented)
+	if err != nil {
+		t.Fatalf("Digest() error = %v", err)
+	}
+	grant, err := access.TenantRegistry().Resolve(access.Pattern("authorities:write"))
+	if err != nil {
+		t.Fatalf("Resolve() error = %v", err)
+	}
+	key, err := access.RestoreKey(access.KeyRecord{
+		ID: presented.ID(), TenantID: presented.TenantHint(), Label: "authority test",
+		Digest: digest, PepperVersion: version, Grant: grant, Version: 1,
+		CreatedAt: fixture.now.Add(-time.Hour), UpdatedAt: fixture.now.Add(-time.Hour),
+	})
+	if err != nil {
+		t.Fatalf("RestoreKey() error = %v", err)
+	}
+	record, err := access.NewVerificationRecord(key, tenant.StateActive)
+	if err != nil {
+		t.Fatalf("NewVerificationRecord() error = %v", err)
+	}
+	authenticator, err := access.NewAuthenticator(authorityAccessRepository{record: record}, peppers, authorityClock{now: fixture.now})
+	if err != nil {
+		t.Fatalf("NewAuthenticator() error = %v", err)
+	}
+	accessContext, err := authenticator.Authenticate(t.Context(), presented.Reveal())
+	if err != nil {
+		t.Fatalf("Authenticate() error = %v", err)
+	}
+	return accessContext
 }
