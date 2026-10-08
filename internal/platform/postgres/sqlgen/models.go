@@ -1826,6 +1826,14 @@ type IdenqaTenantProvisionCommand struct {
 	CreatedAt     pgtype.Timestamptz
 }
 
+type IdenqaUsageReceipt struct {
+	TenantID    string
+	ID          string
+	Receipt     []byte
+	CreatedAt   pgtype.Timestamptz
+	DeliveredAt pgtype.Timestamptz
+}
+
 type IdenqaVerificationAssurance struct {
 	TenantID        string
 	VerificationID  string
