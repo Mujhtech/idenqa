@@ -310,6 +310,18 @@ func composeAdministrativeIssuer(
 	configuration config.API,
 	repository access.AdminRepository,
 ) (*access.AdministrativeIssuer, error) {
+	issuer, err := composeIssuer(configuration, repository)
+	if err != nil {
+		return nil, err
+	}
+
+	return access.NewAdministrativeIssuer(issuer, repository)
+}
+
+func composeIssuer(
+	configuration config.API,
+	repository access.IssuanceRepository,
+) (*access.Issuer, error) {
 	configured := configuration.APIKeyPeppers.Values()
 	pepperValues := make(map[access.PepperVersion][]byte, len(configured))
 	for version, material := range configured {
@@ -343,14 +355,9 @@ func composeAdministrativeIssuer(
 	if err != nil {
 		return nil, err
 	}
-	issuer, err := access.NewIssuer(repository, identifiers, secrets, peppers, clock.System{}, access.IssuerConfig{
+	return access.NewIssuer(repository, identifiers, secrets, peppers, clock.System{}, access.IssuerConfig{
 		Registry: access.TenantRegistry(), ExpiryPolicy: expiryPolicy, RotationPolicy: rotationPolicy,
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	return access.NewAdministrativeIssuer(issuer, repository)
 }
 
 func parseExpiryIntent(options *apiKeyOptions) (access.ExpiryIntent, error) {

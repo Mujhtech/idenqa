@@ -3,6 +3,7 @@ package postgres
 
 import (
 	"context"
+	"crypto/subtle"
 	"errors"
 	"fmt"
 	"time"
@@ -22,6 +23,251 @@ type transactionRunner interface {
 		platformpostgres.TransactionOptions,
 		func(context.Context, platformpostgres.Transaction) error,
 	) error
+}
+
+// IssueBridgeCommand atomically records a privileged issue and its immutable
+// command receipt. The transaction-scoped advisory lock serialises identical
+// command identifiers without creating a durable cross-tenant lock table.
+func (store *Store) IssueBridgeCommand(
+	ctx context.Context,
+	action access.AdminAction,
+	scope tenant.Scope,
+	command access.BridgeCommand,
+	key access.Key,
+	envelope access.CredentialEnvelope,
+) (access.Key, access.CredentialEnvelope, bool, error) {
+	if !sameTenant(scope.ID(), key.TenantID()) {
+		return access.Key{}, access.CredentialEnvelope{}, false, errors.New("access postgres: key tenant does not match scope")
+	}
+	var persisted access.Key
+	var persistedEnvelope access.CredentialEnvelope
+	created := false
+	err := store.pool.WithinTransaction(ctx, platformpostgres.TransactionOptions{}, func(
+		ctx context.Context,
+		tx platformpostgres.Transaction,
+	) error {
+		if err := requireAdminPrivilege(ctx, tx); err != nil {
+			return err
+		}
+		queries := sqlgen.New(tx)
+		if _, err := queries.SetTenantScope(ctx, scope.ID().String()); err != nil {
+			return fmt.Errorf("set API key tenant scope: %w", err)
+		}
+		if _, err := tx.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, command.ID); err != nil {
+			return fmt.Errorf("lock credential bridge command: %w", err)
+		}
+		var tenantID, operation, keyID string
+		var requestDigest []byte
+		err := tx.QueryRow(ctx, `
+			SELECT tenant_id, request_digest, operation, key_id,
+			       delivery_algorithm, delivery_ephemeral_public_key, delivery_nonce, delivery_ciphertext
+			FROM idenqa.api_key_bridge_commands
+			WHERE command_id = $1`, command.ID,
+		).Scan(&tenantID, &requestDigest, &operation, &keyID, &persistedEnvelope.Algorithm,
+			&persistedEnvelope.EphemeralPublicKey, &persistedEnvelope.Nonce, &persistedEnvelope.Ciphertext)
+		if err == nil {
+			if tenantID != scope.ID().String() || operation != "issue" ||
+				len(requestDigest) != len(command.RequestDigest) ||
+				subtle.ConstantTimeCompare(requestDigest, command.RequestDigest[:]) != 1 {
+				return access.ErrKeyConflict
+			}
+			row, err := queries.FindAPIKey(ctx, sqlgen.FindAPIKeyParams{TenantID: tenantID, ID: keyID})
+			if err != nil {
+				return fmt.Errorf("find credential bridge result: %w", err)
+			}
+			persisted, err = restore(row)
+
+			return err
+		}
+		if !errors.Is(err, pgx.ErrNoRows) {
+			return fmt.Errorf("find credential bridge command: %w", err)
+		}
+		if err := create(ctx, queries, key); err != nil {
+			return err
+		}
+		if err := insertAdminAudit(ctx, queries, action, scope.ID(), key.ID(), "issue"); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(ctx, `
+			INSERT INTO idenqa.api_key_bridge_commands (
+				command_id, tenant_id, request_digest, operation, key_id,
+				delivery_algorithm, delivery_ephemeral_public_key, delivery_nonce, delivery_ciphertext, created_at
+			) VALUES ($1, $2, $3, 'issue', $4, $5, $6, $7, $8, $9)`,
+			command.ID, scope.ID().String(), command.RequestDigest[:], key.ID().String(),
+			envelope.Algorithm, envelope.EphemeralPublicKey, envelope.Nonce, envelope.Ciphertext, key.CreatedAt(),
+		); err != nil {
+			return fmt.Errorf("insert credential bridge command: %w", err)
+		}
+		persisted = key
+		persistedEnvelope = envelope
+		created = true
+
+		return nil
+	})
+
+	return persisted, persistedEnvelope, created, err
+}
+
+// RotateBridgeCommand atomically rotates a key, audits the transition, and records its retry-safe delivery.
+func (store *Store) RotateBridgeCommand(ctx context.Context, action access.AdminAction, scope tenant.Scope, command access.BridgeCommand, predecessor access.Key, expectedVersion int64, successor access.Key, envelope access.CredentialEnvelope) (access.Key, access.CredentialEnvelope, bool, error) {
+	var persisted access.Key
+	var persistedEnvelope access.CredentialEnvelope
+	created := false
+	err := store.pool.WithinTransaction(ctx, platformpostgres.TransactionOptions{}, func(ctx context.Context, tx platformpostgres.Transaction) error {
+		if err := requireAdminPrivilege(ctx, tx); err != nil {
+			return err
+		}
+		queries := sqlgen.New(tx)
+		if _, err := queries.SetTenantScope(ctx, scope.ID().String()); err != nil {
+			return fmt.Errorf("set API key tenant scope: %w", err)
+		}
+		if _, err := tx.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, command.ID); err != nil {
+			return err
+		}
+		var tenantID, operation, keyID string
+		var digest []byte
+		err := tx.QueryRow(ctx, `SELECT tenant_id,request_digest,operation,key_id,delivery_algorithm,delivery_ephemeral_public_key,delivery_nonce,delivery_ciphertext FROM idenqa.api_key_bridge_commands WHERE command_id=$1`, command.ID).Scan(
+			&tenantID, &digest, &operation, &keyID, &persistedEnvelope.Algorithm, &persistedEnvelope.EphemeralPublicKey, &persistedEnvelope.Nonce, &persistedEnvelope.Ciphertext)
+		if err == nil {
+			if tenantID != scope.ID().String() || operation != "rotate" || subtle.ConstantTimeCompare(digest, command.RequestDigest[:]) != 1 {
+				return access.ErrKeyConflict
+			}
+			row, err := queries.FindAPIKey(ctx, sqlgen.FindAPIKeyParams{TenantID: tenantID, ID: keyID})
+			if err != nil {
+				return err
+			}
+			persisted, err = restore(row)
+			return err
+		}
+		if !errors.Is(err, pgx.ErrNoRows) {
+			return err
+		}
+		if err := create(ctx, queries, successor); err != nil {
+			return err
+		}
+		if err := saveLifecycle(ctx, queries, predecessor, expectedVersion); err != nil {
+			return err
+		}
+		if err := insertAdminAudit(ctx, queries, action, scope.ID(), predecessor.ID(), "rotate"); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(ctx, `INSERT INTO idenqa.api_key_bridge_commands (command_id,tenant_id,request_digest,operation,key_id,delivery_algorithm,delivery_ephemeral_public_key,delivery_nonce,delivery_ciphertext,created_at) VALUES ($1,$2,$3,'rotate',$4,$5,$6,$7,$8,$9)`, command.ID, scope.ID().String(), command.RequestDigest[:], successor.ID().String(), envelope.Algorithm, envelope.EphemeralPublicKey, envelope.Nonce, envelope.Ciphertext, successor.CreatedAt()); err != nil {
+			return err
+		}
+		persisted, persistedEnvelope, created = successor, envelope, true
+		return nil
+	})
+	return persisted, persistedEnvelope, created, err
+}
+
+// RevokeBridgeCommand atomically revokes a key, audits it, and records the immutable command receipt.
+func (store *Store) RevokeBridgeCommand(ctx context.Context, action access.AdminAction, scope tenant.Scope, command access.BridgeCommand, key access.Key, expectedVersion int64) (access.Key, bool, error) {
+	var persisted access.Key
+	created := false
+	err := store.pool.WithinTransaction(ctx, platformpostgres.TransactionOptions{}, func(ctx context.Context, tx platformpostgres.Transaction) error {
+		if err := requireAdminPrivilege(ctx, tx); err != nil {
+			return err
+		}
+		queries := sqlgen.New(tx)
+		if _, err := queries.SetTenantScope(ctx, scope.ID().String()); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, command.ID); err != nil {
+			return err
+		}
+		var tenantID, operation, keyID string
+		var digest []byte
+		err := tx.QueryRow(ctx, `SELECT tenant_id,request_digest,operation,key_id FROM idenqa.api_key_bridge_commands WHERE command_id=$1`, command.ID).Scan(&tenantID, &digest, &operation, &keyID)
+		if err == nil {
+			if tenantID != scope.ID().String() || operation != "revoke" || subtle.ConstantTimeCompare(digest, command.RequestDigest[:]) != 1 {
+				return access.ErrKeyConflict
+			}
+			row, err := queries.FindAPIKey(ctx, sqlgen.FindAPIKeyParams{TenantID: tenantID, ID: keyID})
+			if err != nil {
+				return err
+			}
+			persisted, err = restore(row)
+			return err
+		}
+		if !errors.Is(err, pgx.ErrNoRows) {
+			return err
+		}
+		if err := saveLifecycle(ctx, queries, key, expectedVersion); err != nil {
+			return err
+		}
+		if err := insertAdminAudit(ctx, queries, action, scope.ID(), key.ID(), "revoke"); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(ctx, `INSERT INTO idenqa.api_key_bridge_commands (command_id,tenant_id,request_digest,operation,key_id,created_at) VALUES ($1,$2,$3,'revoke',$4,$5)`, command.ID, scope.ID().String(), command.RequestDigest[:], key.ID().String(), action.OccurredAt()); err != nil {
+			return err
+		}
+		persisted, created = key, true
+		return nil
+	})
+	return persisted, created, err
+}
+
+// ObserveBridgeCommand returns secret-free key metadata only when both the
+// command identifier and immutable request digest match in the tenant scope.
+func (store *Store) ObserveBridgeCommand(
+	ctx context.Context,
+	scope tenant.Scope,
+	command access.BridgeCommand,
+) (access.Key, access.CredentialEnvelope, error) {
+	var found access.Key
+	var envelope access.CredentialEnvelope
+	err := store.pool.WithinTransaction(ctx, platformpostgres.TransactionOptions{ReadOnly: true}, func(
+		ctx context.Context,
+		tx platformpostgres.Transaction,
+	) error {
+		if err := requireAdminPrivilege(ctx, tx); err != nil {
+			return err
+		}
+		queries := sqlgen.New(tx)
+		if _, err := queries.SetTenantScope(ctx, scope.ID().String()); err != nil {
+			return fmt.Errorf("set API key tenant scope: %w", err)
+		}
+		var tenantID, keyID string
+		var algorithm, ephemeralPublicKey, nonce, ciphertext *string
+		var requestDigest []byte
+		err := tx.QueryRow(ctx, `
+			SELECT tenant_id, request_digest, key_id,
+			       delivery_algorithm, delivery_ephemeral_public_key, delivery_nonce, delivery_ciphertext
+			FROM idenqa.api_key_bridge_commands
+			WHERE command_id = $1`, command.ID,
+		).Scan(&tenantID, &requestDigest, &keyID, &algorithm, &ephemeralPublicKey, &nonce, &ciphertext)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return access.ErrKeyNotFound
+		}
+		if err != nil {
+			return fmt.Errorf("find credential bridge command: %w", err)
+		}
+		if tenantID != scope.ID().String() || len(requestDigest) != len(command.RequestDigest) ||
+			subtle.ConstantTimeCompare(requestDigest, command.RequestDigest[:]) != 1 {
+			return access.ErrKeyConflict
+		}
+		if algorithm != nil {
+			envelope.Algorithm = *algorithm
+		}
+		if ephemeralPublicKey != nil {
+			envelope.EphemeralPublicKey = *ephemeralPublicKey
+		}
+		if nonce != nil {
+			envelope.Nonce = *nonce
+		}
+		if ciphertext != nil {
+			envelope.Ciphertext = *ciphertext
+		}
+		row, err := queries.FindAPIKey(ctx, sqlgen.FindAPIKeyParams{TenantID: tenantID, ID: keyID})
+		if err != nil {
+			return fmt.Errorf("find credential bridge result: %w", err)
+		}
+		found, err = restore(row)
+
+		return err
+	})
+
+	return found, envelope, err
 }
 
 // Store implements tenant-scoped API-key persistence and the narrow
@@ -512,3 +758,4 @@ func insertAdminAudit(
 var _ access.Repository = (*Store)(nil)
 var _ access.VerificationRepository = (*Store)(nil)
 var _ access.AdminRepository = (*Store)(nil)
+var _ access.BridgeIssueRepository = (*Store)(nil)
