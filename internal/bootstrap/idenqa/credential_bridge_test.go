@@ -9,7 +9,7 @@ import (
 func TestCredentialBridgeSocketIsPrivateAndOwnedCleanupRemovesIt(t *testing.T) {
 	t.Parallel()
 
-	directory, err := os.MkdirTemp("/private/tmp", "idq-bridge-")
+	directory, err := os.MkdirTemp("", "idq-bridge-")
 	if err != nil {
 		t.Fatalf("MkdirTemp() error = %v", err)
 	}
