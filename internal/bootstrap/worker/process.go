@@ -132,6 +132,8 @@ func NewProcessWithInfrastructure(ctx context.Context, configuration config.Work
 	if err != nil {
 		return nil, fmt.Errorf("construct worker telemetry: %w", err)
 	}
+	operationTracer := telemetry.NewOperationTracer(providers.TracerProvider())
+
 	metrics, err := telemetry.NewDomainMetrics(providers.MeterProvider())
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
@@ -143,7 +145,7 @@ func NewProcessWithInfrastructure(ctx context.Context, configuration config.Work
 		}
 	}()
 	connectionPool, err := postgres.Open(ctx, postgres.Config{
-		URL: configuration.DatabaseURL, Role: configuration.DatabaseRole,
+		URL: configuration.DatabaseConnectionString(), Role: configuration.DatabaseRole,
 		MaxConnections:      configuration.DatabaseMaxConnections,
 		MinConnections:      configuration.DatabaseMinConnections,
 		MaxConnectionAge:    configuration.DatabaseMaxLifetime,
@@ -163,6 +165,7 @@ func NewProcessWithInfrastructure(ctx context.Context, configuration config.Work
 		connectionPool.Close()
 		return nil, err
 	}
+	connectionPool.WithTracer(operationTracer)
 	adapterConfiguration := taskheadgate.DefaultConfig(configuration.HeadgateInstallationID)
 	adapterConfiguration.Schema = configuration.HeadgateSchema
 	adapterConfiguration.CrashLimit = configuration.CrashLimit
@@ -173,6 +176,7 @@ func NewProcessWithInfrastructure(ctx context.Context, configuration config.Work
 		connectionPool.Close()
 		return nil, err
 	}
+	adapter.WithTracerProvider(providers.TracerProvider())
 	checkStore, err := verificationpostgres.NewGuardedCheckStore(connectionPool, deliveryInfrastructure.wrapper, clock.System{})
 	if err != nil {
 		connectionPool.Close()
@@ -183,7 +187,7 @@ func NewProcessWithInfrastructure(ctx context.Context, configuration config.Work
 		connectionPool.Close()
 		return nil, fmt.Errorf("construct worker identifiers: %w", err)
 	}
-	realProvider, err := configuredProvider(ctx, configuration, connectionPool, identifiers, deliveryInfrastructure.wrapper)
+	realProvider, err := configuredProvider(ctx, configuration, connectionPool, identifiers, deliveryInfrastructure.wrapper, providers.TracerProvider())
 	if err != nil {
 		connectionPool.Close()
 		return nil, err
@@ -194,7 +198,7 @@ func NewProcessWithInfrastructure(ctx context.Context, configuration config.Work
 			_ = realProvider.connection.Close()
 		}
 	}()
-	realModel, err := configuredModel(ctx, configuration, connectionPool, identifiers, deliveryInfrastructure.wrapper)
+	realModel, err := configuredModel(ctx, configuration, connectionPool, identifiers, deliveryInfrastructure.wrapper, providers.TracerProvider())
 	if err != nil {
 		connectionPool.Close()
 		return nil, err
@@ -476,6 +480,7 @@ func NewProcessWithInfrastructure(ctx context.Context, configuration config.Work
 			connectionPool.Close()
 			return nil, err
 		}
+		deliveryInfrastructure.sender = tracedSender{sender: deliveryInfrastructure.sender, tracer: operationTracer}
 		handler, err := deliverytask.NewHandler(store, deliveryInfrastructure.unwrapper, deliveryInfrastructure.sender, identifiers, adapter, clock.System{}.Now)
 		if err != nil {
 			connectionPool.Close()
@@ -574,6 +579,8 @@ func NewProcessWithInfrastructure(ctx context.Context, configuration config.Work
 			connectionPool.Close()
 			return nil, fmt.Errorf("construct key rewrap service: %w", err)
 		}
+		keyRewrap.WithTracer(operationTracer)
+
 	}
 	var privacyCoordinator *privacytask.Coordinator
 	if infrastructure.enabled() {
@@ -597,6 +604,8 @@ func NewProcessWithInfrastructure(ctx context.Context, configuration config.Work
 			connectionPool.Close()
 			return nil, fmt.Errorf("construct worker privacy service: %w", err)
 		}
+		privacyService.WithTracer(operationTracer)
+
 		privacyService.WithMetrics(metrics)
 		privacyHandler, err := privacytask.NewHandler(privacyService)
 		if err != nil {
@@ -614,7 +623,7 @@ func NewProcessWithInfrastructure(ctx context.Context, configuration config.Work
 		}
 	}
 	bridge, err := taskheadgate.NewTelemetry(
-		providers.TracerProvider(), providers.MeterProvider(), configuration.HeadgateInstallationID,
+		providers.MeterProvider(), configuration.HeadgateInstallationID,
 	)
 	if err != nil {
 		connectionPool.Close()

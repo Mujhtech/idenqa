@@ -18,11 +18,14 @@ import (
 	platformcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	pg "github.com/Mujhtech/idenqa/internal/platform/postgres"
+	"github.com/Mujhtech/idenqa/internal/platform/telemetry"
 	"github.com/Mujhtech/idenqa/internal/provider"
 	providerpostgres "github.com/Mujhtech/idenqa/internal/provider/postgres"
 	"github.com/Mujhtech/idenqa/internal/tenant"
 	"github.com/Mujhtech/idenqa/internal/transport/runner"
 	"github.com/Mujhtech/idenqa/internal/verification"
+	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 )
 
@@ -60,7 +63,7 @@ func (runtime *providerRuntime) withMetrics(metrics provider.Metrics) {
 	}
 }
 
-func configuredProvider(ctx context.Context, configuration config.Worker, pool *pg.Pool, ids *id.Generator, wrapper platformcrypto.KeyWrapper) (*providerRuntime, error) {
+func configuredProvider(ctx context.Context, configuration config.Worker, pool *pg.Pool, ids *id.Generator, wrapper platformcrypto.KeyWrapper, tracerProviders ...trace.TracerProvider) (*providerRuntime, error) {
 	if configuration.ProviderRuntimeFile == "" {
 		return nil, nil
 	}
@@ -91,7 +94,11 @@ func configuredProvider(ctx context.Context, configuration config.Worker, pool *
 	if err != nil {
 		return nil, err
 	}
-	options, err := runner.DialOptions(runner.ClientConfig{Credential: bearer, TLS: tlsCredentials})
+	clientConfiguration := runner.ClientConfig{Credential: bearer, TLS: tlsCredentials, Propagator: propagation.TraceContext{}}
+	if len(tracerProviders) > 0 {
+		clientConfiguration.TracerProvider = tracerProviders[0]
+	}
+	options, err := runner.DialOptions(clientConfiguration)
 	if err != nil {
 		return nil, err
 	}
@@ -138,6 +145,15 @@ func configuredProvider(ctx context.Context, configuration config.Worker, pool *
 	if err != nil {
 		return nil, err
 	}
+	if len(tracerProviders) > 0 && tracerProviders[0] != nil {
+		operationTracer := telemetry.NewOperationTracer(tracerProviders[0])
+		switch executor := remote.(type) {
+		case *provider.DurableExecutor:
+			executor.WithTracer(operationTracer)
+		case *provider.AsyncExecutor:
+			executor.WithTracer(operationTracer)
+		}
+	}
 	healthPolicy, err := configuration.ProviderHealthPolicy()
 	if err != nil {
 		return nil, err
@@ -176,6 +192,9 @@ func configuredProvider(ctx context.Context, configuration config.Worker, pool *
 	catalog, err := evidence.BuiltInCatalog()
 	if err != nil {
 		return nil, err
+	}
+	if len(tracerProviders) > 0 && tracerProviders[0] != nil {
+		health.WithTracer(telemetry.NewOperationTracer(tracerProviders[0]))
 	}
 	preparation := &providerpostgres.Preparation{Plan: plan, Requests: requests, IDs: ids, Catalog: catalog, Clock: clock.System{}, Wrapper: wrapper}
 	accepted = true

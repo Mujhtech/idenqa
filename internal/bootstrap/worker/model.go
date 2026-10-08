@@ -18,10 +18,13 @@ import (
 	platformcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	pg "github.com/Mujhtech/idenqa/internal/platform/postgres"
+	"github.com/Mujhtech/idenqa/internal/platform/telemetry"
 	"github.com/Mujhtech/idenqa/internal/tenant"
 	"github.com/Mujhtech/idenqa/internal/transport/runner"
 	"github.com/Mujhtech/idenqa/internal/verification"
 	verificationpostgres "github.com/Mujhtech/idenqa/internal/verification/postgres"
+	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 )
 
@@ -46,7 +49,7 @@ func (runtime *modelRuntime) withMetrics(metrics model.Metrics) {
 	}
 }
 
-func configuredModel(ctx context.Context, configuration config.Worker, pool *pg.Pool, ids *id.Generator, wrapper platformcrypto.KeyWrapper) (*modelRuntime, error) {
+func configuredModel(ctx context.Context, configuration config.Worker, pool *pg.Pool, ids *id.Generator, wrapper platformcrypto.KeyWrapper, tracerProviders ...trace.TracerProvider) (*modelRuntime, error) {
 	if configuration.ModelRuntimeFile == "" {
 		return nil, nil
 	}
@@ -70,7 +73,7 @@ func configuredModel(ctx context.Context, configuration config.Worker, pool *pg.
 	executors := modelExecutors{}
 	connections := runtimeConnections{}
 	for _, setting := range settings {
-		item, err := configuredModelSettings(ctx, setting, pool, ids, wrapper)
+		item, err := configuredModelSettings(ctx, setting, pool, ids, wrapper, tracerProviders...)
 		if err != nil {
 			return nil, err
 		}
@@ -86,7 +89,7 @@ func configuredModel(ctx context.Context, configuration config.Worker, pool *pg.
 	accepted = true
 	return &modelRuntime{plan: combined, preparation: combined, requests: items[0].requests, executor: executors, connection: connections, signals: combined.signals}, nil
 }
-func configuredModelSettings(ctx context.Context, settings config.ModelRuntime, pool *pg.Pool, ids *id.Generator, wrapper platformcrypto.KeyWrapper) (*modelRuntime, error) {
+func configuredModelSettings(ctx context.Context, settings config.ModelRuntime, pool *pg.Pool, ids *id.Generator, wrapper platformcrypto.KeyWrapper, tracerProviders ...trace.TracerProvider) (*modelRuntime, error) {
 
 	plan, err := model.NewPlan(settings.Binding, settings.Manifest)
 	if err != nil {
@@ -104,7 +107,11 @@ func configuredModelSettings(ctx context.Context, settings config.ModelRuntime, 
 	if err != nil {
 		return nil, err
 	}
-	options, err := runner.DialOptions(runner.ClientConfig{Credential: bearer, TLS: tlsCredentials})
+	clientConfiguration := runner.ClientConfig{Credential: bearer, TLS: tlsCredentials, Propagator: propagation.TraceContext{}}
+	if len(tracerProviders) > 0 {
+		clientConfiguration.TracerProvider = tracerProviders[0]
+	}
+	options, err := runner.DialOptions(clientConfiguration)
 	if err != nil {
 		return nil, err
 	}
@@ -145,6 +152,9 @@ func configuredModelSettings(ctx context.Context, settings config.ModelRuntime, 
 	executor, err := model.NewDurableExecutor(requests, supervised, time.Now)
 	if err != nil {
 		return nil, err
+	}
+	if len(tracerProviders) > 0 && tracerProviders[0] != nil {
+		executor.WithTracer(telemetry.NewOperationTracer(tracerProviders[0]))
 	}
 	catalog, err := evidence.BuiltInCatalog()
 	if err != nil {
