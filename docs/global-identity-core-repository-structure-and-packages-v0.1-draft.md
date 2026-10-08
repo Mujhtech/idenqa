@@ -101,7 +101,15 @@ The public repository owns the domain, runtime processes, public contracts, SDKs
 
 ### 3.2 Private commercial repositories
 
-Console and Cloud remain separate repositories with independent dependency graphs and build pipelines. They may use service names such as `core-api` and `core-worker` when those names distinguish core workloads from commercial control-plane workloads.
+**Selected — 26 September 2026:** all Idenqa Cloud implementation, Cloud-internal contracts, infrastructure, deployment orchestration, configuration, operational tooling, tests, and Cloud-specific product and architecture documentation belong in the sibling `../idenqa-cloud` repository. The public Core repository must not acquire an `idenqa-cloud` package, application, internal service, deployment tree, or Cloud implementation fixture.
+
+The Core repository retains only the public contracts, conformance material, and narrowly scoped architecture references required for self-hosted Core to interoperate with an independently built Cloud deployment. Those materials must remain usable without `../idenqa-cloud`; they must not reproduce proprietary Cloud internals or make the commercial repository a build, test, release, or runtime dependency.
+
+**Implemented component — 2 October 2026:** [Regional usage receipts v1](../contracts/usage/v1/README.md) defines a public, content-free Core event projection. `internal/provider/postgres` appends a dispatch receipt atomically with the initial claim; `internal/usage/postgres` owns tenant-scoped delivery acknowledgement and `internal/transport/usagebridge` consumes its narrow store port on the privileged Core-local socket composed by `internal/bootstrap/idenqa`. Migration 88 supplies forced-RLS, immutable regional persistence. There is no Cloud import, mandatory collector, price calculation or provider-charge assertion. Exact source retention/archive policy and deployed handoff evidence remain unresolved; terminal/provider-charged/model sources are not implied by this dispatch contract.
+
+Binding credential replies now include exact issuance times. Core caps predecessor retirement by its original expiry and permits a shorter rotation overlap when necessary for the configured short lifetime. The Cloud-selected C-417 lifetime/renewal policy remains owned by Cloud; Core applies its own shorter configured maximum and never gains a global secret-custody dependency.
+
+Console remains a separate commercial repository. Core, Console, and Cloud have independent dependency graphs and build pipelines. Commercial repositories may use service names such as `core-api` and `core-worker` when those names distinguish managed Core workloads from commercial control-plane workloads.
 
 That naming does not need to leak into the public source tree. The public repository uses the simpler `api` and `worker` entry-point names.
 
@@ -183,6 +191,7 @@ idenqa/
 ├── contracts/
 │   ├── api/
 │   ├── events/
+│   ├── usage/ # Public content-free regional receipt contract
 │   ├── provider/
 │   ├── model/
 │   ├── policy/
@@ -274,6 +283,8 @@ Every `cmd/*/main.go` must remain small:
 
 Each matching `internal/bootstrap/*` package owns its binary-specific command and flags, configuration loading, dependency composition, and lifecycle. `internal/cli` owns only shared Cobra root defaults, version and completion commands, test argument injection, output routing, and exit/error classification. Business rules, SQL, HTTP handlers, configuration decoding, and provider logic do not belong in `cmd` or `internal/cli`.
 
+`internal/acceptance` owns the dependency-free, content-free provider/model production-acceptance record, strict validation and canonical semantic digest. `internal/bootstrap/idenqa` exposes it through `idenqa acceptance validate` and emits only a normalized receipt. The package does not execute providers, read evidence, grant acceptance or import Cloud release policy. Live-AWS, Console-human and aggregate commercial release records remain owned by the separate Cloud repository.
+
 ---
 
 ## 6. Bounded-context packages
@@ -353,6 +364,8 @@ Provider or model execution finishes before the effect transaction opens. The ha
 The reconciliation and progress coordination path is **Selected and implemented**. Headgate's application-confined duty lease elects one installation-wide scheduler for an immediate startup sweep and configurable one-minute repetitions. Identifier-only `SECURITY DEFINER` functions discover at most 100 due reconciliation targets or tenants with pending progress; public execution is revoked and the restricted worker role receives explicit function grants. Every discovered item re-enters mandatory tenant scope. Reconciliation targets are enqueued independently so an expected semantic-uniqueness replay cannot suppress unrelated new work from the same discovery batch. `verification.reconcile` claims only its exact check and attempt for the configured two-minute application lease, distinguishes an already resolved item from an active conflicting lease, and resolves the claim in the same transaction as fenced Headgate completion without changing a check outcome or authoring a policy decision.
 
 Every check-progress outbox insert emits a tenant-ID-only PostgreSQL notification after commit. The worker uses one dedicated listener for latency and a configurable one-second durable fallback poll for correctness. Projection strictly decodes and cross-checks the outbox envelope, appends one durable `verification.check.progress` event under the session's expiry, and marks the exact source published in the same tenant-scoped transaction. The Go wire contract, public JSON Schema, TypeScript SDK, and Capture Web expose only check ID, operational state, and check version; outcome, signals, reason codes, provider data, and evidence remain absent. SDK acknowledgement/replay and Capture Web REST snapshot recovery use the existing durable realtime contract.
+
+**Selected and implemented — 2 October 2026, unified journey timeline:** `internal/verification` owns a bounded tenant-authorised timeline projection that interleaves authoritative Core lifecycle, notice-response, evidence, attempt, signal, and decision records with explicitly non-authoritative Capture Web interaction records. Capture interactions use a closed versioned vocabulary and bounded identifiers; they cannot carry raw evidence, subject values, credentials, provider payloads, DOM snapshots, or free-form metadata. Their displayed chronology uses server receipt time, while a bounded client occurrence time is diagnostic only. Migration 87 stores them append-only behind forced RLS with per-session sequence and event-id idempotency, and the public capture-token route accepts best-effort batches without making their absence block the subject journey. `GET /v1/verifications/{verification_id}/timeline` is the tenant-facing read contract. Every item exposes its source and authority explicitly so client-reported behaviour cannot be mistaken for assurance, lifecycle truth, or verification outcome. Existing lifecycle history remains a compatibility and recovery backbone rather than being redefined as the richer projection.
 
 The L-01 lifecycle foundation belongs to `internal/verification`, with its PostgreSQL primitive in `internal/verification/postgres`. It follows the integrated architecture's section 12 transition graph. A transition uses explicit tenant scope, expected version, stable event identity, bounded authenticated-principal reference, UTC occurrence time and, only for completion, an immutable decision reference. PostgreSQL atomically commits the state, replay receipt, common audit chain and outbox; the caller-owned transaction path is available for composition with task intent and fenced completion. Exact replay returns the original receipt rather than the latest session. The primitive is not an application authorisation API and must not be exposed as a public generic state setter.
 
@@ -523,6 +536,8 @@ Owns review cases, assignments, findings, reason codes, resolution, appeals, and
 **Selected review operations completion — 8 September 2026:** One tenant API key with `reviews:admin`, optimistic version checks and atomic audit may manage operator assignments and tenant-attested certifications. Database-backed assignments are checked transactionally on consequential operations; revocation must not fall back to file authority. External certification verification stays behind an owned adapter. Escalation uses a certified supervisor independent of both findings to author an audited arbitration fact; only the pinned policy decides the outcome. Correction and appeal decisions require independent review and a policy-authored successor, preserving the challenged decision; fresh linked sessions collect new evidence. The user requested implementation of review evidence access, queue operations, operator administration, corrections/appeals and public integration, without writing new tests. Existing checks and explicit end-to-end/visual acceptance remain distinct.
 
 **Implemented ownership:** `review` owns queue/settings, independent follow-up and administration ports; its PostgreSQL adapter owns migrations 46–47, transactional assignment revocation, immutable display/arbitration/correction/appeal receipts and atomic delivery intent. Evidence decryption stays behind `evidence` ports; HTTP's bounded receiver releases only explicitly redacted and watermarked raster output. The public OpenAPI/TypeScript review client and Capture Web recapture handoff depend on published contracts. Queue labels support filtered work selection; advanced assignment automation and external certificate issuer adapters remain outside this increment. Full reviewer/subject journey acceptance remains required. See [manual review operations](manual-review-recapture-v0.1.md#6-review-operations-and-public-integration) for contracts, runtime grants and acceptance boundaries.
+
+**Implemented direct browser-session ownership — 30 September 2026:** `internal/reviewbrowser` owns the control-plane bootstrap verifier, one-time redemption, opaque session-token hashing, exact origin and case/version binding, and the request-context identity used for current transactional reviewer reauthorisation. `internal/reviewbrowser/postgres` owns forced-RLS bootstrap-consumption and session records in migration 82. `internal/transport/httpapi` owns only the direct redeem/list/grant/content/finding routes and restrictive response handling; it does not turn a workforce actor into an API-key principal. `review` continues to own evidence/finding validity, while `evidence` remains the only plaintext boundary. No Cloud package or dependency enters Core, raw evidence never enters the bootstrap/session records, and commercial roles must explicitly receive `review.evidence.open` on the Cloud side.
 
 ### 6.11 `privacy`
 
@@ -815,7 +830,7 @@ HTTP clients use `Idempotency-Key`. Realtime clients use a stable `command_id`. 
 
 For capture-profile commands, the selected initial contract is a configurable 24-hour retention period. The reservation, profile mutation, safe application-result snapshot, and audit event commit in one PostgreSQL transaction. A transaction-scoped advisory lock derived from the complete idempotency scope suppresses concurrent execution of the same key; profile consistency still uses an explicit aggregate version and SQL compare-and-swap. Other operation classes retain independently declared policies.
 
-Capture-profile resources use stable `prf_` identifiers and positive numeric revisions. A profile has at most one mutable draft. Published revisions are immutable; creating a superseding draft leaves the currently published revision active until the replacement is successfully published. Deactivation preserves every revision and audit record.
+Capture-profile resources use stable `prf_` identifiers and positive numeric revisions. A profile has at most one mutable draft. Published revisions are immutable; creating a superseding draft leaves the currently published revision active until the replacement is successfully published. Deactivation prevents new sessions and preserves every revision and audit record. A deactivated profile may create and edit one superseding draft; publishing that draft reactivates the profile without changing the historical published revision in place.
 
 Public list cursors are short-lived integrity-protected tokens. Their payload binds the tenant, canonical query identity, expiry, and last persisted sort position. HMAC-SHA-256 keys are versioned, independently configured, and purpose-separated from API-key peppers; key retirement must allow every cursor issued under that version to expire first.
 
@@ -1005,6 +1020,18 @@ Tenant isolation is enforced below the HTTP layer. Every tenant-owned repository
 
 The selected PostgreSQL implementation forces RLS on tenant-owned tables and supplies tenant scope through transaction-local state. Runtime roles must neither own those tables nor hold `BYPASSRLS`. Database role and credential provisioning stays outside schema migrations so reviewed migrations never create login roles or passwords. CLI administration uses a separately supplied privileged database URL; successful bypass operations require bounded actor and reason assertions and atomically append an administrative audit record. API and worker deployments must not receive that credential. Authenticated administrative principals supersede the initial asserted actor when F-06 introduces access contexts.
 
+Managed distributions may supply the runtime PostgreSQL connection as
+provider-neutral structured host, port, database, user, redacting password,
+TLS mode, and optional root-certificate fields instead of a rendered URL. The
+two forms are mutually exclusive. Structured production connections require
+`verify-full`; Core percent-encodes credentials and constructs the pgx URI only
+in process memory. A separately injected structured administrative user and
+password is accepted only alongside the structured runtime connection and is
+used by migration and privileged administration commands. API and worker
+processes must receive only the runtime fields. Secret retrieval, database-role
+creation, and rotation remain deployment-adapter responsibilities outside Core
+schema migrations and domain/application packages.
+
 `platform/crypto` owns reusable authenticated-encryption values and the small key-wrapping port consumed by encryption implementations. `platform/kms` owns provider-neutral wrapped-key metadata, while `platform/objectstore` carries exact versioned ciphertext-object references. Streaming encryption and object-storage interfaces are defined at their consuming application boundary. Implementations use reviewed standard primitives, Tink Streaming AEAD, or external KMS/HSM integrations; the core does not invent cryptographic algorithms. Provider, library, and cloud SDK types never cross these owned boundaries.
 
 Evidence uses one unique random content key or Streaming AEAD keyset per object with no baseline data-key reuse or cache. The versioned ciphertext envelope records content algorithm and format, wrapped key material, stable provider-native key identity and version, wrapping algorithm, and the digest and schema of canonical non-secret authenticated context. The context binds tenant, verification, evidence, requirement, evidence type, artefact, acquisition method, object purpose, and content revision. Mismatched context, tenant, ciphertext, key version, or unavailable KMS fails closed without fallback.
@@ -1085,7 +1112,9 @@ Tenant API-key middleware accepts exactly one `Authorization` field using the ca
 
 Route permission middleware is an early rejection layer, not the authorisation owner. Each consequential application operation must call `access.Context.Require` for its exact permission and pass the verified `tenant.Scope` into persistence. This rule applies equally when the operation is invoked from HTTP, WebSocket, CLI, worker, replay, or a future commercial surface.
 
-Chi's generic `middleware.Recoverer` is not the selected recovery handler because it logs the recovered panic value and stack and emits only a bare HTTP 500 status. The small Idenqa recovery adapter instead preserves panic-value redaction, the stable JSON problem contract, request IDs, and response-write safety. Shared request logging must likewise use the Idenqa telemetry allow-list rather than logging raw paths, client addresses, user agents, query strings, credentials, or identity-derived values.
+Chi's generic `middleware.Recoverer` is not the selected recovery handler because it logs the recovered panic value and stack and emits only a bare HTTP 500 status. The small Idenqa recovery adapter instead preserves panic-value redaction, the stable JSON problem contract, request IDs, and response-write safety.
+
+**Selected — 1 October 2026, API request debugging metadata:** Tenant-authorised request-log inspection retains the transport peer IP address and structured, bounded query and JSON-body parameters in addition to route-template operational metadata. It never retains a raw URL, raw query string, forwarded-address header, arbitrary header, credential, capture ticket, secret, cookie, signature, evidence or biometric field, raw evidence bytes, or non-JSON body. Sensitive parameter names are recursively redacted before persistence; values and the captured JSON prefix are bounded. `RemoteAddr` is the selected baseline source, so a reverse proxy appears as the peer and untrusted `Forwarded` or `X-Forwarded-For` values cannot spoof the journal. A future forwarded-client-address mode remains **TBD** until an explicit trusted-proxy allow-list and parsing contract are selected. This tenant-authorised journal is distinct from shared logs, traces, and metrics, which continue to exclude client addresses, query values, body values, credentials, and identity-derived labels.
 
 `github.com/coder/websocket` v1.8.15 is selected after focused release, maintenance, licence, module-graph, security, protocol, and concurrent-admission review. The signed current release is ISC-licensed, targets Go 1.23, has no transitive module requirements, passes the Autobahn protocol suite, and supplies context-bounded I/O, native ping/pong, close handling, and a hard message-read limit. It remains isolated inside `internal/transport/realtime`; domain and application packages depend on owned realtime ports and message contracts, not on library types.
 
@@ -1187,6 +1216,8 @@ Validation responsibilities remain distinct:
 The implementation uses explicit SQL rather than an ORM. PostgreSQL is authoritative for domain state, workflow state, attempts, timers, inbox entries, outbox entries, and durable job intent.
 
 Reviewed SQL migrations are embedded in the `idenqa` operational binary and executed through `idenqa migrate`. API and worker startup must never apply migrations automatically. They may check connectivity and schema compatibility and must remain unready when the schema is incompatible. A restricted runtime role used by a process that performs this check must have `SELECT` on `public.schema_migrations` in addition to its narrow application schema and table grants; it must not receive migration authority. Production operations expose preflight, version inspection, and forward migration; rollback is restricted to explicit development or test use with confirmation. Migration metadata is owned at `public.schema_migrations` and must not depend on the connection role's mutable PostgreSQL search path. The standalone upstream migration CLI is not a required runtime or operator dependency.
+
+Each Core release owns a versioned, exact PostgreSQL runtime-permission manifest. After both Core and Headgate migrations reach the versions pinned by that release, an administrative deployment step runs `idenqa migrate permissions --runtime-role <role>`. The command serializes reconciliation, refuses a dirty or non-current Core schema, creates only a `NOLOGIN`, `NOINHERIT`, non-privileged group role, rejects an existing role with unsafe attributes, revokes drifted object privileges, and reapplies the release's explicit table, sequence, function, and schema grants. Cloud or another deployment system may manage a separate rotating login and grant it membership in this group role, but must not reproduce the object-level manifest or grant blanket access. API and worker processes receive only the login credential and never the administrative migration credential.
 
 ### 11.4 Background work
 
@@ -1328,10 +1359,10 @@ No AWS, GCP, Azure, or proprietary provider SDK belongs in the root core module 
 
 ### 11.11 Generative-model provider SDKs
 
-| Package                                      | Status       | Scope                                                                                  |
-| -------------------------------------------- | ------------ | -------------------------------------------------------------------------------------- |
-| `github.com/openai/openai-go/v3` v3.64.0     | **Selected** | OpenAI-compatible Chat Completions protocol inside `adapters/proposals/openaicompatible` |
-| `github.com/anthropics/anthropic-sdk-go` v1.74.0 | **Selected** | Anthropic Messages tool-use protocol inside `adapters/proposals/anthropic`              |
+| Package                                          | Status       | Scope                                                                                    |
+| ------------------------------------------------ | ------------ | ---------------------------------------------------------------------------------------- |
+| `github.com/openai/openai-go/v3` v3.64.0         | **Selected** | OpenAI-compatible Chat Completions protocol inside `adapters/proposals/openaicompatible` |
+| `github.com/anthropics/anthropic-sdk-go` v1.74.0 | **Selected** | Anthropic Messages tool-use protocol inside `adapters/proposals/anthropic`               |
 
 These official SDKs are implementation dependencies of their concrete adapters, not the Core model contract. The adapters instantiate them with exact configured origins and per-call resolved credentials, zero SDK retries, the owned destination-pinned HTTP client, and owned success/error response limits. OpenAI-compatible endpoints reuse the OpenAI adapter only when they implement the selected strict JSON-schema Chat Completions semantics. SDK types, environment-derived configuration, provider errors and provider credentials must not cross into `internal/proposal`, public contracts or SDKs.
 
@@ -1401,15 +1432,15 @@ The X-01 Android foundation, reviewed dependency pins, and Swift foundation are 
 
 **Selected — 22 September 2026: native Capture Web parity.** Swift and Kotlin capture must match Capture Web's Core-authoritative notice/consent, immutable-profile document choices and required sides, guided dark document camera/review with framing and Help, acquisition-plan/quality enforcement, measured directional/blink challenge progress, recovery, and completion semantics. Apple Vision is the selected native iOS measurement framework, preserving the first-party-only runtime decision. MediaPipe is selected for Android tracker evaluation. Tracker/model production acceptance, cross-platform angle/eye calibration, supported-device performance and human visual/interaction acceptance remain unresolved; this choice does not establish PAD assurance. SDK-owned pose ports must keep framework types and raw pixels inside native acquisition boundaries. See [native capture evidence](native-capture-evidence-v0.1.md) for implementation and acceptance status.
 
-| Native SDK candidate                                                                   | Status       | Scope                                                                                                                                                                 |
-| -------------------------------------------------------------------------------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Swift tools 6.2, Apple first-party frameworks, iOS 16+                                 | **Selected** | Foundation HTTP/WebSocket and cancellation, strict concurrency, Keychain, Secure Enclave P-256 proof, and AVFoundation capture with no third-party runtime dependency |
-| Android Gradle Plugin 9.4.0 with built-in Kotlin 2.3.21, Gradle 9.6.0, JDK 17, API 26+ | **Selected** | Android library build; the wrapper records the official Gradle distribution checksum                                                                                  |
-| `org.jetbrains.kotlinx:kotlinx-coroutines-core` 1.11.0                                 | **Selected** | Cancellable suspend operations and public `Flow` realtime observation                                                                                                 |
-| `com.squareup.okhttp3:okhttp` 5.5.0                                                    | **Selected** | Android HTTPS and WebSocket transport behind SDK-owned interfaces                                                                                                     |
-| `com.squareup.moshi:moshi` 1.15.2                                                      | **Selected** | Bounded Android JSON mapping without reflection or code generation                                                                                                    |
-| `com.google.mediapipe:tasks-vision` 1.0.0                                              | **Selected for evaluation** | Android face-landmarker measurement behind the SDK pose port; the digest-pinned model asset is packaged with the application and never downloaded at runtime. Production tracker/model acceptance, device calibration and PAD assurance remain unresolved |
-| `com.google.guava:guava` 33.7.1-android and `com.google.protobuf:protobuf-javalite` 4.36.2 | **Selected override** | The published MediaPipe POM requests `guava` 27.0.1-android and `protobuf-javalite` 4.26.1; the older protobuf is affected by CVE-2024-7254, so both are raised explicitly. Every resolved module was checked against OSV and returned no advisory on 22 September 2026 |
+| Native SDK candidate                                                                       | Status                      | Scope                                                                                                                                                                                                                                                                   |
+| ------------------------------------------------------------------------------------------ | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Swift tools 6.2, Apple first-party frameworks, iOS 16+                                     | **Selected**                | Foundation HTTP/WebSocket and cancellation, strict concurrency, Keychain, Secure Enclave P-256 proof, and AVFoundation capture with no third-party runtime dependency                                                                                                   |
+| Android Gradle Plugin 9.4.0 with built-in Kotlin 2.3.21, Gradle 9.6.0, JDK 17, API 26+     | **Selected**                | Android library build; the wrapper records the official Gradle distribution checksum                                                                                                                                                                                    |
+| `org.jetbrains.kotlinx:kotlinx-coroutines-core` 1.11.0                                     | **Selected**                | Cancellable suspend operations and public `Flow` realtime observation                                                                                                                                                                                                   |
+| `com.squareup.okhttp3:okhttp` 5.5.0                                                        | **Selected**                | Android HTTPS and WebSocket transport behind SDK-owned interfaces                                                                                                                                                                                                       |
+| `com.squareup.moshi:moshi` 1.15.2                                                          | **Selected**                | Bounded Android JSON mapping without reflection or code generation                                                                                                                                                                                                      |
+| `com.google.mediapipe:tasks-vision` 1.0.0                                                  | **Selected for evaluation** | Android face-landmarker measurement behind the SDK pose port; the digest-pinned model asset is packaged with the application and never downloaded at runtime. Production tracker/model acceptance, device calibration and PAD assurance remain unresolved               |
+| `com.google.guava:guava` 33.7.1-android and `com.google.protobuf:protobuf-javalite` 4.36.2 | **Selected override**       | The published MediaPipe POM requests `guava` 27.0.1-android and `protobuf-javalite` 4.26.1; the older protobuf is affected by CVE-2024-7254, so both are raised explicitly. Every resolved module was checked against OSV and returned no advisory on 22 September 2026 |
 
 Both native SDKs provide platform secure-token stores, generate non-exportable hardware-backed P-256 proof keys, sign the published native-bootstrap transcript, and expose optional platform-attestation provider boundaries. The server has a matching owned verifier port and rejects supplied attestation when no verifier is composed. The tenant backend delivers a single-use Idenqa capture token; first redemption binds that token atomically to an allow-listed application identifier and proof-key digest. Capability advertisements narrow method choice and never prove assurance. Native raw capture remains owned by these SDKs rather than a Flutter or React Native bridge.
 
@@ -1445,6 +1476,29 @@ The implemented `capture/web` foundation establishes `@idenqa/capture` with the 
 
 The selected safe-default UI is mobile-first and guided. It presents one primary task per screen using a compact journey grammar: getting started; required notice or consent; optional server-authorised country and document choices; preparation; capture; review with use or retake; processing; and an authoritative success, targeted-retry, or terminal-failure outcome. A choice screen is omitted when the subject has no meaningful policy-approved choice. Country selection that changes applicable policy or profile occurs before session creation; no Capture Web choice may rewrite an immutable active-session snapshot. **Selected — 22 September 2026:** allowed document types and their required artefacts belong to the capture profile and are pinned into the immutable session snapshot. The signed experience may present permitted copy but is not the authority for which document types or sides are required.
 
+**Selected — 4 October 2026:** country selection is part of the document capture
+flow and determines the country-relevant document alternatives. A flow without
+document requirements, including a selfie/liveness-only flow, must omit country
+selection and continue from required notice or consent to capture preparation.
+Document-only and mixed document/selfie flows retain country selection before
+creating the immutable country-bound session. Acceptance must cover both paths
+using the published profile requirements rather than a launch hint alone.
+
+**Implementation update — 1 October 2026:** Capture Web exposes a country-first
+programmatic journey for the pre-session case. The host supplies a bounded set of
+tenant-policy-approved ISO alpha-2 countries and an abortable resolver callback;
+the package renders the introduction and searchable country choice, while the
+trusted host resolves the country pack, policy/profile and applicable notice,
+creates the immutable session, and returns ordinary programmatic start options.
+Tenant credentials remain server-side and bearer credentials never enter markup.
+The local country catalogue is presentation input, not policy authority, and the
+component cannot change country after session creation. The hosted and embedded
+development fixtures demonstrate Nigeria, Ghana and United Kingdom branches with
+country-specific document alternatives and required sides before continuing into
+the existing Core-owned document selection. This is implementation and browser
+conformance evidence, not external substantiation of country-pack coverage or
+final user-facing acceptance.
+
 Core owns the durable per-requirement selection of a pinned document branch.
 The capture-token command is application-authorised, expected-version and
 idempotency bound. Selection activates already-pinned artefacts rather than
@@ -1466,12 +1520,12 @@ Capture Web package acceptance requires all of the following:
 - keyboard, screen-reader, contrast, large-text, reduced-motion, right-to-left, permission, interruption, and recovery evidence; and
 - explicit user-facing visual and interaction review in addition to automated unit, browser, contract, and framework-host conformance tests.
 
-| Package                    | Status            | Capture-Web scope                                                    |
-| -------------------------- | ----------------- | -------------------------------------------------------------------- |
-| `lit` v3.3.3               | **Selected**      | Framework-neutral Web Component runtime                              |
+| Package                          | Status                                    | Capture-Web scope                                                               |
+| -------------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------- |
+| `lit` v3.3.3                     | **Selected**                              | Framework-neutral Web Component runtime                                         |
 | `@mediapipe/tasks-vision` v1.0.1 | **Proposed — implemented for evaluation** | Local face landmarks/blendshapes in a separate self-hosted worker; no PAD claim |
-| `vite` v8.2.2              | **Selected tool** | Development server and plain-HTML browser fixtures only              |
-| `@playwright/test` v1.62.1 | **Selected tool** | Real Chromium, Firefox, and WebKit browser tests as coverage expands |
+| `vite` v8.2.2                    | **Selected tool**                         | Development server and plain-HTML browser fixtures only                         |
+| `@playwright/test` v1.62.1       | **Selected tool**                         | Real Chromium, Firefox, and WebKit browser tests as coverage expands            |
 
 The reviewed intake found active upstream maintenance and BSD-3-Clause, MIT, and Apache-2.0 licensing respectively, all compatible with Idenqa's Apache-2.0 distribution. React, React DOM, and their type packages are actively maintained and MIT-licensed. The initial production graph contained Lit and its five BSD/MIT dependencies; the measured-liveness increment adds MediaPipe Tasks Vision 1.0.1 (Apache-2.0, no declared npm dependencies), bundled only in the separate worker. Its registry release metadata, official documentation/licence and npm advisory endpoint were checked on 22 September 2026; no advisory was returned for that version. The version-1 float16 Face Landmarker model is digest-pinned by the asset-preparation script. Model/device evaluation and production approval remain open. Vite, Playwright, React, React DOM, and the React type packages remain development-only. Neither Vite nor React is used to build the published package, avoiding coupling the library format to a development fixture or framework host.
 
@@ -1487,6 +1541,20 @@ and poor-quality inputs cannot submit, correct holds can submit through Core,
 and cancellation/retry release resources. Real-camera direction/accuracy,
 mobile performance, calibrated thresholds and explicit interaction acceptance
 remain required; local pose compliance never establishes PAD assurance.
+
+**Selected subject pacing — 3 October 2026:** Capture Web retains mandatory
+`maximum_duration_ms` limits for pose attempts and for camera/tracker/assessment
+work. Ordinary centering, framing, movement or recoverable quality feedback must
+not turn an expired pose attempt into a subject-facing error. The coordinator
+quietly restarts that same prompt, discards the expired frame and all partial
+pose/hold state, and requires a fresh neutral baseline while keeping the camera
+and tracker open. A timer must never complete a prompt. Stalled capture work,
+invalid or unavailable required measurements and subject cancellation still
+stop acquisition; local retries cannot renew a Core session or capture authority.
+Acceptance must prove guidance continues beyond several attempt limits without
+submission, eventual correct holds can complete, expired holds cannot carry into
+a new attempt, and cancellation or stalled work releases the camera and worker.
+Real-camera/device and explicit interaction acceptance remain open.
 
 React is not a runtime requirement of the open-source capture package. The commercial Console may use its own React stack separately.
 
@@ -1607,6 +1675,10 @@ The following items remain deliberately unresolved:
 
 28. **Selected — 14 September 2026:** Post-expiry subject-outcome access uses a distinct `idq_out_v1` signed bearer backed by an `otk_` durable credential record. It has a separate HMAC-SHA-256 keyring and domain separator from capture credentials, and binds its token identifier, tenant, verification, key version, issuance time and expiry. Core creates exactly one outcome credential atomically with each verification or recapture session and reconstructs the same deterministic bearer on exact idempotent replay; the tenant backend delivers it beside, but separately from, the capture token at its trusted subject bootstrap. Its expiry is the immutable session expiry plus a selected post-expiry interval: the deployment default is 24 hours, the default deployment maximum is 168 hours, and the hard configuration cap is 30 days. A create request may choose a positive whole-second interval within the deployment maximum. The credential is independently revocable and remains subject to its own key-version retention; its database row follows workflow-metadata retention, which does not extend bearer validity. It grants only the closed subject-safe `GET /v1/capture/outcome` projection and cannot load or exercise capture-session authority, respond to authority, initiate or upload evidence, cancel, open WebSockets, read decision details, or call tenant APIs. No public outcome-token renewal exists in v1. Recapture capture-token renewal reconstructs the existing still-live child outcome credential rather than replacing it. A capture token remains bounded by session expiry and is never accepted for post-expiry outcome access; browser time never invents the authoritative `expired` transition. Idempotency results written before D-027 cannot be expanded safely and therefore conflict instead of minting a new outcome credential during replay.
 
+29. **TBD — forwarded request-log client address:** select the trusted-proxy CIDR configuration, accepted forwarding header, hop-selection algorithm, malformed-chain behaviour and deployment acceptance tests before request logging may treat a forwarded address as the client. The selected baseline records only the transport peer.
+
+30. **TBD — regional usage receipt retention:** select source outbox retention/archive and expiry after durable acknowledgement without weakening replay or financial reconciliation obligations; accept the deployed public local handoff. Dispatch receipts do not imply terminal/provider-charged/model sources.
+
 ---
 
 ## 18. Acceptance criteria
@@ -1621,6 +1693,7 @@ This structure is accepted when:
 - The core, SDKs, capture packages, contracts, conformance suites, and bundled examples carry Apache-2.0 licensing and pass the dependency-licence policy check.
 - `api`, `worker`, `evidence`, `adapter-runner`, `model-runner`, and `idenqa` entry points contain only composition and process lifecycle code.
 - Domain packages compile without HTTP router, SQL driver, task-library, telemetry SDK, or cloud SDK imports.
+- Request-log tests prove route-template use, transport-peer address capture, bounded structured query and JSON-body capture, recursive sensitive-field redaction, omission of evidence and non-JSON bodies, tenant isolation, and an authorised round trip through the public contract. Forwarding headers do not affect the recorded address without a future selected trusted-proxy contract.
 - The Go SDK compiles without access to root `internal` packages.
 - The optional S3 adapter passes real AWS SDK conformance over HTTPS and explicitly enabled HTTP, streams without whole-object buffering, detects ciphertext modification, preserves exact versions, and leaves the root module free of cloud SDK dependencies. The independent S3 distribution composes both public `api` ingress and `worker` exact deletion against one configured namespace without exposing SDK types across owned boundaries.
 - The Web capture package can be embedded in a non-React page and uses the public TypeScript SDK.
