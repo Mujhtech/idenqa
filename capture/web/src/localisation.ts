@@ -20,6 +20,8 @@ export const CAPTURE_MESSAGE_KEYS = [
   "back",
   "continue",
   "chooseAnotherMethod",
+  "noFlowTitle",
+  "noFlowBody",
   "preparingSecureCapture",
   "preparingCaptureBody",
   "capturePreparationFailedTitle",
@@ -260,6 +262,9 @@ const englishMessages: Readonly<Record<CaptureMessageKey, string>> = {
   back: "Back",
   continue: "Continue to Capture",
   chooseAnotherMethod: "Use Another Method",
+  noFlowTitle: "No capture flow to load",
+  noFlowBody:
+    "Open the verification link provided by the organisation requesting your identity check.",
   preparingSecureCapture: "Preparing secure capture…",
   preparingCaptureBody: "This should only take a moment.",
   capturePreparationFailedTitle: "We Couldn’t Open This Verification",

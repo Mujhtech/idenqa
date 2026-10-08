@@ -78,7 +78,11 @@ ordering, expands `all_of` method legs, keeps every required artefact, and
 selects only a policy-approved fallback for the actual unavailability reason.
 
 The package includes an explicitly registered Lit Web Component and a
-capture-flow controller. The component's programmatic `start` method uses the
+capture-flow controller. Without a started flow or country journey, the component
+shows “No capture flow to load” and directs the subject to their verification
+link. The former `plan` property and plan-only renderer have been removed;
+integrations must call `start(...)` or `startCountryJourney(...)`.
+The component's programmatic `start` method uses the
 public SDK to retrieve the immutable session and exact authority notice, records
 the required acknowledgement, consent, or refusal with a retry-stable
 idempotency key, and reveals capture methods only after the response permits
@@ -129,6 +133,30 @@ cancellation, restart, or component detachment. A camera failure activates a
 file-upload alternative only when the immutable profile explicitly permits a
 `capture_failed` fallback; cancelling the camera does not activate that
 fallback.
+
+## Component source layout
+
+[`src/capture-element.ts`](src/capture-element.ts) owns the custom-element lifecycle,
+flow transitions, event dispatch, and camera/adapter cleanup. Its public exports
+remain available from the same entry point. Presentation code lives under
+`src/element/` and receives typed, read-only state plus explicit action callbacks;
+views do not start network requests or own media resources.
+
+| Module                                                                                                                                                                                   | Responsibility                                                                   |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| [`country-view.ts`](src/element/country-view.ts)                                                                                                                                         | Pre-session introduction, notice, and country selection                          |
+| [`notice-view.ts`](src/element/notice-view.ts)                                                                                                                                           | Session introduction and authority notice/response controls                      |
+| [`journey-view.ts`](src/element/journey-view.ts)                                                                                                                                         | Guided steps, method/document choices, preparation, recovery, and confirmation   |
+| [`acquisition-view.ts`](src/element/acquisition-view.ts)                                                                                                                                 | File, camera, document-guide, and liveness-adapter presentation                  |
+| [`status-view.ts`](src/element/status-view.ts)                                                                                                                                           | Missing flow, loading, errors, processing, and terminal outcomes                 |
+| [`styles.ts`](src/element/styles.ts)                                                                                                                                                     | Ordered composition of base, acquisition, journey, motion, and responsive styles |
+| [`types.ts`](src/element/types.ts), [`state.ts`](src/element/state.ts)                                                                                                                   | Public options/event details and internal component state types                  |
+| [`copy.ts`](src/element/copy.ts), [`plan.ts`](src/element/plan.ts), [`country.ts`](src/element/country.ts), [`document.ts`](src/element/document.ts), [`icons.ts`](src/element/icons.ts) | Presentation text, progress, validation, geometry, and icons                     |
+
+Keep side effects in the element and pass callbacks to the views. Preserve the
+stylesheet order in `styles.ts` because later rules intentionally override earlier
+ones. Rendering changes should be checked against the browser interaction and
+visual regression suite.
 
 ## Document capture and selection
 

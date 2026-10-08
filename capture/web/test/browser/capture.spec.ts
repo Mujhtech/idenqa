@@ -7,29 +7,25 @@ import type {
   IdenqaCaptureElement,
 } from "../../src/index.js";
 
-test("renders the plain-HTML capture plan with semantic, keyboard-operable choices", async ({
-  page,
-}) => {
+test("shows a no-flow state instead of plan-only capture controls", async ({ page }) => {
   await page.goto("/");
 
   await expect(page.locator("idenqa-capture section.shell")).toHaveAccessibleName(
     "Identity Verification",
   );
-  await expect(page.getByRole("heading", { level: 3, name: "Selfie Image" })).toBeVisible();
-  await expect(page.getByRole("heading", { level: 4, name: "Document Front" })).toBeVisible();
-  await expect(page.getByRole("heading", { level: 4, name: "Document Back" })).toBeVisible();
-  await expect(page.getByRole("group", { name: "Capture methods for Selfie Image" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "No capture flow to load" })).toBeVisible();
+  await expect(page.getByRole("status")).toContainText("Open the verification link");
+  await expect(page.locator("idenqa-capture button")).toHaveCount(0);
+  await expect(page.locator('idenqa-capture [aria-busy="true"]')).toHaveCount(0);
 
-  const camera = page.getByRole("button", { name: "Use Camera" });
-  await camera.focus();
-  await expect(camera).toBeFocused();
-  await page.keyboard.press("Enter");
-
-  await expect(camera).toHaveAttribute("aria-pressed", "true");
-  await expect(page.getByRole("status").filter({ hasText: "Camera selected." })).toBeVisible();
-  await expect(page.locator("#selection")).toHaveText(
-    "idenqa.method.live_camera selected for idenqa.artefact.selfie_image.",
-  );
+  // An old host assigning a plan must not restore the removed renderer.
+  await page.evaluate(() => {
+    const element = document.querySelector("idenqa-capture")!;
+    Object.assign(element, { plan: { requirements: [] } });
+    (element as IdenqaCaptureElement).requestUpdate();
+  });
+  await expect(page.getByRole("heading", { name: "No capture flow to load" })).toBeVisible();
+  await expect(page.locator("idenqa-capture button")).toHaveCount(0);
 });
 
 test("keeps the component within a narrow mobile viewport", async ({ page }) => {
@@ -38,7 +34,7 @@ test("keeps the component within a narrow mobile viewport", async ({ page }) => 
 
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
   expect(overflow).toBeLessThanOrEqual(0);
-  await expect(page.getByRole("button", { name: "Upload File" }).first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: "No capture flow to load" })).toBeVisible();
 });
 
 test("bounds the capture surface on desktop and keeps overflow reachable", async ({ page }) => {
