@@ -102,6 +102,8 @@ key_output=$(./bin/idenqa api-key create \
   --scope 'reviews:*' \
   --scope 'verification_sessions:*' \
   --scope 'authorities:*' \
+  --scope 'subjects:read' \
+  --scope 'subjects:write' \
   --expires-at 2099-01-01T00:00:00Z \
   --actor capture-web-conformance \
   --reason "create synthetic Capture Web credential")
@@ -153,4 +155,6 @@ until curl --fail --silent --show-error "${demo_url}/hosted.html" >/dev/null 2>&
 done
 
 IDENQA_CAPTURE_LIVE_DEMO_URL=$demo_url \
+IDENQA_CAPTURE_TEST_CORE_URL=$core_url \
+IDENQA_CAPTURE_TEST_TENANT_API_KEY=$api_key \
   pnpm --dir capture/web exec playwright test test/browser/real-core.spec.ts "$@"
