@@ -27,7 +27,7 @@ func TestCredentialEnvelopeCanOnlyBeOpenedByDeliveryKey(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Seal() error = %v", err)
 	}
-	if envelope.Algorithm != credentialEnvelopeAlgorithm || envelope.Ciphertext == "idq_v1_display_once" {
+	if envelope.Algorithm != envelopeAlgorithm || envelope.Ciphertext == "idq_v1_display_once" {
 		t.Fatal("credential envelope is not opaque")
 	}
 	ephemeralBytes, err := base64.RawURLEncoding.DecodeString(envelope.EphemeralPublicKey)

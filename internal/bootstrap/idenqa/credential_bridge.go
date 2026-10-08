@@ -164,7 +164,7 @@ func serveCredentialBridge(command *cobra.Command, options *credentialBridgeOpti
 	mux.Handle("/local/v1/synthetic-tenants/provision", managedHandler)
 	mux.Handle("/local/v1/synthetic-journeys/run", managedHandler)
 	mux.Handle("/local/v1/readiness", readinessHandler)
-	listener, cleanup, err := listenCredentialBridge(options.socketPath)
+	listener, cleanup, err := listenCredentialBridge(ctx, options.socketPath)
 	if err != nil {
 		return cli.RuntimeError("listen on credential bridge socket", err)
 	}
@@ -223,11 +223,12 @@ func validateCredentialBridgeSocketPath(path string) error {
 	return nil
 }
 
-func listenCredentialBridge(path string) (net.Listener, func(), error) {
+func listenCredentialBridge(ctx context.Context, path string) (net.Listener, func(), error) {
 	if err := validateCredentialBridgeSocketPath(path); err != nil {
 		return nil, nil, err
 	}
-	listener, err := net.Listen("unix", path)
+	var listenConfig net.ListenConfig
+	listener, err := listenConfig.Listen(ctx, "unix", path)
 	if err != nil {
 		return nil, nil, err
 	}

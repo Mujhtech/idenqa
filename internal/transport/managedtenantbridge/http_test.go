@@ -48,7 +48,7 @@ func TestHandlerAcceptsOnlyTheFixedProvisionContract(t *testing.T) {
 		t.Fatalf("NewHandler() error = %v", err)
 	}
 	response := httptest.NewRecorder()
-	request := httptest.NewRequest(http.MethodPost, "/local/v1/managed-tenants/provision", strings.NewReader(`{"commandId":"onboarding-command-0001","deliveryPublicKey":"public"}`))
+	request := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/local/v1/managed-tenants/provision", strings.NewReader(`{"commandId":"onboarding-command-0001","deliveryPublicKey":"public"}`))
 	handler.ServeHTTP(response, request)
 	if response.Code != http.StatusOK {
 		t.Fatalf("status = %d, want %d: %s", response.Code, http.StatusOK, response.Body.String())
@@ -72,7 +72,7 @@ func TestHandlerRunsOnlyTheFixedSyntheticContract(t *testing.T) {
 	}
 	body := `{"runId":"sjr_12345678","deploymentId":"dep_12345678","coreEndpoint":"https://core.example.test","profileDocument":{},"policyDocument":{},"fixtureVersion":"builtin.synthetic.selfie.v1","region":"ng-lagos-1","expectedOutcome":"verified","timeoutSeconds":60}`
 	response := httptest.NewRecorder()
-	handler.ServeHTTP(response, httptest.NewRequest(http.MethodPost, "/local/v1/synthetic-journeys/run", strings.NewReader(body)))
+	handler.ServeHTTP(response, httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/local/v1/synthetic-journeys/run", strings.NewReader(body)))
 	if response.Code != http.StatusOK {
 		t.Fatalf("status=%d body=%s", response.Code, response.Body.String())
 	}
@@ -92,7 +92,7 @@ func TestHandlerRejectsUnknownAndTrailingInput(t *testing.T) {
 		`{"commandId":"onboarding-command-0001","deliveryPublicKey":"public"} {}`,
 	} {
 		response := httptest.NewRecorder()
-		handler.ServeHTTP(response, httptest.NewRequest(http.MethodPost, "/local/v1/managed-tenants/provision", strings.NewReader(body)))
+		handler.ServeHTTP(response, httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/local/v1/managed-tenants/provision", strings.NewReader(body)))
 		if response.Code != http.StatusBadRequest {
 			t.Fatalf("body %q status = %d, want %d", body, response.Code, http.StatusBadRequest)
 		}
@@ -103,7 +103,7 @@ func TestHandlerDoesNotExposeProvisioningFailure(t *testing.T) {
 	t.Parallel()
 	handler, _ := NewHandler(&serviceStub{err: errors.New("database detail")})
 	response := httptest.NewRecorder()
-	handler.ServeHTTP(response, httptest.NewRequest(http.MethodPost, "/local/v1/managed-tenants/provision", strings.NewReader(`{"commandId":"onboarding-command-0001","deliveryPublicKey":"public"}`)))
+	handler.ServeHTTP(response, httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/local/v1/managed-tenants/provision", strings.NewReader(`{"commandId":"onboarding-command-0001","deliveryPublicKey":"public"}`)))
 	if response.Code != http.StatusConflict || strings.Contains(response.Body.String(), "database detail") {
 		t.Fatalf("response = %d %q", response.Code, response.Body.String())
 	}

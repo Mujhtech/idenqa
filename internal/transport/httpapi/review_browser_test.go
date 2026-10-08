@@ -28,7 +28,8 @@ func TestReviewBrowserProblem(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			failure, ok := reviewBrowserProblem(test.err).(*apierror.Error)
+			failure := &apierror.Error{}
+			ok := errors.As(reviewBrowserProblem(test.err), &failure)
 			if !ok {
 				t.Fatalf("reviewBrowserProblem() type = %T, want *apierror.Error", reviewBrowserProblem(test.err))
 			}

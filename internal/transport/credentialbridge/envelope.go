@@ -14,7 +14,7 @@ import (
 	"github.com/Mujhtech/idenqa/internal/access"
 )
 
-const credentialEnvelopeAlgorithm = "P256-HKDF-SHA256-AES-256-GCM"
+const envelopeAlgorithm = "P256-HKDF-SHA256-AES-256-GCM"
 
 type credentialSealer struct {
 	aead               cipher.AEAD
@@ -74,7 +74,7 @@ func NewSealer(publicKeyText, commandID string) (access.CredentialSealer, error)
 func (sealer *credentialSealer) Seal(credential string) (access.CredentialEnvelope, error) {
 	ciphertext := sealer.aead.Seal(nil, sealer.nonce, []byte(credential), []byte(sealer.commandID))
 	return access.CredentialEnvelope{
-		Algorithm:          credentialEnvelopeAlgorithm,
+		Algorithm:          envelopeAlgorithm,
 		EphemeralPublicKey: sealer.ephemeralPublicKey,
 		Nonce:              base64.RawURLEncoding.EncodeToString(sealer.nonce),
 		Ciphertext:         base64.RawURLEncoding.EncodeToString(ciphertext),

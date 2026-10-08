@@ -19,8 +19,10 @@ type service interface {
 	RunSynthetic(context.Context, managedtenant.SyntheticRunRequest) (managedtenant.SyntheticRunResult, error)
 }
 
+// Handler serves authenticated local managed-tenant and synthetic-journey requests.
 type Handler struct{ service service }
 
+// NewHandler constructs a local handler backed by service.
 func NewHandler(service service) (*Handler, error) {
 	if service == nil {
 		return nil, errors.New("managed tenant bridge service is required")

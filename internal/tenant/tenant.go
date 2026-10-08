@@ -122,6 +122,7 @@ type ProvisionCommand struct {
 	RequestDigest [32]byte
 }
 
+// Validate checks the identifier and digest of a managed-tenant command.
 func (command ProvisionCommand) Validate() error {
 	if err := validateAuditText("provision command", command.ID, 200); err != nil || len(command.ID) < 16 {
 		return errors.New("tenant provision command is invalid")

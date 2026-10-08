@@ -66,11 +66,13 @@ type Timeline struct {
 	Truncated bool
 }
 
+// TimelineRepository records capture journey events and reads verification timelines.
 type TimelineRepository interface {
 	RecordJourneyEvent(context.Context, CaptureContext, JourneyEvent) (JourneyEvent, error)
 	FindTimeline(context.Context, tenant.Scope, id.Verification) (Timeline, error)
 }
 
+// TimelineService validates and authorises capture journey timeline operations.
 type TimelineService struct {
 	tracer observability.Tracer
 
@@ -78,6 +80,7 @@ type TimelineService struct {
 	now        func() time.Time
 }
 
+// NewTimelineService constructs a timeline service with an explicit clock.
 func NewTimelineService(repository TimelineRepository, now func() time.Time) (*TimelineService, error) {
 	if repository == nil || now == nil {
 		return nil, errors.New("verification: timeline dependencies are required")
@@ -85,6 +88,7 @@ func NewTimelineService(repository TimelineRepository, now func() time.Time) (*T
 	return &TimelineService{repository: repository, now: now}, nil
 }
 
+// Record validates and persists one capture journey event.
 func (service *TimelineService) Record(ctx context.Context, authority CaptureContext, input JourneyEventInput) (spanResult0 JourneyEvent, spanErr error) {
 	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "verification.TimelineService.Record")
 	defer observability.EndSpan(completeSpan, &spanErr)
@@ -104,6 +108,7 @@ func (service *TimelineService) Record(ctx context.Context, authority CaptureCon
 	return service.repository.RecordJourneyEvent(ctx, authority, event)
 }
 
+// Find returns a verification timeline after checking read permission.
 func (service *TimelineService) Find(ctx context.Context, authority access.Context, identifier id.Verification) (spanResult0 Timeline, spanErr error) {
 	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "verification.TimelineService.Find")
 	defer observability.EndSpan(completeSpan, &spanErr)

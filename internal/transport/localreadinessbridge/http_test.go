@@ -20,13 +20,13 @@ func TestHandlerExposesOnlyFixedReadinessSnapshot(t *testing.T) {
 		t.Fatal(err)
 	}
 	response := httptest.NewRecorder()
-	handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/local/v1/readiness", nil))
+	handler.ServeHTTP(response, httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/local/v1/readiness", nil))
 	if response.Code != http.StatusOK {
 		t.Fatalf("status=%d body=%s", response.Code, response.Body.String())
 	}
 	for _, target := range []string{"/local/v1/readiness/other", "/local/v1/command"} {
 		response = httptest.NewRecorder()
-		handler.ServeHTTP(response, httptest.NewRequest(http.MethodGet, target, nil))
+		handler.ServeHTTP(response, httptest.NewRequestWithContext(t.Context(), http.MethodGet, target, nil))
 		if response.Code != http.StatusNotFound {
 			t.Fatalf("target=%s status=%d", target, response.Code)
 		}

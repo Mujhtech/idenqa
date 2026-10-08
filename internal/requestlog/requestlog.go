@@ -17,7 +17,9 @@ import (
 )
 
 var (
-	ErrInvalid  = errors.New("request log: invalid")
+	// ErrInvalid reports invalid request-log data or service configuration.
+	ErrInvalid = errors.New("request log: invalid")
+	// ErrNotFound reports that a request-log record does not exist in the tenant scope.
 	ErrNotFound = errors.New("request log: not found")
 )
 
@@ -32,6 +34,7 @@ type Record struct {
 	OccurredAt                                                                    time.Time
 }
 
+// Cursor identifies the exclusive position after which a request-log page continues.
 type Cursor struct {
 	OccurredAt time.Time
 	RequestID  string
@@ -44,12 +47,14 @@ type AnalyticsWindow struct {
 	To   time.Time `json:"to"`
 }
 
+// VolumeBucket contains privacy-safe request counts for one UTC day.
 type VolumeBucket struct {
 	Day      time.Time `json:"day"`
 	Requests int64     `json:"requests"`
 	Errors   int64     `json:"errors"`
 }
 
+// EndpointMetric contains aggregate request counts and latency for one route.
 type EndpointMetric struct {
 	Method                 string `json:"method"`
 	RouteTemplate          string `json:"route_template"`
@@ -58,11 +63,13 @@ type EndpointMetric struct {
 	P95LatencyMilliseconds int64  `json:"p95_latency_ms"`
 }
 
+// StatusMetric contains the count for one HTTP status class.
 type StatusMetric struct {
 	Class string `json:"class"`
 	Count int64  `json:"count"`
 }
 
+// Analytics contains privacy-safe aggregate request metrics for a time window.
 type Analytics struct {
 	Window                 AnalyticsWindow  `json:"window"`
 	Requests               int64            `json:"requests"`
@@ -75,21 +82,25 @@ type Analytics struct {
 	Statuses               []StatusMetric   `json:"statuses"`
 }
 
+// AnalyticsRepository reads aggregate request metrics for a tenant.
 type AnalyticsRepository interface {
 	Aggregate(context.Context, tenant.Scope, AnalyticsWindow) (Analytics, error)
 }
 
+// Repository persists and reads tenant-scoped request-log records.
 type Repository interface {
 	Append(context.Context, tenant.Scope, Record) error
 	Get(context.Context, tenant.Scope, string) (Record, error)
 	List(context.Context, tenant.Scope, Cursor, int) ([]Record, error)
 }
 
+// Service validates and authorises tenant request-log operations.
 type Service struct {
 	tracer     observability.Tracer
 	repository Repository
 }
 
+// NewService constructs a request-log service backed by repository.
 func NewService(repository Repository) (*Service, error) {
 	if repository == nil {
 		return nil, ErrInvalid
@@ -97,6 +108,7 @@ func NewService(repository Repository) (*Service, error) {
 	return &Service{repository: repository}, nil
 }
 
+// Append stores one validated request-log record for scope.
 func (service *Service) Append(ctx context.Context, scope tenant.Scope, record Record) (spanErr error) {
 	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "requestlog.Service.Append")
 	defer observability.EndSpan(completeSpan, &spanErr)
@@ -110,6 +122,7 @@ func (service *Service) Append(ctx context.Context, scope tenant.Scope, record R
 	return nil
 }
 
+// Get returns one request-log record after checking audit-export permission.
 func (service *Service) Get(ctx context.Context, authority access.Context, requestID string) (spanResult0 Record, spanErr error) {
 	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "requestlog.Service.Get")
 	defer observability.EndSpan(completeSpan, &spanErr)

@@ -39,6 +39,7 @@ type SignalService struct {
 	repository SignalRepository
 }
 
+// NewSignalService constructs a service for provider-independent signal reads.
 func NewSignalService(repository SignalRepository) (*SignalService, error) {
 	if repository == nil {
 		return nil, errors.New("verification: signal repository is required")
@@ -46,6 +47,7 @@ func NewSignalService(repository SignalRepository) (*SignalService, error) {
 	return &SignalService{repository: repository}, nil
 }
 
+// Find returns a page of verification signals after checking read permission.
 func (service *SignalService) Find(ctx context.Context, authority access.Context, identifier id.Verification) (spanResult0 SignalPage, spanErr error) {
 	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "verification.SignalService.Find")
 	defer observability.EndSpan(completeSpan, &spanErr)

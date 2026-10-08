@@ -14,18 +14,26 @@ import (
 )
 
 var (
-	ErrInvalid   = errors.New("review browser session is invalid")
+	// ErrInvalid reports malformed review-browser authority or input.
+	ErrInvalid = errors.New("review browser session is invalid")
+	// ErrForbidden reports authority that does not permit the requested browser session.
 	ErrForbidden = errors.New("review browser session is forbidden")
-	ErrExpired   = errors.New("review browser session is expired")
-	ErrReplay    = errors.New("review browser bootstrap was already consumed")
+	// ErrExpired reports a browser session authority outside its valid lifetime.
+	ErrExpired = errors.New("review browser session is expired")
+	// ErrReplay reports a bootstrap that has already been consumed.
+	ErrReplay = errors.New("review browser bootstrap was already consumed")
 )
 
 const (
-	Version  = "idenqa.cloud/review-evidence-bootstrap/v1"
+	// Version identifies the signed review-evidence bootstrap contract.
+	Version = "idenqa.cloud/review-evidence-bootstrap/v1"
+	// Audience identifies the Core consumer allowed to accept this authority.
 	Audience = "idenqa-core:review-evidence-session"
-	Purpose  = "manual-review"
+	// Purpose limits this bootstrap contract to manual review.
+	Purpose = "manual-review"
 )
 
+// Scope binds browser authority to one organisation, tenant, environment, deployment, and region.
 type Scope struct {
 	OrganisationID string `json:"organisationId"`
 	TenantID       string `json:"tenantId"`
@@ -34,6 +42,7 @@ type Scope struct {
 	Region         string `json:"region"`
 }
 
+// Claims contains the signed authority and one-time bootstrap binding.
 type Claims struct {
 	Version         string    `json:"version"`
 	Audience        string    `json:"audience"`
@@ -49,6 +58,7 @@ type Claims struct {
 	ExpiresAt       time.Time `json:"expiresAt"`
 }
 
+// Envelope carries signed review-browser claims and their verification metadata.
 type Envelope struct {
 	KeyID     string `json:"keyId"`
 	Algorithm string `json:"algorithm"`
@@ -56,6 +66,7 @@ type Envelope struct {
 	Signature string `json:"signature"`
 }
 
+// Binding identifies the deployment context accepted by a verifier.
 type Binding struct {
 	OrganisationID string
 	EnvironmentID  string
@@ -63,6 +74,7 @@ type Binding struct {
 	Region         string
 }
 
+// Verifier validates signed review-browser bootstrap envelopes.
 type Verifier struct {
 	keys    map[string]ed25519.PublicKey
 	binding Binding
@@ -70,6 +82,7 @@ type Verifier struct {
 	maxTTL  time.Duration
 }
 
+// NewVerifier constructs a verifier from trusted public keys and deployment binding.
 func NewVerifier(encodedKeys map[string]string, binding Binding, maxTTL time.Duration, now func() time.Time) (*Verifier, error) {
 	if len(encodedKeys) == 0 || maxTTL <= 0 || now == nil || !validBinding(binding) {
 		return nil, ErrInvalid
@@ -85,6 +98,7 @@ func NewVerifier(encodedKeys map[string]string, binding Binding, maxTTL time.Dur
 	return &Verifier{keys: keys, binding: binding, maxTTL: maxTTL, now: now}, nil
 }
 
+// Verify checks the signature, lifetime, audience, and deployment binding.
 func (verifier *Verifier) Verify(envelope Envelope) (Claims, error) {
 	claims := envelope.Claims
 	if verifier == nil || envelope.Algorithm != "Ed25519" || claims.Version != Version || claims.Audience != Audience {

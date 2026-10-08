@@ -15,17 +15,24 @@ import (
 )
 
 var (
-	ErrInvalid   = errors.New("review delegation is invalid")
+	// ErrInvalid reports malformed review delegation claims or configuration.
+	ErrInvalid = errors.New("review delegation is invalid")
+	// ErrForbidden reports delegation that does not authorise the requested operation.
 	ErrForbidden = errors.New("review delegation is forbidden")
-	ErrExpired   = errors.New("review delegation is expired")
-	ErrNotFound  = errors.New("review delegation receipt not found")
+	// ErrExpired reports delegation claims outside their valid lifetime.
+	ErrExpired = errors.New("review delegation is expired")
+	// ErrNotFound reports that the delegated command receipt does not exist.
+	ErrNotFound = errors.New("review delegation receipt not found")
 )
 
 const (
-	Version  = "idenqa.cloud/review-authority/v1"
+	// Version identifies the signed review-authority claims contract.
+	Version = "idenqa.cloud/review-authority/v1"
+	// Audience identifies the Core consumer allowed to accept this authority.
 	Audience = "idenqa-core:review-command"
 )
 
+// Scope binds delegated authority to one organisation, tenant, environment, deployment, and region.
 type Scope struct {
 	OrganisationID string `json:"organisationId"`
 	TenantID       string `json:"tenantId"`
@@ -34,6 +41,7 @@ type Scope struct {
 	Region         string `json:"region"`
 }
 
+// Intent describes the single review operation authorized by the delegation.
 type Intent struct {
 	CommandID        string    `json:"commandId"`
 	Scope            Scope     `json:"scope"`
@@ -54,12 +62,14 @@ type Intent struct {
 	ExpiresAt        time.Time `json:"expiresAt"`
 }
 
+// Claims wraps one intent with its version and audience binding.
 type Claims struct {
 	Version  string `json:"version"`
 	Audience string `json:"audience"`
 	Intent
 }
 
+// Envelope carries signed review delegation claims and verification metadata.
 type Envelope struct {
 	KeyID     string `json:"keyId"`
 	Algorithm string `json:"algorithm"`
@@ -82,6 +92,7 @@ func ClaimsFromContext(ctx context.Context) (Claims, bool) {
 	return claims, ok
 }
 
+// Binding identifies the deployment context accepted by a verifier.
 type Binding struct {
 	OrganisationID string
 	EnvironmentID  string
@@ -89,6 +100,7 @@ type Binding struct {
 	Region         string
 }
 
+// Verifier validates signed, short-lived review delegation envelopes.
 type Verifier struct {
 	keys    map[string]ed25519.PublicKey
 	binding Binding
@@ -96,6 +108,7 @@ type Verifier struct {
 	maxTTL  time.Duration
 }
 
+// NewVerifier constructs a verifier from trusted public keys and deployment binding.
 func NewVerifier(encodedKeys map[string]string, binding Binding, maxTTL time.Duration, now func() time.Time) (*Verifier, error) {
 	if len(encodedKeys) == 0 || maxTTL <= 0 || now == nil || !validBinding(binding) {
 		return nil, ErrInvalid
@@ -111,6 +124,7 @@ func NewVerifier(encodedKeys map[string]string, binding Binding, maxTTL time.Dur
 	return &Verifier{keys: keys, binding: binding, maxTTL: maxTTL, now: now}, nil
 }
 
+// Verify checks the signature, lifetime, audience, intent, and deployment binding.
 func (verifier *Verifier) Verify(envelope Envelope) (Claims, error) {
 	claims := envelope.Claims
 	if verifier == nil || envelope.Algorithm != "Ed25519" || claims.Version != Version || claims.Audience != Audience {

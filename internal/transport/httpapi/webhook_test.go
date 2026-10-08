@@ -17,7 +17,7 @@ func TestWebhookEventTypesExposeAuthoritativeCatalogue(t *testing.T) {
 		handlerBase: newHandlerBase(fixture.logger, "webhook"),
 		access:      fixture.middleware,
 	}
-	request := httptest.NewRequest(http.MethodGet, "/v1/webhook-event-types", nil)
+	request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/v1/webhook-event-types", nil)
 	request.Header.Set("Authorization", "Bearer "+fixture.encoded)
 	response := httptest.NewRecorder()
 	versionedRouter(t, routes).ServeHTTP(response, request)
@@ -52,7 +52,7 @@ func TestWebhookEventTypesRequireReadPermission(t *testing.T) {
 		handlerBase: newHandlerBase(fixture.logger, "webhook"),
 		access:      fixture.middleware,
 	}
-	request := httptest.NewRequest(http.MethodGet, "/v1/webhook-event-types", nil)
+	request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/v1/webhook-event-types", nil)
 	request.Header.Set("Authorization", "Bearer "+fixture.encoded)
 	response := httptest.NewRecorder()
 	versionedRouter(t, routes).ServeHTTP(response, request)

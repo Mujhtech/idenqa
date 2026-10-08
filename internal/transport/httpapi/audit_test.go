@@ -34,7 +34,7 @@ func TestAuditRoutesReturnReferenceOnlyMetadata(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewAuditRoutes() error = %v", err)
 	}
-	request := httptest.NewRequest(http.MethodGet, "/v1/audit-records?before=10&limit=1", nil)
+	request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/v1/audit-records?before=10&limit=1", nil)
 	request.Header.Set("Authorization", "Bearer "+fixture.encoded)
 	response := httptest.NewRecorder()
 	versionedRouter(t, routes).ServeHTTP(response, request)

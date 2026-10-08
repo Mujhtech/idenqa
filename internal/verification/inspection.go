@@ -89,6 +89,7 @@ type InspectionService struct {
 	repository InspectionRepository
 }
 
+// NewInspectionService constructs a metadata-only verification inspection service.
 func NewInspectionService(repository InspectionRepository) (*InspectionService, error) {
 	if repository == nil {
 		return nil, errors.New("verification: inspection repository is required")

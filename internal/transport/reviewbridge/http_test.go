@@ -91,15 +91,15 @@ func TestHandlerExecutesSignedFindingIntent(t *testing.T) {
 	payload.ReasonCode = "document_consistent"
 	payload.Resolution = "satisfy"
 	payload.EvidenceGrantIDs = []string{"grt_01M3NRK3Z6BA1MMMR66QMM1NRN"}
-	payload.Authority.Claims.Intent.Operation = payload.Operation
-	payload.Authority.Claims.Intent.Permission = payload.Permission
-	payload.Authority.Claims.Intent.Purpose = payload.Purpose
-	payload.Authority.Claims.Intent.ReasonCode = payload.ReasonCode
-	payload.Authority.Claims.Intent.Resolution = payload.Resolution
-	payload.Authority.Claims.Intent.EvidenceGrantIDs = append([]string(nil), payload.EvidenceGrantIDs...)
+	payload.Authority.Claims.Operation = payload.Operation
+	payload.Authority.Claims.Permission = payload.Permission
+	payload.Authority.Claims.Purpose = payload.Purpose
+	payload.Authority.Claims.ReasonCode = payload.ReasonCode
+	payload.Authority.Claims.Resolution = payload.Resolution
+	payload.Authority.Claims.EvidenceGrantIDs = append([]string(nil), payload.EvidenceGrantIDs...)
 	digest := sha256.Sum256([]byte("submit_finding\x00" + payload.TargetID + "\x007\x00satisfy\x00document_consistent\x00" + payload.EvidenceGrantIDs[0]))
 	payload.RequestDigest = hex.EncodeToString(digest[:])
-	payload.Authority.Claims.Intent.RequestDigest = payload.RequestDigest
+	payload.Authority.Claims.RequestDigest = payload.RequestDigest
 	signCommand(t, &payload, private)
 
 	recorder := request(t, handler, payload)
@@ -182,7 +182,7 @@ func request(t *testing.T, handler http.Handler, payload command) *httptest.Resp
 	if err != nil {
 		t.Fatalf("Marshal() error = %v", err)
 	}
-	req := httptest.NewRequest(http.MethodPost, "/local/v1/review-commands/execute", bytes.NewReader(body))
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/local/v1/review-commands/execute", bytes.NewReader(body))
 	recorder := httptest.NewRecorder()
 	handler.ServeHTTP(recorder, req)
 	return recorder

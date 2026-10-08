@@ -12,17 +12,22 @@ import (
 )
 
 var (
+	// ErrInvalidConfiguration reports invalid database, role, or timeout input.
 	ErrInvalidConfiguration = errors.New("invalid runtime permission configuration")
-	ErrSchemaIncompatible   = errors.New("runtime permissions require the exact Core schema version")
-	ErrUnsafeRole           = errors.New("runtime role has unsafe PostgreSQL attributes")
-	rolePattern             = regexp.MustCompile(`^[a-z_][a-z0-9_]{0,62}$`)
+	// ErrSchemaIncompatible reports that Core's database schema is not at the required version.
+	ErrSchemaIncompatible = errors.New("runtime permissions require the exact Core schema version")
+	// ErrUnsafeRole reports a runtime role configured with prohibited PostgreSQL attributes.
+	ErrUnsafeRole = errors.New("runtime role has unsafe PostgreSQL attributes")
+	rolePattern   = regexp.MustCompile(`^[a-z_][a-z0-9_]{0,62}$`)
 )
 
+// Report describes the permission manifest applied to a runtime role.
 type Report struct {
 	Version string
 	Role    string
 }
 
+// Apply reconciles the configured role grants against the current Core schema.
 func Apply(ctx context.Context, databaseURL, role string, timeout time.Duration) (Report, error) {
 	if databaseURL == "" || !rolePattern.MatchString(role) || timeout <= 0 {
 		return Report{}, ErrInvalidConfiguration
@@ -63,14 +68,15 @@ func Apply(ctx context.Context, databaseURL, role string, timeout time.Duration)
 		SELECT rolcanlogin, rolsuper, rolcreaterole, rolcreatedb, rolinherit, rolreplication, rolbypassrls
 		FROM pg_catalog.pg_roles WHERE rolname = $1`, role,
 	).Scan(&canLogin, &superuser, &createRole, &createDatabase, &inherit, &replication, &bypassRLS)
-	if errors.Is(err, pgx.ErrNoRows) {
+	switch {
+	case errors.Is(err, pgx.ErrNoRows):
 		statement := "CREATE ROLE " + pgx.Identifier{role}.Sanitize() + " NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION NOBYPASSRLS"
 		if _, err := transaction.Exec(operationContext, statement); err != nil {
 			return Report{}, fmt.Errorf("create runtime role: %w", err)
 		}
-	} else if err != nil {
+	case err != nil:
 		return Report{}, fmt.Errorf("inspect runtime role: %w", err)
-	} else if canLogin || superuser || createRole || createDatabase || inherit || replication || bypassRLS {
+	case canLogin || superuser || createRole || createDatabase || inherit || replication || bypassRLS:
 		return Report{}, ErrUnsafeRole
 	}
 

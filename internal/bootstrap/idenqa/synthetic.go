@@ -1089,13 +1089,16 @@ func validSyntheticRegion(value string) bool {
 			return false
 		}
 		previous, next := value[index-1], value[index+1]
-		if !((previous >= 'a' && previous <= 'z') || (previous >= '0' && previous <= '9')) ||
-			!((next >= 'a' && next <= 'z') || (next >= '0' && next <= '9')) {
+		if !isASCIIAlphaNumericByte(previous) || !isASCIIAlphaNumericByte(next) {
 			return false
 		}
 		separator = true
 	}
 	return separator
+}
+
+func isASCIIAlphaNumericByte(character byte) bool {
+	return character >= 'a' && character <= 'z' || character >= '0' && character <= '9'
 }
 
 func syntheticArtefact() []byte {

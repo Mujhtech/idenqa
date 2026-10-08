@@ -15,11 +15,15 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+// RecordJourneyEvent inserts an event while accepting identical idempotent replays.
 func (store *SessionStore) RecordJourneyEvent(ctx context.Context, authority verification.CaptureContext, event verification.JourneyEvent) (verification.JourneyEvent, error) {
+	if event.Sequence < 1 || event.Sequence > 10000 {
+		return verification.JourneyEvent{}, verification.ErrSessionConflict
+	}
 	err := store.write(ctx, authority.TenantScope(), func(ctx context.Context, queries *sqlgen.Queries, _ platformpostgres.Transaction) error {
 		rows, err := queries.InsertCaptureJourneyEvent(ctx, sqlgen.InsertCaptureJourneyEventParams{
 			TenantID: authority.TenantScope().ID().String(), VerificationID: authority.Session().ID().String(),
-			CaptureTokenID: authority.TokenID().String(), EventID: event.EventID, Sequence: int32(event.Sequence),
+			CaptureTokenID: authority.TokenID().String(), EventID: event.EventID, Sequence: int32(event.Sequence), //nolint:gosec // validated to the inclusive range 1..10000 above
 			EventType: event.EventType, Screen: event.Screen, Action: optionalText(event.Action),
 			RequirementKey: optionalText(event.RequirementKey), Artefact: optionalText(event.Artefact),
 			AcquisitionMethod: optionalText(event.AcquisitionMethod),
@@ -48,6 +52,7 @@ func (store *SessionStore) RecordJourneyEvent(ctx context.Context, authority ver
 	return event, err
 }
 
+// FindTimeline returns the bounded event timeline for a tenant verification.
 func (store *SessionStore) FindTimeline(ctx context.Context, scope tenant.Scope, identifier id.Verification) (verification.Timeline, error) {
 	if scope.ID().IsZero() || identifier.IsZero() {
 		return verification.Timeline{}, verification.ErrSessionNotFound

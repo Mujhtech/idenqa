@@ -24,6 +24,7 @@ type AuditRoutes struct {
 	logger *slog.Logger
 }
 
+// NewAuditRoutes constructs routes for tenant audit-record reads.
 func NewAuditRoutes(accessMiddleware *AccessMiddleware, reader auditReader, logger *slog.Logger) (*AuditRoutes, error) {
 	if accessMiddleware == nil || reader == nil || logger == nil {
 		return nil, errors.New("audit route dependencies are required")
@@ -31,6 +32,7 @@ func NewAuditRoutes(accessMiddleware *AccessMiddleware, reader auditReader, logg
 	return &AuditRoutes{access: accessMiddleware, reader: reader, logger: logger}, nil
 }
 
+// Register mounts the audit-record endpoint on router.
 func (routes *AuditRoutes) Register(router chi.Router) {
 	router.With(routes.access.Authorize(access.PermissionAuditExport)).Get("/audit-records", routes.list)
 }

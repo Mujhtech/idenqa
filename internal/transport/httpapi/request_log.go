@@ -206,6 +206,7 @@ func bindRequestLogAuthority(ctx context.Context, authority access.Context) {
 	metadata.actor = authority.Principal().KeyID().String()
 }
 
+// RequestLogRoutes exposes tenant-scoped operational request-log endpoints.
 type RequestLogRoutes struct {
 	access *AccessMiddleware
 	reader requestLogReader
@@ -213,6 +214,7 @@ type RequestLogRoutes struct {
 	now    func() time.Time
 }
 
+// NewRequestLogRoutes constructs request-log and analytics routes.
 func NewRequestLogRoutes(accessMiddleware *AccessMiddleware, reader requestLogReader, logger *slog.Logger) (*RequestLogRoutes, error) {
 	if accessMiddleware == nil || reader == nil || logger == nil {
 		return nil, errors.New("request-log route dependencies are required")
@@ -220,6 +222,7 @@ func NewRequestLogRoutes(accessMiddleware *AccessMiddleware, reader requestLogRe
 	return &RequestLogRoutes{access: accessMiddleware, reader: reader, logger: logger, now: time.Now}, nil
 }
 
+// Register mounts the request-log, record, and analytics endpoints.
 func (routes *RequestLogRoutes) Register(router chi.Router) {
 	router.With(routes.access.Authorize(access.PermissionAuditExport)).Get("/request-logs", routes.list)
 	router.With(routes.access.Authorize(access.PermissionAuditExport)).Get("/request-logs/{requestID}", routes.get)

@@ -1930,7 +1930,27 @@ func (process *Process) Run(ctx context.Context) (runErr error) {
 			_ = listener.Close()
 			return fmt.Errorf("protect review bridge socket: %w", err)
 		}
-		defer os.Remove(process.reviewBridgeSocket)
+		reviewSocketInfo, err := os.Lstat(process.reviewBridgeSocket)
+		if err != nil {
+			_ = reviewListener.Close()
+			_ = listener.Close()
+			return fmt.Errorf("inspect review bridge socket: %w", err)
+		}
+		defer func() {
+			current, err := os.Lstat(process.reviewBridgeSocket)
+			if errors.Is(err, os.ErrNotExist) {
+				return
+			}
+			if err != nil {
+				runErr = errors.Join(runErr, fmt.Errorf("inspect review bridge socket for cleanup: %w", err))
+				return
+			}
+			if os.SameFile(reviewSocketInfo, current) {
+				if err := os.Remove(process.reviewBridgeSocket); err != nil && !errors.Is(err, os.ErrNotExist) {
+					runErr = errors.Join(runErr, fmt.Errorf("remove review bridge socket: %w", err))
+				}
+			}
+		}()
 	}
 
 	process.health.MarkStarted()

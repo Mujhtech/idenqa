@@ -25,6 +25,7 @@ type ReviewBrowserRoutes struct {
 	reviews  *review.Service
 }
 
+// NewReviewBrowserRoutes constructs case-bound browser evidence routes.
 func NewReviewBrowserRoutes(sessions *reviewbrowser.Service, evidence *review.EvidenceService, reviews *review.Service, logger *slog.Logger) (*ReviewBrowserRoutes, error) {
 	if sessions == nil || evidence == nil || reviews == nil || logger == nil {
 		return nil, reviewbrowser.ErrInvalid
@@ -32,6 +33,7 @@ func NewReviewBrowserRoutes(sessions *reviewbrowser.Service, evidence *review.Ev
 	return &ReviewBrowserRoutes{base: newHandlerBase(logger, "review_browser"), sessions: sessions, evidence: evidence, reviews: reviews}, nil
 }
 
+// Register mounts review-browser bootstrap and evidence endpoints.
 func (routes *ReviewBrowserRoutes) Register(router chi.Router) {
 	router.Post("/review-evidence-sessions/redeem", routes.redeem)
 	router.Get("/review-evidence-sessions/current/evidence", routes.list)

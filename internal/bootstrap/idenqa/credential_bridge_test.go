@@ -1,6 +1,7 @@
 package idenqa
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -15,7 +16,7 @@ func TestCredentialBridgeSocketIsPrivateAndOwnedCleanupRemovesIt(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = os.RemoveAll(directory) })
 	path := filepath.Join(directory, "bridge.sock")
-	listener, cleanup, err := listenCredentialBridge(path)
+	listener, cleanup, err := listenCredentialBridge(context.Background(), path)
 	if err != nil {
 		t.Fatalf("listenCredentialBridge() error = %v", err)
 	}

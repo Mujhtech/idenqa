@@ -35,7 +35,7 @@ func TestOperationalRequestJournalStoresRouteTemplateOnly(t *testing.T) {
 		metadata.scope, metadata.actor = scope, "key_01ARZ3NDEKTSV4RRFFQ69G5FAV"
 		writer.WriteHeader(http.StatusAccepted)
 	})
-	request := httptest.NewRequest(http.MethodGet, "/v1/verifications/vrf_secret?subject=hidden", nil)
+	request := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/v1/verifications/vrf_secret?subject=hidden", nil)
 	requestID, _ := id.ParseRequest("req_01ARZ3NDEKTSV4RRFFQ69G5FAV")
 	request = request.WithContext(context.WithValue(request.Context(), requestIDContextKey{}, requestID))
 	router.ServeHTTP(httptest.NewRecorder(), request)
@@ -61,7 +61,7 @@ func TestOperationalRequestJournalCapturesBoundedRedactedDebugParameters(t *test
 		_, _ = io.ReadAll(request.Body)
 		writer.WriteHeader(http.StatusCreated)
 	})
-	request := httptest.NewRequest(http.MethodPost, "/v1/verifications?mode=fast&ticket=secret", strings.NewReader(`{"workflow":"document","password":"secret","nested":{"token":"secret"},"items":[{"email":"person@example.com"}]}`))
+	request := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/v1/verifications?mode=fast&ticket=secret", strings.NewReader(`{"workflow":"document","password":"secret","nested":{"token":"secret"},"items":[{"email":"person@example.com"}]}`))
 	request.Header.Set("Content-Type", "application/json; charset=utf-8")
 	request.RemoteAddr = "192.0.2.10:4321"
 	requestID, _ := id.ParseRequest("req_01ARZ3NDEKTSV4RRFFQ69G5FAV")

@@ -19,8 +19,10 @@ type transactionRunner interface {
 	WithinTransaction(context.Context, pg.TransactionOptions, func(context.Context, pg.Transaction) error) error
 }
 
+// Store persists one-time browser bootstraps and tenant-scoped sessions.
 type Store struct{ pool transactionRunner }
 
+// New constructs a PostgreSQL review-browser session store.
 func New(pool transactionRunner) (*Store, error) {
 	if pool == nil {
 		return nil, errors.New("review browser postgres: pool is required")
@@ -28,6 +30,7 @@ func New(pool transactionRunner) (*Store, error) {
 	return &Store{pool: pool}, nil
 }
 
+// Consume atomically records bootstrap consumption and creates its session.
 func (store *Store) Consume(ctx context.Context, session reviewbrowser.Session, tokenHash, nonceHash, claimsHash [32]byte) error {
 	if session.Scope.ID().IsZero() || session.BootstrapID == "" || session.Actor.ID == "" || session.CaseID.IsZero() ||
 		session.Version < 1 || session.Region == "" || session.Origin == "" || session.CreatedAt.IsZero() || !session.ExpiresAt.After(session.CreatedAt) {
@@ -59,6 +62,7 @@ func (store *Store) Consume(ctx context.Context, session reviewbrowser.Session, 
 	})
 }
 
+// Authenticate loads a live session matching the tenant, token hash, and origin.
 func (store *Store) Authenticate(ctx context.Context, scope tenant.Scope, tokenHash [32]byte, origin string, now time.Time) (reviewbrowser.Session, error) {
 	var session reviewbrowser.Session
 	err := store.pool.WithinTransaction(ctx, pg.TransactionOptions{ReadOnly: true}, func(ctx context.Context, tx pg.Transaction) error {

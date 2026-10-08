@@ -1,7 +1,9 @@
+// Package runtimepermissions reconciles least-privilege PostgreSQL grants.
 package runtimepermissions
 
 import "github.com/jackc/pgx/v5"
 
+// Version identifies the runtime permission manifest contract.
 const Version = "idenqa.core/postgres-runtime-permissions/v1"
 
 // Statements returns the exact least-privilege PostgreSQL grants required by

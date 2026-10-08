@@ -17,6 +17,7 @@ type transactionRunner interface {
 	WithinTransaction(context.Context, platformpostgres.TransactionOptions, func(context.Context, platformpostgres.Transaction) error) error
 }
 
+// Get returns one request-log record from the tenant-scoped journal.
 func (store *Store) Get(ctx context.Context, scope tenant.Scope, requestID string) (requestlog.Record, error) {
 	var record requestlog.Record
 	err := store.pool.WithinTransaction(ctx, platformpostgres.TransactionOptions{ReadOnly: true}, func(ctx context.Context, tx platformpostgres.Transaction) error {
@@ -38,8 +39,10 @@ func (store *Store) Get(ctx context.Context, scope tenant.Scope, requestID strin
 	return record, err
 }
 
+// Store persists request-log records and analytics in PostgreSQL.
 type Store struct{ pool transactionRunner }
 
+// New constructs a PostgreSQL request-log store.
 func New(pool transactionRunner) (*Store, error) {
 	if pool == nil {
 		return nil, errors.New("request log postgres: pool is required")
@@ -47,6 +50,7 @@ func New(pool transactionRunner) (*Store, error) {
 	return &Store{pool: pool}, nil
 }
 
+// Append inserts a request-log record without replacing an existing record.
 func (store *Store) Append(ctx context.Context, scope tenant.Scope, record requestlog.Record) error {
 	return store.pool.WithinTransaction(ctx, platformpostgres.TransactionOptions{}, func(ctx context.Context, tx platformpostgres.Transaction) error {
 		if err := setScope(ctx, tx, scope); err != nil {
@@ -64,6 +68,7 @@ func (store *Store) Append(ctx context.Context, scope tenant.Scope, record reque
 	})
 }
 
+// List returns a newest-first page of request-log records for scope.
 func (store *Store) List(ctx context.Context, scope tenant.Scope, before requestlog.Cursor, limit int) ([]requestlog.Record, error) {
 	records := make([]requestlog.Record, 0, limit)
 	err := store.pool.WithinTransaction(ctx, platformpostgres.TransactionOptions{ReadOnly: true}, func(ctx context.Context, tx platformpostgres.Transaction) error {
@@ -90,6 +95,7 @@ func (store *Store) List(ctx context.Context, scope tenant.Scope, before request
 	return records, err
 }
 
+// Aggregate returns privacy-safe request metrics for scope and window.
 func (store *Store) Aggregate(ctx context.Context, scope tenant.Scope, window requestlog.AnalyticsWindow) (requestlog.Analytics, error) {
 	var result requestlog.Analytics
 	err := store.pool.WithinTransaction(ctx, platformpostgres.TransactionOptions{ReadOnly: true}, func(ctx context.Context, tx platformpostgres.Transaction) error {

@@ -18,15 +18,18 @@ import (
 	"github.com/Mujhtech/idenqa/internal/tenant"
 )
 
+// Authorizer confirms the delegated actor can access the requested evidence.
 type Authorizer interface {
 	ListDelegated(context.Context, tenant.Scope, review.Actor, id.ReviewCase, int64) ([]review.EvidenceMetadata, error)
 }
 
+// Store consumes bootstraps and authenticates persisted browser sessions.
 type Store interface {
 	Consume(context.Context, Session, [32]byte, [32]byte, [32]byte) error
 	Authenticate(context.Context, tenant.Scope, [32]byte, string, time.Time) (Session, error)
 }
 
+// Session is the verified, tenant-scoped identity bound to browser requests.
 type Session struct {
 	BootstrapID string
 	Scope       tenant.Scope
@@ -39,11 +42,13 @@ type Session struct {
 	ExpiresAt   time.Time
 }
 
+// Redemption contains the session token returned after a valid bootstrap.
 type Redemption struct {
 	Token     string    `json:"token"`
 	ExpiresAt time.Time `json:"expiresAt"`
 }
 
+// Service redeems signed bootstraps and authenticates browser evidence sessions.
 type Service struct {
 	tracer observability.Tracer
 
@@ -55,6 +60,7 @@ type Service struct {
 	sessionTTL time.Duration
 }
 
+// New constructs a review-browser service with explicit time and entropy sources.
 func New(verifier *Verifier, store Store, authorizer Authorizer, entropy io.Reader, now func() time.Time, sessionTTL time.Duration) (*Service, error) {
 	if verifier == nil || store == nil || authorizer == nil || entropy == nil || now == nil || sessionTTL <= 0 || sessionTTL > 15*time.Minute {
 		return nil, ErrInvalid
@@ -62,10 +68,12 @@ func New(verifier *Verifier, store Store, authorizer Authorizer, entropy io.Read
 	return &Service{verifier: verifier, store: store, authorizer: authorizer, entropy: entropy, now: now, sessionTTL: sessionTTL}, nil
 }
 
+// NewSystem constructs a review-browser service using system time and entropy.
 func NewSystem(verifier *Verifier, store Store, authorizer Authorizer, sessionTTL time.Duration) (*Service, error) {
 	return New(verifier, store, authorizer, rand.Reader, time.Now, sessionTTL)
 }
 
+// Redeem verifies and consumes a bootstrap, returning a new browser session token.
 func (service *Service) Redeem(ctx context.Context, envelope Envelope, origin string) (spanResult0 Redemption, spanErr error) {
 	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "reviewbrowser.Service.Redeem")
 	defer observability.EndSpan(completeSpan, &spanErr)
@@ -121,6 +129,7 @@ func SessionFromContext(ctx context.Context) (Session, bool) {
 	return session, ok
 }
 
+// Authenticate resolves a browser token to its live tenant-scoped session.
 func (service *Service) Authenticate(ctx context.Context, token, origin string) (spanResult0 Session, spanErr error) {
 	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "reviewbrowser.Service.Authenticate")
 	defer observability.EndSpan(completeSpan, &spanErr)
