@@ -17,11 +17,14 @@ import (
 	"github.com/Mujhtech/idenqa/adapters/models/onnx"
 	modelv1 "github.com/Mujhtech/idenqa/contracts/model/v1"
 	"github.com/Mujhtech/idenqa/internal/bootstrap/runnersecret"
+	"github.com/Mujhtech/idenqa/internal/buildinfo"
 	"github.com/Mujhtech/idenqa/internal/config"
 	runnerv1 "github.com/Mujhtech/idenqa/internal/gen/proto/runner/v1"
 	"github.com/Mujhtech/idenqa/internal/platform/egress"
 	"github.com/Mujhtech/idenqa/internal/platform/secret"
+	"github.com/Mujhtech/idenqa/internal/platform/telemetry"
 	"github.com/Mujhtech/idenqa/internal/transport/runner"
+	"go.opentelemetry.io/otel/propagation"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -51,10 +54,12 @@ type Settings struct {
 
 // Process owns the private TLS model server.
 type Process struct {
-	server   *grpc.Server
-	listener net.Listener
-	client   *http.Client
-	reload   *runnersecret.Reloader
+	providers     *telemetry.Providers
+	server        *grpc.Server
+	listener      net.Listener
+	client        *http.Client
+	idleTransport interface{ CloseIdleConnections() }
+	reload        *runnersecret.Reloader
 }
 
 // NewProcess validates pinned model settings, resolves the initial secret
@@ -109,11 +114,23 @@ func NewProcess(ctx context.Context, settings Settings) (*Process, error) {
 	if err != nil {
 		return nil, err
 	}
+	providers, err := telemetry.NewRunnerProviders(ctx, "model-runner", buildinfo.Current().Version)
+	if err != nil {
+		return nil, err
+	}
+	acceptedTelemetry := false
+	defer func() {
+		if !acceptedTelemetry {
+			shutdown, cancel := context.WithTimeout(context.WithoutCancel(ctx), 10*time.Second)
+			defer cancel()
+			_ = providers.Shutdown(shutdown)
+		}
+	}()
 	service, err := runner.NewModelServer(implementation)
 	if err != nil {
 		return nil, err
 	}
-	server, err := runner.NewServer(runner.ServerConfig{Credentials: credentials, TLS: transport, MaximumDeadline: 30 * time.Second})
+	server, err := runner.NewServer(runner.ServerConfig{TracerProvider: providers.TracerProvider(), Propagator: propagation.TraceContext{}, Credentials: credentials, TLS: transport, MaximumDeadline: 30 * time.Second})
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +140,14 @@ func NewProcess(ctx context.Context, settings Settings) (*Process, error) {
 	if err != nil {
 		return nil, errors.New("listen for model runner")
 	}
-	return &Process{server: server, listener: listener, client: client, reload: reloader}, nil
+	base := client.Transport
+	if base == nil {
+		base = http.DefaultTransport
+	}
+	idleTransport, _ := base.(interface{ CloseIdleConnections() })
+	client.Transport = telemetry.NewInternalHTTPTransport(client.Transport, providers.TracerProvider())
+	acceptedTelemetry = true
+	return &Process{providers: providers, server: server, listener: listener, client: client, idleTransport: idleTransport, reload: reloader}, nil
 }
 
 func composeModelTLS(settings Settings) (credentials.TransportCredentials, *runner.RotatingServerTLS, error) {
@@ -279,9 +303,16 @@ func (process *Process) Run(ctx context.Context) error {
 
 // Close releases owned resources.
 func (process *Process) Close() {
+	if process.providers != nil {
+		shutdown, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		defer func() { _ = process.providers.Shutdown(shutdown) }()
+	}
 	process.server.Stop()
 	_ = process.listener.Close()
-	process.client.CloseIdleConnections()
+	if process.idleTransport != nil {
+		process.idleTransport.CloseIdleConnections()
+	}
 }
 
 type gatewayReader struct {
