@@ -22,6 +22,7 @@ import (
 	policyv1 "github.com/Mujhtech/idenqa/contracts/policy/v1"
 	"github.com/Mujhtech/idenqa/internal/cli"
 	"github.com/Mujhtech/idenqa/internal/evidence"
+	"github.com/Mujhtech/idenqa/internal/managedtenant"
 	platformcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto"
 	"github.com/Mujhtech/idenqa/internal/verification"
 	"github.com/spf13/cobra"
@@ -83,7 +84,7 @@ func newSyntheticRunCommand() *cobra.Command {
 	flags.StringVar(&options.profileFile, "profile-file", syntheticDefaultProfileFile, "capture-profile document to ensure and publish")
 	flags.StringVar(&options.policyFile, "policy-file", syntheticDefaultPolicyFile, "policy definition to ensure and activate")
 	flags.StringVar(&options.idempotencyPrefix, "idempotency-prefix", syntheticDefaultPrefix, "stable prefix for the profile and policy ensure steps")
-	flags.StringVar(&options.region, "region", syntheticRegion, "processing-authority and evidence region; must match the deployment IDENQA_REGION for self-hosted Core")
+	flags.StringVar(&options.region, "region", syntheticRegion, "namespaced processing-authority and evidence region (distinct from the deployment runtime region)")
 	flags.DurationVar(&options.timeout, "timeout", syntheticDefaultTimeout, "bounded wait for the completed decision")
 	flags.DurationVar(&options.pollInterval, "poll-interval", syntheticDefaultPoll, "poll interval while awaiting the completed decision")
 	flags.BoolVar(&options.jsonOutput, "json", false, "print each journey step as one JSON object per line")
@@ -150,14 +151,15 @@ func runSynthetic(command *cobra.Command, options *syntheticOptions) error {
 }
 
 type syntheticClient struct {
-	base       *url.URL
-	credential string
-	http       *http.Client
-	out        io.Writer
-	jsonOutput bool
-	prefix     string
-	runID      string
-	region     string
+	base         *url.URL
+	credential   string
+	http         *http.Client
+	out          io.Writer
+	jsonOutput   bool
+	prefix       string
+	runID        string
+	region       string
+	finalOutcome string
 }
 
 func (client *syntheticClient) run(
@@ -608,7 +610,44 @@ func (client *syntheticClient) readDecision(ctx context.Context, decision synthe
 	if report.PolicyID != "" {
 		fields["policy_id"] = report.PolicyID
 	}
+	client.finalOutcome = report.Outcome
 	return client.step("decision.read", fields)
+}
+
+type managedSyntheticRunner struct{}
+
+func (managedSyntheticRunner) Run(ctx context.Context, request managedtenant.SyntheticRunRequest, credential string) (string, error) {
+	if !validSyntheticRegion(request.Region) {
+		return "", errors.New("synthetic region is invalid")
+	}
+	base, err := parsePublicAPIURL(request.CoreEndpoint)
+	if err != nil {
+		return "", err
+	}
+	catalog, err := evidence.BuiltInCatalog()
+	if err != nil {
+		return "", err
+	}
+	profile, err := verification.ParseProfileFromCatalog(request.ProfileDocument, catalog)
+	if err != nil || len(profile.Requirements) != 1 {
+		return "", errors.New("synthetic capture profile is invalid")
+	}
+	if err := validateSyntheticPolicy(request.PolicyDocument); err != nil {
+		return "", fmt.Errorf("synthetic policy is invalid: %w", err)
+	}
+	client := &syntheticClient{
+		base: base, credential: credential,
+		http: &http.Client{Timeout: 30 * time.Second, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }},
+		out:  io.Discard, jsonOutput: true, prefix: "cloud-" + request.RunID, runID: request.RunID, region: request.Region,
+	}
+	options := &syntheticOptions{timeout: time.Duration(request.TimeoutSeconds) * time.Second, pollInterval: syntheticDefaultPoll, region: request.Region}
+	if err := client.run(ctx, options, request.ProfileDocument, request.PolicyDocument, profile.Requirements[0]); err != nil {
+		return "", err
+	}
+	if client.finalOutcome == "" {
+		return "", errors.New("synthetic journey omitted outcome")
+	}
+	return client.finalOutcome, nil
 }
 
 func (client *syntheticClient) call(ctx context.Context, request syntheticRequest) (http.Header, error) {
@@ -1036,13 +1075,27 @@ func validSyntheticRegion(value string) bool {
 	if value == "" || len(value) > 200 || strings.TrimSpace(value) != value {
 		return false
 	}
-	for _, character := range value {
-		if (character < 'a' || character > 'z') && (character < '0' || character > '9') &&
-			!strings.ContainsRune("._-", character) {
+	separator := false
+	for index, character := range value {
+		letter := character >= 'a' && character <= 'z'
+		digit := character >= '0' && character <= '9'
+		if index == 0 && !letter {
 			return false
 		}
+		if letter || digit {
+			continue
+		}
+		if !strings.ContainsRune("._-", character) || index == 0 || index == len(value)-1 {
+			return false
+		}
+		previous, next := value[index-1], value[index+1]
+		if !((previous >= 'a' && previous <= 'z') || (previous >= '0' && previous <= '9')) ||
+			!((next >= 'a' && next <= 'z') || (next >= '0' && next <= '9')) {
+			return false
+		}
+		separator = true
 	}
-	return true
+	return separator
 }
 
 func syntheticArtefact() []byte {

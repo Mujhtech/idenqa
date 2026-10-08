@@ -568,6 +568,7 @@ func TestSyntheticRunRejectsUnusableOptions(t *testing.T) {
 	}{
 		{name: "missing credential", extra: []string{"--api-key-file", ""}, wantCode: 2, wantText: "IDENQA_API_KEY is required"},
 		{name: "invalid prefix", extra: []string{"--idempotency-prefix", "not a prefix"}, wantCode: 2, wantText: "idempotency-prefix"},
+		{name: "deployment region is not an authority code", extra: []string{"--region", "local"}, wantCode: 2, wantText: "processing-authority code"},
 		{name: "poll exceeds timeout", extra: []string{"--timeout", "10ms", "--poll-interval", "1s"}, wantCode: 2, wantText: "one poll interval"},
 		{name: "missing profile file", extra: []string{"--profile-file", "does-not-exist.json"}, wantCode: 1, wantText: "open capture profile file"},
 	}
