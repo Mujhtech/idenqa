@@ -40,6 +40,15 @@ assurance. Plan issuance and production threshold calibration remain separate
 integration/acceptance boundaries; the hosted development fixture uses a local
 synthetic plan.
 
+For Capture Web, `maximum_duration_ms` is mandatory for every bounded pose
+attempt and also bounds camera/tracker/assessment work. An incomplete attempt
+may restart automatically without a subject-facing timeout error. A restart
+must discard its frame, neutral baseline and partial hold; it must not advance
+the challenge or claim assurance. Slow centering and recoverable framing or
+quality feedback keep the camera open. Stalled work, cancellation and invalid
+required measurements remain stopping conditions. Local retries do not renew
+the Core session or its capture authority.
+
 The v1 schema is deliberately the built-in live-camera plan and therefore does
 not pretend that NFC, voice, a provider SDK, or another transport has camera or
 liveness fields. Capture surfaces may implement those profile-approved methods
