@@ -191,6 +191,63 @@ func (q *Queries) InsertCaptureProfileAudit(ctx context.Context, arg InsertCaptu
 	return err
 }
 
+const listCaptureProfileRevisions = `-- name: ListCaptureProfileRevisions :many
+SELECT tenant_id, profile_id, revision, state, schema_version, registry_schema_version, registry_revision, registry_digest, document, digest, created_at, updated_at, published_at, ended_at
+FROM idenqa.capture_profile_revisions
+WHERE tenant_id = $1
+  AND profile_id = $2
+  AND ($3::bigint = 0 OR revision < $3)
+ORDER BY revision DESC
+LIMIT $4
+`
+
+type ListCaptureProfileRevisionsParams struct {
+	TenantID       string
+	ProfileID      string
+	BeforeRevision int64
+	PageSize       int32
+}
+
+func (q *Queries) ListCaptureProfileRevisions(ctx context.Context, arg ListCaptureProfileRevisionsParams) ([]IdenqaCaptureProfileRevision, error) {
+	rows, err := q.db.Query(ctx, listCaptureProfileRevisions,
+		arg.TenantID,
+		arg.ProfileID,
+		arg.BeforeRevision,
+		arg.PageSize,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []IdenqaCaptureProfileRevision
+	for rows.Next() {
+		var i IdenqaCaptureProfileRevision
+		if err := rows.Scan(
+			&i.TenantID,
+			&i.ProfileID,
+			&i.Revision,
+			&i.State,
+			&i.SchemaVersion,
+			&i.RegistrySchemaVersion,
+			&i.RegistryRevision,
+			&i.RegistryDigest,
+			&i.Document,
+			&i.Digest,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.PublishedAt,
+			&i.EndedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listCaptureProfilesAfter = `-- name: ListCaptureProfilesAfter :many
 SELECT id, tenant_id, name, state, version, latest_revision, draft_revision, published_revision, created_at, updated_at, deactivated_at
 FROM idenqa.capture_profiles

@@ -483,6 +483,80 @@ func (q *Queries) InsertVerificationSessionAudit(ctx context.Context, arg Insert
 	return err
 }
 
+const listVerificationSessions = `-- name: ListVerificationSessions :many
+SELECT id, tenant_id, state, version, source_profile_id, source_profile_revision, source_profile_digest, requirements, created_at, updated_at, expires_at, subject_id, authority_id, notice_id, region, policy_id, decision_id, capture_completed_at, completed_decision_id, expiry_discovered_at, failure_class, failure_code, document_selections
+FROM idenqa.verification_sessions
+WHERE tenant_id = $1
+  AND (
+    NOT $2::boolean
+    OR created_at < $3::timestamptz
+    OR (
+      created_at = $3::timestamptz
+      AND id < $4::text
+    )
+  )
+ORDER BY created_at DESC, id DESC
+LIMIT $5
+`
+
+type ListVerificationSessionsParams struct {
+	TenantID       string
+	HasAfter       bool
+	AfterCreatedAt pgtype.Timestamptz
+	AfterID        string
+	PageSize       int32
+}
+
+func (q *Queries) ListVerificationSessions(ctx context.Context, arg ListVerificationSessionsParams) ([]IdenqaVerificationSession, error) {
+	rows, err := q.db.Query(ctx, listVerificationSessions,
+		arg.TenantID,
+		arg.HasAfter,
+		arg.AfterCreatedAt,
+		arg.AfterID,
+		arg.PageSize,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []IdenqaVerificationSession
+	for rows.Next() {
+		var i IdenqaVerificationSession
+		if err := rows.Scan(
+			&i.ID,
+			&i.TenantID,
+			&i.State,
+			&i.Version,
+			&i.SourceProfileID,
+			&i.SourceProfileRevision,
+			&i.SourceProfileDigest,
+			&i.Requirements,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.ExpiresAt,
+			&i.SubjectID,
+			&i.AuthorityID,
+			&i.NoticeID,
+			&i.Region,
+			&i.PolicyID,
+			&i.DecisionID,
+			&i.CaptureCompletedAt,
+			&i.CompletedDecisionID,
+			&i.ExpiryDiscoveredAt,
+			&i.FailureClass,
+			&i.FailureCode,
+			&i.DocumentSelections,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const lockActiveCaptureProfileRevision = `-- name: LockActiveCaptureProfileRevision :one
 SELECT
     profiles.id AS profile_id,
