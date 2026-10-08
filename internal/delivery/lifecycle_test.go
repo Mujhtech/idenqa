@@ -159,7 +159,7 @@ func TestWebhookLifecycleRotationReplayRetryAndTenantIsolation(t *testing.T) {
 	now := time.Date(2026, 9, 1, 12, 0, 0, 0, time.UTC)
 	scope := mustScope(t, "ten_01ARZ3NDEKTSV4RRFFQ69G5FAV")
 	other := mustScope(t, "ten_01ARZ3NDEKTSV4RRFFQ69G5FAW")
-	ids := &identifiers{endpoint: mustEndpoint(t, "whk_01ARZ3NDEKTSV4RRFFQ69G5FAV"), deliveries: []id.Delivery{mustDelivery(t, "dlv_01ARZ3NDEKTSV4RRFFQ69G5FAV"), mustDelivery(t, "dlv_01ARZ3NDEKTSV4RRFFQ69G5FAW")}, tasks: []id.Task{mustTask(t, "tsk_01ARZ3NDEKTSV4RRFFQ69G5FAV")}}
+	ids := &identifiers{endpoint: mustEndpoint(t), deliveries: []id.Delivery{mustDelivery(t, "dlv_01ARZ3NDEKTSV4RRFFQ69G5FAV"), mustDelivery(t, "dlv_01ARZ3NDEKTSV4RRFFQ69G5FAW")}, tasks: []id.Task{mustTask(t)}}
 	repository := newMemoryRepository()
 	manager, err := delivery.NewManager(repository, ids, protector{}, func() time.Time { return now })
 	if err != nil {
@@ -229,14 +229,14 @@ func TestWebhookRetryExhaustion(t *testing.T) {
 	now := time.Date(2026, 9, 1, 12, 0, 0, 0, time.UTC)
 	scope := mustScope(t, "ten_01ARZ3NDEKTSV4RRFFQ69G5FAV")
 	repository := newMemoryRepository()
-	endpointID := mustEndpoint(t, "whk_01ARZ3NDEKTSV4RRFFQ69G5FAV")
+	endpointID := mustEndpoint(t)
 	wrapped, _ := protector{}.Wrap(context.Background(), mustPurpose(t), make([]byte, 32), nil)
 	repository.endpoints[scoped(scope, endpointID.String())] = delivery.Endpoint{ID: endpointID, URL: "https://hooks.example.com", Active: delivery.Secret{Version: 1, Wrapped: wrapped, CreatedAt: now}, Version: 1, CreatedAt: now, UpdatedAt: now}
 	deliveryID := mustDelivery(t, "dlv_01ARZ3NDEKTSV4RRFFQ69G5FAV")
-	intent, _ := delivery.NewIntent(deliveryID, endpointID, mustEvent(t, "evt_01ARZ3NDEKTSV4RRFFQ69G5FAV"), "verification.decision.v1", []byte(`{}`), 2, now)
+	intent, _ := delivery.NewIntent(deliveryID, endpointID, mustEvent(t, "evt_01ARZ3NDEKTSV4RRFFQ69G5FAV"), "verification.decision.v1", wrappedBody(t, []byte(`{}`)), 2, now)
 	repository.deliveries[scoped(scope, deliveryID.String())] = intent
 	queue := &memoryTaskQueue{}
-	ids := &identifiers{tasks: []id.Task{mustTask(t, "tsk_01ARZ3NDEKTSV4RRFFQ69G5FAV")}}
+	ids := &identifiers{tasks: []id.Task{mustTask(t)}}
 	handler, _ := deliverytask.NewHandler(repository, protector{}, &sender{failUntil: 3}, ids, queue, func() time.Time { return now })
 	work, _ := deliverytask.NewIntent(ids, scope, deliveryID, now)
 	if got := runDeliveryEffect(t, handler, work); got.Outcome != platformtask.OutcomeComplete || len(queue.intents) != 1 {
@@ -265,9 +265,9 @@ func mustScope(t *testing.T, value string) tenant.Scope {
 	}
 	return scope
 }
-func mustEndpoint(t *testing.T, value string) id.WebhookEndpoint {
+func mustEndpoint(t *testing.T) id.WebhookEndpoint {
 	t.Helper()
-	parsed, err := id.ParseWebhookEndpoint(value)
+	parsed, err := id.ParseWebhookEndpoint("whk_01ARZ3NDEKTSV4RRFFQ69G5FAV")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -289,9 +289,9 @@ func mustEvent(t *testing.T, value string) id.Event {
 	}
 	return parsed
 }
-func mustTask(t *testing.T, value string) id.Task {
+func mustTask(t *testing.T) id.Task {
 	t.Helper()
-	parsed, err := id.ParseTask(value)
+	parsed, err := id.ParseTask("tsk_01ARZ3NDEKTSV4RRFFQ69G5FAV")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -357,7 +357,7 @@ func TestWebhookStopsBeforeSendingForDisabledOrExpiredDelivery(t *testing.T) {
 			now := created.Add(test.age)
 			scope := mustScope(t, "ten_01ARZ3NDEKTSV4RRFFQ69G5FAV")
 			repository := newMemoryRepository()
-			endpointID := mustEndpoint(t, "whk_01ARZ3NDEKTSV4RRFFQ69G5FAV")
+			endpointID := mustEndpoint(t)
 			wrapped, err := protector{}.Wrap(t.Context(), mustPurpose(t), make([]byte, 32), nil)
 			if err != nil {
 				t.Fatal(err)
@@ -368,12 +368,12 @@ func TestWebhookStopsBeforeSendingForDisabledOrExpiredDelivery(t *testing.T) {
 			}
 			repository.endpoints[scoped(scope, endpointID.String())] = endpoint
 			deliveryID := mustDelivery(t, "dlv_01ARZ3NDEKTSV4RRFFQ69G5FAV")
-			intent, err := delivery.NewIntent(deliveryID, endpointID, mustEvent(t, "evt_01ARZ3NDEKTSV4RRFFQ69G5FAV"), "verification.completed.v1", []byte(`{}`), 8, created)
+			intent, err := delivery.NewIntent(deliveryID, endpointID, mustEvent(t, "evt_01ARZ3NDEKTSV4RRFFQ69G5FAV"), "verification.completed.v1", wrappedBody(t, []byte(`{}`)), 8, created)
 			if err != nil {
 				t.Fatal(err)
 			}
 			repository.deliveries[scoped(scope, deliveryID.String())] = intent
-			ids := &identifiers{tasks: []id.Task{mustTask(t, "tsk_01ARZ3NDEKTSV4RRFFQ69G5FAV")}}
+			ids := &identifiers{tasks: []id.Task{mustTask(t)}}
 			transport, queue := &sender{}, &memoryTaskQueue{}
 			handler, err := deliverytask.NewHandler(repository, protector{}, transport, ids, queue, func() time.Time { return now })
 			if err != nil {
@@ -395,4 +395,96 @@ func TestWebhookStopsBeforeSendingForDisabledOrExpiredDelivery(t *testing.T) {
 			}
 		})
 	}
+}
+
+func wrappedBody(t *testing.T, body []byte) kms.WrappedKey {
+	t.Helper()
+	wrapped, err := protector{}.Wrap(t.Context(), delivery.BodyPurpose(), body, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return wrapped
+}
+
+func TestWebhookRejectsPlaintextDeliveryAndReplay(t *testing.T) {
+	t.Parallel()
+	now := time.Date(2026, 10, 8, 12, 0, 0, 0, time.UTC)
+	scope := mustScope(t, "ten_01ARZ3NDEKTSV4RRFFQ69G5FAV")
+	ids := &identifiers{endpoint: mustEndpoint(t), deliveries: []id.Delivery{mustDelivery(t, "dlv_01ARZ3NDEKTSV4RRFFQ69G5FAV")}, tasks: []id.Task{mustTask(t)}}
+	repo := newMemoryRepository()
+	manager, err := delivery.NewManager(repo, ids, protector{}, func() time.Time { return now })
+	if err != nil {
+		t.Fatal(err)
+	}
+	endpoint, secret, err := manager.CreateEndpoint(t.Context(), scope, "https://hooks.example.com/webhook")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer clear(secret)
+	intent, err := manager.CreateDelivery(t.Context(), scope, endpoint.ID, mustEvent(t, "evt_01ARZ3NDEKTSV4RRFFQ69G5FAV"), "verification.completed", []byte(`{"outcome":"verified"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Emulate a persisted plaintext row from before body encryption.
+	intent.BodyWrapping = nil
+	repo.deliveries[scoped(scope, intent.ID.String())] = intent
+	transport, queue := &sender{}, &memoryTaskQueue{}
+	handler, err := deliverytask.NewHandler(repo, protector{}, transport, ids, queue, func() time.Time { return now })
+	if err != nil {
+		t.Fatal(err)
+	}
+	work, err := deliverytask.NewIntent(ids, scope, intent.ID, now)
+	if err != nil {
+		t.Fatal(err)
+	}
+	effect, result := handler.Prepare(t.Context(), platformtask.Delivery{Intent: work, Attempt: 1})
+	if result.Outcome != platformtask.OutcomeQuarantine || !errors.Is(result.Err, delivery.ErrInvalid) || effect != nil || transport.calls != 0 || len(queue.intents) != 0 {
+		t.Fatalf("plaintext send: result=%#v, sends=%d", result, transport.calls)
+	}
+	if _, err := manager.Replay(t.Context(), scope, intent.ID, intent.EventID); !errors.Is(err, delivery.ErrInvalid) || len(repo.deliveries) != 1 {
+		t.Fatalf("plaintext replay: %v, stored=%d", err, len(repo.deliveries))
+	}
+}
+
+func TestWebhookDoesNotSendWhenBodyUnwrapFails(t *testing.T) {
+	t.Parallel()
+	now := time.Date(2026, 10, 8, 12, 0, 0, 0, time.UTC)
+	scope := mustScope(t, "ten_01ARZ3NDEKTSV4RRFFQ69G5FAV")
+	ids := &identifiers{endpoint: mustEndpoint(t), deliveries: []id.Delivery{mustDelivery(t, "dlv_01ARZ3NDEKTSV4RRFFQ69G5FAV")}, tasks: []id.Task{mustTask(t)}}
+	repo := newMemoryRepository()
+	manager, err := delivery.NewManager(repo, ids, protector{}, func() time.Time { return now })
+	if err != nil {
+		t.Fatal(err)
+	}
+	endpoint, secret, err := manager.CreateEndpoint(t.Context(), scope, "https://hooks.example.com/webhook")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer clear(secret)
+	intent, err := manager.CreateDelivery(t.Context(), scope, endpoint.ID, mustEvent(t, "evt_01ARZ3NDEKTSV4RRFFQ69G5FAV"), "verification.completed", []byte(`{}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	transport, queue := &sender{}, &memoryTaskQueue{}
+	handler, err := deliverytask.NewHandler(repo, failingBodyUnwrapper{}, transport, ids, queue, func() time.Time { return now })
+	if err != nil {
+		t.Fatal(err)
+	}
+	work, err := deliverytask.NewIntent(ids, scope, intent.ID, now)
+	if err != nil {
+		t.Fatal(err)
+	}
+	effect, result := handler.Prepare(t.Context(), platformtask.Delivery{Intent: work, Attempt: 1})
+	if result.Outcome != platformtask.OutcomeRetry || effect != nil || transport.calls != 0 || len(queue.intents) != 0 {
+		t.Fatalf("unwrap failure: result=%#v, sends=%d", result, transport.calls)
+	}
+}
+
+type failingBodyUnwrapper struct{ protector }
+
+func (unwrapper failingBodyUnwrapper) Unwrap(ctx context.Context, purpose kms.Purpose, wrapped kms.WrappedKey, binding []byte) ([]byte, error) {
+	if purpose == delivery.BodyPurpose() {
+		return nil, errors.New("body decryption unavailable")
+	}
+	return unwrapper.protector.Unwrap(ctx, purpose, wrapped, binding)
 }

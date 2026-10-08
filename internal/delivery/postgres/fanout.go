@@ -194,12 +194,12 @@ func (store *Store) CreateDeliveryIfAbsentWithin(ctx context.Context, scope tena
 	if err := setScope(ctx, tx, scope); err != nil {
 		return false, err
 	}
-	provider, reference, keyVersion, algorithm := nullableBodyWrapping(intent.BodyWrapping)
+	wrapping := intent.BodyWrapping.Record()
 	tag, err := tx.Exec(ctx, `INSERT INTO idenqa.webhook_deliveries
 		(tenant_id,id,endpoint_id,event_id,event_type,body,body_digest,state,attempt_count,max_attempts,next_attempt_at,replay_of,created_at,updated_at,body_provider,body_reference,body_key_version,body_algorithm,payload_expires_at,retain_until)
 		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)
 		ON CONFLICT (tenant_id,endpoint_id,event_id) WHERE replay_of IS NULL DO NOTHING`,
-		scope.ID().String(), intent.ID.String(), intent.EndpointID.String(), intent.EventID.String(), intent.EventType, intent.Body, intent.BodyDigest, string(intent.State), intent.AttemptCount, intent.MaxAttempts, intent.NextAttemptAt, nullableDelivery(intent.ReplayOf), intent.CreatedAt, intent.UpdatedAt, provider, reference, keyVersion, algorithm, intent.CreatedAt.Add(7*24*time.Hour), intent.CreatedAt.Add(365*24*time.Hour))
+		scope.ID().String(), intent.ID.String(), intent.EndpointID.String(), intent.EventID.String(), intent.EventType, intent.Body, intent.BodyDigest, string(intent.State), intent.AttemptCount, intent.MaxAttempts, intent.NextAttemptAt, nullableDelivery(intent.ReplayOf), intent.CreatedAt, intent.UpdatedAt, wrapping.Provider, wrapping.Reference, wrapping.Version, wrapping.Algorithm, intent.CreatedAt.Add(7*24*time.Hour), intent.CreatedAt.Add(365*24*time.Hour))
 	if err != nil {
 		return false, fmt.Errorf("create fanout delivery: %w", err)
 	}

@@ -227,7 +227,14 @@ func (manager *Manager) CreateDelivery(ctx context.Context, scope tenant.Scope, 
 	if err != nil {
 		return Intent{}, err
 	}
-	intent, err := NewIntent(identifier, endpointID, eventID, eventType, body, 8, manager.now().UTC())
+	if len(body) == 0 || len(body) > 1<<20 || scope.ID().IsZero() || eventID.IsZero() {
+		return Intent{}, ErrInvalid
+	}
+	wrapped, err := manager.wrapper.Wrap(ctx, BodyPurpose(), body, BodyContext(scope.ID().String(), eventID.String()))
+	if err != nil {
+		return Intent{}, fmt.Errorf("protect webhook delivery body: %w", err)
+	}
+	intent, err := NewIntent(identifier, endpointID, eventID, eventType, wrapped, 8, manager.now().UTC())
 	if err != nil {
 		return Intent{}, err
 	}
@@ -246,6 +253,9 @@ func (manager *Manager) Replay(ctx context.Context, scope tenant.Scope, original
 	if err != nil {
 		return Intent{}, err
 	}
+	if err := original.Validate(); err != nil {
+		return Intent{}, err
+	}
 	if eventID != original.EventID {
 		return Intent{}, ErrConflict
 	}
@@ -257,12 +267,11 @@ func (manager *Manager) Replay(ctx context.Context, scope tenant.Scope, original
 	if err != nil {
 		return Intent{}, err
 	}
-	replay, err := NewIntent(identifier, original.EndpointID, eventID, original.EventType, original.Body, original.MaxAttempts, manager.now().UTC())
+	replay, err := NewIntent(identifier, original.EndpointID, eventID, original.EventType, *original.BodyWrapping, original.MaxAttempts, manager.now().UTC())
 	if err != nil {
 		return Intent{}, err
 	}
 	replay.ReplayOf = original.ID
-	replay.BodyWrapping = original.BodyWrapping
 	if err := manager.repository.CreateDelivery(ctx, scope, replay); err != nil {
 		return Intent{}, err
 	}

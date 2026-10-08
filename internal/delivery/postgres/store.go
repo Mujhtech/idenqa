@@ -137,20 +137,11 @@ func (store *Store) CreateDeliveryWithin(ctx context.Context, scope tenant.Scope
 	if err := setScope(ctx, tx, scope); err != nil {
 		return err
 	}
-	provider, reference, keyVersion, algorithm := nullableBodyWrapping(intent.BodyWrapping)
+	wrapping := intent.BodyWrapping.Record()
 	_, err := tx.Exec(ctx, `INSERT INTO idenqa.webhook_deliveries
 	  (tenant_id,id,endpoint_id,event_id,event_type,body,body_digest,state,attempt_count,max_attempts,next_attempt_at,replay_of,created_at,updated_at,body_provider,body_reference,body_key_version,body_algorithm,payload_expires_at,retain_until)
-	  VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)`, scope.ID().String(), intent.ID.String(), intent.EndpointID.String(), intent.EventID.String(), intent.EventType, intent.Body, intent.BodyDigest, string(intent.State), intent.AttemptCount, intent.MaxAttempts, intent.NextAttemptAt, nullableDelivery(intent.ReplayOf), intent.CreatedAt, intent.UpdatedAt, provider, reference, keyVersion, algorithm, intent.CreatedAt.Add(7*24*time.Hour), intent.CreatedAt.Add(365*24*time.Hour))
+	  VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)`, scope.ID().String(), intent.ID.String(), intent.EndpointID.String(), intent.EventID.String(), intent.EventType, intent.Body, intent.BodyDigest, string(intent.State), intent.AttemptCount, intent.MaxAttempts, intent.NextAttemptAt, nullableDelivery(intent.ReplayOf), intent.CreatedAt, intent.UpdatedAt, wrapping.Provider, wrapping.Reference, wrapping.Version, wrapping.Algorithm, intent.CreatedAt.Add(7*24*time.Hour), intent.CreatedAt.Add(365*24*time.Hour))
 	return err
-}
-
-func nullableBodyWrapping(wrapping *kms.WrappedKey) (any, any, any, any) {
-	if wrapping == nil {
-		return nil, nil, nil, nil
-	}
-	record := wrapping.Record()
-
-	return record.Provider, record.Reference, record.Version, record.Algorithm
 }
 
 func restoreBodyWrapping(body []byte, provider, reference, keyVersion, algorithm *string) (*kms.WrappedKey, error) {
@@ -159,9 +150,6 @@ func restoreBodyWrapping(body []byte, provider, reference, keyVersion, algorithm
 		if value != nil {
 			present++
 		}
-	}
-	if present == 0 {
-		return nil, nil
 	}
 	if present != 4 {
 		return nil, delivery.ErrInvalid

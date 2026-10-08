@@ -5,6 +5,9 @@ package integration_test
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"errors"
 	"path/filepath"
 	"testing"
 	"time"
@@ -210,6 +213,83 @@ func TestDeliveryBodiesAreWrappedAtRest(t *testing.T) {
 	if stored.BodyWrapping == nil || stored.EventID != original.EventID || !bytes.Equal(stored.Body, original.Body) {
 		t.Fatalf("stored replay lost wrapping: %#v", stored)
 	}
+
+	t.Run("direct creation wraps before persistence", func(t *testing.T) {
+		directEvent, err := generator.NewEvent()
+		if err != nil {
+			t.Fatal(err)
+		}
+		direct, err := manager.CreateDelivery(ctx, scope, original.EndpointID, directEvent, original.EventType, canonical)
+		if err != nil {
+			t.Fatal(err)
+		}
+		persisted, err := store.FindDelivery(ctx, scope, direct.ID)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if persisted.BodyWrapping == nil || bytes.Equal(persisted.Body, canonical) {
+			t.Fatal("direct creation persisted plaintext")
+		}
+		plaintext, err := keyring.Unwrap(ctx, delivery.BodyPurpose(), *persisted.BodyWrapping, delivery.BodyContext(scope.ID().String(), directEvent.String()))
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer clear(plaintext)
+		if !bytes.Equal(plaintext, canonical) {
+			t.Fatal("direct creation changed body bytes")
+		}
+	})
+
+	t.Run("plaintext rows cannot be loaded replayed or sent", func(t *testing.T) {
+		legacyID, err := generator.NewDelivery()
+		if err != nil {
+			t.Fatal(err)
+		}
+		digest := sha256.Sum256(canonical)
+		// The schema still permits absent wrapping for redacted tombstones.
+		// Seed a historical non-redacted row to prove the application rejects it.
+		_, err = admin.Native().Exec(ctx, `INSERT INTO idenqa.webhook_deliveries
+		 (tenant_id,id,endpoint_id,event_id,event_type,body,body_digest,state,attempt_count,max_attempts,next_attempt_at,replay_of,created_at,updated_at,payload_expires_at,retain_until)
+		 SELECT tenant_id,$3,endpoint_id,event_id,event_type,$4,$5,'pending',0,max_attempts,created_at,id,created_at,created_at,payload_expires_at,retain_until
+		 FROM idenqa.webhook_deliveries WHERE tenant_id=$1 AND id=$2`, scope.ID().String(), original.ID.String(), legacyID.String(), canonical, hex.EncodeToString(digest[:]))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := store.FindDelivery(ctx, scope, legacyID); !errors.Is(err, delivery.ErrInvalid) {
+			t.Fatalf("plaintext read: %v", err)
+		}
+		if _, err := manager.Replay(ctx, scope, legacyID, original.EventID); !errors.Is(err, delivery.ErrInvalid) {
+			t.Fatalf("plaintext replay: %v", err)
+		}
+		blockedSender := &bodyProofSender{verifier: verifier}
+		blockedHandler, err := deliverytask.NewHandler(store, keyring, blockedSender, generator, queue, func() time.Time { return now })
+		if err != nil {
+			t.Fatal(err)
+		}
+		work, err := deliverytask.NewIntent(generator, scope, legacyID, now)
+		if err != nil {
+			t.Fatal(err)
+		}
+		effect, result := blockedHandler.Prepare(ctx, platformtask.Delivery{Intent: work, Attempt: 1, Fence: 1})
+		if effect != nil || result.Outcome != platformtask.OutcomeQuarantine || !errors.Is(result.Err, delivery.ErrInvalid) || len(blockedSender.body) != 0 {
+			t.Fatalf("plaintext delivery: %#v", result)
+		}
+	})
+
+	t.Run("store rejects unwrapped writes", func(t *testing.T) {
+		invalid := original
+		invalid.BodyWrapping = nil
+		if err := store.CreateDelivery(ctx, scope, invalid); !errors.Is(err, delivery.ErrInvalid) {
+			t.Fatalf("plaintext write: %v", err)
+		}
+		if err := runtime.WithinTransaction(ctx, platformpostgres.TransactionOptions{}, func(ctx context.Context, tx platformpostgres.Transaction) error {
+			_, err := store.CreateDeliveryIfAbsentWithin(ctx, scope, tx, invalid)
+			return err
+		}); !errors.Is(err, delivery.ErrInvalid) {
+			t.Fatalf("plaintext fanout write: %v", err)
+		}
+	})
+
 }
 
 func mustEventID(t *testing.T, value string) id.Event {

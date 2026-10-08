@@ -94,6 +94,9 @@ func (handler *Handler) Prepare(ctx context.Context, work platformtask.Delivery)
 	if err != nil {
 		return nil, taskError(err)
 	}
+	if err := intent.Validate(); err != nil {
+		return nil, platformtask.Quarantine(err)
+	}
 	if intent.State != delivery.StatePending || number <= intent.AttemptCount {
 		return noEffect, platformtask.Complete()
 	}
@@ -121,15 +124,11 @@ func (handler *Handler) Prepare(ctx context.Context, work platformtask.Delivery)
 		return nil, platformtask.Retry(platformtask.RetryClassUnavailable, errors.New("delivery: unwrap signing secret"))
 	}
 	defer clear(secret)
-	body := intent.Body
-	if intent.BodyWrapping != nil {
-		plaintext, unwrapErr := handler.unwrapper.Unwrap(ctx, webhookBodyPurposeForTask(), *intent.BodyWrapping, delivery.BodyContext(scope.ID().String(), intent.EventID.String()))
-		if unwrapErr != nil {
-			return nil, platformtask.Retry(platformtask.RetryClassUnavailable, errors.New("delivery: unwrap event body"))
-		}
-		defer clear(plaintext)
-		body = plaintext
+	body, err := handler.unwrapper.Unwrap(ctx, webhookBodyPurposeForTask(), *intent.BodyWrapping, delivery.BodyContext(scope.ID().String(), intent.EventID.String()))
+	if err != nil {
+		return nil, platformtask.Retry(platformtask.RetryClassUnavailable, errors.New("delivery: unwrap event body"))
 	}
+	defer clear(body)
 	signature, err := delivery.Sign(secret, intent.EventID, now, body)
 	if err != nil {
 		return nil, platformtask.Quarantine(err)

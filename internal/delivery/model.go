@@ -1,11 +1,11 @@
 package delivery
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 	"net/url"
-	"slices"
 	"strings"
 	"time"
 
@@ -105,8 +105,8 @@ const (
 )
 
 // Intent is one immutable event payload plus mutable bounded delivery state.
-// A non-nil BodyWrapping means Body stores KMS-wrapped ciphertext that must be
-// unwrapped only at the send boundary; nil means legacy plaintext storage.
+// Body stores KMS-wrapped ciphertext. BodyWrapping is required and must match
+// those exact bytes; plaintext payloads are never valid delivery intents.
 type Intent struct {
 	ID            id.Delivery
 	EndpointID    id.WebhookEndpoint
@@ -125,8 +125,12 @@ type Intent struct {
 	UpdatedAt     time.Time
 }
 
-// NewIntent creates exact delivery meaning; event IDs are the tenant deduplication key.
-func NewIntent(identifier id.Delivery, endpoint id.WebhookEndpoint, event id.Event, eventType string, body []byte, maxAttempts int32, at time.Time) (Intent, error) {
+// NewIntent accepts only a wrapped body; event IDs are the tenant deduplication key.
+func NewIntent(identifier id.Delivery, endpoint id.WebhookEndpoint, event id.Event, eventType string, wrapped kms.WrappedKey, maxAttempts int32, at time.Time) (Intent, error) {
+	if wrapped.IsZero() {
+		return Intent{}, ErrInvalid
+	}
+	body := wrapped.Record().Ciphertext
 	if identifier.IsZero() || endpoint.IsZero() || event.IsZero() || !validToken(eventType) || len(body) == 0 || len(body) > 1<<20 || maxAttempts == 0 || maxAttempts > 20 || at.IsZero() || at.Location() != time.UTC {
 		return Intent{}, ErrInvalid
 	}
@@ -136,7 +140,8 @@ func NewIntent(identifier id.Delivery, endpoint id.WebhookEndpoint, event id.Eve
 		EndpointID:    endpoint,
 		EventID:       event,
 		EventType:     eventType,
-		Body:          slices.Clone(body),
+		Body:          body,
+		BodyWrapping:  &wrapped,
 		BodyDigest:    hex.EncodeToString(digest[:]),
 		State:         StatePending,
 		MaxAttempts:   maxAttempts,
@@ -155,7 +160,7 @@ func (intent Intent) Validate() error {
 	if intent.BodyDigest != hex.EncodeToString(digest[:]) {
 		return ErrInvalid
 	}
-	if intent.BodyWrapping != nil && (intent.BodyWrapping.IsZero() || intent.BodyWrapping.Record().Ciphertext == nil) {
+	if intent.BodyWrapping == nil || intent.BodyWrapping.IsZero() || !bytes.Equal(intent.Body, intent.BodyWrapping.Record().Ciphertext) {
 		return ErrInvalid
 	}
 	switch intent.State {

@@ -175,11 +175,10 @@ func (handler *FanoutHandler) Prepare(_ context.Context, work platformtask.Deliv
 			if err != nil {
 				return taskError(err)
 			}
-			intent, err := delivery.NewIntent(deliveryID, endpointID, event.ID, string(event.Type), event.Body, 8, now)
+			intent, err := delivery.NewIntent(deliveryID, endpointID, event.ID, string(event.Type), *event.BodyWrapping, 8, now)
 			if err != nil {
 				return platformtask.Quarantine(err)
 			}
-			intent.BodyWrapping = event.BodyWrapping
 			inserted, err := handler.repository.CreateDeliveryIfAbsentWithin(ctx, scope, tx, intent)
 			if err != nil {
 				return taskError(err)
