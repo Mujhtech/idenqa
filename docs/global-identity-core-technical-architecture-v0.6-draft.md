@@ -1471,6 +1471,8 @@ Thresholds are selected per assurance profile and use case. A single global thre
 - Reject replays of completed capture tokens.
 - Treat rooted, jailbroken, emulated, or instrumented devices as signals rather than universal rejection unless policy requires it.
 
+**Selected — 2 October 2026, unified operator journey timeline:** Core exposes a bounded tenant-authorised chronological projection across authoritative lifecycle, notice-response, evidence, attempt, signal, and decision records. Capture Web may additionally submit best-effort interaction records from a closed, versioned vocabulary so an operator can understand screen progression, method selection, retakes, recovery, and completion behaviour. These client records are labelled non-authoritative, ordered by server receipt time, and prohibited from carrying evidence bytes, subject-entered values, credentials, provider payloads, DOM snapshots, or free-form metadata. They cannot establish acquisition assurance, lifecycle state, verification outcome, or tenant action. Append-only forced-RLS storage, per-session sequence/idempotency checks, strict capture-token/session binding, bounded reads, and source/authority fields preserve that trust boundary. Lifecycle history remains the compatibility and recovery backbone.
+
 ### 19.7 Biometric storage
 
 - Raw capture, reference portrait, and embedding have independent retention.
@@ -1814,6 +1816,8 @@ Reviewers cannot bypass processing authority, consent, residency, tenant isolati
 **Implemented explicit recapture follow-up — 8 September 2026:** A reviewer with current `reviews:resolve` authority may request parent policy re-evaluation after acknowledging the exact child decision. Migration 45 atomically records immutable acknowledgement-bound lineage, a new case version, audit, idempotency and durable evaluation intent. The existing fenced worker preserves the parent’s pinned policy and original fact timestamps and adds `review.recapture` from the child’s immutable outcome. Only policy may complete the parent; nonterminal results keep manual review. Child completion does not automatically schedule evaluation. Controlled evidence access, escalation/correction/supersession, generated public contracts and accepted subject-facing UI remain pending. See [manual review and linked recapture](manual-review-recapture-v0.1.md).
 
 **Review operations increment — 8 September 2026:** Core now includes `reviews:admin` versioned tenant-attested operator administration, pinned review settings, bounded queue/priority/SLA/sampling operations, controlled case-bound redacted evidence display, independent supervisor arbitration, policy-authored correction successors and appeal withdrawal/expiry/history. Public OpenAPI/TypeScript operations and Capture Web linked-session handoff are implemented. External certificate verification and accepted composed reviewer/subject journeys remain outstanding; O-03 stays **In progress**. No new tests were requested for this increment. See [manual review and linked recapture](manual-review-recapture-v0.1.md#6-review-operations-and-public-integration) for exact boundaries and migration permissions.
+
+**Selected and implemented direct regional viewer boundary — 30 September 2026:** A commercial control plane may authorise a workforce reviewer and sign a short-lived bootstrap bound to the exact tenant, deployment, region, reviewer, review case/version, browser origin, purpose, nonce and expiry. The browser redeems it once with the authoritative regional Core. Core verifies the configured control-plane signature and deployment binding, reauthorises current reviewer assignment and case eligibility, atomically consumes the bootstrap nonce, and returns an opaque short-lived session secret exactly once. Evidence metadata, grant issuance, redacted/watermarked raster display and finding submission then remain browser-to-Core. Core stores only hashes and reference metadata for the bootstrap/session; the control plane must not proxy evidence bytes or receive the regional session secret. The session does not create reviewer authority: the workforce actor must still have a current Core operator assignment, and the commercial `review.evidence.open` permission must be explicitly assigned rather than added to default roles.
 
 ### 23.3 Review copilot
 
@@ -2932,7 +2936,9 @@ The Go core does not depend on one ML language or framework.
 
 ### 33.5 Repository layout
 
-The open-source core and commercial dashboard use separate repositories and build pipelines. This is a source-code boundary, not merely a feature flag.
+The open-source Core, commercial Console, and Idenqa Cloud use separate repositories and build pipelines. This is a source-code boundary, not merely a feature flag.
+
+**Selected — 26 September 2026:** `../idenqa-cloud` is the sole repository for all Cloud implementation, Cloud-internal contracts, infrastructure, deployment orchestration, configuration, operational tooling, tests, and Cloud-specific product and architecture documentation. This public repository contains only the public contracts, conformance material, and narrow architectural references required for Core interoperability. It must build, test, release, and operate without the Cloud repository, and public material must not reproduce proprietary Cloud internals.
 
 #### Public core repository
 
@@ -3482,6 +3488,8 @@ Commercial delivery modes may include:
 4. **Self-hosted Enterprise:** dashboard binaries or containers are licensed for an isolated customer environment.
 
 ### 39.3 Idenqa Cloud managed service
+
+**Implemented interoperability component — 2 October 2026:** Core supplies [public regional usage receipts](../contracts/usage/v1/README.md) for durable provider-dispatch acceptance. Initial claim and receipt commit together; private local read/ack uses explicit tenant scope, immutable history and digest acknowledgement. The receipt excludes subject/evidence/result/credential payloads and is not proof of provider execution, terminal completion or cost. Commercial collection, allocation and billing remain independently owned; Core requires none of them to operate. Deployed handoff acceptance and source retention/archive policy remain open. Package ownership and migration 88 are recorded in the repository draft.
 
 The managed service adds operational value:
 
@@ -4096,6 +4104,8 @@ The later Cloud module is ready for beta when:
 ---
 
 ## 44. Open product decisions
+
+Regional usage receipt source retention/archive and deployed consumer handoff remain **TBD**. Dispatch acceptance is implemented; terminal/provider-charged/model source extensions require their own exact public semantics and acceptance.
 
 The following require founder decisions before implementation commitments:
 
