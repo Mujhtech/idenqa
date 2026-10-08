@@ -50,6 +50,7 @@ type Querier interface {
 	FindAPIKeyForVerification(ctx context.Context, arg FindAPIKeyForVerificationParams) (FindAPIKeyForVerificationRow, error)
 	FindActivePolicy(ctx context.Context, arg FindActivePolicyParams) (FindActivePolicyRow, error)
 	FindCaptureContext(ctx context.Context, arg FindCaptureContextParams) (FindCaptureContextRow, error)
+	FindCaptureJourneyEventDigest(ctx context.Context, arg FindCaptureJourneyEventDigestParams) (string, error)
 	FindCaptureOutcome(ctx context.Context, arg FindCaptureOutcomeParams) (FindCaptureOutcomeRow, error)
 	FindCaptureProfile(ctx context.Context, arg FindCaptureProfileParams) (IdenqaCaptureProfile, error)
 	FindCaptureProfileRevision(ctx context.Context, arg FindCaptureProfileRevisionParams) (IdenqaCaptureProfileRevision, error)
@@ -81,11 +82,16 @@ type Querier interface {
 	FindSubjectResponse(ctx context.Context, arg FindSubjectResponseParams) (IdenqaSubjectResponse, error)
 	FindTenant(ctx context.Context, id string) (IdenqaTenant, error)
 	FindVerificationCheck(ctx context.Context, arg FindVerificationCheckParams) (IdenqaVerificationCheck, error)
+	FindVerificationInspectionSession(ctx context.Context, arg FindVerificationInspectionSessionParams) (string, error)
+	FindVerificationLifecycleOrigin(ctx context.Context, arg FindVerificationLifecycleOriginParams) (FindVerificationLifecycleOriginRow, error)
 	FindVerificationReconciliationForAttempt(ctx context.Context, arg FindVerificationReconciliationForAttemptParams) (IdenqaVerificationReconciliation, error)
 	FindVerificationSession(ctx context.Context, arg FindVerificationSessionParams) (IdenqaVerificationSession, error)
+	FindVerificationSignalSession(ctx context.Context, arg FindVerificationSignalSessionParams) (string, error)
+	FindVerificationTimelineSession(ctx context.Context, arg FindVerificationTimelineSessionParams) (string, error)
 	IncrementEvidenceProcessingGrantUse(ctx context.Context, arg IncrementEvidenceProcessingGrantUseParams) (IdenqaEvidenceProcessingGrant, error)
 	InsertAPIKeyAdminAudit(ctx context.Context, arg InsertAPIKeyAdminAuditParams) error
 	InsertAuthorityAudit(ctx context.Context, arg InsertAuthorityAuditParams) error
+	InsertCaptureJourneyEvent(ctx context.Context, arg InsertCaptureJourneyEventParams) (int64, error)
 	InsertCaptureProfileAudit(ctx context.Context, arg InsertCaptureProfileAuditParams) error
 	InsertEvidenceAssetAudit(ctx context.Context, arg InsertEvidenceAssetAuditParams) error
 	InsertEvidenceGrantAccessAttemptAudit(ctx context.Context, arg InsertEvidenceGrantAccessAttemptAuditParams) error
@@ -113,6 +119,7 @@ type Querier interface {
 	IsEvidenceObjectReferenced(ctx context.Context, arg IsEvidenceObjectReferencedParams) (bool, error)
 	ListAPIKeys(ctx context.Context, tenantID string) ([]IdenqaApiKey, error)
 	ListAcceptedEvidenceUploadIntents(ctx context.Context, arg ListAcceptedEvidenceUploadIntentsParams) ([]IdenqaEvidenceUploadIntent, error)
+	ListCaptureProfileRevisions(ctx context.Context, arg ListCaptureProfileRevisionsParams) ([]IdenqaCaptureProfileRevision, error)
 	ListCaptureProfilesAfter(ctx context.Context, arg ListCaptureProfilesAfterParams) ([]IdenqaCaptureProfile, error)
 	ListCaptureProfilesFirst(ctx context.Context, arg ListCaptureProfilesFirstParams) ([]IdenqaCaptureProfile, error)
 	ListEvidenceAssetAudit(ctx context.Context, arg ListEvidenceAssetAuditParams) ([]ListEvidenceAssetAuditRow, error)
@@ -126,7 +133,17 @@ type Querier interface {
 	ListRealtimeEvents(ctx context.Context, arg ListRealtimeEventsParams) ([]IdenqaRealtimeEvent, error)
 	ListVerificationAttemptDiagnostics(ctx context.Context, arg ListVerificationAttemptDiagnosticsParams) ([]IdenqaVerificationAttemptDiagnostic, error)
 	ListVerificationAttempts(ctx context.Context, arg ListVerificationAttemptsParams) ([]IdenqaVerificationAttempt, error)
+	ListVerificationInspectionAttempts(ctx context.Context, arg ListVerificationInspectionAttemptsParams) ([]ListVerificationInspectionAttemptsRow, error)
+	ListVerificationInspectionChecks(ctx context.Context, arg ListVerificationInspectionChecksParams) ([]ListVerificationInspectionChecksRow, error)
+	ListVerificationInspectionDecisions(ctx context.Context, arg ListVerificationInspectionDecisionsParams) ([]ListVerificationInspectionDecisionsRow, error)
+	ListVerificationInspectionEvidence(ctx context.Context, arg ListVerificationInspectionEvidenceParams) ([]ListVerificationInspectionEvidenceRow, error)
+	ListVerificationInspectionRetention(ctx context.Context, arg ListVerificationInspectionRetentionParams) ([]ListVerificationInspectionRetentionRow, error)
+	ListVerificationInspectionWebhooks(ctx context.Context, arg ListVerificationInspectionWebhooksParams) ([]ListVerificationInspectionWebhooksRow, error)
+	ListVerificationLifecycleTransitions(ctx context.Context, arg ListVerificationLifecycleTransitionsParams) ([]ListVerificationLifecycleTransitionsRow, error)
 	ListVerificationObservations(ctx context.Context, arg ListVerificationObservationsParams) ([]IdenqaVerificationObservation, error)
+	ListVerificationSessions(ctx context.Context, arg ListVerificationSessionsParams) ([]IdenqaVerificationSession, error)
+	ListVerificationSignals(ctx context.Context, arg ListVerificationSignalsParams) ([]ListVerificationSignalsRow, error)
+	ListVerificationTimeline(ctx context.Context, arg ListVerificationTimelineParams) ([]ListVerificationTimelineRow, error)
 	LoadCaptureProgressPublication(ctx context.Context, arg LoadCaptureProgressPublicationParams) (LoadCaptureProgressPublicationRow, error)
 	LoadRealtimeCommandAuthority(ctx context.Context, arg LoadRealtimeCommandAuthorityParams) (LoadRealtimeCommandAuthorityRow, error)
 	LoadRealtimeReplayAuthority(ctx context.Context, arg LoadRealtimeReplayAuthorityParams) (LoadRealtimeReplayAuthorityRow, error)
@@ -167,6 +184,7 @@ type Querier interface {
 	TryIdempotencyLock(ctx context.Context, arg TryIdempotencyLockParams) (bool, error)
 	UpdateVerificationCheck(ctx context.Context, arg UpdateVerificationCheckParams) (int64, error)
 	UpsertRealtimeAcknowledgement(ctx context.Context, arg UpsertRealtimeAcknowledgementParams) (int64, error)
+	VerificationInspectionHasLegalHold(ctx context.Context, arg VerificationInspectionHasLegalHoldParams) (bool, error)
 	WithdrawCaptureProfileRevision(ctx context.Context, arg WithdrawCaptureProfileRevisionParams) (IdenqaCaptureProfileRevision, error)
 }
 

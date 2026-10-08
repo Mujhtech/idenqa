@@ -5,6 +5,8 @@
 package sqlgen
 
 import (
+	"net/netip"
+
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -48,6 +50,34 @@ type IdenqaApiKeyAdminAudit struct {
 	Actor      string
 	Reason     string
 	OccurredAt pgtype.Timestamptz
+}
+
+type IdenqaApiKeyBridgeCommand struct {
+	CommandID                  string
+	TenantID                   string
+	RequestDigest              []byte
+	Operation                  string
+	KeyID                      string
+	DeliveryAlgorithm          *string
+	DeliveryEphemeralPublicKey *string
+	DeliveryNonce              *string
+	DeliveryCiphertext         *string
+	CreatedAt                  pgtype.Timestamptz
+}
+
+type IdenqaApiRequestLog struct {
+	TenantID        string
+	RequestID       string
+	ActorKeyID      string
+	Method          string
+	RouteTemplate   string
+	StatusCode      int32
+	DurationMs      int64
+	OccurredAt      pgtype.Timestamptz
+	TraceReference  *string
+	ClientIp        netip.Addr
+	QueryParameters []byte
+	BodyParameters  []byte
 }
 
 type IdenqaAppeal struct {
@@ -164,6 +194,23 @@ type IdenqaCaptureDocumentSelectionAudit struct {
 	RequirementKey   string
 	DocumentType     string
 	OccurredAt       pgtype.Timestamptz
+}
+
+type IdenqaCaptureJourneyEvent struct {
+	TenantID          string
+	VerificationID    string
+	CaptureTokenID    string
+	EventID           string
+	Sequence          int32
+	EventType         string
+	Screen            string
+	Action            *string
+	RequirementKey    *string
+	Artefact          *string
+	AcquisitionMethod *string
+	ClientOccurredAt  pgtype.Timestamptz
+	ReceivedAt        pgtype.Timestamptz
+	PayloadDigest     string
 }
 
 type IdenqaCaptureProfile struct {
@@ -1564,6 +1611,18 @@ type IdenqaReviewCaseSetting struct {
 	RecordedAt    pgtype.Timestamptz
 }
 
+type IdenqaReviewCommandReceipt struct {
+	TenantID        string
+	CommandID       string
+	ActorID         string
+	TargetKind      string
+	TargetID        string
+	Operation       string
+	ExpectedVersion int64
+	RequestDigest   string
+	ConsumedAt      pgtype.Timestamptz
+}
+
 type IdenqaReviewCorrectionEvaluation struct {
 	TenantID         string
 	CaseID           string
@@ -1610,6 +1669,32 @@ type IdenqaReviewEvidenceAccess struct {
 	ReviewerID   string
 	Redactions   []byte
 	RecordedAt   pgtype.Timestamptz
+}
+
+type IdenqaReviewEvidenceSession struct {
+	TenantID    string
+	TokenHash   []byte
+	BootstrapID string
+	ActorID     string
+	CaseID      string
+	CaseVersion int64
+	Region      string
+	Origin      string
+	CreatedAt   pgtype.Timestamptz
+	ExpiresAt   pgtype.Timestamptz
+}
+
+type IdenqaReviewEvidenceSessionBootstrap struct {
+	TenantID    string
+	BootstrapID string
+	NonceHash   []byte
+	ClaimsHash  []byte
+	ActorID     string
+	CaseID      string
+	CaseVersion int64
+	Region      string
+	Origin      string
+	ConsumedAt  pgtype.Timestamptz
 }
 
 type IdenqaReviewFinding struct {
@@ -1732,6 +1817,13 @@ type IdenqaTenantAdminAudit struct {
 	Actor      string
 	Reason     string
 	OccurredAt pgtype.Timestamptz
+}
+
+type IdenqaTenantProvisionCommand struct {
+	CommandID     string
+	RequestDigest []byte
+	TenantID      string
+	CreatedAt     pgtype.Timestamptz
 }
 
 type IdenqaVerificationAssurance struct {
