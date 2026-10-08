@@ -1,0 +1,49 @@
+{
+  "schema_version": "idenqa.acceptance.provider.v1",
+  "record_id": "dojah-ng-passport-production-review",
+  "gate_set": "provider",
+  "decision": "open",
+  "tuple": {
+    "adapter_model": "dojah",
+    "artifact_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "capability": "document_analysis",
+    "country": "ng",
+    "evidence_class": "passport",
+    "acquisition_method": "live_camera",
+    "region": "eu-west-1",
+    "runtime_class": "linux_amd64",
+    "configuration_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "run": {
+    "run_id": "pending-live-run",
+    "operator_ref": "",
+    "started_at": "0001-01-01T00:00:00Z",
+    "ended_at": "0001-01-01T00:00:00Z",
+    "revalidate_at": "0001-01-01T00:00:00Z"
+  },
+  "build": {
+    "repository_commit": "",
+    "build_digest": "",
+    "signature_ref": "",
+    "sbom_ref": "",
+    "contract_version": ""
+  },
+  "evidence": {
+    "credential_ownership": "",
+    "account_environment": "",
+    "processing_region": "",
+    "dataset_ref": "",
+    "rights_basis_ref": "",
+    "consent_basis_ref": "",
+    "hardware_bounds_ref": "",
+    "sample_exclusions_ref": "",
+    "thresholds_ref": "",
+    "raw_report_ref": "",
+    "failures_ref": "",
+    "incidents_ref": "",
+    "metrics": []
+  },
+  "checks": [],
+  "risks": [],
+  "approvals": []
+}

@@ -59,6 +59,7 @@ func newRootCommand(info buildinfo.Info) *cobra.Command {
 		newAssuranceCommand(),
 		newFraudCommand(),
 		newSyntheticCommand(),
+		newAcceptanceCommand(),
 		newDoctorCommand(),
 	)
 
