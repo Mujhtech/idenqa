@@ -18,13 +18,16 @@ import (
 	"github.com/Mujhtech/idenqa/adapters/providers/dojah"
 	providerv1 "github.com/Mujhtech/idenqa/contracts/provider/v1"
 	"github.com/Mujhtech/idenqa/internal/bootstrap/runnersecret"
+	"github.com/Mujhtech/idenqa/internal/buildinfo"
 	"github.com/Mujhtech/idenqa/internal/config"
 	runnerv1 "github.com/Mujhtech/idenqa/internal/gen/proto/runner/v1"
 	"github.com/Mujhtech/idenqa/internal/platform/egress"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/platform/secret"
 	"github.com/Mujhtech/idenqa/internal/platform/secret/credential"
+	"github.com/Mujhtech/idenqa/internal/platform/telemetry"
 	"github.com/Mujhtech/idenqa/internal/transport/runner"
+	"go.opentelemetry.io/otel/propagation"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -49,6 +52,7 @@ type Settings struct {
 	TenantID              string                            `json:"tenant_id"`
 	Configuration         providerv1.ConfigurationReference `json:"configuration"`
 	BaseURL               string                            `json:"base_url"`
+	Environment           string                            `json:"environment,omitempty"`
 	ProviderCAFile        string                            `json:"provider_ca_file"`
 	AppIDFile             string                            `json:"app_id_file"`
 	APIKeyFile            string                            `json:"api_key_file"`
@@ -70,12 +74,14 @@ type Settings struct {
 
 // Process owns one tenant-isolated provider runner and its outbound transports.
 type Process struct {
-	server      *grpc.Server
-	listener    net.Listener
-	clients     []*http.Client
-	reload      *runnersecret.Reloader
-	credentials *credential.Window
-	interval    time.Duration
+	providers      *telemetry.Providers
+	server         *grpc.Server
+	listener       net.Listener
+	clients        []*http.Client
+	idleTransports []interface{ CloseIdleConnections() }
+	reload         *runnersecret.Reloader
+	credentials    *credential.Window
+	interval       time.Duration
 }
 
 // NewProcess validates mounted configuration, resolves the initial secret
@@ -147,12 +153,16 @@ func NewProcess(ctx context.Context, settings Settings) (*Process, error) {
 		}
 	}
 
-	sandboxOrigin := "https://sandbox.dojah.io"
-	if settings.Adapter == providerv1.AdapterSmileID {
-		sandboxOrigin = "https://testapi.smileidentity.com"
+	environment, origin, err := reviewedProviderEnvironment(settings.Adapter, settings.Environment)
+	if err != nil {
+		return nil, err
 	}
-	if !settings.Fixture && settings.BaseURL != sandboxOrigin {
-		return nil, errors.New("provider runtime permits only the reviewed adapter sandbox origin")
+	settings.Environment = environment
+	if settings.Fixture && environment == "production" {
+		return nil, errors.New("provider fixture cannot use the production environment")
+	}
+	if !settings.Fixture && settings.BaseURL != origin {
+		return nil, errors.New("provider runtime origin does not match the reviewed adapter environment")
 	}
 	if _, err := runner.NewCredentialSet(gatewayCredential.Load()); err != nil {
 		return nil, err
@@ -177,11 +187,23 @@ func NewProcess(ctx context.Context, settings Settings) (*Process, error) {
 		implementation = smile
 		clients = append(clients, uploadHTTP)
 	}
+	providers, err := telemetry.NewRunnerProviders(ctx, "adapter-runner", buildinfo.Current().Version)
+	if err != nil {
+		return nil, err
+	}
+	acceptedTelemetry := false
+	defer func() {
+		if !acceptedTelemetry {
+			shutdown, cancel := context.WithTimeout(context.WithoutCancel(ctx), 10*time.Second)
+			defer cancel()
+			_ = providers.Shutdown(shutdown)
+		}
+	}()
 	service, err := runner.NewProviderServer(implementation)
 	if err != nil {
 		return nil, err
 	}
-	server, err := runner.NewServer(runner.ServerConfig{Credentials: credentialSet, TLS: tlsCredentials, MaximumDeadline: 10 * time.Minute})
+	server, err := runner.NewServer(runner.ServerConfig{TracerProvider: providers.TracerProvider(), Propagator: propagation.TraceContext{}, Credentials: credentialSet, TLS: tlsCredentials, MaximumDeadline: 10 * time.Minute})
 	if err != nil {
 		return nil, err
 	}
@@ -192,8 +214,50 @@ func NewProcess(ctx context.Context, settings Settings) (*Process, error) {
 		return nil, errors.New("listen for provider runner")
 	}
 
-	return &Process{server: server, listener: listener, clients: clients, reload: reloader, credentials: credentials,
+	var idleTransports []interface{ CloseIdleConnections() }
+	for _, client := range clients {
+		base := client.Transport
+		if base == nil {
+			base = http.DefaultTransport
+		}
+		if closer, ok := base.(interface{ CloseIdleConnections() }); ok {
+			idleTransports = append(idleTransports, closer)
+		}
+		if client != gatewayHTTP {
+			client.Transport = telemetry.NewExternalHTTPTransport(client.Transport, providers.TracerProvider())
+		}
+	}
+	gatewayHTTP.Transport = telemetry.NewInternalHTTPTransport(gatewayHTTP.Transport, providers.TracerProvider())
+	acceptedTelemetry = true
+	return &Process{providers: providers, server: server, listener: listener, clients: clients, idleTransports: idleTransports, reload: reloader, credentials: credentials,
 		interval: secondsDuration(settings.SecretReloadSeconds, runnersecret.DefaultReloadInterval)}, nil
+}
+
+func reviewedProviderEnvironment(adapter, environment string) (string, string, error) {
+	if environment == "" {
+		environment = "sandbox"
+	}
+	switch adapter {
+	case "", providerv1.AdapterDojah:
+		switch environment {
+		case "sandbox":
+			return environment, "https://sandbox.dojah.io", nil
+		case "production":
+			return environment, "https://api.dojah.io", nil
+		}
+	case providerv1.AdapterSmileID:
+		if environment == "sandbox" {
+			return environment, "https://testapi.smileidentity.com", nil
+		}
+	}
+	return "", "", errors.New("provider environment is not reviewed for this adapter")
+}
+
+func providerMode(environment string) string {
+	if environment == "" {
+		return "sandbox"
+	}
+	return environment
 }
 
 // hydrateStaticCredentials reads mounted files for every setting that is not
@@ -470,10 +534,15 @@ func refreshCredentials(ctx context.Context, credentials *credential.Window, int
 
 // Close releases the process-owned listener and pooled connections.
 func (process *Process) Close() {
+	if process.providers != nil {
+		shutdown, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		defer func() { _ = process.providers.Shutdown(shutdown) }()
+	}
 	process.server.Stop()
 	_ = process.listener.Close()
-	for _, client := range process.clients {
-		client.CloseIdleConnections()
+	for _, transport := range process.idleTransports {
+		transport.CloseIdleConnections()
 	}
 }
 
@@ -491,7 +560,13 @@ type scopedAdapter struct {
 // configuration returns the current provider credentials, including any value
 // published by a completed reload.
 func (adapter *scopedAdapter) configuration() dojah.Config {
-	return dojah.Config{BaseURL: adapter.settings.BaseURL, AppID: adapter.appID.Load(), APIKey: adapter.apiKey.Load(), Mode: "sandbox", Region: "africa"}
+	return dojah.Config{
+		BaseURL: adapter.settings.BaseURL,
+		AppID:   adapter.appID.Load(),
+		APIKey:  adapter.apiKey.Load(),
+		Mode:    providerMode(adapter.settings.Environment),
+		Region:  "africa",
+	}
 }
 
 // acceptsConfiguration reports whether one request configuration still binds
@@ -620,7 +695,7 @@ func dojahConfiguration(settings Settings, value secret.Value) (dojah.Config, er
 	if err != nil {
 		return dojah.Config{}, err
 	}
-	return dojah.Config{BaseURL: settings.BaseURL, AppID: credentials.AppID, APIKey: credentials.APIKey, Mode: "sandbox", Region: "africa"}, nil
+	return dojah.Config{BaseURL: settings.BaseURL, AppID: credentials.AppID, APIKey: credentials.APIKey, Mode: providerMode(settings.Environment), Region: "africa"}, nil
 }
 
 type gatewayReader struct {

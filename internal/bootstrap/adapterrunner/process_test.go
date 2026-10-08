@@ -49,6 +49,39 @@ func tenantConfiguration(t *testing.T, reference, version string) providerv1.Con
 	return configuration
 }
 
+func TestReviewedProviderEnvironment(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name        string
+		adapter     string
+		environment string
+		wantMode    string
+		wantOrigin  string
+		wantErr     bool
+	}{
+		{name: "dojah default sandbox", wantMode: "sandbox", wantOrigin: "https://sandbox.dojah.io"},
+		{name: "dojah explicit sandbox", adapter: providerv1.AdapterDojah, environment: "sandbox", wantMode: "sandbox", wantOrigin: "https://sandbox.dojah.io"},
+		{name: "dojah production", adapter: providerv1.AdapterDojah, environment: "production", wantMode: "production", wantOrigin: "https://api.dojah.io"},
+		{name: "smile sandbox", adapter: providerv1.AdapterSmileID, environment: "sandbox", wantMode: "sandbox", wantOrigin: "https://testapi.smileidentity.com"},
+		{name: "smile production remains closed", adapter: providerv1.AdapterSmileID, environment: "production", wantErr: true},
+		{name: "unknown environment", adapter: providerv1.AdapterDojah, environment: "staging", wantErr: true},
+		{name: "unknown adapter", adapter: "other", environment: "sandbox", wantErr: true},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			mode, origin, err := reviewedProviderEnvironment(test.adapter, test.environment)
+			if (err != nil) != test.wantErr {
+				t.Fatalf("reviewedProviderEnvironment() error = %v, wantErr %v", err, test.wantErr)
+			}
+			if mode != test.wantMode || origin != test.wantOrigin {
+				t.Fatalf("reviewedProviderEnvironment() = (%q, %q), want (%q, %q)", mode, origin, test.wantMode, test.wantOrigin)
+			}
+		})
+	}
+}
+
 func TestScopedAdapterResolvesTenantConfigurationBundle(t *testing.T) {
 	t.Parallel()
 

@@ -64,6 +64,7 @@ The runner configuration contains the same `tenant_id` and `configuration` objec
     "secret_reference": "secret://provider/dojah/tenant",
     "credential_version": "v1"
   },
+  "environment": "sandbox",
   "base_url": "https://sandbox.dojah.io",
   "provider_ca_file": "",
   "app_id_file": "/run/idenqa/dojah-app-id",
@@ -79,7 +80,7 @@ Run `adapter-runner --config /run/idenqa/runner.json`, then the API and worker w
 
 All credential files must be owner-only regular files, nonempty and at most 4096 bytes. Generate two independent 32-byte cryptographically random workload secrets, encode each as unpadded Base64URL and prefix each with `idq_wrk_v1_`. They serve different directions and must not be tenant API keys. Keep provider AppId and secret key in their respective files. Configuration contains paths and opaque references, never inline secrets. Reload and rotation require a coordinated restart in this slice.
 
-For the Dojah route, outside tests the runner accepts only `https://sandbox.dojah.io`; production and arbitrary provider origins are rejected. The explicit fixture mode accepts only literal loopback HTTPS with a configured trust root. Provider HTTPS disables proxies, rejects redirects and checks and pins resolved addresses. The private gateway has a separately configured origin and mandatory trust root.
+For the Dojah route, omitting `environment` retains `sandbox` and requires the exact `https://sandbox.dojah.io` origin. Setting `environment` to `production` permits only the reviewed `https://api.dojah.io` origin. Arbitrary origins remain rejected, Smile ID production remains closed pending its own review, and fixture mode cannot declare production. This makes official-account Dojah acceptance executable; it does not itself accept the provider for production. The explicit fixture mode accepts only literal loopback HTTPS with a configured trust root. Provider HTTPS disables proxies, rejects redirects and checks and pins resolved addresses. The private gateway has a separately configured origin and mandatory trust root.
 
 ## Dojah recovery and shared limits
 
@@ -152,7 +153,7 @@ account acceptance, full OCR coverage or persistent structured identity ingestio
 
 `TestDojahRuntimePublicCaptureThroughDecisionAndWebhook` starts from the public capture and authority APIs and proves encrypted storage, atomic planning rollback, exact plaintext delivery through TLS, swapped-grant denial, normalized completion, immutable receipts and signed webhook retry across worker restart. Unit tests cover simultaneous duplicate dispatch, stable ambiguity, document rejection and unknown status, and private-origin/redirect rejection. These are controlled local fixtures, not official-account evidence or Capture Web product acceptance.
 
-The request body and explicit document status mapping were checked against [Dojah's document-analysis reference](https://docs.dojah.io/api-reference/document-analysis/document-analysis). The sandbox host restriction follows [Dojah's environment reference](https://docs.dojah.io/api-reference/get-started/environments), reviewed 7 September 2026. External sandbox and production verification remain subject to X-03's acceptance evidence.
+The request body and explicit document status mapping were checked against [Dojah's document-analysis reference](https://docs.dojah.io/api-reference/document-analysis/document-analysis). The environment binding follows [Dojah's environment reference](https://docs.dojah.io/api-reference/get-started/environments), rechecked 2 October 2026. External sandbox and production verification remain subject to X-03 and the [provider and model production-acceptance protocol](provider-model-production-acceptance-v0.1.md).
 
 ## Smile ID asynchronous document route
 
