@@ -29,11 +29,11 @@ func openOperationalDependencies(ctx context.Context, envFile string) (*operatio
 	if err != nil {
 		return nil, err
 	}
-	if configuration.DatabaseURL == "" {
+	if configuration.DatabaseConnectionString() == "" {
 		return nil, errors.New("runtime database url is required")
 	}
 	pool, err := postgres.Open(ctx, postgres.Config{
-		URL: configuration.DatabaseURL, Role: configuration.DatabaseRole,
+		URL: configuration.DatabaseConnectionString(), Role: configuration.DatabaseRole,
 		MaxConnections: 2, MinConnections: 0,
 		MaxConnectionAge:    configuration.DatabaseMaxLifetime,
 		MaxConnectionIdle:   configuration.DatabaseMaxIdleTime,

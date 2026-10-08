@@ -10,7 +10,9 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"path/filepath"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -23,6 +25,70 @@ import (
 const prefix = "IDENQA"
 
 const secretByteLength = 32
+
+var databaseIdentifierPattern = regexp.MustCompile(`^[a-z_][a-z0-9_]*$`)
+
+// ReviewAuthorityKeys is the public Ed25519 key set trusted by the protected
+// local review-command bridge. Its environment form is key-id=base64 entries.
+type ReviewAuthorityKeys map[string]string
+
+// Decode implements envconfig.Decoder.
+func (keys *ReviewAuthorityKeys) Decode(value string) error {
+	if keys == nil || value == "" || strings.TrimSpace(value) != value {
+		return errors.New("review authority public keys must be non-empty")
+	}
+	decoded := make(ReviewAuthorityKeys)
+	for _, entry := range strings.Split(value, ",") {
+		keyID, material, found := strings.Cut(entry, "=")
+		if !found || keyID == "" || material == "" || strings.TrimSpace(entry) != entry {
+			return errors.New("review authority public keys must use key-id=base64 entries")
+		}
+		if _, exists := decoded[keyID]; exists {
+			return fmt.Errorf("review authority public key %q is duplicated", keyID)
+		}
+		decoded[keyID] = material
+	}
+	*keys = decoded
+	return nil
+}
+
+// Values returns a defensive copy for verifier composition.
+func (keys ReviewAuthorityKeys) Values() map[string]string {
+	result := make(map[string]string, len(keys))
+	for keyID, material := range keys {
+		result[keyID] = material
+	}
+	return result
+}
+
+// Secret is a process credential that refuses string, Go-syntax, and JSON
+// disclosure. Value is intentionally exposed only through owned configuration
+// methods that construct a downstream credential at the last responsible
+// moment.
+type Secret struct{ value string }
+
+// Decode implements envconfig.Decoder.
+func (secret *Secret) Decode(value string) error {
+	if secret == nil {
+		return errors.New("secret destination is required")
+	}
+	if value == "" || strings.TrimSpace(value) != value || strings.ContainsAny(value, "\r\n\x00") {
+		return errors.New("secret must be non-empty and contain no surrounding whitespace or control separators")
+	}
+	secret.value = value
+	return nil
+}
+
+func (secret Secret) isZero() bool { return secret.value == "" }
+
+// String redacts secret material.
+func (Secret) String() string { return "[REDACTED]" }
+
+// GoString redacts secret material in %#v formatting.
+func (Secret) GoString() string { return "[REDACTED]" }
+
+// MarshalJSON prevents configuration diagnostics from serialising a secret.
+func (Secret) MarshalJSON() ([]byte, error) { return json.Marshal("[REDACTED]") }
 
 // Peppers is redacting, versioned API-key HMAC configuration. Its environment
 // form is a comma-separated list of version=unpadded-base64url entries.
@@ -361,10 +427,17 @@ func (TelemetryHeaders) MarshalJSON() ([]byte, error) { return json.Marshal("[RE
 type API struct {
 	ProviderHealthConfiguration
 	ProviderLimitConfiguration
-	ReviewAuthorityFile string `envconfig:"REVIEW_AUTHORITY_FILE"`
-	ProviderRuntimeFile string `envconfig:"PROVIDER_RUNTIME_FILE"`
-	ModelRuntimeFile    string `envconfig:"MODEL_RUNTIME_FILE"`
-	ProposalRuntimeFile string `envconfig:"PROPOSAL_RUNTIME_FILE"`
+	ReviewAuthorityFile        string              `envconfig:"REVIEW_AUTHORITY_FILE"`
+	ReviewBridgeSocket         string              `envconfig:"REVIEW_BRIDGE_SOCKET"`
+	ReviewBridgeOrganisationID string              `envconfig:"REVIEW_BRIDGE_ORGANISATION_ID"`
+	ReviewBridgeEnvironmentID  string              `envconfig:"REVIEW_BRIDGE_ENVIRONMENT_ID"`
+	ReviewBridgeDeploymentID   string              `envconfig:"REVIEW_BRIDGE_DEPLOYMENT_ID"`
+	ReviewBridgePublicKeys     ReviewAuthorityKeys `envconfig:"REVIEW_BRIDGE_PUBLIC_KEYS"`
+	ReviewBridgeAuthorityTTL   time.Duration       `envconfig:"REVIEW_BRIDGE_AUTHORITY_MAX_TTL"`
+	ReviewBrowserSessionTTL    time.Duration       `envconfig:"REVIEW_BROWSER_SESSION_TTL"`
+	ProviderRuntimeFile        string              `envconfig:"PROVIDER_RUNTIME_FILE"`
+	ModelRuntimeFile           string              `envconfig:"MODEL_RUNTIME_FILE"`
+	ProposalRuntimeFile        string              `envconfig:"PROPOSAL_RUNTIME_FILE"`
 	EvidenceUploadConfiguration
 	EvidenceLocalDirectory     string                `envconfig:"EVIDENCE_LOCAL_DIRECTORY"`
 	EvidenceLocalKeyringFile   string                `envconfig:"EVIDENCE_LOCAL_KEYRING_FILE"`
@@ -380,6 +453,15 @@ type API struct {
 	Environment                string                `envconfig:"ENVIRONMENT" default:"production"`
 	DatabaseURL                string                `envconfig:"DATABASE_URL"`
 	DatabaseAdminURL           string                `envconfig:"DATABASE_ADMIN_URL"`
+	DatabaseHost               string                `envconfig:"DATABASE_HOST"`
+	DatabasePort               uint16                `envconfig:"DATABASE_PORT"`
+	DatabaseName               string                `envconfig:"DATABASE_NAME"`
+	DatabaseUser               string                `envconfig:"DATABASE_USER"`
+	DatabasePassword           Secret                `envconfig:"DATABASE_PASSWORD"`
+	DatabaseAdminUser          string                `envconfig:"DATABASE_ADMIN_USER"`
+	DatabaseAdminPassword      Secret                `envconfig:"DATABASE_ADMIN_PASSWORD"`
+	DatabaseSSLMode            string                `envconfig:"DATABASE_SSL_MODE"`
+	DatabaseSSLRootCertificate string                `envconfig:"DATABASE_SSL_ROOT_CERTIFICATE"`
 	DatabaseRole               string                `envconfig:"DATABASE_ROLE"`
 	DatabaseMaxConnections     int32                 `envconfig:"DATABASE_MAX_CONNECTIONS" default:"20"`
 	DatabaseMinConnections     int32                 `envconfig:"DATABASE_MIN_CONNECTIONS" default:"2"`
@@ -459,11 +541,51 @@ func (configuration API) HTTPAddress() string {
 // credential when configured, preserving the development-only fallback used
 // by the initial migration CLI.
 func (configuration API) OperationalDatabaseURL() string {
+	if value := configuration.databaseAdminConnectionString(); value != "" {
+		return value
+	}
+
+	return configuration.DatabaseConnectionString()
+}
+
+// DatabaseConnectionString returns the validated runtime PostgreSQL URI. A
+// managed deployment may supply structured fields so its task definition never
+// contains a rendered credential URI.
+func (configuration API) DatabaseConnectionString() string {
+	if configuration.DatabaseURL != "" {
+		return configuration.DatabaseURL
+	}
+	return configuration.postgresConnectionString(configuration.DatabaseUser, configuration.DatabasePassword)
+}
+
+func (configuration API) databaseAdminConnectionString() string {
 	if configuration.DatabaseAdminURL != "" {
 		return configuration.DatabaseAdminURL
 	}
+	if configuration.DatabaseAdminUser == "" {
+		return ""
+	}
+	return configuration.postgresConnectionString(configuration.DatabaseAdminUser, configuration.DatabaseAdminPassword)
+}
 
-	return configuration.DatabaseURL
+func (configuration API) postgresConnectionString(user string, password Secret) string {
+	port := configuration.DatabasePort
+	if port == 0 {
+		port = 5432
+	}
+	connection := &url.URL{
+		Scheme: "postgres",
+		User:   url.UserPassword(user, password.value),
+		Host:   net.JoinHostPort(configuration.DatabaseHost, strconv.Itoa(int(port))),
+		Path:   "/" + configuration.DatabaseName,
+	}
+	query := connection.Query()
+	query.Set("sslmode", configuration.DatabaseSSLMode)
+	if configuration.DatabaseSSLRootCertificate != "" {
+		query.Set("sslrootcert", configuration.DatabaseSSLRootCertificate)
+	}
+	connection.RawQuery = query.Encode()
+	return connection.String()
 }
 
 // EvidenceUploadPolicy returns the validated deployment upload policy shared
@@ -624,11 +746,11 @@ func (configuration API) validate(providerEvidence bool) error {
 	if _, err := configuration.ProviderHealthPolicy(); err != nil {
 		return errors.New("provider health policy is invalid")
 	}
-	if err := validateDatabaseURL(configuration.DatabaseURL); err != nil {
+	if err := configuration.validateDatabaseConfiguration(); err != nil {
 		return err
 	}
-	if configuration.DatabaseAdminURL != "" {
-		if err := validateDatabaseURL(configuration.DatabaseAdminURL); err != nil {
+	if value := configuration.databaseAdminConnectionString(); value != "" {
+		if err := validateDatabaseURL(value); err != nil {
 			return fmt.Errorf("admin %w", err)
 		}
 	}
@@ -997,6 +1119,48 @@ func validateDatabaseURL(value string) error {
 	}
 
 	return nil
+}
+
+func (configuration API) validateDatabaseConfiguration() error {
+	structured := configuration.DatabaseHost != "" || configuration.DatabasePort != 0 ||
+		configuration.DatabaseName != "" || configuration.DatabaseUser != "" || !configuration.DatabasePassword.isZero() ||
+		configuration.DatabaseSSLMode != "" || configuration.DatabaseSSLRootCertificate != ""
+	if configuration.DatabaseURL != "" && structured {
+		return errors.New("database URL and structured database configuration are mutually exclusive")
+	}
+	if !structured {
+		if configuration.DatabaseAdminUser != "" || !configuration.DatabaseAdminPassword.isZero() {
+			return errors.New("structured database administration requires structured runtime database configuration")
+		}
+		return validateDatabaseURL(configuration.DatabaseURL)
+	}
+	if configuration.DatabaseAdminURL != "" {
+		return errors.New("admin database URL and structured database configuration are mutually exclusive")
+	}
+	if strings.TrimSpace(configuration.DatabaseHost) != configuration.DatabaseHost || configuration.DatabaseHost == "" ||
+		strings.ContainsAny(configuration.DatabaseHost, "/?#@\x00\r\n") ||
+		!databaseIdentifierPattern.MatchString(configuration.DatabaseName) || !databaseIdentifierPattern.MatchString(configuration.DatabaseUser) ||
+		configuration.DatabasePassword.isZero() {
+		return errors.New("structured database host, name, user, and password are invalid")
+	}
+	if (configuration.DatabaseAdminUser == "") != configuration.DatabaseAdminPassword.isZero() ||
+		(configuration.DatabaseAdminUser != "" && !databaseIdentifierPattern.MatchString(configuration.DatabaseAdminUser)) {
+		return errors.New("structured database admin user and password must be configured together")
+	}
+	switch configuration.DatabaseSSLMode {
+	case "disable", "require", "verify-ca", "verify-full":
+	default:
+		return errors.New("structured database SSL mode is invalid")
+	}
+	if configuration.Environment == "production" && configuration.DatabaseSSLMode != "verify-full" {
+		return errors.New("structured production database connections require verify-full TLS")
+	}
+	if configuration.DatabaseSSLRootCertificate != "" &&
+		(strings.TrimSpace(configuration.DatabaseSSLRootCertificate) != configuration.DatabaseSSLRootCertificate ||
+			!filepath.IsAbs(configuration.DatabaseSSLRootCertificate)) {
+		return errors.New("database SSL root certificate must be an absolute path without surrounding whitespace")
+	}
+	return validateDatabaseURL(configuration.DatabaseConnectionString())
 }
 
 func validateOrigins(origins []string) error {

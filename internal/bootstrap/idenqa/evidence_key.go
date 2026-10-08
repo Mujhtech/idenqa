@@ -146,11 +146,11 @@ func executeEvidenceKeyRewrap(command *cobra.Command, options *evidenceKeyOption
 	if err != nil {
 		return cli.RuntimeError("load evidence-key configuration", err)
 	}
-	if configuration.DatabaseURL == "" {
+	if configuration.DatabaseConnectionString() == "" {
 		return cli.RuntimeError("load evidence-key configuration", errors.New("runtime database url is required"))
 	}
 	pool, err := postgres.Open(ctx, postgres.Config{
-		URL: configuration.DatabaseURL, Role: configuration.DatabaseRole,
+		URL: configuration.DatabaseConnectionString(), Role: configuration.DatabaseRole,
 		MaxConnections: 2, MinConnections: 0,
 		MaxConnectionAge:    configuration.DatabaseMaxLifetime,
 		MaxConnectionIdle:   configuration.DatabaseMaxIdleTime,

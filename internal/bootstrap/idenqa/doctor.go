@@ -53,7 +53,7 @@ type doctorBackendProduction struct{}
 
 func (doctorBackendProduction) OpenDatabase(ctx context.Context, configuration config.API) (doctorDatabase, error) {
 	pool, err := postgres.Open(ctx, postgres.Config{
-		URL: configuration.DatabaseURL, Role: configuration.DatabaseRole,
+		URL: configuration.DatabaseConnectionString(), Role: configuration.DatabaseRole,
 		MaxConnections:      configuration.DatabaseMaxConnections,
 		MinConnections:      configuration.DatabaseMinConnections,
 		MaxConnectionAge:    configuration.DatabaseMaxLifetime,

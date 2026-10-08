@@ -1,6 +1,9 @@
 package config_test
 
 import (
+	"encoding/json"
+	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -504,6 +507,74 @@ func TestLoadAPIProcessEnvironmentWinsOverDotenv(t *testing.T) {
 	}
 }
 
+func TestLoadAPIStructuredDatabaseCredentialsAreEscapedAndRedacted(t *testing.T) {
+	clearIDENQAEnvironment(t)
+	setRequiredBrowserEnvironment(t)
+	t.Setenv("IDENQA_DATABASE_HOST", "tenant.cluster.example.com")
+	t.Setenv("IDENQA_DATABASE_PORT", "5432")
+	t.Setenv("IDENQA_DATABASE_NAME", "idenqa_tenant")
+	t.Setenv("IDENQA_DATABASE_USER", "idenqa_runtime")
+	t.Setenv("IDENQA_DATABASE_PASSWORD", "s p@ss:/?")
+	t.Setenv("IDENQA_DATABASE_ADMIN_USER", "idenqa_migrator")
+	t.Setenv("IDENQA_DATABASE_ADMIN_PASSWORD", "admin p@ss:/?")
+	t.Setenv("IDENQA_DATABASE_SSL_MODE", "verify-full")
+
+	configuration, err := config.LoadAPI("")
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertDatabaseCredential(t, configuration.DatabaseConnectionString(), "idenqa_runtime", "s p@ss:/?")
+	assertDatabaseCredential(t, configuration.OperationalDatabaseURL(), "idenqa_migrator", "admin p@ss:/?")
+
+	encoded, err := json.Marshal(configuration)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, rendered := range []string{fmt.Sprintf("%+v", configuration), fmt.Sprintf("%#v", configuration), string(encoded)} {
+		if strings.Contains(rendered, "s p@ss") || strings.Contains(rendered, "admin p@ss") {
+			t.Fatalf("configuration disclosed a database password: %s", rendered)
+		}
+	}
+}
+
+func TestLoadAPIRejectsUnsafeStructuredDatabaseConfiguration(t *testing.T) {
+	for _, test := range []struct {
+		name  string
+		key   string
+		value string
+	}{
+		{name: "mixed URL and components", key: "IDENQA_DATABASE_URL", value: testDatabaseURL},
+		{name: "weak production TLS", key: "IDENQA_DATABASE_SSL_MODE", value: "require"},
+		{name: "admin user without password", key: "IDENQA_DATABASE_ADMIN_USER", value: "idenqa_migrator"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			clearIDENQAEnvironment(t)
+			setRequiredBrowserEnvironment(t)
+			t.Setenv("IDENQA_DATABASE_HOST", "tenant.cluster.example.com")
+			t.Setenv("IDENQA_DATABASE_NAME", "idenqa_tenant")
+			t.Setenv("IDENQA_DATABASE_USER", "idenqa_runtime")
+			t.Setenv("IDENQA_DATABASE_PASSWORD", "runtime-password")
+			t.Setenv("IDENQA_DATABASE_SSL_MODE", "verify-full")
+			t.Setenv(test.key, test.value)
+			if _, err := config.LoadAPI(""); err == nil {
+				t.Fatal("unsafe structured database configuration was accepted")
+			}
+		})
+	}
+}
+
+func assertDatabaseCredential(t *testing.T, value, wantUser, wantPassword string) {
+	t.Helper()
+	parsed, err := url.Parse(value)
+	if err != nil {
+		t.Fatal(err)
+	}
+	password, exists := parsed.User.Password()
+	if parsed.User.Username() != wantUser || !exists || password != wantPassword || parsed.Query().Get("sslmode") != "verify-full" {
+		t.Fatalf("unexpected structured database connection: user=%q passwordMatches=%t query=%v", parsed.User.Username(), password == wantPassword, parsed.Query())
+	}
+}
+
 func TestLoadAPIAcceptsWorkerSettingsFromSharedEnvironment(t *testing.T) {
 	clearIDENQAEnvironment(t)
 	setRequiredAPIEnvironment(t)
@@ -642,6 +713,13 @@ func clearIDENQAEnvironment(t *testing.T) {
 func setRequiredAPIEnvironment(t *testing.T) {
 	t.Helper()
 	t.Setenv("IDENQA_DATABASE_URL", testDatabaseURL)
+	t.Setenv("IDENQA_REGION", "local")
+	t.Setenv("IDENQA_REALTIME_WEBSOCKET_URL", "ws://127.0.0.1:8080/v1/capture/socket")
+	t.Setenv("IDENQA_HTTP_CORS_ALLOWED_ORIGINS", "http://localhost:3000")
+}
+
+func setRequiredBrowserEnvironment(t *testing.T) {
+	t.Helper()
 	t.Setenv("IDENQA_REGION", "local")
 	t.Setenv("IDENQA_REALTIME_WEBSOCKET_URL", "ws://127.0.0.1:8080/v1/capture/socket")
 	t.Setenv("IDENQA_HTTP_CORS_ALLOWED_ORIGINS", "http://localhost:3000")

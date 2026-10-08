@@ -195,11 +195,11 @@ func openPolicyRepository(ctx context.Context, envFile string) (policy.Repositor
 	if err != nil {
 		return nil, nil, fmt.Errorf("load configuration: %w", err)
 	}
-	if configuration.DatabaseURL == "" {
+	if configuration.DatabaseConnectionString() == "" {
 		return nil, nil, errors.New("runtime database url is required")
 	}
 	pool, err := platformpostgres.Open(ctx, platformpostgres.Config{
-		URL: configuration.DatabaseURL, Role: configuration.DatabaseRole,
+		URL: configuration.DatabaseConnectionString(), Role: configuration.DatabaseRole,
 		MaxConnections: 2, MinConnections: 0,
 		MaxConnectionAge:    configuration.DatabaseMaxLifetime,
 		MaxConnectionIdle:   configuration.DatabaseMaxIdleTime,
