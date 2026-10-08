@@ -3,4 +3,6 @@ packages:
   - "capture/*"
 
 overrides:
+  brace-expansion: 2.1.7
   js-yaml: ^4.3.2
+  source-map-js: 1.2.2
