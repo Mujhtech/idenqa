@@ -46,7 +46,8 @@ type Config struct {
 
 // Pool is the owned PostgreSQL connection pool boundary.
 type Pool struct {
-	pool *pgxpool.Pool
+	tracing *queryTracer
+	pool    *pgxpool.Pool
 }
 
 // Native returns the process-owned pgx pool for provider adapters that require
@@ -113,6 +114,8 @@ func Open(ctx context.Context, configuration Config) (*Pool, error) {
 	if err != nil {
 		return nil, ErrInvalidConfiguration
 	}
+	tracing := &queryTracer{}
+	poolConfig.ConnConfig.Tracer = tracing
 	poolConfig.MaxConns = configuration.MaxConnections
 	poolConfig.MinConns = configuration.MinConnections
 	poolConfig.MaxConnLifetime = configuration.MaxConnectionAge
@@ -142,7 +145,7 @@ func Open(ctx context.Context, configuration Config) (*Pool, error) {
 		return nil, ErrUnavailable
 	}
 
-	return &Pool{pool: connectionPool}, nil
+	return &Pool{pool: connectionPool, tracing: tracing}, nil
 }
 
 func (configuration Config) validate() error {

@@ -110,3 +110,21 @@ func TestLoadAPIRejectsUnsafeTelemetryConfiguration(t *testing.T) {
 		})
 	}
 }
+
+func TestLoadTelemetryDoesNotRequireAPIConfiguration(t *testing.T) {
+	clearIDENQAEnvironment(t)
+	t.Setenv("IDENQA_DATABASE_URL", "invalid-and-unrelated")
+	configuration, err := config.LoadTelemetry()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if configuration.TelemetryProtocol != "disabled" || configuration.TelemetryTraceSampleRatio != 0.10 {
+		t.Fatalf("unexpected defaults: %+v", configuration)
+	}
+	t.Setenv("IDENQA_TELEMETRY_PROTOCOL", "grpc")
+	t.Setenv("IDENQA_TELEMETRY_ENDPOINT", "collector.example:4317")
+	t.Setenv("IDENQA_TELEMETRY_INSECURE", "true")
+	if _, err := config.LoadTelemetry(); err == nil {
+		t.Fatal("runner accepted insecure non-loopback collector")
+	}
+}
