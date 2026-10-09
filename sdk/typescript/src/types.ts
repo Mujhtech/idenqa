@@ -15,6 +15,15 @@ export type EvidenceID = string;
 export type DecisionID = string;
 export type PolicyID = string;
 
+/** Safe lifecycle metadata for the tenant represented by the API key. */
+export interface Tenant {
+  readonly id: TenantID;
+  readonly displayName: string;
+  readonly state: "active" | "disabled";
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
 export type PolicyDirective =
   | "complete_verified"
   | "complete_not_verified"

@@ -86,6 +86,7 @@ trap cleanup EXIT INT TERM
 
 tenant_output=$(./bin/idenqa tenant create \
   --actor capture-web-conformance \
+  --display-name "Idenqa Capture Web conformance" \
   --reason "create synthetic Capture Web tenant")
 tenant_id=$(printf '%s\n' "$tenant_output" | sed -n 's/^tenant id=\([^ ]*\).*/\1/p')
 if [ -z "$tenant_id" ]; then

@@ -339,6 +339,13 @@ The control plane stores tenant configuration, deployment metadata, non-sensitiv
 
 The control plane maintains a field-level data inventory. Configuration that reveals sensitive provider relationships, investigation state, subject activity, or regulated-sector information remains regional or is represented globally only through minimised opaque metadata.
 
+For managed onboarding, Cloud's authoritative organisation `name` maps to the
+regional Core tenant's `display_name`. The mapping is explicit at idempotent
+tenant provisioning and is not supplied by Capture Web, a launch URL, or an
+untrusted client. The display name is the organisation-level subject-facing
+default; a verified multi-brand recipient or published experience may provide
+a versioned override without changing tenant identity.
+
 Each regional data plane contains:
 
 - Regional API and worker capacity
@@ -431,6 +438,7 @@ erDiagram
 #### Tenant
 
 - Stable ID
+- Required subject-facing organisation display name; not a stable identifier or proof of legal identity
 - Status
 - Home region
 - Allowed regions
@@ -3972,6 +3980,7 @@ Version one is ready for external beta when:
 
 The Cloud-managed customization capability is ready for beta when:
 
+- Cloud organisation name is projected into Core `display_name`; hosted notice identity is derived from authenticated server-side state, while any multi-brand override is verified, versioned and pinned with the experience.
 - One published configuration renders consistently across hosted Web, embedded Web, native iOS, native Android, Flutter, and React Native within documented platform differences.
 - Logo, semantic colours, structured copy, locale, support links, dark mode, right-to-left layout, and verified-domain branding pass automated and human preview checks.
 - Published versions are immutable, sessions remain pinned, and rollback or revocation activates without an SDK release.

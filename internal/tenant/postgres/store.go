@@ -51,7 +51,7 @@ func (store *Store) Provision(ctx context.Context, action tenant.AdminAction, co
 			return fmt.Errorf("find tenant provision command: %w", err)
 		}
 		if err := queries.CreateTenant(ctx, sqlgen.CreateTenantParams{
-			ID: candidate.ID().String(), State: string(candidate.State()), Version: candidate.Version(),
+			ID: candidate.ID().String(), DisplayName: candidate.DisplayName(), State: string(candidate.State()), Version: candidate.Version(),
 			CreatedAt: timestamp(candidate.CreatedAt()), UpdatedAt: timestamp(candidate.UpdatedAt()),
 		}); err != nil {
 			return fmt.Errorf("insert provisioned tenant: %w", err)
@@ -122,7 +122,7 @@ func (store *Store) Find(ctx context.Context, scope tenant.Scope, identifier id.
 func (store *Store) Create(ctx context.Context, action tenant.AdminAction, value tenant.Tenant) error {
 	return store.adminTransaction(ctx, func(ctx context.Context, queries *sqlgen.Queries) error {
 		if err := queries.CreateTenant(ctx, sqlgen.CreateTenantParams{
-			ID: value.ID().String(), State: string(value.State()), Version: value.Version(),
+			ID: value.ID().String(), DisplayName: value.DisplayName(), State: string(value.State()), Version: value.Version(),
 			CreatedAt: timestamp(value.CreatedAt()), UpdatedAt: timestamp(value.UpdatedAt()),
 		}); err != nil {
 			return fmt.Errorf("insert tenant: %w", err)
@@ -213,7 +213,15 @@ func restore(row sqlgen.IdenqaTenant) (tenant.Tenant, error) {
 		disabledAt = &row.DisabledAt.Time
 	}
 
-	return tenant.Restore(identifier, tenant.State(row.State), row.Version, row.CreatedAt.Time, row.UpdatedAt.Time, disabledAt)
+	return tenant.Restore(
+		identifier,
+		row.DisplayName,
+		tenant.State(row.State),
+		row.Version,
+		row.CreatedAt.Time,
+		row.UpdatedAt.Time,
+		disabledAt,
+	)
 }
 
 func timestamp(value time.Time) pgtype.Timestamptz {

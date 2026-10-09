@@ -26,7 +26,7 @@ import (
 
 // Contract versions identify fixed Core-local provisioning and synthetic operations.
 const (
-	ContractVersion          = "idenqa.core/managed-tenant-provision/v1"
+	ContractVersion          = "idenqa.core/managed-tenant-provision/v2"
 	RenewContractVersion     = "idenqa.core/managed-tenant-renew/v1"
 	SyntheticContractVersion = "idenqa.core/synthetic-journey/v1"
 	rotationOverlap          = 10 * time.Minute
@@ -56,7 +56,7 @@ var syntheticPatterns = []string{
 }
 
 type tenantProvisioner interface {
-	Provision(context.Context, tenant.AdminAction, tenant.ProvisionCommand) (tenant.Tenant, bool, error)
+	Provision(context.Context, tenant.AdminAction, tenant.ProvisionCommand, string) (tenant.Tenant, bool, error)
 }
 
 type credentialIssuer interface {
@@ -71,6 +71,7 @@ type SealerFactory func(string, string) (access.CredentialSealer, error)
 // Request binds tenant provisioning to one idempotent local command.
 type Request struct {
 	CommandID         string `json:"commandId"`
+	DisplayName       string `json:"displayName"`
 	DeliveryPublicKey string `json:"deliveryPublicKey"`
 }
 
@@ -84,10 +85,11 @@ type Credential struct {
 
 // Result binds separate Console and reviewer authority to the provisioned tenant.
 type Result struct {
-	TenantID string     `json:"tenantId"`
-	Created  bool       `json:"created"`
-	Console  Credential `json:"console"`
-	Reviewer Credential `json:"reviewer"`
+	TenantID    string     `json:"tenantId"`
+	DisplayName string     `json:"displayName,omitempty"`
+	Created     bool       `json:"created"`
+	Console     Credential `json:"console"`
+	Reviewer    Credential `json:"reviewer"`
 }
 
 // SyntheticProvisionRequest selects an isolated deployment fixture tenant.
@@ -175,6 +177,7 @@ func (service *Service) ProvisionSynthetic(ctx context.Context, request Syntheti
 	provisioned, _, err := service.tenants.Provision(ctx,
 		tenant.AdminAction{Actor: "idenqa-cloud", Reason: "managed deployment synthetic readiness"},
 		tenant.ProvisionCommand{ID: commandID, RequestDigest: sha256.Sum256([]byte(SyntheticContractVersion + "\x00" + request.DeploymentID))},
+		"Idenqa synthetic "+request.DeploymentID,
 	)
 	if err != nil {
 		return SyntheticProvisionResult{}, err
@@ -289,16 +292,24 @@ func (service *Service) Provision(ctx context.Context, request Request) (spanRes
 	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "managedtenant.Service.Provision")
 	defer observability.EndSpan(completeSpan, &spanErr)
 
-	if service == nil || len(request.CommandID) < 16 || len(request.CommandID) > 180 || strings.TrimSpace(request.CommandID) != request.CommandID || request.DeliveryPublicKey == "" {
+	if service == nil || len(request.CommandID) < 16 || len(request.CommandID) > 180 || strings.TrimSpace(request.CommandID) != request.CommandID || tenant.ValidateDisplayName(request.DisplayName) != nil || request.DeliveryPublicKey == "" {
 		return Result{}, ErrInvalid
 	}
 	meaning := struct {
 		Version           string   `json:"version"`
 		CommandID         string   `json:"commandId"`
+		DisplayName       string   `json:"displayName"`
 		DeliveryPublicKey string   `json:"deliveryPublicKey"`
 		ConsolePatterns   []string `json:"consolePatterns"`
 		ReviewerPatterns  []string `json:"reviewerPatterns"`
-	}{ContractVersion, request.CommandID, request.DeliveryPublicKey, consolePatterns, reviewerPatterns}
+	}{
+		Version:           ContractVersion,
+		CommandID:         request.CommandID,
+		DisplayName:       request.DisplayName,
+		DeliveryPublicKey: request.DeliveryPublicKey,
+		ConsolePatterns:   consolePatterns,
+		ReviewerPatterns:  reviewerPatterns,
+	}
 	encoded, err := json.Marshal(meaning)
 	if err != nil {
 		return Result{}, fmt.Errorf("encode managed tenant command: %w", err)
@@ -306,6 +317,7 @@ func (service *Service) Provision(ctx context.Context, request Request) (spanRes
 	provisioned, created, err := service.tenants.Provision(ctx,
 		tenant.AdminAction{Actor: "idenqa-cloud", Reason: "managed shared onboarding"},
 		tenant.ProvisionCommand{ID: request.CommandID, RequestDigest: sha256.Sum256(encoded)},
+		request.DisplayName,
 	)
 	if err != nil {
 		return Result{}, err
@@ -323,7 +335,13 @@ func (service *Service) Provision(ctx context.Context, request Request) (spanRes
 	if err != nil {
 		return Result{}, fmt.Errorf("issue managed tenant reviewer authority: %w", err)
 	}
-	return Result{TenantID: provisioned.ID().String(), Created: created, Console: console, Reviewer: reviewer}, nil
+	return Result{
+		TenantID:    provisioned.ID().String(),
+		DisplayName: provisioned.DisplayName(),
+		Created:     created,
+		Console:     console,
+		Reviewer:    reviewer,
+	}, nil
 }
 
 // Renew rotates both predecessor-bound authority classes without extending their expiry.

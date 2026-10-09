@@ -282,7 +282,7 @@ func runPublicEvidenceUploadFlow(t *testing.T, backend publicFlowBackend) {
 	}
 	owner, err := tenantAdmin.Create(ctx, tenant.AdminAction{
 		Actor: "public-flow-integration", Reason: "prove encrypted public evidence flow",
-	})
+	}, "Public evidence flow tenant")
 	if err != nil {
 		t.Fatalf("create evidence-flow tenant: %v", err)
 	}

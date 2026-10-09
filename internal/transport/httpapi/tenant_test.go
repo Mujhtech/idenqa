@@ -19,7 +19,15 @@ func TestTenantRoutesReturnAuthenticatedTenant(t *testing.T) {
 
 	fixture := newHTTPAccessFixture(t, nil, access.Pattern("tenant:read"))
 	now := time.Date(2026, time.August, 27, 12, 0, 0, 0, time.UTC)
-	value, err := tenant.Restore(fixture.tenantID, tenant.StateActive, 1, now, now, nil)
+	value, err := tenant.Restore(
+		fixture.tenantID,
+		"Example Organisation",
+		tenant.StateActive,
+		1,
+		now,
+		now,
+		nil,
+	)
 	if err != nil {
 		t.Fatalf("Restore() error = %v", err)
 	}
@@ -42,7 +50,7 @@ func TestTenantRoutesReturnAuthenticatedTenant(t *testing.T) {
 	if err := json.Unmarshal(response.Body.Bytes(), &resource); err != nil {
 		t.Fatalf("decode response: %v", err)
 	}
-	if resource.ID != fixture.tenantID.String() || resource.State != openapiv1.TenantStateActive {
+	if resource.ID != fixture.tenantID.String() || resource.DisplayName != "Example Organisation" || resource.State != openapiv1.TenantStateActive {
 		t.Fatalf("resource = %+v, want authenticated tenant", resource)
 	}
 	if got, want := response.Header().Get("ETag"), `"1"`; got != want {
@@ -58,7 +66,15 @@ func TestTenantRoutesSupportGeneratedClient(t *testing.T) {
 
 	fixture := newHTTPAccessFixture(t, nil, access.Pattern("tenant:read"))
 	now := time.Date(2026, time.August, 27, 12, 0, 0, 0, time.UTC)
-	value, err := tenant.Restore(fixture.tenantID, tenant.StateActive, 1, now, now, nil)
+	value, err := tenant.Restore(
+		fixture.tenantID,
+		"Example Organisation",
+		tenant.StateActive,
+		1,
+		now,
+		now,
+		nil,
+	)
 	if err != nil {
 		t.Fatalf("Restore() error = %v", err)
 	}
@@ -92,7 +108,7 @@ func TestTenantRoutesSupportGeneratedClient(t *testing.T) {
 	if response.StatusCode() != http.StatusOK || response.JSON200 == nil {
 		t.Fatalf("response status = %d body=%s", response.StatusCode(), response.Body)
 	}
-	if response.JSON200.ID != fixture.tenantID.String() || response.JSON200.State != openapiv1.TenantStateActive {
+	if response.JSON200.ID != fixture.tenantID.String() || response.JSON200.DisplayName != "Example Organisation" || response.JSON200.State != openapiv1.TenantStateActive {
 		t.Fatalf("tenant = %+v, want authenticated tenant", response.JSON200)
 	}
 	if response.Headers200 == nil || response.Headers200.ETag == nil || *response.Headers200.ETag != `"1"` {

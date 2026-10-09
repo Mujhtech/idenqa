@@ -7,12 +7,13 @@ import (
 
 // TenantRecord is safe tenant lifecycle metadata.
 type TenantRecord struct {
-	ID         string     `json:"id"`
-	State      string     `json:"state"`
-	Version    int64      `json:"version"`
-	CreatedAt  time.Time  `json:"created_at"`
-	UpdatedAt  time.Time  `json:"updated_at"`
-	DisabledAt *time.Time `json:"disabled_at,omitempty"`
+	ID          string     `json:"id"`
+	DisplayName string     `json:"display_name"`
+	State       string     `json:"state"`
+	Version     int64      `json:"version"`
+	CreatedAt   time.Time  `json:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at"`
+	DisabledAt  *time.Time `json:"disabled_at,omitempty"`
 }
 
 // CaptureProfileRecord is one capture profile with its published revision pin.

@@ -40,7 +40,7 @@ func NewAdmin(repository AdminRepository, identifiers *id.Generator, source cloc
 }
 
 // Create creates an active tenant and its audit record atomically.
-func (admin *Admin) Create(ctx context.Context, action AdminAction) (Tenant, error) {
+func (admin *Admin) Create(ctx context.Context, action AdminAction, displayName string) (Tenant, error) {
 	if err := action.Validate(); err != nil {
 		return Tenant{}, err
 	}
@@ -50,7 +50,7 @@ func (admin *Admin) Create(ctx context.Context, action AdminAction) (Tenant, err
 	}
 	now := admin.clock.Now().UTC()
 	action.occurredAt = now
-	created, err := Restore(identifier, StateActive, 1, now, now, nil)
+	created, err := Restore(identifier, displayName, StateActive, 1, now, now, nil)
 	if err != nil {
 		return Tenant{}, err
 	}
@@ -63,7 +63,12 @@ func (admin *Admin) Create(ctx context.Context, action AdminAction) (Tenant, err
 
 // Provision creates a tenant exactly once for an immutable managed-deployment
 // command. A replay returns the original tenant without creating another.
-func (admin *Admin) Provision(ctx context.Context, action AdminAction, command ProvisionCommand) (Tenant, bool, error) {
+func (admin *Admin) Provision(
+	ctx context.Context,
+	action AdminAction,
+	command ProvisionCommand,
+	displayName string,
+) (Tenant, bool, error) {
 	if err := action.Validate(); err != nil {
 		return Tenant{}, false, err
 	}
@@ -76,7 +81,7 @@ func (admin *Admin) Provision(ctx context.Context, action AdminAction, command P
 	}
 	now := admin.clock.Now().UTC()
 	action.occurredAt = now
-	candidate, err := Restore(identifier, StateActive, 1, now, now, nil)
+	candidate, err := Restore(identifier, displayName, StateActive, 1, now, now, nil)
 	if err != nil {
 		return Tenant{}, false, err
 	}

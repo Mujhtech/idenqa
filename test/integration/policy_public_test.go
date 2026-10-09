@@ -186,7 +186,7 @@ func assertPublicPolicyAdministration(t *testing.T, client *http.Client, base, c
 	}
 	now := time.Now().UTC()
 	err = admin.WithinTransaction(t.Context(), pg.TransactionOptions{}, func(ctx context.Context, tx pg.Transaction) error {
-		_, err := tx.Exec(ctx, `INSERT INTO idenqa.tenants(id,state,version,created_at,updated_at) VALUES($1,'active',1,$2,$2)`, otherID.String(), now)
+		_, err := tx.Exec(ctx, `INSERT INTO idenqa.tenants(id,display_name,state,version,created_at,updated_at) VALUES($1,'Other policy tenant','active',1,$2,$2)`, otherID.String(), now)
 		return err
 	})
 	if err != nil {

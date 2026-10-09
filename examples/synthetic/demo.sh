@@ -40,6 +40,7 @@ echo "==> migrate"
 echo "==> create tenant and tenant API key"
 tenant_output=$(./bin/idenqa tenant create \
   --actor synthetic-demo \
+  --display-name "Idenqa synthetic demo" \
   --reason "create synthetic demonstration tenant")
 tenant_id=$(printf '%s\n' "$tenant_output" | sed -n 's/^tenant id=\([^ ]*\).*/\1/p')
 if [ -z "$tenant_id" ]; then

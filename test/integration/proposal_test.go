@@ -50,11 +50,11 @@ func TestProposalPersistenceIsolationAndReplay(t *testing.T) {
 		t.Fatalf("new tenant admin: %v", err)
 	}
 	action := tenant.AdminAction{Actor: "integration-operator", Reason: "verify proposal isolation"}
-	firstTenant, err := tenantAdmin.Create(ctx, action)
+	firstTenant, err := tenantAdmin.Create(ctx, action, "First Organisation")
 	if err != nil {
 		t.Fatalf("create first tenant: %v", err)
 	}
-	secondTenant, err := tenantAdmin.Create(ctx, action)
+	secondTenant, err := tenantAdmin.Create(ctx, action, "Second Organisation")
 	if err != nil {
 		t.Fatalf("create second tenant: %v", err)
 	}
@@ -261,11 +261,11 @@ func TestProposalModeRegistryAndGuardrailPersistence(t *testing.T) {
 		t.Fatalf("new tenant admin: %v", err)
 	}
 	action := tenant.AdminAction{Actor: "integration-operator", Reason: "verify proposal mode/registry"}
-	firstTenant, err := tenantAdmin.Create(ctx, action)
+	firstTenant, err := tenantAdmin.Create(ctx, action, "First Organisation")
 	if err != nil {
 		t.Fatalf("create first tenant: %v", err)
 	}
-	secondTenant, err := tenantAdmin.Create(ctx, action)
+	secondTenant, err := tenantAdmin.Create(ctx, action, "Second Organisation")
 	if err != nil {
 		t.Fatalf("create second tenant: %v", err)
 	}

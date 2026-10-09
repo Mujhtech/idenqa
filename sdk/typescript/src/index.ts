@@ -6,6 +6,7 @@ export {
   DecisionsClient,
   IdenqaClient,
   OutcomeClient,
+  TenantClient,
   VerificationsClient,
   createIdempotencyKey,
 } from "./client.js";
@@ -132,6 +133,7 @@ export type {
   SDKResponse,
   SDKConditionalResponse,
   TenantClientOptions,
+  Tenant,
   TenantID,
   SubjectID,
   SubjectResponse,

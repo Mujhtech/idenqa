@@ -74,11 +74,11 @@ func runAuthorityPersistenceInRegion(t *testing.T, exercise func(captureAcceptan
 		t.Fatalf("new tenant admin: %v", err)
 	}
 	action := tenant.AdminAction{Actor: "authority-integration", Reason: "verify authority persistence"}
-	owner, err := tenantAdmin.Create(ctx, action)
+	owner, err := tenantAdmin.Create(ctx, action, "Owner Organisation")
 	if err != nil {
 		t.Fatalf("create owner tenant: %v", err)
 	}
-	other, err := tenantAdmin.Create(ctx, action)
+	other, err := tenantAdmin.Create(ctx, action, "Other Organisation")
 	if err != nil {
 		t.Fatalf("create other tenant: %v", err)
 	}

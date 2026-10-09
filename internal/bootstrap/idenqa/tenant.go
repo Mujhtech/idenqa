@@ -17,11 +17,12 @@ import (
 )
 
 type tenantOptions struct {
-	envFile   string
-	actor     string
-	reason    string
-	encodedID string
-	version   int64
+	envFile     string
+	actor       string
+	reason      string
+	encodedID   string
+	displayName string
+	version     int64
 }
 
 func newTenantCommand() *cobra.Command {
@@ -66,6 +67,8 @@ func newTenantOperationCommand(operation string, options *tenantOptions) *cobra.
 	}
 	if operation != "create" {
 		command.Flags().StringVar(&options.encodedID, "id", "", "tenant identifier")
+	} else {
+		command.Flags().StringVar(&options.displayName, "display-name", "", "subject-facing organisation name")
 	}
 	if operation == "disable" {
 		command.Flags().Int64Var(&options.version, "version", 0, "expected lifecycle version")
@@ -93,6 +96,9 @@ func validateTenantOptions(operation string, options *tenantOptions) error {
 	}
 	if operation != "create" && options.encodedID == "" {
 		return cli.UsageError(errors.New("tenant operation requires --id"))
+	}
+	if operation == "create" && options.displayName == "" {
+		return cli.UsageError(errors.New("tenant create requires --display-name"))
 	}
 	if operation == "disable" && options.version < 1 {
 		return cli.UsageError(errors.New("tenant disable requires a positive --version"))
@@ -138,7 +144,7 @@ func executeTenantOperation(command *cobra.Command, operation string, options *t
 	var value tenant.Tenant
 	switch operation {
 	case "create":
-		value, err = admin.Create(ctx, action)
+		value, err = admin.Create(ctx, action, options.displayName)
 	case "inspect", "disable":
 		identifier, parseErr := id.ParseTenant(options.encodedID)
 		if parseErr != nil {
@@ -157,9 +163,17 @@ func executeTenantOperation(command *cobra.Command, operation string, options *t
 	if value.DisabledAt() != nil {
 		disabledAt = value.DisabledAt().Format(time.RFC3339Nano)
 	}
-	_, err = fmt.Fprintf(command.OutOrStdout(), "tenant id=%s state=%s version=%s created_at=%s updated_at=%s disabled_at=%s\n",
-		value.ID(), value.State(), strconv.FormatInt(value.Version(), 10), value.CreatedAt().Format(time.RFC3339Nano),
-		value.UpdatedAt().Format(time.RFC3339Nano), disabledAt)
+	_, err = fmt.Fprintf(
+		command.OutOrStdout(),
+		"tenant id=%s display_name=%q state=%s version=%s created_at=%s updated_at=%s disabled_at=%s\n",
+		value.ID(),
+		value.DisplayName(),
+		value.State(),
+		strconv.FormatInt(value.Version(), 10),
+		value.CreatedAt().Format(time.RFC3339Nano),
+		value.UpdatedAt().Format(time.RFC3339Nano),
+		disabledAt,
+	)
 	if err != nil {
 		return cli.RuntimeError("write tenant result", err)
 	}

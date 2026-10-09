@@ -7440,6 +7440,7 @@ export interface components {
          * @description Safe lifecycle metadata for the authenticated tenant.
          * @example {
          *       "id": "ten_01M11HEQG00000000000000000",
+         *       "display_name": "Example Organisation",
          *       "state": "active",
          *       "created_at": "2026-08-27T12:00:00Z",
          *       "updated_at": "2026-08-27T12:00:00Z"
@@ -7447,6 +7448,11 @@ export interface components {
          */
         readonly Tenant: {
             readonly id: components["schemas"]["TenantID"];
+            /**
+             * @description Subject-facing organisation name. It is not a stable identifier or proof of legal identity.
+             * @example Example Organisation
+             */
+            readonly display_name: string;
             /**
              * @example active
              * @enum {string}

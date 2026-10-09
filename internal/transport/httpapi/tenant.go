@@ -63,10 +63,11 @@ func (routes *TenantRoutes) current(writer http.ResponseWriter, request *http.Re
 		return
 	}
 	resource := openapiv1.Tenant{
-		ID:        value.ID().String(),
-		State:     openapiv1.TenantState(value.State()),
-		CreatedAt: value.CreatedAt(),
-		UpdatedAt: value.UpdatedAt(),
+		ID:          value.ID().String(),
+		DisplayName: value.DisplayName(),
+		State:       openapiv1.TenantState(value.State()),
+		CreatedAt:   value.CreatedAt(),
+		UpdatedAt:   value.UpdatedAt(),
 	}
 	writer.Header().Set("ETag", strconv.Quote(strconv.FormatInt(value.Version(), 10)))
 	if err := respond.JSON(writer, request, http.StatusOK, resource); err != nil {

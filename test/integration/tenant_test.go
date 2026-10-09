@@ -49,11 +49,11 @@ func TestTenantIsolationAndAdministrativeBypass(t *testing.T) {
 		t.Fatalf("new tenant admin: %v", err)
 	}
 	action := tenant.AdminAction{Actor: "integration-operator", Reason: "verify tenant isolation"}
-	first, err := admin.Create(ctx, action)
+	first, err := admin.Create(ctx, action, "First Organisation")
 	if err != nil {
 		t.Fatalf("create first tenant: %v", err)
 	}
-	second, err := admin.Create(ctx, action)
+	second, err := admin.Create(ctx, action, "Second Organisation")
 	if err != nil {
 		t.Fatalf("create second tenant: %v", err)
 	}
@@ -114,7 +114,7 @@ func TestTenantIsolationAndAdministrativeBypass(t *testing.T) {
 		if _, err := tx.Exec(ctx, "SELECT set_config('idenqa.tenant_id', $1, true)", first.ID().String()); err != nil {
 			return err
 		}
-		_, err := tx.Exec(ctx, `INSERT INTO idenqa.tenants (id, state, version, created_at, updated_at) VALUES ($1, 'active', 1, $2, $2)`, thirdID.String(), time.Now().UTC())
+		_, err := tx.Exec(ctx, `INSERT INTO idenqa.tenants (id, display_name, state, version, created_at, updated_at) VALUES ($1, $2, 'active', 1, $3, $3)`, thirdID.String(), "Third tenant", time.Now().UTC())
 		return err
 	})
 	if err == nil {
@@ -188,14 +188,14 @@ func TestManagedTenantProvisionRecordsAuditAndReplays(t *testing.T) {
 		RequestDigest: sha256.Sum256([]byte("synthetic deployment integration fixture")),
 	}
 	action := tenant.AdminAction{Actor: "idenqa-cloud", Reason: "managed deployment synthetic readiness"}
-	provisioned, created, err := admin.Provision(ctx, action, command)
+	provisioned, created, err := admin.Provision(ctx, action, command, "Managed Organisation")
 	if err != nil {
 		t.Fatalf("provision managed tenant: %v", err)
 	}
 	if !created {
 		t.Fatal("first managed tenant provision was not created")
 	}
-	replayed, created, err := admin.Provision(ctx, action, command)
+	replayed, created, err := admin.Provision(ctx, action, command, "Managed Organisation")
 	if err != nil {
 		t.Fatalf("replay managed tenant provision: %v", err)
 	}

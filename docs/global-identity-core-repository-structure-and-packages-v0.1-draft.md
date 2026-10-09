@@ -295,6 +295,18 @@ Owns tenants, tenant lifecycle, tenant-scoped configuration references, and the 
 
 Tenant-aware ports and repository methods make the tenant identifier explicit. No adapter may infer a tenant from mutable global state.
 
+**Selected and implemented — 9 October 2026:** every tenant has a required
+`display_name`, a bounded subject-facing organisation label that is neither a
+stable identifier nor proof of legal identity. Self-hosted creation requires it;
+managed provisioning carries it in the immutable version-two provisioning
+command, where Cloud maps its authoritative organisation `name` to Core
+`display_name`. `GET /v1/tenant`, tenant export, the CLI and the dependency-free
+TypeScript `client.tenant.get()` projection expose it. Migration 89 backfills
+pre-existing rows with their tenant ID only as a compatibility placeholder;
+operators must reconcile that placeholder before using the row for a hosted
+subject journey. Multi-brand recipient or experience identity is a separately
+verified, versioned override and does not mutate the organisation-level default.
+
 ### 6.2 `access`
 
 Owns principals, credentials, authentication results, permissions, delegated authority, effective tenant actors, step-up requirements, support grants, break-glass state, and application-level authorisation decisions.

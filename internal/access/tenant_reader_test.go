@@ -39,7 +39,7 @@ func TestTenantReaderAuthorisesAndUsesVerifiedScope(t *testing.T) {
 		t.Fatalf("Resolve() error = %v", err)
 	}
 	now := time.Date(2026, time.August, 27, 12, 0, 0, 0, time.UTC)
-	want, err := tenant.Restore(tenantID, tenant.StateActive, 1, now, now, nil)
+	want, err := tenant.Restore(tenantID, "Example Organisation", tenant.StateActive, 1, now, now, nil)
 	if err != nil {
 		t.Fatalf("Restore() error = %v", err)
 	}

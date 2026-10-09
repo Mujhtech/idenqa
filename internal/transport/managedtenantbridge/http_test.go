@@ -48,12 +48,12 @@ func TestHandlerAcceptsOnlyTheFixedProvisionContract(t *testing.T) {
 		t.Fatalf("NewHandler() error = %v", err)
 	}
 	response := httptest.NewRecorder()
-	request := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/local/v1/managed-tenants/provision", strings.NewReader(`{"commandId":"onboarding-command-0001","deliveryPublicKey":"public"}`))
+	request := httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/local/v1/managed-tenants/provision", strings.NewReader(`{"commandId":"onboarding-command-0001","displayName":"Example Organisation","deliveryPublicKey":"public"}`))
 	handler.ServeHTTP(response, request)
 	if response.Code != http.StatusOK {
 		t.Fatalf("status = %d, want %d: %s", response.Code, http.StatusOK, response.Body.String())
 	}
-	if service.request.CommandID != "onboarding-command-0001" || service.request.DeliveryPublicKey != "public" {
+	if service.request.CommandID != "onboarding-command-0001" || service.request.DisplayName != "Example Organisation" || service.request.DeliveryPublicKey != "public" {
 		t.Fatalf("request = %#v", service.request)
 	}
 	var result managedtenant.Result
@@ -88,8 +88,8 @@ func TestHandlerRejectsUnknownAndTrailingInput(t *testing.T) {
 	t.Parallel()
 	handler, _ := NewHandler(&serviceStub{})
 	for _, body := range []string{
-		`{"commandId":"onboarding-command-0001","deliveryPublicKey":"public","executable":"/bin/sh"}`,
-		`{"commandId":"onboarding-command-0001","deliveryPublicKey":"public"} {}`,
+		`{"commandId":"onboarding-command-0001","displayName":"Example Organisation","deliveryPublicKey":"public","executable":"/bin/sh"}`,
+		`{"commandId":"onboarding-command-0001","displayName":"Example Organisation","deliveryPublicKey":"public"} {}`,
 	} {
 		response := httptest.NewRecorder()
 		handler.ServeHTTP(response, httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/local/v1/managed-tenants/provision", strings.NewReader(body)))
@@ -103,7 +103,7 @@ func TestHandlerDoesNotExposeProvisioningFailure(t *testing.T) {
 	t.Parallel()
 	handler, _ := NewHandler(&serviceStub{err: errors.New("database detail")})
 	response := httptest.NewRecorder()
-	handler.ServeHTTP(response, httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/local/v1/managed-tenants/provision", strings.NewReader(`{"commandId":"onboarding-command-0001","deliveryPublicKey":"public"}`)))
+	handler.ServeHTTP(response, httptest.NewRequestWithContext(t.Context(), http.MethodPost, "/local/v1/managed-tenants/provision", strings.NewReader(`{"commandId":"onboarding-command-0001","displayName":"Example Organisation","deliveryPublicKey":"public"}`)))
 	if response.Code != http.StatusConflict || strings.Contains(response.Body.String(), "database detail") {
 		t.Fatalf("response = %d %q", response.Code, response.Body.String())
 	}

@@ -357,7 +357,7 @@ func seedExecutionVerification(t *testing.T, pool *idenqapostgres.Pool, generato
 	}
 	defer func() { _ = tx.Rollback(context.WithoutCancel(t.Context())) }()
 	digest := "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-	if _, err := tx.Exec(t.Context(), "INSERT INTO idenqa.tenants (id, state, version, created_at, updated_at) VALUES ($1, 'active', 1, $2, $2)", tenantID.String(), now); err != nil {
+	if _, err := tx.Exec(t.Context(), "INSERT INTO idenqa.tenants (id, display_name, state, version, created_at, updated_at) VALUES ($1, $2, 'active', 1, $3, $3)", tenantID.String(), "Verification execution tenant", now); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := tx.Exec(t.Context(), `INSERT INTO idenqa.capture_profiles

@@ -14912,18 +14912,27 @@ components:
       description: Safe lifecycle metadata for the authenticated tenant.
       example:
         id: ten_01M11HEQG00000000000000000
+        display_name: Example Organisation
         state: active
         created_at: "2026-08-27T12:00:00Z"
         updated_at: "2026-08-27T12:00:00Z"
       additionalProperties: false
       required:
         - id
+        - display_name
         - state
         - created_at
         - updated_at
       properties:
         id:
           $ref: "#/components/schemas/TenantID"
+        display_name:
+          type: string
+          description: Subject-facing organisation name. It is not a stable identifier or proof of legal identity.
+          minLength: 1
+          maxLength: 200
+          pattern: '^[^\x00-\x1F\x7F]+$'
+          example: Example Organisation
         state:
           type: string
           example: active
@@ -21663,6 +21672,7 @@ components:
       description: Synthetic active tenant response used by contract conformance tests.
       value:
         id: ten_01M11HEQG00000000000000000
+        display_name: Example Organisation
         state: active
         created_at: "2026-08-27T12:00:00Z"
         updated_at: "2026-08-27T12:00:00Z"

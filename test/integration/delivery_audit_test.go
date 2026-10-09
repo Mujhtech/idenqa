@@ -59,7 +59,7 @@ func TestDeliveryAndAuditDurabilityIsolationAndTamperEvidence(t *testing.T) {
 	firstTenant, _ := generator.NewTenant()
 	secondTenant, _ := generator.NewTenant()
 	if err := admin.WithinTransaction(ctx, idenqapostgres.TransactionOptions{}, func(ctx context.Context, tx idenqapostgres.Transaction) error {
-		_, err := tx.Exec(ctx, `INSERT INTO idenqa.tenants (id,state,version,created_at,updated_at) VALUES ($1,'active',1,$3,$3),($2,'active',1,$3,$3)`, firstTenant.String(), secondTenant.String(), now)
+		_, err := tx.Exec(ctx, `INSERT INTO idenqa.tenants (id,display_name,state,version,created_at,updated_at) VALUES ($1,'First delivery tenant','active',1,$3,$3),($2,'Second delivery tenant','active',1,$3,$3)`, firstTenant.String(), secondTenant.String(), now)
 		return err
 	}); err != nil {
 		t.Fatal(err)

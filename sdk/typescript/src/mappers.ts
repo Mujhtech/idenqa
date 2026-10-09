@@ -19,6 +19,7 @@ import type {
   PolicyList,
   PolicyRevisionList,
   PolicyActivationList,
+  Tenant,
 } from "./types.js";
 import type {
   WireWebhookEndpoint,
@@ -81,7 +82,18 @@ import type {
   WireEvidenceUpload,
   WirePolicyDecisionBundle,
   WirePolicyDecisionReport,
+  WireTenant,
 } from "./wire.js";
+
+export function tenant(value: WireTenant): Tenant {
+  return {
+    id: value.id,
+    displayName: value.display_name,
+    state: value.state,
+    createdAt: value.created_at,
+    updatedAt: value.updated_at,
+  };
+}
 
 export function captureProfile(value: WireCaptureProfile): CaptureProfile {
   return {

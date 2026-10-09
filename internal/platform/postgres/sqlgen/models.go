@@ -1802,12 +1802,13 @@ type IdenqaSupportGrant struct {
 }
 
 type IdenqaTenant struct {
-	ID         string
-	State      string
-	Version    int64
-	CreatedAt  pgtype.Timestamptz
-	UpdatedAt  pgtype.Timestamptz
-	DisabledAt pgtype.Timestamptz
+	ID          string
+	State       string
+	Version     int64
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+	DisabledAt  pgtype.Timestamptz
+	DisplayName string
 }
 
 type IdenqaTenantAdminAudit struct {

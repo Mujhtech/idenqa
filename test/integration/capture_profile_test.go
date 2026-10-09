@@ -52,11 +52,11 @@ func TestCaptureProfilePersistenceIsolationLifecycleAndReplay(t *testing.T) {
 		t.Fatalf("new tenant admin: %v", err)
 	}
 	action := tenant.AdminAction{Actor: "integration-operator", Reason: "verify capture profiles"}
-	firstTenant, err := tenantAdmin.Create(ctx, action)
+	firstTenant, err := tenantAdmin.Create(ctx, action, "First Organisation")
 	if err != nil {
 		t.Fatalf("create first tenant: %v", err)
 	}
-	secondTenant, err := tenantAdmin.Create(ctx, action)
+	secondTenant, err := tenantAdmin.Create(ctx, action, "Second Organisation")
 	if err != nil {
 		t.Fatalf("create second tenant: %v", err)
 	}

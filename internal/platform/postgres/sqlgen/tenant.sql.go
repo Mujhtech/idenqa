@@ -12,22 +12,24 @@ import (
 )
 
 const createTenant = `-- name: CreateTenant :exec
-INSERT INTO idenqa.tenants (id, state, version, created_at, updated_at, disabled_at)
-VALUES ($1, $2, $3, $4, $5, $6)
+INSERT INTO idenqa.tenants (id, display_name, state, version, created_at, updated_at, disabled_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 `
 
 type CreateTenantParams struct {
-	ID         string
-	State      string
-	Version    int64
-	CreatedAt  pgtype.Timestamptz
-	UpdatedAt  pgtype.Timestamptz
-	DisabledAt pgtype.Timestamptz
+	ID          string
+	DisplayName string
+	State       string
+	Version     int64
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+	DisabledAt  pgtype.Timestamptz
 }
 
 func (q *Queries) CreateTenant(ctx context.Context, arg CreateTenantParams) error {
 	_, err := q.db.Exec(ctx, createTenant,
 		arg.ID,
+		arg.DisplayName,
 		arg.State,
 		arg.Version,
 		arg.CreatedAt,
@@ -41,7 +43,7 @@ const disableTenant = `-- name: DisableTenant :one
 UPDATE idenqa.tenants
 SET state = 'disabled', version = version + 1, updated_at = $3, disabled_at = $3
 WHERE id = $1 AND version = $2 AND state = 'active'
-RETURNING id, state, version, created_at, updated_at, disabled_at
+RETURNING id, state, version, created_at, updated_at, disabled_at, display_name
 `
 
 type DisableTenantParams struct {
@@ -60,12 +62,13 @@ func (q *Queries) DisableTenant(ctx context.Context, arg DisableTenantParams) (I
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DisabledAt,
+		&i.DisplayName,
 	)
 	return i, err
 }
 
 const findTenant = `-- name: FindTenant :one
-SELECT id, state, version, created_at, updated_at, disabled_at
+SELECT id, state, version, created_at, updated_at, disabled_at, display_name
 FROM idenqa.tenants
 WHERE id = $1
 `
@@ -80,6 +83,7 @@ func (q *Queries) FindTenant(ctx context.Context, id string) (IdenqaTenant, erro
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DisabledAt,
+		&i.DisplayName,
 	)
 	return i, err
 }

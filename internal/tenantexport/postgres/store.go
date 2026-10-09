@@ -50,9 +50,17 @@ func (store *Store) Tenant(ctx context.Context, scope tenant.Scope) (tenantexpor
 	err := store.read(ctx, scope, func(ctx context.Context, tx platformpostgres.Transaction) error {
 		var value tenantexport.TenantRecord
 		var disabledAt *time.Time
-		err := tx.QueryRow(ctx, `SELECT id,state,version,created_at,updated_at,disabled_at
+		err := tx.QueryRow(ctx, `SELECT id,display_name,state,version,created_at,updated_at,disabled_at
 			FROM idenqa.tenants WHERE id=$1`, scope.ID().String()).
-			Scan(&value.ID, &value.State, &value.Version, &value.CreatedAt, &value.UpdatedAt, &disabledAt)
+			Scan(
+				&value.ID,
+				&value.DisplayName,
+				&value.State,
+				&value.Version,
+				&value.CreatedAt,
+				&value.UpdatedAt,
+				&disabledAt,
+			)
 		if errors.Is(err, pgx.ErrNoRows) {
 			return tenant.ErrNotFound
 		}

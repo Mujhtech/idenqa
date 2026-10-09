@@ -33,23 +33,32 @@ const (
 
 // Tenant is the tenant lifecycle aggregate.
 type Tenant struct {
-	id         id.Tenant
-	state      State
-	version    int64
-	createdAt  time.Time
-	updatedAt  time.Time
-	disabledAt *time.Time
+	id          id.Tenant
+	displayName string
+	state       State
+	version     int64
+	createdAt   time.Time
+	updatedAt   time.Time
+	disabledAt  *time.Time
 }
 
 // Restore validates and reconstructs a tenant from durable state.
-func Restore(identifier id.Tenant, state State, version int64, createdAt, updatedAt time.Time, disabledAt *time.Time) (Tenant, error) {
+func Restore(
+	identifier id.Tenant,
+	displayName string,
+	state State,
+	version int64,
+	createdAt time.Time,
+	updatedAt time.Time,
+	disabledAt *time.Time,
+) (Tenant, error) {
 	createdAt = createdAt.UTC()
 	updatedAt = updatedAt.UTC()
 	if disabledAt != nil {
 		value := disabledAt.UTC()
 		disabledAt = &value
 	}
-	if identifier.IsZero() || version < 1 || createdAt.IsZero() || updatedAt.IsZero() || updatedAt.Before(createdAt) {
+	if identifier.IsZero() || ValidateDisplayName(displayName) != nil || version < 1 || createdAt.IsZero() || updatedAt.IsZero() || updatedAt.Before(createdAt) {
 		return Tenant{}, errors.New("tenant state is invalid")
 	}
 	switch state {
@@ -65,11 +74,22 @@ func Restore(identifier id.Tenant, state State, version int64, createdAt, update
 		return Tenant{}, fmt.Errorf("tenant state %q is invalid", state)
 	}
 
-	return Tenant{id: identifier, state: state, version: version, createdAt: createdAt, updatedAt: updatedAt, disabledAt: disabledAt}, nil
+	return Tenant{
+		id:          identifier,
+		displayName: displayName,
+		state:       state,
+		version:     version,
+		createdAt:   createdAt,
+		updatedAt:   updatedAt,
+		disabledAt:  disabledAt,
+	}, nil
 }
 
 // ID returns the tenant identifier.
 func (tenant Tenant) ID() id.Tenant { return tenant.id }
+
+// DisplayName returns the tenant's subject-facing organisation name.
+func (tenant Tenant) DisplayName() string { return tenant.displayName }
 
 // State returns the lifecycle state.
 func (tenant Tenant) State() State { return tenant.state }
@@ -152,6 +172,20 @@ func validateAuditText(name, value string, maximum int) error {
 	for _, character := range value {
 		if character < 0x20 || character == 0x7f {
 			return fmt.Errorf("tenant admin %s contains control characters", name)
+		}
+	}
+
+	return nil
+}
+
+// ValidateDisplayName checks the bounded subject-facing organisation label.
+func ValidateDisplayName(value string) error {
+	if strings.TrimSpace(value) != value || value == "" || !utf8.ValidString(value) || utf8.RuneCountInString(value) > 200 {
+		return errors.New("tenant display name is invalid")
+	}
+	for _, character := range value {
+		if character < 0x20 || character == 0x7f {
+			return errors.New("tenant display name is invalid")
 		}
 	}
 

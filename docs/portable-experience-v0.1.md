@@ -186,7 +186,13 @@ default intentionally references no assets.
 
 The hosted server-side bootstrap resolves `GET /v1/capture/experience` with the
 session capture token and includes the signed resolution in the bootstrap
-payload. `IdenqaCaptureElement.start` accepts that resolution and:
+payload. Before a country-bound session exists, the trusted bootstrap also
+returns the exact server-resolved notice for the pre-session screen. The
+organisation default comes from authenticated Core tenant metadata
+(`display_name`); browser URL/body fields cannot select controller or recipient
+identity. A verified multi-brand recipient may override that default only as
+versioned server-side experience data. `IdenqaCaptureElement.start` accepts that
+resolution and:
 
 - selects the pinned locale for package-owned UI copy;
 - overlays tenant copy only for a closed allow-list of `ui.*` keys, so notices,

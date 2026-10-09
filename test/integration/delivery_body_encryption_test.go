@@ -56,7 +56,7 @@ func TestDeliveryBodiesAreWrappedAtRest(t *testing.T) {
 		t.Fatal(err)
 	}
 	if err := admin.WithinTransaction(ctx, platformpostgres.TransactionOptions{}, func(ctx context.Context, tx platformpostgres.Transaction) error {
-		_, err := tx.Exec(ctx, `INSERT INTO idenqa.tenants (id,state,version,created_at,updated_at) VALUES ($1,'active',1,$2,$2)`, tenantID.String(), now)
+		_, err := tx.Exec(ctx, `INSERT INTO idenqa.tenants (id,display_name,state,version,created_at,updated_at) VALUES ($1,'Delivery encryption tenant','active',1,$2,$2)`, tenantID.String(), now)
 		return err
 	}); err != nil {
 		t.Fatal(err)

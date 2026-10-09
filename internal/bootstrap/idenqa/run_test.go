@@ -104,6 +104,12 @@ func TestRun(t *testing.T) {
 			wantStderr: "requires --actor and --reason",
 		},
 		{
+			name:       "tenant create requires display name",
+			args:       []string{"tenant", "create", "--actor", "test", "--reason", "test"},
+			wantCode:   2,
+			wantStderr: "requires --display-name",
+		},
+		{
 			name:       "tenant disable requires version",
 			args:       []string{"tenant", "disable", "--id", "ten_01K3P4NQF00000000000000000", "--actor", "test", "--reason", "test"},
 			wantCode:   2,

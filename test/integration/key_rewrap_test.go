@@ -48,7 +48,7 @@ func TestKeyRewrapDestructionAndRecovery(t *testing.T) {
 	tenantID, _ := generator.NewTenant()
 	otherID, _ := generator.NewTenant()
 	if err := admin.WithinTransaction(ctx, idenqapostgres.TransactionOptions{}, func(ctx context.Context, tx idenqapostgres.Transaction) error {
-		_, err := tx.Exec(ctx, `INSERT INTO idenqa.tenants (id,state,version,created_at,updated_at) VALUES ($1,'active',1,$3,$3),($2,'active',1,$3,$3)`, tenantID.String(), otherID.String(), now)
+		_, err := tx.Exec(ctx, `INSERT INTO idenqa.tenants (id,display_name,state,version,created_at,updated_at) VALUES ($1,'Key rewrap tenant','active',1,$3,$3),($2,'Other key rewrap tenant','active',1,$3,$3)`, tenantID.String(), otherID.String(), now)
 		return err
 	}); err != nil {
 		t.Fatal(err)

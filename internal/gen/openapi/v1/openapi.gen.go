@@ -9050,6 +9050,9 @@ type TemporalEvidenceFrame struct {
 type Tenant struct {
 	CreatedAt time.Time `json:"created_at"`
 
+	// DisplayName Subject-facing organisation name. It is not a stable identifier or proof of legal identity.
+	DisplayName string `json:"display_name"`
+
 	// ID Stable Idenqa tenant identifier.
 	ID        TenantID    `json:"id"`
 	State     TenantState `json:"state"`

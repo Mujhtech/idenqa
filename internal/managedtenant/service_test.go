@@ -19,8 +19,16 @@ type tenantStub struct {
 	commands []tenant.ProvisionCommand
 }
 
-func (stub *tenantStub) Provision(_ context.Context, _ tenant.AdminAction, command tenant.ProvisionCommand) (tenant.Tenant, bool, error) {
+func (stub *tenantStub) Provision(
+	_ context.Context,
+	_ tenant.AdminAction,
+	command tenant.ProvisionCommand,
+	displayName string,
+) (tenant.Tenant, bool, error) {
 	stub.commands = append(stub.commands, command)
+	if stub.item.DisplayName() != displayName {
+		return tenant.Tenant{}, false, tenant.ErrProvisionConflict
+	}
 	return stub.item, len(stub.commands) == 1, nil
 }
 
@@ -111,7 +119,7 @@ func TestProvisionUsesFixedTenantAndAuthorityContract(t *testing.T) {
 		t.Fatalf("ParseTenant() error = %v", err)
 	}
 	now := time.Date(2026, time.October, 1, 9, 0, 0, 0, time.UTC)
-	item, err := tenant.Restore(tenantID, tenant.StateActive, 1, now, now, nil)
+	item, err := tenant.Restore(tenantID, "Example Organisation", tenant.StateActive, 1, now, now, nil)
 	if err != nil {
 		t.Fatalf("Restore() error = %v", err)
 	}
@@ -121,7 +129,11 @@ func TestProvisionUsesFixedTenantAndAuthorityContract(t *testing.T) {
 	if err != nil {
 		t.Fatalf("New() error = %v", err)
 	}
-	request := Request{CommandID: "onboarding-command-0001", DeliveryPublicKey: "delivery-key"}
+	request := Request{
+		CommandID:         "onboarding-command-0001",
+		DisplayName:       "Example Organisation",
+		DeliveryPublicKey: "delivery-key",
+	}
 	first, err := service.Provision(t.Context(), request)
 	if err != nil {
 		t.Fatalf("Provision(first) error = %v", err)
@@ -132,6 +144,9 @@ func TestProvisionUsesFixedTenantAndAuthorityContract(t *testing.T) {
 	}
 	if first.TenantID != tenantID.String() || second.TenantID != tenantID.String() || !first.Created || second.Created {
 		t.Fatalf("provision results = %#v, %#v", first, second)
+	}
+	if first.DisplayName != "Example Organisation" || second.DisplayName != "Example Organisation" {
+		t.Fatalf("display names = %q, %q", first.DisplayName, second.DisplayName)
 	}
 	if len(tenants.commands) != 2 || tenants.commands[0] != tenants.commands[1] {
 		t.Fatalf("tenant commands = %#v", tenants.commands)
@@ -164,7 +179,9 @@ func TestRenewRotatesBothAuthorityClassesUnderOneFixedRequest(t *testing.T) {
 	t.Parallel()
 	now := time.Date(2026, time.October, 1, 9, 0, 0, 0, time.UTC)
 	issuer := &issuerStub{results: make(map[string]access.BridgeIssueResult)}
-	service, err := New(&tenantStub{}, issuer, func(_, _ string) (access.CredentialSealer, error) { return testSealer{}, nil }, fixedClock{now}, 24*time.Hour)
+	tenantID, _ := id.ParseTenant("ten_01K6C3F6M7Z8W9X0Y1A2B3C4D5")
+	item, _ := tenant.Restore(tenantID, "Example Organisation", tenant.StateActive, 1, now, now, nil)
+	service, err := New(&tenantStub{item: item}, issuer, func(_, _ string) (access.CredentialSealer, error) { return testSealer{}, nil }, fixedClock{now}, 24*time.Hour)
 	if err != nil {
 		t.Fatalf("New() error = %v", err)
 	}
@@ -201,7 +218,9 @@ func TestRenewRecoversExpiredAuthorityWithoutOperatorCredential(t *testing.T) {
 	consoleKey := "key_01K6C3F6M7Z8W9X0Y1A2B3C4D9"
 	reviewerKey := "key_01K6C3F6M7Z8W9X0Y1A2B3C4DA"
 	issuer := &issuerStub{results: make(map[string]access.BridgeIssueResult), expired: map[string]bool{consoleKey: true, reviewerKey: true}}
-	service, err := New(&tenantStub{}, issuer, func(_, _ string) (access.CredentialSealer, error) { return testSealer{}, nil }, fixedClock{now}, 24*time.Hour)
+	tenantID, _ := id.ParseTenant("ten_01K6C3F6M7Z8W9X0Y1A2B3C4D5")
+	item, _ := tenant.Restore(tenantID, "Example Organisation", tenant.StateActive, 1, now, now, nil)
+	service, err := New(&tenantStub{item: item}, issuer, func(_, _ string) (access.CredentialSealer, error) { return testSealer{}, nil }, fixedClock{now}, 24*time.Hour)
 	if err != nil {
 		t.Fatalf("New() error = %v", err)
 	}
@@ -240,7 +259,9 @@ func TestManagedBindingAcceptsShorterCoreMaximumAndCapsLifetime(t *testing.T) {
 			t.Fatalf("invalid lifetime accepted: %v", lifetime)
 		}
 	}
-	service, err := New(&tenantStub{}, issuer, sealers, fixedClock{now}, 15*time.Minute)
+	tenantID, _ := id.ParseTenant("ten_01K6C3F6M7Z8W9X0Y1A2B3C4D5")
+	item, _ := tenant.Restore(tenantID, "Example Organisation", tenant.StateActive, 1, now, now, nil)
+	service, err := New(&tenantStub{item: item}, issuer, sealers, fixedClock{now}, 15*time.Minute)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -320,7 +341,7 @@ func TestSyntheticJourneyKeepsCredentialInsideCore(t *testing.T) {
 	t.Parallel()
 	now := time.Date(2026, time.October, 1, 9, 0, 0, 0, time.UTC)
 	tenantID, _ := id.ParseTenant("ten_01K6C3F6M7Z8W9X0Y1A2B3C4D5")
-	item, _ := tenant.Restore(tenantID, tenant.StateActive, 1, now, now, nil)
+	item, _ := tenant.Restore(tenantID, "Idenqa synthetic dep_12345678", tenant.StateActive, 1, now, now, nil)
 	issuer := &issuerStub{results: make(map[string]access.BridgeIssueResult)}
 	runner := &runnerStub{}
 	service, err := New(&tenantStub{item: item}, issuer, func(_, _ string) (access.CredentialSealer, error) { return testSealer{}, nil }, fixedClock{now}, time.Hour)

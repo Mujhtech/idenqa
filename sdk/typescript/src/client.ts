@@ -96,6 +96,7 @@ import {
   captureConnection,
   policyDecisionBundle,
   policyDecisionReport,
+  tenant,
 } from "./mappers.js";
 import { JSONTransport } from "./transport.js";
 import {
@@ -149,6 +150,7 @@ import type {
   DecisionID,
   PolicyDecisionBundle,
   PolicyDecisionReport,
+  Tenant,
 } from "./types.js";
 import type {
   WireCaptureProfile,
@@ -177,9 +179,11 @@ import type {
   WireEvidenceUploadCreate,
   WirePolicyDecisionBundle,
   WirePolicyDecisionReport,
+  WireTenant,
 } from "./wire.js";
 
 export class IdenqaClient {
+  readonly tenant: TenantClient;
   readonly evidence: EvidenceClient;
   readonly consents: ConsentsClient;
   readonly privacy: PrivacyClient;
@@ -199,6 +203,7 @@ export class IdenqaClient {
   constructor(options: TenantClientOptions) {
     const token = requiredToken(options.apiKey, "apiKey");
     const transport = new JSONTransport(options);
+    this.tenant = new TenantClient(transport, token);
     this.evidence = new EvidenceClient(transport, token);
     this.consents = new ConsentsClient(transport, token);
     this.privacy = new PrivacyClient(transport, token);
@@ -214,6 +219,26 @@ export class IdenqaClient {
     this.decisions = new DecisionsClient(transport, token);
     this.webhooks = new WebhooksClient(transport, token);
     this.policies = new PoliciesClient(transport, token);
+  }
+}
+
+export class TenantClient {
+  readonly #transport: JSONTransport;
+  readonly #token: string;
+
+  constructor(transport: JSONTransport, token: string) {
+    this.#transport = transport;
+    this.#token = token;
+  }
+
+  async get(options: RequestOptions = {}): Promise<SDKResponse<Tenant>> {
+    const response = await this.#transport.request<WireTenant>({
+      method: "GET",
+      path: "v1/tenant",
+      bearerToken: this.#token,
+      ...signal(options),
+    });
+    return mapResponse(response, tenant);
   }
 }
 

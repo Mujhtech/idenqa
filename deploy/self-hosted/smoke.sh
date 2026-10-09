@@ -86,7 +86,7 @@ step_pass "schema and Headgate migrations applied"
 
 # --- 3. create tenant and scoped credential ---------------------------------
 step_begin 3 "create tenant and scoped credential"
-if ! tenant_output=$(api_cli tenant create --actor self-hosted-smoke --reason "self-hosted smoke gate" 2>&1); then
+if ! tenant_output=$(api_cli tenant create --actor self-hosted-smoke --display-name "Idenqa self-hosted smoke" --reason "self-hosted smoke gate" 2>&1); then
 	step_fail "tenant creation failed: $tenant_output"
 fi
 tenant_id=$(printf '%s\n' "$tenant_output" | sed -n 's/^tenant id=\([^ ]*\).*/\1/p')

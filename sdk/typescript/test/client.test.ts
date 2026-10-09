@@ -34,6 +34,38 @@ const document: CaptureProfileDocument = {
 };
 
 describe("IdenqaClient", () => {
+  it("reads the authenticated tenant and maps its display name", async () => {
+    const client = new IdenqaClient({
+      baseUrl: "https://core.example.test",
+      apiKey: "tenant-token",
+      fetch: async (input, init) => {
+        expect(String(input)).toBe("https://core.example.test/v1/tenant");
+        expect(new Headers(init?.headers).get("Authorization")).toBe("Bearer tenant-token");
+        return jsonResponse(
+          {
+            id: "ten_01M11HEQG00000000000000000",
+            display_name: "Example Organisation",
+            state: "active",
+            created_at: "2026-08-27T12:00:00Z",
+            updated_at: "2026-08-27T12:00:00Z",
+          },
+          200,
+          { "X-Request-ID": "req_tenant" },
+        );
+      },
+    });
+
+    const response = await client.tenant.get();
+
+    expect(response.data).toEqual({
+      id: "ten_01M11HEQG00000000000000000",
+      displayName: "Example Organisation",
+      state: "active",
+      createdAt: "2026-08-27T12:00:00Z",
+      updatedAt: "2026-08-27T12:00:00Z",
+    });
+  });
+
   it("records a closed journey event and reads the unified timeline", async () => {
     const requests: Request[] = [];
     const fetch = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {

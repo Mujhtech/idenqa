@@ -49,6 +49,7 @@ export IDENQA_EVIDENCE_LOCAL_KEYRING_FILE=$keyring_file
 
 tenant_output=$(./bin/idenqa tenant create \
   --actor sdk-conformance \
+  --display-name "Idenqa SDK conformance" \
   --reason "create synthetic SDK conformance tenant")
 tenant_id=$(printf '%s\n' "$tenant_output" | sed -n 's/^tenant id=\([^ ]*\).*/\1/p')
 if [ -z "$tenant_id" ]; then

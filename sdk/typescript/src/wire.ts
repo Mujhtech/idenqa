@@ -2,6 +2,8 @@ import type { components } from "./generated/openapi.js";
 
 type GeneratedCaptureProfileDocument = components["schemas"]["profile.schema"];
 
+export type WireTenant = components["schemas"]["Tenant"];
+
 // openapi-typescript currently emits the JSON Schema `$defs` keyword as if it
 // were an instance property when following the external profile schema. `$defs`
 // describes the schema and is never part of a capture-profile document.
