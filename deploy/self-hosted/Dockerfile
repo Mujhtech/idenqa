@@ -12,11 +12,11 @@
 # Build from the repository root:
 #   docker build -f deploy/self-hosted/Dockerfile -t idenqa-core:dev .
 
-ARG GO_TOOLCHAIN=1.27.1
+ARG GO_TOOLCHAIN=1.27.2
 ARG NODE_VERSION=22.23.2
 ARG PYTHON_VERSION=3.13
 
-FROM golang:${GO_TOOLCHAIN}-bookworm@sha256:69a7b9788769bec032d238959b61854e9ae87f57be9029ec04e9885fabf99195 AS build
+FROM golang:${GO_TOOLCHAIN}-bookworm@sha256:5cf287a799e6b94384bad13d16b14904c531f51ba65792237e122ce42b392f61 AS build
 
 ARG VERSION=dev
 ARG COMMIT=unknown

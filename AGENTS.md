@@ -32,7 +32,7 @@ Never promote a Proposed, Conditional, or TBD item to Selected without an explic
 
 ## Decisions that must be preserved
 
-- Use Go 1.27.1 unless the user explicitly changes the toolchain decision.
+- Use Go 1.27.2 unless the user explicitly changes the toolchain decision.
 - Use modular hexagonal architecture with manual constructor injection.
 - Public binaries use simple names such as `api`, `worker`, and `idenqa`; commercial control-plane workloads may use qualified names separately.
 - PostgreSQL is authoritative for durable state, orchestration, idempotency, inbox/outbox, replay, and coordination.

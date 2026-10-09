@@ -1,6 +1,6 @@
 module github.com/Mujhtech/idenqa/adapters/kms/aws
 
-go 1.27.1
+go 1.27.2
 
 require (
 	github.com/Mujhtech/idenqa v0.0.0

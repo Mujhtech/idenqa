@@ -71,15 +71,17 @@ The initial implementation uses **manual constructor injection**.
 
 ### 2.4 Go toolchain
 
-The project standardises on **Go 1.27.1**.
+The project standardises on **Go 1.27.2**.
 
 The root module and each Go submodule use:
 
 ```go.mod
-go 1.27.1
+go 1.27.2
 ```
 
 The exact patch version is also pinned in CI, development containers, and release images. The `go` directive establishes the minimum module language/toolchain requirement; reproducible build environments enforce the exact patch version.
+
+**Security patch update — 9 October 2026:** Go 1.27.2 replaces 1.27.1 to resolve the reachable standard-library advisories published with the 8 October security release. The resolved root graph also pins the maintained, BSD-3-Clause `golang.org/x/net` v0.60.0 security release and its required `x/crypto` v0.57.0, `x/mod` v0.41.0, `x/sync` v0.23.0, `x/sys` v0.48.0, `x/term` v0.46.0 and `x/text` v0.42.0 companion graph. The separately executed GPL-3.0 lint tool moves to the signed `golangci-lint` v2.14.0 release and its `x/tools` v0.50.0 graph because the prior tool could not decode Go 1.27.2 export data. CI, local builds and release images must use Go 1.27.2 or newer within the selected 1.27 line; dependency and vulnerability checks must reject the superseded versions.
 
 Go tools are pinned with Go 1.24+ `tool` directives, except for the Buf CLI. The selected Buf v1.72.0 is pinned in the Makefile and invoked with a version-suffixed `go run` command so its upstream Protovalidate/CEL dependency graph remains separate from Core's runtime graph, following [Buf's installation guidance](https://buf.build/docs/cli/installation/). Protobuf linting, generation, and breaking-change checks must all use that isolated command. The repository does not use the legacy blank-import `tools.go` pattern.
 
@@ -1290,7 +1292,7 @@ OPA is not an initial runtime service or dependency.
 | `github.com/oklog/ulid/v2`                 | **Selected** | Opaque, sortable public identifiers generated with cryptographic entropy               |
 | `github.com/tink-crypto/tink-go/v2` v2.8.0 | **Selected** | Authenticated streaming encryption of large evidence objects behind Idenqa-owned ports |
 
-General cryptographic operations use the Go standard library. Tink Go v2.8.0 provides the reviewed Streaming AEAD implementation for large evidence objects, initially using `AES256_GCM_HKDF_1MB`, but its types never cross `platform/crypto`. The v2.8.0 intake is Apache-2.0, compatible with the selected Go 1.27.1 toolchain, checksum-locked, and includes the upstream correction for silent truncation in the streaming reader. Provider-specific KMS and HSM SDKs remain isolated in adapter modules.
+General cryptographic operations use the Go standard library. Tink Go v2.8.0 provides the reviewed Streaming AEAD implementation for large evidence objects, initially using `AES256_GCM_HKDF_1MB`, but its types never cross `platform/crypto`. The v2.8.0 intake is Apache-2.0, compatible with the selected Go 1.27.2 toolchain, checksum-locked, and includes the upstream correction for silent truncation in the streaming reader. Provider-specific KMS and HSM SDKs remain isolated in adapter modules.
 
 F-03 uses `github.com/oklog/ulid/v2` v2.1.2 behind Idenqa-owned prefixed value types and an injected generator. Domain packages expose resource-specific ID types rather than the library type. Production generation uses cryptographic, concurrency-safe monotonic entropy; clocks and entropy remain injectable for deterministic tests. ULID timestamps are not authoritative business timestamps, and pagination uses an authoritative ordering field plus the identifier as a stable tie-breaker.
 
@@ -1345,7 +1347,7 @@ Trace sampling is parent-based with a configurable root ratio defaulting to 0.10
 
 gRPC and Protobuf are used for isolated runner contracts, not as a requirement for the public customer API. HTTP remains the primary public API transport.
 
-The reviewed runner intake found active upstream maintenance, a Go-version requirement compatible with Go 1.27.1, no direct OSV advisories for the exact selected versions, Apache-2.0 licensing for gRPC, Buf, Protovalidate, `protoc-gen-go-grpc`, and `otelgrpc`, and BSD-3-Clause licensing for Protobuf Go. The full reachability scan finds no vulnerable imported packages or called symbols. It separately reports GO-2026-5932 against the unmaintained `golang.org/x/crypto/openpgp` package in a required module, but Idenqa does not import that package and the advisory has no fixed release; the module remains monitored rather than being misreported as a reachable runner vulnerability. Protovalidate's current canonical Go module is `buf.build/go/protovalidate`; the retired GitHub import path must not be reintroduced. Generated Go bindings are committed under `internal/gen/proto/runner/v1`, while the authoritative source is the typed v1 schema under `contracts/runner`.
+The reviewed runner intake found active upstream maintenance, a Go-version requirement compatible with Go 1.27.2, no direct OSV advisories for the exact selected versions, Apache-2.0 licensing for gRPC, Buf, Protovalidate, `protoc-gen-go-grpc`, and `otelgrpc`, and BSD-3-Clause licensing for Protobuf Go. The full reachability scan finds no vulnerable imported packages or called symbols. It separately reports GO-2026-5932 against the unmaintained `golang.org/x/crypto/openpgp` package in a required module, but Idenqa does not import that package and the advisory has no fixed release; the module remains monitored rather than being misreported as a reachable runner vulnerability. Protovalidate's current canonical Go module is `buf.build/go/protovalidate`; the retired GitHub import path must not be reintroduced. Generated Go bindings are committed under `internal/gen/proto/runner/v1`, while the authoritative source is the typed v1 schema under `contracts/runner`.
 
 The v1 runner transport uses a per-runner bearer credential with the display form `idq_wrk_v1_<secret>`, where `secret` is 32 cryptographically random bytes encoded as unpadded Base64URL. It is accepted only as exactly one `Authorization: Bearer` gRPC metadata value over server-authenticated TLS 1.2 or newer. The client requires transport security before sending it; the server retains only SHA-256 digests in its authentication set after startup. One current and one previous credential may overlap for rotation. Missing, malformed, unknown, and removed credentials are non-disclosing; credential material must never enter Protobuf messages, URLs, logs, traces, metrics, audit payloads, or adapter contracts. Each remote runner has an explicit certificate-authority trust root and expected server name. Adapter and model runners now resolve and dynamically reload server credentials, gateway credentials, provider/model credentials and TLS identities from the selected secret provider with last-good fallback and overlap. API/worker outbound runner clients still use mounted credentials and trust files; resolving those through the secret provider with safe redial/overlap remains open. Client mTLS remains optional future scope.
 
@@ -1367,7 +1369,7 @@ The same owned boundary exposes a separate bounded, cursor-paginated inventory c
 
 HTTPS is the default and uses the SDK's standard TLS-aware payload-signing behaviour. A deployment may explicitly allow an HTTP endpoint for a controlled development or private-network environment; because the body is deliberately non-seekable, that mode selects S3's supported `UNSIGNED-PAYLOAD` signing form. Application-layer authenticated encryption and digest verification still apply, but they do not make an untrusted network safe; production deployments should use HTTPS and an externally configured trusted certificate chain.
 
-The reviewed dependency intake found Apache-2.0 licensing, active upstream maintenance, and Go 1.24 minimum declarations compatible with Go 1.27.1. The selected S3 v1.109.1 is newer than v1.97.3, which fixed Go vulnerability advisory `GO-2026-5764`. Credentials and custom certificate authorities remain external AWS SDK configuration rather than Idenqa secret fields. Provider errors and SDK types do not cross the owned core boundary.
+The reviewed dependency intake found Apache-2.0 licensing, active upstream maintenance, and Go 1.24 minimum declarations compatible with Go 1.27.2. The selected S3 v1.109.1 is newer than v1.97.3, which fixed Go vulnerability advisory `GO-2026-5764`. Credentials and custom certificate authorities remain external AWS SDK configuration rather than Idenqa secret fields. Provider errors and SDK types do not cross the owned core boundary.
 
 No AWS, GCP, Azure, or proprietary provider SDK belongs in the root core module merely to satisfy an optional deployment.
 
@@ -1380,7 +1382,7 @@ No AWS, GCP, Azure, or proprietary provider SDK belongs in the root core module 
 
 These official SDKs are implementation dependencies of their concrete adapters, not the Core model contract. The adapters instantiate them with exact configured origins and per-call resolved credentials, zero SDK retries, the owned destination-pinned HTTP client, and owned success/error response limits. OpenAI-compatible endpoints reuse the OpenAI adapter only when they implement the selected strict JSON-schema Chat Completions semantics. SDK types, environment-derived configuration, provider errors and provider credentials must not cross into `internal/proposal`, public contracts or SDKs.
 
-The 21 September 2026 intake reviewed the current signed releases, release activity, Go-version requirements and resolved module graph. OpenAI v3.64.0 requires Go 1.25 and is Apache-2.0 licensed; Anthropic v1.74.0 requires Go 1.24 and is MIT licensed. Both requirements are compatible with the selected Go 1.27.1 toolchain and both licences are compatible with Idenqa's Apache-2.0 distribution. `go.mod` and `go.sum` pin the exact reviewed versions and checksums. The intake also moved `golang.org/x/crypto` to v0.56.0, resolving GO-2026-6354 and GO-2026-6355 found at module level during the first scan. The final reachability scan reports no vulnerable imported package or called symbol; it reports only GO-2026-5932 against the unimported, unmaintained `openpgp` package, which has no fixed release and remains monitored.
+The 21 September 2026 intake reviewed the current signed releases, release activity, Go-version requirements and resolved module graph. OpenAI v3.64.0 requires Go 1.25 and is Apache-2.0 licensed; Anthropic v1.74.0 requires Go 1.24 and is MIT licensed. Both requirements are compatible with the selected Go 1.27.2 toolchain and both licences are compatible with Idenqa's Apache-2.0 distribution. `go.mod` and `go.sum` pin the exact reviewed versions and checksums. The intake also moved `golang.org/x/crypto` to v0.56.0, resolving GO-2026-6354 and GO-2026-6355 found at module level during the first scan. The final reachability scan reports no vulnerable imported package or called symbol; it reports only GO-2026-5932 against the unimported, unmaintained `openpgp` package, which has no fixed release and remains monitored.
 
 ---
 
@@ -1703,7 +1705,7 @@ This structure is accepted when:
 - Requested assurance cannot be achieved from expired sources, uploaded evidence with inadequate acquisition provenance, evaluation-only models or correlated roots counted independently. Fresh verified commits recheck the immutable pin and source age; exact committed replay remains stable after expiry.
 - Decision context preserves applicable identity ancestry, evidence/attempt/signal references, accepted review findings, authority/region context and exact profile/configuration/runtime/policy/evaluator provenance through review, correction, recapture, export and reproduction, while legacy canonical bytes remain unchanged.
 
-- The public core builds with Go 1.27.1 without a commercial repository.
+- The public core builds with Go 1.27.2 without a commercial repository.
 - The core, SDKs, capture packages, contracts, conformance suites, and bundled examples carry Apache-2.0 licensing and pass the dependency-licence policy check.
 - `api`, `worker`, `evidence`, `adapter-runner`, `model-runner`, and `idenqa` entry points contain only composition and process lifecycle code.
 - Domain packages compile without HTTP router, SQL driver, task-library, telemetry SDK, or cloud SDK imports.

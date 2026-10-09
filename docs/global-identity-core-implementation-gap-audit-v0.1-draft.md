@@ -49,7 +49,7 @@ This audit is based on repository and document inspection. It does not replace t
 - Console, managed Cloud, Idenqa Pass, and reusable verification are later commercial capabilities and are not prerequisites for the open-source core.
 - Flutter and React Native are required only when advertised as supported. They remain incremental open-source SDK family work.
 - NFC, voice, KYB, AML, address, tax, phone, non-English localisation, additional countries, and unsupported resident or refugee documents are deferred by D-014.
-- The more authoritative repository draft selects Go 1.27.1, Chi, Apache-2.0, and Headgate v0.1.10 even though section 43 of the v0.6 draft still labels some of them Proposed. They are not implementation decision gaps.
+- The more authoritative repository draft selects Go 1.27.2, Chi, Apache-2.0, and Headgate v0.1.10 even though section 43 of the v0.6 draft still labels some of them Proposed. They are not implementation decision gaps.
 
 ---
 

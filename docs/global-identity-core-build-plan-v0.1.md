@@ -164,7 +164,7 @@ An open gate does not block earlier bricks. Resolve it immediately before its de
 
 **Scope:**
 
-- Go 1.27.1 root module using the canonical published module path.
+- Go 1.27.2 root module using the canonical published module path.
 - Apache-2.0 `LICENSE` and initial dependency-licence policy.
 - Working `cmd/api` process with a startup-safe `/livez` endpoint.
 - Working `cmd/idenqa` command with `version` output.

@@ -73,7 +73,7 @@ The Compose defaults and generated credentials are for local development only. C
 
 Required for the main Go and TypeScript workspace:
 
-- Go 1.27.1
+- Go 1.27.2
 - Node.js 22.18 or newer
 - Corepack with the repository-pinned pnpm release
 - Docker with Compose for PostgreSQL integration tests
