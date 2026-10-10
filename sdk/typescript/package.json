@@ -44,7 +44,7 @@
     "openapi-typescript": "7.13.0",
     "publint": "0.3.24",
     "tsdown": "0.22.14",
-    "typescript": "5.9.3",
+    "typescript": "7.0.2",
     "vitest": "4.1.11"
   }
 }
