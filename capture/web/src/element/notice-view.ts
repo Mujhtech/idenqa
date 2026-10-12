@@ -23,6 +23,61 @@ export function renderIntroduction(
   flow: CaptureActiveFlowSnapshot,
 ): ElementTemplate {
   const totalSteps = flow.plan.requirements.length;
+  return renderIntroductionScreen(view, totalSteps, () => view.beginJourney(flow));
+}
+
+export function renderIntroductionPreview(
+  view: NoticeViewContext,
+  totalSteps: number,
+): ElementTemplate {
+  return renderIntroductionScreen(view, totalSteps);
+}
+
+/** Render the real notice surface with bounded sample authority copy for authoring previews. */
+export function renderNoticePreview(view: NoticeViewContext): ElementTemplate {
+  return html`
+    <div class="screen notice-screen">
+      <div>
+        <p class="eyebrow">${view.text("noticeStep")}</p>
+        <h2>${view.text("noticeTitle")}</h2>
+        <p class="screen-copy">${view.text("noticeBody")}</p>
+      </div>
+      <article class="notice" aria-labelledby="idq-preview-notice-title">
+        <h4 id="idq-preview-notice-title">Identity verification notice</h4>
+        <p class="notice-copy">We will collect the identity information shown in this journey.</p>
+        <h4>${view.text("whyInformationNeeded")}</h4>
+        <p class="notice-copy">To verify your identity for the service you requested.</p>
+        <h4>${view.text("ifYouRefuse")}</h4>
+        <p class="notice-copy">The identity check cannot be completed.</p>
+        <dl class="notice-meta">
+          <div>
+            <dt>${view.text("controller")}</dt>
+            <dd>Your organisation</dd>
+          </div>
+          <div>
+            <dt>${view.text("recipient")}</dt>
+            <dd>Identity verification service</dd>
+          </div>
+        </dl>
+        <p class="notice-guidance">${view.text("reviewConsent")}</p>
+      </article>
+      <div class="journey-actions notice-actions">
+        <button class="primary" type="button" aria-disabled="true" tabindex="-1">
+          ${view.text("agreeAndContinue")}
+        </button>
+        <button class="quiet" type="button" aria-disabled="true" tabindex="-1">
+          ${view.text("cancel")}
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function renderIntroductionScreen(
+  view: NoticeViewContext,
+  totalSteps: number,
+  beginJourney?: () => void,
+): ElementTemplate {
   return html`
     <div class="screen">
       <span class="hero-icon" aria-hidden="true">✓</span>
@@ -39,9 +94,15 @@ export function renderIntroduction(
         <li>${view.text("introDevice")}</li>
       </ul>
       <div class="journey-actions">
-        <button class="primary" type="button" @click=${() => view.beginJourney(flow)}>
-          ${view.text("getStarted")}
-        </button>
+        ${
+          beginJourney === undefined
+            ? html`<button class="primary" type="button" aria-disabled="true" tabindex="-1">
+                ${view.text("getStarted")}
+              </button>`
+            : html`<button class="primary" type="button" @click=${beginJourney}>
+                ${view.text("getStarted")}
+              </button>`
+        }
       </div>
       ${renderSecuredBy(view)}
     </div>

@@ -1,4 +1,9 @@
-import type { ExperienceLinks, ExperiencePinned, ExperienceResolution } from "@idenqa/sdk";
+import type {
+  ExperienceDocument,
+  ExperienceLinks,
+  ExperiencePinned,
+  ExperienceResolution,
+} from "@idenqa/sdk";
 
 import type { CaptureMessageCatalogue, CaptureMessageKey } from "./localisation.js";
 
@@ -76,6 +81,27 @@ export function captureExperiencePresentation(
 ): CaptureExperiencePresentation {
   const document = resolution.manifest.document;
   const locale = resolution.pinned.locale;
+  const presentation = captureExperienceDraftPresentation(document, locale);
+  const mandatoryCopy: Record<string, string> = {};
+  for (const entry of resolution.mandatory_copy.entries) mandatoryCopy[entry.key] = entry.value;
+  return {
+    ...presentation,
+    fallback: resolution.fallback,
+    pinned: resolution.pinned,
+    mandatoryCopy,
+  };
+}
+
+/**
+ * Derive bounded presentation from an unsigned authoring draft.
+ *
+ * This is only for inert renderer previews. It does not verify a manifest,
+ * establish a session pin, or authorize a capture journey.
+ */
+export function captureExperienceDraftPresentation(
+  document: ExperienceDocument,
+  locale = document.default_locale,
+): CaptureExperiencePresentation {
   const localeCopy = document.copy.locales.find((entry) => entry.locale === locale);
   const messages: Partial<Record<CaptureMessageKey, string>> = {};
   for (const entry of localeCopy?.entries ?? []) {
@@ -88,15 +114,11 @@ export function captureExperiencePresentation(
     const value = document.theme[field as keyof typeof document.theme];
     if (typeof value === "string") theme[token] = value;
   }
-  const mandatoryCopy: Record<string, string> = {};
-  for (const entry of resolution.mandatory_copy.entries) mandatoryCopy[entry.key] = entry.value;
   return {
     locale,
     theme,
     links: document.links,
-    fallback: resolution.fallback,
-    pinned: resolution.pinned,
-    mandatoryCopy,
+    fallback: false,
     ...(Object.keys(messages).length === 0 ? {} : { messageCatalogue: { [locale]: messages } }),
   };
 }

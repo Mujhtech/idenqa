@@ -93,6 +93,10 @@ export const baseStyles = css`
     white-space: nowrap;
   }
 
+  .experience-preview {
+    display: contents;
+  }
+
   .eyebrow {
     color: var(--idq-capture-accent-strong);
     font-size: 0.75rem;

@@ -331,6 +331,18 @@ Visual snapshots are rendered by the pinned
 `playwright test --update-snapshots`; other environments resolve different fonts
 and produce spurious diffs.
 
+### Inert authoring preview
+
+`previewExperience({ document, screen, captureItemCount })` renders an unsigned
+draft through Capture Web's package-owned presentation and journey templates.
+`screen` accepts `introduction`, `notice`, `method`, `preparation`, `capture`,
+`review`, `recovery`, `processing`, or `complete`; it defaults to
+`introduction`. Preview surfaces use bounded synthetic journey and notice data,
+remain inert, create no verification session, accept no credential, and perform
+no capture or network action. They are authoring evidence only and do not
+replace signed-manifest, live-session, provider, accessibility, localisation,
+or subject-acceptance evidence.
+
 ## Styling and theming
 
 `<idenqa-capture>` exposes a public CSS custom-property surface on the host

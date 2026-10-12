@@ -1,5 +1,6 @@
 import type {
   CaptureRealtimeEvent,
+  ExperienceDocument,
   ExperienceResolution,
   SubjectResponseAction,
 } from "@idenqa/sdk";
@@ -102,6 +103,29 @@ export interface CaptureCountryJourneyOptions {
   ) => Promise<CaptureElementStartOptions>;
   /** Optional package-copy translations shown before the session exists. */
   readonly messageCatalogue?: CaptureMessageCatalogue;
+}
+
+/** Screens available to the inert experience-authoring renderer. */
+export type CaptureExperiencePreviewScreen =
+  | "introduction"
+  | "notice"
+  | "method"
+  | "preparation"
+  | "capture"
+  | "review"
+  | "recovery"
+  | "processing"
+  | "complete";
+
+export interface CaptureExperiencePreviewOptions {
+  /** Unsigned portable draft rendered without starting or authorizing a capture session. */
+  readonly document: ExperienceDocument;
+  /** Locale to preview; defaults to the document's default locale. */
+  readonly locale?: string;
+  /** Display-only item count for the real Capture Web introduction screen. */
+  readonly captureItemCount?: number;
+  /** Inert journey screen to render; defaults to the introduction. */
+  readonly screen?: CaptureExperiencePreviewScreen;
 }
 
 export interface CaptureCompleteDetail extends CaptureProgressDetail {

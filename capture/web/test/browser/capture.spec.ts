@@ -3,9 +3,33 @@ import { auditCaptureThemeContrast, captureContrastRatio } from "../../src/theme
 
 import type {
   CaptureDocumentCaptureOptions,
+  CaptureExperiencePreviewOptions,
+  CaptureExperiencePreviewScreen,
   CaptureMethodAdapterProgress,
   IdenqaCaptureElement,
 } from "../../src/index.js";
+
+const journeyPreviewDocument: CaptureExperiencePreviewOptions["document"] = {
+  schema_version: "1.0",
+  experience_id: "exp_01J00000000000000000000000",
+  version: 1,
+  name: "Journey preview",
+  copy: { version: "copy-1", locales: [{ locale: "en", entries: [] }] },
+  mandatory_copy_version: "mc-2026-09-01",
+  default_locale: "en",
+  targeting: [],
+  links: {
+    support: "https://acme.example/support",
+    privacy: "https://acme.example/privacy",
+    terms: "https://acme.example/terms",
+  },
+  theme: {
+    primary_color: "#155eef",
+    accent_color: "#0f766e",
+    background_color: "#ffffff",
+    text_color: "#172033",
+  },
+};
 
 test("shows a no-flow state instead of plan-only capture controls", async ({ page }) => {
   await page.goto("/");
@@ -35,6 +59,104 @@ test("keeps the component within a narrow mobile viewport", async ({ page }) => 
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth);
   expect(overflow).toBeLessThanOrEqual(0);
   await expect(page.getByRole("heading", { name: "No capture flow to load" })).toBeVisible();
+});
+
+test("renders an inert portable draft with the complete semantic colour palette", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.locator("idenqa-capture").evaluate((element) => {
+    (element as IdenqaCaptureElement).previewExperience({
+      captureItemCount: 2,
+      document: {
+        schema_version: "1.0",
+        experience_id: "exp_01J00000000000000000000000",
+        version: 1,
+        name: "Acme capture",
+        copy: {
+          version: "copy-1",
+          locales: [
+            {
+              locale: "en",
+              entries: [
+                { key: "ui.intro.title", value: "Welcome to Acme verification" },
+                { key: "ui.intro.body", value: "We will guide you through each step." },
+                { key: "ui.get_started", value: "Begin securely" },
+              ],
+            },
+          ],
+        },
+        mandatory_copy_version: "mc-2026-09-01",
+        default_locale: "en",
+        targeting: [],
+        links: {
+          support: "https://acme.example/support",
+          privacy: "https://acme.example/privacy",
+          terms: "https://acme.example/terms",
+        },
+        theme: {
+          primary_color: "#155eef",
+          accent_color: "#0f766e",
+          accent_foreground_color: "#ffffff",
+          background_color: "#fff7ed",
+          surface_color: "#f8fafc",
+          surface_strong_color: "#e2e8f0",
+          text_color: "#172033",
+          muted_color: "#475569",
+          border_color: "#cbd5e1",
+          error_color: "#b42318",
+          media_background_color: "#0c111d",
+          overlay_background_color: "#0a1210",
+          overlay_border_color: "#ffffff",
+          overlay_foreground_color: "#ffffff",
+          face_guide_color: "#ffffff",
+          face_guide_muted_color: "#d1d5db",
+          face_guide_ready_color: "#79e8b1",
+          liveness_color: "#0f766e",
+          tap_highlight_color: "#155eef",
+        },
+      },
+    });
+  });
+
+  await expect(page.getByRole("heading", { name: "Welcome to Acme verification" })).toBeVisible();
+  await expect(page.getByText("We will guide you through each step.")).toBeVisible();
+  await expect(page.getByText("Items to capture: 2")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Begin securely" })).toHaveAttribute(
+    "aria-disabled",
+    "true",
+  );
+  await expect(page.locator("idenqa-capture .shell")).toHaveCSS(
+    "background-color",
+    "rgb(255, 247, 237)",
+  );
+  await expect(page.locator("idenqa-capture .screen-copy")).toHaveCSS("color", "rgb(71, 85, 105)");
+});
+
+test("renders every selectable authoring preview screen through Capture Web", async ({ page }) => {
+  await page.goto("/");
+  const screens: readonly [CaptureExperiencePreviewScreen, string][] = [
+    ["introduction", "Verify Your Identity"],
+    ["notice", "Review Before You Continue"],
+    ["method", "How Would You Like to Add Front of Your Identity Document?"],
+    ["preparation", "Get Front of Your Identity Document Ready"],
+    ["capture", "Take a clear photo of the front of your identity document."],
+    ["review", "Front of Your Identity Document Added"],
+    ["recovery", "Welcome Back"],
+    ["processing", "Verifying Your Identity"],
+    ["complete", "You’re All Set"],
+  ];
+
+  for (const [screen, heading] of screens) {
+    await page.locator("idenqa-capture").evaluate(
+      (element, options) => {
+        (element as IdenqaCaptureElement).previewExperience(options);
+      },
+      { document: journeyPreviewDocument, screen },
+    );
+    await expect(page.getByRole("heading", { name: heading })).toBeVisible();
+    await expect(page.locator("idenqa-capture .experience-preview")).toHaveAttribute("inert", "");
+  }
 });
 
 test("bounds the capture surface on desktop and keeps overflow reachable", async ({ page }) => {

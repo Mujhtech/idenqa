@@ -136,6 +136,8 @@ export type {
   CaptureCountryJourneyNotice,
   CaptureCountryOption,
   CaptureElementStartOptions,
+  CaptureExperiencePreviewOptions,
+  CaptureExperiencePreviewScreen,
   CaptureEvidenceAcceptedDetail,
   CaptureFlowErrorDetail,
   CaptureMethodSelectDetail,
@@ -190,5 +192,9 @@ export type {
 export { createRecaptureHandoff } from "./recapture.js";
 export type { RecaptureHandoff } from "./recapture.js";
 
-export { applyCaptureExperienceTheme, captureExperiencePresentation } from "./experience.js";
+export {
+  applyCaptureExperienceTheme,
+  captureExperienceDraftPresentation,
+  captureExperiencePresentation,
+} from "./experience.js";
 export type { CaptureExperiencePresentation } from "./experience.js";

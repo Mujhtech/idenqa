@@ -45,7 +45,9 @@ import {
 } from "./element/journey-view.js";
 import {
   renderIntroduction,
+  renderIntroductionPreview,
   renderNotice,
+  renderNoticePreview,
   renderSecuredBy,
   type NoticeViewContext,
 } from "./element/notice-view.js";
@@ -80,6 +82,8 @@ import type {
   CaptureCountryJourneyOptions,
   CaptureCountryOption,
   CaptureElementStartOptions,
+  CaptureExperiencePreviewOptions,
+  CaptureExperiencePreviewScreen,
   CaptureEvidenceAcceptedDetail,
   CaptureFlowErrorDetail,
   CaptureMethodSelectDetail,
@@ -89,6 +93,7 @@ import type {
 } from "./element/types.js";
 import {
   applyCaptureExperienceTheme,
+  captureExperienceDraftPresentation,
   captureExperiencePresentation,
   type CaptureExperiencePresentation,
 } from "./experience.js";
@@ -125,6 +130,8 @@ export type {
   CaptureCountryJourneyOptions,
   CaptureCountryOption,
   CaptureElementStartOptions,
+  CaptureExperiencePreviewOptions,
+  CaptureExperiencePreviewScreen,
   CaptureEvidenceAcceptedDetail,
   CaptureFlowErrorDetail,
   CaptureMethodSelectDetail,
@@ -134,6 +141,45 @@ export type {
 } from "./element/types.js";
 
 export const IDENQA_CAPTURE_TAG_NAME = "idenqa-capture";
+
+const experiencePreviewScreens = new Set<CaptureExperiencePreviewScreen>([
+  "introduction",
+  "notice",
+  "method",
+  "preparation",
+  "capture",
+  "review",
+  "recovery",
+  "processing",
+  "complete",
+]);
+
+const experiencePreviewPlan: CapturePlan = {
+  verificationId: "ver_preview",
+  profileRevision: 1,
+  profileDigest: "preview",
+  requirements: [
+    {
+      key: "identity-document",
+      purpose: "identity verification",
+      evidenceType: "idenqa.evidence.document_image",
+      requiredAssurances: ["idenqa.assurance.live_capture"],
+      steps: [
+        {
+          requirementKey: "identity-document",
+          evidenceType: "idenqa.evidence.document_image",
+          artefact: "idenqa.artefact.document_front",
+          methodOptions: [LIVE_CAMERA_METHOD, FILE_UPLOAD_METHOD],
+        },
+      ],
+    },
+  ],
+};
+
+interface ExperiencePreviewState {
+  readonly screen: CaptureExperiencePreviewScreen;
+  readonly captureItemCount: number;
+}
 
 export class IdenqaCaptureElement extends LitElement {
   static override styles = captureElementStyles;
@@ -171,6 +217,7 @@ export class IdenqaCaptureElement extends LitElement {
   #outcomePolling = false;
   #localizer: CaptureLocalizer = createCaptureLocalizer(browserLocale());
   #experience: CaptureExperiencePresentation | undefined;
+  #preview: ExperiencePreviewState | undefined;
   #journeyPhase: JourneyPhase = "intro";
   #stepStage: StepStage = "method";
   #activeStepIndex = 0;
@@ -209,6 +256,33 @@ export class IdenqaCaptureElement extends LitElement {
     this.requestUpdate();
   }
 
+  /** Render an inert authoring preview through the package-owned presentation path. */
+  previewExperience(options: CaptureExperiencePreviewOptions): void {
+    const captureItemCount = options.captureItemCount ?? 1;
+    const screen = options.screen ?? "introduction";
+    if (!Number.isInteger(captureItemCount) || captureItemCount < 1 || captureItemCount > 99) {
+      throw new TypeError("Capture item count must be an integer between 1 and 99.");
+    }
+    if (!experiencePreviewScreens.has(screen)) {
+      throw new TypeError("Experience preview screen is not supported.");
+    }
+    this.cancel();
+    const presentation = captureExperienceDraftPresentation(
+      options.document,
+      options.locale ?? options.document.default_locale,
+    );
+    this.#experience = presentation;
+    applyCaptureExperienceTheme(this, presentation.theme);
+    this.#localizer = createCaptureLocalizer(
+      presentation.locale ?? browserLocale(),
+      presentation.messageCatalogue,
+    );
+    this.#preview = { screen, captureItemCount };
+    this.#flowState = "idle";
+    this.#lastJourneyScreen = undefined;
+    this.requestUpdate();
+  }
+
   async start(options: CaptureElementStartOptions): Promise<CaptureFlowSnapshot> {
     const {
       messageCatalogue = {},
@@ -218,6 +292,7 @@ export class IdenqaCaptureElement extends LitElement {
       documentCapture,
       ...flowOptions
     } = options;
+    this.#preview = undefined;
     const presentation =
       experience === undefined ? undefined : captureExperiencePresentation(experience);
     this.#experience = presentation;
@@ -327,6 +402,7 @@ export class IdenqaCaptureElement extends LitElement {
     this.#countryAbortController?.abort();
     this.#countryAbortController = undefined;
     this.#countryJourney = undefined;
+    this.#preview = undefined;
     this.#dropFlowController();
     this.#flowSnapshot = undefined;
     this.#flowState = "cancelled";
@@ -372,20 +448,78 @@ export class IdenqaCaptureElement extends LitElement {
       >
         <h1 class="visually-hidden" id="capture-title">${this.#text("identityVerification")}</h1>
         ${
-          this.#countryJourney !== undefined
-            ? renderCountryJourney(this.#countryView())
-            : this.#flowState === "loading"
-              ? renderLoading(this.#statusView())
-              : this.#flowState === "error"
-                ? renderError(this.#statusView())
-                : this.#flowState === "cancelled"
-                  ? renderCancelled(this.#statusView())
-                  : this.#flowSnapshot !== undefined
-                    ? this.#renderFlow(this.#flowSnapshot)
-                    : renderNoFlow(this.#statusView())
+          this.#preview !== undefined
+            ? html`<div class="experience-preview" inert>${this.#renderExperiencePreview()}</div>`
+            : this.#countryJourney !== undefined
+              ? renderCountryJourney(this.#countryView())
+              : this.#flowState === "loading"
+                ? renderLoading(this.#statusView())
+                : this.#flowState === "error"
+                  ? renderError(this.#statusView())
+                  : this.#flowState === "cancelled"
+                    ? renderCancelled(this.#statusView())
+                    : this.#flowSnapshot !== undefined
+                      ? this.#renderFlow(this.#flowSnapshot)
+                      : renderNoFlow(this.#statusView())
         }
       </section>
     `;
+  }
+
+  #renderExperiencePreview() {
+    const preview = this.#preview;
+    if (preview === undefined) return renderNoFlow(this.#statusView());
+    switch (preview.screen) {
+      case "introduction":
+        return renderIntroductionPreview(this.#noticeView(), preview.captureItemCount);
+      case "notice":
+        return renderNoticePreview(this.#noticeView());
+      case "method":
+        return renderGuidedPlan(
+          this.#experiencePreviewJourneyView("method"),
+          experiencePreviewPlan,
+        );
+      case "preparation":
+        return renderGuidedPlan(
+          this.#experiencePreviewJourneyView("preparation"),
+          experiencePreviewPlan,
+        );
+      case "capture":
+        return renderGuidedPlan(
+          this.#experiencePreviewJourneyView("capture"),
+          experiencePreviewPlan,
+        );
+      case "review":
+        return renderConfirmation(
+          this.#experiencePreviewJourneyView("capture", true),
+          experiencePreviewPlan,
+        );
+      case "recovery":
+        return renderRecovery(this.#experiencePreviewJourneyView("method"), experiencePreviewPlan);
+      case "processing":
+        return renderProcessing(this.#statusView());
+      case "complete":
+        return renderComplete(this.#statusView());
+    }
+  }
+
+  #experiencePreviewJourneyView(stage: StepStage, completed = false): JourneyViewContext {
+    const step = experiencePreviewPlan.requirements[0]!.steps[0]!;
+    const selectedMethods = new Map([[stepKey(step), LIVE_CAMERA_METHOD]]);
+    const completedSteps = new Map<string, StepCompletion>();
+    if (completed) {
+      completedSteps.set(stepKey(step), {
+        acquisitionMethod: LIVE_CAMERA_METHOD,
+        uploadId: "upl_preview",
+        evidenceId: "evd_preview",
+      });
+    }
+    return {
+      ...this.#journeyView(),
+      completedSteps,
+      selectedMethods,
+      stepStage: stage,
+    };
   }
 
   async #selectCountry(country: CaptureCountryOption): Promise<void> {
