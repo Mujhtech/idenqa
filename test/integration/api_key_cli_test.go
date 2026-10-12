@@ -44,6 +44,7 @@ func TestAPIKeyCLILifecycleAndAudit(t *testing.T) {
 
 	tenantOutput := runCLI(t,
 		"tenant", "create", "--actor", "integration-operator", "--reason", "create CLI tenant",
+		"--display-name", "API key lifecycle integration tenant",
 	)
 	tenantID := cliOutputValue(t, tenantOutput, "id")
 	createOutput := runCLI(t,
