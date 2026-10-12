@@ -18,6 +18,8 @@ Runtime JSON uses the exact built-in adapter identifiers `dojah` and `smileid`. 
 
 ## Operator configuration
 
+**Selected — 8 October 2026:** Provider routing requires an eligible enabled PostgreSQL tenant registration for the configured adapter and region. Missing, disabled, ambiguous or `not_ready` registrations stop planning; the mounted runtime binding is no longer a fallback. Preparation rechecks eligibility and the pinned configuration digest, so a historical deployment digest alone cannot authorize new preparation. Previously persisted requests retain their immutable execution and recovery contract. Provision and enable tenant registrations before planning provider work; file bindings are not imported automatically. The runtime file below still configures the runner connection and route template. Explicitly approved failover semantics remain separate.
+
 Apply Core migration 36 and the existing Headgate migrations. In addition to existing runtime grants, grant the runtime role `SELECT, INSERT` on `idenqa.provider_requests`, `SELECT, INSERT, UPDATE` on `idenqa.provider_dispatches`, and `EXECUTE` on `idenqa.list_ready_provider_captures(timestamptz, integer, text, text, text)`. Both tables force tenant RLS. The discovery function is security-invoker and uses the same tenant scope.
 
 Set `IDENQA_PROVIDER_RUNTIME_FILE` on the API and worker to a mounted JSON file with this shape. Replace the descriptive identifiers with the actual tenant, active policy, published profile digest and deployment-assigned configuration references:

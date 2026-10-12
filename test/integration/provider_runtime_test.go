@@ -305,6 +305,7 @@ func (journey *providerPublicJourney) run(t *testing.T, admin, runtime *pg.Pool,
 	}
 	journey.runtimeFile = write("runtime.json", raw)
 	restartAPI()
+	registerRuntimeProvider(t, base, credential, settings)
 	verificationID, err := id.ParseVerification(verificationValue)
 	if err != nil {
 		t.Fatal(err)
@@ -589,4 +590,16 @@ func TestProviderDiscoveryEnforcesExactTenantPolicyAndProfile(t *testing.T) {
 			})
 		}
 	})
+}
+
+func registerRuntimeProvider(t *testing.T, base, credential string, settings config.ProviderRuntime) {
+	t.Helper()
+	adapter := settings.Adapter
+	if adapter == "" {
+		adapter = providerv1.AdapterDojah
+	}
+	write := provider.RegistrationWrite{AdapterID: adapter, Region: settings.Binding.Region, Configuration: settings.Binding.Configuration, Inputs: settings.Binding.Inputs, SelfieRequirement: settings.Binding.SelfieRequirement}
+	var created provider.RegistrationReceipt
+	performPublicJSONRequest(t, http.DefaultClient, publicJSONRequest{Method: http.MethodPost, URL: base + "/v1/providers", Bearer: credential, IdempotencyKey: "runtime-provider-register", Body: map[string]any{"reason": "fixture", "registration": write}, WantStatus: http.StatusOK, Result: &created})
+	performPublicJSONRequest(t, http.DefaultClient, publicJSONRequest{Method: http.MethodPost, URL: base + "/v1/providers/" + created.Registration.ID + "/enable", Bearer: credential, Body: map[string]any{"expected_version": created.Registration.Version, "reason": "fixture"}, WantStatus: http.StatusOK})
 }

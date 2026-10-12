@@ -111,7 +111,7 @@ func registrationFixture(providerID string) provider.Binding {
 		Configuration: providerv1.ConfigurationReference{ProviderID: providerID, SchemaDigest: manifest.Configuration.Digest, SecretReference: "secret://provider/tenant", CredentialVersion: "v1"}}
 }
 
-func TestCompositionSelectsEnabledRegistrationThenFallsBack(t *testing.T) {
+func TestCompositionRequiresEnabledRegistration(t *testing.T) {
 	t.Parallel()
 	binding := registrationFixture("pvd_01K4AR9V8FQ2G7ZXCPNM5T6JWH")
 	manifest := dojah.Description()
@@ -122,7 +122,7 @@ func TestCompositionSelectsEnabledRegistrationThenFallsBack(t *testing.T) {
 	registration := provider.Registration{ID: "pvr_01K4AR9V8FQ2G7ZXCPNM5T6JWH", AdapterID: "dojah", Region: "africa", Enabled: true,
 		Configuration: providerv1.ConfigurationReference{ProviderID: "pvd_01K4AR9V8FQ2G7ZXCPNM5T6JWK", SchemaDigest: manifest.Configuration.Digest, SecretReference: "secret://provider/tenant/other", CredentialVersion: "v1"}}
 	source := registrationSourceFixture{registrations: []provider.Registration{registration}}
-	route := &registrationRoute{source: source, manifest: manifest, template: binding, deployment: deployment, preparation: &providerpostgres.Preparation{Plan: deployment}}
+	route := &registrationRoute{source: source, manifest: manifest, template: binding, preparation: &providerpostgres.Preparation{Plan: deployment}}
 	composed, err := composeRoutes(t.Context(), []executionRoute{{planner: deployment, preparation: preparationFixture{}, signals: deployment.OutputSignals(), registration: route}})
 	if err != nil {
 		t.Fatal(err)
@@ -139,14 +139,34 @@ func TestCompositionSelectsEnabledRegistrationThenFallsBack(t *testing.T) {
 	if checks[0].Provenance.RequestDigest != registered.ConfigurationDigest() || checks[0].Provenance.RequestDigest == deployment.ConfigurationDigest() {
 		t.Fatal("plan did not pin the registered configuration")
 	}
-	fallback, err := composeRoutes(t.Context(), []executionRoute{{planner: deployment, preparation: preparationFixture{}, signals: deployment.OutputSignals(),
-		registration: &registrationRoute{source: registrationSourceFixture{}, manifest: manifest, template: binding, deployment: deployment, preparation: &providerpostgres.Preparation{Plan: deployment}}}})
-	if err != nil {
-		t.Fatal(err)
+	disabled := registration
+	disabled.Enabled = false
+	for _, test := range []struct {
+		name          string
+		registrations []provider.Registration
+	}{
+		{name: "missing"},
+		{name: "disabled", registrations: []provider.Registration{disabled}},
+		{name: "ambiguous", registrations: []provider.Registration{registration, registration}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			unavailable, err := composeRoutes(t.Context(), []executionRoute{{planner: deployment, preparation: preparationFixture{}, signals: deployment.OutputSignals(),
+				registration: &registrationRoute{source: registrationSourceFixture{registrations: test.registrations}, manifest: manifest, template: binding, preparation: &providerpostgres.Preparation{Plan: deployment}}}})
+			if err != nil {
+				t.Fatal(err)
+			}
+			checks, err := unavailable.Plan(t.Context(), input)
+			if !errors.Is(err, verification.ErrPlanUnavailable) || len(checks) != 0 {
+				t.Fatalf("unavailable registration = %v, %v", checks, err)
+			}
+		})
 	}
-	checks, err = fallback.Plan(t.Context(), input)
-	if err != nil || len(checks) != 1 || checks[0].Provenance.RequestDigest != deployment.ConfigurationDigest() {
-		t.Fatalf("deployment fallback = %v, %v", checks, err)
+	selected, err := route.selectPlan(t.Context(), mustScope(t, binding.TenantID), registered.ConfigurationDigest())
+	if err != nil || selected.ConfigurationDigest() != registered.ConfigurationDigest() {
+		t.Fatalf("registered pinned plan: %v", err)
+	}
+	if _, err := route.selectPlan(t.Context(), mustScope(t, binding.TenantID), deployment.ConfigurationDigest()); !errors.Is(err, verification.ErrPlanUnavailable) {
+		t.Fatalf("different registration must not replace pinned deployment configuration: %v", err)
 	}
 }
 
@@ -162,7 +182,7 @@ func (source registrationHealthFixture) RegistrationHealth(_ context.Context, _ 
 	return provider.HealthSnapshot{State: source.states[registration.ID]}, nil
 }
 
-func TestCompositionHealthRoutesAroundNotReadyRegistration(t *testing.T) {
+func TestCompositionRejectsNotReadyRegistration(t *testing.T) {
 	t.Parallel()
 	binding := registrationFixture("pvd_01K4AR9V8FQ2G7ZXCPNM5T6JWH")
 	manifest := dojah.Description()
@@ -179,7 +199,7 @@ func TestCompositionHealthRoutesAroundNotReadyRegistration(t *testing.T) {
 	input := verification.PlanInput{TenantID: mustTenant(t, binding.TenantID), PolicyID: mustPolicy(t, binding.PolicyID), ProfileDigest: binding.ProfileDigest}
 	compose := func(health RegistrationHealthSource) (*composedRoutes, error) {
 		route := &registrationRoute{source: registrationSourceFixture{registrations: []provider.Registration{registration}}, health: health,
-			manifest: manifest, template: binding, deployment: deployment, preparation: &providerpostgres.Preparation{Plan: deployment}}
+			manifest: manifest, template: binding, preparation: &providerpostgres.Preparation{Plan: deployment}}
 		return composeRoutes(t.Context(), []executionRoute{{planner: deployment, preparation: preparationFixture{}, signals: deployment.OutputSignals(), registration: route}})
 	}
 	for _, test := range []struct {
@@ -190,7 +210,7 @@ func TestCompositionHealthRoutesAroundNotReadyRegistration(t *testing.T) {
 	}{
 		{name: "ready selects the registration", state: provider.HealthReady, want: registered.ConfigurationDigest()},
 		{name: "degraded keeps the registration", state: provider.HealthDegraded, want: registered.ConfigurationDigest()},
-		{name: "not ready falls back to deployment", state: provider.HealthNotReady, want: deployment.ConfigurationDigest()},
+		{name: "not ready fails closed", state: provider.HealthNotReady, wantError: true},
 		{name: "unknown keeps the registration", state: provider.HealthUnknown, want: registered.ConfigurationDigest()},
 	} {
 		t.Run(test.name, func(t *testing.T) {
@@ -200,6 +220,12 @@ func TestCompositionHealthRoutesAroundNotReadyRegistration(t *testing.T) {
 				t.Fatal(err)
 			}
 			checks, err := composed.Plan(t.Context(), input)
+			if test.wantError {
+				if !errors.Is(err, verification.ErrPlanUnavailable) || len(checks) != 0 {
+					t.Fatalf("unavailable registration = %v, %v", checks, err)
+				}
+				return
+			}
 			if err != nil || len(checks) != 1 || checks[0].Provenance.RequestDigest != test.want {
 				t.Fatalf("plan = %v, %v", checks, err)
 			}
@@ -222,13 +248,16 @@ func TestCompositionRegistrationPinnedDigestFailsClosed(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	route := &registrationRoute{source: registrationSourceFixture{}, manifest: manifest, template: binding, deployment: deployment}
-	if _, _, err := route.selectPlan(t.Context(), mustScope(t, binding.TenantID), "deadbeef"); !errors.Is(err, verification.ErrPlanUnavailable) {
+	route := &registrationRoute{source: registrationSourceFixture{}, manifest: manifest, template: binding}
+	if _, err := route.selectPlan(t.Context(), mustScope(t, binding.TenantID), "deadbeef"); !errors.Is(err, verification.ErrPlanUnavailable) {
 		t.Fatalf("pinned digest fallback = %v", err)
 	}
+	if _, err := route.selectPlan(t.Context(), mustScope(t, binding.TenantID), deployment.ConfigurationDigest()); !errors.Is(err, verification.ErrPlanUnavailable) {
+		t.Fatalf("historical deployment digest bypassed registration: %v", err)
+	}
 	sourceErr := errors.New("registration read failed")
-	failing := &registrationRoute{source: registrationSourceFixture{err: sourceErr}, manifest: manifest, template: binding, deployment: deployment}
-	if _, _, err := failing.selectPlan(t.Context(), mustScope(t, binding.TenantID), "deadbeef"); !errors.Is(err, sourceErr) {
+	failing := &registrationRoute{source: registrationSourceFixture{err: sourceErr}, manifest: manifest, template: binding}
+	if _, err := failing.selectPlan(t.Context(), mustScope(t, binding.TenantID), "deadbeef"); !errors.Is(err, sourceErr) {
 		t.Fatalf("source error = %v", err)
 	}
 }

@@ -16,6 +16,8 @@ Each model binding may set `execution.check_name`, `priority`, `depends_on`, `fa
 
 ## 2. Planning, execution and policy
 
+Provider components require an eligible enabled PostgreSQL registration for the exact tenant, adapter and deployment region. A missing, disabled, ambiguous or `not_ready` registration fails the plan; the mounted provider binding is only a route template and runner configuration. Preparation rechecks the selected registration against the pinned digest. Model routes and explicit dependency/fallback graph semantics are unchanged by this 8 October 2026 decision.
+
 Capture discovery retains the exact tenant/policy/profile filter. After capture is ready and processing authority permits the work, the existing processing transaction creates **all** planned checks, attempts, immutable model/provider requests, scoped grants and task intents. A missing/ambiguous evidence selection or failure in any later preparation rolls back the entire plan. There is no partially dispatched subset from a failed planning transaction.
 
 Independent roots execute through Headgate. Dependency and fallback tasks are durably present but are admitted only when their persisted predecessor states permit execution; a route that becomes unnecessary is terminally `skipped_by_policy` without an external dispatch or subject conclusion. Model dispatch uses the exact saved configuration reference; request loaders retain current-authority and immutable-envelope checks. Each component has its own grants, even when two checks consume the same selfie or document asset. Workload credentials cannot redeem another model's attempt. Existing per-check deadlines, cancellation, fencing, ambiguous-execution reconciliation and retry semantics remain in force.

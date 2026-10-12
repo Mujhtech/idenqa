@@ -42,24 +42,25 @@ type registrationRoute struct {
 	health      RegistrationHealthSource
 	manifest    providerv1.Manifest
 	template    provider.Binding
-	deployment  *provider.Plan
 	preparation *providerpostgres.Preparation
 }
 
 // plan selects the tenant registration for the exact adapter and deployment
 // region. PlanInput carries tenant, policy and immutable profile only; the
 // adapter and region come from the candidate deployment route, which is the
-// strongest context the input proves. A not_ready registration is excluded so
-// the deployment route remains the fallback; a registration that cannot compose
-// an exact plan still fails closed instead of being silently bypassed.
+// strongest context the input proves. Missing, ambiguous or not_ready registrations
+// fail closed; the deployment binding never supplies an executable fallback.
 func (route *registrationRoute) plan(ctx context.Context, input verification.PlanInput) (*provider.Plan, error) {
 	registrations, err := route.source.Enabled(ctx, input.TenantID, route.manifest.Package.AdapterID, route.template.Region)
 	if err != nil {
 		return nil, err
 	}
 	registration, ok, err := route.selectRegistration(ctx, input, registrations)
-	if err != nil || !ok {
+	if err != nil {
 		return nil, err
+	}
+	if !ok {
+		return nil, verification.ErrPlanUnavailable
 	}
 	plan, err := provider.NewRegisteredPlan(registration, route.template, route.manifest)
 	if err != nil {
@@ -100,22 +101,18 @@ func (route *registrationRoute) selectRegistration(ctx context.Context, input ve
 	return registration, ok, nil
 }
 
-// selectPlan re-derives the plan that produced one already-pinned check
-// definition. The pinned configuration digest decides between the deployment
-// plan and the current enabled registration. A digest that matches neither
-// fails closed instead of switching provider meaning after planning.
-func (route *registrationRoute) selectPlan(ctx context.Context, scope tenant.Scope, pinned string) (*provider.Plan, bool, error) {
-	if pinned == route.deployment.ConfigurationDigest() {
-		return route.deployment, false, nil
-	}
+// selectPlan re-derives the current registered plan for an already-pinned check.
+// A missing eligible registration or mismatched digest never switches to the
+// deployment binding, including for historical deployment-pinned checks.
+func (route *registrationRoute) selectPlan(ctx context.Context, scope tenant.Scope, pinned string) (*provider.Plan, error) {
 	plan, err := route.plan(ctx, verification.PlanInput{TenantID: scope.ID()})
 	if err != nil {
-		return nil, false, err
+		return nil, err
 	}
-	if plan == nil || plan.ConfigurationDigest() != pinned {
-		return nil, false, verification.ErrPlanUnavailable
+	if plan.ConfigurationDigest() != pinned {
+		return nil, verification.ErrPlanUnavailable
 	}
-	return plan, true, nil
+	return plan, nil
 }
 
 type executionRoute struct {
@@ -242,14 +239,12 @@ func (routes *composedRoutes) Plan(ctx context.Context, input verification.PlanI
 			if err != nil {
 				return nil, err
 			}
-			if selected != nil {
-				checks, err := selected.Plan(ctx, input)
-				if err != nil {
-					return nil, err
-				}
-				result = append(result, checks...)
-				continue
+			checks, err := selected.Plan(ctx, input)
+			if err != nil {
+				return nil, err
 			}
+			result = append(result, checks...)
+			continue
 		}
 		checks, err := route.planner.Plan(ctx, input)
 		if err != nil {
@@ -339,15 +334,13 @@ func (routes *composedRoutes) Prepare(ctx context.Context, tx pg.Transaction, sc
 		return verification.Provenance{}, nil, verification.ErrPlanUnavailable
 	}
 	if registration := routes.registrations[definition.Name]; registration != nil {
-		selected, chosen, err := registration.selectPlan(ctx, scope, definition.Provenance.Configuration)
+		selected, err := registration.selectPlan(ctx, scope, definition.Provenance.Configuration)
 		if err != nil {
 			return verification.Provenance{}, nil, err
 		}
-		if chosen {
-			bound := *registration.preparation
-			bound.Plan = selected
-			return bound.Prepare(ctx, tx, scope, verificationID, checkID, attemptID, definition, now, deadline)
-		}
+		bound := *registration.preparation
+		bound.Plan = selected
+		return bound.Prepare(ctx, tx, scope, verificationID, checkID, attemptID, definition, now, deadline)
 	}
 	return preparation.Prepare(ctx, tx, scope, verificationID, checkID, attemptID, definition, now, deadline)
 }

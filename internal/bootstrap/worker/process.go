@@ -221,10 +221,8 @@ func NewProcessWithInfrastructure(ctx context.Context, configuration config.Work
 	routes := []executionRoute{}
 	if realProvider != nil {
 		route := executionRoute{planner: realProvider.plan, preparation: realProvider.preparation, signals: realProvider.plan.OutputSignals()}
-		if realProvider.registrations != nil {
-			route.registration = &registrationRoute{source: realProvider.registrations, health: realProvider.health, manifest: realProvider.plan.Manifest,
-				template: realProvider.plan.Binding, deployment: realProvider.plan, preparation: realProvider.preparation}
-		}
+		route.registration = &registrationRoute{source: realProvider.registrations, health: realProvider.health, manifest: realProvider.plan.Manifest,
+			template: realProvider.plan.Binding, preparation: realProvider.preparation}
 		routes = append(routes, route)
 	}
 	if realModel != nil {
