@@ -143,8 +143,23 @@
       "properties": {
         "primary_color": { "$ref": "#/$defs/color" },
         "accent_color": { "$ref": "#/$defs/color" },
+        "accent_foreground_color": { "$ref": "#/$defs/color" },
         "background_color": { "$ref": "#/$defs/color" },
+        "surface_color": { "$ref": "#/$defs/color" },
+        "surface_strong_color": { "$ref": "#/$defs/color" },
         "text_color": { "$ref": "#/$defs/color" },
+        "muted_color": { "$ref": "#/$defs/color" },
+        "border_color": { "$ref": "#/$defs/color" },
+        "error_color": { "$ref": "#/$defs/color" },
+        "media_background_color": { "$ref": "#/$defs/color" },
+        "overlay_background_color": { "$ref": "#/$defs/color" },
+        "overlay_border_color": { "$ref": "#/$defs/color" },
+        "overlay_foreground_color": { "$ref": "#/$defs/color" },
+        "face_guide_color": { "$ref": "#/$defs/color" },
+        "face_guide_muted_color": { "$ref": "#/$defs/color" },
+        "face_guide_ready_color": { "$ref": "#/$defs/color" },
+        "liveness_color": { "$ref": "#/$defs/color" },
+        "tap_highlight_color": { "$ref": "#/$defs/color" },
         "logo_asset_key": { "type": "string", "pattern": "^[a-z][a-z0-9._-]{0,63}$" }
       }
     },

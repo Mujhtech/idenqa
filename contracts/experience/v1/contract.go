@@ -151,11 +151,26 @@ type CustomLink struct {
 // Theme carries safe visual tokens. Host appearance-only CSS variables remain
 // authoritative for host-local branding; these tokens are the portable default.
 type Theme struct {
-	PrimaryColor    string `json:"primary_color"`
-	AccentColor     string `json:"accent_color"`
-	BackgroundColor string `json:"background_color"`
-	TextColor       string `json:"text_color"`
-	LogoAssetKey    string `json:"logo_asset_key,omitempty"`
+	PrimaryColor           string `json:"primary_color"`
+	AccentColor            string `json:"accent_color"`
+	AccentForegroundColor  string `json:"accent_foreground_color,omitempty"`
+	BackgroundColor        string `json:"background_color"`
+	SurfaceColor           string `json:"surface_color,omitempty"`
+	SurfaceStrongColor     string `json:"surface_strong_color,omitempty"`
+	TextColor              string `json:"text_color"`
+	MutedColor             string `json:"muted_color,omitempty"`
+	BorderColor            string `json:"border_color,omitempty"`
+	ErrorColor             string `json:"error_color,omitempty"`
+	MediaBackgroundColor   string `json:"media_background_color,omitempty"`
+	OverlayBackgroundColor string `json:"overlay_background_color,omitempty"`
+	OverlayBorderColor     string `json:"overlay_border_color,omitempty"`
+	OverlayForegroundColor string `json:"overlay_foreground_color,omitempty"`
+	FaceGuideColor         string `json:"face_guide_color,omitempty"`
+	FaceGuideMutedColor    string `json:"face_guide_muted_color,omitempty"`
+	FaceGuideReadyColor    string `json:"face_guide_ready_color,omitempty"`
+	LivenessColor          string `json:"liveness_color,omitempty"`
+	TapHighlightColor      string `json:"tap_highlight_color,omitempty"`
+	LogoAssetKey           string `json:"logo_asset_key,omitempty"`
 }
 
 // Manifest is the signed envelope returned to clients. Digest and Signature

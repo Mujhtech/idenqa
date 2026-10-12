@@ -11884,9 +11884,39 @@ export interface components {
             /** @example #0b3d91 */
             readonly accent_color: string;
             /** @example #ffffff */
+            readonly accent_foreground_color?: string;
+            /** @example #ffffff */
             readonly background_color: string;
+            /** @example #ffffff */
+            readonly surface_color?: string;
+            /** @example #e7f0e8 */
+            readonly surface_strong_color?: string;
             /** @example #1b1f23 */
             readonly text_color: string;
+            /** @example #5b6a61 */
+            readonly muted_color?: string;
+            /** @example #e4e0d5 */
+            readonly border_color?: string;
+            /** @example #b42318 */
+            readonly error_color?: string;
+            /** @example #0c111d */
+            readonly media_background_color?: string;
+            /** @example #0a1210 */
+            readonly overlay_background_color?: string;
+            /** @example #ffffff */
+            readonly overlay_border_color?: string;
+            /** @example #ffffff */
+            readonly overlay_foreground_color?: string;
+            /** @example #ffffff */
+            readonly face_guide_color?: string;
+            /** @example #ffffff */
+            readonly face_guide_muted_color?: string;
+            /** @example #79e8b1 */
+            readonly face_guide_ready_color?: string;
+            /** @example #1f4e37 */
+            readonly liveness_color?: string;
+            /** @example #175cd3 */
+            readonly tap_highlight_color?: string;
             /** @example logo */
             readonly logo_asset_key?: string;
         };

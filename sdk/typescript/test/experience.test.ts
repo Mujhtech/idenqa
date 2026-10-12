@@ -97,4 +97,30 @@ describe("portable experience contract", () => {
     (oversize.assets as { size: number }[])[0]!.size = 2 * 1024 * 1024 + 1;
     expect(() => validateExperienceDocument(oversize)).toThrow(ExperienceContractError);
   });
+
+  it("accepts the optional semantic palette and rejects invalid colour values", () => {
+    const vector = loadVector();
+    const expanded = clone(vector.manifest.document);
+    Object.assign(expanded.theme as Record<string, unknown>, {
+      accent_foreground_color: "#ffffff",
+      surface_color: "#f8fafc",
+      surface_strong_color: "#e2e8f0",
+      muted_color: "#475569",
+      border_color: "#cbd5e1",
+      error_color: "#b42318",
+      media_background_color: "#0c111d",
+      overlay_background_color: "#0a1210",
+      overlay_border_color: "#ffffff",
+      overlay_foreground_color: "#ffffff",
+      face_guide_color: "#ffffff",
+      face_guide_muted_color: "#d1d5db",
+      face_guide_ready_color: "#79e8b1",
+      liveness_color: "#0f766e",
+      tap_highlight_color: "#155eef",
+    });
+    expect(validateExperienceDocument(expanded).theme.surface_color).toBe("#f8fafc");
+
+    (expanded.theme as Record<string, unknown>).surface_color = "blue";
+    expect(() => validateExperienceDocument(expanded)).toThrow(ExperienceContractError);
+  });
 });

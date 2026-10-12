@@ -345,8 +345,21 @@ func validateURL(value string) error {
 }
 
 func validateTheme(theme Theme) error {
-	for _, color := range []string{theme.PrimaryColor, theme.AccentColor, theme.BackgroundColor, theme.TextColor} {
+	required := []string{theme.PrimaryColor, theme.AccentColor, theme.BackgroundColor, theme.TextColor}
+	for _, color := range required {
 		if !colorPattern.MatchString(color) {
+			return fmt.Errorf("%w: theme color", ErrInvalid)
+		}
+	}
+	optional := []string{
+		theme.AccentForegroundColor, theme.SurfaceColor, theme.SurfaceStrongColor,
+		theme.MutedColor, theme.BorderColor, theme.ErrorColor, theme.MediaBackgroundColor,
+		theme.OverlayBackgroundColor, theme.OverlayBorderColor, theme.OverlayForegroundColor,
+		theme.FaceGuideColor, theme.FaceGuideMutedColor, theme.FaceGuideReadyColor,
+		theme.LivenessColor, theme.TapHighlightColor,
+	}
+	for _, color := range optional {
+		if color != "" && !colorPattern.MatchString(color) {
 			return fmt.Errorf("%w: theme color", ErrInvalid)
 		}
 	}

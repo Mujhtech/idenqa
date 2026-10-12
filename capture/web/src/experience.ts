@@ -51,8 +51,23 @@ const EXPERIENCE_COPY_MESSAGES: Readonly<Record<string, readonly CaptureMessageK
 const THEME_TOKENS: Readonly<Record<string, string>> = {
   primary_color: "--idq-capture-accent",
   accent_color: "--idq-capture-accent-strong",
+  accent_foreground_color: "--idq-capture-accent-foreground",
   background_color: "--idq-capture-background",
+  surface_color: "--idq-capture-surface",
+  surface_strong_color: "--idq-capture-surface-strong",
   text_color: "--idq-capture-text",
+  muted_color: "--idq-capture-muted",
+  border_color: "--idq-capture-border",
+  error_color: "--idq-capture-error",
+  media_background_color: "--idq-capture-media-background",
+  overlay_background_color: "--idq-capture-overlay-background",
+  overlay_border_color: "--idq-capture-overlay-border",
+  overlay_foreground_color: "--idq-capture-overlay-foreground",
+  face_guide_color: "--idq-capture-face-guide",
+  face_guide_muted_color: "--idq-capture-face-guide-muted",
+  face_guide_ready_color: "--idq-capture-face-guide-ready",
+  liveness_color: "--idq-capture-liveness-color",
+  tap_highlight_color: "--idq-capture-tap-highlight",
 };
 
 /** Derive bounded presentation from a signed experience resolution. */

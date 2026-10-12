@@ -317,9 +317,11 @@ diagnostic rather than passing. Resolve/composite those colours before auditing.
 This is an authoring and conformance tool; it does not alter tenant branding,
 enforce Core publication, or certify the accessibility of an entire page.
 Browser tests check computed light/dark defaults, low-contrast host overrides,
-and the document review action. Portable theme colours live in the shadow
-cascade, beneath host stylesheet and inline overrides, and are cleared when a
-new journey has no portable theme.
+and the document review action. Portable schema `1.0` maps all nineteen colour
+variables in the table below through a closed allow-list. Those values live in
+the shadow cascade, beneath host stylesheet and inline overrides, and are
+cleared when a new journey has no portable theme. Non-colour variables remain
+host-local appearance controls.
 
 Unit tests and browser tests run separately: `pnpm --filter @idenqa/capture test`
 runs Vitest, and `pnpm --filter @idenqa/capture test:browser` runs Playwright.

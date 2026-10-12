@@ -133,6 +133,7 @@ func TestParseDocumentRejectsClosedContractViolations(t *testing.T) {
 		{name: "insecure origin", mutate: func(d *Document) { d.AllowedOrigins = []string{"http://capture.acme.example"} }, want: ErrInvalid},
 		{name: "origin path", mutate: func(d *Document) { d.AllowedOrigins = []string{"https://capture.acme.example/path"} }, want: ErrInvalid},
 		{name: "color token", mutate: func(d *Document) { d.Theme.PrimaryColor = "blue" }, want: ErrInvalid},
+		{name: "optional color token", mutate: func(d *Document) { d.Theme.SurfaceColor = "blue" }, want: ErrInvalid},
 		{name: "logo without asset", mutate: func(d *Document) { d.Theme.LogoAssetKey = "missing" }, want: ErrInvalid},
 		{name: "duplicate targeting rule", mutate: func(d *Document) {
 			d.Targeting = append(d.Targeting, d.Targeting[0])

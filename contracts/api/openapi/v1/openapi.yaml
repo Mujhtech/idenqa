@@ -20753,8 +20753,23 @@ components:
       properties:
         primary_color: { type: string, pattern: '^#[0-9a-f]{6}$', example: '#1f6feb' }
         accent_color: { type: string, pattern: '^#[0-9a-f]{6}$', example: '#0b3d91' }
+        accent_foreground_color: { type: string, pattern: '^#[0-9a-f]{6}$', example: '#ffffff' }
         background_color: { type: string, pattern: '^#[0-9a-f]{6}$', example: '#ffffff' }
+        surface_color: { type: string, pattern: '^#[0-9a-f]{6}$', example: '#ffffff' }
+        surface_strong_color: { type: string, pattern: '^#[0-9a-f]{6}$', example: '#e7f0e8' }
         text_color: { type: string, pattern: '^#[0-9a-f]{6}$', example: '#1b1f23' }
+        muted_color: { type: string, pattern: '^#[0-9a-f]{6}$', example: '#5b6a61' }
+        border_color: { type: string, pattern: '^#[0-9a-f]{6}$', example: '#e4e0d5' }
+        error_color: { type: string, pattern: '^#[0-9a-f]{6}$', example: '#b42318' }
+        media_background_color: { type: string, pattern: '^#[0-9a-f]{6}$', example: '#0c111d' }
+        overlay_background_color: { type: string, pattern: '^#[0-9a-f]{6}$', example: '#0a1210' }
+        overlay_border_color: { type: string, pattern: '^#[0-9a-f]{6}$', example: '#ffffff' }
+        overlay_foreground_color: { type: string, pattern: '^#[0-9a-f]{6}$', example: '#ffffff' }
+        face_guide_color: { type: string, pattern: '^#[0-9a-f]{6}$', example: '#ffffff' }
+        face_guide_muted_color: { type: string, pattern: '^#[0-9a-f]{6}$', example: '#ffffff' }
+        face_guide_ready_color: { type: string, pattern: '^#[0-9a-f]{6}$', example: '#79e8b1' }
+        liveness_color: { type: string, pattern: '^#[0-9a-f]{6}$', example: '#1f4e37' }
+        tap_highlight_color: { type: string, pattern: '^#[0-9a-f]{6}$', example: '#175cd3' }
         logo_asset_key: { type: string, pattern: '^[a-z][a-z0-9._-]{0,63}$', example: logo }
     ExperienceDocument:
       example: { schema_version: '1.0', experience_id: exp_01J00000000000000000000000, version: 1, name: Acme selfie capture, copy: { version: tc_acme_v1, locales: [{ locale: en, entries: [{ key: capture.title, value: Verify your identity }] }] }, mandatory_copy_version: mc-2026-09-01, default_locale: en, targeting: [], links: { support: https://acme.example/support, privacy: https://acme.example/privacy, terms: https://acme.example/terms }, theme: { primary_color: '#1f6feb', accent_color: '#0b3d91', background_color: '#ffffff', text_color: '#1b1f23' } }

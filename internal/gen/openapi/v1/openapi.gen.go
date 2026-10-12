@@ -5590,11 +5590,26 @@ type ExperienceTarget struct {
 
 // ExperienceTheme Safe portable theme tokens. Host appearance-only CSS variables remain authoritative for host-local branding.
 type ExperienceTheme struct {
-	AccentColor     string  `json:"accent_color"`
-	BackgroundColor string  `json:"background_color"`
-	LogoAssetKey    *string `json:"logo_asset_key,omitempty"`
-	PrimaryColor    string  `json:"primary_color"`
-	TextColor       string  `json:"text_color"`
+	AccentColor            string  `json:"accent_color"`
+	AccentForegroundColor  *string `json:"accent_foreground_color,omitempty"`
+	BackgroundColor        string  `json:"background_color"`
+	BorderColor            *string `json:"border_color,omitempty"`
+	ErrorColor             *string `json:"error_color,omitempty"`
+	FaceGuideColor         *string `json:"face_guide_color,omitempty"`
+	FaceGuideMutedColor    *string `json:"face_guide_muted_color,omitempty"`
+	FaceGuideReadyColor    *string `json:"face_guide_ready_color,omitempty"`
+	LivenessColor          *string `json:"liveness_color,omitempty"`
+	LogoAssetKey           *string `json:"logo_asset_key,omitempty"`
+	MediaBackgroundColor   *string `json:"media_background_color,omitempty"`
+	MutedColor             *string `json:"muted_color,omitempty"`
+	OverlayBackgroundColor *string `json:"overlay_background_color,omitempty"`
+	OverlayBorderColor     *string `json:"overlay_border_color,omitempty"`
+	OverlayForegroundColor *string `json:"overlay_foreground_color,omitempty"`
+	PrimaryColor           string  `json:"primary_color"`
+	SurfaceColor           *string `json:"surface_color,omitempty"`
+	SurfaceStrongColor     *string `json:"surface_strong_color,omitempty"`
+	TapHighlightColor      *string `json:"tap_highlight_color,omitempty"`
+	TextColor              string  `json:"text_color"`
 }
 
 // ExperienceTransition Expected-version precondition and optional bounded reason for approve and publish commands.

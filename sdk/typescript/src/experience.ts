@@ -58,8 +58,23 @@ export interface ExperienceLinks {
 export interface ExperienceTheme {
   readonly primary_color: string;
   readonly accent_color: string;
+  readonly accent_foreground_color?: string;
   readonly background_color: string;
+  readonly surface_color?: string;
+  readonly surface_strong_color?: string;
   readonly text_color: string;
+  readonly muted_color?: string;
+  readonly border_color?: string;
+  readonly error_color?: string;
+  readonly media_background_color?: string;
+  readonly overlay_background_color?: string;
+  readonly overlay_border_color?: string;
+  readonly overlay_foreground_color?: string;
+  readonly face_guide_color?: string;
+  readonly face_guide_muted_color?: string;
+  readonly face_guide_ready_color?: string;
+  readonly liveness_color?: string;
+  readonly tap_highlight_color?: string;
   readonly logo_asset_key?: string;
 }
 
@@ -466,8 +481,23 @@ function validateTheme(value: unknown): Record<string, unknown> {
   assertClosed(theme, "theme", [
     "primary_color",
     "accent_color",
+    "accent_foreground_color",
     "background_color",
+    "surface_color",
+    "surface_strong_color",
     "text_color",
+    "muted_color",
+    "border_color",
+    "error_color",
+    "media_background_color",
+    "overlay_background_color",
+    "overlay_border_color",
+    "overlay_foreground_color",
+    "face_guide_color",
+    "face_guide_muted_color",
+    "face_guide_ready_color",
+    "liveness_color",
+    "tap_highlight_color",
     "logo_asset_key",
   ]);
   for (const field of [
@@ -476,6 +506,27 @@ function validateTheme(value: unknown): Record<string, unknown> {
     "background_color",
     "text_color",
   ] as const) {
+    const color = assertString(theme[field], `theme.${field}`, 7);
+    if (!COLOR_PATTERN.test(color)) fail(`theme.${field}`);
+  }
+  for (const field of [
+    "accent_foreground_color",
+    "surface_color",
+    "surface_strong_color",
+    "muted_color",
+    "border_color",
+    "error_color",
+    "media_background_color",
+    "overlay_background_color",
+    "overlay_border_color",
+    "overlay_foreground_color",
+    "face_guide_color",
+    "face_guide_muted_color",
+    "face_guide_ready_color",
+    "liveness_color",
+    "tap_highlight_color",
+  ] as const) {
+    if (theme[field] === undefined) continue;
     const color = assertString(theme[field], `theme.${field}`, 7);
     if (!COLOR_PATTERN.test(color)) fail(`theme.${field}`);
   }
