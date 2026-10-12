@@ -16,6 +16,7 @@ import (
 	"github.com/Mujhtech/idenqa/internal/identity"
 	"github.com/Mujhtech/idenqa/internal/keycustody"
 	"github.com/Mujhtech/idenqa/internal/keyrewrap"
+	"github.com/Mujhtech/idenqa/internal/managedlaunch"
 	"github.com/Mujhtech/idenqa/internal/model"
 	"github.com/Mujhtech/idenqa/internal/pack"
 	"github.com/Mujhtech/idenqa/internal/platform/idempotency"
@@ -46,6 +47,13 @@ type rule struct {
 // errors.Is, so wrapped, joined, and custom Is implementations are honoured
 // across the whole error tree.
 var rules = []rule{
+	{
+		targets: []error{managedlaunch.ErrInvalid, managedlaunch.ErrForbidden, managedlaunch.ErrExpired},
+		status:  http.StatusUnauthorized,
+		code:    CodeUnauthenticated,
+		title:   "Unauthenticated",
+		detail:  "Authentication is required.",
+	},
 	{
 		targets: []error{access.ErrInvalidCredential},
 		status:  http.StatusUnauthorized,

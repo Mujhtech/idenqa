@@ -61,7 +61,8 @@ type Request struct {
 }
 
 // PrincipalValue is an authenticated command principal accepted by the
-// idempotency boundary. API keys and capture-token records both satisfy it.
+// idempotency boundary. API keys, capture-token records, workforce users and
+// managed workloads may satisfy it at their owned application boundaries.
 type PrincipalValue interface {
 	String() string
 	IsZero() bool
@@ -191,6 +192,16 @@ func validPrincipal(value string) bool {
 		return true
 	}
 	if _, err := id.ParseCaptureToken(value); err == nil {
+		return true
+	}
+	if strings.HasPrefix(value, "wld_") && len(value) >= 8 && len(value) <= 128 {
+		for _, character := range value[len("wld_"):] {
+			isLetter := character >= 'a' && character <= 'z' || character >= 'A' && character <= 'Z'
+			isDigit := character >= '0' && character <= '9'
+			if !isLetter && !isDigit && character != '_' && character != '-' {
+				return false
+			}
+		}
 		return true
 	}
 	if !strings.HasPrefix(value, "usr_") || len(value) < 5 || len(value) > 128 {

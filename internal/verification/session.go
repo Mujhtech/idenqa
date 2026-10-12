@@ -2,6 +2,7 @@ package verification
 
 import (
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/Mujhtech/idenqa/internal/access"
@@ -9,6 +10,55 @@ import (
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/platform/idempotency"
 )
+
+// SessionPrincipal is the non-secret actor identity retained for session
+// idempotency and audit. Tenant API keys and signed managed workloads are
+// distinct principal classes; neither can be reinterpreted as the other.
+type SessionPrincipal struct {
+	value    string
+	workload bool
+}
+
+// APIKeySessionPrincipal constructs the principal used by the public tenant
+// session-creation path after API-key authentication has succeeded.
+func APIKeySessionPrincipal(identifier id.APIKey) SessionPrincipal {
+	if identifier.IsZero() {
+		return SessionPrincipal{}
+	}
+	return SessionPrincipal{value: identifier.String()}
+}
+
+// NewWorkloadSessionPrincipal constructs a signed-workload principal. The
+// value is deliberately not a credential and carries no ambient permission.
+func NewWorkloadSessionPrincipal(value string) (SessionPrincipal, error) {
+	if !validWorkloadPrincipal(value) {
+		return SessionPrincipal{}, errors.New("verification: managed workload principal is invalid")
+	}
+	return SessionPrincipal{value: value, workload: true}, nil
+}
+
+// String returns the stable, non-secret audit identity.
+func (principal SessionPrincipal) String() string { return principal.value }
+
+// IsZero reports whether the principal has not been initialised.
+func (principal SessionPrincipal) IsZero() bool { return principal.value == "" }
+
+// IsWorkload reports whether the identity came from the signed managed-workload boundary.
+func (principal SessionPrincipal) IsWorkload() bool { return principal.workload }
+
+func validWorkloadPrincipal(value string) bool {
+	if !strings.HasPrefix(value, "wld_") || len(value) < 8 || len(value) > 128 || strings.TrimSpace(value) != value {
+		return false
+	}
+	for _, character := range value[len("wld_"):] {
+		isLetter := character >= 'a' && character <= 'z' || character >= 'A' && character <= 'Z'
+		isDigit := character >= '0' && character <= '9'
+		if !isLetter && !isDigit && character != '_' && character != '-' {
+			return false
+		}
+	}
+	return true
+}
 
 var (
 	// ErrSessionNotFound deliberately also covers cross-tenant misses.
@@ -33,22 +83,24 @@ const (
 // SessionCreateMutation contains generated identities and bounded lifetimes
 // required for one atomic verification-session creation transaction.
 type SessionCreateMutation struct {
-	SessionID          id.Verification
-	CaptureTokenID     id.CaptureToken
-	OutcomeTokenID     id.OutcomeToken
-	EventID            id.Event
-	ProfileID          id.Profile
-	PolicyID           id.Policy
-	DecisionID         id.Decision
-	Region             string
-	Actor              id.APIKey
-	CaptureKeyVersion  access.CaptureTokenKeyVersion
-	OutcomeKeyVersion  access.OutcomeTokenKeyVersion
-	CreatedAt          time.Time
-	SessionExpiresAt   time.Time
-	CaptureTokenExpiry time.Time
-	OutcomeTokenExpiry time.Time
-	Idempotency        idempotency.Request
+	SessionID               id.Verification
+	CaptureTokenID          id.CaptureToken
+	OutcomeTokenID          id.OutcomeToken
+	EventID                 id.Event
+	ProfileID               id.Profile
+	PolicyID                id.Policy
+	DecisionID              id.Decision
+	Region                  string
+	Actor                   SessionPrincipal
+	DelegatedActor          string
+	ExpectedProfileRevision *uint32
+	CaptureKeyVersion       access.CaptureTokenKeyVersion
+	OutcomeKeyVersion       access.OutcomeTokenKeyVersion
+	CreatedAt               time.Time
+	SessionExpiresAt        time.Time
+	CaptureTokenExpiry      time.Time
+	OutcomeTokenExpiry      time.Time
+	Idempotency             idempotency.Request
 }
 
 // SessionCreation is the safe reconstructable result of session creation. It

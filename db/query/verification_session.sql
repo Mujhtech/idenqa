@@ -148,8 +148,8 @@ WHERE tokens.tenant_id = $1 AND tokens.id = $2 AND tokens.verification_id = $3;
 -- name: InsertVerificationSessionAudit :exec
 INSERT INTO idenqa.verification_session_audit (
     tenant_id, verification_id, aggregate_version, action,
-    actor_key_id, occurred_at
-) VALUES ($1, $2, $3, $4, $5, $6);
+    actor_id, delegated_actor_id, occurred_at
+) VALUES ($1, $2, $3, $4, $5, $6, $7);
 
 -- name: InsertOutboxEvent :exec
 INSERT INTO idenqa.outbox_events (

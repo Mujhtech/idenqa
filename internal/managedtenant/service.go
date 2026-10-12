@@ -40,6 +40,8 @@ var consolePatterns = []string{
 	"capture_profiles:read", "capture_profiles:write",
 	"deletions:read",
 	"evidence:read",
+	"experiences:publish", "experiences:read", "experiences:write",
+	"policies:read",
 	"privacy_requests:approve", "privacy_requests:read", "privacy_requests:write",
 	"reviews:admin", "reviews:read",
 	"subjects:delete", "subjects:read", "subjects:write",

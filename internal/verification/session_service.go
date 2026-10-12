@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/Mujhtech/idenqa/internal/access"
@@ -51,11 +52,12 @@ type SessionPage struct {
 // SessionCreateInput contains the tenant-selected profile and optional bounded
 // lifetimes. Nil lifetimes select deployment defaults.
 type SessionCreateInput struct {
-	ProfileID       id.Profile
-	PolicyID        id.Policy
-	VerificationTTL *time.Duration
-	CaptureTokenTTL *time.Duration
-	OutcomePostTTL  *time.Duration
+	ProfileID               id.Profile
+	PolicyID                id.Policy
+	ExpectedProfileRevision *uint32
+	VerificationTTL         *time.Duration
+	CaptureTokenTTL         *time.Duration
+	OutcomePostTTL          *time.Duration
 	// Locale and Experience optionally select and pin the portable capture
 	// experience at creation. Nil keeps resolution to the deployment defaults.
 	Locale     string
@@ -161,32 +163,77 @@ func (service *SessionService) Create(
 	if err := authority.Require(access.PermissionVerificationSessionsCreate); err != nil {
 		return CreatedSession{}, err
 	}
+	return service.create(
+		ctx,
+		authority.TenantScope(),
+		APIKeySessionPrincipal(authority.Principal().KeyID()),
+		"",
+		idempotencyKey,
+		input,
+	)
+}
+
+// CreateManaged creates a real tenant session from already verified,
+// deployment-bound managed workload authority. It deliberately accepts no
+// access.Context: a signed workload is not a tenant API key and cannot acquire
+// ambient tenant permissions.
+func (service *SessionService) CreateManaged(
+	ctx context.Context,
+	scope tenant.Scope,
+	principal SessionPrincipal,
+	delegatedActor string,
+	idempotencyKey string,
+	input SessionCreateInput,
+) (spanResult0 CreatedSession, spanErr error) {
+	ctx, completeSpan := observability.StartSpan(ctx, service.operationTracer(), "verification.SessionService.CreateManaged")
+	defer observability.EndSpan(completeSpan, &spanErr)
+
+	if scope.ID().IsZero() || !principal.IsWorkload() || !validDelegatedActor(delegatedActor) || input.ExpectedProfileRevision == nil {
+		return CreatedSession{}, ErrSessionConflict
+	}
+	return service.create(ctx, scope, principal, delegatedActor, idempotencyKey, input)
+}
+
+func (service *SessionService) create(
+	ctx context.Context,
+	scope tenant.Scope,
+	principal SessionPrincipal,
+	delegatedActor string,
+	idempotencyKey string,
+	input SessionCreateInput,
+) (CreatedSession, error) {
 	verificationTTL, captureTTL, outcomePostTTL, err := service.resolveLifetimes(input)
 	if err != nil {
 		return CreatedSession{}, err
 	}
 	canonical, err := json.Marshal(struct {
-		ProfileID              string `json:"capture_profile_id"`
-		PolicyID               string `json:"policy_id"`
-		VerificationTTLSeconds int64  `json:"verification_ttl_seconds"`
-		CaptureTokenTTLSeconds int64  `json:"capture_token_ttl_seconds"`
-		OutcomePostTTLSeconds  int64  `json:"outcome_token_post_expiry_ttl_seconds"`
-		Region                 string `json:"region"`
+		ProfileID              string                        `json:"capture_profile_id"`
+		ProfileRevision        *uint32                       `json:"capture_profile_revision,omitempty"`
+		PolicyID               string                        `json:"policy_id"`
+		VerificationTTLSeconds int64                         `json:"verification_ttl_seconds"`
+		CaptureTokenTTLSeconds int64                         `json:"capture_token_ttl_seconds"`
+		OutcomePostTTLSeconds  int64                         `json:"outcome_token_post_expiry_ttl_seconds"`
+		Region                 string                        `json:"region"`
+		Locale                 string                        `json:"locale,omitempty"`
+		Experience             *experience.ResolutionRequest `json:"experience,omitempty"`
 	}{
 		ProfileID:              input.ProfileID.String(),
+		ProfileRevision:        input.ExpectedProfileRevision,
 		PolicyID:               input.PolicyID.String(),
 		VerificationTTLSeconds: int64(verificationTTL / time.Second),
 		CaptureTokenTTLSeconds: int64(captureTTL / time.Second),
 		OutcomePostTTLSeconds:  int64(outcomePostTTL / time.Second),
 		Region:                 service.region,
+		Locale:                 input.Locale,
+		Experience:             input.Experience,
 	})
 	if err != nil {
 		return CreatedSession{}, fmt.Errorf("serialise verification create command: %w", err)
 	}
 	now := service.clock.Now().UTC().Truncate(time.Second)
 	retry, err := idempotency.NewRequest(
-		authority.TenantScope().ID(),
-		authority.Principal().KeyID(),
+		scope.ID(),
+		principal,
 		OperationCreateVerification,
 		idempotencyKey,
 		canonical,
@@ -217,28 +264,30 @@ func (service *SessionService) Create(
 		return CreatedSession{}, fmt.Errorf("generate policy decision id: %w", err)
 	}
 	sessionExpiresAt := now.Add(verificationTTL)
-	creation, err := service.repository.Create(ctx, authority.TenantScope(), SessionCreateMutation{
-		SessionID:          sessionID,
-		CaptureTokenID:     tokenID,
-		OutcomeTokenID:     outcomeTokenID,
-		EventID:            eventID,
-		ProfileID:          input.ProfileID,
-		PolicyID:           input.PolicyID,
-		DecisionID:         decisionID,
-		Region:             service.region,
-		Actor:              authority.Principal().KeyID(),
-		CaptureKeyVersion:  service.captureSigner.ActiveVersion(),
-		OutcomeKeyVersion:  service.outcomeSigner.ActiveVersion(),
-		CreatedAt:          now,
-		SessionExpiresAt:   sessionExpiresAt,
-		CaptureTokenExpiry: now.Add(captureTTL),
-		OutcomeTokenExpiry: sessionExpiresAt.Add(outcomePostTTL),
-		Idempotency:        retry,
+	creation, err := service.repository.Create(ctx, scope, SessionCreateMutation{
+		SessionID:               sessionID,
+		CaptureTokenID:          tokenID,
+		OutcomeTokenID:          outcomeTokenID,
+		EventID:                 eventID,
+		ProfileID:               input.ProfileID,
+		PolicyID:                input.PolicyID,
+		DecisionID:              decisionID,
+		Region:                  service.region,
+		Actor:                   principal,
+		DelegatedActor:          delegatedActor,
+		ExpectedProfileRevision: input.ExpectedProfileRevision,
+		CaptureKeyVersion:       service.captureSigner.ActiveVersion(),
+		OutcomeKeyVersion:       service.outcomeSigner.ActiveVersion(),
+		CreatedAt:               now,
+		SessionExpiresAt:        sessionExpiresAt,
+		CaptureTokenExpiry:      now.Add(captureTTL),
+		OutcomeTokenExpiry:      sessionExpiresAt.Add(outcomePostTTL),
+		Idempotency:             retry,
 	})
 	if err != nil {
 		return CreatedSession{}, err
 	}
-	service.pinExperience(ctx, authority, creation.Session.ID(), input)
+	service.pinExperience(ctx, scope, creation.Session.ID(), input)
 	presented, err := service.captureSigner.Sign(creation.Credential)
 	if err != nil {
 		return CreatedSession{}, fmt.Errorf("sign capture token: %w", err)
@@ -260,7 +309,7 @@ func (service *SessionService) Create(
 // accessible safe default and resume re-resolves to that same default.
 func (service *SessionService) pinExperience(
 	ctx context.Context,
-	authority access.Context,
+	scope tenant.Scope,
 	verificationID id.Verification,
 	input SessionCreateInput,
 ) {
@@ -274,7 +323,21 @@ func (service *SessionService) pinExperience(
 			request.Locale = input.Locale
 		}
 	}
-	_, _ = service.experience.PinForSession(ctx, authority.TenantScope(), verificationID, request)
+	_, _ = service.experience.PinForSession(ctx, scope, verificationID, request)
+}
+
+func validDelegatedActor(value string) bool {
+	if !strings.HasPrefix(value, "usr_") || len(value) < 5 || len(value) > 128 || strings.TrimSpace(value) != value {
+		return false
+	}
+	for _, character := range value[len("usr_"):] {
+		isLetter := character >= 'a' && character <= 'z' || character >= 'A' && character <= 'Z'
+		isDigit := character >= '0' && character <= '9'
+		if !isLetter && !isDigit && character != '_' && character != '-' {
+			return false
+		}
+	}
+	return true
 }
 
 // Find returns a tenant-owned verification session after application-level authorisation.

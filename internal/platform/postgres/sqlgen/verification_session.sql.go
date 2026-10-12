@@ -458,8 +458,8 @@ func (q *Queries) InsertOutboxEvent(ctx context.Context, arg InsertOutboxEventPa
 const insertVerificationSessionAudit = `-- name: InsertVerificationSessionAudit :exec
 INSERT INTO idenqa.verification_session_audit (
     tenant_id, verification_id, aggregate_version, action,
-    actor_key_id, occurred_at
-) VALUES ($1, $2, $3, $4, $5, $6)
+    actor_id, delegated_actor_id, occurred_at
+) VALUES ($1, $2, $3, $4, $5, $6, $7)
 `
 
 type InsertVerificationSessionAuditParams struct {
@@ -467,7 +467,8 @@ type InsertVerificationSessionAuditParams struct {
 	VerificationID   string
 	AggregateVersion int64
 	Action           string
-	ActorKeyID       string
+	ActorID          string
+	DelegatedActorID *string
 	OccurredAt       pgtype.Timestamptz
 }
 
@@ -477,7 +478,8 @@ func (q *Queries) InsertVerificationSessionAudit(ctx context.Context, arg Insert
 		arg.VerificationID,
 		arg.AggregateVersion,
 		arg.Action,
-		arg.ActorKeyID,
+		arg.ActorID,
+		arg.DelegatedActorID,
 		arg.OccurredAt,
 	)
 	return err

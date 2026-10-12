@@ -61,6 +61,29 @@ func (keys ReviewAuthorityKeys) Values() map[string]string {
 	return result
 }
 
+// ManagedLaunchAuthorityKeys is the public Ed25519 key set trusted only for
+// signed managed-launch session commands.
+type ManagedLaunchAuthorityKeys map[string]string
+
+// Decode implements envconfig.Decoder.
+func (keys *ManagedLaunchAuthorityKeys) Decode(value string) error {
+	var decoded ReviewAuthorityKeys
+	if err := decoded.Decode(value); err != nil {
+		return err
+	}
+	*keys = ManagedLaunchAuthorityKeys(decoded)
+	return nil
+}
+
+// Values returns a defensive copy for verifier composition.
+func (keys ManagedLaunchAuthorityKeys) Values() map[string]string {
+	result := make(map[string]string, len(keys))
+	for keyID, material := range keys {
+		result[keyID] = material
+	}
+	return result
+}
+
 // Secret is a process credential that refuses string, Go-syntax, and JSON
 // disclosure. Value is intentionally exposed only through owned configuration
 // methods that construct a downstream credential at the last responsible
@@ -427,17 +450,23 @@ func (TelemetryHeaders) MarshalJSON() ([]byte, error) { return json.Marshal("[RE
 type API struct {
 	ProviderHealthConfiguration
 	ProviderLimitConfiguration
-	ReviewCertificationFile    string              `envconfig:"REVIEW_CERTIFICATION_FILE"`
-	ReviewBridgeSocket         string              `envconfig:"REVIEW_BRIDGE_SOCKET"`
-	ReviewBridgeOrganisationID string              `envconfig:"REVIEW_BRIDGE_ORGANISATION_ID"`
-	ReviewBridgeEnvironmentID  string              `envconfig:"REVIEW_BRIDGE_ENVIRONMENT_ID"`
-	ReviewBridgeDeploymentID   string              `envconfig:"REVIEW_BRIDGE_DEPLOYMENT_ID"`
-	ReviewBridgePublicKeys     ReviewAuthorityKeys `envconfig:"REVIEW_BRIDGE_PUBLIC_KEYS"`
-	ReviewBridgeAuthorityTTL   time.Duration       `envconfig:"REVIEW_BRIDGE_AUTHORITY_MAX_TTL"`
-	ReviewBrowserSessionTTL    time.Duration       `envconfig:"REVIEW_BROWSER_SESSION_TTL"`
-	ProviderRuntimeFile        string              `envconfig:"PROVIDER_RUNTIME_FILE"`
-	ModelRuntimeFile           string              `envconfig:"MODEL_RUNTIME_FILE"`
-	ProposalRuntimeFile        string              `envconfig:"PROPOSAL_RUNTIME_FILE"`
+	ReviewCertificationFile     string                     `envconfig:"REVIEW_CERTIFICATION_FILE"`
+	ReviewBridgeSocket          string                     `envconfig:"REVIEW_BRIDGE_SOCKET"`
+	ReviewBridgeOrganisationID  string                     `envconfig:"REVIEW_BRIDGE_ORGANISATION_ID"`
+	ReviewBridgeEnvironmentID   string                     `envconfig:"REVIEW_BRIDGE_ENVIRONMENT_ID"`
+	ReviewBridgeDeploymentID    string                     `envconfig:"REVIEW_BRIDGE_DEPLOYMENT_ID"`
+	ReviewBridgePublicKeys      ReviewAuthorityKeys        `envconfig:"REVIEW_BRIDGE_PUBLIC_KEYS"`
+	ReviewBridgeAuthorityTTL    time.Duration              `envconfig:"REVIEW_BRIDGE_AUTHORITY_MAX_TTL"`
+	ReviewBrowserSessionTTL     time.Duration              `envconfig:"REVIEW_BROWSER_SESSION_TTL"`
+	ManagedLaunchOrganisationID string                     `envconfig:"MANAGED_LAUNCH_ORGANISATION_ID"`
+	ManagedLaunchEnvironmentID  string                     `envconfig:"MANAGED_LAUNCH_ENVIRONMENT_ID"`
+	ManagedLaunchDeploymentID   string                     `envconfig:"MANAGED_LAUNCH_DEPLOYMENT_ID"`
+	ManagedLaunchIssuer         string                     `envconfig:"MANAGED_LAUNCH_ISSUER"`
+	ManagedLaunchPublicKeys     ManagedLaunchAuthorityKeys `envconfig:"MANAGED_LAUNCH_PUBLIC_KEYS"`
+	ManagedLaunchAuthorityTTL   time.Duration              `envconfig:"MANAGED_LAUNCH_AUTHORITY_MAX_TTL"`
+	ProviderRuntimeFile         string                     `envconfig:"PROVIDER_RUNTIME_FILE"`
+	ModelRuntimeFile            string                     `envconfig:"MODEL_RUNTIME_FILE"`
+	ProposalRuntimeFile         string                     `envconfig:"PROPOSAL_RUNTIME_FILE"`
 	EvidenceUploadConfiguration
 	EvidenceLocalDirectory     string                `envconfig:"EVIDENCE_LOCAL_DIRECTORY"`
 	EvidenceLocalKeyringFile   string                `envconfig:"EVIDENCE_LOCAL_KEYRING_FILE"`
@@ -837,6 +866,24 @@ func (configuration API) validate(providerEvidence bool) error {
 	}
 	if configuration.VerificationIdempotencyTTL <= 0 {
 		return errors.New("verification idempotency retention must be greater than zero")
+	}
+	managedLaunchConfigured := len(configuration.ManagedLaunchPublicKeys) > 0
+	managedLaunchFields := []string{
+		configuration.ManagedLaunchOrganisationID,
+		configuration.ManagedLaunchEnvironmentID,
+		configuration.ManagedLaunchDeploymentID,
+		configuration.ManagedLaunchIssuer,
+	}
+	for _, value := range managedLaunchFields {
+		if (value != "") != managedLaunchConfigured {
+			return errors.New("managed launch binding, issuer, and public keys must be configured together")
+		}
+	}
+	if managedLaunchConfigured && (configuration.ManagedLaunchAuthorityTTL <= 0 || configuration.ManagedLaunchAuthorityTTL > 5*time.Minute) {
+		return errors.New("managed launch authority maximum TTL must be positive and no more than five minutes")
+	}
+	if !managedLaunchConfigured && configuration.ManagedLaunchAuthorityTTL != 0 {
+		return errors.New("managed launch authority TTL requires managed launch public keys")
 	}
 	if configuration.RealtimeTicketLifetime < 10*time.Second ||
 		configuration.RealtimeTicketLifetime > 60*time.Second {

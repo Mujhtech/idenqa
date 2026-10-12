@@ -116,7 +116,7 @@ func (service *RecaptureService) Create(ctx context.Context, auth access.Context
 	sessionExpiresAt := now.Add(service.ttl)
 	result, err := service.repository.CreateRecapture(ctx, scope, caseID, version, verification.SessionCreateMutation{
 		SessionID: child, CaptureTokenID: token, OutcomeTokenID: outcomeToken,
-		EventID: event, DecisionID: decision, Actor: auth.Principal().KeyID(),
+		EventID: event, DecisionID: decision, Actor: verification.APIKeySessionPrincipal(auth.Principal().KeyID()),
 		CaptureKeyVersion: service.captureSigner.ActiveVersion(),
 		OutcomeKeyVersion: service.outcomeSigner.ActiveVersion(), CreatedAt: now,
 		SessionExpiresAt: sessionExpiresAt, CaptureTokenExpiry: now.Add(service.timeToCapture),

@@ -1997,8 +1997,9 @@ type IdenqaVerificationSessionAudit struct {
 	VerificationID   string
 	AggregateVersion int64
 	Action           string
-	ActorKeyID       string
+	ActorID          string
 	OccurredAt       pgtype.Timestamptz
+	DelegatedActorID *string
 }
 
 type IdenqaVerificationTransition struct {

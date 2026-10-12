@@ -165,12 +165,15 @@ func TestProvisionUsesFixedTenantAndAuthorityContract(t *testing.T) {
 	}
 }
 
-func TestConsoleAuthorityCanReadVerificationInspection(t *testing.T) {
+func TestConsoleAuthorityCanReadVerificationAndManageExperiences(t *testing.T) {
 	t.Parallel()
 
-	for _, required := range []string{"verification_sessions:read", "evidence:read", "webhooks:read"} {
+	for _, required := range []string{
+		"verification_sessions:read", "evidence:read", "webhooks:read", "capture_profiles:read", "policies:read",
+		"experiences:read", "experiences:write", "experiences:publish",
+	} {
 		if !slices.Contains(consolePatterns, required) {
-			t.Errorf("consolePatterns is missing verification inspection permission %q", required)
+			t.Errorf("consolePatterns is missing Console permission %q", required)
 		}
 	}
 }

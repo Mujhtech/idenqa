@@ -1047,7 +1047,7 @@ func newIntegrationSessionMutation(
 		PolicyID:           policyID,
 		DecisionID:         decisionID,
 		Region:             region,
-		Actor:              actor,
+		Actor:              verification.APIKeySessionPrincipal(actor),
 		CaptureKeyVersion:  1,
 		OutcomeKeyVersion:  1,
 		CreatedAt:          now,

@@ -18,6 +18,7 @@ import (
 	identitypostgres "github.com/Mujhtech/idenqa/internal/identity/postgres"
 	"github.com/Mujhtech/idenqa/internal/keycustody"
 	keycustodypostgres "github.com/Mujhtech/idenqa/internal/keycustody/postgres"
+	"github.com/Mujhtech/idenqa/internal/managedlaunch"
 
 	assetstore "github.com/Mujhtech/idenqa/adapters/experience/assetstore"
 	ed25519signer "github.com/Mujhtech/idenqa/adapters/experience/ed25519signer"
@@ -623,6 +624,39 @@ func newProcess(
 		return nil, fmt.Errorf("construct verification session service: %w", err)
 	}
 	sessionService.WithTracer(operationTracer)
+
+	var managedLaunchRoutes InternalRouteRegistrar
+	if len(configuration.ManagedLaunchPublicKeys) > 0 {
+		verifier, err := managedlaunch.NewVerifier(
+			configuration.ManagedLaunchPublicKeys.Values(),
+			managedlaunch.Binding{
+				OrganisationID: configuration.ManagedLaunchOrganisationID,
+				EnvironmentID:  configuration.ManagedLaunchEnvironmentID,
+				DeploymentID:   configuration.ManagedLaunchDeploymentID,
+				Region:         configuration.Region,
+			},
+			configuration.ManagedLaunchIssuer,
+			configuration.ManagedLaunchAuthorityTTL,
+			clock.System{}.Now,
+		)
+		if err != nil {
+			_ = providers.Shutdown(context.Background())
+			connectionPool.Close()
+			return nil, fmt.Errorf("construct managed launch authority verifier: %w", err)
+		}
+		service, err := managedlaunch.NewService(verifier, sessionService)
+		if err != nil {
+			_ = providers.Shutdown(context.Background())
+			connectionPool.Close()
+			return nil, fmt.Errorf("construct managed launch service: %w", err)
+		}
+		managedLaunchRoutes, err = httpapi.NewManagedLaunchRoutes(service, logger)
+		if err != nil {
+			_ = providers.Shutdown(context.Background())
+			connectionPool.Close()
+			return nil, err
+		}
+	}
 
 	var experienceStore *experiencepostgres.Store
 	var experienceRoutes RouteRegistrar
@@ -1414,6 +1448,9 @@ func newProcess(
 		accessCatalogRoutes, auditRoutes, requestLogRoutes, assuranceRoutes, identityRoutes, fraudRoutes, followupRoutes, reviewManagementRoutes, proposalRoutes, tenantRoutes, modelRoutes, policyRoutes, policySimulationRoutes, webhookRoutes, decisionRoutes, reviewRoutes, profileRoutes, verificationRoutes, captureOutcomeRoutes, cancellationRoutes, authorityRoutes, connectionRoutes, realtimeRoutes, providerRegistrationRoutes, packRoutes, kmsRoutes, supportRoutes,
 	}
 	internalRoutes := []InternalRouteRegistrar{}
+	if managedLaunchRoutes != nil {
+		internalRoutes = append(internalRoutes, managedLaunchRoutes)
+	}
 	if keyOperationRoutes != nil {
 		routes = append(routes, keyOperationRoutes)
 	}

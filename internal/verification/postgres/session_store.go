@@ -97,6 +97,9 @@ func (store *SessionStore) Create(
 		if err != nil {
 			return fmt.Errorf("lock active capture profile revision: %w", err)
 		}
+		if mutation.ExpectedProfileRevision != nil && int64(locked.Revision) != int64(*mutation.ExpectedProfileRevision) {
+			return verification.ErrProfileUnavailable
+		}
 		profile, revision, registry, err := store.restoreLockedProfile(locked)
 		if err != nil {
 			return err
@@ -574,7 +577,8 @@ func (store *SessionStore) insertCreation(
 		VerificationID:   session.ID().String(),
 		AggregateVersion: session.Version(),
 		Action:           "create",
-		ActorKeyID:       mutation.Actor.String(),
+		ActorID:          mutation.Actor.String(),
+		DelegatedActorID: optionalString(mutation.DelegatedActor),
 		OccurredAt:       timestamp(session.CreatedAt()),
 	}); err != nil {
 		return fmt.Errorf("insert verification session audit: %w", err)
