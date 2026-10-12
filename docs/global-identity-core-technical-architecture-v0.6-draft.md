@@ -2695,6 +2695,17 @@ The SDK returns a verification-session reference and safe status information. It
 
 The server-created session, not the untrusted client application, selects the authoritative workflow, assurance policy, tenant, environment, and published experience version. Client options may request an allowed locale, colour scheme, presentation style, or server-approved experience key; they cannot substitute another tenant's configuration or alter required steps.
 
+Hosted Capture follows the same boundary before a session exists. A trusted
+tenant backend or managed launch gateway resolves organisation/recipient
+identity server-side and returns the exact notice used by the country-selection
+screen. Browser fragments and request bodies cannot author controller or
+recipient display names. An explicitly development-only local Vite fixture may
+hold one self-hosted tenant API key and provision one fixed synthetic journey;
+it accepts only a server-bound opaque launch credential and is not a supported
+host, compatibility mode, managed-launch fallback, or milestone-completion
+evidence. Static production hosts and operational Capture Web deployments must
+use a separately supplied trusted bootstrap boundary.
+
 ### 31.6 Capture responsibilities
 
 - Session-token validation
@@ -3513,6 +3524,55 @@ The managed service adds operational value:
 - Support and SLAs
 - Dedicated deployment
 
+**Selected managed Capture launch boundary — updated 11 October 2026:** managed Cloud
+serves one versioned static Capture Web application through regional edges and
+uses a multi-tenant regional launch gateway. A tenant backend obtains an opaque,
+short-lived, one-time launch credential bound server-side to the exact tenant,
+deployment, region, subject context, profile/workflow, verified origin and
+published experience/recipient identity. The gateway redeems that credential,
+resolves the active regional Core and current authority without trusting browser
+tenant hints, creates or resumes the session, and returns only the pinned notice
+and experience plus display-once capture and outcome credentials. The browser
+never receives a tenant API key, Cloud workload credential, deployment secret,
+or authority capable of creating arbitrary sessions. Broad tenant authority is
+resolved dynamically at the gateway-to-Core boundary rather than configured as
+one process-wide singleton. Dedicated deployments may isolate the same logical
+components but do not change the public launch contract.
+
+**Implemented published-flow preview subset:** Console requests
+`POST /cloud/v1/flows/{flow_id}/preview-sessions`. Cloud resolves the exact
+published profile revision in the selected sandbox environment and issues a
+random five-minute, one-time launch credential in a URL fragment while storing
+only its digest. The hosted page removes the fragment and posts the credential
+to same-origin `POST /capture/bootstrap`. Cloud claims it atomically, signs a
+canonical 30-second `idenqa.cloud/managed-launch-authority/v1` command with
+Ed25519, and calls Core's internal managed-launch session route without a tenant
+API key. The signed claims bind issuer, audience, command/workload identity,
+organisation, Cloud tenant, environment, deployment, region, Core tenant,
+delegated workforce actor, purpose, profile/revision, policy, verified origin,
+locale, sandbox provider mode, tenant-enabled webhook mode, request digest and
+time window.
+
+Core trusts an overlapping key-ID/public-key set and verifies every binding
+before using the managed workload principal and delegated actor to invoke the
+normal session service. Profile revision drift fails closed. Session,
+idempotency, outbox, Headgate work, real provider sandbox dispatch and signed
+tenant webhooks follow the normal authoritative path; preview does not suppress
+tenant notifications or substitute synthetic Console state. Display-once
+capture and outcome tokens pass through the gateway response and are never
+persisted by Cloud. Responses and bootstrap are `no-store`.
+
+This subset is not a general managed subject launch contract. It requires a
+Cloud environment recorded as `sandbox` and a bound Core deployment whose
+provider adapters are configured for their reviewed sandbox origins. Until an
+explicit flow-to-policy assignment exists, preview fails closed unless exactly
+one policy is active. Production signing-private-key custody and dynamic
+rotation, the broader recipient/subject binding, resume, and production launch
+authority remain unresolved. The signing key must never enter Capture Web,
+URL, HTML, browser storage, logs or analytics; no tenant API key or
+managed-provisioning credential may substitute for this operation-scoped
+authority. Cloud implementation remains in the separate Cloud repository.
+
 #### 39.3.1 Cloud-managed capture experiences
 
 Idenqa Cloud provides a configuration plane for white-labelled Idenqa Capture journeys across hosted Web, embedded Web, native iOS, native Android, Flutter, and React Native. A tenant can manage logos, semantic colours, approved typography, structured text, locales, support links, custom domains, and safe presentation preferences once and publish them consistently to every supported SDK.
@@ -3567,6 +3627,7 @@ GET  /cloud/v1/brand-assets/{asset_id}
 POST /cloud/v1/domains
 POST /cloud/v1/domains/{domain_id}/verify
 POST /cloud/v1/applications
+POST /capture/v1/launches/{launch_credential}/redeem
 GET  /capture/v1/sessions/{session_id}/experience
 ```
 
@@ -3980,6 +4041,7 @@ Version one is ready for external beta when:
 
 The Cloud-managed customization capability is ready for beta when:
 
+- The shared launch gateway resolves tenant, deployment and region solely from a one-time bounded credential, rejects replay and origin/binding changes, and never exposes tenant or workload authority to Capture Web.
 - Cloud organisation name is projected into Core `display_name`; hosted notice identity is derived from authenticated server-side state, while any multi-brand override is verified, versioned and pinned with the experience.
 - One published configuration renders consistently across hosted Web, embedded Web, native iOS, native Android, Flutter, and React Native within documented platform differences.
 - Logo, semantic colours, structured copy, locale, support links, dark mode, right-to-left layout, and verified-domain branding pass automated and human preview checks.
