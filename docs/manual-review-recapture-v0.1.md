@@ -12,30 +12,25 @@ The linkage must be tenant-scoped and auditable, with expected case versions, on
 
 ## 2. Implemented reviewer authority prerequisite
 
-The API resolves durable operator assignments first, with `IDENQA_REVIEW_AUTHORITY_FILE` as a bootstrap fallback only when no database assignment exists. Both bind an authenticated API-key record ID to a stable operator ID. The key still needs the existing transport scope (`reviews:write` or `appeals:write`). The application service separately resolves the operator's permissions, certifications, region and validity window for each reviewer action.
+The API resolves operator assignments exclusively from PostgreSQL. Assignments bind an authenticated API-key record ID to a stable operator ID. The key still needs the existing transport scope (`reviews:write` or `appeals:write`). The application service separately resolves the operator's permissions, certifications, region and validity window for each reviewer action.
 
 Claim, finding, correction and appeal assignment/resolution bodies no longer accept `reviewer_id` or `certifications`; closed JSON decoding rejects those fields. Findings recheck certification, including the second reviewer. Assignments across key rotation must retain the same operator ID so an additional credential does not create a second independent person. The API key remains the audit actor and findings retain the resolved operator ID.
 
-The bounded, closed bootstrap file is reread when fallback applies. Missing or invalid authority fails closed. Protect file writes as privileged deployment configuration. Durable assignments are rechecked under transaction locks for consequential actions; revocation waits for already-authorized transactions and denies subsequent actions. A revoked database row never falls back to the file. Section 6 documents dynamic administration.
+Durable assignments are rechecked under transaction locks for consequential actions; revocation waits for already-authorized transactions and denies subsequent actions. Missing, revoked, expired or invalid assignments deny access. Section 6 documents dynamic administration through `PUT /v1/review-operators/{keyID}` with a `reviews:admin` credential.
 
-Example (replace every identifier and validity interval with deployment-owned values):
+**Selected — 8 October 2026:** The assignment-file fallback and `IDENQA_REVIEW_AUTHORITY_FILE` are removed. Existing file assignments must be provisioned through the operator administration API; they are not imported automatically. External certification issuer keys remain optional under `IDENQA_REVIEW_CERTIFICATION_FILE`. This bounded, closed file is reread for certification checks, accepts only `certification_issuers`, and cannot grant operator identity or permissions:
 
 ```json
 {
-  "assignments": [
-    {
-      "tenant_id": "ten_01K4AR9V8FQ2G7ZXCPNM5T6JWH",
-      "api_key_id": "key_01K4AR9V8FQ2G7ZXCPNM5T6JWH",
-      "operator_id": "reviewer-1",
-      "permissions": ["reviews:claim", "reviews:find"],
-      "certifications": ["document.level2"],
-      "regions": ["tenant.region.ng"],
-      "not_before": "2026-09-07T00:00:00Z",
-      "expires_at": "2026-09-08T00:00:00Z"
+  "certification_issuers": {
+    "issuer.registry": {
+      "key-id": "<standard-base64 Ed25519 public key>"
     }
-  ]
+  }
 }
 ```
+
+A configured file that disappears or becomes invalid fails closed. With no configured file or an empty issuer map, existing tenant-attested certification behaviour remains. Protect issuer configuration writes as privileged deployment configuration.
 
 This is a server-managed assignment mechanism. It does not verify a professional credential with an external issuer, prove which human possesses a shared API key, or implement SSO. Deployments must use individually assigned credentials and maintain operator identity consistently. SSO remains deferred.
 
@@ -145,7 +140,7 @@ Restricted runtime roles additionally need `SELECT, INSERT` on `idenqa.review_re
 
 ## 6. Review operations and public integration
 
-**Selected and implemented — 8 September 2026:** One tenant key with `reviews:admin` manages versioned operator assignments, tenant-attested certifications and review configuration. Revoked database assignments are tombstones: they never fall back to the deployment assignment file. Current operator permissions, certificate, region and expiry are checked inside consequential transactions. Stable operator IDs must survive key rotation. External certificate issuers remain a separate verification-adapter integration.
+**Selected and implemented — 8 September 2026:** One tenant key with `reviews:admin` manages versioned operator assignments, tenant-attested certifications and review configuration. Revoked database assignments are tombstones and deny access. Current operator permissions, certificate, region and expiry are checked inside consequential transactions. Stable operator IDs must survive key rotation. External certificate issuers remain a separate verification-adapter integration.
 
 `PUT/GET /v1/review-operators/{keyID}` and `PUT/GET /v1/review-policies/{policyID}/revisions/{revision}` expose configuration and version. Mutations require `Idempotency-Key`; writes carry `expected_version` and `configuration`. A policy configuration pins tenant, exact policy revision/digest, required certificate, oversight, permitted findings, explicit evidence display purposes/redaction rectangles, initial priority/SLA, queue labels, sampling percentage, appeal window and escalation certificate. Existing cases retain immutable settings. `PUT /v1/review-cases/{caseID}/settings` adopts matching settings once for an existing routed case using the settings document directly.
 
@@ -181,7 +176,7 @@ Apply migrations 46 and 47 before starting these binaries. Restricted roles need
 
 ## 7. Acceptance still required
 
-The selected Core workflow and integration helpers above are implemented, including a fail-closed Ed25519 external-certification assertion adapter configured through the existing authority file and real-HTTP composed correction and appeal journeys. A real third-party issuer trust/status integration (remote key discovery and revocation checks), a complete tenant subject-notification surface, advanced queue assignment automation and production acceptance of the non-authoritative review copilot remain separate work. SSO remains deferred.
+The selected Core workflow and integration helpers above are implemented, including a fail-closed Ed25519 external-certification assertion adapter configured through the certification-only issuer file and real-HTTP composed correction and appeal journeys. A real third-party issuer trust/status integration (remote key discovery and revocation checks), a complete tenant subject-notification surface, advanced queue assignment automation and production acceptance of the non-authoritative review copilot remain separate work. SSO remains deferred.
 
 The live composed fixture demonstrates one least-privilege path through queue claim, protected evidence redemption, `request_input`, tenant-controlled child handoff, fresh child authorization and capture, child outcome acknowledgement, explicit parent re-evaluation and parent completion. It is development and conformance evidence, not accepted product-demo evidence. O-03 remains **In review** until reviewer/subject visual and interaction acceptance is recorded; composed recovery, correction and appeal outcomes are demonstrated at the Core/HTTP boundary. External certification is implemented as a fail-closed adapter over deployment-mounted issuer keys; a real third-party issuer trust/status integration remains an integration boundary rather than a claim established by the tenant-attested fixture.
 
@@ -202,7 +197,7 @@ Focused Go race tests cover the review domain/service, configuration and API bou
 
 **Composed recapture increment — 15 September 2026:** A public-SDK-driven tenant fixture now creates and configures the original verification, lets an authorized operator claim the routed case, redeems a single-use protected evidence grant, records `request_input`, creates the linked child and hands its credentials to Capture Web without placing bearers in the URL. The child supplies fresh authorization, uploads new evidence, reaches its own verified decision, is acknowledged by the operator and triggers an explicit parent re-evaluation to the parent's terminal verified decision. The policy snapshot projects the immutable `review.recapture.requested` context fact for linked children; it is not an assurance assertion. The fixture's API key remains server-side and reviewer actions retain resolved assignment, permission, certification and region checks.
 
-The serial real-Core Chromium suite passes all ten journeys, including this composed path and the existing hosted, embedded, active-liveness and terminal-outcome matrix. Focused Go regressions cover PostgreSQL-microsecond ordering across recapture creation, upload issuance, preflight and acceptance; policy tests cover bounded static fact-presence guards; and TypeScript tests cover RFC 9651 quoting of review idempotency keys. The captured completion screen is reviewable evidence, but explicit user-facing acceptance has not yet been recorded. Correction, appeal and recovery branches are not composed by this fixture, and no external certification issuer is integrated; O-03 therefore moves to **In review**, not complete.
+The serial real-Core Chromium suite historically passed all ten journeys, including this composed path and the hosted, embedded, active-liveness and terminal-outcome matrix. On 9 October 2026 its credential-bearing Vite/review server was removed with no fallback; these results remain historical evidence and the fixture is no longer an executable launch path. Focused Go regressions cover PostgreSQL-microsecond ordering across recapture creation, upload issuance, preflight and acceptance; policy tests cover bounded static fact-presence guards; and TypeScript tests cover RFC 9651 quoting of review idempotency keys. The captured completion screen is reviewable historical evidence, but explicit user-facing acceptance has not yet been recorded. Correction, appeal and recovery branches are not composed by a current trusted launch fixture, and no external certification issuer is integrated; O-03 therefore remains **In review**, not complete.
 
 ## 9. Related documents
 

@@ -14202,7 +14202,7 @@ type ClientInterface interface {
 
 	// PutReviewOperatorWithBody Put review operator
 	//
-	// Version a stable operator assignment, permissions, regions and tenant-attested certifications. Revoked durable rows prevent fallback to bootstrap files. Requires reviews:admin.
+	// Version a stable operator assignment, permissions, regions and tenant-attested certifications. Missing or revoked durable assignments deny reviewer access. Requires reviews:admin.
 	//
 	// Takes any type of body and a specified content type.
 	//
@@ -14211,7 +14211,7 @@ type ClientInterface interface {
 
 	// PutReviewOperator Put review operator
 	//
-	// Version a stable operator assignment, permissions, regions and tenant-attested certifications. Revoked durable rows prevent fallback to bootstrap files. Requires reviews:admin.
+	// Version a stable operator assignment, permissions, regions and tenant-attested certifications. Missing or revoked durable assignments deny reviewer access. Requires reviews:admin.
 	//
 	// Takes a body of the `application/json` content type.
 	//
@@ -20269,7 +20269,7 @@ func (c *Client) GetReviewOperator(ctx context.Context, keyID string, reqEditors
 
 // PutReviewOperatorWithBody Put review operator
 //
-// Version a stable operator assignment, permissions, regions and tenant-attested certifications. Revoked durable rows prevent fallback to bootstrap files. Requires reviews:admin.
+// Version a stable operator assignment, permissions, regions and tenant-attested certifications. Missing or revoked durable assignments deny reviewer access. Requires reviews:admin.
 //
 // Takes any type of body and a specified content type.
 //
@@ -20288,7 +20288,7 @@ func (c *Client) PutReviewOperatorWithBody(ctx context.Context, keyID string, pa
 
 // PutReviewOperator Put review operator
 //
-// Version a stable operator assignment, permissions, regions and tenant-attested certifications. Revoked durable rows prevent fallback to bootstrap files. Requires reviews:admin.
+// Version a stable operator assignment, permissions, regions and tenant-attested certifications. Missing or revoked durable assignments deny reviewer access. Requires reviews:admin.
 //
 // Takes a body of the `application/json` content type.
 //
@@ -36879,7 +36879,7 @@ type ClientWithResponsesInterface interface {
 
 	// PutReviewOperatorWithBodyWithResponse Put review operator
 	//
-	// Version a stable operator assignment, permissions, regions and tenant-attested certifications. Revoked durable rows prevent fallback to bootstrap files. Requires reviews:admin.
+	// Version a stable operator assignment, permissions, regions and tenant-attested certifications. Missing or revoked durable assignments deny reviewer access. Requires reviews:admin.
 	//
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -36888,7 +36888,7 @@ type ClientWithResponsesInterface interface {
 
 	// PutReviewOperatorWithResponse Put review operator
 	//
-	// Version a stable operator assignment, permissions, regions and tenant-attested certifications. Revoked durable rows prevent fallback to bootstrap files. Requires reviews:admin.
+	// Version a stable operator assignment, permissions, regions and tenant-attested certifications. Missing or revoked durable assignments deny reviewer access. Requires reviews:admin.
 	//
 	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -77624,7 +77624,7 @@ func (c *ClientWithResponses) GetReviewOperatorWithResponse(ctx context.Context,
 
 // PutReviewOperatorWithBodyWithResponse Put review operator
 //
-// Version a stable operator assignment, permissions, regions and tenant-attested certifications. Revoked durable rows prevent fallback to bootstrap files. Requires reviews:admin.
+// Version a stable operator assignment, permissions, regions and tenant-attested certifications. Missing or revoked durable assignments deny reviewer access. Requires reviews:admin.
 //
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 //
@@ -77639,7 +77639,7 @@ func (c *ClientWithResponses) PutReviewOperatorWithBodyWithResponse(ctx context.
 
 // PutReviewOperatorWithResponse Put review operator
 //
-// Version a stable operator assignment, permissions, regions and tenant-attested certifications. Revoked durable rows prevent fallback to bootstrap files. Requires reviews:admin.
+// Version a stable operator assignment, permissions, regions and tenant-attested certifications. Missing or revoked durable assignments deny reviewer access. Requires reviews:admin.
 //
 // Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 //

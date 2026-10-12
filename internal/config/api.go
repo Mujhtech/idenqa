@@ -427,7 +427,7 @@ func (TelemetryHeaders) MarshalJSON() ([]byte, error) { return json.Marshal("[RE
 type API struct {
 	ProviderHealthConfiguration
 	ProviderLimitConfiguration
-	ReviewAuthorityFile        string              `envconfig:"REVIEW_AUTHORITY_FILE"`
+	ReviewCertificationFile    string              `envconfig:"REVIEW_CERTIFICATION_FILE"`
 	ReviewBridgeSocket         string              `envconfig:"REVIEW_BRIDGE_SOCKET"`
 	ReviewBridgeOrganisationID string              `envconfig:"REVIEW_BRIDGE_ORGANISATION_ID"`
 	ReviewBridgeEnvironmentID  string              `envconfig:"REVIEW_BRIDGE_ENVIRONMENT_ID"`

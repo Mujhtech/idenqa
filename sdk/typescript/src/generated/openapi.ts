@@ -2110,7 +2110,7 @@ export interface paths {
         readonly get: operations["getReviewOperator"];
         /**
          * Put review operator
-         * @description Version a stable operator assignment, permissions, regions and tenant-attested certifications. Revoked durable rows prevent fallback to bootstrap files. Requires reviews:admin.
+         * @description Version a stable operator assignment, permissions, regions and tenant-attested certifications. Missing or revoked durable assignments deny reviewer access. Requires reviews:admin.
          */
         readonly put: operations["putReviewOperator"];
         readonly post?: never;
@@ -9240,7 +9240,7 @@ export interface components {
          * @example NOT_FOUND
          * @enum {string}
          */
-        readonly ProblemCode: "INVALID_REQUEST" | "UNAUTHENTICATED" | "INSUFFICIENT_SCOPE" | "PROCESSING_AUTHORITY_REQUIRED" | "CAPTURE_ORIGIN_NOT_ALLOWED" | "NOT_FOUND" | "METHOD_NOT_ALLOWED" | "CONFLICT" | "IDEMPOTENCY_CONFLICT" | "PRECONDITION_FAILED" | "REQUEST_TOO_LARGE" | "PRECONDITION_REQUIRED" | "RATE_LIMITED" | "REQUEST_CANCELLED" | "INTERNAL_ERROR" | "SERVICE_UNAVAILABLE" | "REQUEST_TIMEOUT";
+        readonly ProblemCode: "INVALID_REQUEST" | "UNAUTHENTICATED" | "INSUFFICIENT_SCOPE" | "PROCESSING_AUTHORITY_REQUIRED" | "CAPTURE_ORIGIN_NOT_ALLOWED" | "REVIEW_SESSION_EXPIRED" | "REVIEW_SESSION_REPLAYED" | "REVIEW_CASE_STALE" | "REVIEW_AUTHORITY_REVOKED" | "NOT_FOUND" | "METHOD_NOT_ALLOWED" | "CONFLICT" | "IDEMPOTENCY_CONFLICT" | "PRECONDITION_FAILED" | "REQUEST_TOO_LARGE" | "PRECONDITION_REQUIRED" | "RATE_LIMITED" | "REQUEST_CANCELLED" | "INTERNAL_ERROR" | "SERVICE_UNAVAILABLE" | "REQUEST_TIMEOUT";
         /** @description Safe RFC 9457 problem details extended with an Idenqa code and request ID. */
         readonly Problem: {
             /**

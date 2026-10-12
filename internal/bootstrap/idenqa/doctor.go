@@ -310,15 +310,15 @@ func doctorCheckRunner(configuration config.API, report *doctorReport) {
 			return
 		}
 	}
-	if configuration.ReviewAuthorityFile != "" {
+	if configuration.ReviewCertificationFile != "" {
 		checked = true
-		if err := (config.ReviewAuthorityFile{Path: configuration.ReviewAuthorityFile}).Validate(); err != nil {
-			report.add("runner", doctorStatusFail, "review authority configuration is invalid")
+		if err := (config.ReviewCertificationFile{Path: configuration.ReviewCertificationFile}).Validate(); err != nil {
+			report.add("runner", doctorStatusFail, "review certification configuration is invalid")
 			return
 		}
 	}
 	if !checked {
-		report.add("runner", doctorStatusPass, "no mounted provider, model, or review-authority file is configured")
+		report.add("runner", doctorStatusPass, "no mounted provider, model, or review-certification file is configured")
 		return
 	}
 	report.add("runner", doctorStatusPass, "mounted runner configuration is valid")

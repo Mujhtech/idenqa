@@ -5312,7 +5312,7 @@ paths:
       summary: Put review operator
       description:
         Version a stable operator assignment, permissions, regions and tenant-attested certifications.
-        Revoked durable rows prevent fallback to bootstrap files. Requires reviews:admin.
+        Missing or revoked durable assignments deny reviewer access. Requires reviews:admin.
       tags:
         - Manual review
       security:

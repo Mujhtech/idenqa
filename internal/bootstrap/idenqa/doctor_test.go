@@ -65,7 +65,7 @@ func setDoctorEnvironment(t *testing.T, directory, keyringFile string) {
 	t.Setenv("IDENQA_API_KEY", "")
 	t.Setenv("IDENQA_PROVIDER_RUNTIME_FILE", "")
 	t.Setenv("IDENQA_MODEL_RUNTIME_FILE", "")
-	t.Setenv("IDENQA_REVIEW_AUTHORITY_FILE", "")
+	t.Setenv("IDENQA_REVIEW_CERTIFICATION_FILE", "")
 }
 
 func createDoctorKeyring(t *testing.T) (string, string) {

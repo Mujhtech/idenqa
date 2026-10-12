@@ -8,6 +8,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"io"
 	"log/slog"
 	"net/http"
@@ -191,7 +192,6 @@ func startReviewHTTPJourney(t *testing.T, f captureAcceptanceFixture, evaluator 
 	unassertedAssignment.CertificationAssertions = nil
 
 	document, err := json.Marshal(map[string]any{
-		"assignments": []review.Assignment{resolverAssignment, appealerAssignment, findOnlyAssignment, uncertifiedAssignment},
 		"certification_issuers": map[string]map[string]string{
 			issuer: {keyID: base64.StdEncoding.EncodeToString(public)},
 		},
@@ -199,17 +199,23 @@ func startReviewHTTPJourney(t *testing.T, f captureAcceptanceFixture, evaluator 
 	if err != nil {
 		t.Fatal(err)
 	}
-	path := filepath.Join(t.TempDir(), "review-authority.json")
+	path := filepath.Join(t.TempDir(), "review-certification.json")
 	if err := os.WriteFile(path, document, 0600); err != nil {
 		t.Fatal(err)
 	}
-	authorityFile := config.ReviewAuthorityFile{Path: path}
+	authorityFile := config.ReviewCertificationFile{Path: path}
 	if err := authorityFile.Validate(); err != nil {
 		t.Fatal(err)
 	}
 	authority, err := reviewpostgres.NewAuthority(f.runtime, authorityFile)
 	if err != nil {
 		t.Fatal(err)
+	}
+	if _, err := authority.ResolveReviewer(t.Context(), f.scope, review.Actor{ID: reviewerKey.ID().String()}, reviewHTTPRegion, f.now); !errors.Is(err, review.ErrForbidden) {
+		t.Fatalf("missing durable assignment must deny: %v", err)
+	}
+	for _, value := range []review.Assignment{resolverAssignment, appealerAssignment, findOnlyAssignment, uncertifiedAssignment} {
+		administerReviewOperator(t, f, authority, value)
 	}
 	reviewStore, err := reviewpostgres.NewWithClock(f.runtime, integrationProtector{}, fixedIntegrationClock{now: f.now})
 	if err != nil {

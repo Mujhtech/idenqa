@@ -22,18 +22,18 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
-// Authority resolves durable assignments on every operation. A revoked row never falls back to a file.
+// Authority resolves durable assignments on every operation. Missing or revoked assignments deny access.
 type Authority struct {
-	pool     transactionRunner
-	fallback review.Authority
+	pool           transactionRunner
+	certifications review.CertificationVerifierSource
 }
 
-// NewAuthority constructs durable authority with an optional bootstrap fallback.
-func NewAuthority(pool transactionRunner, fallback review.Authority) (*Authority, error) {
+// NewAuthority constructs durable authority with optional external certification verification.
+func NewAuthority(pool transactionRunner, certifications review.CertificationVerifierSource) (*Authority, error) {
 	if pool == nil {
 		return nil, review.ErrInvalid
 	}
-	return &Authority{pool, fallback}, nil
+	return &Authority{pool, certifications}, nil
 }
 
 // ResolveReviewer resolves current tenant, region and credential authority.
@@ -85,10 +85,7 @@ func (a *Authority) ResolveWithin(ctx context.Context, tx pg.Transaction, scope 
 	var revoked bool
 	err := tx.QueryRow(ctx, `SELECT assignment,revoked FROM idenqa.review_operator_assignments WHERE tenant_id=$1 AND api_key_id=$2 FOR SHARE`, scope.ID().String(), actor.ID).Scan(&encoded, &revoked)
 	if errors.Is(err, pgx.ErrNoRows) {
-		if a.fallback == nil {
-			return review.Principal{}, review.ErrForbidden
-		}
-		return a.fallback.ResolveReviewer(ctx, scope, actor, region, at)
+		return review.Principal{}, review.ErrForbidden
 	}
 	if err != nil {
 		return review.Principal{}, err
@@ -104,8 +101,8 @@ func (a *Authority) ResolveWithin(ctx context.Context, tx pg.Transaction, scope 
 	if err != nil {
 		return review.Principal{}, err
 	}
-	if source, ok := a.fallback.(review.CertificationVerifierSource); ok {
-		verifier, err := source.CertificationVerifier()
+	if a.certifications != nil {
+		verifier, err := a.certifications.CertificationVerifier()
 		if err != nil {
 			return review.Principal{}, review.ErrForbidden
 		}
@@ -226,8 +223,8 @@ func (a *Authority) principalFromDelegatedRows(ctx context.Context, rows pgx.Row
 	if err != nil {
 		return review.Principal{}, review.ErrForbidden
 	}
-	if source, ok := a.fallback.(review.CertificationVerifierSource); ok {
-		verifier, err := source.CertificationVerifier()
+	if a.certifications != nil {
+		verifier, err := a.certifications.CertificationVerifier()
 		if err != nil {
 			return review.Principal{}, review.ErrForbidden
 		}

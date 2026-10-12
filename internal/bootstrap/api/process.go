@@ -482,13 +482,13 @@ func newProcess(
 		connectionPool.Close()
 		return nil, fmt.Errorf("construct review persistence: %w", err)
 	}
-	reviewAuthorityFile := config.ReviewAuthorityFile{Path: configuration.ReviewAuthorityFile}
-	if err := reviewAuthorityFile.Validate(); err != nil {
+	reviewCertificationFile := config.ReviewCertificationFile{Path: configuration.ReviewCertificationFile}
+	if err := reviewCertificationFile.Validate(); err != nil {
 		_ = providers.Shutdown(context.Background())
 		connectionPool.Close()
-		return nil, fmt.Errorf("validate review authority: %w", err)
+		return nil, fmt.Errorf("validate review certification: %w", err)
 	}
-	reviewAuthority, err := reviewpostgres.NewAuthority(connectionPool, reviewAuthorityFile)
+	reviewAuthority, err := reviewpostgres.NewAuthority(connectionPool, reviewCertificationFile)
 	if err != nil {
 		_ = providers.Shutdown(context.Background())
 		connectionPool.Close()
