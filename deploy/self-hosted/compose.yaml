@@ -259,11 +259,6 @@ services:
     depends_on:
       api:
         condition: service_healthy
-    environment:
-      IDENQA_DEMO_CORE_URL: http://api:8080
-      IDENQA_DEMO_REGION: ${IDENQA_REGION:-tenant-local}
-    volumes:
-      - state-data:/state:ro
     ports:
       - "${IDENQA_CAPTURE_WEB_HOST_PORT:-4173}:4173"
     networks: [core]

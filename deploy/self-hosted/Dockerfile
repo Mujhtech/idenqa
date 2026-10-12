@@ -5,7 +5,7 @@
 # Targets:
 #   core          api, worker, api-s3, worker-s3, adapter-runner, model-runner,
 #                 idenqa, and the deployment fixtures
-#   capture-web   Capture Web demo bootstrap served by Vite
+#   capture-web   tenant-neutral static Capture Web fixture served by Vite
 #   model-runner  isolated ONNX model runner with the hash-locked Python
 #                 runtime and the repository's evaluation fixture
 #

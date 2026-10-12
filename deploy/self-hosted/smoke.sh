@@ -162,15 +162,7 @@ fi
 if ! compose up -d --wait capture-web >/dev/null 2>&1; then
 	step_fail "capture-web did not serve the hosted journey"
 fi
-if ! bootstrap_status=$(compose exec -T capture-web curl -sS -o /dev/null -w '%{http_code}' \
-	-X POST -H 'Sec-Fetch-Site: same-origin' \
-	http://127.0.0.1:4173/__idenqa_demo/bootstrap 2>&1); then
-	step_fail "capture-web SDK bootstrap request failed: $bootstrap_status"
-fi
-if [ "$bootstrap_status" != "201" ]; then
-	step_fail "capture-web SDK bootstrap returned status $bootstrap_status"
-fi
-step_pass "$version_output; capture-web serves /hosted.html and provisions a real Core journey through the SDK"
+step_pass "$version_output; capture-web serves the static hosted surface without tenant authority"
 
 # --- 6. complete a synthetic capture journey --------------------------------
 step_begin 6 "complete a synthetic capture journey"

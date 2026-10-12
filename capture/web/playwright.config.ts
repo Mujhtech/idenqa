@@ -16,7 +16,7 @@ export default defineConfig({
           command:
             "corepack pnpm build && corepack pnpm assets:prepare && corepack pnpm exec vite ./demo --config ./vite.config.mjs --host 127.0.0.1 --port 4173 --strictPort",
           reuseExistingServer: false,
-          env: { IDENQA_DEMO_CONFORMANCE: "true" },
+          env: { IDENQA_CAPTURE_FIXTURE_CONFORMANCE: "true" },
           url: "http://127.0.0.1:4173",
         },
       }

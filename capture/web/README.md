@@ -54,19 +54,19 @@ Idenqa Core. It consumes only public `@idenqa/sdk` contracts and does not requir
 Console or managed Cloud.
 
 > **Implementation status:** the package now contains the E-04 mobile-first
-> guided journey and safe-default visual system. `demo/hosted.html` and
-> `demo/embedded.html` use a server-side local bootstrap against a running Core;
-> `demo/index.html` and `demo/react.html` remain development fixtures. Hosted and
-> embedded live-Core journeys, responsive and accessibility checks, and visual
-> captures pass. The user accepted the visual and interaction direction on
+> guided journey and safe-default visual system. All files under `demo/` are
+> development fixtures. The hosted fixture includes an explicitly local-only
+> Vite bootstrap for exercising a self-hosted Core; it is not a supported
+> deployment boundary or a substitute for a trusted tenant backend or the
+> managed multi-tenant launch gateway. Responsive and accessibility checks and visual captures
+> pass. Historical live-Core evidence remains recorded in the build plan, but
+> its removed credential-bearing harness is not a current runnable path. The
+> user accepted the visual and interaction direction on
 > 14 September 2026. The user then clarified that advanced acquisition should
 > be implemented now rather than recorded only as follow-on work. Ordered
 > active-liveness challenge orchestration and the fail-closed adapter boundary
 > for namespaced acquisition methods are now implemented and covered by unit and
-> browser tests. The hosted, embedded, and active-liveness demonstrations now
-> continue through real Core processing to a verified terminal decision. The
-> real-Core matrix also proves action required, not verified, inconclusive,
-> subject cancellation, operational failure, and authoritative expiry. E-04
+> browser tests. E-04
 > remains in review only for explicit advanced-interaction acceptance.
 > A live-camera still never implies liveness assurance; production PAD remains
 > dependent on an authoritative provider or model result.
@@ -263,42 +263,12 @@ exists for the requirement, including failed or abandoned uploads. Profiles
 without `document_options` retain their original fixed-artefact behaviour and
 generic identity-document instructions.
 
-The live-Core hosted and embedded fixtures expose this journey through a launch
-fragment such as
-`/hosted.html#journey=document&controller=Example+Tenant&recipient=Example+Tenant`.
-For document flows, the hosted and embedded fixture asks for country, then the
-same-origin server creates a country-specific profile with only the permitted
-document branches before session creation. Core canonicalises the artefact set;
-Capture Web presents the front before the back without changing either binding.
-When a `profile` launch fragment is supplied, the server inspects that profile's
-published requirements to decide whether country selection is needed. A
-selfie/liveness-only profile skips country selection, including when a
-`journey=document` hint is also present.
-
-To test an already-published profile from the same self-hosted Core tenant, use
-the Console-generated launch URL. It places the profile, outcome, and the
-owning tenant's controller and recipient display identity in a URL fragment.
-The fragment is forwarded only to the
-same-origin demo bootstrap; the server creates the real verification session and
-returns its display-once credentials directly to the page. Bearer credentials
-are never placed in the URL. This is a local integration fixture, not a tenant
-production bootstrap endpoint.
-
-The bootstrap declares the profile's explicit processing purpose when all
-requirements use one distinct purpose. For profiles with several purposes,
-configure `IDENQA_DEMO_PROCESSING_PURPOSE` on the server with the intended purpose
-from that profile. An absent, empty or incompatible selection fails before
-session creation; bootstrap never substitutes a demo purpose or rewrites the
-profile. It rechecks the purpose against the newly pinned session requirements
-before creating a notice or declaring authority. Bootstrap failures show an
-error and remove the capture loader.
-
-The real-Core browser suite recreates the component after the front is accepted,
-recovers the document selection and accepted progress from Core, captures the
-back, and waits for an authoritative synthetic policy outcome. A passport
-journey verifies completion after the front only.
-Camera images and the synthetic worker are conformance fixtures, not document
-authenticity or biometric-assurance evidence.
+Country and document-choice behaviour remains covered by component and mocked
+browser tests. An operational hosted page must receive its immutable profile,
+subject context, tenant identity, notice and display-once Capture credentials
+from a trusted backend or the managed launch gateway. The development-only
+hosted fixture creates one fixed selfie journey against local Core; it is not
+evidence that the country-first operational bootstrap is complete.
 
 ### Theme contrast diagnostics
 
@@ -574,64 +544,40 @@ component sets `lang` and `dir`. The immutable legal notice title, summary,
 purpose, consequences, controller, and recipient always remain exact server
 copy and are never read from or replaced by the interface catalogue.
 
-## Real self-hosted demonstration
+## Hosted bootstrap boundary
 
-The hosted and embedded demonstrations create a fresh synthetic policy, capture
-profile, persistent subject, notice, verification session, processing authority, and display-once
-capture and outcome credentials against a running self-hosted Core. The tenant
-API key remains inside the Vite development server. The browser receives both
-credentials only in a same-origin, no-store bootstrap response; neither is
-placed in a URL, HTML, storage, event, or log.
+The hosted development fixture exchanges one opaque URL-fragment value at
+`POST /capture/bootstrap`. The browser request contains exactly
+`{ "launchCredential": "…" }`; controller, recipient, profile, outcome,
+subject, journey and country are not accepted as browser launch hints. The
+fragment is removed from browser history before bootstrap begins.
 
-Provide a local tenant API key with `policies:write`, `policies:activate`,
-`capture_profiles:write`, `notices:write`, `verification_sessions:create`, and
-`authorities:write`, plus `subjects:read` and `subjects:write`. The demo region must exactly match Core's `IDENQA_REGION`
-and must also be a canonical processing-authority code, such as `tenant-local`.
+For local development only, Vite can own a tenant API key and provision a fixed
+synthetic selfie profile, verified policy, subject, notice, authority and
+session against self-hosted Core. All tenant authority, including controller and
+recipient identity, comes from server environment. Configure it and open the
+credential-bearing fragment manually:
 
 ```sh
-IDENQA_DEMO_CORE_URL=http://127.0.0.1:8080 \
-IDENQA_DEMO_TENANT_API_KEY='replace-with-local-tenant-api-key' \
-IDENQA_DEMO_REGION=tenant-local \
+IDENQA_CAPTURE_BOOTSTRAP_CORE_URL=http://127.0.0.1:8080 \
+IDENQA_CAPTURE_BOOTSTRAP_TENANT_API_KEY='replace-with-local-tenant-api-key' \
+IDENQA_CAPTURE_BOOTSTRAP_REGION=tenant-local \
+IDENQA_CAPTURE_BOOTSTRAP_LAUNCH_CREDENTIAL='replace-with-at-least-16-random-characters' \
+IDENQA_CAPTURE_BOOTSTRAP_CONTROLLER='Example Tenant' \
+IDENQA_CAPTURE_BOOTSTRAP_RECIPIENT='Example Tenant' \
 pnpm --dir capture/web demo:hosted
 ```
 
-The command opens a synthetic local launch whose notice identifies `Idenqa
-local demo tenant` as both controller and recipient. To exercise different
-notice copy manually, replace the `controller` and `recipient` values in the
-URL fragment; both are required.
+Then visit
+`http://127.0.0.1:4173/hosted.html#launch=<the-configured-credential>`.
+This process is development fixture infrastructure: it is neither the managed
+multi-tenant launch gateway nor a supported production topology, and its
+browser tests are not product-demo or milestone-completion evidence. An
+operational self-host must use its trusted backend; managed Cloud must use the
+selected regional gateway and bounded launch authority. A per-tenant Vite
+process or singleton tenant credential is not a compatibility mode.
 
-The trusted development server creates a persistent Core subject for each new
-launch and explicitly links its verification before returning capture credentials.
-Cloud's Customers page reads those subjects and their linked verifications from
-Core. An existing tenant subject may be selected explicitly with `subject=sub_…`
-in a local fixture launch fragment. It must be active in the configured region;
-an unknown, inaccessible, suspended, or deleted subject fails the launch. The
-bootstrap never matches or merges customers using names, documents, or external
-references. Persistent subject identity remains separate from the
-verification-local processing-authority subject used for consent.
-
-The browser generates one launch ID and reuses it through country selection.
-Bootstrap mutations use stable, stage-specific Core idempotency keys for that
-launch, including after a development-server restart. Link retries read committed
-associations and respect the current subject version. Reloading the fixture starts
-a new launch; explicitly select the same subject to attach a further verification
-to an existing customer. Production backends must obtain that subject selection
-from their authenticated tenant/customer context, rather than trust a browser
-fragment as authorization.
-
-Open the Console-generated test URL for the standalone product surface. Manual
-fixture launches must supply non-empty `controller` and `recipient` values in
-the URL fragment and may use `/embedded.html` for the same component inside a
-tenant-owned page. Use synthetic JPEG or PNG evidence only. The local conformance
-harness may set `outcome=not_verified`, `inconclusive`, `action_required`,
-`cancelled`, `failed`, or `expired` in that fragment; each option provisions
-or invokes the corresponding real Core transition and never instructs the
-component to manufacture an outcome. This harness is local demonstration infrastructure, not a production
-tenant backend; production integrations must authenticate their own subject and
-apply CSRF, origin, rate-limit, and session-linkage controls at their trusted
-bootstrap boundary.
-
-Vite serves the plain-HTML development fixture, Playwright exercises the
+Vite serves the tenant-neutral plain-HTML development fixture, Playwright exercises the
 component in a real browser, and tsdown remains the published-library builder.
 The second development fixture mounts the same custom element from React and
 observes its composed completion event; React is not a production dependency or
