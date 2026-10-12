@@ -143,6 +143,11 @@ func TestModelRegistryAtomicHistoryIsolationAndRetirement(t *testing.T) {
 	if err := validate(); err != nil {
 		t.Fatal(err)
 	}
+	for _, invalid := range []*model.Plan{nil, {Binding: model.Binding{TenantID: tenantID.String()}}} {
+		if err := modelpostgres.ValidateSelection(ctx, nil, scope, invalid); !errors.Is(err, model.ErrRegistryInvalid) {
+			t.Fatalf("missing selection accepted: %v", err)
+		}
+	}
 	// Saving a registered request must retain threshold pins independently of the wire envelope.
 	checkID, err := ids.NewCheck()
 	if err != nil {
@@ -185,6 +190,47 @@ func TestModelRegistryAtomicHistoryIsolationAndRetirement(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	for _, invalid := range []*model.Plan{nil, {Binding: model.Binding{TenantID: tenantID.String()}}} {
+		if err := requests.SaveRegisteredWithin(ctx, nil, check, request, invalid); !errors.Is(err, model.ErrRegistryInvalid) {
+			t.Fatalf("unregistered write accepted: %v", err)
+		}
+	}
+	t.Run("historical unregistered request cannot load or dispatch", func(t *testing.T) {
+		rollback := errors.New("rollback legacy fixture")
+		err := runtime.WithinTransaction(ctx, pg.TransactionOptions{}, func(ctx context.Context, tx pg.Transaction) error {
+			if _, err := sqlgen.New(tx).SetTenantScope(ctx, tenantID.String()); err != nil {
+				return err
+			}
+			body, err := json.Marshal(request)
+			if err != nil {
+				return err
+			}
+			if _, err := tx.Exec(ctx, `INSERT INTO idenqa.model_requests(tenant_id,attempt_id,verification_id,check_id,request_digest,request_body) VALUES($1,$2,$3,$4,$5,$6)`, request.TenantID, request.AttemptID, request.VerificationID, check.ID.String(), digest, body); err != nil {
+				return err
+			}
+			bound, err := modelpostgres.NewRequestStore(modelBoundTransaction{tx}, clock.System{})
+			if err != nil {
+				return err
+			}
+			if _, err := bound.Load(ctx, scope, check, attempt); !errors.Is(err, model.ErrRequestUnavailable) {
+				t.Fatalf("legacy load: %v", err)
+			}
+			if claimed, _, err := bound.Claim(ctx, request); claimed || !errors.Is(err, model.ErrRequestUnavailable) {
+				t.Fatalf("legacy claim: claimed=%v error=%v", claimed, err)
+			}
+			var count int
+			if err := tx.QueryRow(ctx, `SELECT count(*) FROM idenqa.model_dispatches WHERE tenant_id=$1 AND attempt_id=$2`, request.TenantID, request.AttemptID).Scan(&count); err != nil {
+				return err
+			}
+			if count != 0 {
+				t.Fatal("legacy request created dispatch")
+			}
+			return rollback
+		})
+		if !errors.Is(err, rollback) {
+			t.Fatal(err)
+		}
+	})
 	if err := runtime.WithinTransaction(ctx, pg.TransactionOptions{}, func(ctx context.Context, tx pg.Transaction) error {
 		if _, err := sqlgen.New(tx).SetTenantScope(ctx, tenantID.String()); err != nil {
 			return err
@@ -488,4 +534,10 @@ func TestModelRegistryValidationRoundTripIsolationAndReplay(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
+}
+
+type modelBoundTransaction struct{ tx pg.Transaction }
+
+func (bound modelBoundTransaction) WithinTransaction(ctx context.Context, _ pg.TransactionOptions, work func(context.Context, pg.Transaction) error) error {
+	return work(ctx, bound.tx)
 }

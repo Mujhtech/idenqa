@@ -42,7 +42,7 @@ Names and reasons are lowercase tokens up to 64 characters. History is descendin
 
 ## 4. Worker and evaluation integration
 
-An operator may add `binding.registry` to an existing mounted model runtime binding:
+**Selected — 8 October 2026:** Every Core model runtime entry must include a valid `binding.registry`. Plan construction and runtime configuration reject a missing pin; preparation and persistence require the exact active tenant-owned registry selection. Register and activate the model/threshold pair, then set the pin:
 
 ```json
 {
@@ -54,7 +54,7 @@ An operator may add `binding.registry` to an existing mounted model runtime bind
 }
 ```
 
-The digest fields identify registry metadata revisions, not just weight files. Preparation locks the registry root in the same transaction that creates grants and immutable requests, verifies the active pair/region and exact mounted manifest/configuration, and rejects retired or changed selections. The immutable model request row stores the exact registry selection and a foreign-key reference to its deployment-history version, separately from the runner envelope. Existing saved requests continue to use their original execution envelope; activation cannot rewrite them. Legacy mounted routes remain available without a registry pin. Dynamic hot selection, automatic runner provisioning and automatic fallback are not implemented by this pin check.
+The digest fields identify registry metadata revisions, not just weight files. Preparation locks the registry root in the same transaction that creates grants and immutable requests, verifies the active pair/region and exact mounted manifest/configuration, and rejects retired or changed selections. The immutable model request row stores the exact registry selection and a foreign-key reference to its deployment-history version, separately from the runner envelope. Existing registry-bound requests continue to use their original execution envelope and history binding; activation or retirement cannot rewrite them. Historical requests without valid registry metadata are denied at load and dispatch, with no automatic conversion. The unregistered persistence path is removed. Dynamic hot selection, automatic runner provisioning and automatic fallback are not implemented by this pin check. Acceptance requires missing-pin denial at configuration, plan, preparation and persistence boundaries; rejection of historical unregistered loads/dispatches; exact active-selection checks; and retained immutable request pins across retirement/rollback.
 
 A current readiness probe precedes each new dispatch. Not-ready, degraded, stale, future-dated or failed health responses prevent inference and produce a safe unavailable result. Durable saved results replay without a new probe. This is per-dispatch supervision, not warm-pool management or kernel isolation.
 
@@ -77,6 +77,8 @@ The gate document requires version/reference, dataset/configuration/threshold pi
 Registry integration tests exercise restricted-role tenant isolation, immutable revision lookup, exact replay, stale versions, rollback eligibility, retirement fencing and whole-transaction rollback after an injected outbox failure, competing activation commands, direct unscoped RLS reads and immutable attempt registry pins. Unit tests reject production mode, cross-runtime thresholds, undeclared regions, nonfinite/out-of-range cutoffs, tampered exported revisions and unavailable readiness. Gate tests cover fabricated rate fields, missing denominators, missing groups, subject gaps and pin mismatches.
 
 **Verification — 8 September 2026:** Root race tests, scoped regression tests, full PostgreSQL/Headgate race tests, production lint, command builds and repeatable SQL generation pass. The vulnerability scan reports zero affected code paths (three uncalled required-module advisories). Native ONNX journey tests require `ONNX_TEST_PYTHON` and were not rerun in this environment.
+
+**Verification — 9 October 2026:** With mandatory registry pins and bundle-only runtime configuration, the hash-locked Python environment passed all seven native preprocessing tests and the race-enabled Go ONNX adapter/model tests. PostgreSQL-backed native PAD, face-matching and composed provider/PAD/matching public journeys all passed through decision and webhook delivery. These are synthetic fixture proofs of integration, not trained-model quality or production identity-assurance acceptance.
 
 The broader data-independent MLOps batch is **not yet complete**. Live shadow/canary orchestration, automated technical rollback, persisted drift monitoring, hardened OCI/kernel enforcement and generated registry contracts remain. Hardware deployment selection is pending; actual hardware validation cannot be replaced by a manifest declaration. Accepted models, representative datasets, calibrated production thresholds, rights/impact review and accuracy acceptance also remain open. Manual-review progress-preserving recovery is the next product workflow after the agreed ML batch.
 

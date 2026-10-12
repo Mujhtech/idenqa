@@ -16,7 +16,7 @@ import (
 // Binding is an explicit deployment-approved tenant/policy/profile route.
 // It contains references only; changing it never rewrites a prepared request.
 type Binding struct {
-	Registry            *RegistrySelection             `json:"registry,omitempty"`
+	Registry            *RegistrySelection             `json:"registry"`
 	TenantID            string                         `json:"tenant_id"`
 	PolicyID            string                         `json:"policy_id"`
 	ProfileDigest       string                         `json:"profile_digest"`
@@ -51,7 +51,7 @@ type Plan struct {
 
 // NewPlan composes a bounded PAD or document/selfie matching route.
 func NewPlan(binding Binding, manifest modelv1.Manifest) (*Plan, error) {
-	if binding.Registry != nil && binding.Registry.Validate() != nil {
+	if binding.Registry == nil || binding.Registry.Validate() != nil {
 		return nil, ErrRequestUnavailable
 	}
 	if _, err := id.ParseTenant(binding.TenantID); err != nil {

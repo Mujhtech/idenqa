@@ -12,11 +12,11 @@ import (
 // ValidateSelection fences future attempts under the same root lock as activation.
 // Existing saved requests retain their original dispatch meaning after retirement.
 func ValidateSelection(ctx context.Context, tx pg.Transaction, scope tenant.Scope, plan *model.Plan) error {
-	pin := plan.Binding.Registry
-	if pin == nil {
-		return nil
+	if plan == nil || plan.Binding.Registry == nil {
+		return model.ErrRegistryInvalid
 	}
-	if pin.Validate() != nil {
+	pin := plan.Binding.Registry
+	if pin.Validate() != nil || scope.ID().String() != plan.Binding.TenantID {
 		return model.ErrRegistryInvalid
 	}
 	state, err := readRegistry(ctx, tx, scope, pin.Name, true)

@@ -29,6 +29,7 @@ import (
 
 	"github.com/Mujhtech/idenqa/adapters/models/onnx"
 	modelv1 "github.com/Mujhtech/idenqa/contracts/model/v1"
+	accesspostgres "github.com/Mujhtech/idenqa/internal/access/postgres"
 	"github.com/Mujhtech/idenqa/internal/bootstrap/modelrunner"
 	bootstrapworker "github.com/Mujhtech/idenqa/internal/bootstrap/worker"
 	"github.com/Mujhtech/idenqa/internal/buildinfo"
@@ -38,6 +39,7 @@ import (
 	modelpostgres "github.com/Mujhtech/idenqa/internal/model/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
+	"github.com/Mujhtech/idenqa/internal/platform/idempotency"
 	pg "github.com/Mujhtech/idenqa/internal/platform/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/task"
 	taskheadgate "github.com/Mujhtech/idenqa/internal/platform/task/headgate"
@@ -249,13 +251,17 @@ func (journey *providerPublicJourney) runModel(t *testing.T, admin, runtime *pg.
 	if journey.matching {
 		settings.Binding.DocumentRequirement = "document"
 	}
-	raw, err := json.Marshal(settings)
+	activateModelRuntime(t, runtime, scope, "fixture-primary", &settings)
+	raw, err := json.Marshal(struct {
+		Models []config.ModelRuntime `json:"models"`
+	}{[]config.ModelRuntime{settings}})
 	if err != nil {
 		t.Fatal(err)
 	}
 	journey.runtimeFile = write("runtime.json", raw)
 	if journey.composed {
 		extra, providerFile := startComposedRunners(t, settings, modelrunner.Settings{Python: python, DetectorFile: detectorFile, ModelFile: modelFile, Model: configurationModel}, base, ca, key, gateway.URL, runnerKey, scope, policyID, profileDigest)
+		activateModelRuntime(t, runtime, scope, "fixture-extra", &extra)
 		raw, err = json.Marshal(struct {
 			Models []config.ModelRuntime `json:"models"`
 		}{[]config.ModelRuntime{settings, extra}})
@@ -273,6 +279,13 @@ func (journey *providerPublicJourney) runModel(t *testing.T, admin, runtime *pg.
 	}
 
 	restartAPI()
+	if journey.composed {
+		providerSettings, err := config.LoadProviderRuntime(journey.providerFile)
+		if err != nil {
+			t.Fatal(err)
+		}
+		registerRuntimeProvider(t, base, credential, providerSettings)
+	}
 	verificationID, err := id.ParseVerification(verificationValue)
 	if err != nil {
 		t.Fatal(err)
@@ -485,4 +498,53 @@ func (journey *providerPublicJourney) runModel(t *testing.T, admin, runtime *pg.
 	if response.StatusCode != 403 {
 		t.Fatalf("completed grant replay status=%d", response.StatusCode)
 	}
+}
+
+// activateModelRuntime provisions the same immutable registry records required
+// by every configured Core model route, using synthetic evaluation metadata.
+func activateModelRuntime(t *testing.T, runtime *pg.Pool, scope tenant.Scope, name string, settings *config.ModelRuntime) {
+	t.Helper()
+	ids, err := id.NewSystemGenerator()
+	if err != nil {
+		t.Fatal(err)
+	}
+	now := time.Now().UTC().Truncate(time.Microsecond)
+	keys, err := accesspostgres.New(runtime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	actor := newIntegrationKey(t, ids, scope.ID(), now, id.APIKey{})
+	if err := keys.Create(t.Context(), scope, actor); err != nil {
+		t.Fatal(err)
+	}
+	store, err := modelpostgres.NewRegistryStore(runtime, func() time.Time { return now })
+	if err != nil {
+		t.Fatal(err)
+	}
+	apply := func(command model.RegistryCommand) model.RegistryReceipt {
+		t.Helper()
+		raw, err := json.Marshal(command)
+		if err != nil {
+			t.Fatal(err)
+		}
+		retry, err := idempotency.NewRequest(scope.ID(), actor.ID(), "models."+command.Operation, name+"-"+command.Operation, raw, now, 24*time.Hour)
+		if err != nil {
+			t.Fatal(err)
+		}
+		event, err := ids.NewEvent()
+		if err != nil {
+			t.Fatal(err)
+		}
+		receipt, err := store.Apply(t.Context(), scope, retry, event, command)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return receipt
+	}
+	registration := model.Registration{Manifest: settings.Manifest, Configuration: settings.Binding.Configuration, Owner: "fixture", License: "synthetic-only", TrainingProvenance: "synthetic", IntendedUse: "evaluation", ProhibitedUse: "production", Regions: []string{settings.Binding.Region}, HardwareClass: "cpu", EvaluationOnly: true}
+	registered := apply(model.RegistryCommand{Name: name, Operation: "register", Reason: "fixture", Registration: &registration})
+	threshold := model.ThresholdSet{Configuration: settings.Binding.Configuration, Provenance: settings.Manifest.Provenance, ScoreName: "fixture_score", Minimum: 0, Maximum: 1, Cutoff: 0.5, HigherIsGenuine: true, EvaluationReportDigest: settings.Binding.Configuration.ConfigurationDigest, EvaluationOnly: true}
+	thresholds := apply(model.RegistryCommand{Name: name, Operation: "threshold", Reason: "fixture", ExpectedVersion: 1, Thresholds: &threshold})
+	apply(model.RegistryCommand{Name: name, Operation: "activate", Reason: "fixture", ExpectedVersion: 2, Deployment: &model.Deployment{ModelRevision: 1, ThresholdRevision: 1, Region: settings.Binding.Region}})
+	settings.Binding.Registry = &model.RegistrySelection{Name: name, ModelRevision: 1, ThresholdRevision: 1, ModelDigest: registered.Revision.Digest, ThresholdDigest: thresholds.Revision.Digest}
 }

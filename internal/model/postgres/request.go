@@ -38,11 +38,6 @@ func NewRequestStore(pool transactionRunner, source clock.Clock) (*RequestStore,
 	return &RequestStore{pool, source}, nil
 }
 
-// SaveWithin appends the request with its owning attempt, grant and task transaction.
-func (store *RequestStore) SaveWithin(ctx context.Context, tx pg.Transaction, check verification.Check, request modelv1.Request) error {
-	return store.saveWithin(ctx, tx, check, request, nil)
-}
-
 // SaveRegisteredWithin persists the exact registry selection alongside its immutable request.
 func (store *RequestStore) SaveRegisteredWithin(ctx context.Context, tx pg.Transaction, check verification.Check, request modelv1.Request, plan *model.Plan) error {
 	if plan == nil || plan.Binding.Registry == nil {
@@ -52,6 +47,9 @@ func (store *RequestStore) SaveRegisteredWithin(ctx context.Context, tx pg.Trans
 }
 
 func (store *RequestStore) saveWithin(ctx context.Context, tx pg.Transaction, check verification.Check, request modelv1.Request, plan *model.Plan) error {
+	if plan == nil || plan.Binding.Registry == nil {
+		return model.ErrRegistryInvalid
+	}
 	digest, err := model.RequestDigest(request)
 	if err != nil {
 		return err
@@ -64,29 +62,25 @@ func (store *RequestStore) saveWithin(ctx context.Context, tx pg.Transaction, ch
 	if err != nil {
 		return err
 	}
-	if plan != nil && plan.Binding.Registry != nil {
-		if request.Provenance != plan.Manifest.Provenance || request.Configuration != plan.Binding.Configuration || request.Restrictions != plan.Manifest.Restrictions || !reflect.DeepEqual(request.Capability, plan.Capability) {
-			return model.ErrRegistryInvalid
-		}
-		scope, err := tenant.NewScope(check.TenantID)
-		if err != nil {
-			return err
-		}
-		if err := ValidateSelection(ctx, tx, scope, plan); err != nil {
-			return err
-		}
-		state, err := readRegistry(ctx, tx, scope, plan.Binding.Registry.Name, true)
-		if err != nil {
-			return err
-		}
-		selection, err := json.Marshal(plan.Binding.Registry)
-		if err != nil {
-			return err
-		}
-		_, err = tx.Exec(ctx, `INSERT INTO idenqa.model_requests(tenant_id,attempt_id,verification_id,check_id,request_digest,request_body,registry_name,registry_version,registry_selection) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`, request.TenantID, request.AttemptID, request.VerificationID, check.ID.String(), digest, body, state.Name, state.Version, selection)
+	if request.Provenance != plan.Manifest.Provenance || request.Configuration != plan.Binding.Configuration || request.Restrictions != plan.Manifest.Restrictions || !reflect.DeepEqual(request.Capability, plan.Capability) {
+		return model.ErrRegistryInvalid
+	}
+	scope, err := tenant.NewScope(check.TenantID)
+	if err != nil {
 		return err
 	}
-	_, err = tx.Exec(ctx, `INSERT INTO idenqa.model_requests(tenant_id,attempt_id,verification_id,check_id,request_digest,request_body) VALUES($1,$2,$3,$4,$5,$6)`, request.TenantID, request.AttemptID, request.VerificationID, check.ID.String(), digest, body)
+	if err := ValidateSelection(ctx, tx, scope, plan); err != nil {
+		return err
+	}
+	state, err := readRegistry(ctx, tx, scope, plan.Binding.Registry.Name, true)
+	if err != nil {
+		return err
+	}
+	selection, err := json.Marshal(plan.Binding.Registry)
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(ctx, `INSERT INTO idenqa.model_requests(tenant_id,attempt_id,verification_id,check_id,request_digest,request_body,registry_name,registry_version,registry_selection) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`, request.TenantID, request.AttemptID, request.VerificationID, check.ID.String(), digest, body, state.Name, state.Version, selection)
 	return err
 }
 
@@ -98,6 +92,9 @@ func (store *RequestStore) Load(ctx context.Context, scope tenant.Scope, check v
 	}
 	err := store.pool.WithinTransaction(ctx, pg.TransactionOptions{Isolation: pg.IsolationRepeatableRead}, func(ctx context.Context, tx pg.Transaction) error {
 		if _, err := sqlgen.New(tx).SetTenantScope(ctx, scope.ID().String()); err != nil {
+			return err
+		}
+		if err := requireRegisteredRequest(ctx, tx, scope, attempt.ID.String()); err != nil {
 			return err
 		}
 		if err := authoritypostgres.ValidateProcessingWithin(ctx, tx, scope, check.VerificationID, store.source.Now().UTC(), store.source, verification.SessionStateProcessing); err != nil {
@@ -124,6 +121,26 @@ func (store *RequestStore) Load(ctx context.Context, scope tenant.Scope, check v
 	return request, err
 }
 
+// requireRegisteredRequest checks immutable admission metadata without consulting
+// the current active pointer: retirement cannot rewrite an admitted request.
+func requireRegisteredRequest(ctx context.Context, tx pg.Transaction, scope tenant.Scope, attempt string) error {
+	var name string
+	var version int64
+	var encoded []byte
+	if err := tx.QueryRow(ctx, `SELECT registry_name,registry_version,registry_selection FROM idenqa.model_requests
+		WHERE tenant_id=$1 AND attempt_id=$2 AND registry_name IS NOT NULL AND registry_version IS NOT NULL AND registry_selection IS NOT NULL`, scope.ID().String(), attempt).Scan(&name, &version, &encoded); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return model.ErrRequestUnavailable
+		}
+		return err
+	}
+	var selection model.RegistrySelection
+	if json.Unmarshal(encoded, &selection) != nil || selection.Validate() != nil || selection.Name != name || version <= 0 {
+		return model.ErrRequestUnavailable
+	}
+	return nil
+}
+
 // Claim permits at most one initial external dispatch for a durable attempt.
 func (store *RequestStore) Claim(ctx context.Context, request modelv1.Request) (bool, *modelv1.Result, error) {
 	scope, _, err := model.RequestScope(request)
@@ -138,6 +155,9 @@ func (store *RequestStore) Claim(ctx context.Context, request modelv1.Request) (
 	var result *modelv1.Result
 	err = store.pool.WithinTransaction(ctx, pg.TransactionOptions{}, func(ctx context.Context, tx pg.Transaction) error {
 		if _, err := sqlgen.New(tx).SetTenantScope(ctx, scope.ID().String()); err != nil {
+			return err
+		}
+		if err := requireRegisteredRequest(ctx, tx, scope, request.AttemptID); err != nil {
 			return err
 		}
 		tag, err := tx.Exec(ctx, `INSERT INTO idenqa.model_dispatches(tenant_id,attempt_id,request_digest,claimed_at) SELECT tenant_id,attempt_id,request_digest,$4 FROM idenqa.model_requests WHERE tenant_id=$1 AND attempt_id=$2 AND request_digest=$3 ON CONFLICT DO NOTHING`, request.TenantID, request.AttemptID, digest, store.source.Now().UTC().Truncate(time.Microsecond))

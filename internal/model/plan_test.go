@@ -12,7 +12,7 @@ import (
 func TestMatchingPlanRequiresDocumentAndSelfieContract(t *testing.T) {
 	t.Parallel()
 	request := runtimeRequest(t)
-	binding := model.Binding{TenantID: request.TenantID, PolicyID: "pol_01K4AR9V8FQ2G7ZXCPNM5T6JWH", ProfileDigest: "sha256:" + strings.Repeat("a", 64), Requirement: "selfie", DocumentRequirement: "document", Region: "tenant.region.ng", Purpose: "idenqa.purpose.identity_verification", Recipient: "tenant.recipient.primary", Configuration: request.Configuration}
+	binding := model.Binding{Registry: testRegistryPin(), TenantID: request.TenantID, PolicyID: "pol_01K4AR9V8FQ2G7ZXCPNM5T6JWH", ProfileDigest: "sha256:" + strings.Repeat("a", 64), Requirement: "selfie", DocumentRequirement: "document", Region: "tenant.region.ng", Purpose: "idenqa.purpose.identity_verification", Recipient: "tenant.recipient.primary", Configuration: request.Configuration}
 	manifest := modelv1.Manifest{Provenance: request.Provenance, Restrictions: request.Restrictions, Capabilities: []modelv1.Capability{{Evaluation: "idenqa.check.face_match_1to1", AcceptedEvidence: []string{"idenqa.evidence.document_image", "idenqa.evidence.selfie_image"}, OutputSignals: []string{"idenqa.signal.face_match_1to1"}}}}
 	manifest.Restrictions.MaximumGrants = 2
 	plan, err := model.NewPlan(binding, manifest)
@@ -34,6 +34,7 @@ func TestPlanSelectsExplicitSelfieAnalysisCapability(t *testing.T) {
 	t.Parallel()
 	request := runtimeRequest(t)
 	binding := model.Binding{
+		Registry: testRegistryPin(),
 		TenantID: request.TenantID, PolicyID: "pol_01K4AR9V8FQ2G7ZXCPNM5T6JWH",
 		ProfileDigest: "sha256:" + strings.Repeat("a", 64), Evaluation: modelv1.EvaluationSelfieAnalysis,
 		Requirement: "selfie", Region: "tenant.region.ng", Purpose: "idenqa.purpose.identity_verification",
@@ -51,5 +52,22 @@ func TestPlanSelectsExplicitSelfieAnalysisCapability(t *testing.T) {
 	binding.Evaluation = modelv1.EvaluationFaceMatch
 	if _, err := model.NewPlan(binding, manifest); err == nil {
 		t.Fatal("missing explicit capability accepted")
+	}
+}
+
+func testRegistryPin() *model.RegistrySelection {
+	return &model.RegistrySelection{Name: "fixture", ModelRevision: 1, ThresholdRevision: 1, ModelDigest: "sha256:" + strings.Repeat("a", 64), ThresholdDigest: "sha256:" + strings.Repeat("b", 64)}
+}
+
+func TestPlanRejectsMissingRegistryPin(t *testing.T) {
+	request := runtimeRequest(t)
+	binding := model.Binding{TenantID: request.TenantID, PolicyID: "pol_01K4AR9V8FQ2G7ZXCPNM5T6JWH", ProfileDigest: "sha256:" + strings.Repeat("a", 64), Requirement: "selfie", Region: "tenant.region.ng", Purpose: "idenqa.purpose.identity_verification", Recipient: "tenant.recipient.primary", Configuration: request.Configuration}
+	manifest := modelv1.Manifest{Provenance: request.Provenance, Restrictions: request.Restrictions, Capabilities: []modelv1.Capability{{Evaluation: modelv1.EvaluationPassivePAD, AcceptedEvidence: []string{"idenqa.evidence.selfie_image"}, OutputSignals: []string{"idenqa.signal.passive_pad"}}}}
+	if _, err := model.NewPlan(binding, manifest); err == nil {
+		t.Fatal("unregistered model plan accepted")
+	}
+	binding.Registry = testRegistryPin()
+	if _, err := model.NewPlan(binding, manifest); err != nil {
+		t.Fatalf("valid pinned plan: %v", err)
 	}
 }

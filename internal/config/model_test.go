@@ -13,14 +13,19 @@ import (
 
 func TestModelBundleIsClosedBoundedAndUnambiguous(t *testing.T) {
 	t.Parallel()
-	value := ModelRuntime{Binding: model.Binding{Configuration: modelv1.ConfigurationReference{ModelID: "mdl_01K4AR9V8FQ2G7ZXCPNM5T6JWH", ConfigurationRef: "configuration://fixture/model", ConfigurationDigest: "sha256:" + strings.Repeat("a", 64)}}, RunnerAddress: "fixture:443", RunnerCAFile: "ca", RunnerServerName: "fixture", RunnerCredentialFile: "runner", GatewayCredentialFile: "gateway"}
+	value := ModelRuntime{Binding: model.Binding{Registry: &model.RegistrySelection{Name: "fixture", ModelRevision: 1, ThresholdRevision: 1, ModelDigest: "sha256:" + strings.Repeat("a", 64), ThresholdDigest: "sha256:" + strings.Repeat("b", 64)}, Configuration: modelv1.ConfigurationReference{ModelID: "mdl_01K4AR9V8FQ2G7ZXCPNM5T6JWH", ConfigurationRef: "configuration://fixture/model", ConfigurationDigest: "sha256:" + strings.Repeat("a", 64)}}, RunnerAddress: "fixture:443", RunnerCAFile: "ca", RunnerServerName: "fixture", RunnerCredentialFile: "runner", GatewayCredentialFile: "gateway"}
+	unregistered := value
+	unregistered.Binding.Registry = nil
 	for _, tc := range []struct {
 		name string
 		body any
 		ok   bool
 	}{
-		{"legacy", value, true},
+		{"legacy", value, false},
+		{"unregistered", map[string]any{"models": []ModelRuntime{unregistered}}, false},
 		{"bundle", map[string]any{"models": []ModelRuntime{value}}, true},
+		{"missing models", map[string]any{}, false},
+		{"null models", map[string]any{"models": nil}, false},
 		{"empty", map[string]any{"models": []ModelRuntime{}}, false},
 		{"duplicate", map[string]any{"models": []ModelRuntime{value, value}}, false},
 		{"mixed", map[string]any{"models": []ModelRuntime{value}, "runner_address": "other"}, false},
