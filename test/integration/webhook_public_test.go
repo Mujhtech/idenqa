@@ -270,9 +270,14 @@ func assertPublicWebhookManagement(t *testing.T, client *http.Client, base, cred
 		t.Fatal(err)
 	}
 	persisted, err := store.FindDelivery(t.Context(), scope, replayID)
-	if err != nil || !bytes.Equal(persisted.Body, body) {
+	if err != nil || !bytes.Equal(persisted.Body, original.Body) {
 		t.Fatal("replay changed exact event body")
 	}
+	plaintext, err := keys.Unwrap(t.Context(), delivery.BodyPurpose(), *persisted.BodyWrapping, delivery.BodyContext(scope.ID().String(), event.String()))
+	if err != nil || !bytes.Equal(plaintext, body) {
+		t.Fatal("replay changed exact event plaintext")
+	}
+	clear(plaintext)
 	before = count()
 	retried = publicWebhookMutation{}
 	call("POST", deliveryPath+"/replay", "queue-rollback", map[string]any{"reason": "receiver_recovered"}, &retried, 200)
