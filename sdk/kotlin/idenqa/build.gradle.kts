@@ -17,7 +17,7 @@ android {
 }
 
 dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:2.4.20")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:2.4.21")
     api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
     implementation("com.squareup.okhttp3:okhttp:5.5.0")
     implementation("com.squareup.moshi:moshi:1.15.2")
@@ -34,7 +34,7 @@ dependencies {
 configurations.configureEach {
     resolutionStrategy {
         force(
-            "org.jetbrains.kotlin:kotlin-test:2.4.20",
+            "org.jetbrains.kotlin:kotlin-test:2.4.21",
             "org.jetbrains.kotlin:kotlin-test-junit:2.3.21",
         )
     }
