@@ -21,7 +21,7 @@ dependencies {
     api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
     implementation("com.squareup.okhttp3:okhttp:5.5.0")
     implementation("com.squareup.moshi:moshi:1.15.2")
-    implementation("com.google.mediapipe:tasks-vision:1.0.0")
+    implementation("com.google.mediapipe:tasks-vision:1.1.0")
     // MediaPipe's published POM requests older vulnerable transitive versions.
     implementation("com.google.guava:guava:33.7.2-android")
     implementation("com.google.protobuf:protobuf-javalite:4.36.2")
