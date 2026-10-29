@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/Mujhtech/idenqa/internal/platform/secret"
+	"github.com/Mujhtech/idenqa/internal/platform/secret/broker"
 	"github.com/Mujhtech/idenqa/internal/platform/secret/credential"
 	"github.com/Mujhtech/idenqa/internal/platform/secret/resolver"
 )
@@ -26,6 +27,7 @@ const (
 // Options is the operator-selected resolver configuration.
 type Options struct {
 	Provider       string
+	Broker         broker.Options
 	AWSRegion      string
 	CacheTTL       time.Duration
 	ReloadInterval time.Duration
@@ -55,7 +57,7 @@ func Open(ctx context.Context, options Options) (*credential.Resolver, error) {
 		ttl = DefaultCacheTTL
 	}
 	source, err := resolver.Open(ctx, resolver.Options{
-		Provider: options.Provider, AWSRegion: options.AWSRegion, Now: now,
+		Provider: options.Provider, AWSRegion: options.AWSRegion, Now: now, Broker: options.Broker,
 	})
 	if err != nil {
 		return nil, err

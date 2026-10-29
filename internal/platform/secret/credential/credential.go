@@ -40,6 +40,7 @@ const (
 // with a bounded TTL cache. It implements secret.Resolver for callers that only
 // carry a reference, and adds explicit version selection and invalidation.
 type Resolver struct {
+	source secret.Resolver
 	cache  *secret.Cache
 	mutex  sync.Mutex
 	pinned map[string][]secret.Reference
@@ -55,7 +56,7 @@ func NewResolver(source secret.Resolver, ttl time.Duration, now func() time.Time
 	if err != nil {
 		return nil, ErrInvalid
 	}
-	return &Resolver{cache: cache, pinned: map[string][]secret.Reference{}}, nil
+	return &Resolver{source: source, cache: cache, pinned: map[string][]secret.Reference{}}, nil
 }
 
 // Resolve implements secret.Resolver using the reference's own version
@@ -140,11 +141,12 @@ type generation struct {
 // new reference that cannot resolve or validate leaves both generations
 // untouched.
 type Window struct {
-	resolver *Resolver
-	validate func(secret.Value) error
-	mutex    sync.Mutex
-	current  *generation
-	previous *generation
+	resolver      *Resolver
+	validate      func(secret.Value) error
+	authoritative bool
+	mutex         sync.Mutex
+	current       *generation
+	previous      *generation
 }
 
 // NewWindow constructs a rotation window. validate must reject any unusable
@@ -156,12 +158,39 @@ func NewWindow(resolver *Resolver, validate func(secret.Value) error) (*Window, 
 	return &Window{resolver: resolver, validate: validate}, nil
 }
 
+// WithAuthoritativeReads requires a fresh source decision for every resolution.
+// Use it for revocable workload brokers; no cached generation can outlive the
+// broker's revocation, expiry or bounded predecessor-overlap decision. Configure
+// this before sharing the window between goroutines.
+func (window *Window) WithAuthoritativeReads() *Window { window.authoritative = true; return window }
+
 // Resolve returns the active, overlapping or newly resolved generation for the
 // exact reference and version. A provider refusal fails closed without
 // disturbing the active generation.
 func (window *Window) Resolve(ctx context.Context, reference secret.Reference, version string) (secret.Value, error) {
 	if window == nil || window.resolver == nil || ctx == nil || reference.IsZero() {
 		return secret.Value{}, ErrInvalid
+	}
+	if window.authoritative {
+		effective, err := versionedReference(reference, version)
+		if err != nil {
+			return secret.Value{}, err
+		}
+		value, err := window.resolver.source.Resolve(ctx, effective)
+		if err != nil {
+			return secret.Value{}, err
+		}
+		if value.Reference() != effective {
+			return secret.Value{}, ErrInvalid
+		}
+		if err = window.validate(value); err != nil {
+			return secret.Value{}, err
+		}
+		window.mutex.Lock()
+		window.current = &generation{reference: reference, version: version, value: value}
+		window.previous = nil
+		window.mutex.Unlock()
+		return value, nil
 	}
 	window.mutex.Lock()
 	if value, ok := window.generationLocked(window.current, reference, version); ok {
@@ -244,6 +273,10 @@ func (window *Window) Refresh(ctx context.Context) error {
 	window.mutex.Unlock()
 	if current == nil {
 		return ErrUnavailable
+	}
+	if window.authoritative {
+		_, err := window.Resolve(ctx, current.reference, current.version)
+		return err
 	}
 	window.resolver.Invalidate(current.reference)
 	value, err := window.resolver.ResolveVersion(ctx, current.reference, current.version)

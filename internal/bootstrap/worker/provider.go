@@ -18,6 +18,7 @@ import (
 	platformcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	pg "github.com/Mujhtech/idenqa/internal/platform/postgres"
+	"github.com/Mujhtech/idenqa/internal/platform/secret/broker"
 	"github.com/Mujhtech/idenqa/internal/platform/telemetry"
 	"github.com/Mujhtech/idenqa/internal/provider"
 	providerpostgres "github.com/Mujhtech/idenqa/internal/provider/postgres"
@@ -197,6 +198,17 @@ func configuredProvider(ctx context.Context, configuration config.Worker, pool *
 		health.WithTracer(telemetry.NewOperationTracer(tracerProviders[0]))
 	}
 	preparation := &providerpostgres.Preparation{Plan: plan, Requests: requests, IDs: ids, Catalog: catalog, Clock: clock.System{}, Wrapper: wrapper}
+	if settings.Binding.Configuration.CredentialVersion == "regional-current" {
+		if settings.CredentialBroker == nil {
+			return nil, errors.New("provider current credential broker is required")
+		}
+		configured := settings.CredentialBroker
+		current, err := broker.Open(broker.Options{Endpoint: configured.Endpoint, CertificateFile: configured.CertificateFile, KeyFile: configured.KeyFile, CAFile: configured.CAFile, TenantID: settings.Binding.TenantID})
+		if err != nil {
+			return nil, err
+		}
+		preparation.CurrentCredential = current
+	}
 	accepted = true
 	return &providerRuntime{plan, requests, preparation, limited, breaker, remote, limited, registrations, health, healthStore, breakers, connection}, nil
 }

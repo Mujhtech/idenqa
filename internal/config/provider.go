@@ -93,15 +93,24 @@ func (configuration ProviderLimitConfiguration) DispatchLimit() (provider.Limit,
 	return limit, nil
 }
 
-// ProviderRuntime is an explicitly mounted first-provider route and private transport.
+// CredentialBroker mounts a metadata-only regional identity for provider request planning.
+type CredentialBroker struct {
+	Endpoint        string `json:"endpoint"`
+	CertificateFile string `json:"certificate_file"`
+	KeyFile         string `json:"key_file"`
+	CAFile          string `json:"ca_file"`
+}
+
+// ProviderRuntime is an explicitly mounted provider route and private transport.
 type ProviderRuntime struct {
-	Adapter               string           `json:"adapter,omitempty"`
-	Binding               provider.Binding `json:"binding"`
-	RunnerAddress         string           `json:"runner_address"`
-	RunnerCAFile          string           `json:"runner_ca_file"`
-	RunnerServerName      string           `json:"runner_server_name"`
-	RunnerCredentialFile  string           `json:"runner_credential_file"`
-	GatewayCredentialFile string           `json:"gateway_credential_file"`
+	CredentialBroker      *CredentialBroker `json:"credential_broker,omitempty"`
+	Adapter               string            `json:"adapter,omitempty"`
+	Binding               provider.Binding  `json:"binding"`
+	RunnerAddress         string            `json:"runner_address"`
+	RunnerCAFile          string            `json:"runner_ca_file"`
+	RunnerServerName      string            `json:"runner_server_name"`
+	RunnerCredentialFile  string            `json:"runner_credential_file"`
+	GatewayCredentialFile string            `json:"gateway_credential_file"`
 }
 
 // LoadProviderRuntime reads closed bounded reference-only operator configuration.

@@ -24,6 +24,7 @@ import (
 	"github.com/Mujhtech/idenqa/internal/platform/egress"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/platform/secret"
+	"github.com/Mujhtech/idenqa/internal/platform/secret/broker"
 	"github.com/Mujhtech/idenqa/internal/platform/secret/credential"
 	"github.com/Mujhtech/idenqa/internal/platform/telemetry"
 	"github.com/Mujhtech/idenqa/internal/transport/runner"
@@ -61,15 +62,19 @@ type Settings struct {
 	GatewayCredentialFile string                            `json:"gateway_credential_file"`
 	Fixture               bool                              `json:"fixture"`
 
-	SecretProvider             string `json:"secret_provider,omitempty"`
-	SecretAWSRegion            string `json:"secret_aws_region,omitempty"`
-	SecretCacheSeconds         int    `json:"secret_cache_seconds,omitempty"`
-	SecretReloadSeconds        int    `json:"secret_reload_seconds,omitempty"`
-	CredentialReference        string `json:"credential_reference,omitempty"`
-	GatewayCredentialReference string `json:"gateway_credential_reference,omitempty"`
-	APIKeyReference            string `json:"api_key_reference,omitempty"`
-	AppIDReference             string `json:"app_id_reference,omitempty"`
-	TLSReference               string `json:"tls_reference,omitempty"`
+	SecretProvider              string `json:"secret_provider,omitempty"`
+	SecretBrokerEndpoint        string `json:"secret_broker_endpoint,omitempty"`
+	SecretBrokerCertificateFile string `json:"secret_broker_certificate_file,omitempty"`
+	SecretBrokerKeyFile         string `json:"secret_broker_key_file,omitempty"`
+	SecretBrokerCAFile          string `json:"secret_broker_ca_file,omitempty"`
+	SecretAWSRegion             string `json:"secret_aws_region,omitempty"`
+	SecretCacheSeconds          int    `json:"secret_cache_seconds,omitempty"`
+	SecretReloadSeconds         int    `json:"secret_reload_seconds,omitempty"`
+	CredentialReference         string `json:"credential_reference,omitempty"`
+	GatewayCredentialReference  string `json:"gateway_credential_reference,omitempty"`
+	APIKeyReference             string `json:"api_key_reference,omitempty"`
+	AppIDReference              string `json:"app_id_reference,omitempty"`
+	TLSReference                string `json:"tls_reference,omitempty"`
 }
 
 // Process owns one tenant-isolated provider runner and its outbound transports.
@@ -114,7 +119,7 @@ func NewProcess(ctx context.Context, settings Settings) (*Process, error) {
 			return nil, errors.New("provider configuration reference requires the matching secret provider")
 		}
 		source, err := runnersecret.Open(ctx, runnersecret.Options{
-			Provider: settings.SecretProvider, AWSRegion: settings.SecretAWSRegion,
+			Provider: settings.SecretProvider, AWSRegion: settings.SecretAWSRegion, Broker: broker.Options{Endpoint: settings.SecretBrokerEndpoint, CertificateFile: settings.SecretBrokerCertificateFile, KeyFile: settings.SecretBrokerKeyFile, CAFile: settings.SecretBrokerCAFile, TenantID: settings.TenantID},
 			CacheTTL: secondsDuration(settings.SecretCacheSeconds, runnersecret.DefaultCacheTTL),
 			Now:      time.Now,
 		})
@@ -126,6 +131,9 @@ func NewProcess(ctx context.Context, settings Settings) (*Process, error) {
 		})
 		if err != nil {
 			return nil, err
+		}
+		if settings.SecretProvider == "broker" {
+			window.WithAuthoritativeReads()
 		}
 		if _, err := window.Resolve(ctx, configurationReference, settings.Configuration.CredentialVersion); err != nil {
 			return nil, errors.New("provider configuration credential unavailable")
@@ -346,7 +354,7 @@ func composeReloader(
 		return nil, nil
 	}
 	resolver, err := runnersecret.Open(ctx, runnersecret.Options{
-		Provider: settings.SecretProvider, AWSRegion: settings.SecretAWSRegion,
+		Provider: settings.SecretProvider, AWSRegion: settings.SecretAWSRegion, Broker: broker.Options{Endpoint: settings.SecretBrokerEndpoint, CertificateFile: settings.SecretBrokerCertificateFile, KeyFile: settings.SecretBrokerKeyFile, CAFile: settings.SecretBrokerCAFile, TenantID: settings.TenantID},
 		CacheTTL:       secondsDuration(settings.SecretCacheSeconds, runnersecret.DefaultCacheTTL),
 		ReloadInterval: secondsDuration(settings.SecretReloadSeconds, runnersecret.DefaultReloadInterval),
 	})
@@ -578,6 +586,7 @@ func (adapter *scopedAdapter) acceptsConfiguration(reference providerv1.Configur
 		return true
 	}
 	return adapter.dynamicConfiguration &&
+		(adapter.settings.SecretProvider != "broker" || reference.SecretReference == adapter.settings.Configuration.SecretReference) &&
 		reference.ProviderID == adapter.settings.Configuration.ProviderID &&
 		reference.SchemaDigest == adapter.settings.Configuration.SchemaDigest
 }
@@ -594,7 +603,14 @@ func (adapter *scopedAdapter) Health(ctx context.Context) (providerv1.Health, er
 		return providerv1.Health{}, err
 	}
 	if adapter.credentials != nil {
-		if err := adapter.credentials.Refresh(ctx); err != nil {
+		refresh := func() error { return adapter.credentials.Refresh(ctx) }
+		if adapter.settings.SecretProvider == "broker" {
+			refresh = func() error {
+				_, err := adapter.resolveConfiguration(ctx, adapter.settings.Configuration.SecretReference, adapter.settings.Configuration.CredentialVersion)
+				return err
+			}
+		}
+		if err := refresh(); err != nil {
 			//nolint:nilerr // a bounded not_ready health response is the result; resolution details stay inside the runner.
 			return providerv1.Health{State: providerv1.HealthNotReady, Code: "configuration_unavailable", CheckedAt: time.Now().UTC()}, nil
 		}

@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	providerv1 "github.com/Mujhtech/idenqa/contracts/provider/v1"
@@ -25,14 +26,20 @@ func (bound boundTransaction) WithinTransaction(ctx context.Context, _ pg.Transa
 	return work(ctx, bound.tx)
 }
 
+// CurrentCredential resolves only the current immutable credential version metadata.
+type CurrentCredential interface {
+	CurrentVersion(context.Context, string) (string, error)
+}
+
 // Preparation creates request and grant meaning inside the planning transaction.
 type Preparation struct {
-	Plan     *provider.Plan
-	Requests *RequestStore
-	IDs      *id.Generator
-	Catalog  evidence.Catalog
-	Clock    clock.Clock
-	Wrapper  platformcrypto.KeyWrapper
+	CurrentCredential CurrentCredential
+	Plan              *provider.Plan
+	Requests          *RequestStore
+	IDs               *id.Generator
+	Catalog           evidence.Catalog
+	Clock             clock.Clock
+	Wrapper           platformcrypto.KeyWrapper
 }
 
 // Prepare returns a request-bound provenance and a transaction-local append closure.
@@ -43,6 +50,10 @@ func (preparation *Preparation) Prepare(ctx context.Context, tx pg.Transaction, 
 	plan := preparation.Plan
 	if plan == nil || preparation.Requests == nil || preparation.IDs == nil || preparation.Clock == nil || scope.ID().String() != plan.Binding.TenantID || definition.Name != plan.Capability.Check {
 		return fail(provider.ErrRequestUnavailable)
+	}
+	configuration, err := preparation.resolveConfiguration(ctx, plan.Binding.Configuration)
+	if err != nil {
+		return fail(err)
 	}
 	bound := boundTransaction{tx}
 	assets, err := evidencepostgres.New(bound, preparation.Wrapper, preparation.Catalog)
@@ -130,13 +141,23 @@ func (preparation *Preparation) Prepare(ctx context.Context, tx pg.Transaction, 
 	if err != nil {
 		return fail(err)
 	}
-	request := providerv1.Request{Contract: plan.Manifest.Package.Contract, AttemptID: attemptID.String(), ProviderID: plan.Binding.Configuration.ProviderID, TenantID: scope.ID().String(), VerificationID: verificationID.String(), Check: definition.Name, IdempotencyKey: attemptID.String(), CallbackReference: callbackReference.String(), Adapter: plan.Manifest.Package, Capability: plan.Capability, Restrictions: plan.Manifest.Restrictions, Configuration: plan.Binding.Configuration, Deadline: deadline, Inputs: plan.Binding.Inputs, Evidence: references}
+	request := providerv1.Request{Contract: plan.Manifest.Package.Contract, AttemptID: attemptID.String(), ProviderID: plan.Binding.Configuration.ProviderID, TenantID: scope.ID().String(), VerificationID: verificationID.String(), Check: definition.Name, IdempotencyKey: attemptID.String(), CallbackReference: callbackReference.String(), Adapter: plan.Manifest.Package, Capability: plan.Capability, Restrictions: plan.Manifest.Restrictions, Configuration: configuration, Deadline: deadline, Inputs: plan.Binding.Inputs, Evidence: references}
 	digest, err := provider.RequestDigest(request)
 	if err != nil {
 		return fail(err)
 	}
 	provenance := definition.Provenance
 	provenance.RequestDigest = digest
+	if configuration != plan.Binding.Configuration {
+		binding := plan.Binding
+		binding.Configuration = configuration
+		resolved, err := provider.NewPlan(binding, plan.Manifest)
+		if err != nil {
+			return fail(err)
+		}
+		provenance.Configuration = resolved.ConfigurationDigest()
+	}
+
 	save := func(ctx context.Context, check verification.Check) error {
 		if check.ID != checkID {
 			return provider.ErrRequestUnavailable
@@ -149,3 +170,21 @@ func (preparation *Preparation) Prepare(ctx context.Context, tx pg.Transaction, 
 type preparationClock struct{ now time.Time }
 
 func (source preparationClock) Now() time.Time { return source.now }
+
+func (preparation *Preparation) resolveConfiguration(ctx context.Context, configuration providerv1.ConfigurationReference) (providerv1.ConfigurationReference, error) {
+	if configuration.CredentialVersion != "regional-current" {
+		return configuration, nil
+	}
+	if preparation.CurrentCredential == nil || !strings.HasPrefix(configuration.SecretReference, "secret://broker/") {
+		return providerv1.ConfigurationReference{}, provider.ErrRequestUnavailable
+	}
+	version, err := preparation.CurrentCredential.CurrentVersion(ctx, configuration.SecretReference)
+	if err != nil {
+		return providerv1.ConfigurationReference{}, provider.ErrRequestUnavailable
+	}
+	configuration.CredentialVersion = version
+	if configuration.Validate() != nil || version == "regional-current" {
+		return providerv1.ConfigurationReference{}, provider.ErrRequestUnavailable
+	}
+	return configuration, nil
+}

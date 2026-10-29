@@ -50,6 +50,37 @@ func newTestResolver(t *testing.T, source secret.Resolver, now func() time.Time)
 	return resolver
 }
 
+func TestAuthoritativeWindowNeverReleasesCachedRevokedGeneration(t *testing.T) {
+	source := newFakeSource()
+	reference := mustReference(t, "secret://broker/pva_fixture")
+	one := reference.String() + "?version=pvc_one"
+	two := reference.String() + "?version=pvc_two"
+	source.values[one] = "first"
+	source.values[two] = "second"
+	resolver := newTestResolver(t, source, time.Now)
+	window, err := NewWindow(resolver, func(secret.Value) error { return nil })
+	if err != nil {
+		t.Fatal(err)
+	}
+	window.WithAuthoritativeReads()
+	if _, err = window.Resolve(t.Context(), reference, "pvc_one"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = window.Resolve(t.Context(), reference, "pvc_two"); err != nil {
+		t.Fatal(err)
+	}
+	source.fail[one] = secret.ErrDenied
+	source.fail[two] = secret.ErrDenied
+	for _, version := range []string{"pvc_one", "pvc_two"} {
+		if _, err = window.Resolve(t.Context(), reference, version); !errors.Is(err, secret.ErrDenied) {
+			t.Fatal("cached revoked generation escaped authoritative check", version, err)
+		}
+	}
+	if source.calls[one] != 2 || source.calls[two] != 2 {
+		t.Fatal("broker reads were cached")
+	}
+}
+
 func TestResolverSelectsExactVersionAndInvalidates(t *testing.T) {
 	t.Parallel()
 

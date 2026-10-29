@@ -11,12 +11,14 @@ import (
 
 	awskms "github.com/Mujhtech/idenqa/adapters/kms/aws"
 	"github.com/Mujhtech/idenqa/internal/platform/secret"
+	"github.com/Mujhtech/idenqa/internal/platform/secret/broker"
 	"github.com/Mujhtech/idenqa/internal/platform/secret/file"
 )
 
 // Options is the validated process configuration for secret resolution.
 type Options struct {
 	Provider  string
+	Broker    broker.Options
 	AWSRegion string
 	CacheTTL  time.Duration
 	Now       func() time.Time
@@ -41,6 +43,12 @@ func Open(ctx context.Context, options Options) (secret.Resolver, error) {
 	switch provider {
 	case "file":
 		source = file.New()
+	case "broker":
+		brokerResolver, err := broker.Open(options.Broker)
+		if err != nil {
+			return nil, err
+		}
+		source = brokerResolver
 	case "aws":
 		if options.AWSRegion == "" {
 			return nil, errors.New("secret resolver: AWS region is required")

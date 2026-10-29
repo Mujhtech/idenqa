@@ -1708,6 +1708,21 @@ The following items remain deliberately unresolved:
 
 21. Provider runtime beyond PR-01/PR-02: official-account sandbox evidence, D-029 external-success reconciliation and durable evidence delivery recovery, provider-side deletion, cost budgets and attribution, production recipient/regional approval, callback operation under a tenant-owned official account (the transport, runner verification, receipt deduplication and Core ingress are implemented; live provider-account callback evidence is not), and workflow-metadata retention/purge for immutable request and dispatch receipts. Provider health snapshots, bounded circuit breaking through the shared `platform/breaker` primitive, health-based registration routing, provider credential resolution/rotation through AWS Secrets Manager, per-provider concurrency/rate limits and degraded-mode visibility are implemented (migrations 68, 70, 71). D-029 fixes the owned receipt, deduplication, semantic retry and lifecycle rules; the initial sandbox route and its at-most-one initial dispatch receipt do not resolve those implementation or operational gates.
 
+**Cloud provider credential integration — 17 October 2026:** The optional owned
+`platform/secret/broker` adapter resolves an exact provider account/version over
+TLS 1.3 and an independently authenticated runner certificate. A separately
+configured Core worker may read current version metadata only. For explicitly
+configured `regional-current` broker routes, preparation resolves and persists a
+concrete credential version before the provider request digest and outbox/task
+intent are committed; retries retain that pin. Authoritative runner reads bypass
+cached generations, preserving the regional broker's expiry, overlap and
+revocation decision. Existing file/AWS secret resolution and open-source Core
+operation remain available independently of Cloud. This adds no dependency or
+provider capability/assurance contract change. Deployed identities/routes,
+certificate operations, upstream provider key operations and live acceptance
+remain open; see the companion [Cloud lifecycle report](../../idenqa-cloud/docs/idenqa-cloud-provider-credential-lifecycle-v0.1.md).
+
+
 22. ONNX/biometric acceptance: production licensed model and dataset rights; production acceptance of the implemented face localisation/contextual transform and its preprocessing provenance; approved evaluation data acquisition; trained face-matching and active-liveness models; acceptance of document portrait/alignment and identity-separated pair evaluation; accepted selfie quality/pose/framing thresholds; any future occlusion/accessory classifiers; public route administration and registry-driven hot provisioning beyond the implemented immutable dependency/fallback graph; operational acceptance of configured fallback sets; native/mobile temporal-sequence integration; production threshold calibration and representative evaluation; hardened OCI packaging, kernel resource/egress limits and supported hardware. ONNX Runtime, PAD as first capability and first-party biometric models as the primary direction are **Selected** under section 6.9. The Python 1.29.0 CPU reference, bounded subprocess, durable workflow, contextual preparation, offline evaluation, complete Web temporal-sequence persistence/consumption, evaluation-only selfie diagnostics and repository-owned graph admission are implemented; model quality and production deployment gates remain open.
 
 23. Review acceptance and external integrations: the selected review policy settings, independent escalation/correction rules, versioned operator revocation, controlled display and public contracts are implemented in section 6.10. External certification is now an owned fail-closed Ed25519 assertion adapter configured through the certification-only issuer file, with the tenant-attested path preserved when no issuer is configured; a real third-party issuer trust/status integration (remote key discovery and revocation checks) remains unresolved. Advanced queue assignment automation, tenant notification product surfaces and composed reviewer/subject acceptance also remain unresolved. SSO remains deferred.

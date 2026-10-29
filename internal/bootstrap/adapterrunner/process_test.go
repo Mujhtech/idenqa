@@ -49,6 +49,37 @@ func tenantConfiguration(t *testing.T, reference, version string) providerv1.Con
 	return configuration
 }
 
+func TestBrokerHealthFollowsCurrentGenerationAfterPredecessorRetirement(t *testing.T) {
+	base := mustSecretReference(t, "secret://broker/pva_fixture")
+	source := &fakeCredentialSource{values: map[string]string{
+		base.String() + "?version=pvc_old":          `{"app_id":"app","api_key":"old"}`,
+		base.String() + "?version=regional-current": `{"app_id":"app","api_key":"current"}`,
+	}, fail: map[string]error{}}
+	resolver, err := credential.NewResolver(source, time.Minute, time.Now)
+	if err != nil {
+		t.Fatal(err)
+	}
+	window, err := credential.NewWindow(resolver, func(value secret.Value) error { return validateTenantCredentials(providerv1.AdapterDojah, value) })
+	if err != nil {
+		t.Fatal(err)
+	}
+	window.WithAuthoritativeReads()
+	if _, err = window.Resolve(t.Context(), base, "pvc_old"); err != nil {
+		t.Fatal(err)
+	}
+	source.fail[base.String()+"?version=pvc_old"] = secret.ErrDenied
+	adapter := &scopedAdapter{settings: Settings{SecretProvider: "broker", Configuration: tenantConfiguration(t, base.String(), "regional-current")}, credentials: window, dynamicConfiguration: true}
+	health, err := adapter.Health(t.Context())
+	if err != nil || health.State != providerv1.HealthReady {
+		t.Fatal("retired predecessor blocked valid replacement health", err, health.State)
+	}
+	source.fail[base.String()+"?version=regional-current"] = secret.ErrDenied
+	health, err = adapter.Health(t.Context())
+	if err != nil || health.State != providerv1.HealthNotReady {
+		t.Fatal("revoked current credential reported healthy", err, health.State)
+	}
+}
+
 func TestReviewedProviderEnvironment(t *testing.T) {
 	t.Parallel()
 
