@@ -1,14 +1,13 @@
 package proposal
 
 import (
-	"github.com/Mujhtech/idenqa/internal/platform/observability"
-
 	"context"
 	"strings"
 	"time"
 
 	proposalv1 "github.com/Mujhtech/idenqa/contracts/proposal/v1"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
 	"github.com/Mujhtech/idenqa/internal/tenant"
 )
 

@@ -553,12 +553,10 @@ func TestAuthorConcurrentExactRequestsConverge(t *testing.T) {
 	errorsByRequest := make([]error, requests)
 	var wait sync.WaitGroup
 	for index := range requests {
-		wait.Add(1)
-		go func() {
-			defer wait.Done()
+		wait.Go(func() {
 			decision, err := author.Author(t.Context(), fixture.scope, fixture.request)
 			digests[index], errorsByRequest[index] = decision.Digest(), err
-		}()
+		})
 	}
 	wait.Wait()
 	for index, err := range errorsByRequest {

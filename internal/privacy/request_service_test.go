@@ -317,7 +317,7 @@ func TestRequestServiceExpiryRestrictionAndGate(t *testing.T) {
 	approver := privacy.Actor{ID: "key_approve", Permissions: []privacy.Permission{privacy.PermissionApprovePrivacyRequests}}
 	subjectID := "sub_01M11HEQG00000000000000000"
 
-	expiring, err := service.Create(context.Background(), scope, writer, privacy.CreateRequestInput{Type: privacy.RequestAccess, SubjectID: subjectID, Region: "ng-1", Payload: []byte(`{}`), ExpiresAt: timePointer(now.Add(time.Hour))})
+	expiring, err := service.Create(context.Background(), scope, writer, privacy.CreateRequestInput{Type: privacy.RequestAccess, SubjectID: subjectID, Region: "ng-1", Payload: []byte(`{}`), ExpiresAt: new(now.Add(time.Hour))})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -412,5 +412,3 @@ func TestRequestServiceDisclosureAndProcessorInventory(t *testing.T) {
 		t.Fatalf("stale processor error = %v", err)
 	}
 }
-
-func timePointer(value time.Time) *time.Time { return &value }

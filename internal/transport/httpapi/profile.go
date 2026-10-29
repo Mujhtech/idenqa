@@ -684,9 +684,7 @@ func intPointer(value *uint32) *int {
 	if value == nil {
 		return nil
 	}
-	result := int(*value)
-
-	return &result
+	return new(int(*value))
 }
 
 func entityTag(version int64) string { return strconv.Quote(strconv.FormatInt(version, 10)) }

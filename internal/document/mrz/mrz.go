@@ -7,6 +7,7 @@ package mrz
 
 import (
 	"errors"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -212,7 +213,7 @@ func normaliseLines(lines []string) ([]string, []Issue) {
 	for index, line := range lines {
 		upper := strings.ToUpper(strings.TrimRight(line, " \t"))
 		cleaned := []byte(upper)
-		for position := 0; position < len(cleaned); position++ {
+		for position := range cleaned {
 			if validCharacter(cleaned[position]) {
 				continue
 			}
@@ -293,7 +294,7 @@ func parseTD3(zone *Zone, lines []string, reference time.Time, issues *[]Issue) 
 
 	personalNumber := line2[28:42]
 	verifyField(personalNumber, line2[42], FieldPersonalNumber, issues)
-	zone.PersonalNumber = cleanPersonalNumber(personalNumber)
+	zone.PersonalNumber = cleanField(personalNumber)
 
 	composite := line2[0:10] + line2[13:20] + line2[21:28] + line2[28:43]
 	verifyComposite(composite, line2[43], issues)
@@ -453,10 +454,6 @@ func cleanDocumentNumber(raw string, issues *[]Issue) string {
 	return value
 }
 
-func cleanPersonalNumber(raw string) string {
-	return cleanField(raw)
-}
-
 func cleanField(raw string) string {
 	replaced := strings.ReplaceAll(raw, "<", "")
 	return strings.TrimSpace(replaced)
@@ -489,10 +486,8 @@ func appendIssue(issues []Issue, issue Issue) []Issue {
 	if len(issues) >= maximumIssues {
 		return issues
 	}
-	for _, existing := range issues {
-		if existing == issue {
-			return issues
-		}
+	if slices.Contains(issues, issue) {
+		return issues
 	}
 	return append(issues, issue)
 }

@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
+	"slices"
 	"testing"
 	"time"
 
@@ -119,7 +121,7 @@ func (adapter *mapAdapter) Class() keyrewrap.Class { return adapter.class }
 func (adapter *mapAdapter) List(_ context.Context, scope tenant.Scope, after string, limit int) ([]keyrewrap.Target, error) {
 	objects := adapter.objects[scope.ID().String()]
 	targets := make([]keyrewrap.Target, 0, limit)
-	for _, object := range sortedKeys(objects) {
+	for _, object := range slices.Sorted(maps.Keys(objects)) {
 		if object <= after {
 			continue
 		}
@@ -150,21 +152,6 @@ func (adapter *mapAdapter) Rewrap(_ context.Context, target keyrewrap.Target) (k
 	}
 	objects[target.Object] = wanted
 	return keyrewrap.Outcome{Changed: true, Wrapping: kms.WrappedKeyRecord{Provider: "test", Reference: "ref", Version: wanted, Algorithm: "TEST", Ciphertext: []byte{1}}}, nil
-}
-
-func sortedKeys(values map[string]string) []string {
-	keys := make([]string, 0, len(values))
-	for key := range values {
-		keys = append(keys, key)
-	}
-	for first := 0; first < len(keys); first++ {
-		for second := first + 1; second < len(keys); second++ {
-			if keys[second] < keys[first] {
-				keys[first], keys[second] = keys[second], keys[first]
-			}
-		}
-	}
-	return keys
 }
 
 type tenantList []id.Tenant

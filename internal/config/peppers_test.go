@@ -54,7 +54,6 @@ func TestPeppersDecodeRejectsInvalidAndDoesNotPartiallyReplace(t *testing.T) {
 		"1=" + valid + "=",
 	}
 	for _, value := range tests {
-		value := value
 		t.Run(value, func(t *testing.T) {
 			t.Parallel()
 			var peppers config.Peppers
@@ -95,7 +94,6 @@ func TestLoadAPIRejectsIncompletePepperConfiguration(t *testing.T) {
 		{"IDENQA_API_KEY_ACTIVE_PEPPER_VERSION": "2", "IDENQA_API_KEY_PEPPERS": "1=" + pepper},
 	}
 	for index, environment := range tests {
-		index, environment := index, environment
 		t.Run(fmt.Sprintf("case-%d", index), func(t *testing.T) {
 			clearIDENQAEnvironment(t)
 			setRequiredAPIEnvironment(t)

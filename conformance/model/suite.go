@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"slices"
 
 	modelv1 "github.com/Mujhtech/idenqa/contracts/model/v1"
 )
@@ -39,14 +40,9 @@ func Check(ctx context.Context, adapter modelv1.Adapter, fixture Fixture) error 
 	if manifest.Provenance != fixture.Request.Provenance || manifest.Restrictions != fixture.Request.Restrictions {
 		return errors.New("model conformance: request does not pin advertised manifest")
 	}
-	capabilityFound := false
-	for _, capability := range manifest.Capabilities {
-		if reflect.DeepEqual(capability, fixture.Request.Capability) {
-			capabilityFound = true
-			break
-		}
-	}
-	if !capabilityFound {
+	if !slices.ContainsFunc(manifest.Capabilities, func(capability modelv1.Capability) bool {
+		return reflect.DeepEqual(capability, fixture.Request.Capability)
+	}) {
 		return errors.New("model conformance: request capability is not advertised")
 	}
 	if err := adapter.ValidateConfiguration(ctx, fixture.Configuration); err != nil {

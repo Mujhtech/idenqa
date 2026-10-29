@@ -68,7 +68,6 @@ func TestNewRequestRejectsMalformedWorkforcePrincipal(t *testing.T) {
 
 	tenantID, _ := id.ParseTenant("ten_01K4AR9V8FQ2G7ZXCPNM5T6JWH")
 	for _, value := range []string{"usr_", "usr_review.er", "usr_review/other", "usr_review other", "usr_réviewer"} {
-		value := value
 		t.Run(value, func(t *testing.T) {
 			t.Parallel()
 			_, err := idempotency.NewRequest(tenantID, testPrincipal(value), "reviews.evidence.issue.delegated", "0123456789abcdef", []byte("input"), time.Now(), time.Hour)

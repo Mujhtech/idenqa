@@ -72,7 +72,7 @@ func (s *Store) Execute(ctx context.Context, scope tenant.Scope, c identity.Comm
 	if scope.ID().IsZero() || c.Actor.IsZero() || c.At.IsZero() || c.Region == "" {
 		return identity.Result{}, identity.ErrInvalid
 	}
-	for attempt := 0; attempt < 3; attempt++ {
+	for range 3 {
 		var result identity.Result
 		e := s.pool.WithinTransaction(ctx, pg.TransactionOptions{Isolation: pg.IsolationSerializable}, func(ctx context.Context, tx pg.Transaction) error {
 			if e := setScope(ctx, tx, scope); e != nil {
@@ -85,8 +85,7 @@ func (s *Store) Execute(ctx context.Context, scope tenant.Scope, c identity.Comm
 		if e == nil {
 			return result, nil
 		}
-		var db *pgconn.PgError
-		if errors.As(e, &db) {
+		if db, ok := errors.AsType[*pgconn.PgError](e); ok {
 			if (db.Code == "40001" || db.Code == "40P01") && ctx.Err() == nil {
 				continue
 			}

@@ -292,7 +292,7 @@ func isEventStreamRequest(request *http.Request) bool {
 	if request.Method != http.MethodGet {
 		return false
 	}
-	for _, value := range strings.Split(request.Header.Get("Accept"), ",") {
+	for value := range strings.SplitSeq(request.Header.Get("Accept"), ",") {
 		if strings.HasPrefix(strings.ToLower(strings.TrimSpace(value)), "text/event-stream") {
 			return true
 		}

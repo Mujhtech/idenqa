@@ -51,7 +51,6 @@ func TestWireRoundTripsEveryV1Payload(t *testing.T) {
 		realtime.CommandAcknowledgement{Disposition: realtime.CommandDispositionRejected, Code: "state_conflict"},
 	}
 	for index, payload := range payloads {
-		payload := payload
 		t.Run(fmt.Sprintf("%02d_%s", index, reflect.TypeOf(payload)), func(t *testing.T) {
 			input := fixture.input
 			input.Payload = payload

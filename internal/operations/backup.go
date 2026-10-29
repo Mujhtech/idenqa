@@ -3,6 +3,7 @@ package operations
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -122,7 +123,7 @@ func VerifyDirectory(ctx context.Context, root string, manifest BackupManifest, 
 		}
 	}()
 	artifacts := append([]Artifact(nil), manifest.Artifacts...)
-	slices.SortFunc(artifacts, func(left, right Artifact) int { return compare(left.Path, right.Path) })
+	slices.SortFunc(artifacts, func(left, right Artifact) int { return cmp.Compare(left.Path, right.Path) })
 	var total int64
 	for _, artifact := range artifacts {
 		if err := ctx.Err(); err != nil {
@@ -187,13 +188,4 @@ func safeToken(value string, maximum int) bool {
 		}
 	}
 	return true
-}
-func compare(left, right string) int {
-	if left < right {
-		return -1
-	}
-	if left > right {
-		return 1
-	}
-	return 0
 }

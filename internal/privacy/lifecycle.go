@@ -2,6 +2,7 @@
 package privacy
 
 import (
+	"cmp"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
@@ -113,19 +114,10 @@ func Resolve(class DataClass, region string, createdAt time.Time, tenantRequeste
 		return Resolution{}, ErrInvalid
 	}
 	slices.SortFunc(owned, func(left, right RetentionRule) int {
-		if left.Authority < right.Authority {
-			return -1
+		if compared := cmp.Compare(left.Authority, right.Authority); compared != 0 {
+			return compared
 		}
-		if left.Authority > right.Authority {
-			return 1
-		}
-		if left.Version < right.Version {
-			return -1
-		}
-		if left.Version > right.Version {
-			return 1
-		}
-		return 0
+		return cmp.Compare(left.Version, right.Version)
 	})
 	return Resolution{Class: class, Region: region, Duration: selected, ExpiresAt: createdAt.Add(selected), Rules: owned}, nil
 }

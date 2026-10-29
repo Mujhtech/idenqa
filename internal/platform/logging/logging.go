@@ -68,7 +68,7 @@ func sensitiveKey(key string) bool {
 		return true
 	}
 
-	for _, part := range strings.Split(normalized, "_") {
+	for part := range strings.SplitSeq(normalized, "_") {
 		switch part {
 		case "credential", "credentials", "password", "secret", "token":
 			return true

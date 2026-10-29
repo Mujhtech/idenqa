@@ -7,7 +7,7 @@ package fields
 import (
 	"errors"
 	"fmt"
-	"sort"
+	"slices"
 	"strings"
 	"time"
 
@@ -141,21 +141,12 @@ func normaliseSides(sides []document.Side) []document.Side {
 		if !side.Valid() {
 			continue
 		}
-		if !containsSide(unique, side) {
+		if !slices.Contains(unique, side) {
 			unique = append(unique, side)
 		}
 	}
-	sort.Slice(unique, func(left, right int) bool { return unique[left] < unique[right] })
+	slices.Sort(unique)
 	return unique
-}
-
-func containsSide(sides []document.Side, wanted document.Side) bool {
-	for _, side := range sides {
-		if side == wanted {
-			return true
-		}
-	}
-	return false
 }
 
 func applyRawFields(source document.Source, raw []RawField, merged *contributions, addIssue func(document.Issue)) {
@@ -306,7 +297,7 @@ func (merged *contributions) fields(addIssue func(document.Issue)) []document.Fi
 	for name := range merged.values {
 		names = append(names, name)
 	}
-	sort.Slice(names, func(left, right int) bool { return names[left] < names[right] })
+	slices.Sort(names)
 	result := make([]document.Field, 0, len(names))
 	for _, name := range names {
 		bySource := merged.values[name]
@@ -324,7 +315,7 @@ func (merged *contributions) fields(addIssue func(document.Issue)) []document.Fi
 				winner, winnerValue = source, value
 			}
 		}
-		sort.Slice(sources, func(left, right int) bool { return sources[left] < sources[right] })
+		slices.Sort(sources)
 		agreement := document.AgreementSingle
 		switch {
 		case len(values) > 1:
@@ -371,9 +362,9 @@ func normaliserFor(name document.Name) func(string) (string, bool) {
 	case document.NameDocumentNumber, document.NamePersonalNumber:
 		return canonicalIdentifier
 	case document.NameDocumentType:
-		return canonicalDocumentType
+		return classification.NormaliseDocumentType
 	case document.NameIssuingState, document.NameNationality:
-		return canonicalCountry
+		return classification.NormaliseCountry
 	case document.NameFirstName, document.NameLastName:
 		return canonicalName
 	case document.NameDateOfBirth, document.NameDateOfExpiry, document.NameDateOfIssue:
@@ -399,14 +390,6 @@ func canonicalIdentifier(raw string) (string, bool) {
 		return "", false
 	}
 	return value, true
-}
-
-func canonicalDocumentType(raw string) (string, bool) {
-	return classification.NormaliseDocumentType(raw)
-}
-
-func canonicalCountry(raw string) (string, bool) {
-	return classification.NormaliseCountry(raw)
 }
 
 func canonicalName(raw string) (string, bool) {
@@ -476,7 +459,7 @@ func canonicalAAMVADate(raw string) (string, bool) {
 	if parsed, err := time.Parse(aamvaDateLayout, value); err == nil {
 		candidates = append(candidates, parsed.Format(dateLayout))
 	}
-	if parsed, err := time.Parse(compactDateLayout, value); err == nil && !contains(candidates, parsed.Format(dateLayout)) {
+	if parsed, err := time.Parse(compactDateLayout, value); err == nil && !slices.Contains(candidates, parsed.Format(dateLayout)) {
 		candidates = append(candidates, parsed.Format(dateLayout))
 	}
 	if len(candidates) != 1 {
@@ -574,10 +557,8 @@ func appendIssue(issues []document.Issue, issue document.Issue) []document.Issue
 	if len(issues) >= document.MaximumIssues {
 		return issues
 	}
-	for _, existing := range issues {
-		if existing == issue {
-			return issues
-		}
+	if slices.Contains(issues, issue) {
+		return issues
 	}
 	return append(issues, issue)
 }
@@ -592,13 +573,4 @@ func allDigits(value string) bool {
 		}
 	}
 	return true
-}
-
-func contains(values []string, wanted string) bool {
-	for _, value := range values {
-		if value == wanted {
-			return true
-		}
-	}
-	return false
 }

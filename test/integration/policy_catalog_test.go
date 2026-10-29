@@ -146,11 +146,12 @@ func TestPolicyCatalogDurabilityActivationConcurrencyAndIsolation(t *testing.T) 
 	wait.Wait()
 	successes, conflicts := 0, 0
 	for _, activationErr := range activationErrors {
-		if activationErr == nil {
+		switch {
+		case activationErr == nil:
 			successes++
-		} else if errors.Is(activationErr, policy.ErrActivationConflict) {
+		case errors.Is(activationErr, policy.ErrActivationConflict):
 			conflicts++
-		} else {
+		default:
 			t.Fatalf("unexpected activation error = %v", activationErr)
 		}
 	}

@@ -72,8 +72,8 @@ func validMatchingEvaluation(value Evaluation) bool {
 		return value.Reason == "" && !math.IsNaN(*value.Score) && !math.IsInf(*value.Score, 0) && *value.Score >= -1 && *value.Score <= 1
 	}
 	for _, role := range []string{"document_", "selfie_"} {
-		if strings.HasPrefix(value.Reason, role) {
-			switch strings.TrimPrefix(value.Reason, role) {
+		if after, ok := strings.CutPrefix(value.Reason, role); ok {
+			switch after {
 			case "face_not_found", "multiple_faces", "face_too_small", "face_at_edge", "landmarks_invalid":
 				return true
 			}

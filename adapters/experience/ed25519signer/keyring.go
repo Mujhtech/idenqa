@@ -8,7 +8,7 @@ import (
 	"crypto/ed25519"
 	"errors"
 	"fmt"
-	"sort"
+	"slices"
 
 	contract "github.com/Mujhtech/idenqa/contracts/experience/v1"
 	"github.com/Mujhtech/idenqa/internal/experience"
@@ -64,7 +64,7 @@ func (keyring *Keyring) Versions() []uint16 {
 	for version := range keyring.secrets {
 		versions = append(versions, version)
 	}
-	sort.Slice(versions, func(left, right int) bool { return versions[left] < versions[right] })
+	slices.Sort(versions)
 	return versions
 }
 

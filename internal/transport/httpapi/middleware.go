@@ -201,7 +201,7 @@ func isWebSocketUpgrade(request *http.Request) bool {
 	if !strings.EqualFold(request.Header.Get("Upgrade"), "websocket") {
 		return false
 	}
-	for _, token := range strings.Split(request.Header.Get("Connection"), ",") {
+	for token := range strings.SplitSeq(request.Header.Get("Connection"), ",") {
 		if strings.EqualFold(strings.TrimSpace(token), "upgrade") {
 			return true
 		}

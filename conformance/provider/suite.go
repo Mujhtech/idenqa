@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"slices"
 
 	providerv1 "github.com/Mujhtech/idenqa/contracts/provider/v1"
 )
@@ -40,14 +41,9 @@ func Check(ctx context.Context, adapter providerv1.Adapter, fixture Fixture) err
 		manifest.Configuration.Digest != fixture.Configuration.SchemaDigest {
 		return errors.New("provider conformance: request does not pin advertised manifest")
 	}
-	capabilityFound := false
-	for _, capability := range manifest.Capabilities {
-		if reflect.DeepEqual(capability, fixture.Request.Capability) {
-			capabilityFound = true
-			break
-		}
-	}
-	if !capabilityFound {
+	if !slices.ContainsFunc(manifest.Capabilities, func(capability providerv1.Capability) bool {
+		return reflect.DeepEqual(capability, fixture.Request.Capability)
+	}) {
 		return errors.New("provider conformance: request capability is not advertised")
 	}
 	if err := adapter.ValidateConfiguration(ctx, fixture.Configuration); err != nil {

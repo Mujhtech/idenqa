@@ -63,7 +63,7 @@ func (client *Client) doJSON(
 	if reference.IsAbs() || reference.Host != "" || reference.Fragment != "" {
 		return metadata, errors.New("idenqa: invalid request path")
 	}
-	for _, segment := range strings.Split(reference.Path, "/") {
+	for segment := range strings.SplitSeq(reference.Path, "/") {
 		if segment == ".." {
 			return metadata, errors.New("idenqa: invalid request path")
 		}

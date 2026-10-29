@@ -258,7 +258,7 @@ func publicPortableSimulation(t *testing.T, policyDocument json.RawMessage, eval
 	observedAt := evaluatedAt.Format(time.RFC3339)
 	encoded, err := json.Marshal(map[string]any{
 		"schema_major": 1, "schema_minor": 0,
-		"policy":             json.RawMessage(policyDocument),
+		"policy":             policyDocument,
 		"tenant_id":          "ten_01K3P4NQF00000000000000001",
 		"verification_id":    "ver_01K3P4NQF00000000000000002",
 		"authority_id":       authorityID,

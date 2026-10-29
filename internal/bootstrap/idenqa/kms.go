@@ -57,7 +57,6 @@ func newKMSCommand() *cobra.Command {
 		{name: "retire", short: "Retire one disabled HMAC key version", run: executeKMSRetire},
 		{name: "show", short: "Show a domain's HMAC key versions", run: executeKMSShow},
 	} {
-		operation := operation
 		entry := &cobra.Command{
 			Use:   operation.name,
 			Short: operation.short,

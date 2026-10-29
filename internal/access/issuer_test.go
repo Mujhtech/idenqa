@@ -79,7 +79,6 @@ func TestIssuerIssueEnforcesExplicitExpiryPolicy(t *testing.T) {
 		{name: "no expiry allowed", allowNoExpiry: true, maximum: time.Hour, intent: access.WithoutExpiry()},
 	}
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -197,7 +196,6 @@ func TestIssuerRotateRejectsUnsafeTransitions(t *testing.T) {
 		{name: "already rotating", overlap: 10 * time.Minute, expiry: now.Add(time.Hour), mutate: func(key *access.Key) error { return key.ScheduleRetirement(now, now.Add(20*time.Minute)) }},
 	}
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 

@@ -1,8 +1,6 @@
 package keycustody
 
 import (
-	"github.com/Mujhtech/idenqa/internal/platform/observability"
-
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -13,6 +11,7 @@ import (
 	"github.com/Mujhtech/idenqa/internal/access"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/platform/kms"
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
 )
 
 const (

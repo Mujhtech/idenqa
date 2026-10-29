@@ -36,7 +36,7 @@ func NewKey(value string) (Key, error) {
 		strings.Contains(value, "\\") || path.Clean(value) != value || value == "." {
 		return "", errors.New("objectstore: invalid object key")
 	}
-	for _, segment := range strings.Split(value, "/") {
+	for segment := range strings.SplitSeq(value, "/") {
 		if segment == "" || segment == ".." || !validSegment(segment) {
 			return "", errors.New("objectstore: invalid object key")
 		}

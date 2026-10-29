@@ -153,16 +153,14 @@ func TestSimulatorSupportsConcurrentDeterministicReuse(t *testing.T) {
 	errorsSeen := make(chan error, workers)
 	var wait sync.WaitGroup
 	for range workers {
-		wait.Add(1)
-		go func() {
-			defer wait.Done()
+		wait.Go(func() {
 			simulation, runErr := simulator.Run(t.Context(), input)
 			if runErr != nil {
 				errorsSeen <- runErr
 				return
 			}
 			digests <- simulation.Evaluation().Digest()
-		}()
+		})
 	}
 	wait.Wait()
 	close(digests)

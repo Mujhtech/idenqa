@@ -143,7 +143,6 @@ func TestPepperSetRejectsInvalidConfiguration(t *testing.T) {
 		{name: "missing active", active: 2, peppers: map[access.PepperVersion][]byte{1: bytes.Repeat([]byte{1}, 32)}},
 	}
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 			if _, err := access.NewPepperSet(test.active, test.peppers); err == nil {

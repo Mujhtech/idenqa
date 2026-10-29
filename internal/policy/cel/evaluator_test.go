@@ -280,9 +280,7 @@ func TestEvaluatorIsSafeForConcurrentDeterministicUse(t *testing.T) {
 	errorsSeen := make(chan error, workers)
 	var wait sync.WaitGroup
 	for range workers {
-		wait.Add(1)
-		go func() {
-			defer wait.Done()
+		wait.Go(func() {
 			output, err := evaluator.Evaluate(t.Context(), snapshot)
 			if err != nil {
 				errorsSeen <- err
@@ -294,7 +292,7 @@ func TestEvaluatorIsSafeForConcurrentDeterministicUse(t *testing.T) {
 				return
 			}
 			digests <- resolved.Digest()
-		}()
+		})
 	}
 	wait.Wait()
 	close(digests)

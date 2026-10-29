@@ -751,10 +751,7 @@ func (service *RequestService) observeTransition(from, to Request) {
 		Region: observability.Region(to.Region),
 	})
 	if to.State.Terminal() || to.State == RequestStateInReview || to.State == RequestStateExecuting {
-		age := to.UpdatedAt.Sub(to.RequestedAt)
-		if age < 0 {
-			age = 0
-		}
+		age := max(to.UpdatedAt.Sub(to.RequestedAt), 0)
 		service.metrics.RecordPrivacyRequestAge(observability.PrivacyRequestAge{
 			Type: requestType(to.Type), State: requestState(to.State),
 			Overdue: service.now().UTC().After(to.ExpiresAt), Age: age,

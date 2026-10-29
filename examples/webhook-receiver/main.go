@@ -175,12 +175,14 @@ func (handler *receiver) webhook(writer http.ResponseWriter, request *http.Reque
 		http.Error(writer, "invalid envelope", http.StatusBadRequest)
 		return
 	}
+	receivedAt := time.Now().UTC().Format(time.RFC3339Nano)
+	digest := sha256.Sum256(body)
 	record := map[string]any{
 		"verified":    true,
 		"event_id":    eventID,
 		"type":        eventType,
-		"received_at": time.Now().UTC().Format(time.RFC3339Nano),
-		"body_sha256": "sha256:" + hex.EncodeToString(sum(body)),
+		"received_at": receivedAt,
+		"body_sha256": "sha256:" + hex.EncodeToString(digest[:]),
 	}
 	encoded, err := json.Marshal(record)
 	if err != nil {
@@ -254,11 +256,6 @@ func eventTypeOf(body []byte) (string, error) {
 		return "", errors.New("webhook envelope type is missing")
 	}
 	return envelope.Type, nil
-}
-
-func sum(body []byte) []byte {
-	digest := sha256.Sum256(body)
-	return digest[:]
 }
 
 func environment(name, fallback string) string {

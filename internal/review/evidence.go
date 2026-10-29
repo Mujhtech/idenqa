@@ -1,8 +1,6 @@
 package review
 
 import (
-	"github.com/Mujhtech/idenqa/internal/platform/observability"
-
 	"context"
 	"fmt"
 	"io"
@@ -13,6 +11,7 @@ import (
 	"github.com/Mujhtech/idenqa/internal/evidence"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/platform/idempotency"
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
 	"github.com/Mujhtech/idenqa/internal/tenant"
 )
 

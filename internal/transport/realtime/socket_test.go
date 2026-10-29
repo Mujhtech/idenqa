@@ -427,7 +427,7 @@ func TestRoutesHandleBoundedConcurrentAdmissions(t *testing.T) {
 	server := newTestServer(t, routes)
 	errorsFound := make(chan error, connections)
 	var wait sync.WaitGroup
-	for index := 0; index < connections; index++ {
+	for range connections {
 		wait.Add(1)
 		go func() {
 			defer wait.Done()

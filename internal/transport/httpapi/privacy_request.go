@@ -81,7 +81,7 @@ func (routes *PrivacyRoutes) createRequest(writer http.ResponseWriter, request *
 		routes.problem(writer, request, invalidRequest(err))
 		return
 	}
-	input, err := privacySubjectInput(privacy.RequestType(body.Type), body.Region, derefString(body.SubjectID), derefString(body.Purpose), derefString(body.RecordID), derefString(body.DecisionID), derefString(body.Name), derefString(body.Value), derefTenantKind(body.Kind), derefTenantNormalization(body.Normalization))
+	input, err := privacySubjectInput(privacy.RequestType(body.Type), body.Region, optionalStringValue(body.SubjectID), optionalStringValue(body.Purpose), optionalStringValue(body.RecordID), optionalStringValue(body.DecisionID), optionalStringValue(body.Name), optionalStringValue(body.Value), enumStringValue(body.Kind), enumStringValue(body.Normalization))
 	if err != nil {
 		routes.problem(writer, request, invalidRequest(err))
 		return
@@ -106,7 +106,7 @@ func (routes *PrivacyRoutes) createSubjectRequest(writer http.ResponseWriter, re
 		routes.problem(writer, request, invalidRequest(err))
 		return
 	}
-	input, err := privacySubjectInput(privacy.RequestType(body.Type), body.Region, derefString(body.SubjectID), derefString(body.Purpose), derefString(body.RecordID), derefString(body.DecisionID), derefString(body.Name), derefString(body.Value), derefKind(body.Kind), derefNormalization(body.Normalization))
+	input, err := privacySubjectInput(privacy.RequestType(body.Type), body.Region, optionalStringValue(body.SubjectID), optionalStringValue(body.Purpose), optionalStringValue(body.RecordID), optionalStringValue(body.DecisionID), optionalStringValue(body.Name), optionalStringValue(body.Value), enumStringValue(body.Kind), enumStringValue(body.Normalization))
 	if err != nil {
 		routes.problem(writer, request, invalidRequest(err))
 		return
@@ -571,41 +571,6 @@ func (routes *PrivacyRoutes) encodePrivacyCursor(scope tenant.Scope, bound, posi
 		return "", err
 	}
 	return routes.cursors.Encode(scope.ID(), bound, encoded)
-}
-
-func derefString(value *string) string {
-	if value == nil {
-		return ""
-	}
-	return *value
-}
-
-func derefKind(value *openapiv1.SubjectPrivacyRequestCreateKind) string {
-	if value == nil {
-		return ""
-	}
-	return string(*value)
-}
-
-func derefNormalization(value *openapiv1.SubjectPrivacyRequestCreateNormalization) string {
-	if value == nil {
-		return ""
-	}
-	return string(*value)
-}
-
-func derefTenantKind(value *openapiv1.PrivacyRequestCreateKind) string {
-	if value == nil {
-		return ""
-	}
-	return string(*value)
-}
-
-func derefTenantNormalization(value *openapiv1.PrivacyRequestCreateNormalization) string {
-	if value == nil {
-		return ""
-	}
-	return string(*value)
 }
 
 func privacySubjectInput(requestType privacy.RequestType, region, subjectID, purpose, recordID, decisionID, name, value, kind, normalization string) (privacy.CreateRequestInput, error) {

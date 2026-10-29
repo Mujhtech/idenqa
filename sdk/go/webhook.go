@@ -91,7 +91,7 @@ func canonicalWebhook(timestamp, eventID string, body []byte) []byte {
 
 func parseSignatures(value string) ([][]byte, error) {
 	var result [][]byte
-	for _, part := range strings.Split(value, ",") {
+	for part := range strings.SplitSeq(value, ",") {
 		version, encoded, ok := strings.Cut(strings.TrimSpace(part), "=")
 		if !ok || version != "v1" {
 			continue

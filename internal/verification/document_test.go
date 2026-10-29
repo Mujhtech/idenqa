@@ -3,6 +3,7 @@ package verification
 import (
 	"encoding/json"
 	"errors"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -447,7 +448,7 @@ func assertSignal(t *testing.T, observations []Observation, name string, outcome
 			t.Fatalf("%s outcome = %s", name, observation.Signal.Outcome)
 		}
 		for _, reason := range reasons {
-			if !containsString(observation.Signal.ReasonCodes, reason) {
+			if !slices.Contains(observation.Signal.ReasonCodes, reason) {
 				t.Fatalf("%s reasons = %v", name, observation.Signal.ReasonCodes)
 			}
 		}
@@ -471,15 +472,6 @@ func assertNoRawValue(t *testing.T, observations []Observation, values ...string
 			t.Fatalf("observation payload contains raw value %q", value)
 		}
 	}
-}
-
-func containsString(values []string, wanted string) bool {
-	for _, value := range values {
-		if value == wanted {
-			return true
-		}
-	}
-	return false
 }
 
 func buildTestPassport(t *testing.T, documentNumber, expiry string) []string {

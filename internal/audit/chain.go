@@ -18,6 +18,8 @@ const SchemaVersion = 1
 // MaximumExportBytes bounds offline verification memory.
 const MaximumExportBytes = 16 << 20
 
+const initialChainHash = "0000000000000000000000000000000000000000000000000000000000000000"
+
 var (
 	// ErrInvalid means the export does not satisfy the closed contract.
 	ErrInvalid = errors.New("audit: invalid data")
@@ -42,7 +44,7 @@ type Record struct {
 
 // Append constructs exactly the next record in a tenant chain.
 func Append(previous *Record, eventID, eventType, aggregateID, actorID, eventDigest string, occurredAt time.Time) (Record, error) {
-	sequence, previousHash := uint64(1), zeroHash()
+	sequence, previousHash := uint64(1), initialChainHash
 	if previous != nil {
 		sequence, previousHash = previous.Sequence+1, previous.Hash
 	}
@@ -96,7 +98,7 @@ func Verify(export Export, keys map[string]ed25519.PublicKey) (Report, error) {
 	if export.SchemaVersion != SchemaVersion || export.TenantID == "" || len(export.Records) == 0 || len(export.Checkpoints) == 0 {
 		return Report{}, ErrInvalid
 	}
-	previousHash := zeroHash()
+	previousHash := initialChainHash
 	for index, record := range export.Records {
 		if record.Sequence != uint64(index+1) || record.PreviousHash != previousHash || validateRecordFields(record) != nil || record.Hash != recordHash(record) {
 			return Report{}, fmt.Errorf("%w at sequence %d", ErrChain, record.Sequence)
@@ -159,7 +161,4 @@ func checkpointMessage(value Checkpoint) []byte {
 }
 func validCheckpoint(value Checkpoint, signature bool) bool {
 	return value.TenantID != "" && value.ThroughSequence > 0 && digestPattern.MatchString(value.ChainHash) && tokenPattern.MatchString(value.KeyID) && !value.CreatedAt.IsZero() && value.CreatedAt.Location() == time.UTC && (!signature || len(value.Signature) == ed25519.SignatureSize*2)
-}
-func zeroHash() string {
-	return string(make([]byte, 0)) + "0000000000000000000000000000000000000000000000000000000000000000"
 }

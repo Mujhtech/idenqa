@@ -194,7 +194,6 @@ func newBreakGlassCommand(options *supportOptions) *cobra.Command {
 		{name: "deny", short: "Deny a pending break-glass request"},
 		{name: "revoke", short: "Revoke an approved break-glass request"},
 	} {
-		operation := operation
 		entry := &cobra.Command{
 			Use:   operation.name,
 			Short: operation.short,

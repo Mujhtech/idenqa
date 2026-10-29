@@ -1,6 +1,7 @@
 package evidence
 
 import (
+	"cmp"
 	"errors"
 	"fmt"
 	"slices"
@@ -64,13 +65,7 @@ func (catalog Catalog) Snapshots() ([]Snapshot, error) {
 		snapshots = append(snapshots, Snapshot{Reference: reference, Document: document})
 	}
 	slices.SortFunc(snapshots, func(left, right Snapshot) int {
-		if left.Reference.Revision > right.Reference.Revision {
-			return -1
-		}
-		if left.Reference.Revision < right.Reference.Revision {
-			return 1
-		}
-		return 0
+		return cmp.Compare(right.Reference.Revision, left.Reference.Revision)
 	})
 
 	return snapshots, nil

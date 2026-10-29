@@ -671,8 +671,7 @@ func matchesAny(err error, targets []error) bool {
 // Map returns the public classification for err. Unknown failures are reduced
 // to one generic internal response so operational causes cannot leak.
 func Map(err error) *Error {
-	var classified *Error
-	if errors.As(err, &classified) {
+	if classified, ok := errors.AsType[*Error](err); ok {
 		return classified
 	}
 

@@ -3,6 +3,7 @@ package proposal
 import (
 	"context"
 	"encoding/json"
+	"slices"
 	"strings"
 
 	proposalv1 "github.com/Mujhtech/idenqa/contracts/proposal/v1"
@@ -131,13 +132,7 @@ func ValidateGuardrails(ctx context.Context, input GuardrailInput) (GuardrailRes
 		}
 		// check mode config allow-list version permits kind
 		if input.ModeConfig.AllowListVersion != "" {
-			allowed := false
-			for _, allowedKind := range input.ModeConfig.AllowedKinds {
-				if allowedKind == action.Kind {
-					allowed = true
-					break
-				}
-			}
+			allowed := slices.Contains(input.ModeConfig.AllowedKinds, action.Kind)
 			// if config specifies allow-list, it must include kind
 			if len(input.ModeConfig.AllowedKinds) > 0 && !allowed {
 				return GuardrailResult{Allowed: false, Reason: "kind not in mode allow-list"}, nil

@@ -80,7 +80,6 @@ func TestParsePresentedKeyRejectsMalformedValues(t *testing.T) {
 	}
 
 	for name, value := range tests {
-		name, value := name, value
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 

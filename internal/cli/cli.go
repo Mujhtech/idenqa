@@ -134,8 +134,7 @@ func execute(
 	code := exitUsage
 	reported := false
 	showUsage := true
-	var exitErr *commandError
-	if errors.As(err, &exitErr) {
+	if exitErr, ok := errors.AsType[*commandError](err); ok {
 		code = exitErr.code
 		reported = exitErr.reported
 		showUsage = exitErr.usage

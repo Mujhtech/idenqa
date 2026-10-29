@@ -393,13 +393,7 @@ func RestoreGrant(patterns []Pattern, permissions []Permission) (Grant, error) {
 		return Grant{}, errors.New("access grant snapshot contains a duplicate permission")
 	}
 	for _, pattern := range validatedPatterns {
-		matched := false
-		for _, permission := range validatedPermissions {
-			if pattern.Matches(permission) {
-				matched = true
-				break
-			}
-		}
+		matched := slices.ContainsFunc(validatedPermissions, pattern.Matches)
 		if !matched {
 			return Grant{}, errors.New("access grant snapshot pattern covers no stored permission")
 		}

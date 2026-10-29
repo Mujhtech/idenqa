@@ -10,6 +10,7 @@ package proposal
 import (
 	"context"
 	"encoding/json"
+	"slices"
 	"time"
 )
 
@@ -182,14 +183,8 @@ func AllowedKinds() []ActionKind {
 	for kind := range allowedKinds {
 		kinds = append(kinds, kind)
 	}
-	// stable order for canonical encoding
-	for i := 0; i < len(kinds); i++ {
-		for j := i + 1; j < len(kinds); j++ {
-			if kinds[j] < kinds[i] {
-				kinds[i], kinds[j] = kinds[j], kinds[i]
-			}
-		}
-	}
+	// Stable order for canonical encoding.
+	slices.Sort(kinds)
 	return kinds
 }
 

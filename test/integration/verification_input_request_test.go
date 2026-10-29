@@ -83,7 +83,7 @@ func TestVerificationInputRequestProjectionResumeAndCompletion(t *testing.T) {
 		results := base.Evaluation().Results()
 		overLong := "r" + strings.Repeat("a", 66)
 		reasons := []string{overLong}
-		for index := 0; index < 10; index++ {
+		for index := range 10 {
 			reasons = append(reasons, fmt.Sprintf("reason_%02d", index))
 		}
 		for index := range results {
@@ -335,7 +335,7 @@ func TestVerificationInputRequestProjectionResumeAndCompletion(t *testing.T) {
 		}
 		// A replacement capture credential is usable again once the session is
 		// collecting, and the subject-safe read still omits the persisted request.
-		resumedCapture := serveVerificationRoute(t, router, http.MethodGet, "/v1/capture/session", string(*resumed.CaptureToken), "", nil)
+		resumedCapture := serveVerificationRoute(t, router, http.MethodGet, "/v1/capture/session", *resumed.CaptureToken, "", nil)
 		if resumedCapture.Code != http.StatusOK {
 			t.Fatalf("capture read status = %d body=%s", resumedCapture.Code, resumedCapture.Body)
 		}

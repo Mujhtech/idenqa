@@ -2,8 +2,6 @@
 package requestlog
 
 import (
-	"github.com/Mujhtech/idenqa/internal/platform/observability"
-
 	"context"
 	"encoding/json"
 	"errors"
@@ -13,6 +11,7 @@ import (
 	"time"
 
 	"github.com/Mujhtech/idenqa/internal/access"
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
 	"github.com/Mujhtech/idenqa/internal/tenant"
 )
 

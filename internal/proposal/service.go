@@ -1,8 +1,6 @@
 package proposal
 
 import (
-	"github.com/Mujhtech/idenqa/internal/platform/observability"
-
 	"context"
 	"encoding/json"
 	"errors"
@@ -12,6 +10,7 @@ import (
 	proposalv1 "github.com/Mujhtech/idenqa/contracts/proposal/v1"
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
 	"github.com/Mujhtech/idenqa/internal/tenant"
 )
 

@@ -266,7 +266,7 @@ func (routes *Routes) browserBinding(values []string) (core.ClientBinding, bool)
 func offersSubprotocol(values []string, required string) bool {
 	found := false
 	for _, value := range values {
-		for _, offered := range strings.Split(value, ",") {
+		for offered := range strings.SplitSeq(value, ",") {
 			offered = strings.TrimSpace(offered)
 			if offered == "" {
 				return false

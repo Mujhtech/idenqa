@@ -158,8 +158,7 @@ func (s *AssuranceStore) WriteAssurance(ctx context.Context, scope tenant.Scope,
 	if errors.Is(err, pgx.ErrNoRows) {
 		err = policy.ErrRevisionNotFound
 	}
-	var db *pgconn.PgError
-	if errors.As(err, &db) {
+	if db, ok := errors.AsType[*pgconn.PgError](err); ok {
 		switch db.Code {
 		case "23503":
 			err = policy.ErrRevisionNotFound

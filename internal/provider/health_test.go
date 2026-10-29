@@ -74,7 +74,7 @@ func TestDeriveHealthStateMachine(t *testing.T) {
 			wantState: provider.HealthUnknown, wantReason: provider.HealthReasonProbeUnavailable,
 		},
 		{
-			name: "stale activity", evidence: provider.HealthEvidence{LastActivityAt: timePointer(now.Add(-policy.StaleAfter - time.Minute))},
+			name: "stale activity", evidence: provider.HealthEvidence{LastActivityAt: new(now.Add(-policy.StaleAfter - time.Minute))},
 			wantState: provider.HealthUnknown, wantReason: provider.HealthReasonStaleEvidence, wantStale: true,
 		},
 		{
@@ -345,5 +345,3 @@ func (store *healthStoreFake) Apply(_ context.Context, _ tenant.Scope, _ provide
 	store.snapshot, store.exists = snapshot, true
 	return true, nil
 }
-
-func timePointer(value time.Time) *time.Time { return &value }

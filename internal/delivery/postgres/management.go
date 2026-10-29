@@ -59,7 +59,7 @@ func (store *ManagementStore) ApplyManagement(ctx context.Context, scope tenant.
 	if scope.ID().IsZero() || request.TenantID() != scope.ID() || event.IsZero() || work == nil {
 		return delivery.ManagementResult{}, nil, delivery.ErrInvalid
 	}
-	for attempt := 0; attempt < 3; attempt++ {
+	for range 3 {
 		var result delivery.ManagementResult
 		var secret []byte
 		err := store.pool.WithinTransaction(ctx, pg.TransactionOptions{Isolation: pg.IsolationSerializable}, func(ctx context.Context, tx pg.Transaction) error {

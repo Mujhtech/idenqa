@@ -168,9 +168,9 @@ func TestVerificationRoutesCreateAndCaptureSnapshot(t *testing.T) {
 	body, err := json.Marshal(openapiv1.VerificationCreate{
 		CaptureProfileID:                 profileID.String(),
 		PolicyID:                         policyID.String(),
-		VerificationTTLSeconds:           int64Pointer(3600),
-		CaptureTokenTTLSeconds:           int64Pointer(600),
-		OutcomeTokenPostExpiryTTLSeconds: int64Pointer(7200),
+		VerificationTTLSeconds:           new(int64(3600)),
+		CaptureTokenTTLSeconds:           new(int64(600)),
+		OutcomeTokenPostExpiryTTLSeconds: new(int64(7200)),
 	})
 	if err != nil {
 		t.Fatalf("json.Marshal() error = %v", err)
@@ -820,8 +820,6 @@ func (reader *verificationCaseReaderStub) FindCaseForVerification(
 	reader.calls++
 	return reader.value, reader.err
 }
-
-func int64Pointer(value int64) *int64 { return &value }
 
 func TestVerificationSessionResponseProjectsOperationalFailure(t *testing.T) {
 	t.Parallel()

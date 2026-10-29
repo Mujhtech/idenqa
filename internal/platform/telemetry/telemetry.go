@@ -8,6 +8,7 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"maps"
 	"net"
 	"net/http"
 	"os"
@@ -383,9 +384,7 @@ func shutdownTraceExporter(
 
 func cloneHeaders(source map[string]string) map[string]string {
 	clone := make(map[string]string, len(source))
-	for key, value := range source {
-		clone[key] = value
-	}
+	maps.Copy(clone, source)
 	return clone
 }
 

@@ -277,9 +277,7 @@ func TestProviderHealthBreakerRoutingAndRecovery(t *testing.T) {
 			func(request providerv1.Request) providerv1.Result {
 				return providerFailureResult(request, providerv1.FailureUnavailable)
 			},
-			func(request providerv1.Request) providerv1.Result {
-				return providerCompletedResult(request)
-			},
+			providerCompletedResult,
 		}}
 		breakerExecutor, err := provider.NewBreakerExecutor(executor, registry, health, healthClock.Now)
 		if err != nil {

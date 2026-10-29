@@ -2,6 +2,7 @@ package fields_test
 
 import (
 	"errors"
+	"slices"
 	"testing"
 	"time"
 
@@ -53,7 +54,7 @@ func TestAnalyseMergesProviderMRZAndBarcode(t *testing.T) {
 		analysis.Classification.IssuingState != "UTO" {
 		t.Fatalf("classification = %+v", analysis.Classification)
 	}
-	if !containsSide(analysis.PlanSides, document.SideBack) {
+	if !slices.Contains(analysis.PlanSides, document.SideBack) {
 		t.Fatalf("plan sides = %v", analysis.PlanSides)
 	}
 }
@@ -162,15 +163,6 @@ func assertField(t *testing.T, analysis document.Analysis, name document.Name, v
 func hasIssue(issues []document.Issue, code, field string) bool {
 	for _, issue := range issues {
 		if issue.Code == code && issue.Field == field {
-			return true
-		}
-	}
-	return false
-}
-
-func containsSide(sides []document.Side, wanted document.Side) bool {
-	for _, side := range sides {
-		if side == wanted {
 			return true
 		}
 	}

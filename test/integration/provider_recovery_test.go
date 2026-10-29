@@ -210,9 +210,9 @@ func recoveryProviderResult(fixture providerRecoveryFixture, completedAt time.Ti
 	}
 }
 
-func recoveryCallbackProgress(fixture providerRecoveryFixture, job string, completedAt time.Time, outcome providerv1.SignalOutcome) providerv1.Progress {
+func recoveryCallbackProgress(fixture providerRecoveryFixture, completedAt time.Time, outcome providerv1.SignalOutcome) providerv1.Progress {
 	result := recoveryProviderResult(fixture, completedAt, outcome)
-	return providerv1.Progress{ProviderJobID: job, ReplayID: job, Result: &result}
+	return providerv1.Progress{ProviderJobID: "job-1", ReplayID: "job-1", Result: &result}
 }
 
 func newProviderRecoveryCallbackService(t *testing.T, f captureAcceptanceFixture, verifier providerv1.CallbackVerifier) *provider.CallbackService {
@@ -349,7 +349,7 @@ func TestProviderCallbackReceiptSurvivesWorkerReplacement(t *testing.T) {
 		assertRecoveryPending(t, f, fixture)
 		// The worker stops here; the callback arrives through the API ingress
 		// and is verified into a durable receipt only.
-		progress := recoveryCallbackProgress(fixture, "job-1", f.now.Add(time.Minute), providerv1.SignalOutcomeSatisfied)
+		progress := recoveryCallbackProgress(fixture, f.now.Add(time.Minute), providerv1.SignalOutcomeSatisfied)
 		service := newProviderRecoveryCallbackService(t, f, callbackIntegrationVerifier{progress: progress})
 		accepted, err := service.Handle(ctx, fixture.callback.String(), recoveryCallbackEnvelope())
 		if err != nil || accepted.Status != provider.CallbackAccepted || recoveryCallbackReceipts(t, f, fixture) != 1 {
@@ -363,7 +363,7 @@ func TestProviderCallbackReceiptSurvivesWorkerReplacement(t *testing.T) {
 			t.Fatalf("pre-restart duplicate = %+v err=%v", duplicate, err)
 		}
 
-		replacement := &recoveryAdvancer{advance: func(call int32, resume bool) (providerv1.Progress, error) {
+		replacement := &recoveryAdvancer{advance: func(call int32, _ bool) (providerv1.Progress, error) {
 			t.Fatalf("replacement worker polled the provider instead of adopting its receipt: call=%d", call)
 			return providerv1.Progress{}, nil
 		}}
@@ -403,13 +403,13 @@ func TestProviderCallbackAndPollConvergeOnFirstTerminalResult(t *testing.T) {
 		runAuthorityPersistence(t, func(f captureAcceptanceFixture) {
 			ctx := t.Context()
 			fixture := seedProviderRecoveryFixture(t, f)
-			first := recoveryCallbackProgress(fixture, "job-1", f.now.Add(time.Minute), providerv1.SignalOutcomeSatisfied)
+			first := recoveryCallbackProgress(fixture, f.now.Add(time.Minute), providerv1.SignalOutcomeSatisfied)
 			service := newProviderRecoveryCallbackService(t, f, callbackIntegrationVerifier{progress: first})
 			accepted, err := service.Handle(ctx, fixture.callback.String(), recoveryCallbackEnvelope())
 			if err != nil || accepted.Status != provider.CallbackAccepted {
 				t.Fatalf("callback receipt = %+v err=%v", accepted, err)
 			}
-			conflicting := recoveryCallbackProgress(fixture, "job-1", f.now.Add(time.Minute), providerv1.SignalOutcomeNotSatisfied)
+			conflicting := recoveryCallbackProgress(fixture, f.now.Add(time.Minute), providerv1.SignalOutcomeNotSatisfied)
 			if _, err := newProviderRecoveryCallbackService(t, f, callbackIntegrationVerifier{progress: conflicting}).
 				Handle(ctx, fixture.callback.String(), recoveryCallbackEnvelope()); !errors.Is(err, provider.ErrCallbackConflict) {
 				t.Fatalf("conflicting callback = %v", err)
@@ -420,7 +420,7 @@ func TestProviderCallbackAndPollConvergeOnFirstTerminalResult(t *testing.T) {
 				t.Fatalf("identical callback = %+v receipts=%d err=%v", duplicate, recoveryCallbackReceipts(t, f, fixture), err)
 			}
 
-			polling := &recoveryAdvancer{advance: func(call int32, resume bool) (providerv1.Progress, error) {
+			polling := &recoveryAdvancer{advance: func(call int32, _ bool) (providerv1.Progress, error) {
 				t.Fatalf("status polling replaced an adopted callback receipt: call=%d", call)
 				return providerv1.Progress{}, nil
 			}}
@@ -453,7 +453,7 @@ func TestProviderCallbackAndPollConvergeOnFirstTerminalResult(t *testing.T) {
 			ctx := t.Context()
 			fixture := seedProviderRecoveryFixture(t, f)
 			polled := recoveryProviderResult(fixture, f.now.Add(time.Minute), providerv1.SignalOutcomeSatisfied)
-			polling := &recoveryAdvancer{advance: func(call int32, resume bool) (providerv1.Progress, error) {
+			polling := &recoveryAdvancer{advance: func(_ int32, resume bool) (providerv1.Progress, error) {
 				if !resume {
 					return providerv1.Progress{ProviderJobID: "job-1", ReplayID: "job-1", Result: &polled}, nil
 				}
@@ -469,7 +469,7 @@ func TestProviderCallbackAndPollConvergeOnFirstTerminalResult(t *testing.T) {
 			// A conflicting callback with the same replay identity arrives while
 			// the check is still running; it is receipted but cannot replace the
 			// first terminal result.
-			conflicting := recoveryCallbackProgress(fixture, "job-1", f.now.Add(time.Minute), providerv1.SignalOutcomeNotSatisfied)
+			conflicting := recoveryCallbackProgress(fixture, f.now.Add(time.Minute), providerv1.SignalOutcomeNotSatisfied)
 			accepted, err := newProviderRecoveryCallbackService(t, f, callbackIntegrationVerifier{progress: conflicting}).
 				Handle(ctx, fixture.callback.String(), recoveryCallbackEnvelope())
 			if err != nil || accepted.Status != provider.CallbackAccepted || recoveryCallbackReceipts(t, f, fixture) != 1 {
@@ -514,7 +514,7 @@ func TestProviderCallbackAndPollConvergeOnFirstTerminalResult(t *testing.T) {
 func TestExternalProviderResultSurvivesFencedCommitFailure(t *testing.T) {
 	runAuthorityPersistence(t, func(f captureAcceptanceFixture) {
 		fixture := seedProviderRecoveryFixture(t, f)
-		pending := &recoveryAdvancer{advance: func(call int32, resume bool) (providerv1.Progress, error) {
+		pending := &recoveryAdvancer{advance: func(_ int32, _ bool) (providerv1.Progress, error) {
 			return providerv1.Progress{ProviderJobID: "job-1", ReplayID: "job-1"}, nil
 		}}
 		first := newProviderRecoveryWorker(t, f, fixedIntegrationClock{now: f.now.Add(2 * time.Minute)}, pending, nil)
@@ -554,7 +554,7 @@ func TestExternalProviderResultSurvivesFencedCommitFailure(t *testing.T) {
 			t.Fatalf("post-failure state = %+v", counts)
 		}
 
-		replacement := &recoveryAdvancer{advance: func(call int32, resume bool) (providerv1.Progress, error) {
+		replacement := &recoveryAdvancer{advance: func(call int32, _ bool) (providerv1.Progress, error) {
 			t.Fatalf("replacement polled a persisted terminal result: call=%d", call)
 			return providerv1.Progress{}, nil
 		}}
@@ -582,7 +582,7 @@ func TestExternalProviderResultSurvivesFencedCommitFailure(t *testing.T) {
 func TestProviderRunnerLossRetriesThenRecoversStatusOnly(t *testing.T) {
 	runAuthorityPersistence(t, func(f captureAcceptanceFixture) {
 		fixture := seedProviderRecoveryFixture(t, f)
-		unavailable := &recoveryAdvancer{advance: func(call int32, resume bool) (providerv1.Progress, error) {
+		unavailable := &recoveryAdvancer{advance: func(_ int32, _ bool) (providerv1.Progress, error) {
 			return providerv1.Progress{}, errors.New("provider runner unavailable")
 		}}
 		first := newProviderRecoveryWorker(t, f, fixedIntegrationClock{now: f.now.Add(2 * time.Minute)}, unavailable, nil)
@@ -652,7 +652,7 @@ func TestRejectedProviderCallbackFallsBackToStatusPolling(t *testing.T) {
 				}
 
 				terminal := recoveryProviderResult(fixture, f.now.Add(time.Minute), providerv1.SignalOutcomeSatisfied)
-				polling := &recoveryAdvancer{advance: func(call int32, resume bool) (providerv1.Progress, error) {
+				polling := &recoveryAdvancer{advance: func(_ int32, _ bool) (providerv1.Progress, error) {
 					return providerv1.Progress{ProviderJobID: "job-1", ReplayID: "job-1", Result: &terminal}, nil
 				}}
 				worker := newProviderRecoveryWorker(t, f, fixedIntegrationClock{now: f.now.Add(2 * time.Minute)}, polling, nil)

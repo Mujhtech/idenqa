@@ -189,7 +189,7 @@ func (adapter *Adapter) Execute(ctx context.Context, request providerv1.Request)
 		if archiveErr != nil {
 			return failed(request, adapter.now, providerv1.FailureInvalidRequest, "package_invalid", providerv1.RetryNever, 0), nil
 		}
-		defer wipe(archive)
+		defer clear(archive)
 		if _, uploadStatus, uploadRetry, uploadErr := adapter.rawRequest(ctx, configuration, http.MethodPut, uploadURL, "application/zip", archive); uploadErr != nil {
 			return transportFailure(request, adapter.now, uploadStatus, uploadRetry), nil
 		}
@@ -249,7 +249,7 @@ func (adapter *Adapter) images(ctx context.Context, request providerv1.Request) 
 		}
 		value, err := adapter.evidence.ReadProviderEvidence(ctx, grant, maximumEvidence)
 		if err != nil || len(value) == 0 || len(value) > maximumEvidence {
-			wipe(value)
+			clear(value)
 			clearImages(result)
 			return nil, ErrEvidence
 		}
@@ -279,7 +279,7 @@ func packageArchive(values map[string]string, images []image) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer wipe(encoded)
+	defer clear(encoded)
 	var output bytes.Buffer
 	writer := zip.NewWriter(&output)
 	entry, err := writer.Create("info.json")
@@ -319,7 +319,7 @@ func (adapter *Adapter) jsonRequest(ctx context.Context, configuration Config, p
 	if err != nil {
 		return nil, 0, 0, err
 	}
-	defer wipe(encoded)
+	defer clear(encoded)
 	return adapter.rawRequest(ctx, configuration, http.MethodPost, strings.TrimSuffix(configuration.BaseURL, "/")+path, "application/json", encoded)
 }
 
@@ -340,7 +340,7 @@ func (adapter *Adapter) rawRequest(ctx context.Context, _ Config, method, endpoi
 	if readErr != nil || len(encoded) > maximumBodyBytes {
 		return nil, response.StatusCode, retryAfter, errors.New("invalid bounded response")
 	}
-	defer wipe(encoded)
+	defer clear(encoded)
 	var decoded map[string]any
 	if len(encoded) > 0 && json.Unmarshal(encoded, &decoded) != nil {
 		return nil, response.StatusCode, retryAfter, errors.New("invalid response")
@@ -477,14 +477,9 @@ func parseRetryAfter(value string) time.Duration {
 	}
 	return time.Duration(seconds) * time.Second
 }
-func wipe(value []byte) {
-	for index := range value {
-		value[index] = 0
-	}
-}
 func clearImages(values []image) {
 	for index := range values {
-		wipe(values[index].Value)
+		clear(values[index].Value)
 	}
 }
 

@@ -57,7 +57,7 @@ func (adapter *Adapter) Advance(ctx context.Context, request providerv1.Request,
 	if err != nil {
 		return providerv1.Progress{}, err
 	}
-	defer wipe(archive)
+	defer clear(archive)
 	timestamp := adapter.now().UTC().Format(timestampLayout)
 	prep := prepRequest{
 		SourceSDK:        "rest_api",

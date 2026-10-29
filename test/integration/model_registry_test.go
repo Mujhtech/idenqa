@@ -305,11 +305,12 @@ func TestModelRegistryAtomicHistoryIsolationAndRetirement(t *testing.T) {
 	successes, conflicts := 0, 0
 	for range 2 {
 		err := <-outcomes
-		if err == nil {
+		switch {
+		case err == nil:
 			successes++
-		} else if errors.Is(err, model.ErrRegistryConflict) {
+		case errors.Is(err, model.ErrRegistryConflict):
 			conflicts++
-		} else {
+		default:
 			t.Fatal(err)
 		}
 	}

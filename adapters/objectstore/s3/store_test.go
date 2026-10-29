@@ -8,7 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -465,7 +465,7 @@ func (client *memoryClient) ListObjectsV2(
 			keys = append(keys, key)
 		}
 	}
-	sort.Strings(keys)
+	slices.Sort(keys)
 	maximum := int(aws.ToInt32(input.MaxKeys))
 	isTruncated := len(keys) > maximum
 	if isTruncated {
@@ -535,8 +535,8 @@ func newS3TestServer(t *testing.T, secure bool) *httptest.Server {
 						})
 					}
 				}
-				sort.Slice(contents, func(left, right int) bool {
-					return contents[left].Key < contents[right].Key
+				slices.SortFunc(contents, func(left, right s3ListObject) int {
+					return strings.Compare(left.Key, right.Key)
 				})
 				writer.Header().Set("Content-Type", "application/xml")
 				if err := xml.NewEncoder(writer).Encode(s3ListResult{

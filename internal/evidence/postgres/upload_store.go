@@ -545,7 +545,7 @@ func captureProfileProgress(profile verification.Profile, encoded string, select
 	sequences := map[string][]acceptedCaptureBinding{}
 	for _, binding := range bindings {
 		requirement, exists := requirements[binding.RequirementKey]
-		if !exists || !containsEvidenceName(requirement.Artefacts, binding.Artefact) {
+		if !exists || !slices.Contains(requirement.Artefacts, evidence.Name(binding.Artefact)) {
 			return 0, 0, errors.New("evidence postgres: accepted capture binding is unknown")
 		}
 		key := binding.RequirementKey + "\x00" + binding.Artefact
@@ -592,15 +592,6 @@ func captureProfileProgress(profile verification.Profile, encoded string, select
 	}
 	// #nosec G115 -- both conversions are bounded above immediately before use.
 	return uint32(steps), uint32(len(completed)), nil
-}
-
-func containsEvidenceName(values []evidence.Name, candidate string) bool {
-	for _, value := range values {
-		if string(value) == candidate {
-			return true
-		}
-	}
-	return false
 }
 
 func evidenceReadyEvent(mutation evidence.UploadAcceptance) (outbox.Intent, error) {

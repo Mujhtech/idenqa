@@ -178,9 +178,9 @@ func cliOutputValue(t *testing.T, output, name string) string {
 	t.Helper()
 
 	prefix := name + "="
-	for _, field := range strings.Fields(output) {
-		if strings.HasPrefix(field, prefix) {
-			return strings.TrimPrefix(field, prefix)
+	for field := range strings.FieldsSeq(output) {
+		if after, ok := strings.CutPrefix(field, prefix); ok {
+			return after
 		}
 	}
 	t.Fatalf("CLI output %q does not contain %s", output, prefix)

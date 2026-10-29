@@ -109,7 +109,7 @@ func (trace TraceContext) validate() error {
 		return nil
 	}
 	if !traceparentPattern.MatchString(trace.Traceparent) || len(trace.Tracestate) > 512 ||
-		containsControl(trace.Tracestate) {
+		strings.ContainsFunc(trace.Tracestate, unicode.IsControl) {
 		return invalid("trace", "context is invalid")
 	}
 	return nil
@@ -318,14 +318,14 @@ func validID(value, prefix string) bool {
 }
 
 func validName(value string) bool {
-	if value == "" || len(value) > 160 || strings.TrimSpace(value) != value || containsControl(value) {
+	if value == "" || len(value) > 160 || strings.TrimSpace(value) != value || strings.ContainsFunc(value, unicode.IsControl) {
 		return false
 	}
-	return strings.IndexFunc(value, unicode.IsSpace) == -1
+	return !strings.ContainsFunc(value, unicode.IsSpace)
 }
 
 func validNames(values []string) bool {
-	return slices.IndexFunc(values, func(value string) bool { return !validName(value) }) == -1
+	return !slices.ContainsFunc(values, func(value string) bool { return !validName(value) })
 }
 
 func validVersion(value string) bool {
@@ -347,11 +347,10 @@ func validVersion(value string) bool {
 }
 
 func validOpaque(value string, minimum, maximum int) bool {
-	return len(value) >= minimum && len(value) <= maximum && strings.TrimSpace(value) == value && !containsControl(value)
+	return len(value) >= minimum && len(value) <= maximum && strings.TrimSpace(value) == value && !strings.ContainsFunc(value, unicode.IsControl)
 }
 
-func validUTC(value time.Time) bool     { return !value.IsZero() && value.Location() == time.UTC }
-func containsControl(value string) bool { return strings.IndexFunc(value, unicode.IsControl) >= 0 }
+func validUTC(value time.Time) bool { return !value.IsZero() && value.Location() == time.UTC }
 
 func unique(values []string) bool {
 	seen := make(map[string]struct{}, len(values))

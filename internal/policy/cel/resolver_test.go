@@ -88,12 +88,10 @@ func TestResolverDeduplicatesConcurrentColdResolution(t *testing.T) {
 	errorsSeen := make(chan error, workers)
 	var wait sync.WaitGroup
 	for range workers {
-		wait.Add(1)
-		go func() {
-			defer wait.Done()
+		wait.Go(func() {
 			_, evaluateErr := resolver.Evaluate(t.Context(), snapshot)
 			errorsSeen <- evaluateErr
-		}()
+		})
 	}
 	<-reader.started
 	close(reader.release)

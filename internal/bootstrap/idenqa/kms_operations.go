@@ -524,7 +524,6 @@ func newKMSRecoveryCommand() *cobra.Command {
 		{name: "complete", short: "Complete an approved ceremony and apply its operation"},
 		{name: "abort", short: "Abort a started or approved ceremony without applying anything"},
 	} {
-		operation := operation
 		entry := &cobra.Command{
 			Use:   operation.name,
 			Short: operation.short,

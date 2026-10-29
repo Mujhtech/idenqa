@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"time"
 
 	webhookv1 "github.com/Mujhtech/idenqa/contracts/webhook/v1"
@@ -200,9 +201,7 @@ func appendDecision(
 	}
 	if !decision.Supersedes().IsZero() {
 		superseded := make(map[string]any, len(fields)+1)
-		for key, value := range fields {
-			superseded[key] = value
-		}
+		maps.Copy(superseded, fields)
 		superseded["previous_decision_id"] = decision.Supersedes().String()
 		superseded["decision"] = map[string]any{
 			"id":                   decision.ID().String(),

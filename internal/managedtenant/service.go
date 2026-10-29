@@ -3,8 +3,6 @@
 package managedtenant
 
 import (
-	"github.com/Mujhtech/idenqa/internal/platform/observability"
-
 	"context"
 	"crypto/aes"
 	"crypto/cipher"
@@ -21,6 +19,7 @@ import (
 	"github.com/Mujhtech/idenqa/internal/access"
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
 	"github.com/Mujhtech/idenqa/internal/tenant"
 )
 
@@ -225,10 +224,7 @@ func (service *Service) RunSynthetic(ctx context.Context, request SyntheticRunRe
 	}
 	commandID := "synthetic-run:" + request.RunID + ":" + hex.EncodeToString(random)
 	sealer := &memorySealer{}
-	credentialLifetime := time.Duration(request.TimeoutSeconds)*time.Second + 5*time.Minute
-	if credentialLifetime > service.lifetime {
-		credentialLifetime = service.lifetime
-	}
+	credentialLifetime := min(time.Duration(request.TimeoutSeconds)*time.Second+5*time.Minute, service.lifetime)
 	issued, err := service.keys.Issue(ctx,
 		access.BridgeCommand{ID: commandID, RequestDigest: sha256.Sum256([]byte(SyntheticContractVersion + "\x00" + commandID))},
 		access.AdminAction{Actor: "idenqa-core", Reason: "bounded synthetic readiness journey"}, scope,

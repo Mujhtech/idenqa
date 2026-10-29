@@ -13,6 +13,7 @@ import (
 	"context"
 	"errors"
 	"net/url"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -85,13 +86,7 @@ func (resolver *Resolver) ResolveVersion(ctx context.Context, reference secret.R
 	if effective != reference {
 		resolver.mutex.Lock()
 		pinned := resolver.pinned[reference.String()]
-		known := false
-		for _, candidate := range pinned {
-			if candidate == effective {
-				known = true
-				break
-			}
-		}
+		known := slices.Contains(pinned, effective)
 		if !known {
 			if len(pinned) >= maxPinnedVersions {
 				pinned = pinned[len(pinned)-maxPinnedVersions+1:]

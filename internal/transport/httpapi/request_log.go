@@ -323,17 +323,17 @@ func (routes *RequestLogRoutes) list(writer http.ResponseWriter, request *http.R
 	var before requestlog.Cursor
 	if value := query.Get("before"); value != "" {
 		decoded, err := base64.RawURLEncoding.DecodeString(value)
-		parts := strings.SplitN(string(decoded), "|", 2)
-		if err != nil || len(parts) != 2 {
+		occurredAt, requestID, found := strings.Cut(string(decoded), "|")
+		if err != nil || !found {
 			routes.problem(writer, request, invalidRequest(errors.New("request-log cursor is invalid")))
 			return
 		}
-		parsed, err := time.Parse(time.RFC3339Nano, parts[0])
-		if err != nil || parts[1] == "" {
+		parsed, err := time.Parse(time.RFC3339Nano, occurredAt)
+		if err != nil || requestID == "" {
 			routes.problem(writer, request, invalidRequest(errors.New("request-log cursor is invalid")))
 			return
 		}
-		before = requestlog.Cursor{OccurredAt: parsed.UTC(), RequestID: parts[1]}
+		before = requestlog.Cursor{OccurredAt: parsed.UTC(), RequestID: requestID}
 	}
 	authority, ok := AccessContext(request.Context())
 	if !ok {

@@ -106,11 +106,7 @@ func Reject(code CallbackRejectionCode, field string) error {
 
 // AsCallbackRejection extracts a typed callback rejection.
 func AsCallbackRejection(err error) (*CallbackRejection, bool) {
-	var rejection *CallbackRejection
-	if errors.As(err, &rejection) {
-		return rejection, true
-	}
-	return nil, false
+	return errors.AsType[*CallbackRejection](err)
 }
 
 // CallbackVerifier authenticates a raw provider callback against the exact

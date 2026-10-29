@@ -1,14 +1,13 @@
 package realtime
 
 import (
-	"github.com/Mujhtech/idenqa/internal/platform/observability"
-
 	"context"
 	"errors"
 	"fmt"
 	"time"
 
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
 	"github.com/Mujhtech/idenqa/internal/tenant"
 )
 

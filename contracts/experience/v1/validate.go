@@ -179,10 +179,8 @@ func validateTargeting(rules []Target) error {
 		if rule.Workflow != "" && !workflowPattern.MatchString(rule.Workflow) {
 			return fmt.Errorf("%w: targeting[%d].workflow", ErrInvalid, index)
 		}
-		for _, dimension := range [][]string{rule.Countries, rule.ApplicationIDs, rule.Origins} {
-			if hasDuplicate(dimension) {
-				return fmt.Errorf("%w: targeting[%d] duplicate dimension value", ErrInvalid, index)
-			}
+		if slices.ContainsFunc([][]string{rule.Countries, rule.ApplicationIDs, rule.Origins}, hasDuplicate) {
+			return fmt.Errorf("%w: targeting[%d] duplicate dimension value", ErrInvalid, index)
 		}
 		if (rule.SDKVersionMin == "") != (rule.SDKVersionMax == "") {
 			return fmt.Errorf("%w: targeting[%d].sdk_version range must be complete", ErrInvalid, index)
@@ -222,7 +220,7 @@ func ruleFingerprint(rule Target) string {
 
 func compareSemver(left string, right string) int {
 	leftParts, rightParts := strings.Split(left, "."), strings.Split(right, ".")
-	for index := 0; index < 3; index++ {
+	for index := range 3 {
 		leftValue := numericValue(leftParts[index])
 		rightValue := numericValue(rightParts[index])
 		if leftValue != rightValue {
@@ -282,7 +280,7 @@ func validObjectKey(value string) bool {
 	if !objectKeyPattern.MatchString(value) {
 		return false
 	}
-	for _, segment := range strings.Split(value, "/") {
+	for segment := range strings.SplitSeq(value, "/") {
 		if segment == "" || segment == "." || segment == ".." {
 			return false
 		}

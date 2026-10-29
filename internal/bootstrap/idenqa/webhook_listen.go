@@ -14,7 +14,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -201,13 +201,11 @@ func runWebhookListen(command *cobra.Command, options *webhookListenOptions) err
 		if command.Context().Err() != nil {
 			return nil
 		}
-		var eventErr *listenEventError
-		if errors.As(streamErr, &eventErr) {
+		if eventErr, ok := errors.AsType[*listenEventError](streamErr); ok {
 			return cli.RuntimeError("webhook listen", eventErr.cause)
 		}
 		if streamErr != nil {
-			var status *listenStatusError
-			if errors.As(streamErr, &status) {
+			if status, ok := errors.AsType[*listenStatusError](streamErr); ok {
 				switch status.Status {
 				case http.StatusUnauthorized, http.StatusForbidden:
 					return cli.RuntimeError("webhook listen", fmt.Errorf("event stream rejected the API credential (status %d)", status.Status))
@@ -541,7 +539,7 @@ func discoverWebhookEventTypes(ctx context.Context, client *http.Client, base *u
 	for eventType := range selected {
 		result = append(result, eventType)
 	}
-	sort.Strings(result)
+	slices.Sort(result)
 	return result, nil
 }
 

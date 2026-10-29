@@ -31,7 +31,7 @@ func TestProfileRoutesCreateStrictDraft(t *testing.T) {
 		State:          verification.ProfileStateDraft,
 		Version:        1,
 		LatestRevision: 1,
-		DraftRevision:  uint32PointerForHTTP(1),
+		DraftRevision:  new(uint32(1)),
 		Revision:       1,
 		Digest:         "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
 		UpdatedAt:      now,
@@ -452,5 +452,3 @@ func profileHTTPCursor(t *testing.T, now time.Time) *cursor.Codec {
 
 	return codec
 }
-
-func uint32PointerForHTTP(value uint32) *uint32 { return &value }

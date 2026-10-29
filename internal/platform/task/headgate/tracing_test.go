@@ -251,8 +251,7 @@ func TestTransactionalPreparationUsesLiveConsumerSpan(t *testing.T) {
 	}
 	job := &libheadgate.Job[verificationCarrier]{ID: envelope.ID, Args: verificationCarrier{carrierPayload{payload: envelope.Payload}}, Queue: envelope.Queue, PartitionKey: envelope.PartitionKey, Deadline: intent.Deadline(), MaxAttempts: envelope.MaxAttempts}
 	err = executeJob(t.Context(), registry, job, libheadgate.Metadata{Headers: envelope.Headers, SchemaVersion: envelope.SchemaVersion}, provider.Tracer("test"))
-	var retry *retryError
-	if !errors.As(err, &retry) {
+	if _, ok := errors.AsType[*retryError](err); !ok {
 		t.Fatalf("expected preparation retry: %v", err)
 	}
 	spans := recorder.Ended()

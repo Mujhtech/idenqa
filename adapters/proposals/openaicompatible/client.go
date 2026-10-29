@@ -143,8 +143,7 @@ func classifySDKError(ctx context.Context, err error) error {
 	if errors.Is(err, boundedhttp.ErrResponseTooLarge) {
 		return proposal.ErrModelOutput
 	}
-	var apiError *openai.Error
-	if errors.As(err, &apiError) {
+	if apiError, ok := errors.AsType[*openai.Error](err); ok {
 		return classifyStatus(apiError.StatusCode)
 	}
 	return proposal.ErrModelUnavailable

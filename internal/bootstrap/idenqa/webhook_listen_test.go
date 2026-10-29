@@ -528,7 +528,7 @@ func TestWebhookListenRejectsInvalidOptions(t *testing.T) {
 		return append(append([]string(nil), base...), extra...)
 	}
 	tooMany := withBase()
-	for index := 0; index < 33; index++ {
+	for index := range 33 {
 		tooMany = append(tooMany, "--forward-header", fmt.Sprintf("X-Test-%d: value", index))
 	}
 	tests := []struct {
@@ -610,16 +610,15 @@ func TestWebhookListenSecretLifecycle(t *testing.T) {
 
 func eventID(t *testing.T, event string) string {
 	t.Helper()
-	start := strings.Index(event, `"id":"`)
-	if start < 0 {
+	_, rest, found := strings.Cut(event, `"id":"`)
+	if !found {
 		t.Errorf("event has no id: %s", event)
 		return ""
 	}
-	rest := event[start+len(`"id":"`):]
-	end := strings.Index(rest, `"`)
-	if end < 0 {
+	identifier, _, found := strings.Cut(rest, `"`)
+	if !found {
 		t.Errorf("event id is unterminated: %s", event)
 		return ""
 	}
-	return rest[:end]
+	return identifier
 }

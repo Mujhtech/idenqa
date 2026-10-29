@@ -10,7 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"sort"
+	"slices"
 
 	"github.com/Mujhtech/idenqa/adapters/models/onnx"
 	modelv1 "github.com/Mujhtech/idenqa/contracts/model/v1"
@@ -224,7 +224,7 @@ func evaluateDataset(ctx context.Context, dataset Dataset, configuration onnx.Co
 	for key := range groups {
 		keys = append(keys, key)
 	}
-	sort.Strings(keys)
+	slices.Sort(keys)
 	for _, key := range keys {
 		group := groups[key]
 		group.Counts.rates()

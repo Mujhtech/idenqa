@@ -130,10 +130,7 @@ func (store *LifecycleStore) observeLifecycle(command verification.LifecycleComm
 	}
 	switch next.State {
 	case verification.SessionStateCancelled, verification.SessionStateExpired, verification.SessionStateFailed:
-		duration := command.OccurredAt.Sub(current.CreatedAt)
-		if duration < 0 {
-			duration = 0
-		}
+		duration := max(command.OccurredAt.Sub(current.CreatedAt), 0)
 		store.metrics.RecordVerificationCompletion(observability.WorkflowCompletion{
 			Outcome:  terminalOutcome(next.State),
 			Duration: duration,

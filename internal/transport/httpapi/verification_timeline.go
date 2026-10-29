@@ -23,8 +23,8 @@ func (routes *VerificationRoutes) recordJourneyEvent(writer http.ResponseWriter,
 	}
 	event, err := routes.timeline.Record(request.Context(), authority, verification.JourneyEventInput{
 		EventID: body.EventID, EventType: string(body.EventType), Screen: string(body.Screen),
-		Action: enumStringValue(body.Action), RequirementKey: stringValue(body.RequirementKey),
-		Artefact: stringValue(body.Artefact), AcquisitionMethod: stringValue(body.AcquisitionMethod),
+		Action: enumStringValue(body.Action), RequirementKey: optionalStringValue(body.RequirementKey),
+		Artefact: optionalStringValue(body.Artefact), AcquisitionMethod: optionalStringValue(body.AcquisitionMethod),
 		Sequence: body.Sequence, ClientOccurredAt: body.ClientOccurredAt,
 	})
 	if err != nil {
@@ -72,11 +72,4 @@ func enumStringValue[T ~string](value *T) string {
 		return ""
 	}
 	return string(*value)
-}
-
-func stringValue(value *string) string {
-	if value == nil {
-		return ""
-	}
-	return *value
 }

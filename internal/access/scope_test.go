@@ -30,7 +30,6 @@ func TestParsePermission(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -65,7 +64,6 @@ func TestParsePatternAndMatch(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -222,7 +220,6 @@ func TestRegistryResolve(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -261,7 +258,6 @@ func TestRegistryRejectsInvalidGrants(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -372,7 +368,6 @@ func TestRestoreGrantRejectsInconsistentSnapshot(t *testing.T) {
 		{name: "pattern matches nothing", patterns: []access.Pattern{"tenant:*", "capture_profiles:*"}, permissions: []access.Permission{access.PermissionTenantRead}},
 	}
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 			if _, err := access.RestoreGrant(test.patterns, test.permissions); err == nil {

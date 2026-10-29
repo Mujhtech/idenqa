@@ -120,7 +120,7 @@ func (store *ProcessingStore) StartProcessing(ctx context.Context, scope tenant.
 	if scope.ID().IsZero() || verificationID.IsZero() {
 		return false, verification.ErrInvalidCheck
 	}
-	for attempt := 0; attempt < 3; attempt++ {
+	for range 3 {
 		started := false
 		err := store.pool.WithinTransaction(ctx, platformpostgres.TransactionOptions{Isolation: platformpostgres.IsolationSerializable}, func(ctx context.Context, tx platformpostgres.Transaction) error {
 			var err error

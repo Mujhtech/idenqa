@@ -124,8 +124,7 @@ func TestExecuteSnoozesMissingNameAndQuarantinesUnsupportedVersion(t *testing.T)
 		t.Fatal(err)
 	}
 	err = execute(t.Context(), task.NewRegistry(), libheadgate.Claim{Envelope: envelope})
-	var snooze *libheadgate.SnoozeError
-	if !errors.As(err, &snooze) {
+	if _, ok := errors.AsType[*libheadgate.SnoozeError](err); !ok {
 		t.Fatalf("missing handler error = %v, want SnoozeError", err)
 	}
 	registry := task.NewRegistry()
@@ -135,8 +134,7 @@ func TestExecuteSnoozesMissingNameAndQuarantinesUnsupportedVersion(t *testing.T)
 		t.Fatal(err)
 	}
 	err = execute(t.Context(), registry, libheadgate.Claim{Envelope: envelope})
-	var undecodable *libheadgate.UndecodableError
-	if !errors.As(err, &undecodable) {
+	if _, ok := errors.AsType[*libheadgate.UndecodableError](err); !ok {
 		t.Fatalf("unsupported version error = %v, want UndecodableError", err)
 	}
 }

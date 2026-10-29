@@ -35,12 +35,12 @@ func (adapter *Adapter) documentCheck(ctx context.Context, request providerv1.Re
 		}
 		image, err := adapter.evidence.ReadProviderEvidence(ctx, grant, maximumEvidence)
 		if err != nil || len(image) == 0 || len(image) > maximumEvidence {
-			wipe(image)
+			clear(image)
 			//nolint:nilerr // reader details are replaced by a stable contract failure.
 			return failed(request, adapter.now, providerv1.FailureInvalidRequest, "evidence_unavailable", providerv1.RetryNever, 0), nil
 		}
 		body[side.field] = base64.StdEncoding.EncodeToString(image)
-		wipe(image)
+		clear(image)
 	}
 	if err := ctx.Err(); err != nil {
 		return providerv1.Result{}, err

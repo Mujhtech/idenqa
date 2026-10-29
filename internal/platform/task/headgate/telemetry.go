@@ -92,10 +92,7 @@ func (telemetry *Telemetry) OnEvent(event libheadgate.Event) {
 		telemetry.inflight.Record(ctx, int64(event.Inflight), workerAttributes)
 		telemetry.capacity.Record(ctx, int64(event.Capacity), workerAttributes)
 	case "worker_memory":
-		memoryBytes := event.MemoryBytes
-		if memoryBytes > maximumMetricInt64 {
-			memoryBytes = maximumMetricInt64
-		}
+		memoryBytes := min(event.MemoryBytes, maximumMetricInt64)
 		telemetry.memory.Record(ctx, int64(memoryBytes), metric.WithAttributes(
 			attribute.String("task.system", "headgate"),
 			attribute.String("task.installation", telemetry.installID),

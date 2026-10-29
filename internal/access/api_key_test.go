@@ -54,7 +54,6 @@ func TestKeyIrreversibleLifecycleTransitions(t *testing.T) {
 		{name: "retire", transition: (*access.Key).Retire, want: access.KeyStateRetired},
 	}
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -111,7 +110,6 @@ func TestRestoreKeyRejectsInvalidState(t *testing.T) {
 		{name: "self replacement", mutate: func(record *access.KeyRecord) { record.ReplacesID = record.ID }},
 	}
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 			record := testKeyRecord(t, created)

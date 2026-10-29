@@ -1,6 +1,8 @@
 package experience
 
 import (
+	"slices"
+
 	contract "github.com/Mujhtech/idenqa/contracts/experience/v1"
 )
 
@@ -36,13 +38,13 @@ func matchesRule(rule contract.Target, request ResolutionRequest) bool {
 	if rule.Workflow != "" && rule.Workflow != request.Workflow {
 		return false
 	}
-	if len(rule.Countries) > 0 && (request.Country == "" || !contains(rule.Countries, request.Country)) {
+	if len(rule.Countries) > 0 && (request.Country == "" || !slices.Contains(rule.Countries, request.Country)) {
 		return false
 	}
-	if len(rule.ApplicationIDs) > 0 && (request.ApplicationID == "" || !contains(rule.ApplicationIDs, request.ApplicationID)) {
+	if len(rule.ApplicationIDs) > 0 && (request.ApplicationID == "" || !slices.Contains(rule.ApplicationIDs, request.ApplicationID)) {
 		return false
 	}
-	if len(rule.Origins) > 0 && (request.Origin == "" || !contains(rule.Origins, request.Origin)) {
+	if len(rule.Origins) > 0 && (request.Origin == "" || !slices.Contains(rule.Origins, request.Origin)) {
 		return false
 	}
 	if rule.SDKVersionMin != "" {
@@ -69,19 +71,10 @@ func specificity(rule contract.Target) int {
 	return score
 }
 
-func contains(values []string, target string) bool {
-	for _, value := range values {
-		if value == target {
-			return true
-		}
-	}
-	return false
-}
-
 func compareVersions(left string, right string) int {
 	leftParts := splitVersion(left)
 	rightParts := splitVersion(right)
-	for index := 0; index < 3; index++ {
+	for index := range 3 {
 		if leftParts[index] != rightParts[index] {
 			if leftParts[index] < rightParts[index] {
 				return -1

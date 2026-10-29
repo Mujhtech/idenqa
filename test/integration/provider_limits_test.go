@@ -81,7 +81,7 @@ func TestProviderLimiterHoldsConcurrencyRateAndReleases(t *testing.T) {
 	var leasesMu sync.Mutex
 	var leases []provider.Lease
 	var unexpected atomic.Int64
-	for index := 0; index < 8; index++ {
+	for range 8 {
 		wait.Add(1)
 		go func() {
 			defer wait.Done()
@@ -128,7 +128,7 @@ func TestProviderLimiterHoldsConcurrencyRateAndReleases(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for attempt := 0; attempt < 2; attempt++ {
+	for attempt := range 2 {
 		lease, err := rateStore.Acquire(ctx, scope, rateKey, rateLimit)
 		if err != nil {
 			t.Fatalf("Acquire(rate %d) error = %v", attempt, err)

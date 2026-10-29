@@ -94,7 +94,7 @@ func TestWebhookFanoutResumesAcrossBatchesAfterWorkerReplacement(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for index := 0; index < deliverytask.FanoutBatch+1; index++ {
+	for index := range deliverytask.FanoutBatch + 1 {
 		_, secret, err := manager.CreateEndpoint(ctx, scope, fmt.Sprintf("https://batch-%03d.example.test/webhook", index))
 		if err != nil {
 			t.Fatalf("create endpoint %d: %v", index, err)

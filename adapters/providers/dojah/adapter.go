@@ -145,7 +145,7 @@ func (adapter *Adapter) imageCheck(ctx context.Context, request providerv1.Reque
 	if err != nil {
 		return failed(request, adapter.now, providerv1.FailureInvalidRequest, "evidence_unavailable", providerv1.RetryNever, 0), nil
 	}
-	defer wipe(image)
+	defer clear(image)
 	body := map[string]string{field: base64.StdEncoding.EncodeToString(image)}
 	response, status, retryAfter, err := adapter.post(ctx, configuration, path, body)
 	if err != nil {
@@ -159,12 +159,12 @@ func (adapter *Adapter) faceMatch(ctx context.Context, request providerv1.Reques
 	if err != nil {
 		return failed(request, adapter.now, providerv1.FailureInvalidRequest, "selfie_unavailable", providerv1.RetryNever, 0), nil
 	}
-	defer wipe(selfie)
+	defer clear(selfie)
 	document, err := adapter.evidenceByVariant(ctx, request, map[string]bool{"document.front": true})
 	if err != nil {
 		return failed(request, adapter.now, providerv1.FailureInvalidRequest, "document_unavailable", providerv1.RetryNever, 0), nil
 	}
-	defer wipe(document)
+	defer clear(document)
 	response, status, retryAfter, err := adapter.post(ctx, configuration, "/api/v1/kyc/photoid/verify", map[string]string{
 		"selfie_image": base64.StdEncoding.EncodeToString(selfie), "photoid_image": base64.StdEncoding.EncodeToString(document),
 	})
@@ -201,7 +201,7 @@ func (adapter *Adapter) post(ctx context.Context, configuration Config, path str
 	if err != nil {
 		return nil, 0, 0, err
 	}
-	defer wipe(encoded)
+	defer clear(encoded)
 	return adapter.do(ctx, configuration, http.MethodPost, strings.TrimSuffix(configuration.BaseURL, "/")+path, encoded)
 }
 
@@ -224,7 +224,7 @@ func (adapter *Adapter) do(ctx context.Context, configuration Config, method, en
 	retryAfter := parseRetryAfter(response.Header.Get("Retry-After"))
 	limited := io.LimitReader(response.Body, maximumBodyBytes+1)
 	encoded, readErr := io.ReadAll(limited)
-	defer wipe(encoded)
+	defer clear(encoded)
 	if readErr != nil || len(encoded) > maximumBodyBytes {
 		return nil, response.StatusCode, retryAfter, errors.New("invalid bounded response")
 	}
@@ -243,7 +243,7 @@ func (adapter *Adapter) evidenceByVariant(ctx context.Context, request providerv
 		if accepted[grant.Variant] {
 			value, err := adapter.evidence.ReadProviderEvidence(ctx, grant, maximumEvidence)
 			if err != nil || len(value) == 0 || len(value) > maximumEvidence {
-				wipe(value)
+				clear(value)
 				return nil, ErrEvidence
 			}
 			return value, nil
@@ -432,12 +432,6 @@ func parseRetryAfter(value string) time.Duration {
 		return 0
 	}
 	return seconds
-}
-
-func wipe(value []byte) {
-	for index := range value {
-		value[index] = 0
-	}
 }
 
 var _ providerv1.Adapter = (*Adapter)(nil)

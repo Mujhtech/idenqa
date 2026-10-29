@@ -40,8 +40,8 @@ func adapterFixture(t *testing.T) (Configuration, modelv1.Request, []byte, time.
 		t.Fatal(err)
 	}
 	picture := image.NewRGBA(image.Rect(0, 0, 128, 128))
-	for y := 0; y < 128; y++ {
-		for x := 0; x < 128; x++ {
+	for y := range 128 {
+		for x := range 128 {
 			picture.Set(x, y, color.RGBA{R: 128, G: 64, B: 32, A: 255})
 		}
 	}

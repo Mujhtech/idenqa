@@ -155,8 +155,7 @@ func secretsError(ctx context.Context, err error) error {
 	if ctxErr := ctx.Err(); ctxErr != nil {
 		return fmt.Errorf("resolve aws secret: %w", ctxErr)
 	}
-	var apiError smithy.APIError
-	if errors.As(err, &apiError) {
+	if apiError, ok := errors.AsType[smithy.APIError](err); ok {
 		switch apiError.ErrorCode() {
 		case "ResourceNotFoundException":
 			return secret.ErrNotFound

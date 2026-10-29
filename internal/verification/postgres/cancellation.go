@@ -49,7 +49,7 @@ func (store *StopStore) Cancel(ctx context.Context, scope tenant.Scope, mutation
 	if scope.ID().IsZero() || mutation.VerificationID.IsZero() || mutation.Retry.TenantID() != scope.ID() || mutation.Retry.Operation() != "verification.cancel" || mutation.Retry.Principal().IsZero() {
 		return verification.CancellationResult{}, verification.ErrSessionConflict
 	}
-	for attempt := 0; attempt < 3; attempt++ {
+	for range 3 {
 		var result verification.CancellationResult
 		err := store.pool.WithinTransaction(ctx, platformpostgres.TransactionOptions{Isolation: platformpostgres.IsolationSerializable}, func(ctx context.Context, tx platformpostgres.Transaction) error {
 			var err error

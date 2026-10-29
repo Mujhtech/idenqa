@@ -268,7 +268,7 @@ func (journey *providerPublicJourney) run(t *testing.T, admin, runtime *pg.Pool,
 	if journey.smile {
 		description = smileid.Description()
 	}
-	reference := providerv1.ConfigurationReference{ProviderID: providerID.String(), SchemaDigest: description.Configuration.Digest, SecretReference: "secret://file/provider/fixture", CredentialVersion: "v1"}
+	reference := providerv1.ConfigurationReference{ProviderID: providerID.String(), SchemaDigest: description.Configuration.Digest, SecretReference: "secret://file/provider/fixture", CredentialVersion: "v1"} //nolint:gosec // Synthetic secret reference, not a credential.
 	runnerSettings := adapterrunner.Settings{ListenAddress: "127.0.0.1:0", CertificateFile: ca, PrivateKeyFile: key, CredentialFile: runnerKey, TenantID: scope.ID().String(), Configuration: reference, BaseURL: fixture.URL, ProviderCAFile: ca, AppIDFile: write("app.key", []byte("fixture-app")), APIKeyFile: write("api.key", []byte("fixture-key")), GatewayURL: gateway.URL, GatewayCAFile: gatewayCA, GatewayCredentialFile: gatewayKey, Fixture: true}
 	inputs := []providerv1.InputReference{{Name: "idenqa.input.country", Reference: "secret://input/country"}, {Name: "idenqa.input.id_type", Reference: "secret://input/id-type"}}
 	if journey.smile {

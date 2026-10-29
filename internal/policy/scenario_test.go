@@ -171,16 +171,14 @@ func TestScenarioSuiteSupportsConcurrentReuse(t *testing.T) {
 	errorsSeen := make(chan error, workers)
 	var wait sync.WaitGroup
 	for range workers {
-		wait.Add(1)
-		go func() {
-			defer wait.Done()
+		wait.Go(func() {
 			_, report, err := suite.Run(t.Context(), scenarios)
 			if err != nil {
 				errorsSeen <- err
 				return
 			}
 			digests <- report.Digest
-		}()
+		})
 	}
 	wait.Wait()
 	close(digests)

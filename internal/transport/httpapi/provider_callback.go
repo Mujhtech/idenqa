@@ -162,8 +162,7 @@ func callbackLimiterKey(request *http.Request, token string) string {
 }
 
 func (routes *ProviderCallbackRoutes) problem(writer http.ResponseWriter, request *http.Request, err error) {
-	var failure *apierror.Error
-	if !errors.As(err, &failure) {
+	if _, ok := errors.AsType[*apierror.Error](err); !ok {
 		switch {
 		case errors.Is(err, provider.ErrCallbackUnavailable):
 			err = apierror.New(http.StatusNotFound, apierror.CodeNotFound, "Not found", "The callback reference is not available.", err)

@@ -1,8 +1,6 @@
 package realtime
 
 import (
-	"github.com/Mujhtech/idenqa/internal/platform/observability"
-
 	"context"
 	"crypto/sha256"
 	"encoding/json"
@@ -12,6 +10,7 @@ import (
 
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
 )
 
 const commandFingerprintDomain = "idq-realtime-command\x00v1\x00"

@@ -316,13 +316,7 @@ func planSides(front, back *document.Analysis) []document.Side {
 			continue
 		}
 		for _, side := range analysis.PlanSides {
-			exists := false
-			for _, existing := range sides {
-				if existing == side {
-					exists = true
-					break
-				}
-			}
+			exists := slices.Contains(sides, side)
 			if !exists {
 				sides = append(sides, side)
 			}

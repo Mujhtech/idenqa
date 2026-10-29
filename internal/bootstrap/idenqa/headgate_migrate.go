@@ -21,7 +21,6 @@ func newHeadgateMigrationCommand(options *migrationOptions) *cobra.Command {
 		},
 	}
 	for _, operation := range []string{"preflight", "up", "version"} {
-		operation := operation
 		command.AddCommand(&cobra.Command{
 			Use: operation, Short: migrationOperationDescription(operation),
 			Args: cli.UsageArgs(cobra.NoArgs),

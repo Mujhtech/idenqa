@@ -20,7 +20,7 @@ func TestSourceLoadsOneRepeatableReadProjection(t *testing.T) {
 	fixture := newSourceFixture(t)
 	queries := &authoritativeQueriesStub{
 		header: sqlgen.FindPolicyAuthoritativeHeaderRow{
-			Region: pointer("eu-west-1"), AuthorityID: fixture.authorityID.String(),
+			Region: new("eu-west-1"), AuthorityID: fixture.authorityID.String(),
 			AcknowledgementID: fixture.acknowledgementID.String(), ResponseAction: "consent",
 			ResponseRecordedAt: policyTimestamp(fixture.evaluatedAt.Add(-time.Minute)),
 		},
@@ -145,12 +145,12 @@ func projectionRow(
 ) sqlgen.ListPolicyAuthoritativeObservationsRow {
 	return sqlgen.ListPolicyAuthoritativeObservationsRow{
 		CheckID: fixture.checkID.String(), CheckName: "document.authenticity",
-		CheckOutcome: pointer("passed"), CheckVersion: 3,
+		CheckOutcome: new("passed"), CheckVersion: 3,
 		CheckUpdatedAt: policyTimestamp(fixture.evaluatedAt.Add(-time.Minute)),
 		AttemptID:      fixture.attemptID.String(), AttemptNumber: 1, RunnerKind: "provider",
 		RunnerID: "provider.test", RunnerVersion: "1.0.0",
 		PackageDigest: digest("a"), ContractMajor: 1, ContractMinor: 0,
-		RequestDigest: digest("b"), ConfigurationDigest: digest("c"), ResultDigest: pointer(digest("d")),
+		RequestDigest: digest("b"), ConfigurationDigest: digest("c"), ResultDigest: new(digest("d")),
 		ObservationID: observationID, SignalName: "document.authenticity",
 		SignalOutcome: "satisfied", ReasonCodes: []string{"document_authentic"},
 		RecordedAt: policyTimestamp(recordedAt),
@@ -233,8 +233,6 @@ func (projector *projectorStub) ProjectFacts(_ context.Context, projection Proje
 func policyTimestamp(value time.Time) pgtype.Timestamptz {
 	return pgtype.Timestamptz{Time: value, Valid: true}
 }
-
-func pointer(value string) *string { return &value }
 
 func digest(character string) string {
 	result := ""

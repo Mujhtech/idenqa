@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"slices"
 
 	policyv1 "github.com/Mujhtech/idenqa/contracts/policy/v1"
@@ -75,9 +76,7 @@ func Run(ctx context.Context, engine Engine, cases []Case) error {
 
 func cloneFacts(value Facts) Facts {
 	cloned := Facts{Region: value.Region, Values: make(map[string]policyv1.RequirementState, len(value.Values))}
-	for key, state := range value.Values {
-		cloned.Values[key] = state
-	}
+	maps.Copy(cloned.Values, value.Values)
 	return cloned
 }
 

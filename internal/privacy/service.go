@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/Mujhtech/idenqa/internal/platform/id"
@@ -37,12 +38,7 @@ func (actor Actor) permits(required Permission) bool {
 	if actor.ID == "" {
 		return false
 	}
-	for _, permission := range actor.Permissions {
-		if permission == required {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(actor.Permissions, required)
 }
 
 // Repository persists each transition and its reference-only audit event in

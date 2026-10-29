@@ -91,8 +91,8 @@ func TestContextualNativePipeline(t *testing.T) {
 	request.Provenance = configuration.Manifest.Provenance
 	var encoded bytes.Buffer
 	source := image.NewRGBA(image.Rect(0, 0, 256, 256))
-	for y := 0; y < 256; y++ {
-		for x := 0; x < 256; x++ {
+	for y := range 256 {
+		for x := range 256 {
 			source.Set(x, y, color.RGBA{R: 128, G: 64, B: 32, A: 255})
 		}
 	}

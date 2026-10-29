@@ -204,10 +204,7 @@ func (service *Service) observeResolution(previous, resolved Case, resolution Re
 	if resolved.State == CaseEscalated {
 		outcome = observability.ReviewInconclusive
 	}
-	duration := resolved.UpdatedAt.Sub(previous.CreatedAt)
-	if duration < 0 {
-		duration = 0
-	}
+	duration := max(resolved.UpdatedAt.Sub(previous.CreatedAt), 0)
 	service.metrics.RecordReviewResolution(observability.ReviewResolution{
 		Outcome:   outcome,
 		Oversight: reviewOversight(previous.Oversight),

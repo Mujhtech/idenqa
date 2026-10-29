@@ -265,12 +265,12 @@ func pixels(ctx context.Context, raw []byte, width, height int) ([]float32, erro
 	}
 	result := make([]float32, 3*width*height)
 	bounds := decoded.Bounds()
-	for y := 0; y < height; y++ {
+	for y := range height {
 		if ctx.Err() != nil {
 			clear(result)
 			return nil, ctx.Err()
 		}
-		for x := 0; x < width; x++ {
+		for x := range width {
 			r, g, b, a := decoded.At(bounds.Min.X+x*config.Width/width, bounds.Min.Y+y*config.Height/height).RGBA()
 			if a != 65535 {
 				clear(result)

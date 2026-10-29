@@ -87,7 +87,7 @@ func TestReaderShortCircuitsCompletedRedemptionReplay(t *testing.T) {
 
 	fixture := newReadFixture(t, []byte("private selfie evidence"))
 	receiver := &transactionalReceiver{binding: fixture.binding}
-	for attempt := 0; attempt < 2; attempt++ {
+	for attempt := range 2 {
 		if err := fixture.reader.Read(context.Background(), fixture.scope, fixture.input, receiver); err != nil {
 			t.Fatalf("Read(attempt %d) error = %v", attempt+1, err)
 		}

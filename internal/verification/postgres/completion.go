@@ -186,14 +186,8 @@ AND state NOT IN ('completed','skipped_by_policy','timed_out','cancelled','faile
 	}
 	if store.metrics != nil {
 		createdAt := session.CreatedAt.Time.UTC()
-		duration := receipt.OccurredAt.Sub(createdAt)
-		if duration < 0 {
-			duration = 0
-		}
-		timeToDecision := decision.DecidedAt().Sub(createdAt)
-		if timeToDecision < 0 {
-			timeToDecision = 0
-		}
+		duration := max(receipt.OccurredAt.Sub(createdAt), 0)
+		timeToDecision := max(decision.DecidedAt().Sub(createdAt), 0)
 		store.metrics.RecordVerificationCompletion(observability.WorkflowCompletion{
 			Outcome:        policyOutcome(decision.Evaluation().Outcome()),
 			Duration:       duration,

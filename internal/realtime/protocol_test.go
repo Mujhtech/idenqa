@@ -92,7 +92,6 @@ func TestProtocolAcceptsEveryV1Payload(t *testing.T) {
 		realtime.CommandAcknowledgement{Disposition: realtime.CommandDispositionRejected, Code: "state_conflict"},
 	}
 	for _, payload := range payloads {
-		payload := payload
 		t.Run(reflect.TypeOf(payload).String(), func(t *testing.T) {
 			input := fixture.input
 			input.Payload = payload

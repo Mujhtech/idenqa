@@ -14,7 +14,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -716,7 +716,7 @@ func (client *syntheticClient) step(name string, fields map[string]string) error
 	for key := range fields {
 		keys = append(keys, key)
 	}
-	sort.Strings(keys)
+	slices.Sort(keys)
 	var builder strings.Builder
 	builder.WriteString("step=" + name + " status=ok")
 	for _, key := range keys {

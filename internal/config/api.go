@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"maps"
 	"net"
 	"net/url"
 	"os"
@@ -38,7 +39,7 @@ func (keys *ReviewAuthorityKeys) Decode(value string) error {
 		return errors.New("review authority public keys must be non-empty")
 	}
 	decoded := make(ReviewAuthorityKeys)
-	for _, entry := range strings.Split(value, ",") {
+	for entry := range strings.SplitSeq(value, ",") {
 		keyID, material, found := strings.Cut(entry, "=")
 		if !found || keyID == "" || material == "" || strings.TrimSpace(entry) != entry {
 			return errors.New("review authority public keys must use key-id=base64 entries")
@@ -55,9 +56,7 @@ func (keys *ReviewAuthorityKeys) Decode(value string) error {
 // Values returns a defensive copy for verifier composition.
 func (keys ReviewAuthorityKeys) Values() map[string]string {
 	result := make(map[string]string, len(keys))
-	for keyID, material := range keys {
-		result[keyID] = material
-	}
+	maps.Copy(result, keys)
 	return result
 }
 
@@ -78,9 +77,7 @@ func (keys *ManagedLaunchAuthorityKeys) Decode(value string) error {
 // Values returns a defensive copy for verifier composition.
 func (keys ManagedLaunchAuthorityKeys) Values() map[string]string {
 	result := make(map[string]string, len(keys))
-	for keyID, material := range keys {
-		result[keyID] = material
-	}
+	maps.Copy(result, keys)
 	return result
 }
 
@@ -130,7 +127,7 @@ func (peppers *Peppers) Decode(value string) error {
 	}
 
 	decoded := make(map[uint16][]byte)
-	for _, entry := range strings.Split(value, ",") {
+	for entry := range strings.SplitSeq(value, ",") {
 		versionText, encoded, found := strings.Cut(entry, "=")
 		if !found || versionText == "" || encoded == "" || strings.TrimSpace(entry) != entry {
 			return errors.New("API key peppers must use version=unpadded-base64url entries")
@@ -331,7 +328,7 @@ func decodeVersionedSecrets(value, label string) (map[uint16][]byte, error) {
 	}
 
 	decoded := make(map[uint16][]byte)
-	for _, entry := range strings.Split(value, ",") {
+	for entry := range strings.SplitSeq(value, ",") {
 		versionText, encoded, found := strings.Cut(entry, "=")
 		if !found || versionText == "" || encoded == "" || strings.TrimSpace(entry) != entry {
 			return nil, fmt.Errorf("%s must use version=unpadded-base64url entries", label)
@@ -401,7 +398,7 @@ func (headers *TelemetryHeaders) Decode(value string) error {
 	}
 
 	decoded := make(map[string]string)
-	for _, entry := range strings.Split(value, ",") {
+	for entry := range strings.SplitSeq(value, ",") {
 		encodedName, encodedValue, found := strings.Cut(entry, "=")
 		if !found || encodedName == "" || encodedValue == "" {
 			return errors.New("telemetry headers must use percent-encoded name=value entries")
@@ -428,9 +425,7 @@ func (headers *TelemetryHeaders) Decode(value string) error {
 // Values returns a defensive copy for exporter construction.
 func (headers TelemetryHeaders) Values() map[string]string {
 	result := make(map[string]string, len(headers.values))
-	for name, value := range headers.values {
-		result[name] = value
-	}
+	maps.Copy(result, headers.values)
 	return result
 }
 

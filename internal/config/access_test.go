@@ -28,7 +28,6 @@ func TestLoadAPIAccessPolicyConfiguration(t *testing.T) {
 func TestLoadAPIRejectsNegativeAccessPolicyDuration(t *testing.T) {
 	tests := []string{"IDENQA_API_KEY_MAXIMUM_LIFETIME", "IDENQA_API_KEY_MAXIMUM_ROTATION_OVERLAP"}
 	for _, variable := range tests {
-		variable := variable
 		t.Run(variable, func(t *testing.T) {
 			clearIDENQAEnvironment(t)
 			setRequiredAPIEnvironment(t)

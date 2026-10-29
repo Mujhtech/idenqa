@@ -81,7 +81,7 @@ func (store *Store) CreateCaseWithin(ctx context.Context, scope tenant.Scope, tx
 	}
 	_, err = tx.Exec(ctx, `INSERT INTO idenqa.review_cases
  (tenant_id,id,verification_id,challenged_decision_id,routing_request_id,region,required_certification,oversight,state,version,created_at,updated_at,permitted_findings)
- VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`, scope.ID().String(), value.ID.String(), value.VerificationID.String(), nullableID(value.ChallengedDecision.String()), nullableID(value.RoutingRequest.String()), value.Region, value.RequiredCertificate, string(value.Oversight), string(value.State), value.Version, value.CreatedAt, value.UpdatedAt, rules)
+ VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`, scope.ID().String(), value.ID.String(), value.VerificationID.String(), nullable(value.ChallengedDecision.String()), nullable(value.RoutingRequest.String()), value.Region, value.RequiredCertificate, string(value.Oversight), string(value.State), value.Version, value.CreatedAt, value.UpdatedAt, rules)
 	if err != nil {
 		return err
 	}
@@ -307,7 +307,7 @@ func (store *Store) SaveCase(ctx context.Context, scope tenant.Scope, actor revi
 			}
 		}
 		tag, err := tx.Exec(ctx, `UPDATE idenqa.review_cases SET superseding_decision_id=$3,state=$4,assigned_reviewer=$5,version=$6,updated_at=$7
-			WHERE tenant_id=$1 AND id=$2 AND version=$8`, scope.ID().String(), value.ID.String(), nullableID(value.SupersedesDecision.String()),
+			WHERE tenant_id=$1 AND id=$2 AND version=$8`, scope.ID().String(), value.ID.String(), nullable(value.SupersedesDecision.String()),
 			string(value.State), nullable(value.AssignedReviewer), value.Version, value.UpdatedAt, expectedVersion)
 		if err != nil || tag.RowsAffected() != 1 {
 			return errors.Join(review.ErrConflict, err)
@@ -538,7 +538,7 @@ func (store *Store) SaveAppeal(ctx context.Context, scope tenant.Scope, actor re
 		tag, err := tx.Exec(ctx, `UPDATE idenqa.appeals SET assigned_reviewer=$3,state=$4,outcome=$5,reason_code=$6,
 			superseding_decision_id=$7,version=$8,updated_at=$9 WHERE tenant_id=$1 AND id=$2 AND version=$10`, scope.ID().String(), value.ID.String(),
 			nullable(value.AssignedReviewer), string(value.State), nullable(string(value.Outcome)), nullable(value.ReasonCode),
-			nullableID(value.SupersedingDecision.String()), value.Version, now, expectedVersion)
+			nullable(value.SupersedingDecision.String()), value.Version, now, expectedVersion)
 		if err != nil || tag.RowsAffected() != 1 {
 			return errors.Join(review.ErrConflict, err)
 		}
@@ -600,6 +600,5 @@ func nullable(value string) any {
 	}
 	return value
 }
-func nullableID(value string) any { return nullable(value) }
 
 var _ review.Repository = (*Store)(nil)

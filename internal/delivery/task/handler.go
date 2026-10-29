@@ -124,7 +124,7 @@ func (handler *Handler) Prepare(ctx context.Context, work platformtask.Delivery)
 		return nil, platformtask.Retry(platformtask.RetryClassUnavailable, errors.New("delivery: unwrap signing secret"))
 	}
 	defer clear(secret)
-	body, err := handler.unwrapper.Unwrap(ctx, webhookBodyPurposeForTask(), *intent.BodyWrapping, delivery.BodyContext(scope.ID().String(), intent.EventID.String()))
+	body, err := handler.unwrapper.Unwrap(ctx, delivery.BodyPurpose(), *intent.BodyWrapping, delivery.BodyContext(scope.ID().String(), intent.EventID.String()))
 	if err != nil {
 		return nil, platformtask.Retry(platformtask.RetryClassUnavailable, errors.New("delivery: unwrap event body"))
 	}
@@ -186,10 +186,7 @@ func (handler *Handler) observeAttempt(number, maximum int32, startedAt, complet
 	case number >= maximum:
 		outcome = observability.Exhausted
 	}
-	duration := completedAt.Sub(startedAt)
-	if duration < 0 {
-		duration = 0
-	}
+	duration := max(completedAt.Sub(startedAt), 0)
 	handler.metrics.RecordDeliveryAttempt(observability.DeliveryAttempt{
 		Outcome:  outcome,
 		Attempt:  number,
@@ -233,10 +230,6 @@ func callbackBackoff(deliveryID id.Delivery, attempt int32, retryAfter time.Dura
 func webhookSecretPurposeForTask() kms.Purpose {
 	purpose, _ := kms.NewPurpose("delivery.webhook-secret")
 	return purpose
-}
-
-func webhookBodyPurposeForTask() kms.Purpose {
-	return delivery.BodyPurpose()
 }
 
 var _ platformtask.TransactionalHandler = (*Handler)(nil)

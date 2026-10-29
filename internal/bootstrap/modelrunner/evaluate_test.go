@@ -76,7 +76,6 @@ func (s *evaluationSequence) InferImage(context.Context, onnx.Image) (onnx.Evalu
 	}
 	return onnx.Evaluation{Score: value}, nil
 }
-func floatPointer(value float64) *float64 { return &value }
 func TestEvaluationSeparatesErrorsFromNonresponses(t *testing.T) {
 	directory := t.TempDir()
 	root, err := os.OpenRoot(directory)
@@ -88,8 +87,8 @@ func TestEvaluationSeparatesErrorsFromNonresponses(t *testing.T) {
 	dataset.Samples = nil
 	for i, label := range []string{"genuine", "genuine", "attack", "attack", "attack"} {
 		picture := image.NewRGBA(image.Rect(0, 0, 2, 2))
-		for y := 0; y < 2; y++ {
-			for x := 0; x < 2; x++ {
+		for y := range 2 {
+			for x := range 2 {
 				picture.Set(x, y, color.RGBA{R: byte(i), A: 255})
 			}
 		}
@@ -109,7 +108,7 @@ func TestEvaluationSeparatesErrorsFromNonresponses(t *testing.T) {
 		}
 		dataset.Samples = append(dataset.Samples, sample)
 	}
-	sequence := &evaluationSequence{values: []*float64{floatPointer(0.8), floatPointer(0.3), floatPointer(0.8), floatPointer(0.1), nil}}
+	sequence := &evaluationSequence{values: []*float64{new(0.8), new(0.3), new(0.8), new(0.1), nil}}
 	report, err := evaluateDataset(t.Context(), dataset, onnx.Configuration{}, root, sequence)
 	if err != nil {
 		t.Fatal(err)
@@ -119,7 +118,7 @@ func TestEvaluationSeparatesErrorsFromNonresponses(t *testing.T) {
 		t.Fatalf("misleading metrics: %+v", report)
 	}
 	dataset.Samples = dataset.Samples[2:]
-	sequence = &evaluationSequence{values: []*float64{floatPointer(0.8), floatPointer(0.1), nil}}
+	sequence = &evaluationSequence{values: []*float64{new(0.8), new(0.1), nil}}
 	report, err = evaluateDataset(t.Context(), dataset, onnx.Configuration{}, root, sequence)
 	if err != nil || report.Coverage != "attack_only" || report.Total.BPCER != nil {
 		t.Fatalf("attack-only report implied genuine accuracy: %+v %v", report, err)

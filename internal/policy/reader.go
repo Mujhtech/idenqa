@@ -1,14 +1,13 @@
 package policy
 
 import (
-	"github.com/Mujhtech/idenqa/internal/platform/observability"
-
 	"context"
 	"errors"
 	"fmt"
 
 	"github.com/Mujhtech/idenqa/internal/access"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
 )
 
 // Reader authorises tenant decision inspection and portable export separately.

@@ -155,7 +155,7 @@ func (adapter *Adapter) ListJobs(ctx context.Context, state string, limit uint32
 	if !ok {
 		return nil, "", fmt.Errorf("%w: headgate inspection", task.ErrInvalid)
 	}
-	page, err := inspector.ListJobs(ctx, libheadgate.JobFilter{State: libheadgate.Ptr(state)}, "", limit)
+	page, err := inspector.ListJobs(ctx, libheadgate.JobFilter{State: new(state)}, "", limit)
 	if err != nil {
 		return nil, "", classify(err)
 	}

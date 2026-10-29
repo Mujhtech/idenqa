@@ -191,8 +191,8 @@ func drawReviewWatermark(dst *image.RGBA, x, y int, label string) {
 			if pixel != '1' {
 				continue
 			}
-			for dy := 0; dy < 2; dy++ {
-				for dx := 0; dx < 2; dx++ {
+			for dy := range 2 {
+				for dx := range 2 {
 					px, py := x+index*8+(i%3)*2+dx, y+(i/3)*2+dy
 					dst.Set(px+1, py+1, color.RGBA{0, 0, 0, 255})
 					dst.Set(px, py, color.RGBA{255, 255, 255, 255})

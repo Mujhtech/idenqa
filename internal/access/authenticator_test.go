@@ -98,7 +98,6 @@ func TestAuthenticatorCollapsesExpectedFailures(t *testing.T) {
 		{name: "disabled tenant", encoded: fixture.presented.Reveal(), repository: &verificationRepositoryStub{record: disabled}},
 	}
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -155,7 +154,6 @@ func TestNewAuthenticatorRejectsMissingDependencies(t *testing.T) {
 		{name: "clock", repository: repository, peppers: fixture.peppers},
 	}
 	for _, test := range tests {
-		test := test
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 			var source accessClock

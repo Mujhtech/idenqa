@@ -118,7 +118,7 @@ func TestResolveAmbiguityFallsBackToDefault(t *testing.T) {
 	ctx := context.Background()
 	scope := environment.authority.TenantScope()
 
-	for index := 0; index < 2; index++ {
+	for index := range 2 {
 		request := validDraftRequest()
 		request.Name = fmt.Sprintf("Ambiguous %d", index)
 		created, err := environment.service.Create(ctx, environment.authority, request)

@@ -1,8 +1,6 @@
 package experience
 
 import (
-	"github.com/Mujhtech/idenqa/internal/platform/observability"
-
 	"context"
 	"crypto/ed25519"
 	"encoding/hex"
@@ -13,6 +11,7 @@ import (
 	contract "github.com/Mujhtech/idenqa/contracts/experience/v1"
 	"github.com/Mujhtech/idenqa/internal/access"
 	"github.com/Mujhtech/idenqa/internal/platform/id"
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
 	"github.com/Mujhtech/idenqa/internal/tenant"
 )
 
@@ -402,7 +401,7 @@ func (service *Service) Import(ctx context.Context, authority access.Context, ra
 		return Experience{}, fmt.Errorf("%w: imported experience id", ErrInvalid)
 	}
 	current, findErr := service.repository.Find(ctx, authority.TenantScope(), identifier)
-	if findErr != nil && !isNotFound(findErr) {
+	if findErr != nil && !errors.Is(findErr, ErrNotFound) {
 		return Experience{}, findErr
 	}
 	document := manifest.Document
@@ -482,7 +481,7 @@ func (service *Service) ResolveForSession(
 	if err == nil {
 		return service.resumePinned(ctx, scope, pinned, now)
 	}
-	if !isNotFound(err) {
+	if !errors.Is(err, ErrNotFound) {
 		return service.defaultResolution(now), nil
 	}
 	candidates, err := service.repository.LoadPublished(ctx, scope)
@@ -653,7 +652,7 @@ func (service *Service) signDocument(ctx context.Context, document contract.Docu
 		return contract.Manifest{}, ErrInvalid
 	}
 	manifest := contract.Manifest{
-		Document: document, Digest: digestOf(canonical), KeyID: signature.KeyID,
+		Document: document, Digest: contract.DigestCanonical(canonical), KeyID: signature.KeyID,
 		Algorithm: signature.Algorithm, Signature: hex.EncodeToString(signature.Bytes),
 	}
 	if err := contract.ValidateManifest(manifest); err != nil {
@@ -678,14 +677,6 @@ func mustExperienceID(value string) id.Experience {
 		return id.Experience{}
 	}
 	return parsed
-}
-
-func isNotFound(err error) bool {
-	return errors.Is(err, ErrNotFound)
-}
-
-func digestOf(canonical []byte) string {
-	return contract.DigestCanonical(canonical)
 }
 
 // WithTracer injects operation tracing during composition, before concurrent use.

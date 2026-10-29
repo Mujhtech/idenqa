@@ -95,15 +95,16 @@ func TestDojahDocumentPreparationUsesSelectedSides(t *testing.T) {
 					}
 					return nil
 				})
-				if tt.rollback {
+				switch {
+				case tt.rollback:
 					if !errors.Is(err, rollback) {
 						t.Fatalf("rollback error = %v", err)
 					}
-				} else if tt.want == 0 {
+				case tt.want == 0:
 					if !errors.Is(err, provider.ErrRequestUnavailable) {
 						t.Fatalf("expected unavailable, got %v", err)
 					}
-				} else if err != nil {
+				case err != nil:
 					t.Fatal(err)
 				}
 				var count int

@@ -77,7 +77,7 @@ func TestHandlerRoutesAndReplaysWithoutTerminalCompletion(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			for attempt := 0; attempt < 2; attempt++ {
+			for range 2 {
 				work, result := handler.Prepare(t.Context(), fixture.delivery(t))
 				if result.Outcome != platformtask.OutcomeComplete || work == nil {
 					t.Fatalf("prepare=%+v", result)

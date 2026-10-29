@@ -1,6 +1,7 @@
 package classification_test
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/Mujhtech/idenqa/internal/document"
@@ -81,7 +82,7 @@ func TestDerivePrecedenceAndConflicts(t *testing.T) {
 			if result.DocumentType != test.wantType || result.IssuingState != test.wantState || result.Status != test.wantStatus {
 				t.Fatalf("result = %+v", result)
 			}
-			if test.wantReason != "" && !contains(result.Reasons, test.wantReason) {
+			if test.wantReason != "" && !slices.Contains(result.Reasons, test.wantReason) {
 				t.Fatalf("reasons = %v", result.Reasons)
 			}
 		})
@@ -111,13 +112,4 @@ func TestTypeMappings(t *testing.T) {
 	if _, ok := classification.NormaliseCountry("US"); ok {
 		t.Fatal("unmapped alpha-2 accepted")
 	}
-}
-
-func contains(values []string, wanted string) bool {
-	for _, value := range values {
-		if value == wanted {
-			return true
-		}
-	}
-	return false
 }

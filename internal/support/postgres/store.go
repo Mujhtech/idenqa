@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"slices"
 	"time"
 
 	auditpostgres "github.com/Mujhtech/idenqa/internal/audit/postgres"
@@ -301,13 +302,7 @@ func (store *Store) useEmergency(ctx context.Context, tx pg.Transaction, scope t
 		return support.ErrExpired
 	}
 	permission := command.Permissions[0]
-	allowed := false
-	for _, approved := range emergency.Permissions {
-		if approved == permission {
-			allowed = true
-			break
-		}
-	}
+	allowed := slices.Contains(emergency.Permissions, permission)
 	if !allowed {
 		return support.ErrForbidden
 	}

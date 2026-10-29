@@ -200,9 +200,7 @@ func validateResult(value RequirementResult, facts map[FactKey]struct{}) (Requir
 		return RequirementResult{}, ErrInvalid
 	}
 	validated := cloneResult(value)
-	sort.Slice(validated.ContributingFacts, func(left, right int) bool {
-		return validated.ContributingFacts[left] < validated.ContributingFacts[right]
-	})
+	slices.Sort(validated.ContributingFacts)
 	for index, fact := range validated.ContributingFacts {
 		if _, err := NewFactKey(string(fact)); err != nil {
 			return RequirementResult{}, ErrInvalid

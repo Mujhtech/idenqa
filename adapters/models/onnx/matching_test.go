@@ -57,10 +57,10 @@ func TestMatchingAdapterNeverAssertsIdentity(t *testing.T) {
 		value   Evaluation
 		failure bool
 	}{
-		{"identical", Evaluation{Score: matchingFloat(1)}, false},
-		{"opposite", Evaluation{Score: matchingFloat(-1)}, false},
+		{"identical", Evaluation{Score: new(float64(1))}, false},
+		{"opposite", Evaluation{Score: new(float64(-1))}, false},
 		{"quality", Evaluation{Reason: "document_multiple_faces"}, false},
-		{"nonfinite", Evaluation{Score: matchingFloat(math.NaN())}, true},
+		{"nonfinite", Evaluation{Score: new(math.NaN())}, true},
 		{"empty", Evaluation{}, true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -113,7 +113,6 @@ func TestMatchingAdapterRejectsInvalidPairBeforeReading(t *testing.T) {
 		})
 	}
 }
-func matchingFloat(v float64) *float64 { return &v }
 func TestNativeMatchingCosineAndSchema(t *testing.T) {
 	python := os.Getenv("ONNX_TEST_PYTHON")
 	if python == "" {
@@ -165,7 +164,7 @@ func TestMatchingAdapterEnforcesTotalInputBound(t *testing.T) {
 	c.Registration.ConfigurationDigest = ConfigurationDigest(c)
 	r.Restrictions = c.Manifest.Restrictions
 	r.Configuration = c.Registration
-	p := &matchingPredictor{value: Evaluation{Score: matchingFloat(1)}}
+	p := &matchingPredictor{value: Evaluation{Score: new(float64(1))}}
 	a, err := New(c, p, &testReader{raw: raw}, func() time.Time { return now })
 	if err != nil {
 		t.Fatal(err)

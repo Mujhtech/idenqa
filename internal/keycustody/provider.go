@@ -1,6 +1,7 @@
 package keycustody
 
 import (
+	"cmp"
 	"context"
 	"slices"
 
@@ -97,7 +98,7 @@ func (provider *Provider) activeVersions(ctx context.Context, scope tenant.Scope
 		}
 	}
 	slices.SortFunc(active, func(first, second Version) int {
-		return int(first.Version - second.Version)
+		return cmp.Compare(first.Version, second.Version)
 	})
 
 	return active, nil

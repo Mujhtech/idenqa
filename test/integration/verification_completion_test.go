@@ -22,18 +22,6 @@ import (
 	"github.com/Mujhtech/idenqa/internal/verification/syntheticplan"
 )
 
-type completionProbe struct{ fail bool }
-
-func (probe completionProbe) EnqueueTx(ctx context.Context, tx pg.Transaction, intents ...task.Intent) error {
-	if err := (processingProbe{}).EnqueueTx(ctx, tx, intents...); err != nil {
-		return err
-	}
-	if probe.fail {
-		return errPlannedQueueFailure
-	}
-	return nil
-}
-
 func TestVerificationCompletionAtomicReplayAndAuthority(t *testing.T) {
 	for _, scenario := range []string{"rollback_replay", "withdrawn", "wrong_assignment"} {
 		t.Run(scenario, func(t *testing.T) {

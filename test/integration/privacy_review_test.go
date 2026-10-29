@@ -201,7 +201,11 @@ func TestEvidenceDeletionMarksMetadataAfterExactObjectRemoval(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer objects.Close()
+	t.Cleanup(func() {
+		if err := objects.Close(); err != nil {
+			t.Error(err)
+		}
+	})
 	key, _ := objectstore.NewKey("tenants/" + tenantID.String() + "/evidence/probe/content/1")
 	object, err := objects.Put(ctx, key, func(writer io.Writer) error { _, err := io.WriteString(writer, "ciphertext"); return err })
 	if err != nil {

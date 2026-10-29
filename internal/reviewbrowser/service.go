@@ -1,8 +1,6 @@
 package reviewbrowser
 
 import (
-	"github.com/Mujhtech/idenqa/internal/platform/observability"
-
 	"context"
 	"crypto/rand"
 	"crypto/sha256"
@@ -14,6 +12,7 @@ import (
 	"time"
 
 	"github.com/Mujhtech/idenqa/internal/platform/id"
+	"github.com/Mujhtech/idenqa/internal/platform/observability"
 	"github.com/Mujhtech/idenqa/internal/review"
 	"github.com/Mujhtech/idenqa/internal/tenant"
 )
