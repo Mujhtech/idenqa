@@ -9,6 +9,7 @@ import (
 	"time"
 
 	modelv1 "github.com/Mujhtech/idenqa/contracts/model/v1"
+	usagev1 "github.com/Mujhtech/idenqa/contracts/usage/v1"
 	authoritypostgres "github.com/Mujhtech/idenqa/internal/authority/postgres"
 	"github.com/Mujhtech/idenqa/internal/model"
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
@@ -16,6 +17,7 @@ import (
 	pg "github.com/Mujhtech/idenqa/internal/platform/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/postgres/sqlgen"
 	"github.com/Mujhtech/idenqa/internal/tenant"
+	usagepostgres "github.com/Mujhtech/idenqa/internal/usage/postgres"
 	"github.com/Mujhtech/idenqa/internal/verification"
 	"github.com/jackc/pgx/v5"
 )
@@ -196,6 +198,11 @@ func (store *RequestStore) Claim(ctx context.Context, request modelv1.Request) (
 			}
 			result = &value
 		}
+		if claimed {
+			if err := appendModelUsage(ctx, tx, request, "model_dispatch"); err != nil {
+				return err
+			}
+		}
 		return nil
 	})
 	if err != nil {
@@ -232,6 +239,10 @@ func (store *RequestStore) Complete(ctx context.Context, request modelv1.Request
 		if tag.RowsAffected() != 1 {
 			return model.ErrRequestUnavailable
 		}
-		return nil
+		return appendModelUsage(ctx, tx, request, "model_terminal")
 	})
+}
+
+func appendModelUsage(ctx context.Context, tx pg.Transaction, request modelv1.Request, event string) error {
+	return usagepostgres.AppendWithin(ctx, tx, usagev1.Receipt{CoreTenantID: request.TenantID, Event: event, ModelID: request.ModelID, AdapterID: request.Provenance.ModelID, AdapterVersion: request.Provenance.ModelVersion, PackageDigest: request.Provenance.ModelDigest, Check: request.Evaluation}, request.AttemptID)
 }

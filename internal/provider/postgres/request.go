@@ -3,11 +3,8 @@ package postgres
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"time"
 
 	providerv1 "github.com/Mujhtech/idenqa/contracts/provider/v1"
@@ -19,6 +16,7 @@ import (
 	"github.com/Mujhtech/idenqa/internal/platform/postgres/sqlgen"
 	"github.com/Mujhtech/idenqa/internal/provider"
 	"github.com/Mujhtech/idenqa/internal/tenant"
+	usagepostgres "github.com/Mujhtech/idenqa/internal/usage/postgres"
 	"github.com/Mujhtech/idenqa/internal/verification"
 	"github.com/jackc/pgx/v5"
 )
@@ -129,15 +127,8 @@ func (store *RequestStore) Claim(ctx context.Context, request providerv1.Request
 		}
 		claimed = tag.RowsAffected() == 1
 		if claimed {
-			at := claimedAt
-			identity := sha256.Sum256([]byte("provider-dispatch\x00" + request.TenantID + "\x00" + request.AttemptID))
-			receipt := usagev1.Receipt{Schema: usagev1.Schema, ID: hex.EncodeToString(identity[:]), CoreTenantID: request.TenantID, Event: "provider_dispatch", ProviderID: request.ProviderID, AdapterID: request.Adapter.AdapterID, AdapterVersion: request.Adapter.AdapterVersion, PackageDigest: request.Adapter.PackageDigest, Check: request.Check, OccurredAt: at, Quantity: 1}
-			encoded, err := json.Marshal(receipt)
-			if err != nil {
+			if err := appendProviderUsage(ctx, tx, request, "provider_dispatch"); err != nil {
 				return err
-			}
-			if _, err := tx.Exec(ctx, `INSERT INTO idenqa.usage_receipts(tenant_id,id,receipt,created_at) VALUES($1,$2,$3,$4)`, request.TenantID, receipt.ID, encoded, at); err != nil {
-				return fmt.Errorf("append provider usage intent: %w", err)
 			}
 		}
 		var stored string
@@ -202,6 +193,9 @@ func (store *RequestStore) adoptCallbackReceipt(ctx context.Context, tx pg.Trans
 		return nil, err
 	}
 	if tag.RowsAffected() == 1 {
+		if err := appendProviderUsage(ctx, tx, request, "provider_terminal"); err != nil {
+			return nil, err
+		}
 		store.observeCallbackDelay(ctx, tx, request, receivedAt)
 		return progress.Result, nil
 	}
@@ -280,6 +274,10 @@ func (store *RequestStore) Complete(ctx context.Context, request providerv1.Requ
 		if tag.RowsAffected() != 1 {
 			return provider.ErrRequestUnavailable
 		}
-		return nil
+		return appendProviderUsage(ctx, tx, request, "provider_terminal")
 	})
+}
+
+func appendProviderUsage(ctx context.Context, tx pg.Transaction, request providerv1.Request, event string) error {
+	return usagepostgres.AppendWithin(ctx, tx, usagev1.Receipt{CoreTenantID: request.TenantID, Event: event, ProviderID: request.ProviderID, AdapterID: request.Adapter.AdapterID, AdapterVersion: request.Adapter.AdapterVersion, PackageDigest: request.Adapter.PackageDigest, Check: request.Check}, request.AttemptID)
 }

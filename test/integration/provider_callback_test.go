@@ -20,6 +20,7 @@ import (
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/provider"
 	providerpostgres "github.com/Mujhtech/idenqa/internal/provider/postgres"
+	usagepostgres "github.com/Mujhtech/idenqa/internal/usage/postgres"
 	"github.com/Mujhtech/idenqa/internal/verification"
 )
 
@@ -84,6 +85,24 @@ func TestProviderCallbackReceiptRoundTrip(t *testing.T) {
 		var stored []byte
 		if err := f.admin.Native().QueryRow(ctx, `SELECT result_body FROM idenqa.provider_dispatches WHERE tenant_id=$1 AND attempt_id=$2`, request.TenantID, request.AttemptID).Scan(&stored); err != nil || len(stored) == 0 {
 			t.Fatalf("receipt was not promoted into the dispatch: %v", err)
+		}
+		if _, cached, err := requests.Claim(ctx, request); err != nil || cached == nil {
+			t.Fatalf("callback adoption replay = %+v %v", cached, err)
+		}
+		usage, err := usagepostgres.New(f.runtime)
+		if err != nil {
+			t.Fatal(err)
+		}
+		receipts, err := usage.Read(ctx, request.TenantID, 10)
+		if err != nil || len(receipts) != 2 {
+			t.Fatalf("callback usage under runtime grants = %+v %v", receipts, err)
+		}
+		counts := map[string]int{}
+		for _, receipt := range receipts {
+			counts[receipt.Event]++
+		}
+		if counts["provider_dispatch"] != 1 || counts["provider_terminal"] != 1 {
+			t.Fatalf("callback replay duplicated or omitted usage: %v", counts)
 		}
 		conflicting := progress
 		conflicting.Result = &providerv1.Result{Contract: request.Contract, AttemptID: request.AttemptID, Outcome: providerv1.ResultOutcomeCompleted,

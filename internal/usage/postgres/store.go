@@ -20,14 +20,51 @@ type runner interface {
 }
 
 // Store persists the regional receipt delivery acknowledgement.
-type Store struct{ pool runner }
+type Store struct {
+	pool              runner
+	consumer, routing string
+}
+
+// Coverage establishes a tenant source barrier. All receipt writers share the
+// same transaction lock and assign their occurrence time after acquiring it.
+// Pending earlier receipts return a zero time; an empty read alone is not used.
+func (s *Store) Coverage(ctx context.Context, tenantID string) (usagev1.Coverage, error) {
+	if _, err := id.ParseTenant(tenantID); err != nil {
+		return usagev1.Coverage{}, errors.New("invalid coverage tenant")
+	}
+	result := usagev1.Coverage{Schema: "idenqa-core.usage-coverage.v1", CoreTenantID: tenantID, ConsumerID: s.consumer, RoutingDigest: s.routing}
+	err := s.pool.WithinTransaction(ctx, pg.TransactionOptions{}, func(ctx context.Context, tx pg.Transaction) error {
+		if _, err := sqlgen.New(tx).SetTenantScope(ctx, tenantID); err != nil {
+			return err
+		}
+		from, epoch, err := s.authorizeSource(ctx, tx, tenantID)
+		if err != nil {
+			return err
+		}
+		result.From = from
+		result.Epoch = epoch
+		if s.consumer == "" {
+			return errors.New("coverage requires an owned consumer registration")
+		}
+		var pending bool
+		if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM idenqa.usage_receipts WHERE tenant_id=$1 AND delivered_at IS NULL)`, tenantID).Scan(&pending); err != nil {
+			return err
+		}
+		if pending {
+			return nil
+		}
+		result.Through, err = sourceClock(ctx, tx, tenantID)
+		return err
+	})
+	return result, err
+}
 
 // New constructs a tenant-scoped receipt store.
 func New(pool runner) (*Store, error) {
 	if pool == nil {
 		return nil, errors.New("usage receipt database required")
 	}
-	return &Store{pool}, nil
+	return &Store{pool: pool}, nil
 }
 
 // Read returns a bounded page of pending receipts for one tenant.
@@ -41,6 +78,9 @@ func (s *Store) Read(ctx context.Context, tenantID string, limit int) ([]usagev1
 	receipts := make([]usagev1.Receipt, 0)
 	err := s.pool.WithinTransaction(ctx, pg.TransactionOptions{}, func(ctx context.Context, tx pg.Transaction) error {
 		if _, err := sqlgen.New(tx).SetTenantScope(ctx, tenantID); err != nil {
+			return err
+		}
+		if _, _, err := s.authorizeSource(ctx, tx, tenantID); err != nil {
 			return err
 		}
 		rows, err := tx.Query(ctx, `SELECT receipt FROM idenqa.usage_receipts WHERE tenant_id=$1 AND delivered_at IS NULL ORDER BY created_at,id LIMIT $2`, tenantID, limit)
@@ -80,6 +120,9 @@ func (s *Store) Acknowledge(ctx context.Context, tenantID, receiptID, expectedDi
 	}
 	return s.pool.WithinTransaction(ctx, pg.TransactionOptions{}, func(ctx context.Context, tx pg.Transaction) error {
 		if _, err := sqlgen.New(tx).SetTenantScope(ctx, tenantID); err != nil {
+			return err
+		}
+		if _, _, err := s.authorizeSource(ctx, tx, tenantID); err != nil {
 			return err
 		}
 		var data []byte

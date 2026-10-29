@@ -23,6 +23,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -44,6 +45,7 @@ import (
 	"github.com/Mujhtech/idenqa/internal/platform/task"
 	taskheadgate "github.com/Mujhtech/idenqa/internal/platform/task/headgate"
 	"github.com/Mujhtech/idenqa/internal/tenant"
+	usagepostgres "github.com/Mujhtech/idenqa/internal/usage/postgres"
 	verificationpostgres "github.com/Mujhtech/idenqa/internal/verification/postgres"
 )
 
@@ -428,6 +430,36 @@ func (journey *providerPublicJourney) runModel(t *testing.T, admin, runtime *pg.
 	}
 	if checks != expectedChecks || dispatches != expectedModels || observations != expectedChecks {
 		t.Fatalf("model execution duplicated or incomplete: %d %d %d", checks, dispatches, observations)
+	}
+	usage, err := usagepostgres.New(runtime)
+	if err != nil {
+		t.Fatal(err)
+	}
+	receipts, err := usage.Read(t.Context(), scope.ID().String(), 20)
+	if err != nil {
+		t.Fatalf("usage runtime grants: %v", err)
+	}
+	counts := map[string]int{}
+	for _, receipt := range receipts {
+		counts[receipt.Event]++
+		if receipt.Quantity != 1 {
+			t.Fatal("usage quantity changed")
+		}
+		raw, e := json.Marshal(receipt)
+		if e != nil {
+			t.Fatal(e)
+		}
+		for _, field := range []string{`"attemptId"`, `"verificationId"`, `"evidence"`, `"result"`, `"credential"`} {
+			if strings.Contains(string(raw), field) {
+				t.Fatalf("usage leaked %s", field)
+			}
+		}
+	}
+	if counts["model_dispatch"] != expectedModels || counts["model_terminal"] != expectedModels || counts["verification_completed"] != 1 {
+		t.Fatalf("model/completion receipts duplicated or missing after restart: %v", counts)
+	}
+	if journey.composed && (counts["provider_dispatch"] != 1 || counts["provider_terminal"] != 1) {
+		t.Fatalf("composed provider usage %v", counts)
 	}
 	if journey.composed {
 		var grants, used int

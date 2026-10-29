@@ -1836,6 +1836,30 @@ type IdenqaUsageReceipt struct {
 	DeliveredAt pgtype.Timestamptz
 }
 
+type IdenqaUsageSourceClock struct {
+	TenantID      string
+	Through       pgtype.Timestamptz
+	CoveredFrom   pgtype.Timestamptz
+	Epoch         string
+	ConsumerID    *string
+	RoutingDigest *string
+}
+
+type IdenqaUsageSourceHandoff struct {
+	TenantID         string
+	Epoch            string
+	PreviousConsumer *string
+	PreviousRouting  *string
+	ConsumerID       string
+	RoutingDigest    string
+	CoveredFrom      pgtype.Timestamptz
+	PreviousFrom     pgtype.Timestamptz
+	PendingCarried   int64
+	PendingDigest    string
+	ActorID          string
+	ReasonReference  string
+}
+
 type IdenqaVerificationAssurance struct {
 	TenantID        string
 	VerificationID  string

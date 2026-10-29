@@ -36,6 +36,7 @@ func Statements(role string) []string {
 		"GRANT EXECUTE ON FUNCTION idenqa.list_ready_provider_captures(timestamptz,integer,text,text,text) TO " + pgx.Identifier{role}.Sanitize(),
 		"GRANT SELECT, INSERT ON idenqa.provider_requests TO " + pgx.Identifier{role}.Sanitize(),
 		"GRANT SELECT, INSERT, UPDATE ON idenqa.usage_receipts TO " + pgx.Identifier{role}.Sanitize(),
+		"GRANT SELECT, INSERT, UPDATE ON idenqa.usage_source_clocks TO " + pgx.Identifier{role}.Sanitize(),
 		"GRANT SELECT, INSERT, UPDATE ON idenqa.provider_dispatches TO " + pgx.Identifier{role}.Sanitize(),
 		"GRANT SELECT, INSERT, UPDATE ON idenqa.provider_registrations TO " + pgx.Identifier{role}.Sanitize(),
 		"GRANT SELECT, INSERT ON idenqa.provider_registration_history TO " + pgx.Identifier{role}.Sanitize(),

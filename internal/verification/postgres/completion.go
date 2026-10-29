@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	usagev1 "github.com/Mujhtech/idenqa/contracts/usage/v1"
 	webhookv1 "github.com/Mujhtech/idenqa/contracts/webhook/v1"
 	authoritypostgres "github.com/Mujhtech/idenqa/internal/authority/postgres"
 	"github.com/Mujhtech/idenqa/internal/delivery"
@@ -19,6 +20,7 @@ import (
 	"github.com/Mujhtech/idenqa/internal/policy"
 	policypostgres "github.com/Mujhtech/idenqa/internal/policy/postgres"
 	"github.com/Mujhtech/idenqa/internal/tenant"
+	usagepostgres "github.com/Mujhtech/idenqa/internal/usage/postgres"
 	"github.com/Mujhtech/idenqa/internal/verification"
 )
 
@@ -183,6 +185,9 @@ AND state NOT IN ('completed','skipped_by_policy','timed_out','cancelled','faile
 	}
 	if _, err := deliverypostgres.EmitEventWithin(ctx, tx, store.wrapper, event, seed); err != nil {
 		return fmt.Errorf("emit completion event: %w", err)
+	}
+	if err := usagepostgres.AppendWithin(ctx, tx, usagev1.Receipt{CoreTenantID: scope.ID().String(), Event: "verification_completed"}, verificationID.String()); err != nil {
+		return err
 	}
 	if store.metrics != nil {
 		createdAt := session.CreatedAt.Time.UTC()
