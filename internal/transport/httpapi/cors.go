@@ -18,6 +18,7 @@ var (
 	allowedCORSHeaders = []string{
 		"authorization",
 		"content-type",
+		"content-digest",
 		"idempotency-key",
 		"if-match",
 		"if-none-match",

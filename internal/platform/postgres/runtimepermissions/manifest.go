@@ -98,6 +98,7 @@ func Statements(role string) []string {
 		"GRANT SELECT, INSERT, UPDATE, DELETE ON idenqa.realtime_events TO " + pgx.Identifier{role}.Sanitize(),
 		"GRANT SELECT, INSERT, UPDATE ON idenqa.realtime_acknowledgements TO " + pgx.Identifier{role}.Sanitize(),
 		"GRANT INSERT ON idenqa.verification_session_audit TO " + pgx.Identifier{role}.Sanitize(),
+		"GRANT SELECT (tenant_id,verification_id,action,actor_id,delegated_actor_id) ON idenqa.verification_session_audit TO " + pgx.Identifier{role}.Sanitize(),
 		"GRANT INSERT ON idenqa.capture_document_selection_audit TO " + pgx.Identifier{role}.Sanitize(),
 		"GRANT SELECT, INSERT ON idenqa.verification_transitions TO " + pgx.Identifier{role}.Sanitize(),
 		"GRANT SELECT, INSERT ON idenqa.notice_versions TO " + pgx.Identifier{role}.Sanitize(),

@@ -118,7 +118,7 @@ INSERT INTO idenqa.processing_authorities (
     $11, $12, $13, $14, $15, $16, $17, $18,
     $19, $20, $21, $22, $23, $24, $25, $26
 )
-RETURNING id, tenant_id, subject_id, verification_id, notice_id, category, purpose, jurisdiction, policy_pack, consent_required, requirement_purposes, evidence_types, recipient_reference, recipient_display_name, regions, retention_reference, state, version, valid_from, expires_at, created_at, updated_at, created_by, restricted_at, withdrawn_at, superseded_at
+RETURNING id, tenant_id, subject_id, verification_id, notice_id, category, purpose, jurisdiction, policy_pack, consent_required, requirement_purposes, evidence_types, recipient_reference, recipient_display_name, regions, retention_reference, state, version, valid_from, expires_at, created_at, updated_at, created_by, restricted_at, withdrawn_at, superseded_at, created_by_api_key
 `
 
 type CreateProcessingAuthorityParams struct {
@@ -207,6 +207,7 @@ func (q *Queries) CreateProcessingAuthority(ctx context.Context, arg CreateProce
 		&i.RestrictedAt,
 		&i.WithdrawnAt,
 		&i.SupersededAt,
+		&i.CreatedByApiKey,
 	)
 	return i, err
 }
@@ -390,7 +391,7 @@ func (q *Queries) FindNoticeVersion(ctx context.Context, arg FindNoticeVersionPa
 }
 
 const findProcessingAuthority = `-- name: FindProcessingAuthority :one
-SELECT id, tenant_id, subject_id, verification_id, notice_id, category, purpose, jurisdiction, policy_pack, consent_required, requirement_purposes, evidence_types, recipient_reference, recipient_display_name, regions, retention_reference, state, version, valid_from, expires_at, created_at, updated_at, created_by, restricted_at, withdrawn_at, superseded_at
+SELECT id, tenant_id, subject_id, verification_id, notice_id, category, purpose, jurisdiction, policy_pack, consent_required, requirement_purposes, evidence_types, recipient_reference, recipient_display_name, regions, retention_reference, state, version, valid_from, expires_at, created_at, updated_at, created_by, restricted_at, withdrawn_at, superseded_at, created_by_api_key
 FROM idenqa.processing_authorities
 WHERE tenant_id = $1 AND id = $2
 `
@@ -430,12 +431,13 @@ func (q *Queries) FindProcessingAuthority(ctx context.Context, arg FindProcessin
 		&i.RestrictedAt,
 		&i.WithdrawnAt,
 		&i.SupersededAt,
+		&i.CreatedByApiKey,
 	)
 	return i, err
 }
 
 const findProcessingAuthorityByVerification = `-- name: FindProcessingAuthorityByVerification :one
-SELECT id, tenant_id, subject_id, verification_id, notice_id, category, purpose, jurisdiction, policy_pack, consent_required, requirement_purposes, evidence_types, recipient_reference, recipient_display_name, regions, retention_reference, state, version, valid_from, expires_at, created_at, updated_at, created_by, restricted_at, withdrawn_at, superseded_at
+SELECT id, tenant_id, subject_id, verification_id, notice_id, category, purpose, jurisdiction, policy_pack, consent_required, requirement_purposes, evidence_types, recipient_reference, recipient_display_name, regions, retention_reference, state, version, valid_from, expires_at, created_at, updated_at, created_by, restricted_at, withdrawn_at, superseded_at, created_by_api_key
 FROM idenqa.processing_authorities
 WHERE tenant_id = $1 AND verification_id = $2
 `
@@ -475,6 +477,7 @@ func (q *Queries) FindProcessingAuthorityByVerification(ctx context.Context, arg
 		&i.RestrictedAt,
 		&i.WithdrawnAt,
 		&i.SupersededAt,
+		&i.CreatedByApiKey,
 	)
 	return i, err
 }
@@ -608,7 +611,7 @@ SET state = $4,
     withdrawn_at = $8,
     superseded_at = $9
 WHERE tenant_id = $1 AND id = $2 AND version = $3 AND state = 'active'
-RETURNING id, tenant_id, subject_id, verification_id, notice_id, category, purpose, jurisdiction, policy_pack, consent_required, requirement_purposes, evidence_types, recipient_reference, recipient_display_name, regions, retention_reference, state, version, valid_from, expires_at, created_at, updated_at, created_by, restricted_at, withdrawn_at, superseded_at
+RETURNING id, tenant_id, subject_id, verification_id, notice_id, category, purpose, jurisdiction, policy_pack, consent_required, requirement_purposes, evidence_types, recipient_reference, recipient_display_name, regions, retention_reference, state, version, valid_from, expires_at, created_at, updated_at, created_by, restricted_at, withdrawn_at, superseded_at, created_by_api_key
 `
 
 type TransitionProcessingAuthorityParams struct {
@@ -663,6 +666,7 @@ func (q *Queries) TransitionProcessingAuthority(ctx context.Context, arg Transit
 		&i.RestrictedAt,
 		&i.WithdrawnAt,
 		&i.SupersededAt,
+		&i.CreatedByApiKey,
 	)
 	return i, err
 }

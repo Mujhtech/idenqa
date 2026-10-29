@@ -20,14 +20,15 @@ type SessionCreator interface {
 type Service struct {
 	verifier *Verifier
 	creator  SessionCreator
+	prepare  LaunchPreparation
 }
 
 // NewService constructs the managed-launch application boundary.
-func NewService(verifier *Verifier, creator SessionCreator) (*Service, error) {
-	if verifier == nil || creator == nil {
+func NewService(verifier *Verifier, creator SessionCreator, prepare LaunchPreparation) (*Service, error) {
+	if verifier == nil || creator == nil || prepare == nil {
 		return nil, ErrInvalid
 	}
-	return &Service{verifier: verifier, creator: creator}, nil
+	return &Service{verifier: verifier, creator: creator, prepare: prepare}, nil
 }
 
 // Create verifies one signed command and creates the pinned session through the
@@ -35,6 +36,9 @@ func NewService(verifier *Verifier, creator SessionCreator) (*Service, error) {
 func (service *Service) Create(ctx context.Context, envelope Envelope) (verification.CreatedSession, error) {
 	claims, err := service.verifier.Verify(envelope)
 	if err != nil {
+		return verification.CreatedSession{}, err
+	}
+	if err := service.prepare.Validate(ctx, claims); err != nil {
 		return verification.CreatedSession{}, err
 	}
 	tenantID, err := id.ParseTenant(claims.CoreTenantID)
@@ -69,6 +73,9 @@ func (service *Service) Create(ctx context.Context, envelope Envelope) (verifica
 			return verification.CreatedSession{}, err
 		}
 		return verification.CreatedSession{}, fmt.Errorf("create managed verification session: %w", err)
+	}
+	if err := service.prepare.Prepare(ctx, claims, created.Session); err != nil {
+		return verification.CreatedSession{}, err
 	}
 	return created, nil
 }

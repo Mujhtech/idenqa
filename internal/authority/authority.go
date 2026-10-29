@@ -15,6 +15,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/Mujhtech/idenqa/internal/platform/id"
+	"github.com/Mujhtech/idenqa/internal/verification"
 )
 
 const (
@@ -186,9 +187,12 @@ type Record struct {
 	CreatedAt            time.Time
 	UpdatedAt            time.Time
 	CreatedBy            id.APIKey
-	RestrictedAt         *time.Time
-	WithdrawnAt          *time.Time
-	SupersededAt         *time.Time
+	// WorkloadID is present only for an exact signed managed-launch declaration.
+	// It never represents an API key or grants ambient tenant permissions.
+	WorkloadID   string
+	RestrictedAt *time.Time
+	WithdrawnAt  *time.Time
+	SupersededAt *time.Time
 }
 
 // Authority is one tenant declaration bound to one verification-local subject.
@@ -229,7 +233,7 @@ func restore(record Record) (Authority, error) {
 	record.EvidenceTypes = canonicalSet(record.EvidenceTypes)
 	record.Regions = canonicalSet(record.Regions)
 	if record.ID.IsZero() || record.TenantID.IsZero() || record.SubjectID.IsZero() ||
-		record.VerificationID.IsZero() || record.NoticeID.IsZero() || record.CreatedBy.IsZero() {
+		record.VerificationID.IsZero() || record.NoticeID.IsZero() || !record.validActor() {
 		return Authority{}, errors.New("authority: declaration identity and actor are required")
 	}
 	for name, value := range map[string]string{
@@ -256,6 +260,22 @@ func restore(record Record) (Authority, error) {
 		return Authority{}, err
 	}
 	return Authority{record: record}, nil
+}
+
+// ActorID returns the non-secret declaration actor without changing its class.
+func (record Record) ActorID() string {
+	if record.WorkloadID != "" {
+		return record.WorkloadID
+	}
+	return record.CreatedBy.String()
+}
+
+func (record Record) validActor() bool {
+	if record.WorkloadID == "" {
+		return !record.CreatedBy.IsZero()
+	}
+	_, err := verification.NewWorkloadSessionPrincipal(record.WorkloadID)
+	return record.CreatedBy.IsZero() && err == nil
 }
 
 // ID returns the processing-authority identifier.

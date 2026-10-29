@@ -11,6 +11,7 @@ import (
 func TestLoadAPIManagedLaunchAuthorityConfiguration(t *testing.T) {
 	clearIDENQAEnvironment(t)
 	setRequiredAPIEnvironment(t)
+	t.Setenv("IDENQA_MANAGED_LAUNCH_PREPARATION_FILE", "/etc/idenqa/managed-launch.json")
 	t.Setenv("IDENQA_MANAGED_LAUNCH_ORGANISATION_ID", "org_example")
 	t.Setenv("IDENQA_MANAGED_LAUNCH_ENVIRONMENT_ID", "env_sandbox")
 	t.Setenv("IDENQA_MANAGED_LAUNCH_DEPLOYMENT_ID", "dep_example")

@@ -626,37 +626,6 @@ func newProcess(
 	sessionService.WithTracer(operationTracer)
 
 	var managedLaunchRoutes InternalRouteRegistrar
-	if len(configuration.ManagedLaunchPublicKeys) > 0 {
-		verifier, err := managedlaunch.NewVerifier(
-			configuration.ManagedLaunchPublicKeys.Values(),
-			managedlaunch.Binding{
-				OrganisationID: configuration.ManagedLaunchOrganisationID,
-				EnvironmentID:  configuration.ManagedLaunchEnvironmentID,
-				DeploymentID:   configuration.ManagedLaunchDeploymentID,
-				Region:         configuration.Region,
-			},
-			configuration.ManagedLaunchIssuer,
-			configuration.ManagedLaunchAuthorityTTL,
-			clock.System{}.Now,
-		)
-		if err != nil {
-			_ = providers.Shutdown(context.Background())
-			connectionPool.Close()
-			return nil, fmt.Errorf("construct managed launch authority verifier: %w", err)
-		}
-		service, err := managedlaunch.NewService(verifier, sessionService)
-		if err != nil {
-			_ = providers.Shutdown(context.Background())
-			connectionPool.Close()
-			return nil, fmt.Errorf("construct managed launch service: %w", err)
-		}
-		managedLaunchRoutes, err = httpapi.NewManagedLaunchRoutes(service, logger)
-		if err != nil {
-			_ = providers.Shutdown(context.Background())
-			connectionPool.Close()
-			return nil, err
-		}
-	}
 
 	var experienceStore *experiencepostgres.Store
 	var experienceRoutes RouteRegistrar
@@ -899,6 +868,38 @@ func newProcess(
 		return nil, fmt.Errorf("construct processing authority service: %w", err)
 	}
 	authorityService.WithTracer(operationTracer)
+
+	if len(configuration.ManagedLaunchPublicKeys) > 0 {
+		verifier, err := managedlaunch.NewVerifier(
+			configuration.ManagedLaunchPublicKeys.Values(),
+			managedlaunch.Binding{
+				OrganisationID: configuration.ManagedLaunchOrganisationID,
+				EnvironmentID:  configuration.ManagedLaunchEnvironmentID,
+				DeploymentID:   configuration.ManagedLaunchDeploymentID,
+				Region:         configuration.Region,
+			},
+			configuration.ManagedLaunchIssuer,
+			configuration.ManagedLaunchAuthorityTTL,
+			clock.System{}.Now,
+		)
+		if err != nil {
+			_ = providers.Shutdown(context.Background())
+			connectionPool.Close()
+			return nil, fmt.Errorf("construct managed launch authority verifier: %w", err)
+		}
+		service, err := newManagedLaunchService(configuration.ManagedLaunchPreparationFile, verifier, sessionService, authorityStore, authorityService)
+		if err != nil {
+			_ = providers.Shutdown(context.Background())
+			connectionPool.Close()
+			return nil, fmt.Errorf("construct managed launch service: %w", err)
+		}
+		managedLaunchRoutes, err = httpapi.NewManagedLaunchRoutes(service, logger)
+		if err != nil {
+			_ = providers.Shutdown(context.Background())
+			connectionPool.Close()
+			return nil, err
+		}
+	}
 
 	authorityRoutes, err := httpapi.NewAuthorityRoutes(
 		accessMiddleware,

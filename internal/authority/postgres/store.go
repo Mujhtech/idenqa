@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"slices"
 	"strconv"
+	"strings"
 	"time"
 
 	webhookv1 "github.com/Mujhtech/idenqa/contracts/webhook/v1"
@@ -134,7 +135,7 @@ func (store *Store) Declare(ctx context.Context, scope tenant.Scope, mutation au
 	record := mutation.Authority.Record()
 	if scope.ID().IsZero() || record.TenantID.String() != scope.ID().String() || mutation.EventID.IsZero() ||
 		mutation.Idempotency.TenantID().String() != scope.ID().String() ||
-		mutation.Idempotency.Principal().String() != record.CreatedBy.String() {
+		mutation.Idempotency.Principal().String() != record.ActorID() {
 		return authority.Authority{}, authority.ErrConflict
 	}
 	var result authority.Authority
@@ -161,6 +162,17 @@ func (store *Store) Declare(ctx context.Context, scope tenant.Scope, mutation au
 		}
 		if err != nil {
 			return fmt.Errorf("lock verification for authority: %w", err)
+		}
+		if record.WorkloadID != "" {
+			var permitted bool
+			if err := tx.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM idenqa.verification_session_audit
+				WHERE tenant_id=$1 AND verification_id=$2 AND action='create'
+				AND actor_id=$3 AND delegated_actor_id=$4)`, scope.ID().String(), record.VerificationID.String(), record.WorkloadID, mutation.DelegatedActor).Scan(&permitted); err != nil {
+				return fmt.Errorf("check managed declaration actor: %w", err)
+			}
+			if !permitted {
+				return authority.ErrProcessingNotPermitted
+			}
 		}
 		if locked.State != "collecting" || !locked.ExpiresAt.Valid || record.ExpiresAt.After(locked.ExpiresAt.Time) ||
 			!requirementsMatch(locked.Requirements, record.RequirementPurposes, record.EvidenceTypes) {
@@ -194,7 +206,7 @@ func (store *Store) Declare(ctx context.Context, scope tenant.Scope, mutation au
 		if affected != 1 {
 			return authority.ErrConflict
 		}
-		if err := insertAuthorityAudit(ctx, queries, record, "declare", record.CreatedBy); err != nil {
+		if err := insertDeclarationAudit(ctx, queries, record); err != nil {
 			return err
 		}
 		if err := insertEvent(ctx, queries, mutation.EventID, record.TenantID, "authority", record.ID.String(), record.Version,
@@ -599,9 +611,15 @@ func restoreAuthority(row sqlgen.IdenqaProcessingAuthority) (authority.Authority
 	if err != nil {
 		return authority.Authority{}, fmt.Errorf("parse stored authority notice id: %w", err)
 	}
-	actor, err := id.ParseAPIKey(row.CreatedBy)
-	if err != nil {
-		return authority.Authority{}, fmt.Errorf("parse stored authority actor id: %w", err)
+	var actor id.APIKey
+	workloadID := ""
+	if strings.HasPrefix(row.CreatedBy, "wld_") {
+		workloadID = row.CreatedBy
+	} else {
+		actor, err = id.ParseAPIKey(row.CreatedBy)
+		if err != nil {
+			return authority.Authority{}, fmt.Errorf("parse stored authority actor id: %w", err)
+		}
 	}
 	return authority.Restore(authority.Record{
 		ID: identifier, TenantID: tenantID, SubjectID: subjectID, VerificationID: verificationID, NoticeID: noticeID,
@@ -610,7 +628,7 @@ func restoreAuthority(row sqlgen.IdenqaProcessingAuthority) (authority.Authority
 		RecipientReference: row.RecipientReference, RecipientDisplayName: row.RecipientDisplayName, Regions: row.Regions,
 		RetentionReference: row.RetentionReference, State: authority.State(row.State), Version: row.Version,
 		ValidFrom: row.ValidFrom.Time, ExpiresAt: row.ExpiresAt.Time, CreatedAt: row.CreatedAt.Time, UpdatedAt: row.UpdatedAt.Time,
-		CreatedBy: actor, RestrictedAt: timePointer(row.RestrictedAt), WithdrawnAt: timePointer(row.WithdrawnAt),
+		CreatedBy: actor, WorkloadID: workloadID, RestrictedAt: timePointer(row.RestrictedAt), WithdrawnAt: timePointer(row.WithdrawnAt),
 		SupersededAt: timePointer(row.SupersededAt),
 	})
 }
@@ -660,10 +678,24 @@ func createAuthorityParams(record authority.Record) sqlgen.CreateProcessingAutho
 		EvidenceTypes: record.EvidenceTypes, RecipientReference: record.RecipientReference,
 		RecipientDisplayName: record.RecipientDisplayName, Regions: record.Regions, RetentionReference: record.RetentionReference,
 		State: string(record.State), Version: record.Version, ValidFrom: timestamp(record.ValidFrom), ExpiresAt: timestamp(record.ExpiresAt),
-		CreatedAt: timestamp(record.CreatedAt), UpdatedAt: timestamp(record.UpdatedAt), CreatedBy: record.CreatedBy.String(),
+		CreatedAt: timestamp(record.CreatedAt), UpdatedAt: timestamp(record.UpdatedAt), CreatedBy: record.ActorID(),
 		RestrictedAt: optionalTimestamp(record.RestrictedAt), WithdrawnAt: optionalTimestamp(record.WithdrawnAt),
 		SupersededAt: optionalTimestamp(record.SupersededAt),
 	}
+}
+
+func insertDeclarationAudit(ctx context.Context, queries *sqlgen.Queries, record authority.Record) error {
+	actorType := "api_key"
+	if record.WorkloadID != "" {
+		actorType = "managed_workload"
+	}
+	if err := queries.InsertAuthorityAudit(ctx, sqlgen.InsertAuthorityAuditParams{
+		TenantID: record.TenantID.String(), AuthorityID: record.ID.String(), AggregateVersion: record.Version,
+		Action: "declare", ActorType: actorType, ActorID: record.ActorID(), OccurredAt: timestamp(record.UpdatedAt),
+	}); err != nil {
+		return fmt.Errorf("insert declaration audit: %w", err)
+	}
+	return nil
 }
 
 func insertAuthorityAudit(ctx context.Context, queries *sqlgen.Queries, record authority.Record, action string, actor id.APIKey) error {

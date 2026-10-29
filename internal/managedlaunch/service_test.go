@@ -43,7 +43,7 @@ func TestServiceTranslatesVerifiedAuthorityToPinnedManagedCreation(t *testing.T)
 		t.Fatal(err)
 	}
 	creator := &recordingCreator{}
-	service, err := NewService(verifier, creator)
+	service, err := NewService(verifier, creator, preparationStub{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -62,3 +62,8 @@ func TestServiceTranslatesVerifiedAuthorityToPinnedManagedCreation(t *testing.T)
 		t.Fatalf("unexpected experience pin request: %#v", creator.input.Experience)
 	}
 }
+
+type preparationStub struct{}
+
+func (preparationStub) Validate(context.Context, Claims) error                      { return nil }
+func (preparationStub) Prepare(context.Context, Claims, verification.Session) error { return nil }

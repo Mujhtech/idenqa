@@ -36,9 +36,10 @@ type NoticeMutation struct {
 // DeclarationMutation is one atomic subject, authority, session-binding,
 // audit, outbox, and idempotency command.
 type DeclarationMutation struct {
-	Authority   Authority
-	EventID     id.Event
-	Idempotency idempotency.Request
+	DelegatedActor string
+	Authority      Authority
+	EventID        id.Event
+	Idempotency    idempotency.Request
 }
 
 // TransitionMutation is one optimistic authority lifecycle command.
@@ -334,11 +335,57 @@ func (service *Service) Declare(
 	if err := accessContext.Require(access.PermissionAuthoritiesWrite); err != nil {
 		return Authority{}, err
 	}
-	session, err := service.sessions.FindSession(ctx, accessContext.TenantScope(), input.VerificationID)
+	return service.declare(ctx, accessContext.TenantScope(), verification.APIKeySessionPrincipal(accessContext.Principal().KeyID()), "", idempotencyKey, input)
+}
+
+// DeclareManaged attaches configured processing authority to the session created
+// by the exact verified workload. The repository checks its durable creation
+// actor and delegated workforce actor under the session lock.
+func (service *Service) DeclareManaged(ctx context.Context, scope tenant.Scope, principal verification.SessionPrincipal, delegatedActor, idempotencyKey string, input DeclarationInput) (Authority, error) {
+	if scope.ID().IsZero() || !principal.IsWorkload() || !strings.HasPrefix(delegatedActor, "usr_") || len(delegatedActor) > 128 {
+		return Authority{}, ErrProcessingNotPermitted
+	}
+	return service.declare(ctx, scope, principal, delegatedActor, idempotencyKey, input)
+}
+
+func (service *Service) declare(ctx context.Context, scope tenant.Scope, principal verification.SessionPrincipal, delegatedActor, idempotencyKey string, input DeclarationInput) (Authority, error) {
+	var actorKey id.APIKey
+	workloadID := ""
+	if principal.IsWorkload() {
+		workloadID = principal.String()
+	} else {
+		var err error
+		actorKey, err = id.ParseAPIKey(principal.String())
+		if err != nil {
+			return Authority{}, ErrProcessingNotPermitted
+		}
+	}
+	canonical, err := json.Marshal(func() any {
+		if principal.IsWorkload() {
+			return struct {
+				Input          DeclarationInput
+				DelegatedActor string
+			}{input, delegatedActor}
+		}
+		return input
+	}())
+	if err != nil {
+		return Authority{}, fmt.Errorf("encode authority declaration: %w", err)
+	}
+	now := service.clock.Now().UTC().Truncate(time.Second)
+	request, err := idempotency.NewRequest(scope.ID(), principal, operationDeclare, idempotencyKey, canonical, now, service.retention)
 	if err != nil {
 		return Authority{}, err
 	}
-	now := service.clock.Now().UTC().Truncate(time.Second)
+	if replay, exists, err := service.authorities.ReplayAuthority(ctx, scope, request); err != nil {
+		return Authority{}, err
+	} else if exists {
+		return replay, nil
+	}
+	session, err := service.sessions.FindSession(ctx, scope, input.VerificationID)
+	if err != nil {
+		return Authority{}, err
+	}
 	if !session.AcceptsCaptureAt(now) || input.ExpiresAt.After(session.ExpiresAt()) {
 		return Authority{}, ErrConflict
 	}
@@ -346,7 +393,7 @@ func (service *Service) Declare(
 	if !slices.Contains(purposes, input.Purpose) {
 		return Authority{}, fmt.Errorf("declare authority: purpose is absent from session requirement purposes: %w", ErrConflict)
 	}
-	notice, err := service.notices.FindNotice(ctx, accessContext.TenantScope(), input.NoticeID)
+	notice, err := service.notices.FindNotice(ctx, scope, input.NoticeID)
 	if err != nil {
 		return Authority{}, err
 	}
@@ -367,7 +414,7 @@ func (service *Service) Declare(
 		return Authority{}, fmt.Errorf("generate authority event id: %w", err)
 	}
 	declaration, err := New(Record{
-		ID: authorityID, TenantID: accessContext.TenantScope().ID(),
+		ID: authorityID, TenantID: scope.ID(),
 		SubjectID: subjectID, VerificationID: session.ID(), NoticeID: notice.ID(),
 		Category: input.Category, Purpose: input.Purpose,
 		Jurisdiction: input.Jurisdiction, PolicyPack: input.PolicyPack,
@@ -377,19 +424,14 @@ func (service *Service) Declare(
 		RecipientDisplayName: input.RecipientDisplayName,
 		Regions:              input.Regions, RetentionReference: input.RetentionReference,
 		ValidFrom: input.ValidFrom, ExpiresAt: input.ExpiresAt,
-		CreatedAt: now, CreatedBy: accessContext.Principal().KeyID(),
+		CreatedAt: now, CreatedBy: actorKey, WorkloadID: workloadID,
 	})
 	if err != nil {
 		return Authority{}, err
 	}
-	request, err := service.idempotencyRequest(
-		accessContext, operationDeclare, idempotencyKey, input, now,
-	)
-	if err != nil {
-		return Authority{}, err
-	}
-	return service.authorities.Declare(ctx, accessContext.TenantScope(), DeclarationMutation{
-		Authority: declaration, EventID: eventID, Idempotency: request,
+
+	return service.authorities.Declare(ctx, scope, DeclarationMutation{
+		Authority: declaration, EventID: eventID, Idempotency: request, DelegatedActor: delegatedActor,
 	})
 }
 

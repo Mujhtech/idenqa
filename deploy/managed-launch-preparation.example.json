@@ -1,0 +1,17 @@
+{
+  "routes": [
+    {
+      "tenantId": "ten_01HZZZZZZZZZZZZZZZZZZZZZZZ",
+      "profileId": "prf_01HZZZZZZZZZZZZZZZZZZZZZZZ",
+      "policyId": "pol_01HZZZZZZZZZZZZZZZZZZZZZZZ",
+      "noticeId": "ntc_01HZZZZZZZZZZZZZZZZZZZZZZZ",
+      "locale": "en",
+      "category": "tenant.authority.customer_declared",
+      "purpose": "idenqa.purpose.identity_verification",
+      "jurisdiction": "tenant.jurisdiction.replace_me",
+      "policyPack": "tenant.policy.replace_me",
+      "recipientReference": "tenant.recipient.replace_me",
+      "retentionReference": "tenant.retention.replace_me"
+    }
+  ]
+}

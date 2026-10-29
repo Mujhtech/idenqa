@@ -445,23 +445,24 @@ func (TelemetryHeaders) MarshalJSON() ([]byte, error) { return json.Marshal("[RE
 type API struct {
 	ProviderHealthConfiguration
 	ProviderLimitConfiguration
-	ReviewCertificationFile     string                     `envconfig:"REVIEW_CERTIFICATION_FILE"`
-	ReviewBridgeSocket          string                     `envconfig:"REVIEW_BRIDGE_SOCKET"`
-	ReviewBridgeOrganisationID  string                     `envconfig:"REVIEW_BRIDGE_ORGANISATION_ID"`
-	ReviewBridgeEnvironmentID   string                     `envconfig:"REVIEW_BRIDGE_ENVIRONMENT_ID"`
-	ReviewBridgeDeploymentID    string                     `envconfig:"REVIEW_BRIDGE_DEPLOYMENT_ID"`
-	ReviewBridgePublicKeys      ReviewAuthorityKeys        `envconfig:"REVIEW_BRIDGE_PUBLIC_KEYS"`
-	ReviewBridgeAuthorityTTL    time.Duration              `envconfig:"REVIEW_BRIDGE_AUTHORITY_MAX_TTL"`
-	ReviewBrowserSessionTTL     time.Duration              `envconfig:"REVIEW_BROWSER_SESSION_TTL"`
-	ManagedLaunchOrganisationID string                     `envconfig:"MANAGED_LAUNCH_ORGANISATION_ID"`
-	ManagedLaunchEnvironmentID  string                     `envconfig:"MANAGED_LAUNCH_ENVIRONMENT_ID"`
-	ManagedLaunchDeploymentID   string                     `envconfig:"MANAGED_LAUNCH_DEPLOYMENT_ID"`
-	ManagedLaunchIssuer         string                     `envconfig:"MANAGED_LAUNCH_ISSUER"`
-	ManagedLaunchPublicKeys     ManagedLaunchAuthorityKeys `envconfig:"MANAGED_LAUNCH_PUBLIC_KEYS"`
-	ManagedLaunchAuthorityTTL   time.Duration              `envconfig:"MANAGED_LAUNCH_AUTHORITY_MAX_TTL"`
-	ProviderRuntimeFile         string                     `envconfig:"PROVIDER_RUNTIME_FILE"`
-	ModelRuntimeFile            string                     `envconfig:"MODEL_RUNTIME_FILE"`
-	ProposalRuntimeFile         string                     `envconfig:"PROPOSAL_RUNTIME_FILE"`
+	ReviewCertificationFile      string                     `envconfig:"REVIEW_CERTIFICATION_FILE"`
+	ReviewBridgeSocket           string                     `envconfig:"REVIEW_BRIDGE_SOCKET"`
+	ReviewBridgeOrganisationID   string                     `envconfig:"REVIEW_BRIDGE_ORGANISATION_ID"`
+	ReviewBridgeEnvironmentID    string                     `envconfig:"REVIEW_BRIDGE_ENVIRONMENT_ID"`
+	ReviewBridgeDeploymentID     string                     `envconfig:"REVIEW_BRIDGE_DEPLOYMENT_ID"`
+	ReviewBridgePublicKeys       ReviewAuthorityKeys        `envconfig:"REVIEW_BRIDGE_PUBLIC_KEYS"`
+	ReviewBridgeAuthorityTTL     time.Duration              `envconfig:"REVIEW_BRIDGE_AUTHORITY_MAX_TTL"`
+	ReviewBrowserSessionTTL      time.Duration              `envconfig:"REVIEW_BROWSER_SESSION_TTL"`
+	ManagedLaunchPreparationFile string                     `envconfig:"MANAGED_LAUNCH_PREPARATION_FILE"`
+	ManagedLaunchOrganisationID  string                     `envconfig:"MANAGED_LAUNCH_ORGANISATION_ID"`
+	ManagedLaunchEnvironmentID   string                     `envconfig:"MANAGED_LAUNCH_ENVIRONMENT_ID"`
+	ManagedLaunchDeploymentID    string                     `envconfig:"MANAGED_LAUNCH_DEPLOYMENT_ID"`
+	ManagedLaunchIssuer          string                     `envconfig:"MANAGED_LAUNCH_ISSUER"`
+	ManagedLaunchPublicKeys      ManagedLaunchAuthorityKeys `envconfig:"MANAGED_LAUNCH_PUBLIC_KEYS"`
+	ManagedLaunchAuthorityTTL    time.Duration              `envconfig:"MANAGED_LAUNCH_AUTHORITY_MAX_TTL"`
+	ProviderRuntimeFile          string                     `envconfig:"PROVIDER_RUNTIME_FILE"`
+	ModelRuntimeFile             string                     `envconfig:"MODEL_RUNTIME_FILE"`
+	ProposalRuntimeFile          string                     `envconfig:"PROPOSAL_RUNTIME_FILE"`
 	EvidenceUploadConfiguration
 	EvidenceLocalDirectory     string                `envconfig:"EVIDENCE_LOCAL_DIRECTORY"`
 	EvidenceLocalKeyringFile   string                `envconfig:"EVIDENCE_LOCAL_KEYRING_FILE"`
@@ -864,6 +865,7 @@ func (configuration API) validate(providerEvidence bool) error {
 	}
 	managedLaunchConfigured := len(configuration.ManagedLaunchPublicKeys) > 0
 	managedLaunchFields := []string{
+		configuration.ManagedLaunchPreparationFile,
 		configuration.ManagedLaunchOrganisationID,
 		configuration.ManagedLaunchEnvironmentID,
 		configuration.ManagedLaunchDeploymentID,

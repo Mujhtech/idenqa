@@ -1243,6 +1243,7 @@ type IdenqaProcessingAuthority struct {
 	RestrictedAt         pgtype.Timestamptz
 	WithdrawnAt          pgtype.Timestamptz
 	SupersededAt         pgtype.Timestamptz
+	CreatedByApiKey      *string
 }
 
 type IdenqaProcessorInventory struct {
@@ -2000,6 +2001,7 @@ type IdenqaVerificationSessionAudit struct {
 	ActorID          string
 	OccurredAt       pgtype.Timestamptz
 	DelegatedActorID *string
+	ActorApiKey      *string
 }
 
 type IdenqaVerificationTransition struct {
