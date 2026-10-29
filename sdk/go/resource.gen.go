@@ -756,6 +756,8 @@ func (e PrivacyTargetState) Valid() bool {
 
 // Defines values for ProblemCode.
 const (
+	ADMISSIONUNAVAILABLE        ProblemCode = "ADMISSION_UNAVAILABLE"
+	CAPABILITYNOTENTITLED       ProblemCode = "CAPABILITY_NOT_ENTITLED"
 	CAPTUREORIGINNOTALLOWED     ProblemCode = "CAPTURE_ORIGIN_NOT_ALLOWED"
 	CONFLICT                    ProblemCode = "CONFLICT"
 	IDEMPOTENCYCONFLICT         ProblemCode = "IDEMPOTENCY_CONFLICT"
@@ -764,10 +766,15 @@ const (
 	INVALIDREQUEST              ProblemCode = "INVALID_REQUEST"
 	METHODNOTALLOWED            ProblemCode = "METHOD_NOT_ALLOWED"
 	NOTFOUND                    ProblemCode = "NOT_FOUND"
+	PLATFORMSAFETYLIMIT         ProblemCode = "PLATFORM_SAFETY_LIMIT"
 	PRECONDITIONFAILED          ProblemCode = "PRECONDITION_FAILED"
 	PRECONDITIONREQUIRED        ProblemCode = "PRECONDITION_REQUIRED"
 	PROCESSINGAUTHORITYREQUIRED ProblemCode = "PROCESSING_AUTHORITY_REQUIRED"
+	QUOTACEILING                ProblemCode = "QUOTA_CEILING"
+	QUOTAEXCEEDED               ProblemCode = "QUOTA_EXCEEDED"
+	QUOTAPRESSURE               ProblemCode = "QUOTA_PRESSURE"
 	RATELIMITED                 ProblemCode = "RATE_LIMITED"
+	REGIONCAPACITYUNAVAILABLE   ProblemCode = "REGION_CAPACITY_UNAVAILABLE"
 	REQUESTCANCELLED            ProblemCode = "REQUEST_CANCELLED"
 	REQUESTTIMEOUT              ProblemCode = "REQUEST_TIMEOUT"
 	REQUESTTOOLARGE             ProblemCode = "REQUEST_TOO_LARGE"
@@ -777,11 +784,16 @@ const (
 	REVIEWSESSIONREPLAYED       ProblemCode = "REVIEW_SESSION_REPLAYED"
 	SERVICEUNAVAILABLE          ProblemCode = "SERVICE_UNAVAILABLE"
 	UNAUTHENTICATED             ProblemCode = "UNAUTHENTICATED"
+	USAGELIMITREACHED           ProblemCode = "USAGE_LIMIT_REACHED"
 )
 
 // Valid indicates whether the value is a known member of the ProblemCode enum.
 func (e ProblemCode) Valid() bool {
 	switch e {
+	case ADMISSIONUNAVAILABLE:
+		return true
+	case CAPABILITYNOTENTITLED:
+		return true
 	case CAPTUREORIGINNOTALLOWED:
 		return true
 	case CONFLICT:
@@ -798,13 +810,23 @@ func (e ProblemCode) Valid() bool {
 		return true
 	case NOTFOUND:
 		return true
+	case PLATFORMSAFETYLIMIT:
+		return true
 	case PRECONDITIONFAILED:
 		return true
 	case PRECONDITIONREQUIRED:
 		return true
 	case PROCESSINGAUTHORITYREQUIRED:
 		return true
+	case QUOTACEILING:
+		return true
+	case QUOTAEXCEEDED:
+		return true
+	case QUOTAPRESSURE:
+		return true
 	case RATELIMITED:
+		return true
+	case REGIONCAPACITYUNAVAILABLE:
 		return true
 	case REQUESTCANCELLED:
 		return true
@@ -823,6 +845,8 @@ func (e ProblemCode) Valid() bool {
 	case SERVICEUNAVAILABLE:
 		return true
 	case UNAUTHENTICATED:
+		return true
+	case USAGELIMITREACHED:
 		return true
 	default:
 		return false

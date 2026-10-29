@@ -30,6 +30,14 @@ const (
 	CodeReviewSessionReplayed       = "REVIEW_SESSION_REPLAYED"
 	CodeReviewCaseStale             = "REVIEW_CASE_STALE"
 	CodeReviewAuthorityRevoked      = "REVIEW_AUTHORITY_REVOKED"
+	CodeQuotaExceeded               = "QUOTA_EXCEEDED"
+	CodeQuotaPressure               = "QUOTA_PRESSURE"
+	CodeQuotaCeiling                = "QUOTA_CEILING"
+	CodeUsageLimit                  = "USAGE_LIMIT_REACHED"
+	CodeRegionCapacity              = "REGION_CAPACITY_UNAVAILABLE"
+	CodePlatformSafety              = "PLATFORM_SAFETY_LIMIT"
+	CodeCapabilityNotEntitled       = "CAPABILITY_NOT_ENTITLED"
+	CodeAdmissionUnavailable        = "ADMISSION_UNAVAILABLE"
 )
 
 // Error contains an explicitly safe public representation and an optional

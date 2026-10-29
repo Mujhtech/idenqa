@@ -40,6 +40,7 @@ func newMigrationCommand() *cobra.Command {
 		newHeadgateMigrationCommand(options),
 		newRuntimePermissionsCommand(options),
 		newUsageHandoffCommand(options),
+		newAdmissionCounterCommand(options),
 	)
 
 	return command

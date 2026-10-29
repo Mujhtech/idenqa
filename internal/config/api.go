@@ -461,6 +461,7 @@ type API struct {
 	ManagedLaunchPublicKeys      ManagedLaunchAuthorityKeys `envconfig:"MANAGED_LAUNCH_PUBLIC_KEYS"`
 	ManagedLaunchAuthorityTTL    time.Duration              `envconfig:"MANAGED_LAUNCH_AUTHORITY_MAX_TTL"`
 	ProviderRuntimeFile          string                     `envconfig:"PROVIDER_RUNTIME_FILE"`
+	AdmissionRuntimeFile         string                     `envconfig:"ADMISSION_RUNTIME_FILE"`
 	ModelRuntimeFile             string                     `envconfig:"MODEL_RUNTIME_FILE"`
 	ProposalRuntimeFile          string                     `envconfig:"PROPOSAL_RUNTIME_FILE"`
 	EvidenceUploadConfiguration

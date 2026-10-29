@@ -9,6 +9,7 @@ import (
 	"math"
 	"time"
 
+	"github.com/Mujhtech/idenqa/internal/admission"
 	"github.com/Mujhtech/idenqa/internal/evidence"
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
 	platformcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto"
@@ -32,11 +33,22 @@ type transactionRunner interface {
 
 // Store persists tenant-scoped evidence metadata and lifecycle audit records.
 type Store struct {
-	pool    transactionRunner
-	catalog evidence.Catalog
-	clock   clock.Clock
-	wrapper platformcrypto.KeyWrapper
-	metrics Metrics
+	pool      transactionRunner
+	catalog   evidence.Catalog
+	clock     clock.Clock
+	wrapper   platformcrypto.KeyWrapper
+	metrics   Metrics
+	admission interface {
+		AdmitResourceWithin(context.Context, platformpostgres.Transaction, admission.Resource) error
+	}
+}
+
+// WithAdmission enables reservation before accepting a new upload intent.
+func (store *Store) WithAdmission(gate interface {
+	AdmitResourceWithin(context.Context, platformpostgres.Transaction, admission.Resource) error
+}) *Store {
+	store.admission = gate
+	return store
 }
 
 // WithMetrics attaches the bounded capture metric receiver.

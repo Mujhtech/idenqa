@@ -9,8 +9,10 @@ import (
 	"strconv"
 	"time"
 
+	admissionv1 "github.com/Mujhtech/idenqa/contracts/admission/v1"
 	webhookv1 "github.com/Mujhtech/idenqa/contracts/webhook/v1"
 	"github.com/Mujhtech/idenqa/internal/access"
+	"github.com/Mujhtech/idenqa/internal/admission"
 	deliverypostgres "github.com/Mujhtech/idenqa/internal/delivery/postgres"
 	"github.com/Mujhtech/idenqa/internal/evidence"
 	platformcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto"
@@ -37,10 +39,22 @@ const (
 
 // SessionStore implements tenant-scoped verification-session persistence.
 type SessionStore struct {
-	pool    transactionRunner
-	catalog evidence.Catalog
-	wrapper platformcrypto.KeyWrapper
-	metrics Metrics
+	pool      transactionRunner
+	catalog   evidence.Catalog
+	wrapper   platformcrypto.KeyWrapper
+	metrics   Metrics
+	admission interface {
+		AdmitWithin(context.Context, platformpostgres.Transaction, admission.Operation) error
+	}
+}
+
+// WithAdmission attaches optional operational ceilings to new session creation.
+// Accepted idempotent replay and subject/worker continuation retain their authority.
+func (store *SessionStore) WithAdmission(gate interface {
+	AdmitWithin(context.Context, platformpostgres.Transaction, admission.Operation) error
+}) *SessionStore {
+	store.admission = gate
+	return store
 }
 
 // NewSessionStore constructs a verification-session PostgreSQL adapter.
@@ -149,6 +163,15 @@ func (store *SessionStore) Create(
 		fresh = true
 		if err := policypg.PinAssuranceWithin(ctx, tx, scope, session.ID().String(), session.PolicyID().String()); err != nil {
 			return err
+		}
+		if store.admission != nil {
+			operation, err := admissionv1.VerificationOperation(session.ProfileID().String(), session.ProfileRevision(), session.PolicyID().String())
+			if err != nil {
+				return err
+			}
+			if err := store.admission.AdmitWithin(ctx, tx, admission.Operation{TenantID: scope.ID().String(), ID: session.ID().String(), Rule: operation}); err != nil {
+				return err
+			}
 		}
 		encodedReplay, err := json.Marshal(sessionReplay{
 			VerificationID: session.ID().String(),

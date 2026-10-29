@@ -133,6 +133,13 @@ func configuredProvider(ctx context.Context, configuration config.Worker, pool *
 	if err != nil {
 		return nil, err
 	}
+	gate, err := configuredOperationalAdmission(configuration.API, pool)
+	if err != nil {
+		return nil, err
+	}
+	if gate != nil {
+		requests.WithAdmission(gate)
+	}
 	registrations, err := providerpostgres.NewRegistrationStore(pool, clock.System{})
 	if err != nil {
 		return nil, err

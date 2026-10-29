@@ -1,0 +1,47 @@
+{
+  "publicKey": "Md6+VdN8cidosTcTHKpghwgLLgtguUvXhdFFdc+kmLw=",
+  "signingSha256": "082915ac4a0b00588b4732ef0b21a5dac9ade8d2bcc5a1db1cc19364f796fb79",
+  "snapshot": {
+    "schema": "idenqa-core.admission-snapshot.v1",
+    "id": "contract_fixture_1",
+    "scope": {
+      "tenantId": "ten_01K4AR9V8FQ2G7ZXCPNM5T6JWH",
+      "deploymentId": "dep_contract_fixture",
+      "region": "eu-west-1"
+    },
+    "revision": 1,
+    "issuer": "public_fixture",
+    "issuedAt": "2026-10-22T12:00:00Z",
+    "validFrom": "2026-10-22T12:00:00Z",
+    "validUntil": "2026-10-22T13:00:00Z",
+    "status": "active",
+    "capabilities": {
+      "fixture.workflow": 1
+    },
+    "limits": [
+      {
+        "kind": "concurrency",
+        "key": "fixture",
+        "maximum": 1,
+        "windowNanoseconds": 0
+      }
+    ],
+    "rules": [
+      {
+        "operation": "verifications.create/prf_01K4AR9V8FQ2G7ZXCPNM5T6JWH/1/pol_01K4AR9V8FQ2G7ZXCPNM5T6JWH",
+        "capabilities": {
+          "fixture.workflow": 1
+        },
+        "budgets": [
+          {
+            "kind": "concurrency",
+            "key": "fixture",
+            "quantity": 1,
+            "lifetime": "terminal"
+          }
+        ]
+      }
+    ],
+    "proof": "B3/4wTHxWfVipzLpvzjMq86I5yJrM+DMqhG8afySHoeWMoU3M75yjD9MHJVD1Bdxqw3i3qYEf6q6NaLHIb8lBQ=="
+  }
+}

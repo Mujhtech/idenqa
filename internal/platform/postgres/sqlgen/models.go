@@ -25,6 +25,91 @@ type IdenqaAcceptedCommand struct {
 	PolicyID       *string
 }
 
+type IdenqaAdmissionCounter struct {
+	TenantID  string
+	Kind      string
+	Key       string
+	WindowKey int64
+	Used      int64
+	Dirty     bool
+}
+
+type IdenqaAdmissionEvent struct {
+	TenantID        string
+	Kind            string
+	Reference       string
+	Revision        int64
+	ActorID         *string
+	ReasonReference *string
+	CounterKind     *string
+	CounterKey      *string
+	CounterWindow   *int64
+	CounterBefore   *int64
+	CounterAfter    *int64
+	CounterWasDirty *bool
+	OccurredAt      pgtype.Timestamptz
+}
+
+type IdenqaAdmissionHead struct {
+	TenantID       string
+	ActiveRevision *int64
+}
+
+type IdenqaAdmissionLimitDefinition struct {
+	TenantID          string
+	Kind              string
+	Key               string
+	WindowNanoseconds int64
+}
+
+type IdenqaAdmissionOperation struct {
+	TenantID         string
+	ID               string
+	Rule             string
+	Digest           string
+	SnapshotRevision int64
+	State            string
+	AcceptedAt       pgtype.Timestamptz
+}
+
+type IdenqaAdmissionPending struct {
+	TenantID  string
+	Revision  int64
+	ValidFrom pgtype.Timestamptz
+}
+
+type IdenqaAdmissionReservation struct {
+	TenantID    string
+	OperationID string
+	Kind        string
+	Key         string
+	WindowKey   int64
+	Quantity    int64
+	Lifetime    string
+	Released    bool
+}
+
+type IdenqaAdmissionResourceSource struct {
+	TenantID       string
+	OperationID    string
+	VerificationID string
+	Kind           string
+	SourceID       string
+}
+
+type IdenqaAdmissionSnapshot struct {
+	TenantID     string
+	Revision     int64
+	ID           string
+	DeploymentID string
+	Region       string
+	ValidFrom    pgtype.Timestamptz
+	ValidUntil   pgtype.Timestamptz
+	Body         []byte
+	Digest       string
+	InstalledAt  pgtype.Timestamptz
+}
+
 type IdenqaApiKey struct {
 	ID              string
 	TenantID        string

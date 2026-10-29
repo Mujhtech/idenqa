@@ -206,6 +206,7 @@ func (service *SessionService) create(
 		return CreatedSession{}, err
 	}
 	canonical, err := json.Marshal(struct {
+		DelegatedActor         string                        `json:"delegated_actor,omitempty"`
 		ProfileID              string                        `json:"capture_profile_id"`
 		ProfileRevision        *uint32                       `json:"capture_profile_revision,omitempty"`
 		PolicyID               string                        `json:"policy_id"`
@@ -216,6 +217,7 @@ func (service *SessionService) create(
 		Locale                 string                        `json:"locale,omitempty"`
 		Experience             *experience.ResolutionRequest `json:"experience,omitempty"`
 	}{
+		DelegatedActor:         delegatedActor,
 		ProfileID:              input.ProfileID.String(),
 		ProfileRevision:        input.ExpectedProfileRevision,
 		PolicyID:               input.PolicyID.String(),

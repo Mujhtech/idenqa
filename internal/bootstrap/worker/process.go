@@ -417,6 +417,14 @@ func NewProcessWithInfrastructure(ctx context.Context, configuration config.Work
 		connectionPool.Close()
 		return nil, fmt.Errorf("construct review routing: %w", err)
 	}
+	admissionGate, err := configuredOperationalAdmission(configuration.API, connectionPool)
+	if err != nil {
+		connectionPool.Close()
+		return nil, err
+	}
+	if admissionGate != nil {
+		reviewRouting.WithAdmission(admissionGate)
+	}
 	policyHandler, err := policytask.NewHandlerWithRouting(policyStore, policyBuilder, completion, reviewRouting)
 	if err != nil {
 		connectionPool.Close()

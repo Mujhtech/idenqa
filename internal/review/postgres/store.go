@@ -13,6 +13,7 @@ import (
 	"time"
 
 	webhookv1 "github.com/Mujhtech/idenqa/contracts/webhook/v1"
+	"github.com/Mujhtech/idenqa/internal/admission"
 	auditpostgres "github.com/Mujhtech/idenqa/internal/audit/postgres"
 	deliverypostgres "github.com/Mujhtech/idenqa/internal/delivery/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
@@ -34,6 +35,17 @@ type Store struct {
 	pool      transactionRunner
 	clock     clock.Clock
 	wrapper   platformcrypto.KeyWrapper
+	admission interface {
+		AdmitResourceWithin(context.Context, platformpostgres.Transaction, admission.Resource) error
+	}
+}
+
+// WithAdmission enables dependent review capacity reservation.
+func (store *Store) WithAdmission(gate interface {
+	AdmitResourceWithin(context.Context, platformpostgres.Transaction, admission.Resource) error
+}) *Store {
+	store.admission = gate
+	return store
 }
 
 // New constructs the review PostgreSQL adapter.
@@ -84,6 +96,11 @@ func (store *Store) CreateCaseWithin(ctx context.Context, scope tenant.Scope, tx
  VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`, scope.ID().String(), value.ID.String(), value.VerificationID.String(), nullable(value.ChallengedDecision.String()), nullable(value.RoutingRequest.String()), value.Region, value.RequiredCertificate, string(value.Oversight), string(value.State), value.Version, value.CreatedAt, value.UpdatedAt, rules)
 	if err != nil {
 		return err
+	}
+	if store.admission != nil {
+		if err := store.admission.AdmitResourceWithin(ctx, tx, admission.Resource{TenantID: scope.ID().String(), VerificationID: value.VerificationID.String(), Kind: "review", ID: value.ID.String()}); err != nil {
+			return err
+		}
 	}
 	if err := appendReviewAudit(ctx, tx, scope, actor, value.ID.String(), "review.case.opened", value.UpdatedAt, value.Version); err != nil {
 		return err

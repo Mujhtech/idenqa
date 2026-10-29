@@ -1,0 +1,12 @@
+{
+  "kind": "provider",
+  "selectors": [
+    "provider_fixture",
+    "1.2.3",
+    "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "idenqa.check.document_analysis"
+  ],
+  "workflow": "verifications.create/profile/3/policy",
+  "operation": "resources.accept/provider/f7011e34d4f7f3e4803fa5ee2724f60102b2ee644b95cdaa7888cd961dc7d620",
+  "dependentOperation": "workflows.depend/4fb128e7630ff4af4cd773ed199d1d1be8273ef30439b9a8c690bd2e8f08f7a5"
+}

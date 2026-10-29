@@ -25,6 +25,7 @@ import (
 	"github.com/Mujhtech/idenqa/db/migrations"
 	"github.com/Mujhtech/idenqa/internal/access"
 	accesspostgres "github.com/Mujhtech/idenqa/internal/access/postgres"
+	admissionpostgres "github.com/Mujhtech/idenqa/internal/admission/postgres"
 	"github.com/Mujhtech/idenqa/internal/audit"
 	auditpostgres "github.com/Mujhtech/idenqa/internal/audit/postgres"
 	"github.com/Mujhtech/idenqa/internal/authority"
@@ -600,6 +601,28 @@ func newProcess(
 		return nil, fmt.Errorf("construct verification session persistence: %w", err)
 	}
 	sessionStore.WithMetrics(metrics)
+	var operationalAdmission *admissionpostgres.Store
+	if configuration.AdmissionRuntimeFile != "" {
+		policy, err := config.LoadAdmissionPolicy(configuration.AdmissionRuntimeFile)
+		if err == nil && policy.Region() != configuration.Region {
+			err = errors.New("admission region differs from API region")
+		}
+		if err != nil {
+			_ = providers.Shutdown(context.Background())
+			connectionPool.Close()
+			return nil, fmt.Errorf("load operational admission policy: %w", err)
+		}
+		gate, err := admissionpostgres.New(connectionPool, policy)
+		if err != nil {
+			_ = providers.Shutdown(context.Background())
+			connectionPool.Close()
+			return nil, fmt.Errorf("compose operational admission: %w", err)
+		}
+		sessionStore.WithAdmission(gate)
+		reviewStore.WithAdmission(gate)
+		recaptureStore.WithSessionAdmission(gate)
+		operationalAdmission = gate
+	}
 	sessionService, err := verification.NewSessionService(
 		sessionStore,
 		identifiers,
@@ -1562,6 +1585,9 @@ func newProcess(
 			return nil, fmt.Errorf("construct evidence persistence: %w", err)
 		}
 		evidenceStore.WithMetrics(metrics)
+		if operationalAdmission != nil {
+			evidenceStore.WithAdmission(operationalAdmission)
+		}
 		evidenceAdministration, err := evidence.NewAdministration(
 			evidenceStore,
 			evidenceStore,

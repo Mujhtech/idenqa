@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 
+	admissionv1 "github.com/Mujhtech/idenqa/contracts/admission/v1"
+	"github.com/Mujhtech/idenqa/internal/admission"
 	"github.com/Mujhtech/idenqa/internal/evidence"
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
 	platformcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto"
@@ -24,7 +26,10 @@ import (
 // RecaptureStore composes child creation and immutable review lineage in one transaction.
 type RecaptureStore struct {
 	*Store
-	sessions *verificationpostgres.SessionStore
+	sessions         *verificationpostgres.SessionStore
+	sessionAdmission interface {
+		AdmitWithin(context.Context, pg.Transaction, admission.Operation) error
+	}
 }
 
 // NewRecaptureStore joins the owned review and session adapters.
@@ -37,7 +42,16 @@ func NewRecaptureStore(pool transactionRunner, wrapper platformcrypto.KeyWrapper
 	if err != nil {
 		return nil, err
 	}
-	return &RecaptureStore{cases, sessions}, nil
+	return &RecaptureStore{Store: cases, sessions: sessions}, nil
+}
+
+// WithSessionAdmission attaches optional ceilings to new recapture sessions.
+// Already linked replay is restored before this new-work check is reached.
+func (store *RecaptureStore) WithSessionAdmission(gate interface {
+	AdmitWithin(context.Context, pg.Transaction, admission.Operation) error
+}) *RecaptureStore {
+	store.sessionAdmission = gate
+	return store
 }
 
 // CreateRecapture restores an existing child before checking mutable parent eligibility.
@@ -135,6 +149,15 @@ func (store *RecaptureStore) CreateRecapture(ctx context.Context, scope tenant.S
 			_, err = tx.Exec(ctx, `INSERT INTO idenqa.review_recaptures(tenant_id,case_id,case_version,parent_verification_id,child_verification_id,capture_token_id,policy_snapshot_digest,created_at) VALUES($1,$2,$3,$4,$5,$6,$7,$8)`, scope.ID().String(), caseID.String(), version, value.VerificationID.String(), result.Session.ID().String(), result.Credential.ID().String(), sd, mutation.CreatedAt)
 			if err != nil {
 				return err
+			}
+			if store.sessionAdmission != nil {
+				operation, err := admissionv1.RecaptureOperation(result.Session.ProfileID().String(), result.Session.ProfileRevision(), result.Session.PolicyID().String())
+				if err != nil {
+					return admission.ErrInvalid
+				}
+				if err = store.sessionAdmission.AdmitWithin(ctx, tx, admission.Operation{TenantID: scope.ID().String(), ID: result.Session.ID().String(), Rule: operation}); err != nil {
+					return err
+				}
 			}
 			if err := appendReviewAudit(ctx, tx, scope, review.Actor{ID: mutation.Actor.String()}, caseID.String(), "review.case.recapture_created", mutation.CreatedAt, version); err != nil {
 				return err

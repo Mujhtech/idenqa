@@ -11,6 +11,7 @@ import (
 	"time"
 
 	webhookv1 "github.com/Mujhtech/idenqa/contracts/webhook/v1"
+	"github.com/Mujhtech/idenqa/internal/admission"
 	authoritypostgres "github.com/Mujhtech/idenqa/internal/authority/postgres"
 	deliverypostgres "github.com/Mujhtech/idenqa/internal/delivery/postgres"
 	"github.com/Mujhtech/idenqa/internal/evidence"
@@ -26,6 +27,7 @@ import (
 	"github.com/Mujhtech/idenqa/internal/tenant"
 	"github.com/Mujhtech/idenqa/internal/verification"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 const uploadExpiredReason = "evidence.upload.expired"
@@ -63,7 +65,7 @@ func (store *Store) CreateUpload(
 	}
 
 	created := mutation.Upload
-	err := store.write(ctx, scope, func(ctx context.Context, queries *sqlgen.Queries) error {
+	err := store.writeTx(ctx, scope, func(ctx context.Context, tx platformpostgres.Transaction, queries *sqlgen.Queries) error {
 		reservation, err := idempotencypostgres.Reserve(ctx, queries, request)
 		if err != nil {
 			return err
@@ -86,6 +88,11 @@ func (store *Store) CreateUpload(
 		}
 		if err := queries.CreateEvidenceUploadIntent(ctx, parameters); err != nil {
 			return fmt.Errorf("insert evidence upload intent: %w", err)
+		}
+		if store.admission != nil {
+			if err := store.admission.AdmitResourceWithin(ctx, tx, admission.Resource{TenantID: scope.ID().String(), VerificationID: record.VerificationID.String(), Kind: "evidence", ID: record.ID.String()}); err != nil {
+				return err
+			}
 		}
 		if frame := record.Sequence; frame != nil {
 			if err := queries.CreateEvidenceTemporalFrame(ctx, sqlgen.CreateEvidenceTemporalFrameParams{
@@ -687,6 +694,10 @@ func (store *Store) transitionUpload(
 			return evidence.ErrUploadVersionConflict
 		}
 		if err != nil {
+			var databaseError *pgconn.PgError
+			if errors.As(err, &databaseError) && databaseError.Code == "PQA01" {
+				return admission.ErrUnavailable
+			}
 			return fmt.Errorf("transition evidence upload intent: %w", err)
 		}
 		result, err = store.restoreUpload(persisted)

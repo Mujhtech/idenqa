@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/Mujhtech/idenqa/internal/admission"
 	"github.com/Mujhtech/idenqa/internal/authority"
 	"github.com/Mujhtech/idenqa/internal/delivery"
 	"github.com/Mujhtech/idenqa/internal/evidence"
@@ -46,6 +47,14 @@ func TestStableCodesMatchGeneratedContract(t *testing.T) {
 		apierror.CodeRequestTooLarge,
 		apierror.CodePreconditionRequired,
 		apierror.CodeRateLimited,
+		apierror.CodeQuotaExceeded,
+		apierror.CodeQuotaPressure,
+		apierror.CodeQuotaCeiling,
+		apierror.CodeUsageLimit,
+		apierror.CodeRegionCapacity,
+		apierror.CodePlatformSafety,
+		apierror.CodeCapabilityNotEntitled,
+		apierror.CodeAdmissionUnavailable,
 		apierror.CodeRequestCancelled,
 		apierror.CodeInternalError,
 		apierror.CodeServiceUnavailable,
@@ -66,6 +75,14 @@ func TestMapAuthorityFailures(t *testing.T) {
 		wantStatus int
 		wantCode   string
 	}{
+		{admission.ErrQuota, http.StatusTooManyRequests, apierror.CodeQuotaExceeded},
+		{admission.ErrPressure, http.StatusTooManyRequests, apierror.CodeQuotaPressure},
+		{admission.ErrCeiling, http.StatusTooManyRequests, apierror.CodeQuotaCeiling},
+		{admission.ErrUsage, http.StatusTooManyRequests, apierror.CodeUsageLimit},
+		{admission.ErrCapacity, http.StatusServiceUnavailable, apierror.CodeRegionCapacity},
+		{admission.ErrSafety, http.StatusServiceUnavailable, apierror.CodePlatformSafety},
+		{admission.ErrEntitlement, http.StatusForbidden, apierror.CodeCapabilityNotEntitled},
+		{admission.ErrUnavailable, http.StatusServiceUnavailable, apierror.CodeAdmissionUnavailable},
 		{authority.ErrNotFound, http.StatusNotFound, apierror.CodeNotFound},
 		{authority.ErrConflict, http.StatusConflict, apierror.CodeConflict},
 		{authority.ErrVersionConflict, http.StatusPreconditionFailed, apierror.CodePreconditionFailed},

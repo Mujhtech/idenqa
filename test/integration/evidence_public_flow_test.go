@@ -381,6 +381,9 @@ func runPublicEvidenceUploadFlow(t *testing.T, backend publicFlowBackend) {
 	})
 
 	var creation openapiv1.VerificationCreated
+	if backend.providerJourney != nil && backend.providerJourney.admission != nil {
+		backend.providerJourney.admission.prepare(t, adminPool, scope, profile, policyID, client, baseURL, backendCredential)
+	}
 	performPublicJSONRequest(t, client, publicJSONRequest{
 		Method: http.MethodPost, URL: baseURL + "/v1/verifications",
 		Bearer: backendCredential, IdempotencyKey: "public-flow-verification-create",
@@ -394,6 +397,9 @@ func runPublicEvidenceUploadFlow(t *testing.T, backend publicFlowBackend) {
 		t.Fatal("verification response omitted its display-once capture token")
 	}
 	captureToken := *creation.CaptureToken
+	if backend.providerJourney != nil && backend.providerJourney.admission != nil {
+		backend.providerJourney.admission.revoke(t, client, baseURL, backendCredential, creation)
+	}
 
 	now := time.Now().UTC()
 	var notice openapiv1.NoticeVersion
@@ -520,6 +526,9 @@ func runPublicEvidenceUploadFlow(t *testing.T, backend publicFlowBackend) {
 			waitForPublicAPIReadiness(t, baseURL, process)
 		}
 		backend.providerJourney.run(t, adminPool, runtimePool, scope, creation.Session.ID, policyID.String(), digest, baseURL, backendCredential, keyringFile, restart, body)
+		if backend.providerJourney.admission != nil {
+			backend.providerJourney.admission.assertCompleted(t, adminPool, creation.Session.ID)
+		}
 	}
 	if backend.verifyProcessing {
 		assertPublicSDKAdministration(t, client, baseURL, backendCredential, upload.EvidenceID, subjectResponse.ID, creation.Session.ID)

@@ -8,6 +8,7 @@ import (
 
 	contract "github.com/Mujhtech/idenqa/contracts/experience/v1"
 	"github.com/Mujhtech/idenqa/internal/access"
+	"github.com/Mujhtech/idenqa/internal/admission"
 	"github.com/Mujhtech/idenqa/internal/authority"
 	"github.com/Mujhtech/idenqa/internal/delivery"
 	"github.com/Mujhtech/idenqa/internal/evidence"
@@ -47,6 +48,42 @@ type rule struct {
 // errors.Is, so wrapped, joined, and custom Is implementations are honoured
 // across the whole error tree.
 var rules = []rule{
+	{
+		targets: []error{admission.ErrPressure}, status: http.StatusTooManyRequests,
+		code: CodeQuotaPressure, title: "Temporary operational pressure", detail: "New work can be retried when the configured rate window or concurrency slot becomes available.",
+	},
+	{
+		targets: []error{admission.ErrCeiling}, status: http.StatusTooManyRequests,
+		code: CodeQuotaCeiling, title: "Configured ceiling reached", detail: "The configured resource ceiling requires remediation before accepting this work.",
+	},
+	{
+		targets: []error{admission.ErrUsage}, status: http.StatusTooManyRequests,
+		code: CodeUsageLimit, title: "Usage limit reached", detail: "The configured usage interval cannot accept this new work.",
+	},
+	{
+		targets: []error{admission.ErrCapacity}, status: http.StatusServiceUnavailable,
+		code: CodeRegionCapacity, title: "Regional capacity unavailable", detail: "The configured regional capacity cannot currently accept this work.",
+	},
+	{
+		targets: []error{admission.ErrSafety}, status: http.StatusServiceUnavailable,
+		code: CodePlatformSafety, title: "Platform safety limit", detail: "A platform safety limit prevents accepting this work.",
+	},
+	{
+		targets: []error{admission.ErrQuota}, status: http.StatusTooManyRequests,
+		code: CodeQuotaExceeded, title: "Operational limit reached", detail: "A configured operational limit prevents new work.",
+	},
+	{
+		targets: []error{admission.ErrEntitlement}, status: http.StatusForbidden,
+		code: CodeCapabilityNotEntitled, title: "Capability unavailable", detail: "The configured operational policy does not permit this new work.",
+	},
+	{
+		targets: []error{admission.ErrUnavailable, admission.ErrInvalid}, status: http.StatusServiceUnavailable,
+		code: CodeAdmissionUnavailable, title: "Operational policy unavailable", detail: "The local operational policy needs recovery before accepting new work.",
+	},
+	{
+		targets: []error{admission.ErrConflict}, status: http.StatusConflict,
+		code: CodeConflict, title: "Admission conflict", detail: "The operation conflicts with its original admission.",
+	},
 	{
 		targets: []error{managedlaunch.ErrInvalid, managedlaunch.ErrForbidden, managedlaunch.ErrExpired},
 		status:  http.StatusUnauthorized,

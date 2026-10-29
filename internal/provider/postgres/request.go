@@ -9,6 +9,7 @@ import (
 
 	providerv1 "github.com/Mujhtech/idenqa/contracts/provider/v1"
 	usagev1 "github.com/Mujhtech/idenqa/contracts/usage/v1"
+	"github.com/Mujhtech/idenqa/internal/admission"
 	authoritypostgres "github.com/Mujhtech/idenqa/internal/authority/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
 	"github.com/Mujhtech/idenqa/internal/platform/observability"
@@ -27,9 +28,20 @@ type transactionRunner interface {
 
 // RequestStore owns tenant-scoped reference envelopes and dispatch history.
 type RequestStore struct {
-	pool    transactionRunner
-	source  clock.Clock
-	metrics provider.Metrics
+	pool      transactionRunner
+	source    clock.Clock
+	metrics   provider.Metrics
+	admission interface {
+		AdmitResourceWithin(context.Context, pg.Transaction, admission.Resource) error
+	}
+}
+
+// WithAdmission enables the optional owning-transaction operational boundary.
+func (store *RequestStore) WithAdmission(gate interface {
+	AdmitResourceWithin(context.Context, pg.Transaction, admission.Resource) error
+}) *RequestStore {
+	store.admission = gate
+	return store
 }
 
 // NewRequestStore constructs durable provider dispatch persistence.
@@ -67,6 +79,9 @@ func (store *RequestStore) SaveWithin(ctx context.Context, tx pg.Transaction, ch
 		return err
 	}
 	_, err = tx.Exec(ctx, `INSERT INTO idenqa.provider_requests(tenant_id,attempt_id,verification_id,check_id,request_digest,request_body,callback_token_digest) VALUES($1,$2,$3,$4,$5,$6,NULLIF($7,''))`, request.TenantID, request.AttemptID, request.VerificationID, check.ID.String(), digest, body, tokenDigest)
+	if err == nil && store.admission != nil {
+		err = store.admission.AdmitResourceWithin(ctx, tx, admission.Resource{TenantID: request.TenantID, VerificationID: request.VerificationID, Kind: "provider", ID: request.AttemptID})
+	}
 	return err
 }
 

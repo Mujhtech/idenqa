@@ -10,6 +10,7 @@ import (
 
 	modelv1 "github.com/Mujhtech/idenqa/contracts/model/v1"
 	usagev1 "github.com/Mujhtech/idenqa/contracts/usage/v1"
+	"github.com/Mujhtech/idenqa/internal/admission"
 	authoritypostgres "github.com/Mujhtech/idenqa/internal/authority/postgres"
 	"github.com/Mujhtech/idenqa/internal/model"
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
@@ -28,8 +29,19 @@ type transactionRunner interface {
 
 // RequestStore owns tenant-scoped reference envelopes and dispatch history.
 type RequestStore struct {
-	pool   transactionRunner
-	source clock.Clock
+	pool      transactionRunner
+	source    clock.Clock
+	admission interface {
+		AdmitResourceWithin(context.Context, pg.Transaction, admission.Resource) error
+	}
+}
+
+// WithAdmission enables the optional owning-transaction operational boundary.
+func (store *RequestStore) WithAdmission(gate interface {
+	AdmitResourceWithin(context.Context, pg.Transaction, admission.Resource) error
+}) *RequestStore {
+	store.admission = gate
+	return store
 }
 
 // NewRequestStore constructs durable model dispatch persistence.
@@ -37,7 +49,7 @@ func NewRequestStore(pool transactionRunner, source clock.Clock) (*RequestStore,
 	if pool == nil || source == nil {
 		return nil, model.ErrRequestUnavailable
 	}
-	return &RequestStore{pool, source}, nil
+	return &RequestStore{pool: pool, source: source}, nil
 }
 
 // SaveRegisteredWithin persists the exact registry selection alongside its immutable request.
@@ -83,6 +95,9 @@ func (store *RequestStore) saveWithin(ctx context.Context, tx pg.Transaction, ch
 		return err
 	}
 	_, err = tx.Exec(ctx, `INSERT INTO idenqa.model_requests(tenant_id,attempt_id,verification_id,check_id,request_digest,request_body,registry_name,registry_version,registry_selection) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`, request.TenantID, request.AttemptID, request.VerificationID, check.ID.String(), digest, body, state.Name, state.Version, selection)
+	if err == nil && store.admission != nil {
+		err = store.admission.AdmitResourceWithin(ctx, tx, admission.Resource{TenantID: request.TenantID, VerificationID: request.VerificationID, Kind: "model", ID: request.AttemptID})
+	}
 	return err
 }
 

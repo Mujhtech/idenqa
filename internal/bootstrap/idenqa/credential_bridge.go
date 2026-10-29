@@ -14,6 +14,7 @@ import (
 	"github.com/Mujhtech/idenqa/db/migrations"
 	"github.com/Mujhtech/idenqa/internal/access"
 	accesspostgres "github.com/Mujhtech/idenqa/internal/access/postgres"
+	admissionpostgres "github.com/Mujhtech/idenqa/internal/admission/postgres"
 	"github.com/Mujhtech/idenqa/internal/cli"
 	"github.com/Mujhtech/idenqa/internal/config"
 	"github.com/Mujhtech/idenqa/internal/managedtenant"
@@ -22,6 +23,7 @@ import (
 	"github.com/Mujhtech/idenqa/internal/platform/postgres"
 	"github.com/Mujhtech/idenqa/internal/tenant"
 	tenantpostgres "github.com/Mujhtech/idenqa/internal/tenant/postgres"
+	"github.com/Mujhtech/idenqa/internal/transport/admissionbridge"
 	"github.com/Mujhtech/idenqa/internal/transport/credentialbridge"
 	"github.com/Mujhtech/idenqa/internal/transport/localreadinessbridge"
 	"github.com/Mujhtech/idenqa/internal/transport/managedtenantbridge"
@@ -157,6 +159,25 @@ func serveCredentialBridge(command *cobra.Command, options *credentialBridgeOpti
 		return cli.RuntimeError("compose regional usage receipt bridge", err)
 	}
 	mux := http.NewServeMux()
+	if configuration.AdmissionRuntimeFile != "" {
+		policy, err := config.LoadAdmissionPolicy(configuration.AdmissionRuntimeFile)
+		if err == nil && policy.Region() != configuration.Region {
+			err = errors.New("admission region differs from Core region")
+		}
+		if err != nil {
+			return cli.RuntimeError("load local admission policy", err)
+		}
+		store, err := admissionpostgres.New(pool, policy)
+		if err != nil {
+			return cli.RuntimeError("compose local admission store", err)
+		}
+		handler, err := admissionbridge.NewHandler(store)
+		if err != nil {
+			return cli.RuntimeError("compose local admission transport", err)
+		}
+		mux.Handle("/local/v1/admission/snapshots/install", handler)
+		mux.Handle("/local/v1/admission/summary", handler.WithSummary(store))
+	}
 	mux.Handle("/local/v1/usage/receipts/", usageHandler)
 	mux.Handle("/local/v1/credential-commands/", handler)
 	mux.Handle("/local/v1/managed-tenants/provision", managedHandler)

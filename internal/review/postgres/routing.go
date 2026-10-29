@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/Mujhtech/idenqa/internal/admission"
 	authoritypostgres "github.com/Mujhtech/idenqa/internal/authority/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/clock"
 	platformcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto"
@@ -35,6 +36,14 @@ type RoutingStore struct {
 	ids       routingIdentifiers
 	clock     clock.Clock
 	rules     []review.RoutingRule
+}
+
+// WithAdmission attaches the owning dependent review reservation boundary.
+func (store *RoutingStore) WithAdmission(gate interface {
+	AdmitResourceWithin(context.Context, platformpostgres.Transaction, admission.Resource) error
+}) *RoutingStore {
+	store.cases.WithAdmission(gate)
+	return store
 }
 
 // NewRoutingStore has no implicit reviewer certification or oversight defaults.

@@ -27,6 +27,7 @@ import (
 	"github.com/Mujhtech/idenqa/adapters/providers/smileid"
 	policyv1 "github.com/Mujhtech/idenqa/contracts/policy/v1"
 	providerv1 "github.com/Mujhtech/idenqa/contracts/provider/v1"
+	admissionpg "github.com/Mujhtech/idenqa/internal/admission/postgres"
 	"github.com/Mujhtech/idenqa/internal/bootstrap/adapterrunner"
 	bootstrapapi "github.com/Mujhtech/idenqa/internal/bootstrap/api"
 	bootstrapworker "github.com/Mujhtech/idenqa/internal/bootstrap/worker"
@@ -58,6 +59,8 @@ type providerPublicJourney struct {
 	documentBack  bool
 	backPlaintext []byte
 	providerFile  string
+	admission     *admissionJourney
+	providerID    id.Provider
 }
 
 func TestDojahRuntimePublicCaptureThroughDecisionAndWebhook(t *testing.T) {
@@ -74,6 +77,17 @@ func runProviderPublicJourney(t *testing.T, smile, pad bool, matching ...bool) {
 }
 func runProviderPublicJourneyWithOptions(t *testing.T, journey *providerPublicJourney) {
 	t.Helper()
+	if journey.admission != nil {
+		ids, err := id.NewSystemGenerator()
+		if err != nil {
+			t.Fatal(err)
+		}
+		journey.providerID, err = ids.NewProvider()
+		if err != nil {
+			t.Fatal(err)
+		}
+		journey.admission.providerID = journey.providerID.String()
+	}
 	directory := t.TempDir()
 	objects, err := objectlocal.Open(objectlocal.Config{Directory: directory, MaxObjectBytes: 2 * evidence.MaximumUploadMaximumBytes})
 	if err != nil {
@@ -88,6 +102,9 @@ func runProviderPublicJourneyWithOptions(t *testing.T, journey *providerPublicJo
 		start: func(t *testing.T, databaseURL, runtimeRole string, port int, keyringFile string, pepper []byte) publicFlowProcess {
 			t.Helper()
 			configuration := loadPublicFlowConfiguration(t, databaseURL, runtimeRole, port, directory, keyringFile, pepper)
+			if journey.admission != nil {
+				configuration.AdmissionRuntimeFile = journey.admission.runtimeFile
+			}
 			if journey.model {
 				configuration.ModelRuntimeFile = journey.runtimeFile
 				configuration.ProviderRuntimeFile = journey.providerFile
@@ -264,6 +281,9 @@ func (journey *providerPublicJourney) run(t *testing.T, admin, runtime *pg.Pool,
 	if err != nil {
 		t.Fatal(err)
 	}
+	if !journey.providerID.IsZero() {
+		providerID = journey.providerID
+	}
 	description := dojah.Description()
 	if journey.smile {
 		description = smileid.Description()
@@ -319,6 +339,17 @@ func (journey *providerPublicJourney) run(t *testing.T, admin, runtime *pg.Pool,
 	if err != nil {
 		t.Fatal(err)
 	}
+	if journey.admission != nil {
+		admissionPolicy, err := config.LoadAdmissionPolicy(journey.admission.runtimeFile)
+		if err != nil {
+			t.Fatal(err)
+		}
+		admissionGate, err := admissionpg.New(runtime, admissionPolicy)
+		if err != nil {
+			t.Fatal(err)
+		}
+		requests.WithAdmission(admissionGate)
+	}
 	registry, err := evidence.BuiltInRegistry()
 	if err != nil {
 		t.Fatal(err)
@@ -357,6 +388,9 @@ func (journey *providerPublicJourney) run(t *testing.T, admin, runtime *pg.Pool,
 		t.Fatal(err)
 	}
 	configuration.ProviderRuntimeFile = journey.runtimeFile
+	if journey.admission != nil {
+		configuration.AdmissionRuntimeFile = journey.admission.runtimeFile
+	}
 	configuration.SyntheticProcessing = false
 	configuration.ProgressPollInterval = 20 * time.Millisecond
 	startWorker := func() func() {

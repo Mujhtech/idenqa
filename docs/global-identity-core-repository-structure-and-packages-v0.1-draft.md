@@ -113,6 +113,8 @@ The Core repository retains only the public contracts, conformance material, and
 
 Binding credential replies now include exact issuance times. Core caps predecessor retirement by its original expiry and permits a shorter rotation overlap when necessary for the configured short lifetime. The Cloud-selected C-417 lifetime/renewal policy remains owned by Cloud; Core applies its own shorter configured maximum and never gains a global secret-custody dependency.
 
+**Implemented components — 23 October 2026:** [Operational admission v1](../contracts/admission/v1/README.md) is an optional public signed-policy contract. `internal/admission` owns pure verification/decision semantics; its PostgreSQL adapter reserves explicit rule budgets inside owning source transactions. Migration 93 supplies forced-RLS immutable policy, a monotonic effective head, at most 64 pending future revisions, indexed counters and durable reservation/release/recovery history. Migration 94 connects exact workflow-bound provider/model requests, upload intents and review cases to dependent budgets and authoritative closure/cleanup. Recapture has a distinct explicit rule rather than borrowing create grants. `internal/transport/admissionbridge` installs independently verified policy and exposes bounded content-free counter summaries through the protected Core-local socket. The API, worker and review recapture composition use these optional boundaries. Core imports no Cloud implementation, and standalone operation has no issuer or collector requirement. The independently built companion Cloud verifies, queues and durably delivers this public protocol; actual Core provider/Capture/worker/webhook continuation and native PostgreSQL resource checks pass locally. Production source/meter quantities, freshness, grace, legal hold/archive, backup byte budgets and deployed identity/readiness acceptance retain their own gates.
+
 Console remains a separate commercial repository. Core, Console, and Cloud have independent dependency graphs and build pipelines. Commercial repositories may use service names such as `core-api` and `core-worker` when those names distinguish managed Core workloads from commercial control-plane workloads.
 
 That naming does not need to leak into the public source tree. The public repository uses the simpler `api` and `worker` entry-point names.
@@ -196,6 +198,7 @@ idenqa/
 │   ├── api/
 │   ├── events/
 │   ├── usage/ # Public content-free regional receipt contract
+│   ├── admission/ # Optional signed operational policy; no Cloud implementation dependency
 │   ├── provider/
 │   ├── model/
 │   ├── policy/
@@ -1780,6 +1783,8 @@ active-policy fail-closed rule, and the broader managed subject/recipient launch
 contract remain **TBD** under item 8.
 
 ---
+
+32. **TBD — optional operational admission policy:** deployment owners must explicitly configure trusted issuers and maximum policy lifetime before enabling signed admission. Commercial quantities, grace and retention remain external policy decisions. Exact workflow/resource and recapture reservation quantities, commercial evidence-byte meaning, backup budgets and retained admission history require explicit operator policy and acceptance. The implemented gates do not select these commercial inputs or claim production capacity.
 
 ## 18. Acceptance criteria
 

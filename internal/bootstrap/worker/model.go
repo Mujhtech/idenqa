@@ -77,6 +77,14 @@ func configuredModel(ctx context.Context, configuration config.Worker, pool *pg.
 		if err != nil {
 			return nil, err
 		}
+		gate, err := configuredOperationalAdmission(configuration.API, pool)
+		if err != nil {
+			_ = item.connection.Close()
+			return nil, err
+		}
+		if gate != nil {
+			item.requests.WithAdmission(gate)
+		}
 		items = append(items, item)
 		routes = append(routes, executionRoute{planner: item.plan, preparation: item.preparation, signals: item.signals})
 		executors[setting.Binding.Configuration] = item.executor

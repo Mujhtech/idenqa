@@ -42,6 +42,10 @@ func runAuthorityPersistence(t *testing.T, exercise func(captureAcceptanceFixtur
 }
 
 func runAuthorityPersistenceInRegion(t *testing.T, exercise func(captureAcceptanceFixture), sessionRegion, evidenceRegion string, customise ...func(*verification.Profile)) {
+	runAuthorityPersistenceInRegionAt(t, exercise, sessionRegion, evidenceRegion, time.Date(2026, time.September, 5, 12, 0, 0, 0, time.UTC), customise...)
+}
+
+func runAuthorityPersistenceInRegionAt(t *testing.T, exercise func(captureAcceptanceFixture), sessionRegion, evidenceRegion string, now time.Time, customise ...func(*verification.Profile)) {
 	database := createIsolatedDatabase(t)
 	ctx := t.Context()
 	migrator, err := idenqapostgres.OpenMigrator(ctx, migrationConfig(database.url))
@@ -60,7 +64,6 @@ func runAuthorityPersistenceInRegion(t *testing.T, exercise func(captureAcceptan
 		t.Fatalf("open admin pool: %v", err)
 	}
 	defer adminPool.Close()
-	now := time.Date(2026, time.September, 5, 12, 0, 0, 0, time.UTC)
 	generator, err := id.NewGenerator(fixedIntegrationClock{now: now}, bytes.NewReader(bytes.Repeat([]byte{17}, 8192)))
 	if err != nil {
 		t.Fatalf("new identifier generator: %v", err)

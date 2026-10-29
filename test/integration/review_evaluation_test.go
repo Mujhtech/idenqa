@@ -50,9 +50,9 @@ func (evaluator *reviewEvaluator) Evaluate(_ context.Context, snapshot policy.Sn
 }
 
 func TestAcceptedReviewEvaluationAtomicCompletionAndReplay(t *testing.T) {
-	for _, scenario := range []string{"terminal", "nonterminal", "recapture_terminal", "withdrawn", "revoked_grant", "wrong_case_grant"} {
+	for _, scenario := range []string{"terminal", "nonterminal", "recapture_terminal", "recapture_admission", "withdrawn", "revoked_grant", "wrong_case_grant"} {
 		t.Run(scenario, func(t *testing.T) {
-			runAuthorityPersistenceInRegion(t, func(f captureAcceptanceFixture) {
+			runReviewEvaluationFixture(t, scenario, func(f captureAcceptanceFixture) {
 				value, routing := prepareEvaluationReview(t, f)
 				source := fixedIntegrationClock{now: f.now}
 				cases, err := reviewpostgres.NewWithClock(f.runtime, integrationProtector{}, source)
@@ -128,7 +128,7 @@ func TestAcceptedReviewEvaluationAtomicCompletionAndReplay(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				evaluator := &reviewEvaluator{reference: routing.Snapshot().Evaluator(), nonterminal: scenario == "nonterminal" || scenario == "recapture_terminal"}
+				evaluator := &reviewEvaluator{reference: routing.Snapshot().Evaluator(), nonterminal: scenario == "nonterminal" || scenario == "recapture_terminal" || scenario == "recapture_admission"}
 				identifiers := verificationpostgres.CompletionIdentifiers(f.ids)
 				if scenario == "terminal" {
 					identifiers = failingCompletionIdentifiers{}
@@ -232,6 +232,9 @@ func TestAcceptedReviewEvaluationAtomicCompletionAndReplay(t *testing.T) {
 				if err != nil || saved.CaseDigest != candidate.CaseDigest {
 					t.Fatalf("saved=%v", err)
 				}
+				if scenario == "recapture_admission" {
+					testAdmittedLinkedRecapture(t, f, resolved, candidate)
+				}
 				if scenario == "nonterminal" || scenario == "recapture_terminal" {
 					testLinkedRecapture(t, f, resolved, candidate, scenario == "recapture_terminal")
 				}
@@ -307,4 +310,12 @@ func prepareEvaluationReview(t *testing.T, f captureAcceptanceFixture) (review.C
 		t.Fatal(err)
 	}
 	return value, routing
+}
+
+func runReviewEvaluationFixture(t *testing.T, scenario string, exercise func(captureAcceptanceFixture), sessionRegion, evidenceRegion string) {
+	if scenario == "recapture_admission" {
+		runAuthorityPersistenceInRegionAt(t, exercise, sessionRegion, evidenceRegion, time.Now().UTC().Add(-8*time.Minute).Truncate(time.Microsecond))
+		return
+	}
+	runAuthorityPersistenceInRegion(t, exercise, sessionRegion, evidenceRegion)
 }
