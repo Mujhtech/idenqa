@@ -12017,6 +12017,13 @@ type ClientInterface interface {
 	// Corresponds with GET /v1/capture/experience (the `ResolveCaptureExperience` operationId).
 	ResolveCaptureExperience(ctx context.Context, params *ResolveCaptureExperienceParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetCaptureExperienceAsset Get an image from the stored capture experience pin
+	//
+	// Requires a capture token. Reads only a named asset in the existing session pin, observes revocation and never creates a pin. Approval, tenant ownership, immutable version, size and digest are checked before returning bytes. Tokens stay in the Authorization header.
+	//
+	// Corresponds with GET /v1/capture/experience/assets/{assetKey} (the `GetCaptureExperienceAsset` operationId).
+	GetCaptureExperienceAsset(ctx context.Context, assetKey string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// RecordCaptureJourneyEventWithBody Record a privacy-safe capture interaction
 	//
 	// Records one best-effort client interaction against the verification bound to
@@ -12490,6 +12497,13 @@ type ClientInterface interface {
 	//
 	// Corresponds with POST /v1/experiences/{experienceID}/rollback (the `RollbackExperience` operationId).
 	RollbackExperience(ctx context.Context, experienceID ExperienceID, body RollbackExperienceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetExperienceAsset Get an approved image from an immutable experience revision
+	//
+	// Requires experiences:read. Reads only a named asset in this tenant-owned revision. Approval, exact object version, size and digest are verified. Raw staging objects and arbitrary object references cannot be fetched.
+	//
+	// Corresponds with GET /v1/experiences/{experienceID}/versions/{version}/assets/{assetKey} (the `GetExperienceAsset` operationId).
+	GetExperienceAsset(ctx context.Context, experienceID ExperienceID, version int, assetKey string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetFraudConfiguration Read active fraud rules
 	//
@@ -15624,6 +15638,23 @@ func (c *Client) ResolveCaptureExperience(ctx context.Context, params *ResolveCa
 	return c.Client.Do(req)
 }
 
+// GetCaptureExperienceAsset Get an image from the stored capture experience pin
+//
+// Requires a capture token. Reads only a named asset in the existing session pin, observes revocation and never creates a pin. Approval, tenant ownership, immutable version, size and digest are checked before returning bytes. Tokens stay in the Authorization header.
+//
+// Corresponds with GET /v1/capture/experience/assets/{assetKey} (the `GetCaptureExperienceAsset` operationId).
+func (c *Client) GetCaptureExperienceAsset(ctx context.Context, assetKey string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetCaptureExperienceAssetRequest(c.Server, assetKey)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // RecordCaptureJourneyEventWithBody Record a privacy-safe capture interaction
 //
 // Records one best-effort client interaction against the verification bound to
@@ -16588,6 +16619,23 @@ func (c *Client) RollbackExperienceWithBody(ctx context.Context, experienceID Ex
 // Corresponds with POST /v1/experiences/{experienceID}/rollback (the `RollbackExperience` operationId).
 func (c *Client) RollbackExperience(ctx context.Context, experienceID ExperienceID, body RollbackExperienceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewRollbackExperienceRequest(c.Server, experienceID, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetExperienceAsset Get an approved image from an immutable experience revision
+//
+// Requires experiences:read. Reads only a named asset in this tenant-owned revision. Approval, exact object version, size and digest are verified. Raw staging objects and arbitrary object references cannot be fetched.
+//
+// Corresponds with GET /v1/experiences/{experienceID}/versions/{version}/assets/{assetKey} (the `GetExperienceAsset` operationId).
+func (c *Client) GetExperienceAsset(ctx context.Context, experienceID ExperienceID, version int, assetKey string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetExperienceAssetRequest(c.Server, experienceID, version, assetKey)
 	if err != nil {
 		return nil, err
 	}
@@ -23232,6 +23280,40 @@ func NewResolveCaptureExperienceRequest(server string, params *ResolveCaptureExp
 	return req, nil
 }
 
+// NewGetCaptureExperienceAssetRequest constructs an http.Request for the GetCaptureExperienceAsset method
+func NewGetCaptureExperienceAssetRequest(server string, assetKey string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "assetKey", assetKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/capture/experience/assets/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewRecordCaptureJourneyEventRequest calls the generic RecordCaptureJourneyEvent builder with application/json body
 func NewRecordCaptureJourneyEventRequest(server string, body RecordCaptureJourneyEventJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -24803,6 +24885,54 @@ func NewRollbackExperienceRequestWithBody(server string, experienceID Experience
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetExperienceAssetRequest constructs an http.Request for the GetExperienceAsset method
+func NewGetExperienceAssetRequest(server string, experienceID ExperienceID, version int, assetKey string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "experienceID", experienceID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithOptions("simple", false, "version", version, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "integer", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam2 string
+
+	pathParam2, err = runtime.StyleParamWithOptions("simple", false, "assetKey", assetKey, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/experiences/%s/versions/%s/assets/%s", pathParam0, pathParam1, pathParam2)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	return req, nil
 }
@@ -34548,6 +34678,15 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with GET /v1/capture/experience (the `ResolveCaptureExperience` operationId).
 	ResolveCaptureExperienceWithResponse(ctx context.Context, params *ResolveCaptureExperienceParams, reqEditors ...RequestEditorFn) (*ResolveCaptureExperienceResponse, error)
 
+	// GetCaptureExperienceAssetWithResponse Get an image from the stored capture experience pin
+	//
+	// Requires a capture token. Reads only a named asset in the existing session pin, observes revocation and never creates a pin. Approval, tenant ownership, immutable version, size and digest are checked before returning bytes. Tokens stay in the Authorization header.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/capture/experience/assets/{assetKey} (the `GetCaptureExperienceAsset` operationId).
+	GetCaptureExperienceAssetWithResponse(ctx context.Context, assetKey string, reqEditors ...RequestEditorFn) (*GetCaptureExperienceAssetResponse, error)
+
 	// RecordCaptureJourneyEventWithBodyWithResponse Record a privacy-safe capture interaction
 	//
 	// Records one best-effort client interaction against the verification bound to
@@ -35059,6 +35198,15 @@ type ClientWithResponsesInterface interface {
 	//
 	// Corresponds with POST /v1/experiences/{experienceID}/rollback (the `RollbackExperience` operationId).
 	RollbackExperienceWithResponse(ctx context.Context, experienceID ExperienceID, body RollbackExperienceJSONRequestBody, reqEditors ...RequestEditorFn) (*RollbackExperienceResponse, error)
+
+	// GetExperienceAssetWithResponse Get an approved image from an immutable experience revision
+	//
+	// Requires experiences:read. Reads only a named asset in this tenant-owned revision. Approval, exact object version, size and digest are verified. Raw staging objects and arbitrary object references cannot be fetched.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/experiences/{experienceID}/versions/{version}/assets/{assetKey} (the `GetExperienceAsset` operationId).
+	GetExperienceAssetWithResponse(ctx context.Context, experienceID ExperienceID, version int, assetKey string, reqEditors ...RequestEditorFn) (*GetExperienceAssetResponse, error)
 
 	// GetFraudConfigurationWithResponse Read active fraud rules
 	//
@@ -41652,6 +41800,151 @@ func (r ResolveCaptureExperienceResponse) ContentType() string {
 	return ""
 }
 
+// GetCaptureExperienceAssetResponse200Headers the declared response headers of an HTTP 200 response for GetCaptureExperienceAsset
+type GetCaptureExperienceAssetResponse200Headers struct {
+	CacheControl *string
+	XRequestID   RequestID
+}
+
+// GetCaptureExperienceAssetResponse400Headers the declared response headers of an HTTP 400 response for GetCaptureExperienceAsset
+type GetCaptureExperienceAssetResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// GetCaptureExperienceAssetResponse401Headers the declared response headers of an HTTP 401 response for GetCaptureExperienceAsset
+type GetCaptureExperienceAssetResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// GetCaptureExperienceAssetResponse403Headers the declared response headers of an HTTP 403 response for GetCaptureExperienceAsset
+type GetCaptureExperienceAssetResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// GetCaptureExperienceAssetResponse404Headers the declared response headers of an HTTP 404 response for GetCaptureExperienceAsset
+type GetCaptureExperienceAssetResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// GetCaptureExperienceAssetResponse429Headers the declared response headers of an HTTP 429 response for GetCaptureExperienceAsset
+type GetCaptureExperienceAssetResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// GetCaptureExperienceAssetResponse500Headers the declared response headers of an HTTP 500 response for GetCaptureExperienceAsset
+type GetCaptureExperienceAssetResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// GetCaptureExperienceAssetResponse503Headers the declared response headers of an HTTP 503 response for GetCaptureExperienceAsset
+type GetCaptureExperienceAssetResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type GetCaptureExperienceAssetResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetCaptureExperienceAssetResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *GetCaptureExperienceAssetResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *GetCaptureExperienceAssetResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetCaptureExperienceAssetResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetCaptureExperienceAssetResponse404Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *GetCaptureExperienceAssetResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *GetCaptureExperienceAssetResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *GetCaptureExperienceAssetResponse503Headers
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r GetCaptureExperienceAssetResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetCaptureExperienceAssetResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetCaptureExperienceAssetResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetCaptureExperienceAssetResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r GetCaptureExperienceAssetResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r GetCaptureExperienceAssetResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r GetCaptureExperienceAssetResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r GetCaptureExperienceAssetResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetCaptureExperienceAssetResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetCaptureExperienceAssetResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetCaptureExperienceAssetResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // RecordCaptureJourneyEventResponse202Headers the declared response headers of an HTTP 202 response for RecordCaptureJourneyEvent
 type RecordCaptureJourneyEventResponse202Headers struct {
 	XRequestID RequestID
@@ -46160,6 +46453,151 @@ func (r RollbackExperienceResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r RollbackExperienceResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetExperienceAssetResponse200Headers the declared response headers of an HTTP 200 response for GetExperienceAsset
+type GetExperienceAssetResponse200Headers struct {
+	CacheControl *string
+	XRequestID   RequestID
+}
+
+// GetExperienceAssetResponse400Headers the declared response headers of an HTTP 400 response for GetExperienceAsset
+type GetExperienceAssetResponse400Headers struct {
+	XRequestID RequestID
+}
+
+// GetExperienceAssetResponse401Headers the declared response headers of an HTTP 401 response for GetExperienceAsset
+type GetExperienceAssetResponse401Headers struct {
+	WWWAuthenticate string
+	XRequestID      RequestID
+}
+
+// GetExperienceAssetResponse403Headers the declared response headers of an HTTP 403 response for GetExperienceAsset
+type GetExperienceAssetResponse403Headers struct {
+	XRequestID RequestID
+}
+
+// GetExperienceAssetResponse404Headers the declared response headers of an HTTP 404 response for GetExperienceAsset
+type GetExperienceAssetResponse404Headers struct {
+	XRequestID RequestID
+}
+
+// GetExperienceAssetResponse429Headers the declared response headers of an HTTP 429 response for GetExperienceAsset
+type GetExperienceAssetResponse429Headers struct {
+	RateLimit       *string
+	RateLimitPolicy *string
+	RetryAfter      *int
+	XRequestID      RequestID
+}
+
+// GetExperienceAssetResponse500Headers the declared response headers of an HTTP 500 response for GetExperienceAsset
+type GetExperienceAssetResponse500Headers struct {
+	XRequestID RequestID
+}
+
+// GetExperienceAssetResponse503Headers the declared response headers of an HTTP 503 response for GetExperienceAsset
+type GetExperienceAssetResponse503Headers struct {
+	RetryAfter *int
+	XRequestID RequestID
+}
+
+type GetExperienceAssetResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// ApplicationProblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationProblemJSON400 *InvalidRequest
+	// ApplicationProblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationProblemJSON401 *Unauthenticated
+	// ApplicationProblemJSON403 the response for an HTTP 403 `application/problem+json` response
+	ApplicationProblemJSON403 *InsufficientScope
+	// ApplicationProblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationProblemJSON404 *NotFound
+	// ApplicationProblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationProblemJSON429 *RateLimited
+	// ApplicationProblemJSON500 the response for an HTTP 500 `application/problem+json` response
+	ApplicationProblemJSON500 *InternalError
+	// ApplicationProblemJSON503 the response for an HTTP 503 `application/problem+json` response
+	ApplicationProblemJSON503 *ServiceUnavailable
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetExperienceAssetResponse200Headers
+	// Headers400 the parsed response headers for an HTTP 400 response
+	Headers400 *GetExperienceAssetResponse400Headers
+	// Headers401 the parsed response headers for an HTTP 401 response
+	Headers401 *GetExperienceAssetResponse401Headers
+	// Headers403 the parsed response headers for an HTTP 403 response
+	Headers403 *GetExperienceAssetResponse403Headers
+	// Headers404 the parsed response headers for an HTTP 404 response
+	Headers404 *GetExperienceAssetResponse404Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *GetExperienceAssetResponse429Headers
+	// Headers500 the parsed response headers for an HTTP 500 response
+	Headers500 *GetExperienceAssetResponse500Headers
+	// Headers503 the parsed response headers for an HTTP 503 response
+	Headers503 *GetExperienceAssetResponse503Headers
+}
+
+// GetApplicationProblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r GetExperienceAssetResponse) GetApplicationProblemJSON400() *InvalidRequest {
+	return r.ApplicationProblemJSON400
+}
+
+// GetApplicationProblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetExperienceAssetResponse) GetApplicationProblemJSON401() *Unauthenticated {
+	return r.ApplicationProblemJSON401
+}
+
+// GetApplicationProblemJSON403 returns the response for an HTTP 403 `application/problem+json` response
+func (r GetExperienceAssetResponse) GetApplicationProblemJSON403() *InsufficientScope {
+	return r.ApplicationProblemJSON403
+}
+
+// GetApplicationProblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r GetExperienceAssetResponse) GetApplicationProblemJSON404() *NotFound {
+	return r.ApplicationProblemJSON404
+}
+
+// GetApplicationProblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r GetExperienceAssetResponse) GetApplicationProblemJSON429() *RateLimited {
+	return r.ApplicationProblemJSON429
+}
+
+// GetApplicationProblemJSON500 returns the response for an HTTP 500 `application/problem+json` response
+func (r GetExperienceAssetResponse) GetApplicationProblemJSON500() *InternalError {
+	return r.ApplicationProblemJSON500
+}
+
+// GetApplicationProblemJSON503 returns the response for an HTTP 503 `application/problem+json` response
+func (r GetExperienceAssetResponse) GetApplicationProblemJSON503() *ServiceUnavailable {
+	return r.ApplicationProblemJSON503
+}
+
+// GetBody returns the raw response body bytes
+func (r GetExperienceAssetResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetExperienceAssetResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetExperienceAssetResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetExperienceAssetResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -73817,6 +74255,21 @@ func (c *ClientWithResponses) ResolveCaptureExperienceWithResponse(ctx context.C
 	return ParseResolveCaptureExperienceResponse(rsp)
 }
 
+// GetCaptureExperienceAssetWithResponse Get an image from the stored capture experience pin
+//
+// Requires a capture token. Reads only a named asset in the existing session pin, observes revocation and never creates a pin. Approval, tenant ownership, immutable version, size and digest are checked before returning bytes. Tokens stay in the Authorization header.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/capture/experience/assets/{assetKey} (the `GetCaptureExperienceAsset` operationId).
+func (c *ClientWithResponses) GetCaptureExperienceAssetWithResponse(ctx context.Context, assetKey string, reqEditors ...RequestEditorFn) (*GetCaptureExperienceAssetResponse, error) {
+	rsp, err := c.GetCaptureExperienceAsset(ctx, assetKey, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetCaptureExperienceAssetResponse(rsp)
+}
+
 // RecordCaptureJourneyEventWithBodyWithResponse Record a privacy-safe capture interaction
 //
 // Records one best-effort client interaction against the verification bound to
@@ -74627,6 +75080,21 @@ func (c *ClientWithResponses) RollbackExperienceWithResponse(ctx context.Context
 		return nil, err
 	}
 	return ParseRollbackExperienceResponse(rsp)
+}
+
+// GetExperienceAssetWithResponse Get an approved image from an immutable experience revision
+//
+// Requires experiences:read. Reads only a named asset in this tenant-owned revision. Approval, exact object version, size and digest are verified. Raw staging objects and arbitrary object references cannot be fetched.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/experiences/{experienceID}/versions/{version}/assets/{assetKey} (the `GetExperienceAsset` operationId).
+func (c *ClientWithResponses) GetExperienceAssetWithResponse(ctx context.Context, experienceID ExperienceID, version int, assetKey string, reqEditors ...RequestEditorFn) (*GetExperienceAssetResponse, error) {
+	rsp, err := c.GetExperienceAsset(ctx, experienceID, version, assetKey, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetExperienceAssetResponse(rsp)
 }
 
 // GetFraudConfigurationWithResponse Read active fraud rules
@@ -83812,6 +84280,199 @@ func ParseResolveCaptureExperienceResponse(rsp *http.Response) (*ResolveCaptureE
 	return response, nil
 }
 
+// ParseGetCaptureExperienceAssetResponse parses an HTTP response from a GetCaptureExperienceAssetWithResponse call
+func ParseGetCaptureExperienceAssetResponse(rsp *http.Response) (*GetCaptureExperienceAssetResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetCaptureExperienceAssetResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetCaptureExperienceAssetResponse200Headers
+		if values := rsp.Header.Values("Cache-Control"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Cache-Control", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.CacheControl = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers GetCaptureExperienceAssetResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers GetCaptureExperienceAssetResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetCaptureExperienceAssetResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetCaptureExperienceAssetResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 429:
+		var headers GetCaptureExperienceAssetResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers GetCaptureExperienceAssetResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers GetCaptureExperienceAssetResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
 // ParseRecordCaptureJourneyEventResponse parses an HTTP response from a RecordCaptureJourneyEventWithResponse call
 func ParseRecordCaptureJourneyEventResponse(rsp *http.Response) (*RecordCaptureJourneyEventResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -89485,6 +90146,199 @@ func ParseRollbackExperienceResponse(rsp *http.Response) (*RollbackExperienceRes
 		response.Headers500 = &headers
 	case rsp.StatusCode == 503:
 		var headers RollbackExperienceResponse503Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers503 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetExperienceAssetResponse parses an HTTP response from a GetExperienceAssetWithResponse call
+func ParseGetExperienceAssetResponse(rsp *http.Response) (*GetExperienceAssetResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetExperienceAssetResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest InvalidRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest InsufficientScope
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON429 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+		var dest InternalError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON500 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 503:
+		var dest ServiceUnavailable
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationProblemJSON503 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetExperienceAssetResponse200Headers
+		if values := rsp.Header.Values("Cache-Control"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Cache-Control", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.CacheControl = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 400:
+		var headers GetExperienceAssetResponse400Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers400 = &headers
+	case rsp.StatusCode == 401:
+		var headers GetExperienceAssetResponse401Headers
+		if values := rsp.Header.Values("WWW-Authenticate"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "WWW-Authenticate", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.WWWAuthenticate = value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers401 = &headers
+	case rsp.StatusCode == 403:
+		var headers GetExperienceAssetResponse403Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers403 = &headers
+	case rsp.StatusCode == 404:
+		var headers GetExperienceAssetResponse404Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers404 = &headers
+	case rsp.StatusCode == 429:
+		var headers GetExperienceAssetResponse429Headers
+		if values := rsp.Header.Values("RateLimit"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimit = &value
+		}
+		if values := rsp.Header.Values("RateLimit-Policy"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "RateLimit-Policy", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RateLimitPolicy = &value
+		}
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers429 = &headers
+	case rsp.StatusCode == 500:
+		var headers GetExperienceAssetResponse500Headers
+		if values := rsp.Header.Values("X-Request-ID"); len(values) > 0 {
+			var value RequestID
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Request-ID", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XRequestID = value
+		}
+		response.Headers500 = &headers
+	case rsp.StatusCode == 503:
+		var headers GetExperienceAssetResponse503Headers
 		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
 			var value int
 			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {

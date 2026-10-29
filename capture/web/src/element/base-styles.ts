@@ -57,6 +57,16 @@ export const baseStyles = css`
     box-sizing: border-box;
   }
 
+  .experience-logo {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: min(10rem, 100%);
+    max-height: 3rem;
+    object-fit: contain;
+    margin: 0 auto 1.5rem;
+  }
+
   .shell {
     background: var(--idq-capture-background);
     border: 1px solid var(--idq-capture-border);

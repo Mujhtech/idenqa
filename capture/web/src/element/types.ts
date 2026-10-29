@@ -120,6 +120,8 @@ export type CaptureExperiencePreviewScreen =
 export interface CaptureExperiencePreviewOptions {
   /** Unsigned portable draft rendered without starting or authorizing a capture session. */
   readonly document: ExperienceDocument;
+  /** Already-authorised image bytes for an inert preview, keyed by document asset key. */
+  readonly assets?: Readonly<Record<string, Blob>>;
   /** Locale to preview; defaults to the document's default locale. */
   readonly locale?: string;
   /** Display-only item count for the real Capture Web introduction screen. */

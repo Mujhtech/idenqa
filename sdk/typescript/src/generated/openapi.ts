@@ -4014,6 +4014,46 @@ export interface paths {
         readonly patch?: never;
         readonly trace?: never;
     };
+    readonly "/v1/capture/experience/assets/{assetKey}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Get an image from the stored capture experience pin
+         * @description Requires a capture token. Reads only a named asset in the existing session pin, observes revocation and never creates a pin. Approval, tenant ownership, immutable version, size and digest are checked before returning bytes. Tokens stay in the Authorization header.
+         */
+        readonly get: operations["getCaptureExperienceAsset"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
+    readonly "/v1/experiences/{experienceID}/versions/{version}/assets/{assetKey}": {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path?: never;
+            readonly cookie?: never;
+        };
+        /**
+         * Get an approved image from an immutable experience revision
+         * @description Requires experiences:read. Reads only a named asset in this tenant-owned revision. Approval, exact object version, size and digest are verified. Raw staging objects and arbitrary object references cannot be fetched.
+         */
+        readonly get: operations["getExperienceAsset"];
+        readonly put?: never;
+        readonly post?: never;
+        readonly delete?: never;
+        readonly options?: never;
+        readonly head?: never;
+        readonly patch?: never;
+        readonly trace?: never;
+    };
     readonly "/v1/experiences": {
         readonly parameters: {
             readonly query?: never;
@@ -22817,6 +22857,78 @@ export interface operations {
                 };
             };
             readonly 401: components["responses"]["Unauthenticated"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly getCaptureExperienceAsset: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Named image key within the authorised document. */
+                readonly assetKey: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The approved immutable PNG or JPEG was verified and returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    /** @description Always no-store. */
+                    readonly "Cache-Control"?: string;
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "image/png": string;
+                    readonly "image/jpeg": string;
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 429: components["responses"]["RateLimited"];
+            readonly 500: components["responses"]["InternalError"];
+            readonly 503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    readonly getExperienceAsset: {
+        readonly parameters: {
+            readonly query?: never;
+            readonly header?: never;
+            readonly path: {
+                /** @description Stable tenant-owned experience identifier. */
+                readonly experienceID: components["schemas"]["ExperienceID"];
+                /** @description Exact immutable document version. */
+                readonly version: number;
+                /** @description Named image key within the authorised document. */
+                readonly assetKey: string;
+            };
+            readonly cookie?: never;
+        };
+        readonly requestBody?: never;
+        readonly responses: {
+            /** @description The approved immutable PNG or JPEG was verified and returned. */
+            readonly 200: {
+                headers: {
+                    readonly "X-Request-ID": components["headers"]["XRequestID"];
+                    /** @description Always no-store. */
+                    readonly "Cache-Control"?: string;
+                    readonly [name: string]: unknown;
+                };
+                content: {
+                    readonly "image/png": string;
+                    readonly "image/jpeg": string;
+                };
+            };
+            readonly 400: components["responses"]["InvalidRequest"];
+            readonly 401: components["responses"]["Unauthenticated"];
+            readonly 403: components["responses"]["InsufficientScope"];
+            readonly 404: components["responses"]["NotFound"];
+            readonly 429: components["responses"]["RateLimited"];
             readonly 500: components["responses"]["InternalError"];
             readonly 503: components["responses"]["ServiceUnavailable"];
         };

@@ -2,6 +2,7 @@ package experience
 
 import (
 	"context"
+	"io"
 	"time"
 
 	contract "github.com/Mujhtech/idenqa/contracts/experience/v1"
@@ -56,6 +57,12 @@ type Verifier interface {
 // port. Publication fails closed when an asset cannot be verified.
 type AssetStore interface {
 	Verify(ctx context.Context, scope tenant.Scope, asset contract.Asset) error
+}
+
+// AssetReader opens an approved, tenant-owned immutable image. Implementations
+// verify the approval, size and digest before returning any bytes.
+type AssetReader interface {
+	Open(context.Context, tenant.Scope, contract.Asset) (io.ReadCloser, error)
 }
 
 // IDGenerator is the identifier capability consumed by the service.

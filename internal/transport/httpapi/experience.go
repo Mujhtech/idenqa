@@ -88,6 +88,7 @@ func (routes *ExperienceRoutes) Register(router chi.Router) {
 	router.With(write...).Post("/experiences", routes.create)
 	router.With(write...).Post("/experiences/import", routes.importManifest)
 	router.With(read...).Get("/experiences/{experienceID}", routes.get)
+	router.With(read...).Get("/experiences/{experienceID}/versions/{version}/assets/{assetKey}", routes.asset)
 	router.With(write...).Put("/experiences/{experienceID}", routes.updateDraft)
 	router.With(write...).Get("/experiences/{experienceID}/export", routes.export)
 	router.With(publish...).Post("/experiences/{experienceID}/approve", routes.approve)
@@ -95,6 +96,7 @@ func (routes *ExperienceRoutes) Register(router chi.Router) {
 	router.With(publish...).Post("/experiences/{experienceID}/revoke", routes.revoke)
 	router.With(publish...).Post("/experiences/{experienceID}/rollback", routes.rollback)
 	router.With(routes.capture.Authenticate).Get("/capture/experience", routes.resolve)
+	router.With(routes.capture.Authenticate).Get("/capture/experience/assets/{assetKey}", routes.pinnedAsset)
 }
 
 type experienceMutationRequest struct {

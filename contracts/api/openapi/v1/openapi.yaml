@@ -9649,6 +9649,79 @@ paths:
         '401': { $ref: '#/components/responses/Unauthenticated' }
         '500': { $ref: '#/components/responses/InternalError' }
         '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v1/capture/experience/assets/{assetKey}:
+    get:
+      operationId: getCaptureExperienceAsset
+      summary: Get an image from the stored capture experience pin
+      description: Requires a capture token. Reads only a named asset in the existing session pin, observes revocation and never creates a pin. Approval, tenant ownership, immutable version, size and digest are checked before returning bytes. Tokens stay in the Authorization header.
+      tags: [Capture]
+      security: [CaptureToken: []]
+      parameters:
+        - name: assetKey
+          in: path
+          required: true
+          description: Named image key within the authorised document.
+          schema: { type: string, minLength: 1, maxLength: 64, pattern: '^[a-z][a-z0-9._-]{0,63}$' }
+      responses:
+        '200':
+          description: The approved immutable PNG or JPEG was verified and returned.
+          headers:
+            X-Request-ID: { $ref: '#/components/headers/XRequestID' }
+            Cache-Control: { description: Always no-store., schema: { type: string } }
+          content:
+            image/png:
+              schema: { type: string, format: binary, maxLength: 2097152 }
+            image/jpeg:
+              schema: { type: string, format: binary, maxLength: 2097152 }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
+  /v1/experiences/{experienceID}/versions/{version}/assets/{assetKey}:
+    get:
+      operationId: getExperienceAsset
+      summary: Get an approved image from an immutable experience revision
+      description: Requires experiences:read. Reads only a named asset in this tenant-owned revision. Approval, exact object version, size and digest are verified. Raw staging objects and arbitrary object references cannot be fetched.
+      tags: [Experiences]
+      security: [TenantAPIKey: []]
+      x-required-scopes: [experiences:read]
+      parameters:
+        - name: experienceID
+          in: path
+          required: true
+          description: Stable tenant-owned experience identifier.
+          schema: { $ref: '#/components/schemas/ExperienceID' }
+        - name: version
+          in: path
+          required: true
+          description: Exact immutable document version.
+          schema: { type: integer, minimum: 1, maximum: 4294967295 }
+        - name: assetKey
+          in: path
+          required: true
+          description: Named image key within the authorised document.
+          schema: { type: string, minLength: 1, maxLength: 64, pattern: '^[a-z][a-z0-9._-]{0,63}$' }
+      responses:
+        '200':
+          description: The approved immutable PNG or JPEG was verified and returned.
+          headers:
+            X-Request-ID: { $ref: '#/components/headers/XRequestID' }
+            Cache-Control: { description: Always no-store., schema: { type: string } }
+          content:
+            image/png:
+              schema: { type: string, format: binary, maxLength: 2097152 }
+            image/jpeg:
+              schema: { type: string, format: binary, maxLength: 2097152 }
+        '400': { $ref: '#/components/responses/InvalidRequest' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/InsufficientScope' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+        '500': { $ref: '#/components/responses/InternalError' }
+        '503': { $ref: '#/components/responses/ServiceUnavailable' }
   /v1/experiences:
     get:
       operationId: listExperiences

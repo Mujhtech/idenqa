@@ -1,9 +1,11 @@
+import { CaptureClient } from "@idenqa/sdk";
 import type {
   CaptureJourneyAction,
   CaptureJourneyEventType,
   CaptureJourneyScreen,
   CaptureRealtimeEvent,
   EvidenceUpload,
+  ExperienceAsset,
   SubjectResponseAction,
 } from "@idenqa/sdk";
 import { LitElement, html, type PropertyValues } from "lit";
@@ -217,6 +219,8 @@ export class IdenqaCaptureElement extends LitElement {
   #outcomePolling = false;
   #localizer: CaptureLocalizer = createCaptureLocalizer(browserLocale());
   #experience: CaptureExperiencePresentation | undefined;
+  #logoURL: string | undefined;
+  #logoAbort: AbortController | undefined;
   #preview: ExperiencePreviewState | undefined;
   #journeyPhase: JourneyPhase = "intro";
   #stepStage: StepStage = "method";
@@ -278,12 +282,22 @@ export class IdenqaCaptureElement extends LitElement {
       presentation.messageCatalogue,
     );
     this.#preview = { screen, captureItemCount };
+    const logo = options.document.assets?.find(
+      (asset) => asset.key === options.document.theme.logo_asset_key,
+    );
+    const blob = logo === undefined ? undefined : options.assets?.[logo.key];
+    if (logo !== undefined && blob !== undefined) {
+      const controller = new AbortController();
+      this.#logoAbort = controller;
+      void this.#setLogo(blob, logo, controller.signal).catch(() => {});
+    }
     this.#flowState = "idle";
     this.#lastJourneyScreen = undefined;
     this.requestUpdate();
   }
 
   async start(options: CaptureElementStartOptions): Promise<CaptureFlowSnapshot> {
+    this.#clearLogo();
     const {
       messageCatalogue = {},
       experience,
@@ -317,6 +331,17 @@ export class IdenqaCaptureElement extends LitElement {
     this.#countryJourney = undefined;
     const abortController = new AbortController();
     this.#flowAbortController = abortController;
+    const logo = experience?.manifest.document.assets?.find(
+      (asset) => asset.key === experience.manifest.document.theme.logo_asset_key,
+    );
+    if (logo !== undefined) {
+      this.#logoAbort = new AbortController();
+      const logoSignal = AbortSignal.any([abortController.signal, this.#logoAbort.signal]);
+      void new CaptureClient(flowOptions)
+        .getExperienceAsset(logo, { signal: logoSignal })
+        .then((response) => this.#setLogo(response.data, logo, logoSignal))
+        .catch(() => {}); // Optional branding failure keeps the accessible default presentation.
+    }
     this.#flowController = createCaptureFlowController(flowOptions);
     this.#methodAdapters = [];
     this.#flowSnapshot = undefined;
@@ -399,6 +424,7 @@ export class IdenqaCaptureElement extends LitElement {
   }
 
   cancel(): void {
+    this.#clearLogo();
     this.#countryAbortController?.abort();
     this.#countryAbortController = undefined;
     this.#countryJourney = undefined;
@@ -420,6 +446,32 @@ export class IdenqaCaptureElement extends LitElement {
   override disconnectedCallback(): void {
     this.cancel();
     super.disconnectedCallback();
+  }
+
+  #clearLogo(): void {
+    this.#logoAbort?.abort();
+    this.#logoAbort = undefined;
+    if (this.#logoURL !== undefined) URL.revokeObjectURL(this.#logoURL);
+    this.#logoURL = undefined;
+  }
+
+  async #setLogo(blob: Blob, asset: ExperienceAsset, signal: AbortSignal): Promise<void> {
+    if (
+      signal.aborted ||
+      (asset.mime !== "image/png" && asset.mime !== "image/jpeg") ||
+      blob.type !== asset.mime ||
+      blob.size !== asset.size ||
+      blob.size > 2 * 1024 * 1024 ||
+      !/^[a-f0-9]{64}$/.test(asset.digest)
+    )
+      return;
+    const bytes = await blob.arrayBuffer();
+    const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+    const hex = Array.from(digest, (value) => value.toString(16).padStart(2, "0")).join("");
+    if (signal.aborted || hex !== asset.digest) return;
+    if (this.#logoURL !== undefined) URL.revokeObjectURL(this.#logoURL);
+    this.#logoURL = URL.createObjectURL(blob);
+    this.requestUpdate();
   }
 
   protected override updated(changedProperties: PropertyValues<this>): void {
@@ -447,6 +499,22 @@ export class IdenqaCaptureElement extends LitElement {
         dir=${this.#localizer.direction}
       >
         <h1 class="visually-hidden" id="capture-title">${this.#text("identityVerification")}</h1>
+        ${
+          this.#logoURL === undefined ||
+          this.#isDocumentCameraScreen() ||
+          this.#isLiveCameraScreen()
+            ? undefined
+            : html`<img
+                class="experience-logo"
+                src=${this.#logoURL}
+                alt=""
+                referrerpolicy="no-referrer"
+                @error=${() => {
+                  this.#clearLogo();
+                  this.requestUpdate();
+                }}
+              />`
+        }
         ${
           this.#preview !== undefined
             ? html`<div class="experience-preview" inert>${this.#renderExperiencePreview()}</div>`

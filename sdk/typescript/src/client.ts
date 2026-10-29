@@ -523,6 +523,22 @@ export class CaptureClient {
     return mapResponse(response, validateExperienceResolution);
   }
 
+  /** Fetch an image from the existing session pin and verify the signed reference. */
+  async getExperienceAsset(
+    asset: import("./experience.js").ExperienceAsset,
+    options: RequestOptions = {},
+  ): Promise<SDKResponse<Blob>> {
+    return this.#transport.requestImage(
+      {
+        method: "GET",
+        path: `v1/capture/experience/assets/${pathSegment(asset.key, "assetKey")}`,
+        bearerToken: this.#token,
+        ...signal(options),
+      },
+      asset,
+    );
+  }
+
   async getProgress(options: RequestOptions = {}): Promise<SDKResponse<CaptureProgress>> {
     const response = await this.#transport.request<WireCaptureProgress>({
       method: "GET",

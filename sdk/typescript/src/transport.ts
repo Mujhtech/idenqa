@@ -6,6 +6,7 @@ import {
 } from "./errors.js";
 import type { SDKConditionalResponse, SDKResponse } from "./types.js";
 import type { WireProblem } from "./wire.js";
+import type { ExperienceAsset } from "./experience.js";
 
 interface TransportOptions {
   readonly baseUrl: string | URL;
@@ -128,6 +129,91 @@ export class JSONTransport {
     return "allowNotModified" in request
       ? { ...successful, notModified: false as const }
       : successful;
+  }
+
+  /** Read a bounded image and check it against the signed experience reference. */
+  async requestImage(request: JSONRequest, asset: ExperienceAsset): Promise<SDKResponse<Blob>> {
+    if (
+      (asset.mime !== "image/png" && asset.mime !== "image/jpeg") ||
+      !Number.isSafeInteger(asset.size) ||
+      asset.size < 1 ||
+      asset.size > 2 * 1024 * 1024 ||
+      !/^[a-f0-9]{64}$/.test(asset.digest)
+    ) {
+      throw new TypeError("A bounded PNG or JPEG experience asset is required.");
+    }
+    let response: Response;
+    try {
+      response = await this.#fetch(new URL(stripLeadingSlash(request.path), this.#baseUrl), {
+        method: "GET",
+        headers: {
+          Accept: `${asset.mime}, application/problem+json`,
+          Authorization: `Bearer ${request.bearerToken}`,
+        },
+        credentials: "omit",
+        cache: "no-store",
+        redirect: "error",
+        referrerPolicy: "no-referrer",
+        ...(request.signal === undefined ? {} : { signal: request.signal }),
+      });
+    } catch (cause) {
+      throw new IdenqaTransportError(
+        "Experience image request failed.",
+        request.signal?.aborted === true || isAbortError(cause),
+        cause,
+      );
+    }
+    const requestId = optionalHeader(response.headers, "X-Request-ID");
+    if (!response.ok) throw await apiError(response, requestId);
+    if (
+      !requestId ||
+      response.headers.get("Content-Type")?.split(";", 1)[0] !== asset.mime ||
+      !response.body ||
+      (response.headers.has("Content-Length") &&
+        response.headers.get("Content-Length") !== String(asset.size))
+    ) {
+      await response.body?.cancel();
+      throw new IdenqaProtocolError(
+        "Invalid experience image response.",
+        response.status,
+        requestId,
+      );
+    }
+    const reader = response.body.getReader();
+    const data = new Uint8Array(asset.size);
+    let offset = 0;
+    try {
+      for (;;) {
+        const next = await reader.read();
+        if (next.done) break;
+        if (offset + next.value.byteLength > data.length) {
+          next.value.fill(0);
+          throw new IdenqaProtocolError(
+            "Experience image exceeds its declared size.",
+            response.status,
+            requestId,
+          );
+        }
+        data.set(next.value, offset);
+        offset += next.value.byteLength;
+        next.value.fill(0);
+      }
+      if (offset !== data.length || globalThis.crypto?.subtle === undefined)
+        throw new IdenqaProtocolError("Incomplete experience image.", response.status, requestId);
+      const digest = new Uint8Array(await globalThis.crypto.subtle.digest("SHA-256", data));
+      const hex = Array.from(digest, (value) => value.toString(16).padStart(2, "0")).join("");
+      if (hex !== asset.digest)
+        throw new IdenqaProtocolError(
+          "Experience image digest mismatch.",
+          response.status,
+          requestId,
+        );
+      return { data: new Blob([data], { type: asset.mime }), requestId };
+    } finally {
+      data.fill(0);
+      await reader.cancel();
+      reader.releaseLock();
+    }
   }
 
   async requestBytes(request: JSONRequest): Promise<SDKResponse<Uint8Array>> {
