@@ -12,7 +12,7 @@
 # Build from the repository root:
 #   docker build -f deploy/self-hosted/Dockerfile -t idenqa-core:dev .
 
-ARG GO_TOOLCHAIN=1.27.2
+ARG GO_TOOLCHAIN=1.27.3
 ARG NODE_VERSION=22.23.2
 ARG PYTHON_VERSION=3.13
 
