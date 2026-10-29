@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 
 	providerv1 "github.com/Mujhtech/idenqa/contracts/provider/v1"
@@ -135,6 +136,45 @@ func (store *RequestStore) Claim(ctx context.Context, request providerv1.Request
 		if _, err := sqlgen.New(tx).SetTenantScope(ctx, scope.ID().String()); err != nil {
 			return err
 		}
+		var state string
+		err := tx.QueryRow(ctx, `SELECT state FROM idenqa.verification_sessions WHERE tenant_id=$1 AND id=$2 FOR UPDATE`, request.TenantID, request.VerificationID).Scan(&state)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return provider.ErrRequestUnavailable
+		}
+		if err != nil {
+			return fmt.Errorf("lock provider dispatch lifecycle: %w", err)
+		}
+		var exists bool
+		if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM idenqa.provider_dispatches WHERE tenant_id=$1 AND attempt_id=$2)`, request.TenantID, request.AttemptID).Scan(&exists); err != nil {
+			return fmt.Errorf("find provider dispatch receipt: %w", err)
+		}
+		// An exact existing receipt remains recoverable after the parent stops.
+		// Only a new dispatch needs an active parent and its current attempt.
+		if !exists {
+			if state != string(verification.SessionStateProcessing) && state != string(verification.SessionStateAwaitingExternal) {
+				return provider.ErrRequestUnavailable
+			}
+			// A tuple write fences cancellation's serializable snapshot as well
+			// as locking the parent, including when this is a bound async claim.
+			// No lifecycle value changes; only the dispatch claim is new work.
+			if _, err := tx.Exec(ctx, `UPDATE idenqa.verification_sessions SET id=id WHERE tenant_id=$1 AND id=$2`, request.TenantID, request.VerificationID); err != nil {
+				return fmt.Errorf("fence provider dispatch lifecycle: %w", err)
+			}
+			// Read child state after the parent lock so a preceding check
+			// completion cannot leave this claim using its earlier snapshot.
+			var active bool
+			if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM idenqa.verification_attempts a
+			 JOIN idenqa.verification_checks c ON c.tenant_id=a.tenant_id AND c.id=a.check_id
+			 WHERE a.tenant_id=$1 AND a.id=$3 AND a.verification_id=$2
+			 AND a.runner_kind='provider' AND a.state='running' AND c.state='running'
+			 AND NOT EXISTS(SELECT 1 FROM idenqa.verification_attempts newer
+			  WHERE newer.tenant_id=a.tenant_id AND newer.check_id=a.check_id AND newer.attempt_number>a.attempt_number))`, request.TenantID, request.VerificationID, request.AttemptID).Scan(&active); err != nil {
+				return fmt.Errorf("validate provider dispatch attempt: %w", err)
+			}
+			if !active {
+				return provider.ErrRequestUnavailable
+			}
+		}
 		claimedAt := store.source.Now().UTC().Truncate(time.Microsecond)
 		tag, err := tx.Exec(ctx, `INSERT INTO idenqa.provider_dispatches(tenant_id,attempt_id,request_digest,claimed_at) SELECT tenant_id,attempt_id,request_digest,$4 FROM idenqa.provider_requests WHERE tenant_id=$1 AND attempt_id=$2 AND request_digest=$3 ON CONFLICT DO NOTHING`, request.TenantID, request.AttemptID, digest, claimedAt)
 		if err != nil {
@@ -172,7 +212,10 @@ func (store *RequestStore) Claim(ctx context.Context, request providerv1.Request
 		}
 		return nil
 	})
-	return claimed, result, err
+	if err != nil {
+		return false, nil, err
+	}
+	return claimed, result, nil
 }
 
 // adoptCallbackReceipt promotes one terminal callback receipt into the

@@ -21,7 +21,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
-// StopIdentifiers supplies reference-only lifecycle event identities.
+// StopIdentifiers supplies reference-only lifecycle and check progress identities.
 type StopIdentifiers interface{ NewEvent() (id.Event, error) }
 
 // StopStore serializes cancellation and expiry with all consequential session effects.
@@ -111,6 +111,9 @@ func (store *StopStore) cancelWithin(ctx context.Context, tx platformpostgres.Tr
 	if current.Version != mutation.ExpectedVersion {
 		return verification.CancellationResult{}, verification.ErrSessionConflict
 	}
+	if err := store.cancelUndispatchedChecksWithin(ctx, scope, tx, mutation.VerificationID, command.OccurredAt); err != nil {
+		return verification.CancellationResult{}, err
+	}
 	receipt, err := store.lifecycle.ApplyWithin(ctx, scope, tx, command)
 	if err != nil {
 		return verification.CancellationResult{}, err
@@ -180,6 +183,75 @@ func (store *StopStore) CancelForDeletionWithin(ctx context.Context, scope tenan
 	if err != nil {
 		return err
 	}
+	if target == verification.SessionStateCancelled {
+		if err := store.cancelUndispatchedChecksWithin(ctx, scope, tx, verificationID, now); err != nil {
+			return err
+		}
+	}
 	_, err = store.lifecycle.ApplyWithin(ctx, scope, tx, verification.LifecycleCommand{EventID: eventID, VerificationID: verificationID, ExpectedVersion: current.Version, Target: target, ActorID: actor.String(), OccurredAt: now})
 	return err
+}
+
+// cancelUndispatchedChecksWithin closes only attempts whose external execution
+// never acquired a durable dispatch claim. The caller holds the parent session
+// lock, shared with dispatch claiming. A dispatch claim writes that parent tuple
+// so an older serializable cancellation snapshot retries rather than missing it.
+// Existing dispatches retain their reservations until their owned result or
+// reconciliation path proves closure; cancellation alone cannot establish that.
+func (store *StopStore) cancelUndispatchedChecksWithin(ctx context.Context, scope tenant.Scope, tx platformpostgres.Transaction, verificationID id.Verification, at time.Time) error {
+	rows, err := tx.Query(ctx, `SELECT c.id FROM idenqa.verification_checks c
+JOIN idenqa.verification_attempts a ON a.tenant_id=c.tenant_id AND a.check_id=c.id AND a.verification_id=c.verification_id
+WHERE c.tenant_id=$1 AND c.verification_id=$2 AND c.state='running' AND a.state='running'
+ AND NOT EXISTS (SELECT 1 FROM idenqa.verification_attempts newer
+  WHERE newer.tenant_id=a.tenant_id AND newer.check_id=a.check_id AND newer.attempt_number>a.attempt_number)
+ AND ((a.runner_kind='provider' AND NOT EXISTS (SELECT 1 FROM idenqa.provider_dispatches d
+   WHERE d.tenant_id=a.tenant_id AND d.attempt_id=a.id))
+  OR (a.runner_kind='model' AND NOT EXISTS (SELECT 1 FROM idenqa.model_dispatches d
+   WHERE d.tenant_id=a.tenant_id AND d.attempt_id=a.id)))
+ORDER BY c.id FOR UPDATE OF c,a`, scope.ID().String(), verificationID.String())
+	if err != nil {
+		return fmt.Errorf("lock undispatched verification checks: %w", err)
+	}
+	checkIDs, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (id.Check, error) {
+		var value string
+		if err := row.Scan(&value); err != nil {
+			return id.Check{}, err
+		}
+		return id.ParseCheck(value)
+	})
+	if err != nil {
+		return fmt.Errorf("read undispatched verification checks: %w", err)
+	}
+	queries := sqlgen.New(tx)
+	for _, checkID := range checkIDs {
+		check, err := loadCheck(ctx, queries, scope.ID(), checkID)
+		if err != nil {
+			return err
+		}
+		expectedVersion := check.Version
+		// An undispatched semantic retry already records its future scheduled
+		// start as StartedAt/UpdatedAt. Preserve that immutable time floor when
+		// closing it; the parent still records the actual cancellation time.
+		cancelledAt := at
+		if check.UpdatedAt.After(cancelledAt) {
+			cancelledAt = check.UpdatedAt
+		}
+		attempts := check.Attempts()
+		if latest := attempts[len(attempts)-1]; latest.StartedAt.After(cancelledAt) {
+			cancelledAt = latest.StartedAt
+		}
+		if err := check.Cancel(cancelledAt); err != nil {
+			return fmt.Errorf("cancel undispatched verification check: %w", err)
+		}
+		eventID, err := store.identifiers.NewEvent()
+		if err != nil {
+			return fmt.Errorf("generate check cancellation event: %w", err)
+		}
+		if _, err := saveCheck(ctx, tx, queries, store.lifecycle.wrapper, scope, verification.CheckCommit{
+			Check: check, ExpectedVersion: expectedVersion, EventID: eventID,
+		}); err != nil {
+			return fmt.Errorf("save undispatched verification cancellation: %w", err)
+		}
+	}
+	return nil
 }

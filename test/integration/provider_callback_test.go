@@ -22,6 +22,7 @@ import (
 	providerpostgres "github.com/Mujhtech/idenqa/internal/provider/postgres"
 	usagepostgres "github.com/Mujhtech/idenqa/internal/usage/postgres"
 	"github.com/Mujhtech/idenqa/internal/verification"
+	verificationpostgres "github.com/Mujhtech/idenqa/internal/verification/postgres"
 )
 
 type callbackIntegrationVerifier struct{ progress providerv1.Progress }
@@ -32,6 +33,7 @@ func (verifier callbackIntegrationVerifier) VerifyCallback(context.Context, prov
 
 func TestProviderCallbackReceiptRoundTrip(t *testing.T) {
 	runAuthorityPersistence(t, func(f captureAcceptanceFixture) {
+		seedCallbackProcessingSession(t, f)
 		ctx := t.Context()
 		sessionID := f.creation.Session.ID()
 		callback, err := f.ids.NewProviderCallback()
@@ -111,6 +113,22 @@ func TestProviderCallbackReceiptRoundTrip(t *testing.T) {
 			t.Fatalf("conflicting reproduction = %v", err)
 		}
 	})
+}
+
+// Callback adoption starts from the processing state that owns the request in
+// the real planner. A collecting capture session cannot acquire a new dispatch.
+func seedCallbackProcessingSession(t *testing.T, f captureAcceptanceFixture) {
+	t.Helper()
+	lifecycle, err := verificationpostgres.NewLifecycleStore(f.runtime, integrationProtector{}, fixedIntegrationClock{now: f.now})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := lifecycle.Apply(t.Context(), f.scope, verification.LifecycleCommand{
+		EventID: mustCaptureEvent(t, f.ids), VerificationID: f.creation.Session.ID(), ExpectedVersion: f.creation.Session.Version(),
+		Target: verification.SessionStateProcessing, ActorID: f.declaration.Record().CreatedBy.String(), OccurredAt: f.now,
+	}); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestProviderCallbackExpiredReferenceFailsClosed(t *testing.T) {
@@ -244,6 +262,7 @@ func (unusedSmileClient) Do(*http.Request) (*http.Response, error) {
 // realtime state.
 func TestSmileCallbackDocumentObservationReachesCoreWithoutRawPersistence(t *testing.T) {
 	runAuthorityPersistence(t, func(f captureAcceptanceFixture) {
+		seedCallbackProcessingSession(t, f)
 		ctx := t.Context()
 		sessionID := f.creation.Session.ID()
 		callback, err := f.ids.NewProviderCallback()

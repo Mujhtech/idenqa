@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"reflect"
 	"time"
 
@@ -177,11 +178,6 @@ func (store *RequestStore) Claim(ctx context.Context, request modelv1.Request) (
 		if err := requireRegisteredRequest(ctx, tx, scope, request.AttemptID); err != nil {
 			return err
 		}
-		tag, err := tx.Exec(ctx, `INSERT INTO idenqa.model_dispatches(tenant_id,attempt_id,request_digest,claimed_at) SELECT tenant_id,attempt_id,request_digest,$4 FROM idenqa.model_requests WHERE tenant_id=$1 AND attempt_id=$2 AND request_digest=$3 ON CONFLICT DO NOTHING`, request.TenantID, request.AttemptID, digest, store.source.Now().UTC().Truncate(time.Microsecond))
-		if err != nil {
-			return err
-		}
-		claimed = tag.RowsAffected() == 1
 		verificationID, err := id.ParseVerification(request.VerificationID)
 		if err != nil {
 			return model.ErrRequestUnavailable
@@ -197,6 +193,17 @@ func (store *RequestStore) Claim(ctx context.Context, request modelv1.Request) (
 		if !active {
 			return model.ErrRequestUnavailable
 		}
+		// A parent tuple write also fences a serializable cancellation whose
+		// snapshot predates this claim. Parent locking alone would not refresh
+		// that snapshot when it checks whether dispatch ever started.
+		if _, err := tx.Exec(ctx, `UPDATE idenqa.verification_sessions SET id=id WHERE tenant_id=$1 AND id=$2`, request.TenantID, request.VerificationID); err != nil {
+			return fmt.Errorf("fence model dispatch lifecycle: %w", err)
+		}
+		tag, err := tx.Exec(ctx, `INSERT INTO idenqa.model_dispatches(tenant_id,attempt_id,request_digest,claimed_at) SELECT tenant_id,attempt_id,request_digest,$4 FROM idenqa.model_requests WHERE tenant_id=$1 AND attempt_id=$2 AND request_digest=$3 ON CONFLICT DO NOTHING`, request.TenantID, request.AttemptID, digest, now.UTC().Truncate(time.Microsecond))
+		if err != nil {
+			return err
+		}
+		claimed = tag.RowsAffected() == 1
 
 		var stored string
 		var body []byte

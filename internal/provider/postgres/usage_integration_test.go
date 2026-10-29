@@ -96,6 +96,9 @@ func TestDispatchReceiptAtomicDeliveryAndReplay(t *testing.T) {
 		_, _ = pool.Exec(context.Background(), "DROP ROLE "+role)
 	})
 	exec("CREATE TABLE " + schema + ".tenants(id text PRIMARY KEY)")
+	exec("CREATE TABLE " + schema + ".verification_sessions(tenant_id text,id text,state text,PRIMARY KEY(tenant_id,id))")
+	exec("CREATE TABLE " + schema + ".verification_checks(tenant_id text,id text,state text,PRIMARY KEY(tenant_id,id))")
+	exec("CREATE TABLE " + schema + ".verification_attempts(tenant_id text,id text,verification_id text,check_id text,runner_kind text,state text,attempt_number integer,PRIMARY KEY(tenant_id,id))")
 	exec("CREATE TABLE " + schema + ".provider_requests(tenant_id text,attempt_id text,request_digest text,PRIMARY KEY(tenant_id,attempt_id))")
 	exec("CREATE TABLE " + schema + ".provider_dispatches(tenant_id text,attempt_id text,request_digest text,claimed_at timestamptz,result_body jsonb,PRIMARY KEY(tenant_id,attempt_id))")
 	exec("CREATE TABLE " + schema + ".provider_callback_receipts(tenant_id text,attempt_id text,result_digest text,progress_body jsonb,received_at timestamptz,provider_replay_id text)")
@@ -120,6 +123,9 @@ func TestDispatchReceiptAtomicDeliveryAndReplay(t *testing.T) {
 		t.Fatal(err)
 	}
 	exec("INSERT INTO "+schema+".tenants VALUES($1)", request.TenantID)
+	exec("INSERT INTO "+schema+".verification_sessions VALUES($1,$2,'processing')", request.TenantID, request.VerificationID)
+	exec("INSERT INTO "+schema+".verification_checks VALUES($1,'fixture','running')", request.TenantID)
+	exec("INSERT INTO "+schema+".verification_attempts VALUES($1,$2,$3,'fixture','provider','running',1)", request.TenantID, request.AttemptID, request.VerificationID)
 	exec("INSERT INTO "+schema+".provider_requests VALUES($1,$2,$3)", request.TenantID, request.AttemptID, digest)
 	runner := usageRunner{pool, schema, role}
 	store, err := NewRequestStore(runner, usageClock{at})
