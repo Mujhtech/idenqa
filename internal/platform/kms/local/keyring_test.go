@@ -3,13 +3,70 @@ package local
 import (
 	"bytes"
 	"context"
+	"encoding/binary"
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/Mujhtech/idenqa/internal/platform/kms"
 )
+
+func TestWrappingAADPreservesFormatAndRejectsOversizedInputs(t *testing.T) {
+	t.Parallel()
+	purpose := mustPurpose(t, "idenqa.evidence.content")
+	aad, err := wrappingAAD(purpose, []byte("context"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Decode the existing length-prefixed format independently; changing it
+	// would make persisted wrapped keys unreadable.
+	for _, want := range []string{wrappingDomain, string(purpose), "context"} {
+		length, count := binary.Uvarint(aad)
+		if count < 1 || length != uint64(len(want)) || count > len(aad)-len(want) {
+			t.Fatalf("invalid AAD framing: %x", aad)
+		}
+		aad = aad[count:]
+		if string(aad[:len(want)]) != want {
+			t.Fatalf("AAD component=%q want=%q", aad[:len(want)], want)
+		}
+		aad = aad[len(want):]
+	}
+	if len(aad) != 0 {
+		t.Fatalf("trailing AAD bytes=%x", aad)
+	}
+	for _, test := range []struct {
+		purpose kms.Purpose
+		context []byte
+	}{
+		{purpose: kms.Purpose("idenqa." + strings.Repeat("a", 194)), context: []byte("context")},
+		{purpose: purpose, context: make([]byte, maximumContextSize+1)},
+	} {
+		if _, err := wrappingAAD(test.purpose, test.context); !errors.Is(err, ErrInvalidKeyring) {
+			t.Fatalf("oversized AAD error=%v", err)
+		}
+	}
+}
+
+func TestKeyringRoundTripAtPurposeAndContextLimits(t *testing.T) {
+	t.Parallel()
+	keyring, err := create(filepath.Join(t.TempDir(), "keyring.json"), bytes.NewReader(bytes.Repeat([]byte{0x63}, 128)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = keyring.Close() })
+	purpose := mustPurpose(t, "idenqa."+strings.Repeat("a", 193))
+	authenticatedContext := bytes.Repeat([]byte{0x41}, maximumContextSize)
+	wrapped, err := keyring.Wrap(t.Context(), purpose, []byte("keyset"), authenticatedContext)
+	if err != nil {
+		t.Fatalf("Wrap(boundary) error=%v", err)
+	}
+	assertUnwrap(t, keyring, purpose, wrapped, authenticatedContext, "keyset")
+	if _, err := keyring.Wrap(t.Context(), purpose, []byte("keyset"), append(authenticatedContext, 0)); !errors.Is(err, ErrWrapFailed) {
+		t.Fatalf("Wrap(oversized context) error=%v", err)
+	}
+}
 
 func TestKeyringRotationRetainsExactOldVersion(t *testing.T) {
 	t.Parallel()

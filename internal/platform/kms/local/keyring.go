@@ -162,7 +162,11 @@ func (keyring *Keyring) Wrap(
 		return kms.WrappedKey{}, ErrWrapFailed
 	}
 
-	ciphertext := aead.Seal(nonce, nonce, plaintext, wrappingAAD(purpose, authenticatedContext))
+	aad, err := wrappingAAD(purpose, authenticatedContext)
+	if err != nil {
+		return kms.WrappedKey{}, ErrWrapFailed
+	}
+	ciphertext := aead.Seal(nonce, nonce, plaintext, aad)
 	wrapped, err := kms.NewWrappedKey(kms.WrappedKeyRecord{
 		Provider:   provider,
 		Reference:  reference,
@@ -215,7 +219,11 @@ func (keyring *Keyring) Unwrap(
 		return nil, ErrUnwrapFailed
 	}
 	nonce := record.Ciphertext[:aead.NonceSize()]
-	plaintext, err := aead.Open(nil, nonce, record.Ciphertext[aead.NonceSize():], wrappingAAD(purpose, authenticatedContext))
+	aad, err := wrappingAAD(purpose, authenticatedContext)
+	if err != nil {
+		return nil, ErrUnwrapFailed
+	}
+	plaintext, err := aead.Open(nil, nonce, record.Ciphertext[aead.NonceSize():], aad)
 	if err != nil {
 		return nil, ErrUnwrapFailed
 	}
@@ -293,7 +301,12 @@ func validateOperation(ctx context.Context, purpose kms.Purpose, value, authenti
 	return nil
 }
 
-func wrappingAAD(purpose kms.Purpose, authenticatedContext []byte) []byte {
+func wrappingAAD(purpose kms.Purpose, authenticatedContext []byte) ([]byte, error) {
+	// Keep the existing purpose/context limits next to the allocation as well as
+	// at the operation boundary. kms.NewPurpose permits at most 200 bytes.
+	if len(purpose) > 200 || len(authenticatedContext) > maximumContextSize {
+		return nil, ErrInvalidKeyring
+	}
 	aad := make([]byte, 0, len(wrappingDomain)+len(purpose)+len(authenticatedContext)+24)
 	aad = binary.AppendUvarint(aad, uint64(len(wrappingDomain)))
 	aad = append(aad, wrappingDomain...)
@@ -302,7 +315,7 @@ func wrappingAAD(purpose kms.Purpose, authenticatedContext []byte) []byte {
 	aad = binary.AppendUvarint(aad, uint64(len(authenticatedContext)))
 	aad = append(aad, authenticatedContext...)
 
-	return aad
+	return aad, nil
 }
 
 func readKeyring(path string) (diskKeyring, map[string][]byte, error) {

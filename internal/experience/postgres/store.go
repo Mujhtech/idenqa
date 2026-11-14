@@ -214,22 +214,38 @@ func (store *Store) ApplyTransition(ctx context.Context, scope tenant.Scope, mut
 			result = current
 			return nil
 		}
+		supersededVersion, err := versionInt32(plan.SupersededVersion)
+		if err != nil {
+			return err
+		}
+		targetVersion, err := versionInt32(plan.TargetVersion)
+		if err != nil {
+			return err
+		}
+		approvedVersion, err := versionInt32(plan.ApprovedVersion)
+		if err != nil {
+			return err
+		}
+		publishedVersion, err := versionInt32(plan.PublishedVersion)
+		if err != nil {
+			return err
+		}
 		if plan.SupersededVersion != 0 {
 			if _, err := tx.Exec(ctx, `UPDATE idenqa.experience_revisions SET state=$4
 				WHERE tenant_id=$1 AND experience_id=$2 AND version=$3`,
-				scope.ID().String(), mutation.ExperienceID.String(), versionInt32(plan.SupersededVersion), string(plan.SupersededRevision)); err != nil {
+				scope.ID().String(), mutation.ExperienceID.String(), supersededVersion, string(plan.SupersededRevision)); err != nil {
 				return fmt.Errorf("supersede experience revision: %w", err)
 			}
 		}
 		if _, err := tx.Exec(ctx, `UPDATE idenqa.experience_revisions SET state=$4
 			WHERE tenant_id=$1 AND experience_id=$2 AND version=$3`,
-			scope.ID().String(), mutation.ExperienceID.String(), versionInt32(plan.TargetVersion), string(plan.TargetRevision)); err != nil {
+			scope.ID().String(), mutation.ExperienceID.String(), targetVersion, string(plan.TargetRevision)); err != nil {
 			return fmt.Errorf("advance experience revision state: %w", err)
 		}
 		if _, err := tx.Exec(ctx, `UPDATE idenqa.experiences
 			SET state=$3, revision=revision+1, approved_version=$4, published_version=$5, updated_at=$6
 			WHERE tenant_id=$1 AND id=$2`,
-			scope.ID().String(), mutation.ExperienceID.String(), string(plan.State), versionInt32(plan.ApprovedVersion), versionInt32(plan.PublishedVersion), mutation.At); err != nil {
+			scope.ID().String(), mutation.ExperienceID.String(), string(plan.State), approvedVersion, publishedVersion, mutation.At); err != nil {
 			return fmt.Errorf("apply experience transition: %w", err)
 		}
 		digest := mutation.Digest
@@ -345,8 +361,12 @@ func (store *Store) Changes(ctx context.Context, scope tenant.Scope, identifier 
 
 // SavePin stores the first pin for a session and is idempotent on resume.
 func (store *Store) SavePin(ctx context.Context, scope tenant.Scope, pin experience.Pin) (experience.Pin, error) {
+	version, err := versionInt32(pin.Version)
+	if err != nil {
+		return experience.Pin{}, err
+	}
 	var result experience.Pin
-	err := store.pool.WithinTransaction(ctx, platformpostgres.TransactionOptions{Isolation: platformpostgres.IsolationSerializable}, func(ctx context.Context, tx platformpostgres.Transaction) error {
+	err = store.pool.WithinTransaction(ctx, platformpostgres.TransactionOptions{Isolation: platformpostgres.IsolationSerializable}, func(ctx context.Context, tx platformpostgres.Transaction) error {
 		if err := setScope(ctx, tx, scope); err != nil {
 			return err
 		}
@@ -354,7 +374,7 @@ func (store *Store) SavePin(ctx context.Context, scope tenant.Scope, pin experie
 			(tenant_id,verification_id,experience_id,version,locale,tenant_copy_version,mandatory_copy_version,source,digest,key_id,pinned_at)
 			VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
 			ON CONFLICT (tenant_id,verification_id) DO NOTHING`,
-			scope.ID().String(), pin.VerificationID.String(), pin.ExperienceID.String(), versionInt32(pin.Version),
+			scope.ID().String(), pin.VerificationID.String(), pin.ExperienceID.String(), version,
 			pin.Locale, pin.TenantCopyVersion, pin.MandatoryCopyVersion, pin.Source, pin.Digest, pin.KeyID, pin.PinnedAt); err != nil {
 			return fmt.Errorf("insert session pin: %w", err)
 		}
@@ -441,12 +461,16 @@ func lockExperience(ctx context.Context, tx platformpostgres.Transaction, scope 
 }
 
 func loadRevision(ctx context.Context, tx platformpostgres.Transaction, scope tenant.Scope, identifier id.Experience, version uint32) (experience.Revision, error) {
+	storedVersion, err := versionInt32(version)
+	if err != nil {
+		return experience.Revision{}, err
+	}
 	var state string
 	var document []byte
 	result := experience.Revision{ExperienceID: identifier, Version: version}
-	err := tx.QueryRow(ctx, `SELECT state, document, digest, key_id, signature, created_at
+	err = tx.QueryRow(ctx, `SELECT state, document, digest, key_id, signature, created_at
 		FROM idenqa.experience_revisions WHERE tenant_id=$1 AND experience_id=$2 AND version=$3`,
-		scope.ID().String(), identifier.String(), versionInt32(version)).Scan(
+		scope.ID().String(), identifier.String(), storedVersion).Scan(
 		&state, &document, &result.Manifest.Digest, &result.Manifest.KeyID, &result.Manifest.Signature, &result.CreatedAt)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return experience.Revision{}, experience.ErrNotFound
@@ -468,6 +492,10 @@ func loadRevision(ctx context.Context, tx platformpostgres.Transaction, scope te
 }
 
 func insertRevision(ctx context.Context, tx platformpostgres.Transaction, scope tenant.Scope, experienceID string, state experience.RevisionState, mutation experience.CreateMutation) error {
+	version, err := versionInt32(mutation.Document.Version)
+	if err != nil {
+		return err
+	}
 	document, err := json.Marshal(mutation.Document)
 	if err != nil {
 		return fmt.Errorf("encode experience document: %w", err)
@@ -475,7 +503,7 @@ func insertRevision(ctx context.Context, tx platformpostgres.Transaction, scope 
 	if _, err := tx.Exec(ctx, `INSERT INTO idenqa.experience_revisions
 		(tenant_id,experience_id,version,state,document,digest,key_id,signature,actor_id,created_at)
 		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
-		scope.ID().String(), experienceID, versionInt32(mutation.Document.Version), string(state), string(document),
+		scope.ID().String(), experienceID, version, string(state), string(document),
 		mutation.Manifest.Digest, mutation.Manifest.KeyID, mutation.Manifest.Signature, mutation.Actor, mutation.At); err != nil {
 		return fmt.Errorf("insert experience revision: %w", err)
 	}
@@ -486,7 +514,7 @@ func insertRevision(ctx context.Context, tx platformpostgres.Transaction, scope 
 		if _, err := tx.Exec(ctx, `INSERT INTO idenqa.experience_targeting
 			(tenant_id,experience_id,version,rule_index,workflow,countries,application_ids,origins,sdk_version_min,sdk_version_max,specificity)
 			VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
-			scope.ID().String(), experienceID, versionInt32(mutation.Document.Version), index, nullableText(rule.Workflow),
+			scope.ID().String(), experienceID, version, index, nullableText(rule.Workflow),
 			string(countries), string(applications), string(origins), nullableText(rule.SDKVersionMin), nullableText(rule.SDKVersionMax),
 			targetSpecificity(rule)); err != nil {
 			return fmt.Errorf("insert experience targeting: %w", err)
@@ -496,6 +524,14 @@ func insertRevision(ctx context.Context, tx platformpostgres.Transaction, scope 
 }
 
 func insertEvent(ctx context.Context, tx platformpostgres.Transaction, scope tenant.Scope, experienceID string, record eventRecord) error {
+	version, err := versionInt32(record.Version)
+	if err != nil {
+		return err
+	}
+	targetVersion, err := versionInt32(record.TargetVersion)
+	if err != nil {
+		return err
+	}
 	var sequence int64
 	if err := tx.QueryRow(ctx, `SELECT COALESCE(MAX(sequence),0)+1 FROM idenqa.experience_events WHERE tenant_id=$1 AND experience_id=$2`,
 		scope.ID().String(), experienceID).Scan(&sequence); err != nil {
@@ -505,7 +541,7 @@ func insertEvent(ctx context.Context, tx platformpostgres.Transaction, scope ten
 		(tenant_id,experience_id,sequence,operation,from_state,to_state,version,target_version,actor_id,reason,digest,occurred_at)
 		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
 		scope.ID().String(), experienceID, sequence, record.Operation, nullableState(record.FromState), string(record.ToState),
-		versionInt32(record.Version), versionInt32(record.TargetVersion), record.Actor, nullableText(record.Reason), record.Digest, record.At); err != nil {
+		version, targetVersion, record.Actor, nullableText(record.Reason), record.Digest, record.At); err != nil {
 		return fmt.Errorf("insert experience event: %w", err)
 	}
 	return nil
@@ -592,13 +628,17 @@ func jsonArray(values []string) []string {
 	return values
 }
 
-// versionInt32 converts one contract-validated bounded version for storage.
-func versionInt32(value uint32) int32 {
-	return int32(value) //nolint:gosec // Experience versions are bounded by contract.MaxVersion.
+// versionInt32 checks the contract's version bound at the storage boundary.
+// Zero remains the sentinel for absent approved/published versions.
+func versionInt32(value uint32) (int32, error) {
+	if value > contract.MaxVersion {
+		return 0, experience.ErrInvalid
+	}
+	return int32(value), nil
 }
 
 func targetSpecificity(rule contract.Target) int32 {
-	score := 0
+	score := int32(0)
 	if rule.Workflow != "" {
 		score++
 	}
@@ -614,7 +654,7 @@ func targetSpecificity(rule contract.Target) int32 {
 	if rule.SDKVersionMin != "" {
 		score++
 	}
-	return versionInt32(uint32(score))
+	return score
 }
 
 func nullableText(value string) any {
