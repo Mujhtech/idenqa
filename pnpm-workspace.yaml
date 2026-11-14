@@ -2,6 +2,11 @@ packages:
   - "sdk/*"
   - "capture/*"
 
+minimumReleaseAgeExclude:
+  - "@playwright/test@1.65.1"
+  - playwright-core@1.65.1
+  - playwright@1.65.1
+
 overrides:
   brace-expansion: 2.1.7
   js-yaml: ^4.3.2

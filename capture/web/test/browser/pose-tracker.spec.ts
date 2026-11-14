@@ -184,3 +184,32 @@ test("loads the self-hosted landmark worker and rejects a frame without a face",
   });
   expect(result.faceCount).toBe(0);
 });
+
+for (const asset of ["wasm", "model"] as const) {
+  test(`rejects tracker initialization when the local ${asset} is unavailable`, async ({
+    page,
+    context,
+  }) => {
+    await context.route(
+      asset === "wasm" ? "**/idenqa-liveness/wasm/**" : "**/idenqa-liveness/face_landmarker.task",
+      (route) => route.abort(),
+    );
+    await page.goto("/");
+    const result = await page.evaluate(async () => {
+      const moduleUrl = performance
+        .getEntriesByType("resource")
+        .map((entry) => entry.name)
+        .find((name) => name.includes("/src/index.ts"));
+      if (!moduleUrl) throw new Error("Capture module not loaded");
+      const { createBrowserPoseTracker } = await import(moduleUrl);
+      try {
+        const tracker = await createBrowserPoseTracker(new AbortController().signal);
+        tracker.close();
+        return "ready";
+      } catch (error) {
+        return error instanceof Error ? error.message : "unknown error";
+      }
+    });
+    expect(result).toMatch(/^Face tracking (could not run|worker failed)\./);
+  });
+}
