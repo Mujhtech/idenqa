@@ -87,7 +87,9 @@ func (pool *Pool) WithinTransaction(
 }
 
 func commitError(err error) error {
-	if errors.Is(err, pgx.ErrTxCommitRollback) {
+	var rejected *pgconn.PgError
+	if errors.Is(err, pgx.ErrTxCommitRollback) ||
+		(errors.As(err, &rejected) && (rejected.Code == "40001" || rejected.Code == "40P01")) {
 		return fmt.Errorf("commit PostgreSQL transaction: %w", err)
 	}
 

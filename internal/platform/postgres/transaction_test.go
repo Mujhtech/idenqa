@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 func TestCommitErrorClassifiesOnlyUnconfirmedOutcomesAsUnknown(t *testing.T) {
@@ -13,6 +14,15 @@ func TestCommitErrorClassifiesOnlyUnconfirmedOutcomesAsUnknown(t *testing.T) {
 	rolledBack := commitError(pgx.ErrTxCommitRollback)
 	if errors.Is(rolledBack, ErrCommitOutcomeUnknown) {
 		t.Fatalf("commitError(rollback) = %v, unexpectedly unknown", rolledBack)
+	}
+	for _, code := range []string{"40001", "40P01"} {
+		t.Run(code, func(t *testing.T) {
+			rejected := &pgconn.PgError{Code: code}
+			got := commitError(rejected)
+			if errors.Is(got, ErrCommitOutcomeUnknown) || !errors.Is(got, rejected) {
+				t.Fatalf("commitError(%s) = %v, want confirmed transaction abort", code, got)
+			}
+		})
 	}
 	transportFailure := errors.New("connection lost after commit write")
 	unknown := commitError(transportFailure)
