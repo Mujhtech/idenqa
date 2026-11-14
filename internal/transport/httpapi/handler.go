@@ -27,8 +27,7 @@ func (base handlerBase) problem(writer http.ResponseWriter, request *http.Reques
 	attributes := []any{
 		"request_id", requestIDString(request.Context()),
 		"status", failure.Status(),
-		"code", failure.Code(),
-		"error", err,
+		"code", problemLogCode(failure.Code()),
 	}
 	if failure.Status() >= http.StatusInternalServerError {
 		base.logger.ErrorContext(request.Context(), base.name+" request failed", attributes...)
@@ -36,8 +35,23 @@ func (base handlerBase) problem(writer http.ResponseWriter, request *http.Reques
 		base.logger.WarnContext(request.Context(), base.name+" request rejected", attributes...)
 	}
 	if writeErr := respond.WriteProblem(writer, request, err, requestIDString(request.Context())); writeErr != nil {
-		base.logger.ErrorContext(request.Context(), "write "+base.name+" problem response", "error", writeErr)
+		base.logger.ErrorContext(request.Context(), "write "+base.name+" problem response")
 	}
+}
+
+// problemLogCode accepts only the bounded public code vocabulary's syntax.
+// Raw errors and response-write errors may contain request data or secrets and
+// never belong in these content-free operational records.
+func problemLogCode(code string) string {
+	if len(code) == 0 || len(code) > 64 {
+		return apierror.CodeInternalError
+	}
+	for _, character := range code {
+		if (character < 'A' || character > 'Z') && (character < '0' || character > '9') && character != '_' {
+			return apierror.CodeInternalError
+		}
+	}
+	return code
 }
 
 // writeJSON writes a JSON response with the given status.
