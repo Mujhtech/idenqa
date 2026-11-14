@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { mkdir, copyFile, cp, readFile, writeFile } from "node:fs/promises";
+import { mkdir, copyFile, readFile, rm, writeFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -24,7 +24,19 @@ const require = createRequire(import.meta.url);
 const library = dirname(require.resolve("@mediapipe/tasks-vision"));
 await mkdir(destination, { recursive: true });
 await copyFile(resolve(root, "dist/pose-worker.js"), resolve(destination, "pose-worker.js"));
-await cp(resolve(library, "wasm"), resolve(destination, "wasm"), { recursive: true });
+// MediaPipe 1.2.3 ships classic-worker and module-worker loader pairs. Replace
+// the directory so a previous preparation cannot retain obsolete WASM loaders.
+const wasm = resolve(destination, "wasm");
+await rm(wasm, { recursive: true, force: true });
+await mkdir(wasm, { recursive: true });
+await Promise.all(
+  [
+    "vision_wasm_internal.js",
+    "vision_wasm_internal.wasm",
+    "vision_wasm_module_internal.js",
+    "vision_wasm_module_internal.wasm",
+  ].map((file) => copyFile(resolve(library, "wasm", file), resolve(wasm, file))),
+);
 await copyFile(
   resolve(root, "THIRD_PARTY_NOTICES.md"),
   resolve(destination, "THIRD_PARTY_NOTICES.md"),

@@ -8,7 +8,7 @@ Font License 1.1. Source: https://github.com/rsms/inter
 
 ## MediaPipe
 
-The bundled pose worker uses Google's MediaPipe Tasks Vision 1.0.1,
+The bundled pose worker uses Google's MediaPipe Tasks Vision 1.2.3,
 copyright Google LLC, licensed under Apache License 2.0.
 Source and full licence: https://github.com/google-ai-edge/mediapipe
 and https://www.apache.org/licenses/LICENSE-2.0 . Upstream licence notices are
