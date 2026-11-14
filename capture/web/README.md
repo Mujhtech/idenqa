@@ -19,7 +19,7 @@ work and unavailable/invalid required measurements still stop capture;
 cancellation releases camera and worker. Session and capture-authority expiry
 remain authoritative and are not extended by local retries.
 
-The default tracker runs MediaPipe Tasks Vision 1.0.1 in a dedicated classic
+The default tracker runs MediaPipe Tasks Vision 1.2.3 in a dedicated classic
 worker. Runtime model/WASM assets must be hosted on the page origin:
 
 ```sh
