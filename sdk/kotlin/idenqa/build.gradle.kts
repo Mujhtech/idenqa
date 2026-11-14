@@ -19,7 +19,7 @@ android {
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib:2.4.21")
     api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
-    implementation("com.squareup.okhttp3:okhttp:5.5.0")
+    implementation("com.squareup.okhttp3:okhttp:5.5.1")
     implementation("com.squareup.moshi:moshi:1.15.2")
     implementation("com.google.mediapipe:tasks-vision:1.1.0")
     // MediaPipe's published POM requests older vulnerable transitive versions.
