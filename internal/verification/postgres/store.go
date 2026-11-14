@@ -84,13 +84,14 @@ func (store *Store) FindRevision(
 	if scope.ID().IsZero() || identifier.IsZero() || revision == 0 || revision > math.MaxInt32 {
 		return verification.Revision{}, verification.ErrProfileNotFound
 	}
+	revisionNumber := int32(revision)
 
 	var found verification.Revision
 	err := store.read(ctx, scope, func(ctx context.Context, queries *sqlgen.Queries) error {
 		row, err := queries.FindCaptureProfileRevision(ctx, sqlgen.FindCaptureProfileRevisionParams{
 			TenantID:  scope.ID().String(),
 			ProfileID: identifier.String(),
-			Revision:  int32(revision), //nolint:gosec // bounded above before the transaction
+			Revision:  revisionNumber,
 		})
 		if errors.Is(err, pgx.ErrNoRows) {
 			return verification.ErrProfileNotFound

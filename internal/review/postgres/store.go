@@ -591,6 +591,7 @@ func appendReviewAudit(ctx context.Context, tx platformpostgres.Transaction, sco
 	if len(operationIDs) > 0 {
 		identity += ":" + operationIDs[0]
 	}
+	// This binds public event/reference metadata, not a password or credential verifier.
 	digest := sha256.Sum256([]byte(fmt.Sprintf("%s\n%s\n%d\n", eventType, aggregateID, version)))
 	_, err := auditpostgres.AppendInTransaction(ctx, tx, scope, auditpostgres.Event{
 		EventID: token("event", identity), EventType: eventType,
@@ -608,6 +609,7 @@ func setScope(ctx context.Context, tx platformpostgres.Transaction, scope tenant
 }
 
 func token(prefix, value string) string {
+	// Audit references use public record IDs (including id.APIKey), never bearer secrets.
 	digest := sha256.Sum256([]byte(value))
 	return prefix + ":" + hex.EncodeToString(digest[:12])
 }

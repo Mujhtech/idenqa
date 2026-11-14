@@ -503,6 +503,7 @@ func setScope(ctx context.Context, tx platformpostgres.Transaction, scope tenant
 }
 
 func referenceToken(prefix, value string) string {
+	// Audit references use public record IDs (including id.APIKey), never bearer secrets.
 	digest := sha256.Sum256([]byte(value))
 	return prefix + ":" + hex.EncodeToString(digest[:12])
 }
