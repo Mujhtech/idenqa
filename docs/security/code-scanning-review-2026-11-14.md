@@ -34,8 +34,9 @@ dispositions; they are not accepted vulnerabilities or disabled queries.
 public `key_…` record identifier and is safe to persist and display.
 `ParseAPIKey` validates that identifier; it does not parse a presented secret.
 The review and privacy transport paths construct actors from the authenticated
-principal's `KeyID()`, and application actor validation uses that typed public
-identifier. The reported paths reach deterministic reference helpers in
+principal's typed public `KeyID()`. Actor IDs are stored as strings; these
+transport paths pass the public identifier, separately from the presented
+credential secret. The reported paths reach deterministic reference helpers in
 [`review/postgres`](../../internal/review/postgres/store.go) and
 [`privacy/postgres`](../../internal/privacy/postgres/store.go), or the digest
 of event type, aggregate ID and version. None is a password verifier.
@@ -55,9 +56,9 @@ origin and creates a private Worker; the separate classic IIFE build is in
 messages use the worker's implicit private port. A different-origin iframe
 can message the host Window but does not acquire this Worker handle.
 
-A real-browser probe delivered a forged initialization message from a
-different-origin iframe to the host Window, then initialized the actual
-worker/model and inferred a blank frame. Only the expected ready and pose
+A real-browser probe initialized the actual worker/model, delivered a forged
+initialization message from a different-origin iframe to the host Window,
+and then inferred a blank frame. Only the expected ready and pose
 messages reached the worker client; no attacker-origin network request or
 worker error occurred. This validates channel isolation, not face-model,
 active-liveness, PAD or product-demo acceptance.
@@ -80,7 +81,8 @@ rejection for ordinary and upload requests, explicit CLI base prefixes,
 content-free logs, integer boundaries, capacity sums near native `MaxInt`,
 and maximum supported KMS purpose/context round trips with unchanged AAD.
 The affected Go package tests passed with the race detector; formatting, vet
-and configured lint passed with zero issues. The two browser probes passed.
+and configured lint passed with zero issues. The browser worker probe and
+Node VM model-preparation probe passed.
 Repository PR checks and default-branch CodeQL analysis provide separate
 merge and alert-closure evidence.
 
