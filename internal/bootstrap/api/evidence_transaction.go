@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"net/http"
 
 	pg "github.com/Mujhtech/idenqa/internal/platform/postgres"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -61,4 +62,12 @@ func evidenceTransactionConflict(err error) bool {
 	var conflict *pgconn.PgError
 	return !errors.Is(err, pg.ErrCommitOutcomeUnknown) && errors.As(err, &conflict) &&
 		(conflict.Code == "40001" || conflict.Code == "40P01")
+}
+
+func writeEvidenceUnavailable(w http.ResponseWriter, err error) {
+	status := http.StatusForbidden
+	if evidenceTransactionConflict(err) {
+		status = http.StatusServiceUnavailable
+	}
+	http.Error(w, "evidence unavailable", status)
 }

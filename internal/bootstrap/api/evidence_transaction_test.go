@@ -4,6 +4,9 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/Mujhtech/idenqa/internal/evidence"
@@ -112,6 +115,42 @@ func TestBufferedEvidenceTransactionNeverReplaysUnknownCommitOrAuthorityDenial(t
 				if !bytes.Equal(buffer, make([]byte, len(buffer))) {
 					t.Fatal("failed evidence transaction retained plaintext")
 				}
+			}
+		})
+	}
+}
+
+func TestEvidenceUnavailableDistinguishesExhaustedConflictsFromAuthorityDenial(t *testing.T) {
+	t.Parallel()
+	for _, test := range []struct {
+		name       string
+		err        error
+		wantStatus int
+		wantCalls  int
+	}{
+		{name: "serialization conflict", err: fmt.Errorf("read authority: %w", &pgconn.PgError{Code: "40001"}), wantStatus: http.StatusServiceUnavailable, wantCalls: 3},
+		{name: "deadlock", err: &pgconn.PgError{Code: "40P01"}, wantStatus: http.StatusServiceUnavailable, wantCalls: 3},
+		{name: "authority denied", err: evidence.ErrReadDenied, wantStatus: http.StatusForbidden, wantCalls: 1},
+		{name: "unknown commit", err: errors.Join(pg.ErrCommitOutcomeUnknown, &pgconn.PgError{Code: "40001"}), wantStatus: http.StatusForbidden, wantCalls: 1},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			database := &evidenceTransactionTestDatabase{commit: func(int) error { return test.err }}
+			var plaintext []byte
+			err := withBufferedEvidenceTransaction(t.Context(), database, func() {
+				clear(plaintext)
+				plaintext = nil
+			}, func(context.Context, *evidenceTransaction) error {
+				plaintext = []byte("synthetic controlled plaintext")
+				return nil
+			})
+			response := httptest.NewRecorder()
+			writeEvidenceUnavailable(response, err)
+			if response.Code != test.wantStatus || database.calls != test.wantCalls || plaintext != nil {
+				t.Fatalf("status=%d transactions=%d retained=%d error=%v", response.Code, database.calls, len(plaintext), err)
+			}
+			if response.Body.String() != "evidence unavailable\n" {
+				t.Fatalf("response disclosed transaction details: %q", response.Body.String())
 			}
 		})
 	}
