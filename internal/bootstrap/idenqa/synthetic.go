@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -21,6 +22,7 @@ import (
 
 	policyv1 "github.com/Mujhtech/idenqa/contracts/policy/v1"
 	"github.com/Mujhtech/idenqa/internal/cli"
+	"github.com/Mujhtech/idenqa/internal/config"
 	"github.com/Mujhtech/idenqa/internal/evidence"
 	"github.com/Mujhtech/idenqa/internal/managedtenant"
 	platformcrypto "github.com/Mujhtech/idenqa/internal/platform/crypto"
@@ -614,14 +616,42 @@ func (client *syntheticClient) readDecision(ctx context.Context, decision synthe
 	return client.step("decision.read", fields)
 }
 
-type managedSyntheticRunner struct{}
+type managedSyntheticRunner struct{ base *url.URL }
 
-func (managedSyntheticRunner) Run(ctx context.Context, request managedtenant.SyntheticRunRequest, credential string) (string, error) {
+func newManagedSyntheticRunner(configuration config.API) (managedSyntheticRunner, error) {
+	host := configuration.HTTPHost
+	switch host {
+	case "0.0.0.0":
+		host = "127.0.0.1"
+	case "::", "[::]":
+		host = "::1"
+	}
+	if host == "" || configuration.HTTPPort == 0 {
+		return managedSyntheticRunner{}, errors.New("synthetic journey requires the configured local API listener")
+	}
+	scheme := "http"
+	switch configuration.HTTPTLSMode {
+	case "disabled":
+	case "file":
+		scheme = "https"
+	default:
+		return managedSyntheticRunner{}, errors.New("synthetic journey requires a supported local API TLS mode")
+	}
+	// The protected bridge caller supplies journey metadata, never network
+	// authority for the ephemeral credential issued by this Core. Operator
+	// configuration selects the local listener; the standalone CLI separately
+	// permits an explicit self-hosted API URL. Redirects remain disabled.
+	return managedSyntheticRunner{base: &url.URL{Scheme: scheme, Host: net.JoinHostPort(host, strconv.Itoa(int(configuration.HTTPPort)))}}, nil
+}
+
+func (runner managedSyntheticRunner) Run(ctx context.Context, request managedtenant.SyntheticRunRequest, credential string) (string, error) {
+	if runner.base == nil {
+		return "", errors.New("synthetic journey requires a configured local API listener")
+	}
 	if !validSyntheticRegion(request.Region) {
 		return "", errors.New("synthetic region is invalid")
 	}
-	base, err := parsePublicAPIURL(request.CoreEndpoint)
-	if err != nil {
+	if _, err := parsePublicAPIURL(request.CoreEndpoint); err != nil {
 		return "", err
 	}
 	catalog, err := evidence.BuiltInCatalog()
@@ -636,7 +666,7 @@ func (managedSyntheticRunner) Run(ctx context.Context, request managedtenant.Syn
 		return "", fmt.Errorf("synthetic policy is invalid: %w", err)
 	}
 	client := &syntheticClient{
-		base: base, credential: credential,
+		base: runner.base, credential: credential,
 		http: &http.Client{Timeout: 30 * time.Second, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }},
 		out:  io.Discard, jsonOutput: true, prefix: "cloud-" + request.RunID, runID: request.RunID, region: request.Region,
 	}

@@ -138,7 +138,11 @@ func serveCredentialBridge(command *cobra.Command, options *credentialBridgeOpti
 	if err != nil {
 		return cli.RuntimeError("compose managed tenant service", err)
 	}
-	managedService, err = managedService.WithSyntheticRunner(managedSyntheticRunner{})
+	syntheticRunner, err := newManagedSyntheticRunner(configuration)
+	if err != nil {
+		return cli.RuntimeError("compose synthetic journey target", err)
+	}
+	managedService, err = managedService.WithSyntheticRunner(syntheticRunner)
 	if err != nil {
 		return cli.RuntimeError("compose synthetic journey service", err)
 	}
