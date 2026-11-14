@@ -568,7 +568,7 @@ func waitProviderAttempt(t *testing.T, admin *pg.Pool, verificationID string, ex
 		select {
 		case <-deadline.C:
 			var diagnostic string
-			_ = admin.Native().QueryRow(t.Context(), `SELECT json_build_object('jobs',(SELECT json_agg(json_build_object('kind',kind,'state',state,'errors',errors)) FROM headgate.headgate_job),'checks',(SELECT json_agg(row_to_json(c)) FROM idenqa.verification_checks c))::text`).Scan(&diagnostic)
+			_ = admin.Native().QueryRow(t.Context(), `SELECT json_build_object('jobs',(SELECT json_agg(json_build_object('kind',kind,'state',state,'errors',errors)) FROM headgate.headgate_job),'checks',(SELECT json_agg(row_to_json(c)) FROM idenqa.verification_checks c),'attempts',(SELECT json_agg(json_build_object('id',id,'check',check_id,'state',state,'failure',failure_code,'retry',retry_disposition)) FROM idenqa.verification_attempts),'models',(SELECT json_agg(json_build_object('attempt',attempt_id,'outcome',result_body->>'outcome','failure',result_body->'failure')) FROM idenqa.model_dispatches),'requests',(SELECT json_agg(attempt_id) FROM idenqa.model_requests))::text`).Scan(&diagnostic)
 			t.Fatalf("provider journey timeout: %s", diagnostic)
 		case <-tick.C:
 		}

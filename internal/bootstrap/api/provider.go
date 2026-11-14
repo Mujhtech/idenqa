@@ -25,7 +25,6 @@ import (
 	"github.com/Mujhtech/idenqa/internal/platform/id"
 	"github.com/Mujhtech/idenqa/internal/platform/kms"
 	"github.com/Mujhtech/idenqa/internal/platform/observability"
-	pg "github.com/Mujhtech/idenqa/internal/platform/postgres"
 	"github.com/Mujhtech/idenqa/internal/platform/postgres/sqlgen"
 	"github.com/Mujhtech/idenqa/internal/provider"
 	"github.com/Mujhtech/idenqa/internal/tenant"
@@ -66,11 +65,6 @@ type providerEvidenceRoutes struct {
 	catalog    evidence.Catalog
 	ids        *id.Generator
 	keys       platformcrypto.KeyWrapper
-}
-type providerBoundTransaction struct{ tx pg.Transaction }
-
-func (bound providerBoundTransaction) WithinTransaction(ctx context.Context, _ pg.TransactionOptions, work func(context.Context, pg.Transaction) error) error {
-	return work(ctx, bound.tx)
 }
 
 func newProviderEvidenceRoutes(configuration config.API, pool database, infrastructure EvidenceInfrastructure, catalog evidence.Catalog) (*providerEvidenceRoutes, error) {
@@ -151,13 +145,20 @@ func (routes *providerEvidenceRoutes) read(w http.ResponseWriter, r *http.Reques
 	defer cancel()
 	var receiver *providerBuffer
 	var readErr error
-	err = routes.pool.WithinTransaction(ctx, pg.TransactionOptions{Isolation: pg.IsolationSerializable}, func(ctx context.Context, tx pg.Transaction) error {
+	discard := func() {
+		if receiver != nil {
+			clear(receiver.Bytes())
+			receiver = nil
+		}
+		readErr = nil
+	}
+	err = withBufferedEvidenceTransaction(ctx, routes.pool, discard, func(ctx context.Context, tx *evidenceTransaction) error {
 		if _, err := sqlgen.New(tx).SetTenantScope(ctx, tenantID.String()); err != nil {
 			return err
 		}
 		var encoded []byte
 		if err := tx.QueryRow(ctx, `SELECT requests.request_body FROM idenqa.provider_requests requests JOIN idenqa.provider_dispatches dispatch ON dispatch.tenant_id=requests.tenant_id AND dispatch.attempt_id=requests.attempt_id WHERE requests.tenant_id=$1 AND requests.attempt_id=$2 AND dispatch.result_body IS NULL`, tenantID.String(), input.AttemptID).Scan(&encoded); err != nil {
-			return evidence.ErrReadDenied
+			return err
 		}
 		var request providerv1.Request
 		if json.Unmarshal(encoded, &request) != nil || request.Validate() != nil || request.Configuration != routes.plan.Binding.Configuration || request.TenantID != tenantID.String() || request.Check != routes.plan.Capability.Check {
@@ -179,25 +180,27 @@ func (routes *providerEvidenceRoutes) read(w http.ResponseWriter, r *http.Reques
 		// Hold the session lock until authenticated plaintext and the grant audit commit.
 		var state string
 		if err := tx.QueryRow(ctx, `SELECT state FROM idenqa.verification_sessions WHERE tenant_id=$1 AND id=$2 FOR UPDATE`, tenantID.String(), request.VerificationID).Scan(&state); err != nil {
-			return evidence.ErrReadDenied
+			return err
 		}
 		if err := authoritypostgres.ValidateProcessingWithin(ctx, tx, scope, verificationID, time.Now().UTC(), clock.System{}, verification.SessionStateProcessing); err != nil {
 			return err
 		}
 		var active bool
-		if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM idenqa.verification_attempts AS attempts JOIN idenqa.verification_checks AS checks ON checks.tenant_id=attempts.tenant_id AND checks.id=attempts.check_id WHERE attempts.tenant_id=$1 AND attempts.id=$2 AND attempts.verification_id=$3 AND attempts.state='running' AND checks.state='running' AND attempts.deadline > $4)`, tenantID.String(), request.AttemptID, request.VerificationID, time.Now().UTC()).Scan(&active); err != nil || !active {
+		if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM idenqa.verification_attempts AS attempts JOIN idenqa.verification_checks AS checks ON checks.tenant_id=attempts.tenant_id AND checks.id=attempts.check_id WHERE attempts.tenant_id=$1 AND attempts.id=$2 AND attempts.verification_id=$3 AND attempts.state='running' AND checks.state='running' AND attempts.deadline > $4)`, tenantID.String(), request.AttemptID, request.VerificationID, time.Now().UTC()).Scan(&active); err != nil {
+			return err
+		}
+		if !active {
 			return evidence.ErrReadDenied
 		}
-		bound := providerBoundTransaction{tx}
-		store, err := evidencepostgres.New(bound, routes.keys, routes.catalog)
+		store, err := evidencepostgres.New(tx, routes.keys, routes.catalog)
 		if err != nil {
 			return err
 		}
-		authorities, err := authoritypostgres.New(bound, routes.keys)
+		authorities, err := authoritypostgres.New(tx, routes.keys)
 		if err != nil {
 			return err
 		}
-		sessions, err := verificationpostgres.NewSessionStore(bound, routes.keys, routes.catalog)
+		sessions, err := verificationpostgres.NewSessionStore(tx, routes.keys, routes.catalog)
 		if err != nil {
 			return err
 		}
