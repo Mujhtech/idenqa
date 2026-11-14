@@ -16,6 +16,18 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    groups:
+      react-host-fixtures:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
+    ignore:
+      # openapi-typescript 7.13.0 requires TypeScript 5.x and uses its compiler API.
+      # Revisit together with generator support; keep 5.x security patches enabled.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: gradle
     directory: /sdk/kotlin
     schedule:
