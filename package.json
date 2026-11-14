@@ -18,6 +18,6 @@
     "verify": "pnpm format:check && pnpm generate:check && pnpm typecheck && pnpm test && pnpm build && pnpm package:check && pnpm audit"
   },
   "devDependencies": {
-    "prettier": "3.9.6"
+    "prettier": "3.10.0"
   }
 }
