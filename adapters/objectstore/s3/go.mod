@@ -1,6 +1,6 @@
 module github.com/Mujhtech/idenqa/adapters/objectstore/s3
 
-go 1.27.3
+go 1.27.4
 
 require (
 	github.com/Mujhtech/idenqa v0.0.0
