@@ -13,6 +13,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/Mujhtech/idenqa/internal/platform/objectstore"
@@ -106,6 +107,118 @@ func TestStoreStreamsThroughRealAWSSDKClient(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestStoreSDKRetriesDeleteOnlyForTheExactVersion(t *testing.T) {
+	t.Parallel()
+
+	synctest.Test(t, func(t *testing.T) {
+		var paths []string
+		store := retryTestStore(t, func(request *http.Request) (*http.Response, error) {
+			if request.Method != http.MethodDelete {
+				t.Fatalf("request method = %s, want DELETE", request.Method)
+			}
+			paths = append(paths, request.URL.Path)
+			return unavailableResponse(request), nil
+		})
+		object, err := objectstore.NewObject(objectstore.ObjectRecord{
+			Key: "tenants/ten_1/evidence/evd_1/content/1", Version: strings.Repeat("a", 32),
+			Size: 1, Checksum: "sha256:" + strings.Repeat("b", 64),
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := store.Delete(t.Context(), object); !errors.Is(err, ErrUnavailable) {
+			t.Fatalf("Delete() error = %v, want ErrUnavailable", err)
+		}
+		if len(paths) != 3 {
+			t.Fatalf("DELETE attempts = %d, want 3", len(paths))
+		}
+		want := "/idenqa-evidence/idenqa/prefix/" + string(object.Key()) + "/" + object.Record().Version
+		for _, path := range paths {
+			if path != want {
+				t.Fatalf("DELETE path = %q, want exact version %q", path, want)
+			}
+		}
+	})
+}
+
+func TestStoreSDKRetryAfterHonoursOperationDeadline(t *testing.T) {
+	t.Parallel()
+
+	synctest.Test(t, func(t *testing.T) {
+		attempts := 0
+		store := retryTestStore(t, func(request *http.Request) (*http.Response, error) {
+			attempts++
+			response := unavailableResponse(request)
+			response.Header.Set("X-Amz-Retry-After", "10000")
+			return response, nil
+		})
+		object, err := objectstore.NewObject(objectstore.ObjectRecord{
+			Key: "tenants/ten_1/evidence/evd_1/content/1", Version: strings.Repeat("a", 32),
+			Size: 1, Checksum: "sha256:" + strings.Repeat("b", 64),
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		const budget = 100 * time.Millisecond
+		ctx, cancel := context.WithTimeout(t.Context(), budget)
+		defer cancel()
+		started := time.Now()
+		if err := store.Delete(ctx, object); !errors.Is(err, context.DeadlineExceeded) {
+			t.Fatalf("Delete() error = %v, want context.DeadlineExceeded", err)
+		}
+		if elapsed := time.Since(started); elapsed != budget {
+			t.Fatalf("Delete() elapsed = %s, want operation budget %s", elapsed, budget)
+		}
+		if attempts != 1 {
+			t.Fatalf("DELETE attempts = %d, want 1 before deadline", attempts)
+		}
+	})
+}
+
+func TestStoreSDKDoesNotReplayStreamedCiphertextAfterAmbiguousPut(t *testing.T) {
+	t.Parallel()
+
+	synctest.Test(t, func(t *testing.T) {
+		var putPaths, deletePaths []string
+		store := retryTestStore(t, func(request *http.Request) (*http.Response, error) {
+			switch request.Method {
+			case http.MethodPut:
+				putPaths = append(putPaths, request.URL.Path)
+				if request.Header.Get("If-None-Match") != "*" {
+					t.Fatal("PUT omitted its create-only precondition")
+				}
+				if _, err := io.Copy(io.Discard, request.Body); err != nil {
+					t.Fatalf("consume ciphertext: %v", err)
+				}
+				// The server may have persisted the complete body before losing
+				// the acknowledgement; cleanup must address this exact object.
+				return unavailableResponse(request), nil
+			case http.MethodDelete:
+				deletePaths = append(deletePaths, request.URL.Path)
+				return &http.Response{
+					StatusCode: http.StatusNoContent, Header: make(http.Header),
+					Body: http.NoBody, Request: request,
+				}, nil
+			default:
+				t.Fatalf("unexpected method %s", request.Method)
+				return nil, errors.New("unexpected request")
+			}
+		})
+		writes := 0
+		object, err := store.Put(t.Context(), mustKey(t, "tenants/ten_1/evidence/evd_1/content/1"), func(writer io.Writer) error {
+			writes++
+			_, err := io.WriteString(writer, "bounded authenticated ciphertext")
+			return err
+		})
+		if !errors.Is(err, ErrUnavailable) || !object.IsZero() {
+			t.Fatalf("Put() object = %+v, error = %v, want confirmed cleanup and ErrUnavailable", object, err)
+		}
+		if writes != 1 || len(putPaths) != 1 || len(deletePaths) != 1 || putPaths[0] != deletePaths[0] {
+			t.Fatalf("writes=%d PUT=%v DELETE=%v, want one producer and exact-version cleanup", writes, putPaths, deletePaths)
+		}
+	})
 }
 
 func TestStoreRemovesFailedAndOversizedUploads(t *testing.T) {
@@ -341,6 +454,38 @@ func assertRead(t *testing.T, store *Store, object objectstore.Object, want []by
 	}
 	if !bytes.Equal(got, want) {
 		t.Fatalf("ReadAll() length = %d, want %d", len(got), len(want))
+	}
+}
+
+type httpClientFunc func(*http.Request) (*http.Response, error)
+
+func (client httpClientFunc) Do(request *http.Request) (*http.Response, error) {
+	return client(request)
+}
+
+func retryTestStore(t *testing.T, client httpClientFunc) *Store {
+	t.Helper()
+	configuration := aws.Config{
+		Region: "us-east-1", HTTPClient: client,
+		Credentials: aws.NewCredentialsCache(credentials.NewStaticCredentialsProvider(
+			"test-access-key", "test-secret-key", "",
+		)),
+		RequestChecksumCalculation: aws.RequestChecksumCalculationWhenRequired,
+		ResponseChecksumValidation: aws.ResponseChecksumValidationWhenRequired,
+	}
+	sdkClient := awss3.NewFromConfig(configuration, func(options *awss3.Options) {
+		options.BaseEndpoint = aws.String("https://objects.example.test")
+		options.UsePathStyle = true
+	})
+	return mustStore(t, sdkClient, bytes.NewReader(bytes.Repeat([]byte{0x94}, 32)))
+}
+
+func unavailableResponse(request *http.Request) *http.Response {
+	return &http.Response{
+		StatusCode: http.StatusServiceUnavailable,
+		Header:     http.Header{"Content-Type": {"application/xml"}},
+		Body:       io.NopCloser(strings.NewReader("<Error><Code>ServiceUnavailable</Code></Error>")),
+		Request:    request,
 	}
 }
 
