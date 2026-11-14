@@ -231,7 +231,7 @@ func (routes *providerEvidenceRoutes) read(w http.ResponseWriter, r *http.Reques
 		defer clear(receiver.Bytes())
 	}
 	if err != nil || readErr != nil || receiver == nil || receiver.Len() == 0 {
-		http.Error(w, "evidence unavailable", http.StatusForbidden)
+		writeEvidenceUnavailable(w, err)
 		return
 	}
 	w.Header().Set("Content-Type", receiver.mediaType)
