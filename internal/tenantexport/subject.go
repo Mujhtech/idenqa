@@ -257,7 +257,11 @@ func (exporter *SubjectExporter) emitLine(stream *subjectStream, collection stri
 	if len(encoded) < 2 || encoded[0] != '{' || encoded[len(encoded)-1] != '}' {
 		return ErrInvalid
 	}
-	line := make([]byte, 0, len(encoded)+len(collection)+16)
+	capacity, err := lineCapacity(len(encoded), len(collection))
+	if err != nil {
+		return err
+	}
+	line := make([]byte, 0, capacity)
 	line = append(line, `{"record":"`...)
 	line = append(line, collection...)
 	line = append(line, '"', ',')

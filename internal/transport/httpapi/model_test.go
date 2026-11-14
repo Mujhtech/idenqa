@@ -21,11 +21,20 @@ import (
 
 type registryProbe struct {
 	model.RegistryRepository
-	calls     int
-	state     model.RegistryState
-	stateErr  error
-	revisions map[string]model.RegistryRevision
-	eligible  bool
+	calls         int
+	state         model.RegistryState
+	stateErr      error
+	revisions     map[string]model.RegistryRevision
+	eligible      bool
+	historyBefore int64
+	historyLimit  int
+}
+
+func (probe *registryProbe) History(_ context.Context, _ tenant.Scope, _ string, before int64, limit int) ([]model.RegistryReceipt, error) {
+	probe.calls++
+	probe.historyBefore = before
+	probe.historyLimit = limit
+	return []model.RegistryReceipt{}, nil
 }
 
 func (probe *registryProbe) Apply(_ context.Context, _ tenant.Scope, _ idempotency.Request, _ id.Event, command model.RegistryCommand) (model.RegistryReceipt, error) {
@@ -251,4 +260,43 @@ func handlerModelService(t *testing.T, probe model.RegistryRepository) *model.Ma
 		t.Fatal(err)
 	}
 	return service
+}
+
+func TestModelHistoryChecksLimitBeforeNativeIntegerConversion(t *testing.T) {
+	for _, test := range []struct {
+		query         string
+		status, limit int
+	}{
+		{"", 200, 50},
+		{"?before=9223372036854775807&limit=1", 200, 1},
+		{"?limit=100", 200, 100},
+		{"?limit=0", 400, 0},
+		{"?limit=-1", 400, 0},
+		{"?limit=101", 400, 0},
+		{"?limit=4294967297", 400, 0},
+		{"?limit=4294967396", 400, 0},
+		{"?limit=9223372036854775807", 400, 0},
+	} {
+		t.Run(test.query, func(t *testing.T) {
+			fixture := newHTTPAccessFixture(t, nil, "models:read")
+			probe := &registryProbe{}
+			routes, err := NewModelRoutes(fixture.middleware, handlerModelService(t, probe), fixture.logger)
+			if err != nil {
+				t.Fatal(err)
+			}
+			request := httptest.NewRequestWithContext(t.Context(), "GET", "/v1/models/pad/history"+test.query, nil)
+			request.Header.Set("Authorization", "Bearer "+fixture.encoded)
+			response := httptest.NewRecorder()
+			versionedRouter(t, routes).ServeHTTP(response, request)
+			if response.Code != test.status || probe.historyLimit != test.limit {
+				t.Fatalf("status=%d limit=%d body=%s", response.Code, probe.historyLimit, response.Body.String())
+			}
+			if test.status == 400 && probe.calls != 0 {
+				t.Fatal("invalid limit reached the registry")
+			}
+			if strings.Contains(test.query, "before=") && probe.historyBefore != 9223372036854775807 {
+				t.Fatalf("before=%d", probe.historyBefore)
+			}
+		})
+	}
 }

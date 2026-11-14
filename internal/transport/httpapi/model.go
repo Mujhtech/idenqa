@@ -127,6 +127,10 @@ func (routes *ModelRoutes) history(w http.ResponseWriter, r *http.Request) {
 		if key == "before" {
 			before = number
 		} else {
+			if number < 1 || number > 100 {
+				routes.reply(w, r, nil, model.ErrRegistryInvalid)
+				return
+			}
 			limit = int(number)
 		}
 	}

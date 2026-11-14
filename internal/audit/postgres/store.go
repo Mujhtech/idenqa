@@ -36,12 +36,12 @@ func (store *Store) List(ctx context.Context, scope tenant.Scope, before uint64,
 	if scope.ID().IsZero() || limit < 1 || limit > 100 || before > math.MaxInt64 {
 		return nil, audit.ErrInvalid
 	}
+	boundary := int64(before)
 	records := make([]audit.Record, 0, limit)
 	err := store.pool.WithinTransaction(ctx, platformpostgres.TransactionOptions{ReadOnly: true}, func(ctx context.Context, tx platformpostgres.Transaction) error {
 		if err := setScope(ctx, tx, scope); err != nil {
 			return err
 		}
-		boundary := int64(before) //nolint:gosec // before is rejected above MaxInt64.
 		rows, err := tx.Query(ctx, `SELECT sequence,event_id,event_type,aggregate_id,actor_id,occurred_at,event_digest,previous_hash,hash
 			FROM idenqa.audit_records WHERE tenant_id=$1 AND ($2=0 OR sequence<$2)
 			ORDER BY sequence DESC LIMIT $3`, scope.ID().String(), boundary, limit)

@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"hash"
+	"math"
 	"slices"
 	"strings"
 	"time"
@@ -497,7 +498,11 @@ func emitLine(emit func([]byte) error, collection string, fields any, digest has
 	if len(encoded) < 2 || encoded[0] != '{' || encoded[len(encoded)-1] != '}' {
 		return ErrInvalid
 	}
-	line := make([]byte, 0, len(encoded)+len(collection)+16)
+	capacity, err := lineCapacity(len(encoded), len(collection))
+	if err != nil {
+		return err
+	}
+	line := make([]byte, 0, capacity)
 	line = append(line, `{"record":"`...)
 	line = append(line, collection...)
 	line = append(line, '"', ',')
@@ -510,4 +515,18 @@ func emitLine(emit func([]byte) error, collection string, fields any, digest has
 		_, _ = digest.Write(line)
 	}
 	return nil
+}
+
+// lineCapacity checks the complete envelope size before adding lengths. The
+// bound is the native allocation limit, without imposing a new record limit.
+func lineCapacity(encodedSize, collectionSize int) (int, error) {
+	const overhead = 16
+	if encodedSize < 0 || collectionSize < 0 || encodedSize > math.MaxInt-overhead {
+		return 0, ErrLimit
+	}
+	remaining := math.MaxInt - overhead - encodedSize
+	if collectionSize > remaining {
+		return 0, ErrLimit
+	}
+	return encodedSize + collectionSize + overhead, nil
 }
