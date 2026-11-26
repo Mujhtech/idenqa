@@ -68,3 +68,53 @@ func TestAttributeFilteringTracerProviderDropsUnapprovedData(t *testing.T) {
 		}
 	}
 }
+
+func TestAttributeFilteringTracerProviderPreservesSDKValueLengthLimit(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name  string
+		value string
+		limit int
+		want  string
+	}{
+		{name: "replacement runes count toward limit", value: "\uFFFD\uFFFDoversized", limit: 1, want: "\uFFFD"},
+		{name: "zero limit with replacement rune", value: "\uFFFDoversized", limit: 0, want: ""},
+		{name: "zero limit with malformed UTF-8", value: "\xffoversized", limit: 0, want: ""},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			recorder := tracetest.NewSpanRecorder()
+			provider := sdktrace.NewTracerProvider(
+				sdktrace.WithSpanProcessor(recorder),
+				sdktrace.WithRawSpanLimits(sdktrace.SpanLimits{
+					AttributeValueLengthLimit: test.limit,
+					AttributeCountLimit:       1,
+				}),
+			)
+			t.Cleanup(func() {
+				if err := provider.Shutdown(context.Background()); err != nil {
+					t.Errorf("shutdown tracer provider: %v", err)
+				}
+			})
+
+			safe := telemetry.NewAttributeFilteringTracerProvider(provider, "http.route")
+			_, span := safe.Tracer("length-limit-regression").Start(t.Context(), "bounded attribute")
+			span.SetAttributes(attribute.String("http.route", test.value))
+			span.End()
+
+			ended := recorder.Ended()
+			if len(ended) != 1 {
+				t.Fatalf("ended span count = %d, want 1", len(ended))
+			}
+			attributes := ended[0].Attributes()
+			if len(attributes) != 1 || attributes[0].Key != "http.route" {
+				t.Fatalf("allowed attributes = %v, want http.route", attributes)
+			}
+			if got := attributes[0].Value.AsString(); got != test.want {
+				t.Errorf("recorded attribute = %q, want %q for length limit %d", got, test.want, test.limit)
+			}
+		})
+	}
+}

@@ -1332,10 +1332,10 @@ The initial self-hosted CLI covers migrations and preflight checks, tenant and A
 | `go.opentelemetry.io/otel` module family                                              | **Selected**                  | Traces, metrics, propagation, SDK, and exporters |
 | `github.com/riandyrn/otelchi`                                                         | **Selected**                  | Chi route instrumentation                        |
 | `go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc` v0.71.0 | **Selected**                  | gRPC runner client/server instrumentation        |
-| `go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc` v1.46.0             | **Selected**                  | OTLP/gRPC trace export                           |
-| `go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp` v1.46.0             | **Selected**                  | OTLP HTTP/protobuf trace export                  |
-| `go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc` v1.46.0           | **Selected**                  | OTLP/gRPC metric export                          |
-| `go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp` v1.46.0           | **Selected**                  | OTLP HTTP/protobuf metric export                 |
+| `go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc` v1.47.0             | **Selected**                  | OTLP/gRPC trace export                           |
+| `go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp` v1.47.0             | **Selected**                  | OTLP HTTP/protobuf trace export                  |
+| `go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc` v1.47.0           | **Selected**                  | OTLP/gRPC metric export                          |
+| `go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp` v1.47.0           | **Selected**                  | OTLP HTTP/protobuf metric export                 |
 
 Observability rules:
 

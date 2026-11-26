@@ -51,7 +51,7 @@ Ozzo validation remains conditional and was not added in F-02 because the presen
 | `github.com/go-chi/chi/v5`               | v5.3.2  | HTTP routing and middleware composition                                     | MIT; accepted runtime dependency                        | Current signed upstream release checked on 27 August 2026; Go 1.26 is covered by upstream CI; no runtime module dependencies                                                                                                   |
 | `github.com/go-chi/render`               | v1.0.3  | Shared response status and rendering primitives                             | MIT; accepted runtime dependency                        | Latest stable upstream tag checked on 27 August 2026; small graph with `github.com/ajg/form` as the relevant indirect decoder dependency                                                                                       |
 | `github.com/riandyrn/otelchi`            | v0.12.3 | Chi-aware OpenTelemetry traces and HTTP server metrics                      | Apache-2.0; accepted runtime dependency following D-002 | Latest stable tag checked on 27 August 2026; active upstream history; runtime graph adds `github.com/felixge/httpsnoop` and OpenTelemetry modules; its Gorilla WebSocket test dependency is absent from Idenqa's runtime graph |
-| `go.opentelemetry.io/otel` module family | v1.46.0 | Trace and metric APIs, SDK providers, resources, propagation, and lifecycle | Apache-2.0; accepted runtime dependency                 | Current coordinated upstream release checked on 27 August 2026; official project supports Go 1.26; exact module graph locked by `go.sum`                                                                                       |
+| `go.opentelemetry.io/otel` module family | v1.47.0 | Trace and metric APIs, SDK providers, resources, propagation, and lifecycle | Apache-2.0; accepted runtime dependency                 | Coordinated security release reviewed on 26 November 2026 for GO-2026-6974; Go 1.26 minimum is compatible with selected Go 1.27.4; exact module graph locked by `go.sum`                                                                                       |
 | `github.com/oklog/ulid/v2`               | v2.1.2  | Sortable opaque payload behind Idenqa-owned typed and prefixed identifiers  | Apache-2.0; accepted runtime dependency following D-015 | Latest stable upstream tag checked on 27 August 2026; no transitive runtime module remains in Idenqa's tidy graph                                                                                                              |
 
 All versions are pinned in `go.mod` and checksummed in `go.sum`. `go mod verify`, race-enabled tests, `golangci-lint`, and `govulncheck` pass; the reachable-vulnerability scan reports no known vulnerabilities. Exporters were deliberately not added in F-03, so no collector endpoint or vendor SDK is an implicit runtime dependency.
@@ -150,3 +150,41 @@ The Android buildscript audit found seven advisories already present in the AGP 
 The complete TypeScript verification suite and all 47 browser tests pass with unchanged snapshots. Public declaration export names remain unchanged (SDK 264, capture 158). The full Go workspace race tests, vet, formatting/lint, module integrity, standalone builds and vulnerability checks pass with zero vulnerable imported packages or called symbols; the three previously recorded unused-module advisories remain separately reported. Final combined CI, including the composed native-model integration journey, must pass before merge.
 
 The composed native-model integration failure was reproduced with the hash-locked ONNX runtime. A SERIALIZABLE conflict while locking the parent session was incorrectly surfaced as a forbidden evidence read. The shared buffered gateway now retries at most three definitely aborted transactions, repeats authority/grant checks, wipes discarded plaintext and releases bytes only after confirmed commit. Unknown commit outcomes are not replayed. Exhausted confirmed serialization/deadlock conflicts return an opaque HTTP 503; genuine denials remain opaque HTTP 403. Confirmed aborts remain distinct from uncertain commits. Race regressions and the native composed ONNX journey passed twice under each of the two recorded failing CI seeds, with unchanged deadlines. The Playwright 1.65.1 image omits Corepack, so browser CI explicitly uses the existing reviewed Node 22.22.3 setup before enabling Corepack. The separately discovered successor request/grant preparation gap is deferred from this PR by the user and recorded in the [package draft](global-identity-core-repository-structure-and-packages-v0.1-draft.md#66-verification); no claim of complete real-runtime semantic retry support is made.
+
+## OpenTelemetry security review — 26 November 2026
+
+The [failed Security run](https://github.com/Mujhtech/idenqa/actions/runs/45772457735)
+on `f36f5eb5` correctly rejected reachable [GO-2026-6974](https://pkg.go.dev/vuln/GO-2026-6974)
+in SDK and trace v1.46.0. Valid U+FFFD replacement characters were not counted
+toward the configured attribute-value length limit. The [upstream advisory](https://github.com/open-telemetry/opentelemetry-go/security/advisories/GHSA-q7gw-24fr-5p69)
+and [signed fix](https://github.com/open-telemetry/opentelemetry-go/commit/017b08c7f1018b619991aaf6b2299d4beb9da1d3)
+identify v1.47.0 as the patched release.
+
+The ten existing core/API/SDK/metric/trace and OTLP exporter module pins advance
+together to [v1.47.0](https://github.com/open-telemetry/opentelemetry-go/releases/tag/v1.47.0).
+It is the current stable release checked on this review date, remains
+[Apache-2.0](https://github.com/open-telemetry/opentelemetry-go/blob/v1.47.0/LICENSE),
+and requires Go 1.26, compatible with the selected Go 1.27.4 toolchain. Upstream
+remains actively maintained. Existing `otelhttp` v0.70.0 and `otelgrpc` v0.71.0
+minimum requirements permit the patched core versions; their instrumentation
+pins remain unchanged.
+
+The before/after resolved graph contains only those ten coordinated upgrades,
+the added transitive `go.opentelemetry.io/otel/log` v1.47.0 API module,
+`go.opentelemetry.io/otel/metric/x` v0.68.0 to v0.69.0, and the existing Google
+API/RPC generated modules advancing to
+`v0.0.0-20260928230214-8a89bd6388cc` as required by the reviewed exporter graph.
+These modules retain Apache-2.0 licensing. Existing gRPC v1.84.0 and protobuf
+v1.36.12 already satisfy the exporter minima. OTLP log export remains
+unselected; a transitive log API module does not enable a log exporter.
+
+Exact-version OSV queries found no advisories for the proposed OpenTelemetry
+modules, generated Google modules or retained instrumentation. The exact
+`make vuln` target passes across all five workspace Go modules and the npm
+audit. There are zero vulnerable imported packages or called symbols; the
+three previously recorded advisories in unused packages of required modules
+remain separately reported. A regression through Idenqa's owned filtering
+tracer fails on v1.46.0 and passes on v1.47.0 for replacement-character counting
+and a zero length limit, including malformed UTF-8. The existing privacy
+filters and exporter behavior remain covered by the telemetry and transport
+suites. No vulnerability gate is disabled or suppressed.
