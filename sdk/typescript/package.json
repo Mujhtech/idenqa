@@ -45,6 +45,6 @@
     "publint": "0.3.25",
     "tsdown": "0.23.7",
     "typescript": "5.9.3",
-    "vitest": "5.1.0"
+    "vitest": "5.1.1"
   }
 }
